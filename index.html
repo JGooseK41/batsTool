@@ -2186,6 +2186,21 @@
     </div>
 
     <script>
+        // HTTPS Enforcement and Security Check
+        (function() {
+            // Check if we're running on HTTP (not HTTPS or file://)
+            if (window.location.protocol === 'http:') {
+                // Redirect to HTTPS version
+                window.location.href = 'https:' + window.location.href.substring(5);
+                return; // Stop execution
+            }
+            
+            // Security warning for file:// protocol
+            if (window.location.protocol === 'file:') {
+                console.warn('⚠️ Running from file:// protocol. Some features may be limited. For full functionality, serve over HTTPS.');
+            }
+        })();
+
         // Global state
         let investigation = {
             caseId: '',
@@ -4954,12 +4969,76 @@ const entryTypes = {
 
         // Close file dropdown when clicking outside - will be initialized after DOM loads
 
+        // Security Status Display Function
+        function displaySecurityStatus() {
+            const protocol = window.location.protocol;
+            const container = document.querySelector('.container');
+            
+            if (protocol === 'file:') {
+                // Add warning banner for file:// protocol
+                const warningBanner = document.createElement('div');
+                warningBanner.style.cssText = `
+                    background: #fff3cd;
+                    border: 2px solid #ffc107;
+                    color: #856404;
+                    padding: 15px;
+                    margin-bottom: 20px;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                `;
+                warningBanner.innerHTML = `
+                    <span style="font-size: 24px;">⚠️</span>
+                    <div>
+                        <strong>Limited Functionality - File Protocol Detected</strong><br>
+                        <small>You're running B.A.T.S. from a local file. For full functionality including custom save locations and API features, please serve this file over HTTPS. 
+                        <a href="training.html#deployment" target="_blank" style="color: #856404; text-decoration: underline;">Learn more about deployment options</a></small>
+                    </div>
+                `;
+                container.insertBefore(warningBanner, container.firstChild);
+            } else if (protocol === 'https:') {
+                // Add secure connection indicator
+                const secureIndicator = document.createElement('div');
+                secureIndicator.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: #d4edda;
+                    border: 1px solid #c3e6cb;
+                    color: #155724;
+                    padding: 8px 15px;
+                    border-radius: 6px;
+                    font-size: 12px;
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                    z-index: 1000;
+                    opacity: 0.9;
+                `;
+                secureIndicator.innerHTML = `
+                    <span style="color: #28a745;">🔒</span> Secure Connection
+                `;
+                document.body.appendChild(secureIndicator);
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    secureIndicator.style.transition = 'opacity 0.5s';
+                    secureIndicator.style.opacity = '0';
+                    setTimeout(() => secureIndicator.remove(), 500);
+                }, 5000);
+            }
+        }
+
         // Make sure these functions are globally accessible
         window.switchTab = switchTab;
         window.toggleFileMenu = toggleFileMenu;
 
         document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing B.A.T.S. application...');
+    
+    // Display security status
+    displaySecurityStatus();
     
     try {
         // Enhanced structure initialization
