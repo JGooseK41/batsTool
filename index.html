@@ -4702,7 +4702,9 @@ function updateFormFieldsFromInvestigation() {
         }
 
         function switchTab(tabName) {
+            // First, ensure all tabs are visible (in case they were hidden)
             document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = '';
                 tab.classList.remove('active');
             });
             document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -4710,7 +4712,12 @@ function updateFormFieldsFromInvestigation() {
             });
 
             document.getElementById(tabName + '-tab').classList.add('active');
-            event.target.classList.add('active');
+            
+            // Find and activate the corresponding nav tab
+            const navTab = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+            if (navTab) {
+                navTab.classList.add('active');
+            }
 
             if (tabName === 'summary') {
                 renderSummary();
@@ -4720,6 +4727,8 @@ function updateFormFieldsFromInvestigation() {
                 renderRedWalletIndex();
                 renderPurpleWalletIndex();
                 renderBlueWalletIndex();
+            } else if (tabName === 'victims') {
+                renderVictims();
             }
             
             // Update breadcrumbs
