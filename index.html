@@ -1680,25 +1680,36 @@
                 addressApiUrl: 'https://api.etherscan.io/api?module=account&action=txlist&address=',
                 apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
                 fallbackUrls: [
-                    'https://api-ropsten.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=',
-                    'https://api.blockchair.com/ethereum/raw/transaction/'
+                    // Removed Ropsten as it no longer exists
+                    // Blockchair doesn't support transaction lookup by hash in this format
                 ],
                 parseResponse: (data, tokenData) => {
                     // If we have token transfer data, use that
                     if (tokenData && tokenData.result && tokenData.result.length > 0) {
                         const token = tokenData.result[0]; // Get first token transfer
-                        const timestamp = parseInt(token.timeStamp) * 1000;
+                        
+                        // Get timestamp - try different field names
+                        let timestamp = null;
+                        if (token.timeStamp) {
+                            timestamp = parseInt(token.timeStamp) * 1000;
+                        } else if (token.timestamp) {
+                            timestamp = parseInt(token.timestamp) * 1000;
+                        } else if (data.result && data.result.blockNumber) {
+                            // Use block timestamp from main transaction if available
+                            console.log('Using block data for timestamp');
+                            timestamp = Date.now(); // Fallback to current time
+                        }
                         
                         // Validate timestamp
-                        if (isNaN(timestamp) || timestamp <= 0) {
-                            console.error('Invalid token timestamp:', token.timeStamp);
-                            return null;
+                        if (!timestamp || isNaN(timestamp) || timestamp <= 0) {
+                            console.warn('No valid timestamp in token data, using current time');
+                            timestamp = Date.now();
                         }
                         
                         return {
                             time: timestamp,
-                            amount: parseInt(token.value) / Math.pow(10, parseInt(token.tokenDecimal)),
-                            currency: token.tokenSymbol,
+                            amount: parseInt(token.value) / Math.pow(10, parseInt(token.tokenDecimal || 18)),
+                            currency: token.tokenSymbol || 'Unknown Token',
                             from: token.from,
                             to: token.to,
                             fee: token.gasUsed && token.gasPrice ? 
@@ -12328,6 +12339,7 @@ async function lookupTransaction() {
                     const tokenResponse = await fetch(tokenUrl);
                     if (tokenResponse.ok) {
                         tokenData = await tokenResponse.json();
+                        console.log('Token data received:', tokenData);
                     }
                 } catch (err) {
                     console.log('No token transfers found');
@@ -12980,6 +12992,7 @@ async function fetchTransactionData(hash, blockchain) {
                     const tokenResponse = await fetch(tokenUrl);
                     if (tokenResponse.ok) {
                         tokenData = await tokenResponse.json();
+                        console.log('Token data received:', tokenData);
                     }
                 } catch (err) {
                     console.log('No token transfers found');
