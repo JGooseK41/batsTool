@@ -1053,7 +1053,16 @@
                         <div class="generate-root-section">
                             <h3>🎯 Ready to Generate Root Total?</h3>
                             <p>You've entered victim transaction data. The next step is to establish your investigation baseline by generating and confirming your Root Total.</p>
-                            <button class="btn btn-confirm btn-large" onclick="generateRootTotal()">
+                            <div id="saveRequiredMessage" style="display: none; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                                <h4 style="color: #856404; margin: 0 0 10px 0;">💾 Save Required to Continue</h4>
+                                <p style="color: #666; margin-bottom: 15px;">
+                                    Before proceeding, you must save your investigation file. This will enable automatic saving at each hop.
+                                </p>
+                                <button class="btn btn-confirm" onclick="saveAndCaptureFilePath()" style="background: #ffc107; color: #333; padding: 10px 30px;">
+                                    💾 Save Investigation File
+                                </button>
+                            </div>
+                            <button class="btn btn-confirm btn-large" id="generateRootBtn" onclick="generateRootTotal()" style="display: none;">
                                 📊 Generate Root Total & Begin Tracing
                             </button>
                         </div>
@@ -1788,6 +1797,11 @@
         // Undo system
         let undoHistory = [];
         const MAX_UNDO_HISTORY = 20;
+        
+        // File system integration
+        let savedFilePath = null;
+        let isFileSystemAvailable = false;
+        let fileHandle = null;
         
         // Blockchain API Integration
         let targetEntryContext = null;
@@ -4652,6 +4666,15 @@ function updateFormFieldsFromInvestigation() {
             
             if (hasTransactions && !investigation.rootTotalConfirmed) {
                 generateSection.style.display = 'block';
+                
+                // Check if file has been saved to show appropriate button
+                if (savedFilePath) {
+                    document.getElementById('saveRequiredMessage').style.display = 'none';
+                    document.getElementById('generateRootBtn').style.display = 'block';
+                } else {
+                    document.getElementById('saveRequiredMessage').style.display = 'block';
+                    document.getElementById('generateRootBtn').style.display = 'none';
+                }
             } else {
                 generateSection.style.display = 'none';
             }
@@ -4925,6 +4948,13 @@ function updateFormFieldsFromInvestigation() {
         }
 
         function generateRootTotal() {
+    // Check if file has been saved
+    if (!savedFilePath) {
+        document.getElementById('saveRequiredMessage').style.display = 'block';
+        document.getElementById('generateRootBtn').style.display = 'none';
+        return;
+    }
+    
     // NEW VALIDATION: Check for missing wallet addresses before generating root total
     const missingWallets = [];
     investigation.victims.forEach(victim => {
@@ -7457,6 +7487,11 @@ function proceedWithHopFinalization(hop) {
         saveToStorage();
         renderHops();
         updateInvestigationCompletionStatus();
+        
+        // Trigger autosave after hop completion
+        if (isFileSystemAvailable) {
+            autosaveInvestigation();
+        }
         
         alert(`✅ Hop ${hop.hopNumber} finalized successfully! All amounts balanced.`);
     }
@@ -11014,13 +11049,30 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             return colors[type] || '#3498db';
         }
 
-        function saveInvestigation() {
+        async function saveInvestigation() {
             if (!investigation.caseId) {
                 alert('Please enter a Case ID before saving.');
                 return;
             }
 
             const dataStr = JSON.stringify(investigation, null, 2);
+            
+            // If we have a file handle from the File System Access API, use it
+            if (fileHandle && isFileSystemAvailable) {
+                try {
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(dataStr);
+                    await writable.close();
+                    
+                    showNotification('Investigation saved successfully!', 'success');
+                    return;
+                } catch (error) {
+                    console.error('Error saving with file handle:', error);
+                    // Fall back to download if file handle save fails
+                }
+            }
+            
+            // Default download method
             const filename = `${investigation.caseId}_BATS_Investigation.bats`;
             downloadFile(dataStr, filename, 'application/json');
         }
@@ -13984,7 +14036,7 @@ Note: Block timestamp will be added when available.`);
             
             // Detect blockchain from address
             let detectedBlockchain = null;
-            for (const [blockchain, config of Object.entries(blockchainAPIs)) {
+            for (const [blockchain, config] of Object.entries(blockchainAPIs)) {
                 if (config.addressPattern && config.addressPattern.test(address)) {
                     detectedBlockchain = blockchain;
                     break;
@@ -14051,6 +14103,168 @@ Note: Block timestamp will be added when available.`);
                     entityInfoDiv.style.display = 'none';
                 }
             }
+        }
+        
+        // File system save functionality
+        async function saveAndCaptureFilePath() {
+            try {
+                // Check if File System Access API is available
+                if ('showSaveFilePicker' in window) {
+                    const options = {
+                        types: [{
+                            description: 'BATS Investigation Files',
+                            accept: { 'application/json': ['.bats'] }
+                        }],
+                        suggestedName: `BATS_${investigation.caseId || 'Investigation'}_${new Date().toISOString().split('T')[0]}.bats`
+                    };
+                    
+                    // Show save file picker
+                    fileHandle = await window.showSaveFilePicker(options);
+                    
+                    // Create the file content
+                    const fileData = JSON.stringify(investigation, null, 2);
+                    
+                    // Write the file
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(fileData);
+                    await writable.close();
+                    
+                    // Capture file path info
+                    savedFilePath = fileHandle.name;
+                    isFileSystemAvailable = true;
+                    
+                    // Update UI
+                    document.getElementById('saveRequiredMessage').style.display = 'none';
+                    document.getElementById('generateRootBtn').style.display = 'block';
+                    
+                    alert(`✅ Investigation saved successfully!\n\nFile: ${savedFilePath}\n\nAutomatic saving is now enabled. Your investigation will be saved after each hop.`);
+                    
+                } else {
+                    // Fallback to regular download
+                    const fileData = JSON.stringify(investigation, null, 2);
+                    const filename = `BATS_${investigation.caseId || 'Investigation'}_${new Date().toISOString().split('T')[0]}.bats`;
+                    
+                    const blob = new Blob([fileData], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    // Mark as saved (but without autosave capability)
+                    savedFilePath = filename;
+                    isFileSystemAvailable = false;
+                    
+                    // Update UI
+                    document.getElementById('saveRequiredMessage').style.display = 'none';
+                    document.getElementById('generateRootBtn').style.display = 'block';
+                    
+                    alert(`✅ Investigation saved successfully!\n\nFile: ${filename}\n\nNote: Automatic saving is not available in your browser. Please save manually using the "Save .bats File" button.`);
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    // User cancelled the save dialog
+                    return;
+                }
+                console.error('Save error:', error);
+                alert('❌ Error saving file: ' + error.message);
+            }
+        }
+        
+        // Autosave function for hops
+        async function autosaveInvestigation() {
+            if (!isFileSystemAvailable || !fileHandle) {
+                console.log('Autosave not available - no file handle');
+                return;
+            }
+            
+            try {
+                const fileData = JSON.stringify(investigation, null, 2);
+                const writable = await fileHandle.createWritable();
+                await writable.write(fileData);
+                await writable.close();
+                
+                // Show subtle save indicator
+                showAutosaveIndicator();
+                
+            } catch (error) {
+                console.error('Autosave error:', error);
+                // Don't alert on every autosave failure, just log it
+            }
+        }
+        
+        function showAutosaveIndicator() {
+            // Create or update autosave indicator
+            let indicator = document.getElementById('autosaveIndicator');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'autosaveIndicator';
+                indicator.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: #27ae60;
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 20px;
+                    font-size: 14px;
+                    z-index: 1000;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(indicator);
+            }
+            
+            indicator.textContent = '✓ Autosaved';
+            indicator.style.opacity = '1';
+            
+            setTimeout(() => {
+                indicator.style.opacity = '0';
+            }, 2000);
+        }
+        
+        // General notification function
+        function showNotification(message, type = 'info') {
+            let notification = document.getElementById('notification');
+            if (!notification) {
+                notification = document.createElement('div');
+                notification.id = 'notification';
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 25px;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    z-index: 1000;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                    pointer-events: none;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                `;
+                document.body.appendChild(notification);
+            }
+            
+            // Set color based on type
+            const colors = {
+                success: '#27ae60',
+                error: '#e74c3c',
+                warning: '#f39c12',
+                info: '#3498db'
+            };
+            
+            notification.style.background = colors[type] || colors.info;
+            notification.style.color = 'white';
+            notification.textContent = message;
+            notification.style.opacity = '1';
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+            }, 3000);
         }
         
         // Show terminal wallet notification
