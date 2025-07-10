@@ -1765,6 +1765,7 @@
                 txPattern: /^[a-f0-9]{64}$/i,
                 apiUrl: 'https://blockchain.info/rawtx/',
                 addressApiUrl: 'https://blockchain.info/rawaddr/',
+                entityApiUrl: 'https://www.walletexplorer.com/api/1/address-lookup?address=',
                 apiKey: null,
                 fallbackUrls: [
                     'https://api.blockcypher.com/v1/btc/main/txs/',
@@ -1819,6 +1820,7 @@
                 tokenApiUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionReceipt&txhash=',
                 txReceiptUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionReceipt&txhash=',
                 addressApiUrl: 'https://api.etherscan.io/api?module=account&action=txlist&address=',
+                labelApiUrl: 'https://api.etherscan.io/api?module=account&action=addressinfo&address=',
                 apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
                 fallbackUrls: [
                     // Removed Ropsten as it no longer exists
@@ -2854,6 +2856,7 @@ function renderHopEntry(entry) {
                                    placeholder="Select existing or enter new wallet address"
                                    onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
                                    oninput="handleWalletAutocomplete(this, ${entry.hopId}, ${entry.id})"
+                                   onblur="checkWalletEntity(this.value, ${entry.hopId}, ${entry.id})"
                                    autocomplete="off"
                                    list="walletList_${entry.hopId}_${entry.id}"
                                    style="width: 100%;">
@@ -2873,6 +2876,9 @@ function renderHopEntry(entry) {
                     </div>
                     <div style="font-size: 11px; color: #666; margin-top: 5px;">
                         Type to search existing wallets or enter a new address
+                    </div>
+                    <div id="entityInfo_${entry.hopId}_${entry.id}" style="display: none; margin-top: 10px; padding: 10px; background: #f3e6ff; border: 2px solid #9b59b6; border-radius: 4px;">
+                        <!-- Entity information will be displayed here -->
                     </div>
                 </div>
                 <div class="form-group">
@@ -13747,6 +13753,260 @@ From: ${transfer.from}
 To (RED Wallet): ${transfer.to}
 
 Note: Block timestamp will be added when available.`);
+        }
+        
+        // Entity Detection Functions
+        async function detectWalletEntity(address, blockchain) {
+            const config = blockchainAPIs[blockchain];
+            if (!config) return null;
+            
+            const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
+            const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+            
+            try {
+                if (blockchain === 'bitcoin' && config.entityApiUrl) {
+                    // WalletExplorer API for Bitcoin
+                    let url = config.entityApiUrl + address;
+                    if (corsEnabled) url = corsProxyUrl + url;
+                    
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data && data.label && data.label !== 'Unknown') {
+                            return {
+                                entity: data.label,
+                                category: data.category || 'Exchange/Service',
+                                confidence: 'high',
+                                source: 'WalletExplorer'
+                            };
+                        }
+                    }
+                } else if (blockchain === 'ethereum' && config.labelApiUrl) {
+                    // Etherscan labels API
+                    const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                    let url = `${config.labelApiUrl}${address}&apikey=${apiKey}`;
+                    if (corsEnabled) url = corsProxyUrl + url;
+                    
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === '1' && data.result) {
+                            // Check for name tag (exchange/service label)
+                            if (data.result.length > 0) {
+                                const labelInfo = data.result[0];
+                                if (labelInfo.nameTag && labelInfo.nameTag !== '') {
+                                    return {
+                                        entity: labelInfo.nameTag,
+                                        category: 'Exchange/Service',
+                                        confidence: 'high',
+                                        source: 'Etherscan'
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Check against known exchange patterns
+                const knownPatterns = checkKnownExchangePatterns(address, blockchain);
+                if (knownPatterns) {
+                    return knownPatterns;
+                }
+                
+            } catch (error) {
+                console.error('Entity detection error:', error);
+            }
+            
+            return null;
+        }
+        
+        function checkKnownExchangePatterns(address, blockchain) {
+            // Common exchange address patterns and known addresses
+            const knownExchanges = {
+                bitcoin: {
+                    // Binance cold wallets often start with bc1q
+                    patterns: [
+                        { prefix: '3BMEX', entity: 'BitMEX', category: 'Exchange' },
+                        { prefix: '3JZq4atUahhuA9rLhX', entity: 'Bitfinex', category: 'Exchange' },
+                        { prefix: '1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s', entity: 'Binance', category: 'Exchange' }
+                    ],
+                    addresses: {
+                        '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa': { entity: 'Genesis Block', category: 'Historical' },
+                        '12cgpFdJViXbwHbhrA3TuW1EGnL25Zqc3P': { entity: 'Binance Cold Wallet', category: 'Exchange' }
+                    }
+                },
+                ethereum: {
+                    addresses: {
+                        '0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be': { entity: 'Binance', category: 'Exchange' },
+                        '0xd551234ae421e3bcba99a0da6d736074f22192ff': { entity: 'Binance 2', category: 'Exchange' },
+                        '0x564286362092d8e7936f0549571a803b203aaced': { entity: 'Binance 3', category: 'Exchange' },
+                        '0x28c6c06298d514db089934071355e5743bf21d60': { entity: 'Binance 14', category: 'Exchange' },
+                        '0x21a31ee1afc51d94c2efccaa2092ad1028285549': { entity: 'Binance 15', category: 'Exchange' },
+                        '0xdfd5293d8e347dfe59e90efd55b2956a1343963d': { entity: 'Binance 16', category: 'Exchange' },
+                        '0x56eddb7aa87536c09ccc2793473599fd21a8b17f': { entity: 'Binance 17', category: 'Exchange' },
+                        '0x9696f59e4d72e237be84ffd425dcad154bf96976': { entity: 'Binance 18', category: 'Exchange' },
+                        '0x4e9ce36e442e55ecd9025b9a6e0d88485d628a67': { entity: 'Binance US', category: 'Exchange' },
+                        '0xbe0eb53f46cd790cd13851d5eff43d12404d33e8': { entity: 'Binance 7', category: 'Exchange' },
+                        '0x876eabf441b2ee5b5b0554fd502a8e0600950cfa': { entity: 'Bitfinex', category: 'Exchange' },
+                        '0xc6bed363b30df7f35b601a5547fe56cd31ec63da': { entity: 'Bitfinex 2', category: 'Exchange' },
+                        '0x29728d0efd284d85187362faa2d4d76c2cfc2612': { entity: 'Bitfinex 3', category: 'Exchange' },
+                        '0xe92d1a43df510f82c66382592a047d288f85226f': { entity: 'Bitfinex 4', category: 'Exchange' },
+                        '0x8103683202aa8da10536036edef04cdd865c225e': { entity: 'Bitfinex 5', category: 'Exchange' },
+                        '0xab7c74abc0c4d48d1bdad5dcb26153fc8780f83e': { entity: 'Bitfinex MultiSig', category: 'Exchange' },
+                        '0x6262998ced04146fa42253a5c0af90ca02dfd2a3': { entity: 'Crypto.com', category: 'Exchange' },
+                        '0x46340b20830761efd32832a74d7169b29feb9758': { entity: 'Crypto.com 2', category: 'Exchange' },
+                        '0x71660c4005ba85c37ccec55d0c4493e66fe775d3': { entity: 'Coinbase 1', category: 'Exchange' },
+                        '0x503828976d22510aad0201ac7ec88293211d23da': { entity: 'Coinbase 2', category: 'Exchange' },
+                        '0xddfabcdc4d8ffc6d5beaf154f18b778f892a0740': { entity: 'Coinbase 3', category: 'Exchange' },
+                        '0x3cd751e6b0078be393132286c442345e5dc49699': { entity: 'Coinbase 4', category: 'Exchange' },
+                        '0xb5d85cbf7cb3ee0d56b3bb207d5fc4b82f43f511': { entity: 'Coinbase 5', category: 'Exchange' },
+                        '0xeb2629a2734e272bcc07bda959863f316f4bd4cf': { entity: 'Coinbase 6', category: 'Exchange' },
+                        '0xa090e606e30bd747d4e6245a1517ebe430f0057e': { entity: 'Coinbase Miscellaneous', category: 'Exchange' },
+                        '0x6cc5f688a315f3dc28a7781717a9a798a59fda7b': { entity: 'OKEx', category: 'Exchange' },
+                        '0x236f9f97e0e62388479bf9e5ba4889e46b0273c3': { entity: 'OKEx 2', category: 'Exchange' },
+                        '0xa7efae728d2936e78bda97dc267687568dd593f3': { entity: 'OKEx 3', category: 'Exchange' },
+                        '0x2c8fbb630289363ac80705a1a61273f76fd5a161': { entity: 'Poloniex', category: 'Exchange' },
+                        '0x32be343b94f860124dc4fee278fdcbd38c102d88': { entity: 'Poloniex', category: 'Exchange' },
+                        '0x209c4784ab1e8183cf58ca33cb740efbf3fc18ef': { entity: 'Poloniex 2', category: 'Exchange' },
+                        '0xb794f5ea0ba39494ce839613fffba74279579268': { entity: 'Poloniex 3', category: 'Exchange' },
+                        '0x0a869d79a7052c7f1b55a8ebabbea3420f0d1e13': { entity: 'KuCoin', category: 'Exchange' },
+                        '0x2b5634c42055806a59e9107ed44d43c426e58258': { entity: 'KuCoin 2', category: 'Exchange' },
+                        '0x689c56aef474df92d44a1b70850f808488f9769c': { entity: 'KuCoin 3', category: 'Exchange' },
+                        '0xa1d8d972560c2f8144af871db508f0b0b10a3fbf': { entity: 'KuCoin 4', category: 'Exchange' },
+                        '0x4ad64983349c49defe8d7a4686202d24b25d0ce8': { entity: 'KuCoin 5', category: 'Exchange' },
+                        '0x1692e170361cefd1eb7240ec13d048fd9af6d667': { entity: 'KuCoin 6', category: 'Exchange' },
+                        '0xd6216fc19db775df9774a6e33526131da7d19a2c': { entity: 'KuCoin 7', category: 'Exchange' },
+                        '0xe59cd29be3be4461d79c0881d238cbe87d64595a': { entity: 'Kraken', category: 'Exchange' },
+                        '0x43984d578803891dfa9706bdeee6078d80cfc79e': { entity: 'Kraken 2', category: 'Exchange' },
+                        '0x66c57bf505a85a74609d2c83e94aabb26d691e41': { entity: 'Kraken 3', category: 'Exchange' },
+                        '0xda9dfa130df4de4673b89022ee50ff26f6ea73cf': { entity: 'Kraken 4', category: 'Exchange' },
+                        '0xa83b11093c858c86321fbc4c20fe82cdbd58e09e': { entity: 'Kraken 5', category: 'Exchange' },
+                        '0x0a98fb70939162725ae66e626fe4b52cff62c2e5': { entity: 'Gate.io', category: 'Exchange' },
+                        '0xf56e08ee4e8ac390c28bba0431c22e6c1cb54529': { entity: 'Gate.io 2', category: 'Exchange' },
+                        '0x7793cd85c11a924478d358d49b05b37e91b5810f': { entity: 'Gate.io 3', category: 'Exchange' },
+                        '0x1c4b70a3968436b9a0a9cf5205c787eb81bb558c': { entity: 'Gate.io 4', category: 'Exchange' },
+                        '0xd793281182a0e3e023116004778f45c29fc14f19': { entity: 'Gate.io 5', category: 'Exchange' },
+                        '0x9f5ca0012b9b72e8f3db57092a6f26bf4f13dc69': { entity: 'Gate.io 6', category: 'Exchange' },
+                        '0xc882b111a75c0c657fc507c04fbfcd2cc984f071': { entity: 'Gate.io 7', category: 'Exchange' }
+                    }
+                }
+            };
+            
+            const lowerAddress = address.toLowerCase();
+            
+            // Check exact matches
+            if (knownExchanges[blockchain] && knownExchanges[blockchain].addresses) {
+                const match = knownExchanges[blockchain].addresses[lowerAddress];
+                if (match) {
+                    return {
+                        entity: match.entity,
+                        category: match.category,
+                        confidence: 'high',
+                        source: 'Known Address Database'
+                    };
+                }
+            }
+            
+            // Check patterns
+            if (knownExchanges[blockchain] && knownExchanges[blockchain].patterns) {
+                for (const pattern of knownExchanges[blockchain].patterns) {
+                    if (address.startsWith(pattern.prefix)) {
+                        return {
+                            entity: pattern.entity,
+                            category: pattern.category,
+                            confidence: 'medium',
+                            source: 'Address Pattern Match'
+                        };
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        // Update wallet classification based on entity
+        function updateWalletClassificationFromEntity(entityData, walletType) {
+            if (!entityData) return walletType;
+            
+            // If it's an exchange, mark as purple
+            if (entityData.category === 'Exchange' || entityData.category === 'Exchange/Service') {
+                return 'purple';
+            }
+            
+            // Keep original classification if no exchange detected
+            return walletType;
+        }
+        
+        // Check wallet entity when address is entered
+        async function checkWalletEntity(address, hopId, entryId) {
+            if (!address || address.trim() === '') return;
+            
+            // Detect blockchain from address
+            let detectedBlockchain = null;
+            for (const [blockchain, config of Object.entries(blockchainAPIs)) {
+                if (config.addressPattern && config.addressPattern.test(address)) {
+                    detectedBlockchain = blockchain;
+                    break;
+                }
+            }
+            
+            if (!detectedBlockchain) return;
+            
+            // Show loading state
+            const entityInfoDiv = document.getElementById(`entityInfo_${hopId}_${entryId}`);
+            if (entityInfoDiv) {
+                entityInfoDiv.style.display = 'block';
+                entityInfoDiv.innerHTML = '<div style="text-align: center;">🔍 Checking wallet entity...</div>';
+            }
+            
+            try {
+                const entityData = await detectWalletEntity(address, detectedBlockchain);
+                
+                if (entityData) {
+                    // Display entity information
+                    if (entityInfoDiv) {
+                        entityInfoDiv.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>🏢 Entity Detected:</strong> ${entityData.entity}<br>
+                                    <small>Category: ${entityData.category} | Confidence: ${entityData.confidence} | Source: ${entityData.source}</small>
+                                </div>
+                                <div>
+                                    ${entityData.category === 'Exchange' || entityData.category === 'Exchange/Service' ? 
+                                        '<span style="background: #9b59b6; color: white; padding: 4px 12px; border-radius: 4px; font-weight: bold;">PURPLE</span>' : 
+                                        ''}
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Auto-update wallet type if it's an exchange
+                        if (entityData.category === 'Exchange' || entityData.category === 'Exchange/Service') {
+                            const walletTypeSelect = document.querySelector(`select[onchange*="updateHopEntryWalletType(${hopId}, ${entryId}"]`);
+                            if (walletTypeSelect && walletTypeSelect.value !== 'purple') {
+                                walletTypeSelect.value = 'purple';
+                                updateHopEntryWalletType(hopId, entryId, 'purple');
+                                
+                                // Add note about auto-classification
+                                entityInfoDiv.innerHTML += `
+                                    <div style="margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.5); border-radius: 4px; font-size: 12px;">
+                                        ✅ Wallet automatically classified as PURPLE (Exchange)
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
+                } else {
+                    // No entity found
+                    if (entityInfoDiv) {
+                        entityInfoDiv.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('Entity detection error:', error);
+                if (entityInfoDiv) {
+                    entityInfoDiv.style.display = 'none';
+                }
+            }
         }
         
         // Welcome Screen and Onboarding Functions
