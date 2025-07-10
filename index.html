@@ -11091,6 +11091,11 @@ function updateWriteoffAmount(hopId, entryId, amount) {
         function updateValidationStatus() {
             const validationPanel = document.getElementById('validationStatus');
             
+            // Early return if element doesn't exist (it was removed from the UI)
+            if (!validationPanel) {
+                return;
+            }
+            
             if (!investigation.rootTotalConfirmed) {
                 validationPanel.className = 'validation-panel validation-warning';
                 validationPanel.innerHTML = '<div>⚠ Setup Required</div><div>Complete steps 1-3 to begin tracing</div>';
