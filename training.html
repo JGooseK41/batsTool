@@ -320,6 +320,7 @@
                 <a href="#notation">V-T-H Notation</a>
                 <a href="#colors">Wallet Colors</a>
                 <a href="#golden-thread">Golden Thread</a>
+                <a href="#judgment">Professional Judgment</a>
                 <a href="#quick-start">Quick Start</a>
                 <a href="#faq">FAQ</a>
                 <a href="#benefits">Benefits</a>
@@ -345,9 +346,10 @@
                 <li><a href="#notation">3. Understanding V-T-H Notation</a></li>
                 <li><a href="#colors">4. Wallet Color Classification System</a></li>
                 <li><a href="#golden-thread">5. The Golden Thread Principle</a></li>
-                <li><a href="#quick-start">6. Quick Start Guide</a></li>
-                <li><a href="#faq">7. Frequently Asked Questions</a></li>
-                <li><a href="#benefits">8. Benefits Overview</a></li>
+                <li><a href="#judgment">6. Professional Judgment in B.A.T.S.</a></li>
+                <li><a href="#quick-start">7. Quick Start Guide</a></li>
+                <li><a href="#faq">8. Frequently Asked Questions</a></li>
+                <li><a href="#benefits">9. Benefits Overview</a></li>
             </ul>
         </div>
 
@@ -499,7 +501,7 @@
             </div>
 
             <div class="tip-box">
-                <strong>Why This Matters:</strong> V-T-H notation creates an unambiguous audit trail that any investigator can follow, ensuring reproducible results.
+                <strong>Why This Matters:</strong> V-T-H notation creates an unambiguous audit trail that clearly documents every decision in your investigation, allowing reviewers to understand your methodology and reasoning.
             </div>
         </section>
 
@@ -588,7 +590,8 @@
                         <li>Follow funds chronologically</li>
                         <li>Document every hop</li>
                         <li>Validate amounts at each level</li>
-                        <li>Apply PIFO consistently</li>
+                        <li>Apply PIFO consistently (or document LIFO choice)</li>
+                        <li>Document judgment calls clearly</li>
                     </ul>
                 </div>
                 <div class="card card-red">
@@ -605,6 +608,56 @@
             <div class="warning-box">
                 <h4>⚠️ Breaking the Thread</h4>
                 <p>The golden thread breaks if you cannot mathematically prove the connection. Common breaks: mixers, privacy coins, or poor documentation. Document these as write-offs.</p>
+            </div>
+        </section>
+
+        <!-- Professional Judgment Section -->
+        <section id="judgment" class="section">
+            <h2>⚖️ Professional Judgment in B.A.T.S.</h2>
+            
+            <p>While B.A.T.S. provides a standardized framework, cryptocurrency investigations often require professional judgment based on training and experience. The framework ensures these decisions are well-documented and defensible.</p>
+            
+            <h3>Areas Requiring Judgment Calls</h3>
+            <div class="grid">
+                <div class="card card-yellow">
+                    <h4>Transaction Attribution</h4>
+                    <p><strong>PIFO vs. LIFO:</strong> While PIFO is strongly preferred, certain circumstances may warrant LIFO application.</p>
+                    <p><strong>Key:</strong> Document why you chose your method.</p>
+                </div>
+                
+                <div class="card card-blue">
+                    <h4>Convergence Handling</h4>
+                    <p>When multiple traces converge, determining exact proportions may require judgment.</p>
+                    <p><strong>Key:</strong> Show your mathematical reasoning.</p>
+                </div>
+                
+                <div class="card card-purple">
+                    <h4>Write-off Decisions</h4>
+                    <p>Determining when to abandon a trace path requires balancing resources vs. recovery potential.</p>
+                    <p><strong>Key:</strong> Justify with clear thresholds.</p>
+                </div>
+                
+                <div class="card card-green">
+                    <h4>Wallet Classification</h4>
+                    <p>Edge cases may require judgment in color assignment based on wallet behavior.</p>
+                    <p><strong>Key:</strong> Document observed patterns.</p>
+                </div>
+            </div>
+            
+            <h3>Documentation Best Practices</h3>
+            <div class="checklist">
+                <ul>
+                    <li>State your methodological choices upfront</li>
+                    <li>Document reasoning for each judgment call</li>
+                    <li>Reference training and experience when applicable</li>
+                    <li>Maintain consistency within your investigation</li>
+                    <li>Be prepared to defend your decisions in court</li>
+                </ul>
+            </div>
+            
+            <div class="warning-box">
+                <h4>Important Understanding</h4>
+                <p>Two trained B.A.T.S. investigators may reach different conclusions on complex cases. This is acceptable and expected. What matters is that each investigator can clearly articulate their decision-making process and demonstrate the mathematical certainty of their traced paths.</p>
             </div>
         </section>
 
@@ -695,7 +748,7 @@
             <h3>General Questions</h3>
             
             <h4>What is B.A.T.S.?</h4>
-            <p>B.A.T.S. (Block Audit Tracing Standard) is a revolutionary framework for cryptocurrency investigation that maintains the "golden thread" of traceability required for successful asset forfeiture cases.</p>
+            <p>B.A.T.S. (Block Audit Tracing Standard) is a revolutionary framework for cryptocurrency investigation that maintains the "golden thread" of traceability required for successful asset forfeiture cases. It provides a standardized methodology for documenting investigative decisions with clarity and mathematical precision.</p>
 
             <h4>Why is B.A.T.S. necessary?</h4>
             <p>Traditional blockchain analysis tools often fail to maintain the mathematical precision required for asset forfeiture. B.A.T.S. addresses this gap by:</p>
@@ -723,15 +776,19 @@
             <h4>What is the Sequential Hop Rule?</h4>
             <p>When multiple trace paths converge at the same wallet and move out together, apply the highest hop count among all converging paths, plus one for the outbound transaction.</p>
 
+            <h4>Will different investigators reach the same conclusions?</h4>
+            <p>Not necessarily. B.A.T.S. provides a standardized framework, but complex investigations often require judgment calls based on training and experience. Different investigators may make different decisions regarding transaction attribution (PIFO vs. LIFO), convergence handling, or write-off thresholds. What's crucial is that B.A.T.S. ensures every investigator can clearly document and defend their decision-making process with mathematical certainty.</p>
+
             <h3>Legal Questions</h3>
             
             <h4>How does B.A.T.S. support asset forfeiture cases?</h4>
             <p>B.A.T.S. provides:</p>
             <ul>
-                <li>Mathematical certainty required by courts</li>
-                <li>Documented chain of custody for digital assets</li>
+                <li>Mathematical certainty for traced fund movements</li>
+                <li>Clear documentation of investigative decisions</li>
                 <li>Standardized reports that prosecutors understand</li>
-                <li>Evidence that withstands defense challenges</li>
+                <li>Defensible methodology that withstands scrutiny</li>
+                <li>Framework for articulating professional judgment</li>
             </ul>
 
             <h4>What about privacy considerations?</h4>
