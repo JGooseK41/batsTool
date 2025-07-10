@@ -7457,6 +7457,12 @@ function exportUniversalWalletIndex() {
                                 <div id="terminalSummaryContent"></div>
                             </div>
                         </div>
+                        
+                        <div class="modal-footer" style="text-align: center; padding: 20px; border-top: 1px solid #eee;">
+                            <button class="btn btn-secondary" onclick="closeAnalysisModal()" style="padding: 10px 30px;">
+                                Close Analysis
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -7955,6 +7961,15 @@ function exportUniversalWalletIndex() {
             // Update add hop button and complete investigation section visibility
             updateInvestigationCompletionStatus();
         }
+
+// Get starting ART for a specific hop
+function getStartingARTForHop(hopId) {
+    const hop = investigation.hops.find(h => h.id === hopId);
+    if (!hop) return {};
+    
+    // Use the stored ART at start for this hop
+    return hop.artAtStartByCurrency || {};
+}
 
 // Render visual ART progress bars
 function renderARTProgressBars(hop) {
@@ -12343,6 +12358,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                 renderVictims();
                 saveToStorage();
                 updateWorkflowSteps();
+                updateGenerateRootSection();
             }
         }
         
