@@ -11229,8 +11229,13 @@ function addHopEntry(hopId, entryType = 'trace') {
 }
 
 function createHopEntryDirectly(hopId, entryType = 'trace') {
-    const hop = investigation.hops.find(h => h.id === hopId);
-    if (!hop) return;
+    // Convert hopId to number to ensure type matching
+    const numericHopId = typeof hopId === 'string' ? parseInt(hopId) : hopId;
+    const hop = investigation.hops.find(h => h.id === numericHopId);
+    if (!hop) {
+        console.error('Hop not found in createHopEntryDirectly:', hopId, 'numericHopId:', numericHopId);
+        return;
+    }
     
     const entry = {
         id: hop.entries.length + 1,
@@ -11277,17 +11282,23 @@ function createHopEntryDirectly(hopId, entryType = 'trace') {
 }
 
 function showHopEntryWizard(hopId) {
-    console.log('showHopEntryWizard called for hopId:', hopId);
-    const hop = investigation.hops.find(h => h.id === hopId);
+    console.log('showHopEntryWizard called for hopId:', hopId, 'type:', typeof hopId);
+    console.log('Available hops:', investigation.hops.map(h => ({ id: h.id, type: typeof h.id, hopNumber: h.hopNumber })));
+    
+    // Convert hopId to number to ensure type matching
+    const numericHopId = typeof hopId === 'string' ? parseInt(hopId) : hopId;
+    const hop = investigation.hops.find(h => h.id === numericHopId);
+    
     if (!hop) {
         console.error('Hop not found in showHopEntryWizard:', hopId);
+        console.error('Looking for id:', numericHopId, 'in hops:', investigation.hops);
         return;
     }
     console.log('Found hop:', hop);
     
     // Initialize wizard data
     window.hopWizardData = {
-        hopId: hopId,
+        hopId: numericHopId,
         hopNumber: hop.hopNumber,
         step: 1,
         selectedThreads: [],
