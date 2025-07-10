@@ -3,16 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 18:17)
+## Latest Commit (Auto-updated: 2025-07-10 18:49)
 
-**Commit:** 58f354833c8c5254c3acb11889c556550e18aac6
+**Commit:** 49a06360d3c47ae891b2f19d1c14a0fda2773a83
 **Author:** Your Name
-**Message:** Fix template literal syntax errors on lines 5557 and 5592
+**Message:** Fix initial white screen and missing blockchain lookup functions
 
-- Line 5557: Moved closing brace inside the template literal interpolation
-- Line 5592: Swapped backtick and brace order to properly close the ternary expression
-
-This resolves the "Missing } in template expression" error by ensuring proper nesting of template literals and expressions.
+- Added switchTab('victims') on page load to show Victims tab by default
+- Created individual blockchain lookup functions (lookupEthereumTransaction, lookupBitcoinTransaction, etc.)
+- Fixed "lookupEthereumTransaction is not defined" error in hop entry
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -20,22 +19,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ CLAUDE.md  |  39 ++++++++-------
+ index.html | 160 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 181 insertions(+), 18 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 58f3548 Fix template literal syntax errors on lines 5557 and 5592 (0 seconds ago)
-- c803494 Fix template literal syntax error on line 5557 (5 minutes ago)
-- ef38132 Fix template literal structure on line 5557 (31 minutes ago)
-- 6cd39e0 Fix missing backtick in template expression (33 minutes ago)
-- 4782757 Fix template literal syntax - swap backtick and brace position (38 minutes ago)
-- aa39a3a Remove carriage return characters causing syntax error (54 minutes ago)
-- a865d8b Fix extra closing brace in template literal (56 minutes ago)
-- 8fbd79e Fix template literal syntax error in renderVictims function (58 minutes ago)
-- 15406db Fix missing closing brace in template literal interpolation (63 minutes ago)
-- 84be191 Fix unexpected closing brace in template literal (67 minutes ago)
+- 49a0636 Fix initial white screen and missing blockchain lookup functions (0 seconds ago)
+- 58f3548 Fix template literal syntax errors on lines 5557 and 5592 (32 minutes ago)
+- c803494 Fix template literal syntax error on line 5557 (37 minutes ago)
+- ef38132 Fix template literal structure on line 5557 (63 minutes ago)
+- 6cd39e0 Fix missing backtick in template expression (65 minutes ago)
+- 4782757 Fix template literal syntax - swap backtick and brace position (69 minutes ago)
+- aa39a3a Remove carriage return characters causing syntax error (86 minutes ago)
+- a865d8b Fix extra closing brace in template literal (88 minutes ago)
+- 8fbd79e Fix template literal syntax error in renderVictims function (2 hours ago)
+- 15406db Fix missing closing brace in template literal interpolation (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

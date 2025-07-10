@@ -3321,6 +3321,10 @@ function renderHopEntry(entry) {
                         : `Allocate partial or full amount from source thread`
                     }
                 </div>
+                <div style="background: #e8f5e8; border: 1px solid #27ae60; border-radius: 4px; padding: 8px; margin-top: 8px; font-size: 11px;">
+                    <strong>💡 Use this when:</strong> You want to trace a specific total amount and need the tool to automatically 
+                    calculate how much to take from each available source thread.
+                </div>
             </div>
             ` : ''}
             
@@ -3342,6 +3346,12 @@ function renderHopEntry(entry) {
                     ${isWriteoff ? 'Amount to write off from ART' : isColdStorage ? 'Amount remaining in cold storage' : 'Amount to trace forward'}
                     ${!isWriteoff && !isColdStorage && entry.sourceThreadId && maxAmount > 0 ? 
                         `<br><span style="color: #3498db;">💡 You can allocate any amount up to ${maxAmount.toLocaleString()} ${entry.currency || 'units'}</span>` : ''
+                    }
+                    ${!isWriteoff && entry.sourceThreadId ? 
+                        `<br><span style="background: #e8f0fe; padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: 5px;">
+                            <strong>Max button:</strong> Quickly allocates ALL available funds from selected source(s). 
+                            Use when you want to trace the entire amount forward.
+                        </span>` : ''
                     }
                 </div>
                 <div id="assignmentPreview_${entry.hopId}_${entry.id}" 
@@ -10600,6 +10610,10 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                         : `Allocate partial or full amount from source thread`
                     }
                 </div>
+                <div style="background: #e8f5e8; border: 1px solid #27ae60; border-radius: 4px; padding: 8px; margin-top: 8px; font-size: 11px;">
+                    <strong>💡 Use this when:</strong> You want to trace a specific total amount and need the tool to automatically 
+                    calculate how much to take from each available source thread.
+                </div>
             </div>
             ` : ''}
             
@@ -10849,6 +10863,22 @@ function addHopEntry(hopId, entryType = 'trace') {
     const hop = investigation.hops.find(h => h.id === hopId);
     if (!hop) return;
     
+    // Check if wizard is disabled
+    const wizardDisabled = localStorage.getItem('bats_hop_wizard_disabled') === 'true';
+    
+    if (entryType === 'trace' && !wizardDisabled) {
+        // Show wizard for trace entries
+        showHopEntryWizard(hopId);
+    } else {
+        // Direct creation for non-trace entries or when wizard is disabled
+        createHopEntryDirectly(hopId, entryType);
+    }
+}
+
+function createHopEntryDirectly(hopId, entryType = 'trace') {
+    const hop = investigation.hops.find(h => h.id === hopId);
+    if (!hop) return;
+    
     const entry = {
         id: hop.entries.length + 1,
         hopId: hopId,
@@ -10889,6 +10919,409 @@ function addHopEntry(hopId, entryType = 'trace') {
     saveUndoState(`Add ${entryType} entry to Hop ${hop.hopNumber}`);
     
     hop.entries.push(entry);
+    renderHops();
+    saveToStorage();
+}
+
+function showHopEntryWizard(hopId) {
+    const hop = investigation.hops.find(h => h.id === hopId);
+    if (!hop) return;
+    
+    // Initialize wizard data
+    window.hopWizardData = {
+        hopId: hopId,
+        hopNumber: hop.hopNumber,
+        step: 1,
+        selectedThreads: [],
+        allocations: {},
+        txHash: '',
+        txData: null
+    };
+    
+    const wizardHTML = `
+        <div id="hopEntryWizard" class="modal" style="display: block;">
+            <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10; border-bottom: 2px solid #eee; padding-bottom: 15px;">
+                    <h2>🧙‍♂️ Hop Entry Wizard - Step 1 of 3</h2>
+                    <div style="margin-top: 10px;">
+                        <div style="background: #f0f0f0; height: 8px; border-radius: 4px;">
+                            <div id="wizardProgress" style="background: #3498db; height: 100%; width: 33%; border-radius: 4px; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="wizardContent" style="padding: 20px;">
+                    <!-- Content will be dynamically updated -->
+                </div>
+                
+                <div class="modal-footer" style="position: sticky; bottom: 0; background: white; border-top: 2px solid #eee; padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <input type="checkbox" id="disableWizardCheckbox" onchange="toggleWizardPreference()">
+                        <label for="disableWizardCheckbox" style="margin-left: 5px;">Don't show this wizard again</label>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary" onclick="closeHopWizard()">Cancel</button>
+                        <button class="btn btn-secondary" id="wizardBackBtn" onclick="hopWizardBack()" style="display: none;">Back</button>
+                        <button class="btn btn-primary" id="wizardNextBtn" onclick="hopWizardNext()">Next</button>
+                        <button class="btn btn-secondary" onclick="skipHopWizard()">Skip Wizard</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', wizardHTML);
+    
+    // Show first step
+    showHopWizardStep(1);
+}
+
+function showHopWizardStep(step) {
+    const content = document.getElementById('wizardContent');
+    const wizardData = window.hopWizardData;
+    const progress = document.getElementById('wizardProgress');
+    const backBtn = document.getElementById('wizardBackBtn');
+    const nextBtn = document.getElementById('wizardNextBtn');
+    const header = document.querySelector('#hopEntryWizard .modal-header h2');
+    
+    // Update progress
+    progress.style.width = `${step * 33}%`;
+    backBtn.style.display = step > 1 ? 'inline-block' : 'none';
+    header.textContent = `🧙‍♂️ Hop Entry Wizard - Step ${step} of 3`;
+    
+    if (step === 1) {
+        // Step 1: Select source threads
+        const availableThreads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+        
+        content.innerHTML = `
+            <h3>Step 1: Select Source Threads</h3>
+            <p>Choose which thread(s) you want to trace from. You can select multiple threads if the transaction combines funds.</p>
+            
+            <div style="margin-top: 20px;">
+                ${availableThreads.length > 0 ? `
+                    ${availableThreads.map(thread => `
+                        <div style="background: white; border: 2px solid #e8f0fe; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" 
+                                       value="${thread.threadId}" 
+                                       onchange="updateWizardThreadSelection('${thread.threadId}')"
+                                       ${wizardData.selectedThreads.includes(thread.threadId) ? 'checked' : ''}
+                                       style="margin-right: 10px;">
+                                <div>
+                                    <strong>${thread.displayText}</strong><br>
+                                    <span style="color: #666;">${thread.availableAmount.toLocaleString()} ${thread.currency} available</span>
+                                </div>
+                            </label>
+                        </div>
+                    `).join('')}
+                ` : `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 15px;">
+                        <strong>⚠️ No source threads available</strong><br>
+                        You need to complete previous hops or victim transactions first.
+                    </div>
+                `}
+            </div>
+        `;
+        
+        nextBtn.disabled = wizardData.selectedThreads.length === 0;
+        nextBtn.textContent = 'Next';
+        
+    } else if (step === 2) {
+        // Step 2: Allocate amounts
+        content.innerHTML = `
+            <h3>Step 2: Allocate Amounts</h3>
+            <p>Specify how much from each selected thread will be traced in this transaction.</p>
+            
+            <div style="margin-top: 20px;">
+                ${wizardData.selectedThreads.map(threadId => {
+                    const thread = getAvailableSourcesForHop(wizardData.hopNumber, null).find(t => t.threadId === threadId);
+                    const allocation = wizardData.allocations[threadId] || 0;
+                    
+                    return `
+                        <div style="background: white; border: 2px solid #e8f0fe; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                            <h4 style="margin-top: 0;">${thread.displayText}</h4>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label style="min-width: 80px;">Amount:</label>
+                                <input type="number" 
+                                       id="wizardAllocation_${threadId}"
+                                       step="${getCurrencyStep(thread.currency)}" 
+                                       min="0" 
+                                       max="${thread.availableAmount}"
+                                       value="${allocation}"
+                                       onchange="updateWizardAllocation('${threadId}', this.value)"
+                                       style="width: 150px; padding: 8px;">
+                                <span>${thread.currency}</span>
+                                <button class="btn btn-sm btn-primary" 
+                                        onclick="setWizardMaxAllocation('${threadId}', ${thread.availableAmount})">
+                                    Max (${thread.availableAmount.toLocaleString()})
+                                </button>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                                ${allocation > 0 ? `${(thread.availableAmount - allocation).toLocaleString()} ${thread.currency} will remain` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+                
+                <div style="margin-top: 20px; padding: 15px; background: #e8f4f8; border-radius: 8px;">
+                    <strong>Total to trace:</strong> 
+                    <span id="wizardTotalAmount">0</span>
+                </div>
+            </div>
+        `;
+        
+        updateWizardTotal();
+        const hasAllocations = Object.values(wizardData.allocations).some(v => v > 0);
+        nextBtn.disabled = !hasAllocations;
+        nextBtn.textContent = 'Next';
+        
+    } else if (step === 3) {
+        // Step 3: Transaction details
+        content.innerHTML = `
+            <h3>Step 3: Transaction Details</h3>
+            <p>Enter the transaction hash to automatically fill in the details.</p>
+            
+            <div style="margin-top: 20px;">
+                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; border: 2px solid #2196f3;">
+                    <label style="font-weight: bold; color: #0d47a1;">Transaction Hash:</label>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <input type="text" 
+                               id="wizardTxHash"
+                               placeholder="Paste transaction hash here"
+                               value="${wizardData.txHash}"
+                               onchange="window.hopWizardData.txHash = this.value"
+                               style="flex: 1; padding: 12px; font-size: 16px;">
+                        <button class="btn btn-primary" onclick="lookupWizardTransaction()">
+                            🔍 Lookup
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="wizardTxResult" style="margin-top: 20px;">
+                    <!-- Transaction details will appear here -->
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h4 style="margin-top: 0;">Summary</h4>
+                    <div style="font-size: 14px; line-height: 1.6;">
+                        ${wizardData.selectedThreads.map(threadId => {
+                            const thread = getAvailableSourcesForHop(wizardData.hopNumber, null).find(t => t.threadId === threadId);
+                            const allocation = wizardData.allocations[threadId] || 0;
+                            return `<div><strong>${thread.displayText}:</strong> ${allocation.toLocaleString()} ${thread.currency}</div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        nextBtn.textContent = 'Create Entry';
+        nextBtn.disabled = !wizardData.txHash;
+    }
+    
+    wizardData.step = step;
+}
+
+function hopWizardNext() {
+    const wizardData = window.hopWizardData;
+    
+    if (wizardData.step === 3) {
+        // Create the entry
+        createHopEntryFromWizard();
+    } else {
+        showHopWizardStep(wizardData.step + 1);
+    }
+}
+
+function hopWizardBack() {
+    const wizardData = window.hopWizardData;
+    if (wizardData.step > 1) {
+        showHopWizardStep(wizardData.step - 1);
+    }
+}
+
+function closeHopWizard() {
+    const wizard = document.getElementById('hopEntryWizard');
+    if (wizard) wizard.remove();
+    window.hopWizardData = null;
+}
+
+function skipHopWizard() {
+    closeHopWizard();
+    createHopEntryDirectly(window.hopWizardData.hopId, 'trace');
+}
+
+function toggleWizardPreference() {
+    const checkbox = document.getElementById('disableWizardCheckbox');
+    localStorage.setItem('bats_hop_wizard_disabled', checkbox.checked ? 'true' : 'false');
+}
+
+function updateWizardThreadSelection(threadId) {
+    const wizardData = window.hopWizardData;
+    const index = wizardData.selectedThreads.indexOf(threadId);
+    
+    if (index > -1) {
+        wizardData.selectedThreads.splice(index, 1);
+        delete wizardData.allocations[threadId];
+    } else {
+        wizardData.selectedThreads.push(threadId);
+    }
+    
+    const nextBtn = document.getElementById('wizardNextBtn');
+    nextBtn.disabled = wizardData.selectedThreads.length === 0;
+}
+
+function updateWizardAllocation(threadId, value) {
+    window.hopWizardData.allocations[threadId] = parseFloat(value) || 0;
+    updateWizardTotal();
+}
+
+function setWizardMaxAllocation(threadId, maxAmount) {
+    document.getElementById(`wizardAllocation_${threadId}`).value = maxAmount;
+    updateWizardAllocation(threadId, maxAmount);
+}
+
+function updateWizardTotal() {
+    const wizardData = window.hopWizardData;
+    const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+    
+    let totalText = [];
+    const currencyTotals = {};
+    
+    Object.entries(wizardData.allocations).forEach(([threadId, amount]) => {
+        if (amount > 0) {
+            const thread = threads.find(t => t.threadId === threadId);
+            if (thread) {
+                if (!currencyTotals[thread.currency]) {
+                    currencyTotals[thread.currency] = 0;
+                }
+                currencyTotals[thread.currency] += amount;
+            }
+        }
+    });
+    
+    Object.entries(currencyTotals).forEach(([currency, total]) => {
+        totalText.push(`${total.toLocaleString()} ${currency}`);
+    });
+    
+    const totalElement = document.getElementById('wizardTotalAmount');
+    if (totalElement) {
+        totalElement.textContent = totalText.join(' + ') || '0';
+    }
+    
+    const nextBtn = document.getElementById('wizardNextBtn');
+    const hasAllocations = Object.values(wizardData.allocations).some(v => v > 0);
+    nextBtn.disabled = !hasAllocations;
+}
+
+async function lookupWizardTransaction() {
+    const txHash = document.getElementById('wizardTxHash').value.trim();
+    if (!txHash) return;
+    
+    const resultDiv = document.getElementById('wizardTxResult');
+    resultDiv.innerHTML = '<div style="text-align: center;">🔄 Looking up transaction...</div>';
+    
+    try {
+        const detectedChain = detectBlockchainFromHash(txHash);
+        if (!detectedChain) {
+            throw new Error('Unable to detect blockchain from hash');
+        }
+        
+        let txData;
+        switch(detectedChain) {
+            case 'ethereum':
+                txData = await lookupEthereumTransaction(txHash);
+                break;
+            case 'bitcoin':
+                txData = await lookupBitcoinTransaction(txHash);
+                break;
+            case 'tron':
+                txData = await lookupTronTransaction(txHash);
+                break;
+            case 'solana':
+                txData = await lookupSolanaTransaction(txHash);
+                break;
+            default:
+                throw new Error('Unsupported blockchain');
+        }
+        
+        window.hopWizardData.txData = txData;
+        
+        resultDiv.innerHTML = `
+            <div style="background: #e8f4f8; border: 1px solid #3498db; border-radius: 8px; padding: 15px;">
+                <h4 style="margin-top: 0;">✅ Transaction Found</h4>
+                <div style="display: grid; gap: 8px; font-size: 14px;">
+                    <div><strong>Chain:</strong> ${txData.blockchain}</div>
+                    <div><strong>Amount:</strong> ${txData.amount} ${txData.currency}</div>
+                    <div><strong>From:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.from}</span></div>
+                    <div><strong>To:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span></div>
+                    <div><strong>Time:</strong> ${new Date(txData.time).toLocaleString()} UTC</div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('wizardNextBtn').disabled = false;
+        
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 15px;">
+                <strong>❌ Lookup Failed</strong><br>
+                ${error.message}
+            </div>
+        `;
+    }
+}
+
+function createHopEntryFromWizard() {
+    const wizardData = window.hopWizardData;
+    const hop = investigation.hops.find(h => h.id === wizardData.hopId);
+    if (!hop) return;
+    
+    // Create entry with wizard data
+    const entry = {
+        id: hop.entries.length + 1,
+        hopId: wizardData.hopId,
+        hopNumber: hop.hopNumber,
+        entryType: 'trace',
+        notation: '',
+        fromWallet: wizardData.txData?.from || '',
+        fromWalletType: hop.hopNumber === 1 ? 'red' : 'black',
+        fromWalletId: '',
+        toWallet: wizardData.txData?.to || '',
+        toWalletType: '',
+        toWalletId: '',
+        amount: Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0).toString(),
+        currency: wizardData.selectedThreads.length === 1 ? 
+            getAvailableSourcesForHop(hop.hopNumber, null).find(t => t.threadId === wizardData.selectedThreads[0])?.currency : '',
+        customCurrency: '',
+        txHash: wizardData.txHash,
+        timestamp: wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '',
+        timezone: 'UTC',
+        notes: '',
+        category: '',
+        justification: '',
+        // Enhanced fields
+        sourceChain: [],
+        displayNotation: '',
+        summaryNotation: '',
+        victimNumbers: '',
+        transactionNumbers: '',
+        availableSourceAmount: 0,
+        sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
+        sourceThreadData: null,
+        assignmentPercentage: 0,
+        generatedNotation: '',
+        isConvergence: false,
+        convergenceData: null,
+        // New fields for multiple sources
+        multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
+        individualSourceAssignments: wizardData.selectedThreads.length > 1 ? wizardData.allocations : {}
+    };
+    
+    // Save undo state
+    saveUndoState(`Add trace entry to Hop ${hop.hopNumber}`);
+    
+    hop.entries.push(entry);
+    closeHopWizard();
     renderHops();
     saveToStorage();
 }
