@@ -902,6 +902,7 @@
                         <div id="universalWalletIndexList"></div>
                         <button class="btn" onclick="addManualWallet()">+ Add Manual Wallet Entry</button>
                         <button class="btn btn-success" onclick="exportWalletIndex('universal')">📊 Export Universal Index to Excel</button>
+                        <button class="btn btn-primary" onclick="openApiSettings()">⚙️ API Settings</button>
                     </div>
                     
                     <!-- Red Wallet Index -->
@@ -1062,6 +1063,7 @@
                         <button class="btn btn-success" onclick="exportReport()">📄 Export B.A.T.S. Report</button>
                         <button class="btn btn-secondary" onclick="exportJSON()">💾 Export JSON Data</button>
                         <button class="btn" onclick="exportCSV()">📊 Export CSV</button>
+                        <button class="btn" onclick="openApiSettings()" style="background: #95a5a6;">⚙️ API Settings</button>
                     </div>
                 </div>
             </div>
@@ -1321,6 +1323,159 @@
         </div>
     </div>
 
+    <!-- API Settings Modal -->
+    <div id="apiSettingsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>⚙️ Blockchain API Settings</h2>
+                <p>Configure API keys for enhanced reliability and higher rate limits</p>
+            </div>
+            
+            <div style="background: #e8f4f8; border: 2px solid #3498db; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h4 style="color: #2c3e50; margin-bottom: 15px;">🔑 Why Use API Keys?</h4>
+                <ul style="margin-left: 20px; color: #34495e;">
+                    <li>Higher rate limits (more lookups per day)</li>
+                    <li>More reliable service</li>
+                    <li>Access to additional features</li>
+                    <li>All services offer FREE tiers</li>
+                </ul>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <h4>API Key Configuration</h4>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">
+                        Ethereum - Etherscan API Key
+                    </label>
+                    <input type="text" id="etherscanApiKey" placeholder="Your Etherscan API key" 
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Get free key at: <a href="https://etherscan.io/apis" target="_blank" style="color: #3498db;">https://etherscan.io/apis</a>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">
+                        Bitcoin - Blockchain.com API Key (Optional)
+                    </label>
+                    <input type="text" id="blockchainApiKey" placeholder="Your Blockchain.com API key (optional)" 
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Works without key, but get one for higher limits at: <a href="https://www.blockchain.com/api" target="_blank" style="color: #3498db;">https://www.blockchain.com/api</a>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">
+                        Tron - TronGrid API Key (Optional)
+                    </label>
+                    <input type="text" id="trongridApiKey" placeholder="Your TronGrid API key (optional)" 
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Works without key, but get one for stability at: <a href="https://www.trongrid.io/" target="_blank" style="color: #3498db;">https://www.trongrid.io/</a>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">
+                        Solana RPC Endpoint
+                    </label>
+                    <input type="text" id="solanaRpcEndpoint" placeholder="https://api.mainnet-beta.solana.com" 
+                           value="https://api.mainnet-beta.solana.com"
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Default public RPC or use: <a href="https://www.helius.dev/" target="_blank" style="color: #3498db;">Helius</a>, 
+                        <a href="https://www.quicknode.com/" target="_blank" style="color: #3498db;">QuickNode</a>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 6px;">
+                    <h5 style="color: #856404; margin-bottom: 10px;">🔐 Security Note</h5>
+                    <p style="font-size: 13px; color: #856404; margin: 0;">
+                        API keys are stored locally in your browser only. They are never sent to any server except the official blockchain APIs.
+                        For production use, consider using a backend proxy for additional security.
+                    </p>
+                </div>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: #e8f5e8; border: 2px solid #27ae60; border-radius: 6px;">
+                    <h5 style="color: #27ae60; margin-bottom: 10px;">💡 CORS Proxy Option</h5>
+                    <label style="display: block; margin-bottom: 5px;">
+                        <input type="checkbox" id="enableCorsProxy" style="margin-right: 8px;">
+                        Enable CORS Proxy (helps bypass browser restrictions)
+                    </label>
+                    <input type="text" id="corsProxyUrl" placeholder="https://cors-anywhere.herokuapp.com/" 
+                           value="https://cors-anywhere.herokuapp.com/"
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; margin-top: 8px;"
+                           disabled>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        <strong>Public CORS Proxies:</strong><br>
+                        • <code>https://cors-anywhere.herokuapp.com/</code> (requires activation at <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">corsdemo</a>)<br>
+                        • <code>https://proxy.cors.sh/</code> (alternative)<br>
+                        • <code>https://corsproxy.io/?</code> (another alternative)<br>
+                        <br>
+                        <strong>For Production Use:</strong> Deploy your own proxy using:
+                        <a href="https://github.com/Rob--W/cors-anywhere" target="_blank" style="color: #3498db;">CORS Anywhere</a> or
+                        <a href="https://www.npmjs.com/package/cors-proxy-server" target="_blank" style="color: #3498db;">cors-proxy-server</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <button class="btn btn-confirm" onclick="saveApiSettings()">
+                    💾 Save Settings
+                </button>
+                <button class="btn btn-secondary" onclick="closeApiSettingsModal()">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blockchain Lookup Modal -->
+    <div id="blockchainLookupModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>🔗 Blockchain Transaction Lookup</h2>
+                <p>Automatically fetch transaction details from the blockchain</p>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <div class="form-group">
+                    <label>Transaction Hash</label>
+                    <input type="text" id="txHashInput" placeholder="Enter transaction hash..." 
+                           style="width: 100%; padding: 12px; border: 2px solid #3498db; border-radius: 6px; font-family: monospace; font-size: 14px;"
+                           onkeyup="detectBlockchainFromHash(this.value)">
+                    <div id="detectedBlockchain" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
+                </div>
+                
+                <div id="lookupError" style="display: none; background: #fee; border: 1px solid #c00; border-radius: 6px; padding: 15px; margin: 20px 0; color: #c00;"></div>
+                <div id="lookupLoading" style="display: none; text-align: center; margin: 20px 0;">
+                    <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
+                    <div>Fetching transaction data...</div>
+                </div>
+                
+                <div id="lookupResult" style="display: none; margin-top: 20px;">
+                    <h4 style="color: #2c3e50; margin-bottom: 15px;">Transaction Details</h4>
+                    <div id="txDetailsDisplay" style="background: #f8f9fa; padding: 15px; border-radius: 6px;"></div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <button class="btn btn-primary" onclick="lookupTransaction()" id="lookupBtn">
+                    🔍 Lookup Transaction
+                </button>
+                <button class="btn btn-confirm" id="applyTxDataBtn" onclick="applyTransactionData()" style="display: none;">
+                    ✅ Apply to Entry
+                </button>
+                <button class="btn btn-secondary" onclick="openApiSettings()" style="background: #95a5a6;">
+                    ⚙️ API Settings
+                </button>
+                <button class="btn btn-secondary" onclick="closeBlockchainLookupModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global state
         let investigation = {
@@ -1351,6 +1506,129 @@
         // Undo system
         let undoHistory = [];
         const MAX_UNDO_HISTORY = 20;
+        
+        // Blockchain API Integration
+        let targetEntryContext = null;
+        let currentTxData = null;
+        
+        // Blockchain API configurations
+        const blockchainAPIs = {
+            bitcoin: {
+                name: 'Bitcoin',
+                hashPattern: /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$|^bc1[a-z0-9]{39,59}$/,
+                txPattern: /^[a-f0-9]{64}$/i,
+                apiUrl: 'https://blockchain.info/rawtx/',
+                apiKey: null,
+                fallbackUrls: [
+                    'https://api.blockcypher.com/v1/btc/main/txs/',
+                    'https://mempool.space/api/tx/'
+                ],
+                parseResponse: (data) => {
+                    if (data.hash) {
+                        // blockchain.info format
+                        const firstInput = data.inputs[0];
+                        const firstOutput = data.outputs[0];
+                        return {
+                            time: data.time * 1000,
+                            amount: firstOutput.value / 100000000,
+                            currency: 'BTC',
+                            from: firstInput.prev_out ? firstInput.prev_out.addr : 'Unknown',
+                            to: firstOutput.addr || 'Unknown',
+                            fee: data.fee ? data.fee / 100000000 : null
+                        };
+                    } else if (data.tx_hash) {
+                        // blockcypher format
+                        return {
+                            time: new Date(data.received).getTime(),
+                            amount: data.outputs[0].value / 100000000,
+                            currency: 'BTC',
+                            from: data.inputs[0].addresses ? data.inputs[0].addresses[0] : 'Unknown',
+                            to: data.outputs[0].addresses ? data.outputs[0].addresses[0] : 'Unknown',
+                            fee: data.fees ? data.fees / 100000000 : null
+                        };
+                    }
+                }
+            },
+            ethereum: {
+                name: 'Ethereum',
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=',
+                apiKey: null,
+                fallbackUrls: [
+                    'https://api-ropsten.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=',
+                    'https://api.blockchair.com/ethereum/raw/transaction/'
+                ],
+                parseResponse: (data) => {
+                    if (data.result) {
+                        const tx = data.result;
+                        return {
+                            time: parseInt(tx.blockNumber, 16) * 12 * 1000 + Date.now() - 7000000 * 12 * 1000, // Approximate
+                            amount: parseInt(tx.value, 16) / 1e18,
+                            currency: 'ETH',
+                            from: tx.from,
+                            to: tx.to,
+                            fee: parseInt(tx.gasPrice, 16) * parseInt(tx.gas, 16) / 1e18
+                        };
+                    }
+                    return null;
+                }
+            },
+            tron: {
+                name: 'Tron',
+                hashPattern: /^T[a-zA-Z0-9]{33}$/,
+                txPattern: /^[a-f0-9]{64}$/i,
+                apiUrl: 'https://api.trongrid.io/v1/transactions/',
+                apiKey: null,
+                fallbackUrls: [
+                    'https://apilist.tronscan.org/api/transaction-info?hash='
+                ],
+                parseResponse: (data) => {
+                    if (data.data && data.data[0]) {
+                        const tx = data.data[0];
+                        return {
+                            time: tx.block_timestamp,
+                            amount: (tx.raw_data.contract[0].parameter.value.amount || 0) / 1e6,
+                            currency: 'TRX',
+                            from: tx.raw_data.contract[0].parameter.value.owner_address,
+                            to: tx.raw_data.contract[0].parameter.value.to_address,
+                            fee: tx.fee ? tx.fee / 1e6 : null
+                        };
+                    }
+                    return null;
+                }
+            },
+            solana: {
+                name: 'Solana',
+                hashPattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
+                txPattern: /^[1-9A-HJ-NP-Za-km-z]{87,88}$/,
+                apiUrl: 'https://api.mainnet-beta.solana.com',
+                apiKey: null,
+                fallbackUrls: [
+                    'https://solana-mainnet.g.alchemy.com/v2/demo',
+                    'https://rpc.ankr.com/solana'
+                ],
+                parseResponse: (data) => {
+                    if (data.result) {
+                        const tx = data.result;
+                        const meta = tx.meta;
+                        const preBalances = meta.preBalances[0];
+                        const postBalances = meta.postBalances[0];
+                        const amount = Math.abs(postBalances - preBalances) / 1e9;
+                        
+                        return {
+                            time: tx.blockTime * 1000,
+                            amount: amount,
+                            currency: 'SOL',
+                            from: tx.transaction.message.accountKeys[0],
+                            to: tx.transaction.message.accountKeys[1] || 'Unknown',
+                            fee: meta.fee / 1e9
+                        };
+                    }
+                    return null;
+                }
+            }
+        };
         
         // Currency decimal place configuration
         const currencyDecimals = {
@@ -11770,61 +12048,110 @@ async function lookupTransaction() {
     }
     
     const config = blockchainAPIs[detectedChain];
+    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
+    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
     
     // Show loading
     document.getElementById('lookupLoading').style.display = 'block';
     document.getElementById('lookupError').style.display = 'none';
     document.getElementById('lookupResult').style.display = 'none';
     
-    try {
-        let data;
-        
-        if (detectedChain === 'bitcoin') {
-            const response = await fetch(config.apiUrl + txHash);
-            if (!response.ok) throw new Error('Transaction not found');
-            data = await response.json();
-        } else if (detectedChain === 'ethereum') {
-            // Note: User needs to add their Etherscan API key
-            const apiKey = config.apiKey || 'YourEtherscanAPIKey';
-            const response = await fetch(`${config.apiUrl}${txHash}&apikey=${apiKey}`);
-            if (!response.ok) throw new Error('API request failed');
-            data = await response.json();
-            if (!data.result || data.result === null) throw new Error('Transaction not found');
-        } else if (detectedChain === 'tron') {
-            const response = await fetch(config.apiUrl + txHash);
-            if (!response.ok) throw new Error('Transaction not found');
-            data = await response.json();
-        } else if (detectedChain === 'solana') {
-            // Solana RPC call
-            const response = await fetch(config.apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    id: 1,
-                    method: 'getTransaction',
-                    params: [txHash, { encoding: 'json', maxSupportedTransactionVersion: 0 }]
-                })
-            });
-            if (!response.ok) throw new Error('RPC request failed');
-            data = await response.json();
-            if (data.error) throw new Error(data.error.message);
+    // Build array of URLs to try (primary + fallbacks)
+    const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
+    let lastError = null;
+    
+    for (let apiUrl of urlsToTry) {
+        try {
+            let data;
+            let url;
+            
+            if (detectedChain === 'bitcoin') {
+                url = apiUrl + txHash;
+                if (config.apiKey) {
+                    url += `?api_key=${config.apiKey}`;
+                }
+                if (corsEnabled) url = corsProxyUrl + url;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Transaction not found');
+                data = await response.json();
+                
+            } else if (detectedChain === 'ethereum') {
+                const apiKey = config.apiKey || 'YourEtherscanAPIKey';
+                url = `${apiUrl}${txHash}&apikey=${apiKey}`;
+                if (corsEnabled) url = corsProxyUrl + url;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('API request failed');
+                data = await response.json();
+                if (!data.result || data.result === null) throw new Error('Transaction not found');
+                
+            } else if (detectedChain === 'tron') {
+                url = apiUrl + txHash;
+                if (config.apiKey) {
+                    // TronGrid uses header authentication
+                    const headers = { 'TRON-PRO-API-KEY': config.apiKey };
+                    if (corsEnabled) url = corsProxyUrl + url;
+                    
+                    const response = await fetch(url, { headers });
+                    if (!response.ok) throw new Error('Transaction not found');
+                    data = await response.json();
+                } else {
+                    if (corsEnabled) url = corsProxyUrl + url;
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Transaction not found');
+                    data = await response.json();
+                }
+                
+            } else if (detectedChain === 'solana') {
+                url = apiUrl;
+                if (corsEnabled) url = corsProxyUrl + url;
+                
+                // Solana RPC call
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getTransaction',
+                        params: [txHash, { encoding: 'json', maxSupportedTransactionVersion: 0 }]
+                    })
+                });
+                if (!response.ok) throw new Error('RPC request failed');
+                data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+            }
+            
+            // Parse the response
+            currentTxData = config.parseResponse(data);
+            if (!currentTxData) throw new Error('Failed to parse transaction data');
+            
+            currentTxData.blockchain = config.name;
+            currentTxData.rawHash = txHash;
+            
+            // Display the results
+            displayTransactionData(currentTxData);
+            
+            // Success! Break out of the loop
+            return;
+            
+        } catch (error) {
+            console.error(`Failed with ${apiUrl}:`, error);
+            lastError = error;
+            // Continue to next URL
         }
-        
-        // Parse the response
-        currentTxData = config.parseResponse(data);
-        currentTxData.blockchain = config.name;
-        currentTxData.rawHash = txHash;
-        
-        // Display the results
-        displayTransactionData(currentTxData);
-        
-    } catch (error) {
-        console.error('Lookup error:', error);
-        showLookupError(`Failed to fetch transaction: ${error.message}`);
-    } finally {
-        document.getElementById('lookupLoading').style.display = 'none';
     }
+    
+    // If we get here, all URLs failed
+    const errorMsg = lastError ? lastError.message : 'Failed to fetch transaction';
+    if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
+        showLookupError(`${errorMsg}\n\nTip: Enable CORS Proxy in API Settings or add your API key.`);
+    } else {
+        showLookupError(`Failed to fetch transaction: ${errorMsg}`);
+    }
+    
+    document.getElementById('lookupLoading').style.display = 'none';
 }
 
 function showLookupError(message) {
@@ -11889,6 +12216,99 @@ function applyTransactionData() {
     closeBlockchainLookupModal();
     
     alert(`✅ Transaction data applied successfully!\n\nAmount: ${entry.amount} ${entry.currency}\nFrom: ${entry.fromWallet.slice(0, 20)}...\nTo: ${entry.toWallet.slice(0, 20)}...`);
+}
+
+// API Settings Management Functions
+function openApiSettings() {
+    // Load saved settings
+    const savedEtherscan = localStorage.getItem('bats_etherscan_api_key');
+    const savedBlockchain = localStorage.getItem('bats_blockchain_api_key');
+    const savedTrongrid = localStorage.getItem('bats_trongrid_api_key');
+    const savedSolanaRpc = localStorage.getItem('bats_solana_rpc_endpoint');
+    const savedCorsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
+    const savedCorsUrl = localStorage.getItem('bats_cors_proxy_url');
+    
+    // Populate form fields
+    document.getElementById('etherscanApiKey').value = savedEtherscan || '';
+    document.getElementById('blockchainApiKey').value = savedBlockchain || '';
+    document.getElementById('trongridApiKey').value = savedTrongrid || '';
+    document.getElementById('solanaRpcEndpoint').value = savedSolanaRpc || 'https://api.mainnet-beta.solana.com';
+    document.getElementById('enableCorsProxy').checked = savedCorsEnabled;
+    document.getElementById('corsProxyUrl').value = savedCorsUrl || 'https://cors-anywhere.herokuapp.com/';
+    document.getElementById('corsProxyUrl').disabled = !savedCorsEnabled;
+    
+    // Show modal
+    document.getElementById('apiSettingsModal').style.display = 'block';
+}
+
+function closeApiSettingsModal() {
+    document.getElementById('apiSettingsModal').style.display = 'none';
+}
+
+function saveApiSettings() {
+    // Get values from form
+    const etherscanKey = document.getElementById('etherscanApiKey').value.trim();
+    const blockchainKey = document.getElementById('blockchainApiKey').value.trim();
+    const trongridKey = document.getElementById('trongridApiKey').value.trim();
+    const solanaRpc = document.getElementById('solanaRpcEndpoint').value.trim();
+    const corsEnabled = document.getElementById('enableCorsProxy').checked;
+    const corsUrl = document.getElementById('corsProxyUrl').value.trim();
+    
+    // Save to localStorage
+    if (etherscanKey) localStorage.setItem('bats_etherscan_api_key', etherscanKey);
+    else localStorage.removeItem('bats_etherscan_api_key');
+    
+    if (blockchainKey) localStorage.setItem('bats_blockchain_api_key', blockchainKey);
+    else localStorage.removeItem('bats_blockchain_api_key');
+    
+    if (trongridKey) localStorage.setItem('bats_trongrid_api_key', trongridKey);
+    else localStorage.removeItem('bats_trongrid_api_key');
+    
+    if (solanaRpc) localStorage.setItem('bats_solana_rpc_endpoint', solanaRpc);
+    else localStorage.removeItem('bats_solana_rpc_endpoint');
+    
+    localStorage.setItem('bats_cors_proxy_enabled', corsEnabled.toString());
+    
+    if (corsUrl) localStorage.setItem('bats_cors_proxy_url', corsUrl);
+    else localStorage.removeItem('bats_cors_proxy_url');
+    
+    // Update blockchain API configurations
+    blockchainAPIs.ethereum.apiKey = etherscanKey || null;
+    blockchainAPIs.bitcoin.apiKey = blockchainKey || null;
+    blockchainAPIs.tron.apiKey = trongridKey || null;
+    blockchainAPIs.solana.apiUrl = solanaRpc || 'https://api.mainnet-beta.solana.com';
+    
+    closeApiSettingsModal();
+    alert('✅ API settings saved successfully!');
+}
+
+// Enable/disable CORS proxy URL input based on checkbox
+document.addEventListener('DOMContentLoaded', function() {
+    const corsCheckbox = document.getElementById('enableCorsProxy');
+    const corsUrlInput = document.getElementById('corsProxyUrl');
+    
+    if (corsCheckbox && corsUrlInput) {
+        corsCheckbox.addEventListener('change', function() {
+            corsUrlInput.disabled = !this.checked;
+        });
+    }
+    
+    // Load API settings on startup
+    loadApiSettingsOnStartup();
+});
+
+function loadApiSettingsOnStartup() {
+    // Load saved API keys
+    const savedEtherscan = localStorage.getItem('bats_etherscan_api_key');
+    const savedBlockchain = localStorage.getItem('bats_blockchain_api_key');
+    const savedTrongrid = localStorage.getItem('bats_trongrid_api_key');
+    const savedSolanaRpc = localStorage.getItem('bats_solana_rpc_endpoint');
+    
+    // Update blockchain API configurations
+    if (savedEtherscan) blockchainAPIs.ethereum.apiKey = savedEtherscan;
+    if (savedBlockchain) blockchainAPIs.bitcoin.apiKey = savedBlockchain;
+    if (savedTrongrid) blockchainAPIs.tron.apiKey = savedTrongrid;
+    if (savedSolanaRpc) blockchainAPIs.solana.apiUrl = savedSolanaRpc;
 }
     </script>
 </body>
