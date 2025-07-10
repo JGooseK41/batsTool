@@ -4624,15 +4624,7 @@ const entryTypes = {
             }
         }
 
-        // Close file dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('fileDropdown');
-            const fileButton = event.target.closest('button[onclick="toggleFileMenu()"]');
-            
-            if (dropdown && !fileButton && !dropdown.contains(event.target)) {
-                dropdown.style.display = 'none';
-            }
-        });
+        // Close file dropdown when clicking outside - will be initialized after DOM loads
 
         document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing B.A.T.S. application...');
@@ -4701,6 +4693,16 @@ const entryTypes = {
                 }
             });
         }
+        
+        // Close file dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('fileDropdown');
+            const fileButton = event.target.closest('button[onclick="toggleFileMenu()"]');
+            
+            if (dropdown && !fileButton && !dropdown.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
         
         console.log('✅ B.A.T.S. application initialized successfully');
         
