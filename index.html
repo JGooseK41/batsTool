@@ -830,6 +830,62 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+/* Flow Diagram Styles */
+.flow-wallet-node {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.flow-wallet-node:hover {
+    filter: brightness(1.1);
+    transform: scale(1.05);
+}
+
+.flow-connection-line {
+    fill: none;
+    stroke-width: 2;
+    opacity: 0.8;
+}
+
+.flow-connection-line:hover {
+    stroke-width: 3;
+    opacity: 1;
+}
+
+.flow-thread-label {
+    font-size: 12px;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.flow-hop-column {
+    fill: #f8f9fa;
+    stroke: #e8f0fe;
+    stroke-width: 1;
+}
+
+.flow-art-text {
+    font-size: 16px;
+    font-weight: bold;
+    fill: #2c3e50;
+}
+
+.flow-calculation-text {
+    font-size: 12px;
+    fill: #666;
+}
+
+@media print {
+    #flowDiagramControls {
+        display: none !important;
+    }
+    
+    #flowDiagramContainer {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
    </style>
 </head>
 <body>
@@ -964,6 +1020,7 @@
                     <button class="nav-tab active" onclick="switchTab('victims')">Victims & Transactions</button>
                     <button class="nav-tab" onclick="switchTab('traces')">Trace Documentation</button>
                     <button class="nav-tab" onclick="switchTab('walletindexes')">Wallet Indexes</button>
+                    <button class="nav-tab" onclick="switchTab('flowdiagram')">Flow Diagram</button>
                     <button class="nav-tab" onclick="switchTab('summary')">Summary & Export</button>
                 </div>
 
@@ -1249,6 +1306,32 @@
                     </div>
                 </div>
 
+
+                <!-- Flow Diagram Tab -->
+                <div id="flowdiagram-tab" class="tab-content">
+                    <div class="section-title">Visual Flow Diagram</div>
+                    
+                    <div id="flowDiagramControls" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <button class="btn btn-secondary" onclick="generateFlowDiagram()" style="margin-right: 10px;">
+                            🔄 Generate/Refresh Diagram
+                        </button>
+                        <button class="btn" onclick="exportFlowDiagram('svg')" style="margin-right: 10px;">
+                            📥 Export SVG
+                        </button>
+                        <button class="btn" onclick="exportFlowDiagram('png')" style="margin-right: 10px;">
+                            🖼️ Export PNG
+                        </button>
+                        <button class="btn" onclick="printFlowDiagram()">
+                            🖨️ Print
+                        </button>
+                    </div>
+                    
+                    <div id="flowDiagramContainer" style="background: white; border: 1px solid #e8f0fe; border-radius: 8px; padding: 20px; min-height: 600px; overflow: auto;">
+                        <svg id="flowDiagramSVG" width="100%" height="100%">
+                            <!-- Flow diagram will be generated here -->
+                        </svg>
+                    </div>
+                </div>
 
                 <!-- Summary Tab -->
                 <div id="summary-tab" class="tab-content">
@@ -4729,6 +4812,15 @@ function updateFormFieldsFromInvestigation() {
                 renderBlueWalletIndex();
             } else if (tabName === 'victims') {
                 renderVictims();
+            } else if (tabName === 'flowdiagram') {
+                // Flow diagram will be generated on demand
+                // Check if we have data to visualize
+                if (investigation.hops && investigation.hops.length > 0) {
+                    document.getElementById('flowDiagramControls').style.display = 'block';
+                } else {
+                    document.getElementById('flowDiagramControls').style.display = 'none';
+                    document.getElementById('flowDiagramSVG').innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#999">No trace data available. Complete at least one hop to generate flow diagram.</text>';
+                }
             }
             
             // Update breadcrumbs
@@ -14456,6 +14548,305 @@ Note: Block timestamp will be added when available.`);
                     }
                 }
             });
+        }
+        
+        // Flow Diagram Functions
+        function generateFlowDiagram() {
+            const svg = document.getElementById('flowDiagramSVG');
+            svg.innerHTML = ''; // Clear existing content
+            
+            if (!investigation.hops || investigation.hops.length === 0) {
+                svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#999">No trace data available</text>';
+                return;
+            }
+            
+            // Configuration
+            const hopWidth = 300;
+            const hopPadding = 50;
+            const nodeRadius = 25;
+            const verticalSpacing = 100;
+            const topMargin = 100;
+            const bottomMargin = 150;
+            
+            // Calculate dimensions
+            const numHops = investigation.hops.length + 1; // +1 for victims column
+            const totalWidth = numHops * (hopWidth + hopPadding) + hopPadding;
+            
+            // Find max entries in any hop
+            let maxEntries = investigation.victims.length;
+            investigation.hops.forEach(hop => {
+                const nonWriteoffEntries = hop.entries.filter(e => !e.isWriteoff).length;
+                maxEntries = Math.max(maxEntries, nonWriteoffEntries);
+            });
+            
+            const totalHeight = topMargin + (maxEntries * verticalSpacing) + bottomMargin;
+            
+            // Set SVG dimensions
+            svg.setAttribute('width', totalWidth);
+            svg.setAttribute('height', totalHeight);
+            svg.setAttribute('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
+            
+            // Create hop columns
+            const columns = [];
+            
+            // Victims column
+            columns.push({
+                x: hopPadding,
+                width: hopWidth,
+                title: 'Victims',
+                entries: investigation.victims.map(v => ({
+                    id: `victim-${v.id}`,
+                    type: 'victim',
+                    label: `Victim ${v.id}`,
+                    amount: v.transactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0),
+                    wallet: v.transactions[0]?.receivingWallet || 'Unknown'
+                }))
+            });
+            
+            // Hop columns
+            investigation.hops.forEach((hop, index) => {
+                columns.push({
+                    x: (index + 1) * (hopWidth + hopPadding) + hopPadding,
+                    width: hopWidth,
+                    title: `Hop ${hop.number}`,
+                    hopId: hop.id,
+                    art: hop.aggregateRunningTotal,
+                    entries: hop.entries.filter(e => !e.isWriteoff).map(e => ({
+                        id: `hop-${hop.id}-entry-${e.id}`,
+                        hopId: hop.id,
+                        entryId: e.id,
+                        type: e.toWalletType || 'unknown',
+                        label: e.notation || `Entry ${e.id}`,
+                        amount: parseFloat(e.amount || 0),
+                        wallet: e.toWallet || 'Unknown',
+                        sourceThread: e.sourceThread
+                    }))
+                });
+            });
+            
+            // Draw hop columns
+            columns.forEach((col, colIndex) => {
+                // Column background
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', col.x);
+                rect.setAttribute('y', 20);
+                rect.setAttribute('width', col.width);
+                rect.setAttribute('height', totalHeight - 40);
+                rect.setAttribute('class', 'flow-hop-column');
+                rect.setAttribute('rx', '8');
+                svg.appendChild(rect);
+                
+                // Column title
+                const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                title.setAttribute('x', col.x + col.width / 2);
+                title.setAttribute('y', 50);
+                title.setAttribute('text-anchor', 'middle');
+                title.setAttribute('class', 'flow-art-text');
+                title.textContent = col.title;
+                svg.appendChild(title);
+                
+                // ART display for hops
+                if (col.art !== undefined) {
+                    const artText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    artText.setAttribute('x', col.x + col.width / 2);
+                    artText.setAttribute('y', 75);
+                    artText.setAttribute('text-anchor', 'middle');
+                    artText.setAttribute('class', 'flow-art-text');
+                    artText.setAttribute('fill', '#27ae60');
+                    artText.textContent = `ART: ${formatCurrency(col.art)}`;
+                    svg.appendChild(artText);
+                }
+                
+                // Draw wallet nodes
+                col.entries.forEach((entry, entryIndex) => {
+                    const y = topMargin + (entryIndex * verticalSpacing);
+                    
+                    // Wallet circle
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', col.x + col.width / 2);
+                    circle.setAttribute('cy', y);
+                    circle.setAttribute('r', nodeRadius);
+                    circle.setAttribute('class', 'flow-wallet-node');
+                    circle.setAttribute('fill', getWalletColor(entry.type));
+                    circle.setAttribute('data-wallet', entry.wallet);
+                    circle.onclick = () => showWalletDetails(entry);
+                    svg.appendChild(circle);
+                    
+                    // Wallet label
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', col.x + col.width / 2);
+                    label.setAttribute('y', y + 5);
+                    label.setAttribute('text-anchor', 'middle');
+                    label.setAttribute('fill', 'white');
+                    label.setAttribute('font-size', '12px');
+                    label.setAttribute('font-weight', 'bold');
+                    label.textContent = entry.label;
+                    svg.appendChild(label);
+                    
+                    // Amount below node
+                    const amountText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    amountText.setAttribute('x', col.x + col.width / 2);
+                    amountText.setAttribute('y', y + nodeRadius + 20);
+                    amountText.setAttribute('text-anchor', 'middle');
+                    amountText.setAttribute('font-size', '11px');
+                    amountText.setAttribute('fill', '#666');
+                    amountText.textContent = formatCurrency(entry.amount);
+                    svg.appendChild(amountText);
+                    
+                    // Store position for connections
+                    entry.x = col.x + col.width / 2;
+                    entry.y = y;
+                });
+            });
+            
+            // Draw connections between hops
+            for (let i = 0; i < columns.length - 1; i++) {
+                const fromCol = columns[i];
+                const toCol = columns[i + 1];
+                
+                toCol.entries.forEach(toEntry => {
+                    // Find source entries based on sourceThread
+                    if (toEntry.sourceThread) {
+                        fromCol.entries.forEach(fromEntry => {
+                            // Check if this entry matches the source thread pattern
+                            if (shouldConnect(fromEntry, toEntry)) {
+                                drawConnection(svg, fromEntry, toEntry);
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Draw calculation summary at bottom
+            drawCalculationSummary(svg, columns, totalHeight - 100);
+        }
+        
+        function getWalletColor(type) {
+            const colors = {
+                'victim': '#e74c3c',
+                'red': '#e74c3c',
+                'purple': '#9b59b6',
+                'blue': '#3498db',
+                'green': '#27ae60',
+                'unknown': '#95a5a6'
+            };
+            return colors[type] || colors.unknown;
+        }
+        
+        function shouldConnect(fromEntry, toEntry) {
+            if (!toEntry.sourceThread) return false;
+            
+            // For victim entries
+            if (fromEntry.type === 'victim') {
+                return toEntry.sourceThread.includes(`V-${fromEntry.label.split(' ')[1]}`);
+            }
+            
+            // For hop entries
+            return toEntry.sourceThread === fromEntry.label;
+        }
+        
+        function drawConnection(svg, fromEntry, toEntry) {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            
+            // Create curved path
+            const startX = fromEntry.x + 25; // Start from right edge of circle
+            const startY = fromEntry.y;
+            const endX = toEntry.x - 25; // End at left edge of circle
+            const endY = toEntry.y;
+            const midX = (startX + endX) / 2;
+            
+            const d = `M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`;
+            
+            path.setAttribute('d', d);
+            path.setAttribute('class', 'flow-connection-line');
+            path.setAttribute('stroke', '#666');
+            
+            svg.appendChild(path);
+            
+            // Add amount label on the line
+            const labelX = (startX + endX) / 2;
+            const labelY = (startY + endY) / 2;
+            
+            const amountLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            amountLabel.setAttribute('x', labelX);
+            amountLabel.setAttribute('y', labelY - 5);
+            amountLabel.setAttribute('text-anchor', 'middle');
+            amountLabel.setAttribute('class', 'flow-thread-label');
+            amountLabel.setAttribute('fill', '#e74c3c');
+            amountLabel.textContent = formatCurrency(toEntry.amount);
+            svg.appendChild(amountLabel);
+        }
+        
+        function drawCalculationSummary(svg, columns, y) {
+            // Draw calculation verification for each hop
+            columns.forEach((col, index) => {
+                if (index === 0) return; // Skip victims column
+                
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', col.x + col.width / 2);
+                text.setAttribute('y', y);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('class', 'flow-calculation-text');
+                
+                // Calculate totals
+                const hopData = investigation.hops[index - 1];
+                const totalIn = col.entries.reduce((sum, e) => sum + e.amount, 0);
+                const writeoffs = hopData.entries.filter(e => e.isWriteoff).reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                
+                text.textContent = `Total: ${formatCurrency(totalIn)} + WO: ${formatCurrency(writeoffs)} = ART: ${formatCurrency(col.art)}`;
+                svg.appendChild(text);
+            });
+        }
+        
+        function showWalletDetails(entry) {
+            alert(`Wallet: ${entry.wallet}\nType: ${entry.type}\nAmount: ${formatCurrency(entry.amount)}`);
+        }
+        
+        function exportFlowDiagram(format) {
+            const svg = document.getElementById('flowDiagramSVG');
+            
+            if (format === 'svg') {
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const blob = new Blob([svgData], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `BATS_Flow_${investigation.caseId || 'Diagram'}.svg`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else if (format === 'png') {
+                // Convert SVG to PNG
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(svgBlob);
+                
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                    
+                    canvas.toBlob(function(blob) {
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = `BATS_Flow_${investigation.caseId || 'Diagram'}.png`;
+                        a.click();
+                    });
+                    
+                    URL.revokeObjectURL(url);
+                };
+                
+                img.src = url;
+            }
+        }
+        
+        function printFlowDiagram() {
+            window.print();
         }
         
         function startInvestigation() {
