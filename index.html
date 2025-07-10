@@ -1374,6 +1374,57 @@
         </div>
     </div>
 
+    <!-- Bulk Transaction Modal -->
+    <div id="bulkTransactionModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>📋 Bulk Add Transactions</h2>
+                <p>Paste multiple transaction hashes (one per line) to add them all at once. They will be automatically sorted by date.</p>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <label style="display: block; font-weight: bold; margin-bottom: 10px;">Transaction Hashes:</label>
+                <textarea id="bulkTransactionHashes" 
+                          placeholder="Paste transaction hashes here, one per line&#10;&#10;Example:&#10;0x123abc...&#10;0x456def...&#10;0x789ghi..."
+                          style="width: 100%; height: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 13px;"></textarea>
+                
+                <div style="margin-top: 15px; padding: 15px; background: #e8f4f8; border: 1px solid #3498db; border-radius: 6px;">
+                    <h4 style="color: #2c3e50; margin-bottom: 10px;">💡 How it works:</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #34495e;">
+                        <li>Paste all transaction hashes at once</li>
+                        <li>Click "Process Transactions" to fetch all data</li>
+                        <li>Transactions will be automatically sorted by date</li>
+                        <li>V-T notation will be assigned in chronological order</li>
+                        <li>Failed lookups will be created as empty transactions for manual entry</li>
+                    </ul>
+                </div>
+                
+                <div id="bulkProcessingStatus" style="margin-top: 15px; display: none;">
+                    <div style="padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                        <div id="bulkProgressBar" style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
+                            <div id="bulkProgressFill" style="background: #3498db; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <div id="bulkProgressText" style="text-align: center; margin-top: 10px; font-size: 14px; color: #666;">Processing...</div>
+                    </div>
+                </div>
+                
+                <div id="bulkProcessingResults" style="margin-top: 15px; display: none;">
+                    <h4>Processing Results:</h4>
+                    <div id="bulkResultsList" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #f8f9fa;"></div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <button class="btn btn-confirm" onclick="processBulkTransactions()" id="bulkProcessBtn">
+                    🚀 Process Transactions
+                </button>
+                <button class="btn btn-secondary" onclick="closeBulkTransactionModal()">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- API Settings Modal -->
     <div id="apiSettingsModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
@@ -4333,9 +4384,39 @@ function updateFormFieldsFromInvestigation() {
             updateWorkflowSteps();
         }
 
+        function sortTransactionsChronologically() {
+            // Sort all transactions across all victims by datetime
+            investigation.victims.forEach(victim => {
+                // Sort this victim's transactions by datetime
+                victim.transactions.sort((a, b) => {
+                    // Handle empty dates - put them at the end
+                    if (!a.datetime && !b.datetime) return 0;
+                    if (!a.datetime) return 1;
+                    if (!b.datetime) return -1;
+                    
+                    // Convert to comparable dates considering timezone
+                    const dateA = new Date(a.datetime + ' ' + (a.timezone || 'UTC'));
+                    const dateB = new Date(b.datetime + ' ' + (b.timezone || 'UTC'));
+                    
+                    return dateA - dateB;
+                });
+                
+                // Re-assign transaction IDs based on new order
+                victim.transactions.forEach((transaction, index) => {
+                    transaction.id = index + 1;
+                });
+            });
+            
+            // Save the reordered data
+            saveToStorage();
+        }
+
         function renderVictims() {
     const container = document.getElementById('victimsList');
     container.innerHTML = '';
+    
+    // First, sort all transactions chronologically
+    sortTransactionsChronologically();
 
     investigation.victims.forEach(victim => {
         const victimDiv = document.createElement('div');
@@ -4443,6 +4524,7 @@ function updateFormFieldsFromInvestigation() {
                 `;
             }).join('')}
             <button class="btn btn-secondary" onclick="addTransaction(${victim.id})">+ Add Transaction</button>
+            <button class="btn btn-secondary" onclick="openBulkTransactionModal(${victim.id})">📋 Bulk Add Transactions</button>
         `;
         container.appendChild(victimDiv);
     });
@@ -12649,6 +12731,216 @@ document.addEventListener('click', function(event) {
         });
     }
 });
+
+// Bulk Transaction Modal Functions
+let currentBulkVictimId = null;
+
+function openBulkTransactionModal(victimId) {
+    currentBulkVictimId = victimId;
+    document.getElementById('bulkTransactionHashes').value = '';
+    document.getElementById('bulkProcessingStatus').style.display = 'none';
+    document.getElementById('bulkProcessingResults').style.display = 'none';
+    document.getElementById('bulkProcessBtn').disabled = false;
+    document.getElementById('bulkTransactionModal').style.display = 'block';
+}
+
+function closeBulkTransactionModal() {
+    document.getElementById('bulkTransactionModal').style.display = 'none';
+    currentBulkVictimId = null;
+    // Re-render to show the new transactions with correct V-T notation
+    renderVictims();
+}
+
+async function processBulkTransactions() {
+    const hashesText = document.getElementById('bulkTransactionHashes').value.trim();
+    if (!hashesText) {
+        alert('Please paste transaction hashes first');
+        return;
+    }
+    
+    // Parse hashes (one per line)
+    const hashes = hashesText.split('\n')
+        .map(h => h.trim())
+        .filter(h => h.length > 0);
+    
+    if (hashes.length === 0) {
+        alert('No valid transaction hashes found');
+        return;
+    }
+    
+    // Disable button and show progress
+    document.getElementById('bulkProcessBtn').disabled = true;
+    document.getElementById('bulkProcessingStatus').style.display = 'block';
+    document.getElementById('bulkProcessingResults').style.display = 'none';
+    
+    const victim = investigation.victims.find(v => v.id === currentBulkVictimId);
+    const results = [];
+    const tempTransactions = [];
+    
+    // Process each hash
+    for (let i = 0; i < hashes.length; i++) {
+        const hash = hashes[i];
+        const progress = ((i + 1) / hashes.length) * 100;
+        
+        // Update progress
+        document.getElementById('bulkProgressFill').style.width = progress + '%';
+        document.getElementById('bulkProgressText').textContent = `Processing ${i + 1} of ${hashes.length}...`;
+        
+        try {
+            // Detect blockchain
+            const detectedChain = detectBlockchainFromHash(hash);
+            if (!detectedChain) {
+                results.push({ hash, status: 'error', message: 'Unknown blockchain format' });
+                continue;
+            }
+            
+            // Fetch transaction data
+            const txData = await fetchTransactionData(hash, detectedChain);
+            
+            if (txData) {
+                // Create transaction object
+                const transaction = {
+                    id: 0, // Will be reassigned after sorting
+                    txHash: hash,
+                    amount: txData.amount.toString(),
+                    currency: txData.currency,
+                    customCurrency: '',
+                    receivingWallet: txData.to,
+                    datetime: new Date(txData.time).toISOString().slice(0, 16),
+                    timezone: 'UTC',
+                    notes: `From: ${txData.from} | ${txData.blockchain} transaction`
+                };
+                
+                tempTransactions.push(transaction);
+                results.push({ 
+                    hash, 
+                    status: 'success', 
+                    message: `${txData.amount} ${txData.currency} → ${txData.to.substring(0, 20)}...`,
+                    timestamp: txData.time
+                });
+            } else {
+                results.push({ hash, status: 'error', message: 'Failed to fetch data' });
+            }
+            
+        } catch (error) {
+            results.push({ hash, status: 'error', message: error.message });
+        }
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    // Add all successful transactions to the victim
+    tempTransactions.forEach(tx => {
+        victim.transactions.push(tx);
+    });
+    
+    // Show results
+    document.getElementById('bulkProgressText').textContent = 'Complete! Sorting transactions chronologically...';
+    showBulkResults(results);
+    
+    // Save and re-render (which will sort chronologically)
+    saveToStorage();
+    
+    // Give user time to see results before closing
+    setTimeout(() => {
+        alert(`✅ Processed ${hashes.length} transaction hashes!\n\n${results.filter(r => r.status === 'success').length} successful\n${results.filter(r => r.status === 'error').length} failed\n\nTransactions have been sorted chronologically and V-T notation has been updated.`);
+        closeBulkTransactionModal();
+    }, 2000);
+}
+
+function showBulkResults(results) {
+    const resultsList = document.getElementById('bulkResultsList');
+    resultsList.innerHTML = results.map(result => {
+        const icon = result.status === 'success' ? '✅' : '❌';
+        const color = result.status === 'success' ? '#27ae60' : '#dc3545';
+        return `
+            <div style="padding: 8px; border-bottom: 1px solid #e0e0e0;">
+                <span style="color: ${color};">${icon}</span>
+                <span style="font-family: monospace; font-size: 12px;">${result.hash.substring(0, 20)}...</span>
+                <span style="color: #666; margin-left: 10px;">${result.message}</span>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('bulkProcessingResults').style.display = 'block';
+}
+
+async function fetchTransactionData(hash, blockchain) {
+    const config = blockchainAPIs[blockchain];
+    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
+    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+    
+    // Try primary and fallback URLs
+    const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
+    
+    for (let apiUrl of urlsToTry) {
+        try {
+            let data;
+            let url;
+            
+            if (blockchain === 'bitcoin') {
+                url = apiUrl + hash;
+                if (config.apiKey) url += `?api_key=${config.apiKey}`;
+                if (corsEnabled) url = corsProxyUrl + url;
+                
+                const response = await fetch(url);
+                if (!response.ok) continue;
+                data = await response.json();
+                
+            } else if (blockchain === 'ethereum') {
+                const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                url = `${apiUrl}${hash}&apikey=${apiKey}`;
+                if (corsEnabled) url = corsProxyUrl + url;
+                
+                const response = await fetch(url);
+                if (!response.ok) continue;
+                data = await response.json();
+                if (!data.result || data.result === null) continue;
+                
+            } else if (blockchain === 'tron') {
+                url = apiUrl + hash;
+                const headers = config.apiKey ? { 'TRON-PRO-API-KEY': config.apiKey } : {};
+                if (corsEnabled) url = corsProxyUrl + url;
+                
+                const response = await fetch(url, { headers });
+                if (!response.ok) continue;
+                data = await response.json();
+                
+            } else if (blockchain === 'solana') {
+                url = apiUrl;
+                if (corsEnabled) url = corsProxyUrl + url;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getTransaction',
+                        params: [hash, { encoding: 'json', maxSupportedTransactionVersion: 0 }]
+                    })
+                });
+                if (!response.ok) continue;
+                data = await response.json();
+                if (data.error) continue;
+            }
+            
+            // Parse and return the data
+            const txData = config.parseResponse(data);
+            if (txData) {
+                txData.blockchain = config.name;
+                return txData;
+            }
+            
+        } catch (error) {
+            console.error(`Failed with ${apiUrl}:`, error);
+            // Continue to next URL
+        }
+    }
+    
+    return null;
+}
 
 // Victim Transaction Lookup Function
 async function lookupVictimTransaction(victimId, transactionId) {
