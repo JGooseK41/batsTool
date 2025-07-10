@@ -14297,25 +14297,37 @@ async function lookupVictimTransaction(victimId, transactionId) {
             
             const selectedTransfer = window.allTransfers[index];
             
+            // Store the callback before closing modal (which clears it)
+            const callback = pendingTransferCallback;
+            
             // Close the modal
             closeTransferSelectionModal();
             
             // Execute the callback with the selected transfer
-            pendingTransferCallback(selectedTransfer);
+            callback(selectedTransfer);
         }
         
         function applyTransferToVictim(victimId, transactionId, transfer, txHash) {
             console.log('Applying transfer to victim:', { victimId, transactionId, transfer, txHash });
             
+            // Ensure transfer data is valid
+            if (!transfer || !transfer.amount || !transfer.to) {
+                console.error('Invalid transfer data:', transfer);
+                alert('Error: Invalid transfer data received');
+                return;
+            }
+            
             const victim = investigation.victims.find(v => v.id === victimId);
             if (!victim) {
                 console.error('Victim not found:', victimId);
+                alert('Error: Victim not found');
                 return;
             }
             
             const transaction = victim.transactions.find(t => t.id === transactionId);
             if (!transaction) {
                 console.error('Transaction not found:', transactionId);
+                alert('Error: Transaction not found');
                 return;
             }
             
@@ -14337,32 +14349,46 @@ async function lookupVictimTransaction(victimId, transactionId) {
             
             // Update currency
             const currencySelect = document.getElementById(`currency_victim_${victimId}_${transactionId}`);
-            
-            // If the currency doesn't exist in the select, add it
-            const optionExists = Array.from(currencySelect.options).some(opt => opt.value === transfer.currency);
-            if (!optionExists && transfer.currency !== 'CUSTOM') {
-                const newOption = document.createElement('option');
-                newOption.value = transfer.currency;
-                newOption.textContent = transfer.currency;
-                currencySelect.appendChild(newOption);
+            if (!currencySelect) {
+                console.error('Currency select not found:', `currency_victim_${victimId}_${transactionId}`);
+            } else {
+                // If the currency doesn't exist in the select, add it
+                const optionExists = Array.from(currencySelect.options).some(opt => opt.value === transfer.currency);
+                if (!optionExists && transfer.currency !== 'CUSTOM') {
+                    const newOption = document.createElement('option');
+                    newOption.value = transfer.currency;
+                    newOption.textContent = transfer.currency;
+                    currencySelect.appendChild(newOption);
+                }
+                
+                currencySelect.value = transfer.currency;
+                transaction.currency = transfer.currency;
             }
             
-            currencySelect.value = transfer.currency;
-            transaction.currency = transfer.currency;
-            
             // Update receiving wallet (the "to" address is the RED wallet)
-            document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`).value = transfer.to;
-            transaction.receivingWallet = transfer.to;
+            const receivingWalletInput = document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`);
+            if (receivingWalletInput) {
+                receivingWalletInput.value = transfer.to;
+                transaction.receivingWallet = transfer.to;
+            } else {
+                console.error('Receiving wallet input not found');
+            }
             
             // Update datetime with current time (transaction receipt doesn't have block timestamp)
             const now = new Date();
             const dateTimeLocal = now.toISOString().slice(0, 16);
-            document.getElementById(`datetime_victim_${victimId}_${transactionId}`).value = dateTimeLocal;
-            transaction.datetime = dateTimeLocal;
+            const datetimeInput = document.getElementById(`datetime_victim_${victimId}_${transactionId}`);
+            if (datetimeInput) {
+                datetimeInput.value = dateTimeLocal;
+                transaction.datetime = dateTimeLocal;
+            }
             
             // Set timezone to UTC
-            document.getElementById(`timezone_victim_${victimId}_${transactionId}`).value = 'UTC';
-            transaction.timezone = 'UTC';
+            const timezoneSelect = document.getElementById(`timezone_victim_${victimId}_${transactionId}`);
+            if (timezoneSelect) {
+                timezoneSelect.value = 'UTC';
+                transaction.timezone = 'UTC';
+            }
             
             // Add note about the transaction
             const notesInput = document.querySelector(`input[onchange*="updateTransaction(${victimId}, ${transactionId}, 'notes'"]`);
@@ -14380,10 +14406,13 @@ async function lookupVictimTransaction(victimId, transactionId) {
                 txHashElem.value = txHash;
             }
             
-            // Save and re-render
+            // Save to storage
             saveToStorage();
-            renderVictims();
             
+            // Update the workflow steps to reflect progress
+            updateWorkflowSteps();
+            
+            // Show success message
             alert(`✅ Transaction data retrieved successfully!
 
 Amount: ${formatNumber(transfer.amount)} ${transfer.currency}
@@ -14391,6 +14420,15 @@ From: ${transfer.from}
 To (RED Wallet): ${transfer.to}
 
 Note: Block timestamp will be added when available.`);
+            
+            // Log for debugging
+            console.log('Transfer applied successfully:', {
+                victimId,
+                transactionId,
+                amount: transfer.amount,
+                currency: transfer.currency,
+                to: transfer.to
+            });
         }
         
         // Entity Detection Functions
