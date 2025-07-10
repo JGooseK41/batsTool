@@ -4951,6 +4951,10 @@ const entryTypes = {
 
         // Close file dropdown when clicking outside - will be initialized after DOM loads
 
+        // Make sure these functions are globally accessible
+        window.switchTab = switchTab;
+        window.toggleFileMenu = toggleFileMenu;
+
         document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing B.A.T.S. application...');
     
@@ -13898,8 +13902,8 @@ async function fetchTransactionData(hash, blockchain) {
 
 // Victim Transaction Lookup Function
 async function lookupVictimTransaction(victimId, transactionId) {
-    const txHashInput = document.getElementById(`txHash_victim_${victimId}_${transactionId}`);
-    const txHash = txHashInput.value.trim();
+    const txHashInputElement = document.getElementById(`txHash_victim_${victimId}_${transactionId}`);
+    const txHash = txHashInputElement.value.trim();
     
     if (!txHash) {
         alert('Please paste a transaction hash first');
@@ -14313,9 +14317,9 @@ async function lookupVictimTransaction(victimId, transactionId) {
             }
             
             // Update transaction hash first
-            const txHashInput = document.getElementById(`txHash_victim_${victimId}_${transactionId}`);
-            if (txHashInput && txHash) {
-                txHashInput.value = txHash;
+            const txHashField = document.getElementById(`txHash_victim_${victimId}_${transactionId}`);
+            if (txHashField && txHash) {
+                txHashField.value = txHash;
                 transaction.txHash = txHash;
             }
             
@@ -14368,9 +14372,9 @@ async function lookupVictimTransaction(victimId, transactionId) {
             transaction.txHash = txHash;
             
             // Also update the transaction hash input field
-            const txHashInput = document.getElementById(`txHash_victim_${victimId}_${transactionId}`);
-            if (txHashInput) {
-                txHashInput.value = txHash;
+            const txHashElem = document.getElementById(`txHash_victim_${victimId}_${transactionId}`);
+            if (txHashElem) {
+                txHashElem.value = txHash;
             }
             
             // Save and re-render
@@ -15431,6 +15435,9 @@ Note: Block timestamp will be added when available.`);
             }, 100);
         }
         
+        // Make validateAndProceedSetup globally accessible
+        window.validateAndProceedSetup = validateAndProceedSetup;
+
         // Add event listeners to setup fields
         document.addEventListener('DOMContentLoaded', function() {
             ['caseId', 'investigator', 'caseType', 'caseSynopsis'].forEach(id => {
