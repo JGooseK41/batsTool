@@ -11103,8 +11103,12 @@ function assignMaxAmountMultiple(hopId, entryId) {
 
 
 function showAddEntryWizard(hopId) {
+    console.log('showAddEntryWizard called for hopId:', hopId);
     const hop = investigation.hops.find(h => h.id === hopId);
-    if (!hop) return;
+    if (!hop) {
+        console.error('Hop not found:', hopId);
+        return;
+    }
     
     const entryTypeDescriptions = {
         'trace': {
@@ -11125,7 +11129,7 @@ function showAddEntryWizard(hopId) {
     };
     
     const wizardHTML = `
-        <div id="addEntryWizard" class="modal" style="display: block;">
+        <div id="addEntryWizard" class="modal" style="display: block; z-index: 9998;">
             <div class="modal-content" style="max-width: 600px;">
                 <div class="modal-header">
                     <h2>➕ Add New Entry - Hop ${hop.hopNumber}</h2>
@@ -11164,19 +11168,41 @@ function showAddEntryWizard(hopId) {
 }
 
 function selectEntryType(hopId, entryType) {
+    console.log('selectEntryType called with:', hopId, entryType);
     closeAddEntryWizard();
     
     // Check if we should use wizards
     const wizardDisabled = localStorage.getItem('bats_hop_wizard_disabled') === 'true';
+    console.log('Wizard disabled:', wizardDisabled);
     
-    if (entryType === 'trace' && !wizardDisabled) {
-        // Use the existing trace wizard
-        showHopEntryWizard(hopId);
-    } else {
-        // For now, create other types directly
-        // In the future, we could add specific wizards for each type
-        createHopEntryDirectly(hopId, entryType);
-    }
+    // Add a small delay to prevent race condition with modal closing
+    setTimeout(() => {
+        console.log('Inside setTimeout - entryType:', entryType, 'wizardDisabled:', wizardDisabled);
+        if (entryType === 'trace' && !wizardDisabled) {
+            // Use the existing trace wizard
+            console.log('About to call showHopEntryWizard for hopId:', hopId);
+            try {
+                showHopEntryWizard(hopId);
+                console.log('showHopEntryWizard called successfully');
+                // Check if wizard was created
+                setTimeout(() => {
+                    const wizard = document.getElementById('hopEntryWizard');
+                    console.log('Wizard element found:', !!wizard);
+                    if (!wizard) {
+                        console.error('Wizard element not found after creation');
+                    }
+                }, 50);
+            } catch (error) {
+                console.error('Error showing hop entry wizard:', error);
+                alert('Error opening wizard: ' + error.message);
+            }
+        } else {
+            // For now, create other types directly
+            // In the future, we could add specific wizards for each type
+            console.log('Creating entry directly for type:', entryType);
+            createHopEntryDirectly(hopId, entryType);
+        }
+    }, 250);
 }
 
 function closeAddEntryWizard() {
@@ -11251,8 +11277,13 @@ function createHopEntryDirectly(hopId, entryType = 'trace') {
 }
 
 function showHopEntryWizard(hopId) {
+    console.log('showHopEntryWizard called for hopId:', hopId);
     const hop = investigation.hops.find(h => h.id === hopId);
-    if (!hop) return;
+    if (!hop) {
+        console.error('Hop not found in showHopEntryWizard:', hopId);
+        return;
+    }
+    console.log('Found hop:', hop);
     
     // Initialize wizard data
     window.hopWizardData = {
@@ -11266,7 +11297,7 @@ function showHopEntryWizard(hopId) {
     };
     
     const wizardHTML = `
-        <div id="hopEntryWizard" class="modal" style="display: block;">
+        <div id="hopEntryWizard" class="modal" style="display: block; z-index: 9999;">
             <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
                 <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10; border-bottom: 2px solid #eee; padding-bottom: 15px;">
                     <h2>🧙‍♂️ Hop Entry Wizard - Step 1 of 3</h2>
@@ -11297,7 +11328,16 @@ function showHopEntryWizard(hopId) {
         </div>
     `;
     
+    console.log('About to insert hop entry wizard HTML');
     document.body.insertAdjacentHTML('beforeend', wizardHTML);
+    console.log('Hop entry wizard HTML inserted');
+    
+    // Verify wizard was created
+    const wizardElement = document.getElementById('hopEntryWizard');
+    console.log('Wizard element exists after insertion:', !!wizardElement);
+    if (wizardElement) {
+        console.log('Wizard display style:', wizardElement.style.display);
+    }
     
     // Show first step
     showHopWizardStep(1);
