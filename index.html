@@ -4319,6 +4319,7 @@ function updateFormFieldsFromInvestigation() {
             const transactionId = victim.transactions.length + 1;
             victim.transactions.push({
                 id: transactionId,
+                txHash: '',
                 amount: '',
                 currency: 'USD',
                 customCurrency: '',
@@ -4364,16 +4365,35 @@ function updateFormFieldsFromInvestigation() {
                         ${isIncomplete ? '<div style="color: #856404; font-weight: bold; margin-bottom: 10px;">⚠️ Missing receiving wallet address!</div>' : ''}
                         <div class="trace-notation">V${victim.id}-T${transaction.id}</div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label>Transaction Hash</label>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <input type="text" 
+                                           id="txHash_victim_${victim.id}_${transaction.id}"
+                                           value="${transaction.txHash || ''}" 
+                                           placeholder="Paste transaction hash to auto-fill details"
+                                           onchange="updateTransaction(${victim.id}, ${transaction.id}, 'txHash', this.value)"
+                                           style="flex: 1;">
+                                    <button type="button" class="btn btn-sm btn-primary" 
+                                            onclick="lookupVictimTransaction(${victim.id}, ${transaction.id})"
+                                            style="padding: 6px 12px;">
+                                        🔍 Lookup
+                                    </button>
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label>Amount</label>
-                                <input type="number" step="${getCurrencyStep(transaction.currency)}" 
+                                <input type="number" 
+                                       id="amount_victim_${victim.id}_${transaction.id}"
+                                       step="${getCurrencyStep(transaction.currency)}" 
                                        value="${transaction.amount}" 
                                        onchange="updateTransaction(${victim.id}, ${transaction.id}, 'amount', this.value)"
                                        title="${currencies[transaction.currency]?.name || transaction.currency} supports ${getCurrencyDecimals(transaction.currency)} decimal places">
                             </div>
                             <div class="form-group">
                                 <label>Currency</label>
-                                <select onchange="updateTransactionCurrency(${victim.id}, ${transaction.id}, this.value)">
+                                <select id="currency_victim_${victim.id}_${transaction.id}"
+                                        onchange="updateTransactionCurrency(${victim.id}, ${transaction.id}, this.value)">
                                     ${Object.entries(currencies).map(([key, currency]) => 
                                         `<option value="${key}" ${transaction.currency === key ? 'selected' : ''}>${currency.name}</option>`
                                     ).join('')}
@@ -4383,7 +4403,9 @@ function updateFormFieldsFromInvestigation() {
                                 <label style="color: ${isIncomplete ? '#dc3545' : 'inherit'}; font-weight: ${isIncomplete ? 'bold' : 'normal'};">
                                     Receiving Wallet Address (RED Wallet) ${isIncomplete ? '- REQUIRED' : ''}
                                 </label>
-                                <input type="text" value="${transaction.receivingWallet || ''}" 
+                                <input type="text" 
+                                       id="receivingWallet_victim_${victim.id}_${transaction.id}"
+                                       value="${transaction.receivingWallet || ''}" 
                                        placeholder="Wallet address that received victim's funds"
                                        style="border-color: ${isIncomplete ? '#dc3545' : '#e8f0fe'};"
                                        onchange="updateTransaction(${victim.id}, ${transaction.id}, 'receivingWallet', this.value)">
@@ -4398,9 +4420,12 @@ function updateFormFieldsFromInvestigation() {
                             <div class="form-group">
                                 <label>Date & Time with Timezone</label>
                                 <div class="datetime-timezone">
-                                    <input type="datetime-local" value="${transaction.datetime}" 
+                                    <input type="datetime-local" 
+                                           id="datetime_victim_${victim.id}_${transaction.id}"
+                                           value="${transaction.datetime}" 
                                            onchange="updateTransaction(${victim.id}, ${transaction.id}, 'datetime', this.value)">
-                                    <select onchange="updateTransaction(${victim.id}, ${transaction.id}, 'timezone', this.value)">
+                                    <select id="timezone_victim_${victim.id}_${transaction.id}"
+                                            onchange="updateTransaction(${victim.id}, ${transaction.id}, 'timezone', this.value)">
                                         ${Object.entries(timezones).map(([key, value]) => 
                                             `<option value="${key}" ${transaction.timezone === key ? 'selected' : ''}>${value}</option>`
                                         ).join('')}
@@ -12624,6 +12649,171 @@ document.addEventListener('click', function(event) {
         });
     }
 });
+
+// Victim Transaction Lookup Function
+async function lookupVictimTransaction(victimId, transactionId) {
+    const txHashInput = document.getElementById(`txHash_victim_${victimId}_${transactionId}`);
+    const txHash = txHashInput.value.trim();
+    
+    if (!txHash) {
+        alert('Please paste a transaction hash first');
+        return;
+    }
+    
+    // Detect blockchain from hash
+    const detectedChain = detectBlockchainFromHash(txHash);
+    if (!detectedChain) {
+        alert('Unable to detect blockchain from transaction hash format');
+        return;
+    }
+    
+    // Show loading state
+    const lookupBtn = event.target;
+    const originalText = lookupBtn.textContent;
+    lookupBtn.textContent = '⏳ Loading...';
+    lookupBtn.disabled = true;
+    
+    try {
+        const config = blockchainAPIs[detectedChain];
+        const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
+        const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+        
+        // Build array of URLs to try (primary + fallbacks)
+        const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
+        let lastError = null;
+        let txData = null;
+        
+        for (let apiUrl of urlsToTry) {
+            try {
+                let data;
+                let url;
+                
+                if (detectedChain === 'bitcoin') {
+                    url = apiUrl + txHash;
+                    if (config.apiKey) {
+                        url += `?api_key=${config.apiKey}`;
+                    }
+                    if (corsEnabled) url = corsProxyUrl + url;
+                    
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Transaction not found');
+                    data = await response.json();
+                    
+                } else if (detectedChain === 'ethereum') {
+                    const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                    url = `${apiUrl}${txHash}&apikey=${apiKey}`;
+                    if (corsEnabled) url = corsProxyUrl + url;
+                    
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('API request failed');
+                    data = await response.json();
+                    if (!data.result || data.result === null) throw new Error('Transaction not found');
+                    
+                } else if (detectedChain === 'tron') {
+                    url = apiUrl + txHash;
+                    if (config.apiKey) {
+                        const headers = { 'TRON-PRO-API-KEY': config.apiKey };
+                        if (corsEnabled) url = corsProxyUrl + url;
+                        
+                        const response = await fetch(url, { headers });
+                        if (!response.ok) throw new Error('Transaction not found');
+                        data = await response.json();
+                    } else {
+                        if (corsEnabled) url = corsProxyUrl + url;
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error('Transaction not found');
+                        data = await response.json();
+                    }
+                    
+                } else if (detectedChain === 'solana') {
+                    url = apiUrl;
+                    if (corsEnabled) url = corsProxyUrl + url;
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            id: 1,
+                            method: 'getTransaction',
+                            params: [txHash, { encoding: 'json', maxSupportedTransactionVersion: 0 }]
+                        })
+                    });
+                    if (!response.ok) throw new Error('RPC request failed');
+                    data = await response.json();
+                    if (data.error) throw new Error(data.error.message);
+                }
+                
+                // Parse the response
+                txData = config.parseResponse(data);
+                if (!txData) throw new Error('Failed to parse transaction data');
+                
+                // Success! Break out of the loop
+                break;
+                
+            } catch (error) {
+                console.error(`Failed with ${apiUrl}:`, error);
+                lastError = error;
+                // Continue to next URL
+            }
+        }
+        
+        if (!txData) {
+            throw lastError || new Error('Failed to fetch transaction');
+        }
+        
+        // Apply the data to the victim transaction
+        const victim = investigation.victims.find(v => v.id === victimId);
+        const transaction = victim.transactions.find(t => t.id === transactionId);
+        
+        // Update amount
+        document.getElementById(`amount_victim_${victimId}_${transactionId}`).value = txData.amount;
+        transaction.amount = txData.amount.toString();
+        
+        // Update currency
+        document.getElementById(`currency_victim_${victimId}_${transactionId}`).value = txData.currency;
+        transaction.currency = txData.currency;
+        
+        // Update receiving wallet (the "to" address is the RED wallet)
+        document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`).value = txData.to;
+        transaction.receivingWallet = txData.to;
+        
+        // Update datetime
+        const date = new Date(txData.time);
+        const dateTimeLocal = date.toISOString().slice(0, 16);
+        document.getElementById(`datetime_victim_${victimId}_${transactionId}`).value = dateTimeLocal;
+        transaction.datetime = dateTimeLocal;
+        
+        // Set timezone to UTC
+        document.getElementById(`timezone_victim_${victimId}_${transactionId}`).value = 'UTC';
+        transaction.timezone = 'UTC';
+        
+        // Add note about the transaction
+        const notesInput = document.querySelector(`input[onchange*="updateTransaction(${victimId}, ${transactionId}, 'notes'"]`);
+        if (notesInput) {
+            notesInput.value = `From: ${txData.from} | ${config.name} transaction`;
+            transaction.notes = notesInput.value;
+        }
+        
+        // Save and re-render
+        saveToStorage();
+        renderVictims();
+        
+        alert(`✅ Transaction data retrieved successfully!\n\nAmount: ${txData.amount} ${txData.currency}\nFrom: ${txData.from}\nTo (RED Wallet): ${txData.to}\nTime: ${new Date(txData.time).toLocaleString()} UTC`);
+        
+    } catch (error) {
+        console.error('Lookup error:', error);
+        const errorMsg = error.message || 'Failed to fetch transaction';
+        if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
+            alert(`❌ ${errorMsg}\n\nTip: Enable CORS Proxy in API Settings or try again.`);
+        } else {
+            alert(`❌ Failed to fetch transaction: ${errorMsg}`);
+        }
+    } finally {
+        lookupBtn.textContent = originalText;
+        lookupBtn.disabled = false;
+    }
+}
     </script>
 </body>
 </html>
