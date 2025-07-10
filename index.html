@@ -5106,6 +5106,9 @@ const entryTypes = {
         updateWorkflowSteps();
         setupConversionModalListeners();
         
+        // Show Victims tab by default to avoid white screen
+        switchTab('victims');
+        
         // Check onboarding state on load
         setTimeout(() => checkOnboardingState(), 100);
         
@@ -14161,6 +14164,163 @@ async function fetchTransactionData(hash, blockchain) {
     }
     
     return null;
+}
+
+// Individual blockchain lookup functions for hop transactions
+async function lookupEthereumTransaction(txHash) {
+    const config = blockchainAPIs.ethereum;
+    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
+    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+    const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+    
+    // Build array of URLs to try (primary + fallbacks)
+    const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
+    
+    for (let apiUrl of urlsToTry) {
+        try {
+            // First get the basic transaction
+            let url = `${apiUrl}${txHash}&apikey=${apiKey}`;
+            if (corsEnabled) url = corsProxyUrl + url;
+            
+            const response = await fetch(url);
+            if (!response.ok) continue;
+            const data = await response.json();
+            if (!data.result || data.result === null) continue;
+            
+            // Also check for token transfers
+            let tokenData = null;
+            try {
+                const tokenUrl = corsEnabled ? 
+                    corsProxyUrl + `${config.tokenApiUrl}${txHash}&apikey=${apiKey}` :
+                    `${config.tokenApiUrl}${txHash}&apikey=${apiKey}`;
+                
+                const tokenResponse = await fetch(tokenUrl);
+                if (tokenResponse.ok) {
+                    tokenData = await tokenResponse.json();
+                }
+            } catch (err) {
+                console.log('No token transfers found');
+            }
+            
+            // Parse the response
+            const txData = config.parseResponse(data, tokenData);
+            if (txData) {
+                txData.blockchain = config.name;
+                txData.rawHash = txHash;
+                return txData;
+            }
+        } catch (error) {
+            console.error(`Failed with ${apiUrl}:`, error);
+        }
+    }
+    
+    throw new Error('Failed to fetch Ethereum transaction');
+}
+
+async function lookupBitcoinTransaction(txHash) {
+    const config = blockchainAPIs.bitcoin;
+    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
+    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+    
+    const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
+    
+    for (let apiUrl of urlsToTry) {
+        try {
+            let url = apiUrl + txHash;
+            if (config.apiKey) {
+                url += `?api_key=${config.apiKey}`;
+            }
+            if (corsEnabled) url = corsProxyUrl + url;
+            
+            const response = await fetch(url);
+            if (!response.ok) continue;
+            const data = await response.json();
+            
+            const txData = config.parseResponse(data);
+            if (txData) {
+                txData.blockchain = config.name;
+                txData.rawHash = txHash;
+                return txData;
+            }
+        } catch (error) {
+            console.error(`Failed with ${apiUrl}:`, error);
+        }
+    }
+    
+    throw new Error('Failed to fetch Bitcoin transaction');
+}
+
+async function lookupTronTransaction(txHash) {
+    const config = blockchainAPIs.tron;
+    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
+    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+    
+    const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
+    
+    for (let apiUrl of urlsToTry) {
+        try {
+            let url = apiUrl + txHash;
+            const headers = config.apiKey ? { 'TRON-PRO-API-KEY': config.apiKey } : {};
+            
+            if (corsEnabled) url = corsProxyUrl + url;
+            
+            const response = await fetch(url, { headers });
+            if (!response.ok) continue;
+            const data = await response.json();
+            
+            const txData = config.parseResponse(data);
+            if (txData) {
+                txData.blockchain = config.name;
+                txData.rawHash = txHash;
+                return txData;
+            }
+        } catch (error) {
+            console.error(`Failed with ${apiUrl}:`, error);
+        }
+    }
+    
+    throw new Error('Failed to fetch Tron transaction');
+}
+
+async function lookupSolanaTransaction(txHash) {
+    const config = blockchainAPIs.solana;
+    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
+    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+    
+    const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
+    
+    for (let apiUrl of urlsToTry) {
+        try {
+            let url = apiUrl;
+            if (corsEnabled) url = corsProxyUrl + url;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'getTransaction',
+                    params: [txHash, { encoding: 'json', maxSupportedTransactionVersion: 0 }]
+                })
+            });
+            
+            if (!response.ok) continue;
+            const data = await response.json();
+            if (data.error) continue;
+            
+            const txData = config.parseResponse(data);
+            if (txData) {
+                txData.blockchain = config.name;
+                txData.rawHash = txHash;
+                return txData;
+            }
+        } catch (error) {
+            console.error(`Failed with ${apiUrl}:`, error);
+        }
+    }
+    
+    throw new Error('Failed to fetch Solana transaction');
 }
 
 // Victim Transaction Lookup Function
