@@ -316,6 +316,7 @@
         <div class="nav-container">
             <div class="nav-links">
                 <a href="#overview">Overview</a>
+                <a href="#graph-illustration">Graph Structure</a>
                 <a href="#methodology">Methodology</a>
                 <a href="#notation">V-T-H Notation</a>
                 <a href="#colors">Wallet Colors</a>
@@ -342,14 +343,16 @@
             <h3>📑 Table of Contents</h3>
             <ul>
                 <li><a href="#overview">1. Overview - What is B.A.T.S.?</a></li>
-                <li><a href="#methodology">2. The B.A.T.S. Methodology</a></li>
-                <li><a href="#notation">3. Understanding V-T-H Notation</a></li>
-                <li><a href="#colors">4. Wallet Color Classification System</a></li>
-                <li><a href="#golden-thread">5. The Golden Thread Principle</a></li>
-                <li><a href="#judgment">6. Professional Judgment in B.A.T.S.</a></li>
-                <li><a href="#quick-start">7. Quick Start Guide</a></li>
-                <li><a href="#faq">8. Frequently Asked Questions</a></li>
-                <li><a href="#benefits">9. Benefits Overview</a></li>
+                <li><a href="#graph-illustration">2. BATS Investigation Graph Structure</a></li>
+                <li><a href="#methodology">3. The B.A.T.S. Methodology</a></li>
+                <li><a href="#notation">4. Understanding V-T-H Notation</a></li>
+                <li><a href="#colors">5. Wallet Color Classification System</a></li>
+                <li><a href="#golden-thread">6. The Golden Thread Principle</a></li>
+                <li><a href="#judgment">7. Professional Judgment in B.A.T.S.</a></li>
+                <li><a href="#quick-start">8. Quick Start Guide</a></li>
+                <li><a href="#faq">9. Frequently Asked Questions</a></li>
+                <li><a href="#deployment">10. Deployment & Security</a></li>
+                <li><a href="#benefits">11. Benefits Overview</a></li>
             </ul>
         </div>
 
@@ -380,6 +383,180 @@
 
             <div class="tip-box">
                 <strong>Remember:</strong> B.A.T.S. ensures that two different investigators analyzing the same case will reach identical conclusions, providing the reproducibility that courts demand.
+            </div>
+        </section>
+
+        <!-- Visual Graph Illustration Section -->
+        <section id="graph-illustration" class="section">
+            <h2>📊 BATS Investigation Graph Structure</h2>
+            
+            <p>The power of B.A.T.S. lies in its mathematical graph structure that creates an unbreakable chain of evidence. This visual representation shows how investigations maintain the golden thread from victims to terminal wallets.</p>
+            
+            <!-- SVG Graph Illustration -->
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; overflow-x: auto;">
+                <svg width="1000" height="600" viewBox="0 0 1000 600" style="max-width: 100%; height: auto;">
+                    <!-- Title -->
+                    <text x="500" y="30" text-anchor="middle" style="font-size: 20px; font-weight: bold; fill: #2c3e50;">
+                        B.A.T.S. Investigation Graph Structure
+                    </text>
+                    
+                    <!-- Legend -->
+                    <g id="legend" transform="translate(20, 50)">
+                        <text x="0" y="0" style="font-size: 14px; font-weight: bold;">Legend:</text>
+                        <circle cx="10" cy="20" r="8" fill="#e74c3c"/>
+                        <text x="25" y="25" style="font-size: 12px;">RED - Victim Facing</text>
+                        <circle cx="10" cy="40" r="8" fill="#f39c12"/>
+                        <text x="25" y="45" style="font-size: 12px;">YELLOW - Convergence Hub</text>
+                        <circle cx="10" cy="60" r="8" fill="#34495e"/>
+                        <text x="25" y="65" style="font-size: 12px;">BLACK - Intermediary</text>
+                        <circle cx="10" cy="80" r="8" fill="#9b59b6"/>
+                        <text x="25" y="85" style="font-size: 12px;">PURPLE - Exchange</text>
+                        <circle cx="10" cy="100" r="8" fill="#3498db"/>
+                        <text x="25" y="105" style="font-size: 12px;">BLUE - Cold Storage</text>
+                    </g>
+                    
+                    <!-- Victim Level -->
+                    <g id="victims">
+                        <text x="100" y="200" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Victims</text>
+                        <rect x="50" y="220" width="100" height="40" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
+                        <text x="100" y="245" text-anchor="middle" style="font-size: 12px;">V1-T1</text>
+                        <text x="100" y="280" text-anchor="middle" style="font-size: 10px;">$10,000 BTC</text>
+                        
+                        <rect x="50" y="290" width="100" height="40" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
+                        <text x="100" y="315" text-anchor="middle" style="font-size: 12px;">V2-T1</text>
+                        <text x="100" y="350" text-anchor="middle" style="font-size: 10px;">$5,000 ETH</text>
+                        
+                        <rect x="50" y="360" width="100" height="40" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
+                        <text x="100" y="385" text-anchor="middle" style="font-size: 12px;">V3-T1</text>
+                        <text x="100" y="420" text-anchor="middle" style="font-size: 10px;">$3,000 USDT</text>
+                    </g>
+                    
+                    <!-- RED Wallets (Hop 0) -->
+                    <g id="red-wallets">
+                        <text x="250" y="200" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Hop 0 (RED)</text>
+                        <circle cx="250" cy="240" r="20" fill="#e74c3c"/>
+                        <text x="250" y="245" text-anchor="middle" style="font-size: 10px; fill: white;">RED1</text>
+                        
+                        <circle cx="250" cy="310" r="20" fill="#e74c3c"/>
+                        <text x="250" y="315" text-anchor="middle" style="font-size: 10px; fill: white;">RED2</text>
+                        
+                        <circle cx="250" cy="380" r="20" fill="#e74c3c"/>
+                        <text x="250" y="385" text-anchor="middle" style="font-size: 10px; fill: white;">RED3</text>
+                    </g>
+                    
+                    <!-- Hop 1 -->
+                    <g id="hop1">
+                        <text x="400" y="200" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Hop 1</text>
+                        <circle cx="400" cy="240" r="20" fill="#34495e"/>
+                        <text x="400" y="245" text-anchor="middle" style="font-size: 10px; fill: white;">BLACK1</text>
+                        <text x="400" y="265" text-anchor="middle" style="font-size: 9px;">V1-T1-H1</text>
+                        
+                        <circle cx="400" cy="310" r="20" fill="#34495e"/>
+                        <text x="400" y="315" text-anchor="middle" style="font-size: 10px; fill: white;">BLACK2</text>
+                        <text x="400" y="335" text-anchor="middle" style="font-size: 9px;">V2-T1-H1</text>
+                        
+                        <circle cx="400" cy="380" r="20" fill="#34495e"/>
+                        <text x="400" y="385" text-anchor="middle" style="font-size: 10px; fill: white;">BLACK3</text>
+                        <text x="400" y="405" text-anchor="middle" style="font-size: 9px;">V3-T1-H1</text>
+                    </g>
+                    
+                    <!-- Convergence Point (YELLOW) -->
+                    <g id="convergence">
+                        <text x="550" y="200" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Hop 2</text>
+                        <circle cx="550" cy="310" r="25" fill="#f39c12"/>
+                        <text x="550" y="315" text-anchor="middle" style="font-size: 12px; fill: white;">YELLOW1</text>
+                        <text x="550" y="340" text-anchor="middle" style="font-size: 9px;">V1,2,3-T1-H2</text>
+                        <text x="550" y="355" text-anchor="middle" style="font-size: 10px; font-weight: bold;">$18,000 Total</text>
+                    </g>
+                    
+                    <!-- Hop 3 - Split -->
+                    <g id="hop3">
+                        <text x="700" y="200" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Hop 3</text>
+                        <circle cx="700" cy="260" r="20" fill="#9b59b6"/>
+                        <text x="700" y="265" text-anchor="middle" style="font-size: 10px; fill: white;">PURPLE1</text>
+                        <text x="700" y="285" text-anchor="middle" style="font-size: 9px;">Exchange A</text>
+                        <text x="700" y="300" text-anchor="middle" style="font-size: 9px;">$8,000</text>
+                        
+                        <circle cx="700" cy="360" r="20" fill="#3498db"/>
+                        <text x="700" y="365" text-anchor="middle" style="font-size: 10px; fill: white;">BLUE1</text>
+                        <text x="700" y="385" text-anchor="middle" style="font-size: 9px;">Cold Storage</text>
+                        <text x="700" y="400" text-anchor="middle" style="font-size: 9px;">$10,000</text>
+                    </g>
+                    
+                    <!-- Arrows showing flow -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+                        </marker>
+                    </defs>
+                    
+                    <!-- Victim to RED connections -->
+                    <line x1="150" y1="240" x2="230" y2="240" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <line x1="150" y1="310" x2="230" y2="310" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <line x1="150" y1="380" x2="230" y2="380" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    
+                    <!-- RED to Hop 1 connections -->
+                    <line x1="270" y1="240" x2="380" y2="240" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <line x1="270" y1="310" x2="380" y2="310" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <line x1="270" y1="380" x2="380" y2="380" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    
+                    <!-- Hop 1 to Convergence -->
+                    <line x1="420" y1="245" x2="525" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <line x1="420" y1="310" x2="525" y2="310" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <line x1="420" y1="375" x2="525" y2="320" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    
+                    <!-- Convergence to terminals -->
+                    <line x1="575" y1="300" x2="680" y2="265" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <line x1="575" y1="320" x2="680" y2="355" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    
+                    <!-- Mathematical Validation Box -->
+                    <g id="validation" transform="translate(750, 450)">
+                        <rect x="0" y="0" width="220" height="120" fill="#e8f5e8" stroke="#27ae60" stroke-width="2" rx="5"/>
+                        <text x="110" y="20" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Mathematical Validation</text>
+                        <text x="10" y="40" style="font-size: 12px;">Root Total: $18,000</text>
+                        <text x="10" y="60" style="font-size: 12px;">Hop 2 Total: $18,000 ✓</text>
+                        <text x="10" y="80" style="font-size: 12px;">Terminal Total: $18,000 ✓</text>
+                        <text x="10" y="100" style="font-size: 10px; fill: #27ae60;">All funds accounted for!</text>
+                    </g>
+                    
+                    <!-- Annotations -->
+                    <text x="500" y="450" text-anchor="middle" style="font-size: 12px; fill: #666;">
+                        Every transaction maintains V-T-H notation, creating an unbreakable audit trail
+                    </text>
+                    <text x="500" y="470" text-anchor="middle" style="font-size: 12px; fill: #666;">
+                        Mathematical validation at each hop ensures no funds are lost or created
+                    </text>
+                    <text x="500" y="490" text-anchor="middle" style="font-size: 12px; fill: #27ae60; font-weight: bold;">
+                        This graph structure is what makes B.A.T.S. evidence legally defensible
+                    </text>
+                </svg>
+            </div>
+            
+            <div class="grid">
+                <div class="card card-green">
+                    <h4>Why This Structure Works</h4>
+                    <ul>
+                        <li><strong>Directed Acyclic Graph (DAG):</strong> Funds flow in one direction, preventing circular logic</li>
+                        <li><strong>Node Classification:</strong> Wallet colors indicate function, not ownership</li>
+                        <li><strong>Edge Labels:</strong> V-T-H notation on every connection</li>
+                        <li><strong>Mathematical Constraints:</strong> Sum of inputs = Sum of outputs at each level</li>
+                    </ul>
+                </div>
+                
+                <div class="card card-blue">
+                    <h4>Key Graph Properties</h4>
+                    <ul>
+                        <li><strong>Completeness:</strong> Every dollar from victims reaches a terminal node</li>
+                        <li><strong>Traceability:</strong> Path from any node back to specific victim(s)</li>
+                        <li><strong>Convergence Detection:</strong> YELLOW nodes show criminal consolidation</li>
+                        <li><strong>Terminal Identification:</strong> PURPLE/BLUE nodes indicate investigation endpoints</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="tip-box">
+                <h4>The Power of Graph-Based Investigation</h4>
+                <p>By treating cryptocurrency flows as a mathematical graph, B.A.T.S. transforms subjective blockchain analysis into objective, court-ready evidence. The graph structure ensures that every investigative decision is documented, every fund movement is tracked, and the complete flow from victim to criminal is mathematically proven.</p>
             </div>
         </section>
 
