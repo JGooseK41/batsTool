@@ -3,14 +3,14 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 17:08)
+## Latest Commit (Auto-updated: 2025-07-10 17:10)
 
-**Commit:** b9ab7bb58ab2a43932cd6b41677efb4081835413
+**Commit:** 84be191278b5a3f6c6b91d31e54abbb78bc9ed55
 **Author:** Your Name
-**Message:** Fix template literal syntax error in renderVictims
+**Message:** Fix unexpected closing brace in template literal
 
-- Added missing backtick in template literal expression
-- Fixed template string interpolation syntax
+- Removed extra backtick and closing brace after join()
+- Fixed template string interpolation in victim rendering
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -18,23 +18,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 37 ++++++++++++++++++-------------------
+ CLAUDE.md  | 34 +++++++++++++++++-----------------
  index.html |  2 +-
- 2 files changed, 19 insertions(+), 20 deletions(-)
+ 2 files changed, 18 insertions(+), 18 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b9ab7bb Fix template literal syntax error in renderVictims (0 seconds ago)
-- b816ed6 Fix extra closing brace syntax error (2 minutes ago)
-- f64360d Fix syntax error in renderVictims function (5 minutes ago)
-- 4924b33 Fix hop entry functionality and token value handling (11 minutes ago)
-- 07f9461 Improve hop entry UX with transaction hash at top (16 minutes ago)
-- 2383e3f UI improvements for victim transactions (22 minutes ago)
-- a0fecda Add SSL success documentation and update troubleshooting guides (47 minutes ago)
-- 7dd59b9 Add Netlify DNS setup guide (55 minutes ago)
-- c214168 Add SSL certificate troubleshooting guide (58 minutes ago)
-- 4145bde Fix error preventing progression after root total generation (66 minutes ago)
+- 84be191 Fix unexpected closing brace in template literal (0 seconds ago)
+- b9ab7bb Fix template literal syntax error in renderVictims (2 minutes ago)
+- b816ed6 Fix extra closing brace syntax error (4 minutes ago)
+- f64360d Fix syntax error in renderVictims function (7 minutes ago)
+- 4924b33 Fix hop entry functionality and token value handling (13 minutes ago)
+- 07f9461 Improve hop entry UX with transaction hash at top (18 minutes ago)
+- 2383e3f UI improvements for victim transactions (24 minutes ago)
+- a0fecda Add SSL success documentation and update troubleshooting guides (49 minutes ago)
+- 7dd59b9 Add Netlify DNS setup guide (57 minutes ago)
+- c214168 Add SSL certificate troubleshooting guide (60 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
