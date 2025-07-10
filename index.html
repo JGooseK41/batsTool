@@ -5735,6 +5735,10 @@ function updateFormFieldsFromInvestigation() {
                         Will show traced funds
                     </span>
                     <span style="display: flex; align-items: center; gap: 5px;">
+                        <span style="width: 14px; height: 14px; background: #9b59b6; border-radius: 3px;"></span>
+                        Will show exchange/VASP
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 5px;">
                         <span style="width: 14px; height: 14px; background: #3498db; border-radius: 3px;"></span>
                         Will show cold storage
                     </span>
@@ -7969,6 +7973,7 @@ function renderARTProgressBars(hop) {
                 traced: 0,
                 writeoff: 0,
                 coldStorage: 0,
+                vasp: 0,
                 remaining: amount
             };
         }
@@ -7986,13 +7991,19 @@ function renderARTProgressBars(hop) {
                     traced: 0,
                     writeoff: 0,
                     coldStorage: 0,
+                    vasp: 0,
                     remaining: 0
                 };
             }
             
             switch (entry.entryType) {
                 case 'trace':
-                    breakdown[currency].traced += amount;
+                    // Check if this trace goes to a VASP/exchange (purple wallet)
+                    if (entry.toWalletType === 'purple') {
+                        breakdown[currency].vasp += amount;
+                    } else {
+                        breakdown[currency].traced += amount;
+                    }
                     breakdown[currency].remaining -= amount;
                     break;
                 case 'writeoff':
@@ -8018,6 +8029,7 @@ function renderARTProgressBars(hop) {
         const tracedPct = (data.traced / total) * 100;
         const writeoffPct = (data.writeoff / total) * 100;
         const coldStoragePct = (data.coldStorage / total) * 100;
+        const vaspPct = (data.vasp / total) * 100;
         const remainingPct = (data.remaining / total) * 100;
         
         html += `
@@ -8038,23 +8050,30 @@ function renderARTProgressBars(hop) {
                         </div>
                     ` : ''}
                     
+                    <!-- VASP/Exchange (Purple) -->
+                    ${vaspPct > 0 ? `
+                        <div style="position: absolute; left: ${tracedPct}%; top: 0; height: 100%; width: ${vaspPct}%; background: #9b59b6; transition: all 0.3s ease;"
+                             title="Sent to Exchange/VASP: ${data.vasp.toLocaleString()} ${currency} (${vaspPct.toFixed(1)}%)">
+                        </div>
+                    ` : ''}
+                    
                     <!-- Write-off (Gray) -->
                     ${writeoffPct > 0 ? `
-                        <div style="position: absolute; left: ${tracedPct}%; top: 0; height: 100%; width: ${writeoffPct}%; background: #95a5a6; transition: all 0.3s ease;"
+                        <div style="position: absolute; left: ${tracedPct + vaspPct}%; top: 0; height: 100%; width: ${writeoffPct}%; background: #95a5a6; transition: all 0.3s ease;"
                              title="Written off: ${data.writeoff.toLocaleString()} ${currency} (${writeoffPct.toFixed(1)}%)">
                         </div>
                     ` : ''}
                     
                     <!-- Cold Storage (Blue) -->
                     ${coldStoragePct > 0 ? `
-                        <div style="position: absolute; left: ${tracedPct + writeoffPct}%; top: 0; height: 100%; width: ${coldStoragePct}%; background: #3498db; transition: all 0.3s ease;"
+                        <div style="position: absolute; left: ${tracedPct + vaspPct + writeoffPct}%; top: 0; height: 100%; width: ${coldStoragePct}%; background: #3498db; transition: all 0.3s ease;"
                              title="Cold Storage: ${data.coldStorage.toLocaleString()} ${currency} (${coldStoragePct.toFixed(1)}%)">
                         </div>
                     ` : ''}
                     
                     <!-- Remaining (Red) -->
                     ${remainingPct > 0.1 ? `
-                        <div style="position: absolute; left: ${tracedPct + writeoffPct + coldStoragePct}%; top: 0; height: 100%; width: ${remainingPct}%; background: #e74c3c; transition: all 0.3s ease;"
+                        <div style="position: absolute; left: ${tracedPct + vaspPct + writeoffPct + coldStoragePct}%; top: 0; height: 100%; width: ${remainingPct}%; background: #e74c3c; transition: all 0.3s ease;"
                              title="Remaining to account: ${data.remaining.toLocaleString()} ${currency} (${remainingPct.toFixed(1)}%)">
                         </div>
                     ` : ''}
@@ -8075,6 +8094,12 @@ function renderARTProgressBars(hop) {
                         <span style="display: flex; align-items: center; gap: 5px;">
                             <span style="width: 12px; height: 12px; background: #27ae60; border-radius: 2px;"></span>
                             Traced: ${data.traced.toLocaleString()}
+                        </span>
+                    ` : ''}
+                    ${data.vasp > 0 ? `
+                        <span style="display: flex; align-items: center; gap: 5px;">
+                            <span style="width: 12px; height: 12px; background: #9b59b6; border-radius: 2px;"></span>
+                            Exchange/VASP: ${data.vasp.toLocaleString()}
                         </span>
                     ` : ''}
                     ${data.writeoff > 0 ? `

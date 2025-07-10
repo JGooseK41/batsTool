@@ -3,17 +3,24 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 18:58)
+## Latest Commit (Auto-updated: 2025-07-10 19:04)
 
-**Commit:** ff7f197a932d698d8bf6bebad01847d393b47c13
+**Commit:** b7b101f6b622a3c4d8dcae8a8c0de5f667a32f69
 **Author:** Your Name
-**Message:** Add entry type selection wizard for better UX
+**Message:** Add visual ART progress bars for fund tracking
 
-- Replaced dropdown + button with single "Add New Entry" button
-- Created visual wizard showing all entry types with icons and descriptions
-- Each entry type has clear explanation of when to use it
-- Clicking an entry type either launches the trace wizard or creates the entry
-- Cleaner, more intuitive interface for adding hop entries
+- Created horizontal progress bars showing fund allocation by currency
+- Color-coded segments:
+  - Green: Successfully traced funds
+  - Gray: Written off funds
+  - Blue: Cold storage
+  - Red: Remaining unaccounted funds
+- Added progress bars to:
+  - Root total confirmation modal (preview mode)
+  - Each hop's ART summary section
+- Includes hover tooltips showing exact amounts and percentages
+- Legend shows what each color represents
+- Real-time updates as entries are added
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -21,23 +28,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 42 +++++++++++++++------------
- index.html | 95 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 111 insertions(+), 26 deletions(-)
+ CLAUDE.md  |  42 ++++++-------
+ index.html | 210 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 228 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ff7f197 Add entry type selection wizard for better UX (0 seconds ago)
-- d4eb009 Improve hop entry workflow with wizard and better button explanations (6 minutes ago)
-- 49a0636 Fix initial white screen and missing blockchain lookup functions (9 minutes ago)
-- 58f3548 Fix template literal syntax errors on lines 5557 and 5592 (41 minutes ago)
-- c803494 Fix template literal syntax error on line 5557 (46 minutes ago)
-- ef38132 Fix template literal structure on line 5557 (73 minutes ago)
-- 6cd39e0 Fix missing backtick in template expression (74 minutes ago)
-- 4782757 Fix template literal syntax - swap backtick and brace position (79 minutes ago)
+- b7b101f Add visual ART progress bars for fund tracking (0 seconds ago)
+- ff7f197 Add entry type selection wizard for better UX (6 minutes ago)
+- d4eb009 Improve hop entry workflow with wizard and better button explanations (12 minutes ago)
+- 49a0636 Fix initial white screen and missing blockchain lookup functions (16 minutes ago)
+- 58f3548 Fix template literal syntax errors on lines 5557 and 5592 (47 minutes ago)
+- c803494 Fix template literal syntax error on line 5557 (53 minutes ago)
+- ef38132 Fix template literal structure on line 5557 (79 minutes ago)
+- 6cd39e0 Fix missing backtick in template expression (81 minutes ago)
+- 4782757 Fix template literal syntax - swap backtick and brace position (85 minutes ago)
 - aa39a3a Remove carriage return characters causing syntax error (2 hours ago)
-- a865d8b Fix extra closing brace in template literal (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
