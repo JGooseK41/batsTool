@@ -5625,44 +5625,84 @@ function updateFormFieldsFromInvestigation() {
 }
 
         function confirmAndProceed() {
-            investigation.rootTotalConfirmed = true;
-            
-            // Store confirmed root totals by currency
-            investigation.confirmedRootTotalsByCurrency = {};
-            investigation.victims.forEach(victim => {
-                victim.transactions.forEach(transaction => {
-                    if (parseFloat(transaction.amount) > 0) {
-                        const currency = transaction.currency === 'CUSTOM' ? transaction.customCurrency : transaction.currency;
-                        if (!investigation.confirmedRootTotalsByCurrency[currency]) {
-                            investigation.confirmedRootTotalsByCurrency[currency] = 0;
+            try {
+                console.log('Starting confirmAndProceed...');
+                
+                investigation.rootTotalConfirmed = true;
+                
+                // Store confirmed root totals by currency
+                investigation.confirmedRootTotalsByCurrency = {};
+                investigation.victims.forEach(victim => {
+                    victim.transactions.forEach(transaction => {
+                        if (parseFloat(transaction.amount) > 0) {
+                            const currency = transaction.currency === 'CUSTOM' ? transaction.customCurrency : transaction.currency;
+                            if (!investigation.confirmedRootTotalsByCurrency[currency]) {
+                                investigation.confirmedRootTotalsByCurrency[currency] = 0;
+                            }
+                            investigation.confirmedRootTotalsByCurrency[currency] += parseFloat(transaction.amount);
                         }
-                        investigation.confirmedRootTotalsByCurrency[currency] += parseFloat(transaction.amount);
-                    }
+                    });
                 });
-            });
-            
-            // Keep legacy confirmedRootTotal for backward compatibility (sum of all)
-            investigation.confirmedRootTotal = Object.values(investigation.confirmedRootTotalsByCurrency).reduce((sum, amount) => sum + amount, 0);
-            
-            // Build Universal Wallet Index and Red Wallet Index from victim transactions
-            buildUniversalWalletIndex();
-            buildRedWalletIndex();
-            
-            closeModal();
-            updateValidationStatus();
-            updateWorkflowSteps();
-            updateGenerateRootSection();
-            saveToStorage();
-            
-            // Auto-save investigation
-            saveInvestigation();
+                
+                console.log('Root totals by currency:', investigation.confirmedRootTotalsByCurrency);
+                
+                // Keep legacy confirmedRootTotal for backward compatibility (sum of all)
+                investigation.confirmedRootTotal = Object.values(investigation.confirmedRootTotalsByCurrency).reduce((sum, amount) => sum + amount, 0);
+                
+                // Initialize currentART with the confirmed root totals
+                investigation.currentART = {...investigation.confirmedRootTotalsByCurrency};
+                
+                console.log('Total root amount:', investigation.confirmedRootTotal);
+                console.log('Current ART:', investigation.currentART);
+                
+                // Build Universal Wallet Index and Red Wallet Index from victim transactions
+                console.log('Building wallet indexes...');
+                buildUniversalWalletIndex();
+                buildRedWalletIndex();
+                
+                // Close modal first
+                console.log('Closing modal...');
+                closeModal();
+                
+                // Update various statuses
+                console.log('Updating statuses...');
+                updateValidationStatus();
+                updateWorkflowSteps();
+                updateGenerateRootSection();
+                saveToStorage();
+                
+                // Auto-save investigation
+                console.log('Auto-saving investigation...');
+                saveInvestigation();
             
             // Switch to traces tab
-            switchTab('traces');
-            document.querySelector('[onclick="switchTab(\'traces\')"]').click();
+            try {
+                switchTab('traces');
+                
+                // Force re-render hops to show ready state
+                renderHops();
+                
+                // Show success message
+                setTimeout(() => {
+                    alert('✅ Root Total Confirmed!\n\nYour investigation baseline has been established. You can now begin tracing funds from the RED wallets.');
+                }, 100);
+            } catch (error) {
+                console.error('Error switching to traces tab:', error);
+                alert('Root total confirmed, but there was an error switching tabs. Please manually click on "Trace Documentation" to continue.');
+            }
             
-            // Force re-render hops to show ready state
-            renderHops();
+            } catch (error) {
+                console.error('Error in confirmAndProceed:', error);
+                alert(`An error occurred while confirming the root total:\n\n${error.message}\n\nPlease check the console for more details.`);
+                
+                // Try to save what we can
+                try {
+                    investigation.rootTotalConfirmed = true;
+                    saveToStorage();
+                } catch (saveError) {
+                    console.error('Error saving after error:', saveError);
+                }
+            }
         }
 
         function buildRedWalletIndex() {

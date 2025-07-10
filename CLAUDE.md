@@ -3,26 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 15:52)
+## Latest Commit (Auto-updated: 2025-07-10 15:56)
 
-**Commit:** 4295dde5c5c55caea88b406c4892cc65fcb6d94d
+**Commit:** 1ae3b49380afc177b368d9c3c0c566c11f472ace
 **Author:** Your Name
-**Message:** Fix SSL certificate mismatch and improve domain handling
+**Message:** Add BATS Investigation Graph Structure illustration to training
 
-- Updated HTTPS enforcement to handle multiple trusted domains
-- Added batstool.com to trusted domains list
-- Created netlify.toml configuration file with:
-  - Proper redirect rules for HTTPS enforcement
-  - Security headers configuration
-  - Cache control settings
-  - CSP policy allowing required external APIs
-- Made HTTPS redirect more intelligent (skip for localhost)
-- Added domain validation to prevent redirect loops
+- Created comprehensive SVG diagram showing the mathematical graph structure
+- Illustrates flow from victims through RED, BLACK, YELLOW wallets to terminals
+- Shows convergence at YELLOW hub wallet demonstrating criminal consolidation
+- Includes mathematical validation box showing how totals are verified
+- Added explanatory cards about graph properties (DAG, completeness, traceability)
+- Demonstrates V-T-H notation on actual graph edges
+- Visual legend for all wallet color classifications
+- Shows why the graph structure makes evidence legally defensible
 
-To complete SSL setup:
-1. Add batstool.com as custom domain in Netlify dashboard
-2. Wait for automatic SSL certificate provisioning (5-15 mins)
-3. Ensure DNS points to Netlify servers
+This visual clearly articulates both the reason for the process and how it fundamentally functions as a mathematical proof system.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -30,24 +26,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md    | 45 ++++++++++++++++++++++-----------------
- index.html   | 27 ++++++++++++++++++++----
- netlify.toml | 69 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 118 insertions(+), 23 deletions(-)
+ CLAUDE.md     |  52 ++++++++--------
+ training.html | 193 +++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 211 insertions(+), 34 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4295dde Fix SSL certificate mismatch and improve domain handling (0 seconds ago)
-- 13e9872 Add HTTPS enforcement and security features (2 minutes ago)
-- f8a59a5 Fix critical transaction selection modal data population issue (13 minutes ago)
-- 6a44eb2 Update B.A.T.S. training to emphasize documentation over identical results (19 minutes ago)
-- c775b9a Create dedicated B.A.T.S. Training page (34 minutes ago)
-- 4918949 Fix JavaScript errors and duplicate variable declarations (51 minutes ago)
+- 1ae3b49 Add BATS Investigation Graph Structure illustration to training (0 seconds ago)
+- 4295dde Fix SSL certificate mismatch and improve domain handling (4 minutes ago)
+- 13e9872 Add HTTPS enforcement and security features (6 minutes ago)
+- f8a59a5 Fix critical transaction selection modal data population issue (17 minutes ago)
+- 6a44eb2 Update B.A.T.S. training to emphasize documentation over identical results (23 minutes ago)
+- c775b9a Create dedicated B.A.T.S. Training page (38 minutes ago)
+- 4918949 Fix JavaScript errors and duplicate variable declarations (55 minutes ago)
 - 5732873 Add comprehensive BATS Info tab and documentation (2 hours ago)
-- fcbd8cd Add submit button to investigation setup card (4 hours ago)
+- fcbd8cd Add submit button to investigation setup card (5 hours ago)
 - 5e7cad5 Improve UI workflow and fix transfer selection functionality (5 hours ago)
-- d724e0c Redesign case details layout for improved UX (5 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
