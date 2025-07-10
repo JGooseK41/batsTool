@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
+            background: #f0f4f8;
             min-height: 100vh;
             color: #2c3e50;
         }
@@ -972,10 +972,16 @@
         </div>
 
         <!-- Case Details Card (Horizontal) -->
-        <div class="case-details-card" style="background: white; border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 1px solid #e8f0fe;">
-            <div class="section-title" style="margin-bottom: 20px;">Investigation Setup</div>
+        <div id="caseDetailsCard" class="case-details-card" style="background: linear-gradient(135deg, #fff5e6 0%, #ffe4cc 100%); border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 2px solid #ff9800; transition: all 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <div class="section-title" style="margin-bottom: 5px; color: #e65100;">Step 1: Investigation Setup</div>
+                    <div style="font-size: 12px; color: #666;">Complete all fields to begin your investigation</div>
+                </div>
+                <button id="toggleSetupBtn" onclick="toggleSetupCard()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #e65100; display: none;">▼</button>
+            </div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <div id="setupContent" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
                 <div class="form-group" style="margin-bottom: 0;">
                     <label for="caseId">Case ID</label>
                     <input type="text" id="caseId" placeholder="e.g., CASE-2025-001">
@@ -1044,23 +1050,23 @@
                             Block Audit Tracing Standard - Professional Cryptocurrency Investigation Tool
                         </p>
                         
-                        <div style="background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%); border: 2px solid #27ae60; border-radius: 12px; padding: 40px; margin-bottom: 30px;">
+                        <div style="background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%); border: 2px solid #27ae60; border-radius: 12px; padding: 40px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.1);">
                             <h2 style="color: #27ae60; margin-bottom: 20px;">🚀 Let's Get Started!</h2>
                             <p style="font-size: 1.1rem; color: #2c3e50; margin-bottom: 30px;">
-                                Begin by documenting your victim's transactions. This establishes the foundation for your entire investigation.
+                                Follow the steps below to begin your cryptocurrency investigation
                             </p>
                             
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
-                                <div style="background: white; padding: 20px; border-radius: 8px; text-align: left;">
-                                    <h3 style="color: #27ae60; margin-bottom: 10px;">📝 Step 1: Case Details</h3>
-                                    <p style="color: #666;">Fill in the case information on the left sidebar</p>
+                                <div style="background: linear-gradient(135deg, #fff5e6 0%, #ffe4cc 100%); padding: 20px; border-radius: 8px; text-align: left; border: 2px solid #ff9800; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1);">
+                                    <h3 style="color: #e65100; margin-bottom: 10px;">📝 Step 1a: Case Details</h3>
+                                    <p style="color: #666;">Complete the investigation setup above</p>
                                 </div>
-                                <div style="background: white; padding: 20px; border-radius: 8px; text-align: left;">
-                                    <h3 style="color: #3498db; margin-bottom: 10px;">👥 Step 2: Add Victims</h3>
+                                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; text-align: left; border: 2px solid #2196f3; box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);">
+                                    <h3 style="color: #0d47a1; margin-bottom: 10px;">👥 Step 1b: Add Victims</h3>
                                     <p style="color: #666;">Document all victim transactions with hashes</p>
                                 </div>
-                                <div style="background: white; padding: 20px; border-radius: 8px; text-align: left;">
-                                    <h3 style="color: #e67e22; margin-bottom: 10px;">✅ Step 3: Confirm Total</h3>
+                                <div style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding: 20px; border-radius: 8px; text-align: left; border: 2px solid #ff9800; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1);">
+                                    <h3 style="color: #e65100; margin-bottom: 10px;">✅ Step 2: Confirm Total</h3>
                                     <p style="color: #666;">Establish your investigation's root total</p>
                                 </div>
                             </div>
@@ -4865,6 +4871,15 @@ function updateFormFieldsFromInvestigation() {
                 renderBlueWalletIndex();
             } else if (tabName === 'victims') {
                 renderVictims();
+                // Auto-collapse setup card if it's complete
+                if (isSetupComplete()) {
+                    const setupContent = document.getElementById('setupContent');
+                    const toggleBtn = document.getElementById('toggleSetupBtn');
+                    const card = document.getElementById('caseDetailsCard');
+                    if (setupContent && setupContent.style.display !== 'none') {
+                        toggleSetupCard();
+                    }
+                }
             } else if (tabName === 'flowdiagram') {
                 // Flow diagram will be generated on demand
                 // Check if we have data to visualize
@@ -4992,21 +5007,22 @@ function updateFormFieldsFromInvestigation() {
                         ${isIncomplete ? '<div style="color: #856404; font-weight: bold; margin-bottom: 10px;">⚠️ Missing receiving wallet address!</div>' : ''}
                         <div class="trace-notation">V${victim.id}-T${transaction.id}</div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
-                            <div class="form-group" style="grid-column: span 2;">
-                                <label>Transaction Hash</label>
+                            <div class="form-group" style="grid-column: span 2; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; border: 2px solid #2196f3; margin-bottom: 15px;">
+                                <label style="font-weight: bold; color: #0d47a1; font-size: 16px;">📌 Transaction Hash (Start Here)</label>
                                 <div style="display: flex; gap: 10px; align-items: center;">
                                     <input type="text" 
                                            id="txHash_victim_${victim.id}_${transaction.id}"
                                            value="${transaction.txHash || ''}" 
                                            placeholder="Paste transaction hash to auto-fill details"
                                            onchange="updateTransaction(${victim.id}, ${transaction.id}, 'txHash', this.value)"
-                                           style="flex: 1;">
+                                           style="flex: 1; font-size: 16px; padding: 14px; border: 2px solid #2196f3;">
                                     <button type="button" class="btn btn-sm btn-primary" 
                                             onclick="lookupVictimTransaction(${victim.id}, ${transaction.id})"
-                                            style="padding: 6px 12px;">
+                                            style="padding: 10px 20px; font-size: 16px; background: #2196f3;">
                                         🔍 Lookup
                                     </button>
                                 </div>
+                                <div style="font-size: 12px; color: #0d47a1; margin-top: 8px;">Paste the transaction hash and click Lookup to automatically fetch transaction details</div>
                             </div>
                             <div class="form-group">
                                 <label>Amount</label>
@@ -13590,8 +13606,8 @@ async function lookupVictimTransaction(victimId, transactionId) {
         return;
     }
     
-    // Show loading state
-    const lookupBtn = event.target;
+    // Show loading state - find the button that was clicked
+    const lookupBtn = document.querySelector(`button[onclick*="lookupVictimTransaction(${victimId}, ${transactionId})"]`);
     const originalText = lookupBtn.textContent;
     lookupBtn.textContent = '⏳ Loading...';
     lookupBtn.disabled = true;
@@ -14987,6 +15003,56 @@ Note: Block timestamp will be added when available.`);
                 }
             }, 300);
         }
+
+        // Toggle setup card collapse
+        function toggleSetupCard() {
+            const setupContent = document.getElementById('setupContent');
+            const toggleBtn = document.getElementById('toggleSetupBtn');
+            const card = document.getElementById('caseDetailsCard');
+            
+            if (setupContent.style.display === 'none') {
+                setupContent.style.display = 'grid';
+                toggleBtn.innerHTML = '▼';
+                card.style.paddingBottom = '25px';
+            } else {
+                setupContent.style.display = 'none';
+                toggleBtn.innerHTML = '▶';
+                card.style.paddingBottom = '15px';
+            }
+        }
+        
+        // Check if setup is complete
+        function isSetupComplete() {
+            const caseId = document.getElementById('caseId').value;
+            const investigator = document.getElementById('investigator').value;
+            const caseType = document.getElementById('caseType').value;
+            const caseSynopsis = document.getElementById('caseSynopsis').value;
+            
+            return caseId && investigator && caseType && caseSynopsis;
+        }
+        
+        // Update setup card based on completion
+        function updateSetupCard() {
+            const toggleBtn = document.getElementById('toggleSetupBtn');
+            const card = document.getElementById('caseDetailsCard');
+            
+            if (isSetupComplete()) {
+                toggleBtn.style.display = 'block';
+                card.style.background = 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)';
+                card.style.borderColor = '#28a745';
+            }
+        }
+        
+        // Add event listeners to setup fields
+        document.addEventListener('DOMContentLoaded', function() {
+            ['caseId', 'investigator', 'caseType', 'caseSynopsis'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', updateSetupCard);
+                    element.addEventListener('blur', updateSetupCard);
+                }
+            });
+        });
     </script>
 </body>
 </html>
