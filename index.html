@@ -5698,7 +5698,59 @@ function updateFormFieldsFromInvestigation() {
     
     document.getElementById('totalRootAmount').innerHTML = totalDisplay;
     
-    let breakdown = '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0; border: 1px solid #ddd;">';
+    // Add visual progress bars for root total
+    let progressBars = '<div style="background: white; padding: 20px; border-radius: 8px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
+    progressBars += '<h4 style="margin-bottom: 15px; color: #2c3e50;">📊 Investigation Progress Overview</h4>';
+    progressBars += '<p style="color: #666; margin-bottom: 15px; font-size: 14px;">These bars will track your progress as you trace funds through the investigation.</p>';
+    
+    Object.entries(totalsByCurrency).forEach(([currency, total]) => {
+        progressBars += `
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="font-size: 16px;">${currency}</strong>
+                    <span style="font-size: 14px; color: #666;">
+                        ${total.toLocaleString()} total
+                    </span>
+                </div>
+                
+                <!-- Progress Bar Preview -->
+                <div style="position: relative; height: 35px; background: #f5f5f5; border-radius: 20px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Starting state - all red (unaccounted) -->
+                    <div style="position: absolute; left: 0; top: 0; height: 100%; width: 100%; background: #e74c3c;"
+                         title="All funds currently unaccounted">
+                    </div>
+                    
+                    <!-- Label -->
+                    <div style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                        <span style="color: white; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                            100% Unaccounted
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Legend Preview -->
+                <div style="display: flex; gap: 20px; margin-top: 10px; font-size: 12px; flex-wrap: wrap;">
+                    <span style="display: flex; align-items: center; gap: 5px;">
+                        <span style="width: 14px; height: 14px; background: #27ae60; border-radius: 3px;"></span>
+                        Will show traced funds
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 5px;">
+                        <span style="width: 14px; height: 14px; background: #3498db; border-radius: 3px;"></span>
+                        Will show cold storage
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 5px;">
+                        <span style="width: 14px; height: 14px; background: #95a5a6; border-radius: 3px;"></span>
+                        Will show write-offs
+                    </span>
+                </div>
+            </div>
+        `;
+    });
+    
+    progressBars += '</div>';
+    
+    let breakdown = progressBars;
+    breakdown += '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0; border: 1px solid #ddd;">';
     breakdown += '<h4 style="margin-bottom: 15px; color: #2c3e50;">📋 Transaction Breakdown by Currency:</h4>';
     
     investigation.victims.forEach(victim => {
@@ -7863,6 +7915,11 @@ function exportUniversalWalletIndex() {
                                             </div>
                                         ` : ''}
                                     </div>
+                                    
+                                    <!-- Visual ART Progress Bars -->
+                                    <div style="margin-top: 20px;">
+                                        ${renderARTProgressBars(hop)}
+                                    </div>
                                 </div>
                             ` : ''}
                             
@@ -7894,6 +7951,157 @@ function exportUniversalWalletIndex() {
             // Update add hop button and complete investigation section visibility
             updateInvestigationCompletionStatus();
         }
+
+// Render visual ART progress bars
+function renderARTProgressBars(hop) {
+    // Get ART data for this hop
+    const hopIndex = investigation.hops.findIndex(h => h.id === hop.id);
+    const startingART = getStartingARTForHop(hop.id);
+    
+    // Calculate amounts by category for each currency
+    const breakdown = {};
+    
+    // Initialize with starting ART
+    Object.entries(startingART).forEach(([currency, amount]) => {
+        if (amount > 0) {
+            breakdown[currency] = {
+                total: amount,
+                traced: 0,
+                writeoff: 0,
+                coldStorage: 0,
+                remaining: amount
+            };
+        }
+    });
+    
+    // Process entries
+    hop.entries.forEach(entry => {
+        const amount = parseFloat(entry.amount) || 0;
+        if (amount > 0 && entry.currency) {
+            const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+            
+            if (!breakdown[currency]) {
+                breakdown[currency] = {
+                    total: 0,
+                    traced: 0,
+                    writeoff: 0,
+                    coldStorage: 0,
+                    remaining: 0
+                };
+            }
+            
+            switch (entry.entryType) {
+                case 'trace':
+                    breakdown[currency].traced += amount;
+                    breakdown[currency].remaining -= amount;
+                    break;
+                case 'writeoff':
+                    breakdown[currency].writeoff += amount;
+                    breakdown[currency].remaining -= amount;
+                    break;
+                case 'cold_storage':
+                    breakdown[currency].coldStorage += amount;
+                    breakdown[currency].remaining -= amount;
+                    break;
+            }
+        }
+    });
+    
+    // Generate progress bars
+    let html = '';
+    
+    Object.entries(breakdown).forEach(([currency, data]) => {
+        const total = data.total;
+        if (total <= 0) return;
+        
+        // Calculate percentages
+        const tracedPct = (data.traced / total) * 100;
+        const writeoffPct = (data.writeoff / total) * 100;
+        const coldStoragePct = (data.coldStorage / total) * 100;
+        const remainingPct = (data.remaining / total) * 100;
+        
+        html += `
+            <div style="margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <strong>${currency}</strong>
+                    <span style="font-size: 12px; color: #666;">
+                        ${data.total.toLocaleString()} total
+                    </span>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div style="position: relative; height: 30px; background: #f5f5f5; border-radius: 15px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Traced (Green) -->
+                    ${tracedPct > 0 ? `
+                        <div style="position: absolute; left: 0; top: 0; height: 100%; width: ${tracedPct}%; background: #27ae60; transition: width 0.3s ease;"
+                             title="Traced: ${data.traced.toLocaleString()} ${currency} (${tracedPct.toFixed(1)}%)">
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Write-off (Gray) -->
+                    ${writeoffPct > 0 ? `
+                        <div style="position: absolute; left: ${tracedPct}%; top: 0; height: 100%; width: ${writeoffPct}%; background: #95a5a6; transition: all 0.3s ease;"
+                             title="Written off: ${data.writeoff.toLocaleString()} ${currency} (${writeoffPct.toFixed(1)}%)">
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Cold Storage (Blue) -->
+                    ${coldStoragePct > 0 ? `
+                        <div style="position: absolute; left: ${tracedPct + writeoffPct}%; top: 0; height: 100%; width: ${coldStoragePct}%; background: #3498db; transition: all 0.3s ease;"
+                             title="Cold Storage: ${data.coldStorage.toLocaleString()} ${currency} (${coldStoragePct.toFixed(1)}%)">
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Remaining (Red) -->
+                    ${remainingPct > 0.1 ? `
+                        <div style="position: absolute; left: ${tracedPct + writeoffPct + coldStoragePct}%; top: 0; height: 100%; width: ${remainingPct}%; background: #e74c3c; transition: all 0.3s ease;"
+                             title="Remaining to account: ${data.remaining.toLocaleString()} ${currency} (${remainingPct.toFixed(1)}%)">
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Percentage labels -->
+                    <div style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; padding: 0 10px; pointer-events: none;">
+                        ${tracedPct > 15 ? `
+                            <span style="color: white; font-size: 11px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                                ${tracedPct.toFixed(0)}%
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <!-- Legend -->
+                <div style="display: flex; gap: 15px; margin-top: 8px; font-size: 11px; flex-wrap: wrap;">
+                    ${data.traced > 0 ? `
+                        <span style="display: flex; align-items: center; gap: 5px;">
+                            <span style="width: 12px; height: 12px; background: #27ae60; border-radius: 2px;"></span>
+                            Traced: ${data.traced.toLocaleString()}
+                        </span>
+                    ` : ''}
+                    ${data.writeoff > 0 ? `
+                        <span style="display: flex; align-items: center; gap: 5px;">
+                            <span style="width: 12px; height: 12px; background: #95a5a6; border-radius: 2px;"></span>
+                            Written off: ${data.writeoff.toLocaleString()}
+                        </span>
+                    ` : ''}
+                    ${data.coldStorage > 0 ? `
+                        <span style="display: flex; align-items: center; gap: 5px;">
+                            <span style="width: 12px; height: 12px; background: #3498db; border-radius: 2px;"></span>
+                            Cold Storage: ${data.coldStorage.toLocaleString()}
+                        </span>
+                    ` : ''}
+                    ${data.remaining > 0 ? `
+                        <span style="display: flex; align-items: center; gap: 5px;">
+                            <span style="width: 12px; height: 12px; background: #e74c3c; border-radius: 2px;"></span>
+                            Remaining: ${data.remaining.toLocaleString()}
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    return html || '<div style="text-align: center; color: #999;">No ART data to display</div>';
+}
 
 // Show modal for ART completion options
 function showARTCompletionModal(hop, validation) {
