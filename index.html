@@ -1011,6 +1011,12 @@
                 <textarea id="caseSynopsis" rows="3" placeholder="Briefly describe the circumstances that led to the victim's asset loss (e.g., investment platform, romance scam details, ransomware attack, etc.)" style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px; resize: vertical;"></textarea>
                 <div style="font-size: 11px; color: #666; margin-top: 5px;">This will be included in the final report</div>
             </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-confirm" onclick="validateAndProceedSetup()" style="padding: 12px 30px; font-size: 16px;">
+                    ✓ Complete Setup & Continue
+                </button>
+            </div>
         </div>
 
         <div class="main-content" style="display: block;">
@@ -15043,6 +15049,66 @@ Note: Block timestamp will be added when available.`);
             }
         }
         
+        // Validate and proceed with setup
+        function validateAndProceedSetup() {
+            const caseId = document.getElementById('caseId').value.trim();
+            const investigator = document.getElementById('investigator').value.trim();
+            const caseType = document.getElementById('caseType').value;
+            const caseSynopsis = document.getElementById('caseSynopsis').value.trim();
+            
+            // Validate all fields are filled
+            const errors = [];
+            if (!caseId) errors.push('Case ID');
+            if (!investigator) errors.push('Investigator');
+            if (!caseType) errors.push('Case Type');
+            if (!caseSynopsis) errors.push('Case Synopsis');
+            
+            if (errors.length > 0) {
+                alert(`Please complete the following fields:\n\n• ${errors.join('\n• ')}`);
+                
+                // Highlight empty fields
+                if (!caseId) document.getElementById('caseId').style.borderColor = '#e74c3c';
+                if (!investigator) document.getElementById('investigator').style.borderColor = '#e74c3c';
+                if (!caseType) document.getElementById('caseType').style.borderColor = '#e74c3c';
+                if (!caseSynopsis) document.getElementById('caseSynopsis').style.borderColor = '#e74c3c';
+                
+                // Reset highlighting after 3 seconds
+                setTimeout(() => {
+                    ['caseId', 'investigator', 'caseType', 'caseSynopsis'].forEach(id => {
+                        document.getElementById(id).style.borderColor = '';
+                    });
+                }, 3000);
+                
+                return;
+            }
+            
+            // Save case details to investigation object
+            investigation.caseId = caseId;
+            investigation.investigator = investigator;
+            investigation.caseType = caseType;
+            investigation.caseSynopsis = caseSynopsis;
+            
+            // Update the setup card appearance
+            updateSetupCard();
+            
+            // Save to storage
+            saveToStorage();
+            
+            // Hide welcome screen if visible
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            if (welcomeScreen && welcomeScreen.style.display !== 'none') {
+                welcomeScreen.style.display = 'none';
+            }
+            
+            // Switch to victims tab
+            switchTab('victims');
+            
+            // Show success message
+            setTimeout(() => {
+                alert('✅ Investigation setup complete!\n\nNow add victim transactions to begin your investigation.');
+            }, 100);
+        }
+        
         // Add event listeners to setup fields
         document.addEventListener('DOMContentLoaded', function() {
             ['caseId', 'investigator', 'caseType', 'caseSynopsis'].forEach(id => {
@@ -15052,6 +15118,15 @@ Note: Block timestamp will be added when available.`);
                     element.addEventListener('blur', updateSetupCard);
                 }
             });
+            
+            // Load existing values if they exist
+            if (investigation.caseId) document.getElementById('caseId').value = investigation.caseId;
+            if (investigation.investigator) document.getElementById('investigator').value = investigation.investigator;
+            if (investigation.caseType) document.getElementById('caseType').value = investigation.caseType;
+            if (investigation.caseSynopsis) document.getElementById('caseSynopsis').value = investigation.caseSynopsis;
+            
+            // Update card appearance on load
+            updateSetupCard();
         });
     </script>
 </body>

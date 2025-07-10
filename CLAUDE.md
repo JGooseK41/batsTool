@@ -3,17 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 10:57)
+## Latest Commit (Auto-updated: 2025-07-10 11:19)
 
-**Commit:** d724e0c78036e83f31df9c7ae5a499d9564fb93a
+**Commit:** 5e7cad5ba7a9095e522b0f0f12a32277cca66e48
 **Author:** Your Name
-**Message:** Redesign case details layout for improved UX
+**Message:** Improve UI workflow and fix transfer selection functionality
 
-- Move case details card from sidebar to above welcome tab
-- Convert from vertical to horizontal layout using CSS Grid
-- Make form fields responsive with auto-fit columns
-- Remove sidebar/main panel split for cleaner interface
-- Improve visual flow for more intuitive investigation setup
+- Add color-coded cards with clear workflow definition (Step 1a, 1b, Step 2)
+- Implement collapsible investigation setup card with green completion state
+- Auto-collapse setup card when navigating to victim transactions
+- Highlight transaction hash field as primary starting point with blue background
+- Fix transfer selection modal by correcting event.target reference error
+- Improve visual hierarchy and user guidance throughout the application
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -21,24 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 40 ++++++++++++++++++++++++++++++++++++++++
- index.html | 52 ++++++++++++++++++++++++++++++++--------------------
- 2 files changed, 72 insertions(+), 20 deletions(-)
+ CLAUDE.md  |  52 ++++++++++++++++++++++++-------
+ index.html | 104 ++++++++++++++++++++++++++++++++++++++++++++++++++-----------
+ 2 files changed, 125 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d724e0c Redesign case details layout for improved UX (0 seconds ago)
-- efa7956 Fix null reference error in updateValidationStatus (19 minutes ago)
-- bdbe95c Fix initialization error by moving event listener inside DOMContentLoaded (20 minutes ago)
-- 175069e Improve UI and fix transfer selection functionality (23 minutes ago)
-- e376652 Fix transfer selection and add asset filter (53 minutes ago)
-- 45fb983 Add Flow Diagram visualization - Phase 1 (61 minutes ago)
-- 31ec874 Fix white screen issue when starting investigation (79 minutes ago)
-- 521a99d Implement required save with file path capture and autosave functionality (86 minutes ago)
+- 5e7cad5 Improve UI workflow and fix transfer selection functionality (0 seconds ago)
+- d724e0c Redesign case details layout for improved UX (22 minutes ago)
+- efa7956 Fix null reference error in updateValidationStatus (41 minutes ago)
+- bdbe95c Fix initialization error by moving event listener inside DOMContentLoaded (42 minutes ago)
+- 175069e Improve UI and fix transfer selection functionality (45 minutes ago)
+- e376652 Fix transfer selection and add asset filter (75 minutes ago)
+- 45fb983 Add Flow Diagram visualization - Phase 1 (83 minutes ago)
+- 31ec874 Fix white screen issue when starting investigation (2 hours ago)
+- 521a99d Implement required save with file path capture and autosave functionality (2 hours ago)
 - a7852cd Add terminal wallet popup notification for detected exchanges (2 hours ago)
-- ba07f89 Add wallet entity detection to identify exchanges automatically (2 hours ago)
-
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
