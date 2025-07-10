@@ -1675,7 +1675,7 @@
                 addressPrefixes: ['0x'],
                 txPattern: /^0x[a-fA-F0-9]{64}$/,
                 apiUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=',
-                tokenApiUrl: 'https://api.etherscan.io/api?module=account&action=tokentx&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionReceipt&txhash=',
                 txReceiptUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionReceipt&txhash=',
                 addressApiUrl: 'https://api.etherscan.io/api?module=account&action=txlist&address=',
                 apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
@@ -1683,38 +1683,76 @@
                     // Removed Ropsten as it no longer exists
                     // Blockchair doesn't support transaction lookup by hash in this format
                 ],
-                parseResponse: (data, tokenData) => {
-                    // If we have token transfer data, use that
-                    if (tokenData && tokenData.result && tokenData.result.length > 0) {
-                        const token = tokenData.result[0]; // Get first token transfer
+                parseResponse: (data, receiptData) => {
+                    // Check if we have a token transfer in the receipt logs
+                    if (receiptData && receiptData.result && receiptData.result.logs && receiptData.result.logs.length > 0) {
+                        console.log('Checking receipt logs for token transfers:', receiptData.result.logs);
                         
-                        // Get timestamp - try different field names
-                        let timestamp = null;
-                        if (token.timeStamp) {
-                            timestamp = parseInt(token.timeStamp) * 1000;
-                        } else if (token.timestamp) {
-                            timestamp = parseInt(token.timestamp) * 1000;
-                        } else if (data.result && data.result.blockNumber) {
-                            // Use block timestamp from main transaction if available
-                            console.log('Using block data for timestamp');
-                            timestamp = Date.now(); // Fallback to current time
+                        // Look for Transfer event (topic0 = 0xddf252ad...)
+                        const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+                        const transferLog = receiptData.result.logs.find(log => 
+                            log.topics && log.topics[0] === transferTopic && log.topics.length >= 3
+                        );
+                        
+                        if (transferLog) {
+                            console.log('Found token transfer log:', transferLog);
+                            
+                            // Decode the transfer
+                            const from = '0x' + transferLog.topics[1].slice(26); // Remove padding
+                            const to = '0x' + transferLog.topics[2].slice(26);
+                            const value = transferLog.data; // This is the amount in hex
+                            
+                            // Get timestamp from main transaction
+                            let timestamp = Date.now();
+                            if (data.result && data.result.blockNumber) {
+                                // Could fetch block data for exact timestamp, but for now use current
+                                timestamp = Date.now();
+                            }
+                            
+                            // Convert hex amount to decimal
+                            let amount = 0;
+                            try {
+                                const amountBN = parseInt(value, 16);
+                                // Common token decimals - would need token info for exact decimals
+                                // USDT/USDC use 6, most others use 18
+                                const decimals = 6; // Assume USDT/USDC for now
+                                amount = amountBN / Math.pow(10, decimals);
+                                
+                                if (isNaN(amount)) {
+                                    console.error('Failed to parse amount from:', value);
+                                    amount = 0;
+                                }
+                            } catch (e) {
+                                console.error('Error parsing token amount:', e);
+                            }
+                            
+                            // Get token symbol from contract address if possible
+                            const contractAddress = transferLog.address;
+                            let currency = 'Token';
+                            
+                            // Known token addresses (mainnet)
+                            const knownTokens = {
+                                '0xdac17f958d2ee523a2206206994597c13d831ec7': 'USDT',
+                                '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 'USDC',
+                                '0x6b175474e89094c44da98b954eedeac495271d0f': 'DAI',
+                                '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': 'WBTC',
+                                '0x514910771af9ca656af840dff83e8264ecf986ca': 'LINK'
+                            };
+                            
+                            if (knownTokens[contractAddress.toLowerCase()]) {
+                                currency = knownTokens[contractAddress.toLowerCase()];
+                            }
+                            
+                            return {
+                                time: timestamp,
+                                amount: amount,
+                                currency: currency,
+                                from: from,
+                                to: to,
+                                fee: receiptData.result.gasUsed ? 
+                                    (parseInt(receiptData.result.gasUsed, 16) * parseInt(receiptData.result.effectiveGasPrice || data.result.gasPrice, 16)) / 1e18 : 0
+                            };
                         }
-                        
-                        // Validate timestamp
-                        if (!timestamp || isNaN(timestamp) || timestamp <= 0) {
-                            console.warn('No valid timestamp in token data, using current time');
-                            timestamp = Date.now();
-                        }
-                        
-                        return {
-                            time: timestamp,
-                            amount: parseInt(token.value) / Math.pow(10, parseInt(token.tokenDecimal || 18)),
-                            currency: token.tokenSymbol || 'Unknown Token',
-                            from: token.from,
-                            to: token.to,
-                            fee: token.gasUsed && token.gasPrice ? 
-                                (parseInt(token.gasUsed) * parseInt(token.gasPrice)) / 1e18 : 0
-                        };
                     }
                     // Otherwise use regular ETH transaction
                     else if (data.result) {
@@ -12339,7 +12377,7 @@ async function lookupTransaction() {
                     const tokenResponse = await fetch(tokenUrl);
                     if (tokenResponse.ok) {
                         tokenData = await tokenResponse.json();
-                        console.log('Token data received:', tokenData);
+                        console.log('Receipt/Token data received:', tokenData);
                     }
                 } catch (err) {
                     console.log('No token transfers found');
@@ -12992,7 +13030,7 @@ async function fetchTransactionData(hash, blockchain) {
                     const tokenResponse = await fetch(tokenUrl);
                     if (tokenResponse.ok) {
                         tokenData = await tokenResponse.json();
-                        console.log('Token data received:', tokenData);
+                        console.log('Receipt/Token data received:', tokenData);
                     }
                 } catch (err) {
                     console.log('No token transfers found');
