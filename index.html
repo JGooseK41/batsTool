@@ -1554,7 +1554,7 @@
                 hashPattern: /^0x[a-fA-F0-9]{40}$/,
                 txPattern: /^0x[a-fA-F0-9]{64}$/,
                 apiUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=',
-                apiKey: null,
+                apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
                 fallbackUrls: [
                     'https://api-ropsten.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=',
                     'https://api.blockchair.com/ethereum/raw/transaction/'
@@ -12077,7 +12077,7 @@ async function lookupTransaction() {
                 data = await response.json();
                 
             } else if (detectedChain === 'ethereum') {
-                const apiKey = config.apiKey || 'YourEtherscanAPIKey';
+                const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
                 url = `${apiUrl}${txHash}&apikey=${apiKey}`;
                 if (corsEnabled) url = corsProxyUrl + url;
                 
