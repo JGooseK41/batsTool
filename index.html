@@ -1433,6 +1433,28 @@
                 <p>This transaction contains multiple token transfers. Please select the one that belongs to your victim:</p>
             </div>
             
+            <!-- Filter Section -->
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Filter by Amount:</label>
+                        <input type="text" id="transferAmountFilter" placeholder="e.g., 1000 or 1000.50" 
+                               style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px;"
+                               oninput="filterTransfers()">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Filter by Address:</label>
+                        <input type="text" id="transferAddressFilter" placeholder="To or From address" 
+                               style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px;"
+                               oninput="filterTransfers()">
+                    </div>
+                    <button class="btn btn-secondary" onclick="clearTransferFilters()" style="padding: 8px 15px;">
+                        Clear
+                    </button>
+                </div>
+                <div id="filterResultsInfo" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
+            </div>
+            
             <div id="transfersList" style="margin: 20px 0; max-height: 400px; overflow-y: auto;">
                 <!-- Transfers will be populated here -->
             </div>
@@ -13376,12 +13398,39 @@ async function lookupVictimTransaction(victimId, transactionId) {
             const modal = document.getElementById('transferSelectionModal');
             const transfersList = document.getElementById('transfersList');
             
-            // Clear existing content
+            // Store transfers globally for filtering
+            window.allTransfers = transfers;
+            window.filteredTransfers = transfers;
+            
+            // Clear filters
+            document.getElementById('transferAmountFilter').value = '';
+            document.getElementById('transferAddressFilter').value = '';
+            
+            // Render transfers
+            renderTransferCards(transfers);
+            
+            // Update filter info
+            updateFilterInfo(transfers.length, transfers.length);
+            
+            // Show the modal
+            modal.style.display = 'block';
+        }
+        
+        function renderTransferCards(transfers) {
+            const transfersList = document.getElementById('transfersList');
             transfersList.innerHTML = '';
             
-            // Create a card for each transfer
+            if (transfers.length === 0) {
+                transfersList.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No transfers match your filters</div>';
+                return;
+            }
+            
             transfers.forEach((transfer, index) => {
+                // Find the original index for correct selection
+                const originalIndex = window.allTransfers.indexOf(transfer);
+                
                 const transferCard = document.createElement('div');
+                transferCard.className = 'transfer-card';
                 transferCard.style.cssText = `
                     background: white;
                     border: 2px solid #e8f0fe;
@@ -13406,7 +13455,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     <div style="display: grid; grid-template-columns: 1fr auto; gap: 15px; align-items: start;">
                         <div>
                             <h4 style="margin: 0 0 10px 0; color: #2c3e50;">
-                                Transfer ${index + 1}: ${transfer.amount} ${transfer.currency}
+                                Transfer ${originalIndex + 1}: ${transfer.amount} ${transfer.currency}
                             </h4>
                             <div style="font-size: 14px; color: #555;">
                                 <div style="margin-bottom: 5px;">
@@ -13420,7 +13469,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
                                 </div>
                             </div>
                         </div>
-                        <button class="btn btn-confirm" onclick="selectTransfer(${index})" style="margin-top: 0;">
+                        <button class="btn btn-confirm" onclick="selectTransfer(${originalIndex})" style="margin-top: 0;">
                             Select This Transfer
                         </button>
                     </div>
@@ -13428,9 +13477,58 @@ async function lookupVictimTransaction(victimId, transactionId) {
                 
                 transfersList.appendChild(transferCard);
             });
+        }
+        
+        function filterTransfers() {
+            const amountFilter = document.getElementById('transferAmountFilter').value.trim();
+            const addressFilter = document.getElementById('transferAddressFilter').value.trim().toLowerCase();
             
-            // Show the modal
-            modal.style.display = 'block';
+            window.filteredTransfers = window.allTransfers.filter(transfer => {
+                // Amount filter
+                if (amountFilter) {
+                    const filterAmount = parseFloat(amountFilter);
+                    if (!isNaN(filterAmount)) {
+                        // Allow for slight variations due to decimal precision
+                        if (Math.abs(transfer.amount - filterAmount) > 0.000001) {
+                            return false;
+                        }
+                    }
+                }
+                
+                // Address filter (check both from and to)
+                if (addressFilter) {
+                    const fromMatch = transfer.from.toLowerCase().includes(addressFilter);
+                    const toMatch = transfer.to.toLowerCase().includes(addressFilter);
+                    if (!fromMatch && !toMatch) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // Re-render filtered transfers
+            renderTransferCards(window.filteredTransfers);
+            
+            // Update filter info
+            updateFilterInfo(window.filteredTransfers.length, window.allTransfers.length);
+        }
+        
+        function clearTransferFilters() {
+            document.getElementById('transferAmountFilter').value = '';
+            document.getElementById('transferAddressFilter').value = '';
+            window.filteredTransfers = window.allTransfers;
+            renderTransferCards(window.allTransfers);
+            updateFilterInfo(window.allTransfers.length, window.allTransfers.length);
+        }
+        
+        function updateFilterInfo(shown, total) {
+            const infoDiv = document.getElementById('filterResultsInfo');
+            if (shown === total) {
+                infoDiv.textContent = `Showing all ${total} transfers`;
+            } else {
+                infoDiv.textContent = `Showing ${shown} of ${total} transfers`;
+            }
         }
         
         function closeTransferSelectionModal() {
