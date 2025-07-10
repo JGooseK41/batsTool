@@ -3199,6 +3199,29 @@ function renderHopEntry(entry) {
                 <button class="btn btn-danger" onclick="removeHopEntry(${entry.hopId}, ${entry.id})">Remove</button>
             </div>
             
+            ${isTrace ? `
+                <div class="form-group" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; border: 2px solid #2196f3; margin-bottom: 15px;">
+                    <label style="font-weight: bold; color: #0d47a1; font-size: 16px;">📌 Transaction Hash (Start Here)</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" 
+                               id="txHash_${entry.hopId}_${entry.id}"
+                               value="${entry.txHash || ''}" 
+                               placeholder="Paste transaction hash to auto-fill details"
+                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'txHash', this.value)"
+                               style="flex: 1; font-size: 16px; padding: 14px; border: 2px solid #2196f3;">
+                        <button type="button" 
+                                class="btn btn-primary" 
+                                onclick="lookupHopTransaction(${entry.hopId}, ${entry.id})"
+                                style="background: #2196f3; color: white; padding: 14px 20px; font-size: 16px; font-weight: bold;">
+                            🔍 Auto-fill
+                        </button>
+                    </div>
+                    <div style="font-size: 12px; color: #0d47a1; margin-top: 8px;">
+                        Enter transaction hash above to automatically populate amount, wallets, and timestamp
+                    </div>
+                </div>
+            ` : ''}
+            
             <div class="form-group">
                 <label>Entry Type</label>
                 <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'entryType', this.value)">
@@ -3412,23 +3435,7 @@ function renderHopEntry(entry) {
                         ).join('')}
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Transaction Hash</label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="text" 
-                               id="txHash_${entry.hopId}_${entry.id}"
-                               value="${entry.txHash || ''}" 
-                               placeholder="Blockchain transaction hash"
-                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'txHash', this.value)"
-                               style="flex: 1;">
-                        <button type="button" 
-                                class="btn btn-secondary" 
-                                onclick="openBlockchainLookup(${entry.hopId}, ${entry.id})"
-                                style="background: #3498db; color: white; padding: 8px 15px; font-size: 14px;">
-                            🔗 Lookup
-                        </button>
-                    </div>
-                </div>
+                <!-- Transaction hash moved to top of form -->
                 <div class="form-group">
                     <label>Timestamp with Timezone</label>
                     <div class="datetime-timezone">
@@ -14144,6 +14151,85 @@ async function fetchTransactionData(hash, blockchain) {
 }
 
 // Victim Transaction Lookup Function
+async function lookupHopTransaction(hopId, entryId) {
+    const hop = investigation.hops.find(h => h.id === hopId);
+    const entry = hop?.entries.find(e => e.id === entryId);
+    if (!hop || !entry) return;
+    
+    const txHash = document.getElementById(`txHash_${hopId}_${entryId}`)?.value?.trim();
+    if (!txHash) {
+        alert('Please enter a transaction hash');
+        return;
+    }
+    
+    const detectedChain = detectBlockchainFromHash(txHash);
+    if (!detectedChain) {
+        alert('Cannot determine blockchain from hash format');
+        return;
+    }
+    
+    // Show loading indicator
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = '⏳ Looking up...';
+    button.disabled = true;
+    
+    try {
+        let txData = null;
+        
+        switch(detectedChain) {
+            case 'ethereum':
+                txData = await lookupEthereumTransaction(txHash);
+                break;
+            case 'bitcoin':
+                txData = await lookupBitcoinTransaction(txHash);
+                break;
+            case 'tron':
+                txData = await lookupTronTransaction(txHash);
+                break;
+            case 'solana':
+                txData = await lookupSolanaTransaction(txHash);
+                break;
+            default:
+                throw new Error('Unsupported blockchain');
+        }
+        
+        if (txData) {
+            // Auto-populate hop entry fields
+            updateHopEntry(hopId, entryId, 'fromWallet', txData.from);
+            updateHopEntry(hopId, entryId, 'toWallet', txData.to);
+            updateHopEntry(hopId, entryId, 'amount', txData.value);
+            updateHopEntry(hopId, entryId, 'currency', txData.currency);
+            updateHopEntry(hopId, entryId, 'timestamp', txData.timestamp);
+            
+            // Update UI fields directly
+            const amountField = document.getElementById(`amount_${hopId}_${entryId}`);
+            if (amountField) amountField.value = txData.value;
+            
+            const currencySelect = document.querySelector(`[onchange*="updateHopEntry(${hopId}, ${entryId}, 'currency'"]`);
+            if (currencySelect) {
+                currencySelect.value = txData.currency;
+                // Trigger currency change to update step
+                updateHopEntry(hopId, entryId, 'currency', txData.currency);
+            }
+            
+            const timestampField = document.getElementById(`timestamp_${hopId}_${entryId}`);
+            if (timestampField) timestampField.value = formatDatetimeLocal(txData.timestamp);
+            
+            const toWalletField = document.getElementById(`toWallet_${hopId}_${entryId}`);
+            if (toWalletField) toWalletField.value = txData.to;
+            
+            alert(`✅ Transaction data loaded:\n\nFrom: ${txData.from}\nTo: ${txData.to}\nAmount: ${txData.value} ${txData.currency}\nTime: ${new Date(txData.timestamp).toLocaleString()}`);
+        }
+    } catch (error) {
+        console.error('Lookup error:', error);
+        alert(`❌ Failed to lookup transaction: ${error.message}`);
+    } finally {
+        button.textContent = originalText;
+        button.disabled = false;
+    }
+}
+
 async function lookupVictimTransaction(victimId, transactionId) {
     const txHashInputElement = document.getElementById(`txHash_victim_${victimId}_${transactionId}`);
     const txHash = txHashInputElement.value.trim();
