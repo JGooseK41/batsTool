@@ -1661,14 +1661,29 @@
                 addressPrefixes: ['0x'],
                 txPattern: /^0x[a-fA-F0-9]{64}$/,
                 apiUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/api?module=account&action=tokentx&txhash=',
+                txReceiptUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionReceipt&txhash=',
                 addressApiUrl: 'https://api.etherscan.io/api?module=account&action=txlist&address=',
                 apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
                 fallbackUrls: [
                     'https://api-ropsten.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=',
                     'https://api.blockchair.com/ethereum/raw/transaction/'
                 ],
-                parseResponse: (data) => {
-                    if (data.result) {
+                parseResponse: (data, tokenData) => {
+                    // If we have token transfer data, use that
+                    if (tokenData && tokenData.result && tokenData.result.length > 0) {
+                        const token = tokenData.result[0]; // Get first token transfer
+                        return {
+                            time: parseInt(token.timeStamp) * 1000,
+                            amount: parseInt(token.value) / Math.pow(10, parseInt(token.tokenDecimal)),
+                            currency: token.tokenSymbol,
+                            from: token.from,
+                            to: token.to,
+                            fee: (parseInt(token.gasUsed) * parseInt(token.gasPrice)) / 1e18
+                        };
+                    }
+                    // Otherwise use regular ETH transaction
+                    else if (data.result) {
                         const tx = data.result;
                         return {
                             time: parseInt(tx.blockNumber, 16) * 12 * 1000 + Date.now() - 7000000 * 12 * 1000, // Approximate
@@ -12242,6 +12257,7 @@ async function lookupTransaction() {
         try {
             let data;
             let url;
+            let tokenData = null; // Define tokenData at this scope
             
             if (detectedChain === 'bitcoin') {
                 url = apiUrl + txHash;
@@ -12256,6 +12272,8 @@ async function lookupTransaction() {
                 
             } else if (detectedChain === 'ethereum') {
                 const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                
+                // First get the basic transaction
                 url = `${apiUrl}${txHash}&apikey=${apiKey}`;
                 if (corsEnabled) url = corsProxyUrl + url;
                 
@@ -12263,6 +12281,21 @@ async function lookupTransaction() {
                 if (!response.ok) throw new Error('API request failed');
                 data = await response.json();
                 if (!data.result || data.result === null) throw new Error('Transaction not found');
+                
+                // Also check for token transfers
+                let tokenData = null;
+                try {
+                    const tokenUrl = corsEnabled ? 
+                        corsProxyUrl + `${config.tokenApiUrl}${txHash}&apikey=${apiKey}` :
+                        `${config.tokenApiUrl}${txHash}&apikey=${apiKey}`;
+                    
+                    const tokenResponse = await fetch(tokenUrl);
+                    if (tokenResponse.ok) {
+                        tokenData = await tokenResponse.json();
+                    }
+                } catch (err) {
+                    console.log('No token transfers found');
+                }
                 
             } else if (detectedChain === 'tron') {
                 url = apiUrl + txHash;
@@ -12301,8 +12334,10 @@ async function lookupTransaction() {
                 if (data.error) throw new Error(data.error.message);
             }
             
-            // Parse the response
-            currentTxData = config.parseResponse(data);
+            // Parse the response (pass tokenData for Ethereum)
+            currentTxData = detectedChain === 'ethereum' ? 
+                config.parseResponse(data, tokenData) : 
+                config.parseResponse(data);
             if (!currentTxData) throw new Error('Failed to parse transaction data');
             
             currentTxData.blockchain = config.name;
@@ -12878,6 +12913,7 @@ async function fetchTransactionData(hash, blockchain) {
         try {
             let data;
             let url;
+            let tokenData = null; // Define tokenData at this scope
             
             if (blockchain === 'bitcoin') {
                 url = apiUrl + hash;
@@ -12890,6 +12926,8 @@ async function fetchTransactionData(hash, blockchain) {
                 
             } else if (blockchain === 'ethereum') {
                 const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                
+                // First get the basic transaction
                 url = `${apiUrl}${hash}&apikey=${apiKey}`;
                 if (corsEnabled) url = corsProxyUrl + url;
                 
@@ -12897,6 +12935,21 @@ async function fetchTransactionData(hash, blockchain) {
                 if (!response.ok) continue;
                 data = await response.json();
                 if (!data.result || data.result === null) continue;
+                
+                // Also check for token transfers
+                let tokenData = null;
+                try {
+                    const tokenUrl = corsEnabled ? 
+                        corsProxyUrl + `${config.tokenApiUrl}${hash}&apikey=${apiKey}` :
+                        `${config.tokenApiUrl}${hash}&apikey=${apiKey}`;
+                    
+                    const tokenResponse = await fetch(tokenUrl);
+                    if (tokenResponse.ok) {
+                        tokenData = await tokenResponse.json();
+                    }
+                } catch (err) {
+                    console.log('No token transfers found');
+                }
                 
             } else if (blockchain === 'tron') {
                 url = apiUrl + hash;
@@ -12926,8 +12979,10 @@ async function fetchTransactionData(hash, blockchain) {
                 if (data.error) continue;
             }
             
-            // Parse and return the data
-            const txData = config.parseResponse(data);
+            // Parse and return the data (pass tokenData for Ethereum)
+            const txData = blockchain === 'ethereum' ? 
+                config.parseResponse(data, tokenData) : 
+                config.parseResponse(data);
             if (txData) {
                 txData.blockchain = config.name;
                 return txData;
@@ -12979,6 +13034,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
             try {
                 let data;
                 let url;
+                let tokenData = null; // Define tokenData at this scope
                 
                 if (detectedChain === 'bitcoin') {
                     url = apiUrl + txHash;
@@ -12993,6 +13049,8 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     
                 } else if (detectedChain === 'ethereum') {
                     const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                    
+                    // First get the basic transaction
                     url = `${apiUrl}${txHash}&apikey=${apiKey}`;
                     if (corsEnabled) url = corsProxyUrl + url;
                     
@@ -13000,6 +13058,20 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     if (!response.ok) throw new Error('API request failed');
                     data = await response.json();
                     if (!data.result || data.result === null) throw new Error('Transaction not found');
+                    
+                    // Also check for token transfers
+                    try {
+                        const tokenUrl = corsEnabled ? 
+                            corsProxyUrl + `${config.tokenApiUrl}${txHash}&apikey=${apiKey}` :
+                            `${config.tokenApiUrl}${txHash}&apikey=${apiKey}`;
+                        
+                        const tokenResponse = await fetch(tokenUrl);
+                        if (tokenResponse.ok) {
+                            tokenData = await tokenResponse.json();
+                        }
+                    } catch (err) {
+                        console.log('No token transfers found');
+                    }
                     
                 } else if (detectedChain === 'tron') {
                     url = apiUrl + txHash;
@@ -13036,8 +13108,10 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     if (data.error) throw new Error(data.error.message);
                 }
                 
-                // Parse the response
-                txData = config.parseResponse(data);
+                // Parse the response (pass tokenData for Ethereum)
+                txData = detectedChain === 'ethereum' ? 
+                    config.parseResponse(data, tokenData) : 
+                    config.parseResponse(data);
                 if (!txData) throw new Error('Failed to parse transaction data');
                 
                 // Success! Break out of the loop
