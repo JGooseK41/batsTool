@@ -2240,6 +2240,7 @@
             investigator: '',
             caseType: '',
             caseSynopsis: '',
+            setupComplete: false,
             victims: [],
             hops: [],
             conversions: [],
@@ -5195,6 +5196,7 @@ function updateFormFieldsFromInvestigation() {
     const caseIdField = document.getElementById('caseId');
     const investigatorField = document.getElementById('investigator');
     const caseTypeField = document.getElementById('caseType');
+    const caseSynopsisField = document.getElementById('caseSynopsis');
     
     if (caseIdField) {
         caseIdField.value = investigation.caseId || '';
@@ -5205,6 +5207,12 @@ function updateFormFieldsFromInvestigation() {
     if (caseTypeField) {
         caseTypeField.value = investigation.caseType || '';
     }
+    if (caseSynopsisField) {
+        caseSynopsisField.value = investigation.caseSynopsis || '';
+    }
+    
+    // Update the setup card appearance to reflect loaded state
+    updateSetupCard();
     
     console.log('Form fields updated');
 }
@@ -6079,11 +6087,13 @@ function renderBlueWalletIndex() {
 function renderRedWalletIndex() {
     const container = document.getElementById('redWalletIndexList');
     
-    if (!investigation.rootTotalConfirmed || investigation.redWalletIndex.length === 0) {
+    if (investigation.redWalletIndex.length === 0) {
         container.innerHTML = `
             <div class="no-traces-message">
                 <h3>Red Wallet Index Not Available</h3>
-                <p>Please complete victim setup and confirm your root total to generate the Red Wallet Index.</p>
+                <p>${!investigation.rootTotalConfirmed ? 
+                    'Please complete victim setup to generate the Red Wallet Index. Note: Full functionality requires confirming the root total.' : 
+                    'No victim transactions found. Please add victim transactions first.'}</p>
                 <button class="btn btn-confirm" onclick="switchTab('victims'); document.querySelector('[onclick=\\"switchTab(\\'victims\\')\\"]').click();">← Back to Victims & Transactions</button>
             </div>
         `;
@@ -8239,6 +8249,9 @@ function createMaxWriteoff(hopId, currency, amount) {
     
     hop.entries.push(writeoffEntry);
     
+    // Sort entries chronologically
+    sortHopEntriesChronologically(hop);
+    
     closeARTCompletionModal();
     renderHops();
     saveToStorage();
@@ -8302,6 +8315,9 @@ function createColdStorage(hopId, currency, amount) {
     };
     
     hop.entries.push(coldStorageEntry);
+    
+    // Sort entries chronologically
+    sortHopEntriesChronologically(hop);
     
     closeARTCompletionModal();
     renderHops();
@@ -9094,6 +9110,9 @@ function createAutoWriteoff(hopId, currency, amount) {
     
     hop.entries.push(writeoffEntry);
     
+    // Sort entries chronologically
+    sortHopEntriesChronologically(hop);
+    
     closeHopFinalizationModal();
     renderHops();
     saveToStorage();
@@ -9163,6 +9182,9 @@ function markAsColdStorage(hopId, currency, amount) {
     };
     
     hop.entries.push(coldStorageEntry);
+    
+    // Sort entries chronologically
+    sortHopEntriesChronologically(hop);
     
     // Update wallet classification in UWI
     let walletReclassified = false;
@@ -9242,6 +9264,9 @@ function markAsVASPArrival(hopId, currency, amount) {
     };
     
     hop.entries.push(vaspEntry);
+    
+    // Sort entries chronologically
+    sortHopEntriesChronologically(hop);
     
     // Create a new hop entry for the purple wallet to terminal exchange
     // This ensures the funds continue to be traced to their final destination
@@ -11277,8 +11302,32 @@ function createHopEntryDirectly(hopId, entryType = 'trace') {
     saveUndoState(`Add ${entryType} entry to Hop ${hop.hopNumber}`);
     
     hop.entries.push(entry);
+    
+    // Sort entries by timestamp to maintain chronological order
+    sortHopEntriesChronologically(hop);
+    
     renderHops();
     saveToStorage();
+}
+
+function sortHopEntriesChronologically(hop) {
+    // Sort entries by timestamp, with entries without timestamps at the end
+    hop.entries.sort((a, b) => {
+        // If both have timestamps, sort chronologically
+        if (a.timestamp && b.timestamp) {
+            return new Date(a.timestamp) - new Date(b.timestamp);
+        }
+        // If only one has timestamp, put the one with timestamp first
+        if (a.timestamp && !b.timestamp) return -1;
+        if (!a.timestamp && b.timestamp) return 1;
+        // If neither has timestamp, maintain existing order
+        return 0;
+    });
+    
+    // Re-assign IDs to maintain sequential ordering
+    hop.entries.forEach((entry, index) => {
+        entry.id = index + 1;
+    });
 }
 
 function showHopEntryWizard(hopId) {
@@ -11699,6 +11748,10 @@ function createHopEntryFromWizard() {
     saveUndoState(`Add trace entry to Hop ${hop.hopNumber}`);
     
     hop.entries.push(entry);
+    
+    // Sort entries by timestamp to maintain chronological order
+    sortHopEntriesChronologically(hop);
+    
     closeHopWizard();
     renderHops();
     saveToStorage();
@@ -11932,6 +11985,11 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             const hop = investigation.hops.find(h => h.id === hopId);
             const entry = hop.entries.find(e => e.id === entryId);
             entry[field] = value;
+            
+            // If timestamp changed, re-sort entries chronologically
+            if (field === 'timestamp') {
+                sortHopEntriesChronologically(hop);
+            }
             
             if (field === 'entryType') {
                 // Regenerate notation if victim and transaction numbers exist
@@ -12205,6 +12263,10 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             };
             
             hop.entries.push(entry);
+            
+            // Sort entries chronologically
+            sortHopEntriesChronologically(hop);
+            
             investigation.hops.push(hop);
             
             closeConvergenceModal();
@@ -12406,6 +12468,11 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             
             if (confirm(`Complete Victim ${victimId}?\n\nThis will minimize the view to show only a summary. You can edit later if needed.`)) {
                 victim.isCompleted = true;
+                
+                // Build wallet indexes even before root total confirmation to allow early access
+                buildUniversalWalletIndex();
+                buildRedWalletIndex();
+                
                 renderVictims();
                 saveToStorage();
                 updateWorkflowSteps();
@@ -12675,6 +12742,15 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             
             // Set the global investigation object
             investigation = loadedData;
+            
+            // Sort all hop entries chronologically after loading
+            if (investigation.hops) {
+                investigation.hops.forEach(hop => {
+                    if (hop.entries && hop.entries.length > 0) {
+                        sortHopEntriesChronologically(hop);
+                    }
+                });
+            }
             
             // Update form fields
             updateFormFieldsFromInvestigation();
@@ -16794,6 +16870,12 @@ Note: Block timestamp will be added when available.`);
         
         // Check if setup is complete
         function isSetupComplete() {
+            // First check the saved state
+            if (investigation.setupComplete) {
+                return true;
+            }
+            
+            // Otherwise check current form values
             const caseId = document.getElementById('caseId').value;
             const investigator = document.getElementById('investigator').value;
             const caseType = document.getElementById('caseType').value;
@@ -16852,6 +16934,7 @@ Note: Block timestamp will be added when available.`);
             investigation.investigator = investigator;
             investigation.caseType = caseType;
             investigation.caseSynopsis = caseSynopsis;
+            investigation.setupComplete = true;
             
             // Update the setup card appearance
             updateSetupCard();
