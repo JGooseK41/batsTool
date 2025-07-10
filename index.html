@@ -4,6 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>B.A.T.S. - Block Audit Tracing Standard</title>
+    <!-- 
+    DEPLOYMENT INSTRUCTIONS:
+    For full functionality (custom save locations, autosave), serve this file over HTTPS:
+    
+    Option 1 - Local Development Server:
+    - Python: python -m http.server 8000 (then visit http://localhost:8000)
+    - Node.js: npx http-server
+    - VS Code: Use Live Server extension
+    
+    Option 2 - Web Hosting:
+    - Upload to any HTTPS-enabled web server
+    - GitHub Pages (free): https://pages.github.com
+    - Netlify Drop (free): https://app.netlify.com/drop
+    
+    Option 3 - Direct File Access:
+    - Open index.html directly in browser
+    - Limited functionality: saves only to Downloads folder
+    -->
     <style>
         * {
             margin: 0;
@@ -1004,18 +1022,17 @@
                         <option value="other">Other</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="form-group" style="margin-top: 20px;">
-                <label for="caseSynopsis">Case Synopsis</label>
-                <textarea id="caseSynopsis" rows="3" placeholder="Briefly describe the circumstances that led to the victim's asset loss (e.g., investment platform, romance scam details, ransomware attack, etc.)" style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px; resize: vertical;"></textarea>
-                <div style="font-size: 11px; color: #666; margin-top: 5px;">This will be included in the final report</div>
-            </div>
-            
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="btn btn-confirm" onclick="validateAndProceedSetup()" style="padding: 12px 30px; font-size: 16px;">
-                    ✓ Complete Setup & Continue
-                </button>
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="caseSynopsis">Case Synopsis</label>
+                    <textarea id="caseSynopsis" rows="3" placeholder="Briefly describe the circumstances that led to the victim's asset loss (e.g., investment platform, romance scam details, ransomware attack, etc.)" style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px; resize: vertical;"></textarea>
+                    <div style="font-size: 11px; color: #666; margin-top: 5px;">This will be included in the final report</div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-confirm" onclick="validateAndProceedSetup()" style="padding: 12px 30px; font-size: 16px;">
+                        ✓ Complete Setup & Continue
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1041,6 +1058,7 @@
                 </div>
                 
                 <div class="nav-tabs">
+                    <button class="nav-tab" onclick="switchTab('batsinfo')" style="background: #e8f5e8; border: 2px solid #27ae60;">📚 BATS Info</button>
                     <button class="nav-tab active" onclick="switchTab('victims')">Victims & Transactions</button>
                     <button class="nav-tab" onclick="switchTab('traces')">Trace Documentation</button>
                     <button class="nav-tab" onclick="switchTab('walletindexes')">Wallet Indexes</button>
@@ -1091,6 +1109,289 @@
                                 <li style="margin-bottom: 10px;">✓ The tool will guide you through each step of the investigation</li>
                             </ul>
                         </div>
+                    </div>
+                </div>
+
+                <!-- BATS Info Tab -->
+                <div id="batsinfo-tab" class="tab-content">
+                    <div class="section-title">📚 B.A.T.S. Framework Education Center</div>
+                    
+                    <!-- Key Benefit Highlight -->
+                    <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 3px solid #fdcb6e; border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center;">
+                        <h2 style="color: #f39c12; margin-bottom: 15px;">🎯 The Key Benefit of B.A.T.S.</h2>
+                        <p style="font-size: 1.3rem; color: #2c3e50; font-weight: 600; margin-bottom: 15px;">
+                            Standardized Documentation = Reproducible Results
+                        </p>
+                        <p style="color: #34495e; font-size: 1.1rem; line-height: 1.6;">
+                            Any investigator following the B.A.T.S. methodology will arrive at the same conclusions, creating legally defensible evidence that withstands scrutiny and enables successful asset forfeiture.
+                        </p>
+                    </div>
+
+                    <!-- Quick Navigation -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                        <button class="btn" style="background: #3498db;" onclick="document.getElementById('batsOverview').scrollIntoView({behavior: 'smooth'})">
+                            📖 Overview
+                        </button>
+                        <button class="btn" style="background: #27ae60;" onclick="document.getElementById('batsMethodology').scrollIntoView({behavior: 'smooth'})">
+                            🔬 Methodology
+                        </button>
+                        <button class="btn" style="background: #e74c3c;" onclick="document.getElementById('batsNotation').scrollIntoView({behavior: 'smooth'})">
+                            🏷️ V-T-H Notation
+                        </button>
+                        <button class="btn" style="background: #9b59b6;" onclick="document.getElementById('batsColors').scrollIntoView({behavior: 'smooth'})">
+                            🎨 Wallet Colors
+                        </button>
+                        <button class="btn" style="background: #f39c12;" onclick="document.getElementById('batsGoldenThread').scrollIntoView({behavior: 'smooth'})">
+                            🧵 Golden Thread
+                        </button>
+                        <button class="btn" style="background: #1abc9c;" onclick="document.getElementById('batsQuickRef').scrollIntoView({behavior: 'smooth'})">
+                            ⚡ Quick Reference
+                        </button>
+                    </div>
+
+                    <!-- Overview Section -->
+                    <div id="batsOverview" style="background: white; border-radius: 8px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">📖 What is B.A.T.S.?</h3>
+                        <p style="line-height: 1.8; margin-bottom: 15px;">
+                            The <strong>Block Audit Tracing Standard (B.A.T.S.)</strong> is a revolutionary framework for cryptocurrency investigation that transforms blockchain analysis from an art into a science. It provides the mathematical certainty required for successful asset forfeiture cases.
+                        </p>
+                        <div style="background: #ecf0f1; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <h4 style="color: #2c3e50; margin-bottom: 15px;">Core Principles:</h4>
+                            <ul style="line-height: 1.8;">
+                                <li><strong>Mathematical Precision</strong> - Every dollar accounted for</li>
+                                <li><strong>Standardized Process</strong> - Consistent methodology across all cases</li>
+                                <li><strong>Legal Compliance</strong> - Meets court requirements for asset forfeiture</li>
+                                <li><strong>Scope Control</strong> - Prevents investigation creep</li>
+                                <li><strong>Complete Documentation</strong> - Full audit trail for legal review</li>
+                            </ul>
+                        </div>
+                        <div style="background: #d5f4e6; padding: 20px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                            <p style="margin: 0;">
+                                <strong>Remember:</strong> B.A.T.S. ensures that two different investigators analyzing the same case will reach identical conclusions, providing the reproducibility that courts demand.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Methodology Section -->
+                    <div id="batsMethodology" style="background: white; border-radius: 8px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">🔬 The B.A.T.S. Methodology</h3>
+                        
+                        <div style="margin-bottom: 30px;">
+                            <h4 style="color: #27ae60; margin-bottom: 15px;">Step 1: Establish Root Total</h4>
+                            <p style="line-height: 1.8; margin-bottom: 10px;">Document all victim losses to create your mathematical baseline. This becomes your Adjusted Root Total (ART) after any justified write-offs.</p>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; font-family: monospace;">
+                                Example: Victim 1 lost $10,000 + Victim 2 lost $5,000 = $15,000 Root Total
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 30px;">
+                            <h4 style="color: #27ae60; margin-bottom: 15px;">Step 2: Apply V-T-H Notation</h4>
+                            <p style="line-height: 1.8; margin-bottom: 10px;">Assign unique identifiers to every transaction maintaining clear lineage from victims.</p>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; font-family: monospace;">
+                                V1-T1 → V1-T1-H1 → V1-T1-H2 → Terminal Wallet
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 30px;">
+                            <h4 style="color: #27ae60; margin-bottom: 15px;">Step 3: Classify Wallets by Color</h4>
+                            <p style="line-height: 1.8; margin-bottom: 10px;">Assign permanent colors based on wallet function, not ownership assumptions.</p>
+                        </div>
+
+                        <div style="margin-bottom: 30px;">
+                            <h4 style="color: #27ae60; margin-bottom: 15px;">Step 4: Validate at Each Hop</h4>
+                            <p style="line-height: 1.8; margin-bottom: 10px;">Ensure all thread totals at each hop level sum to your ART. This mathematical validation proves completeness.</p>
+                            <div style="background: #fee; padding: 15px; border-radius: 6px; border-left: 4px solid #e74c3c;">
+                                <strong>Critical:</strong> If totals don't match, you've missed transactions!
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 30px;">
+                            <h4 style="color: #27ae60; margin-bottom: 15px;">Step 5: Document Terminal Points</h4>
+                            <p style="line-height: 1.8;">Identify where funds reach exchanges (PURPLE) or cold storage (BLUE) for legal process or monitoring.</p>
+                        </div>
+                    </div>
+
+                    <!-- V-T-H Notation Section -->
+                    <div id="batsNotation" style="background: white; border-radius: 8px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">🏷️ Understanding V-T-H Notation</h3>
+                        
+                        <div style="background: #e8f5e8; padding: 25px; border-radius: 8px; margin-bottom: 20px;">
+                            <h4 style="color: #27ae60; margin-bottom: 15px;">The Formula: V[#]-T[#]-H[#]</h4>
+                            <ul style="line-height: 2; font-size: 1.1rem;">
+                                <li><strong>V</strong> = Victim number (V1, V2, V3...)</li>
+                                <li><strong>T</strong> = Transaction number (T1, T2, T3...)</li>
+                                <li><strong>H</strong> = Hop count from victim (H1, H2, H3...)</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="color: #3498db; margin-bottom: 15px;">Practical Examples:</h4>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr style="background: #f8f9fa;">
+                                    <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Notation</th>
+                                    <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Meaning</th>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #ddd; padding: 12px; font-family: monospace;">V1-T1</td>
+                                    <td style="border: 1px solid #ddd; padding: 12px;">First victim's first transaction (at RED wallet)</td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #ddd; padding: 12px; font-family: monospace;">V1-T1-H1</td>
+                                    <td style="border: 1px solid #ddd; padding: 12px;">One hop away from victim's transaction</td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #ddd; padding: 12px; font-family: monospace;">V2-T3-H5</td>
+                                    <td style="border: 1px solid #ddd; padding: 12px;">Second victim's third transaction, five hops away</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="background: #ffeaa7; padding: 20px; border-radius: 8px; border-left: 4px solid #fdcb6e;">
+                            <p style="margin: 0;">
+                                <strong>Why This Matters:</strong> V-T-H notation creates an unambiguous audit trail that any investigator can follow, ensuring reproducible results.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Wallet Colors Section -->
+                    <div id="batsColors" style="background: white; border-radius: 8px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">🎨 Wallet Color Classification</h3>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                            <div style="background: #ffebee; padding: 20px; border-radius: 8px; border-left: 4px solid #e74c3c;">
+                                <h4 style="color: #c0392b; margin-bottom: 10px;">🔴 RED Wallets</h4>
+                                <p><strong>Definition:</strong> Victim-facing wallets</p>
+                                <p><strong>Rule:</strong> First wallet to receive victim funds</p>
+                                <p><strong>Example:</strong> Scammer's receiving address</p>
+                            </div>
+
+                            <div style="background: #fff8e1; padding: 20px; border-radius: 8px; border-left: 4px solid #f39c12;">
+                                <h4 style="color: #f39c12; margin-bottom: 10px;">🟡 YELLOW Wallets</h4>
+                                <p><strong>Definition:</strong> Convergence/hub wallets</p>
+                                <p><strong>Rule:</strong> Where multiple victim traces meet</p>
+                                <p><strong>Example:</strong> Criminal consolidation wallet</p>
+                            </div>
+
+                            <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; border-left: 4px solid #9b59b6;">
+                                <h4 style="color: #8e44ad; margin-bottom: 10px;">🟣 PURPLE Wallets</h4>
+                                <p><strong>Definition:</strong> Exchange deposit addresses</p>
+                                <p><strong>Rule:</strong> Known VASP/exchange wallets</p>
+                                <p><strong>Example:</strong> Binance deposit address</p>
+                            </div>
+
+                            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; border-left: 4px solid #3498db;">
+                                <h4 style="color: #2980b9; margin-bottom: 10px;">🔵 BLUE Wallets</h4>
+                                <p><strong>Definition:</strong> Cold storage wallets</p>
+                                <p><strong>Rule:</strong> Long-term holding addresses</p>
+                                <p><strong>Example:</strong> Criminal savings wallet</p>
+                            </div>
+
+                            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; border-left: 4px solid #34495e;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">⚫ BLACK Wallets</h4>
+                                <p><strong>Definition:</strong> Standard intermediary</p>
+                                <p><strong>Rule:</strong> Default for unclassified</p>
+                                <p><strong>Example:</strong> Pass-through addresses</p>
+                            </div>
+
+                            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                                <h4 style="color: #27ae60; margin-bottom: 10px;">📌 Remember</h4>
+                                <p><strong>Colors are permanent!</strong></p>
+                                <p>Once assigned, never change</p>
+                                <p>Based on function, not ownership</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Golden Thread Section -->
+                    <div id="batsGoldenThread" style="background: white; border-radius: 8px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">🧵 The Golden Thread Principle</h3>
+                        
+                        <div style="background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%); padding: 25px; border-radius: 8px; margin-bottom: 20px;">
+                            <h4 style="color: #2c3e50; margin-bottom: 15px;">Definition</h4>
+                            <p style="font-size: 1.1rem; line-height: 1.8;">
+                                The unbroken connection between a victim's original funds and any assets ultimately seized by law enforcement. This principle is essential for proving in court that specific seized cryptocurrency originated from criminal activity.
+                            </p>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="color: #e74c3c; margin-bottom: 15px;">The PIFO Method (Proceeds In First Out)</h4>
+                            <p style="line-height: 1.8; margin-bottom: 15px;">
+                                When traced funds enter a wallet, the very next outbound transaction contains those funds. Apply this strictly chronologically to maintain the golden thread through commingled funds.
+                            </p>
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                                <strong>Example:</strong><br>
+                                Wallet has 5 BTC existing balance<br>
+                                Victim sends 2 BTC (our traced funds)<br>
+                                Next transaction out is 3 BTC<br>
+                                → We trace 2 BTC of that 3 BTC transaction
+                            </div>
+                        </div>
+
+                        <div style="background: #fee; padding: 20px; border-radius: 8px; border-left: 4px solid #e74c3c;">
+                            <h4 style="color: #c0392b; margin-bottom: 10px;">⚠️ Breaking the Thread</h4>
+                            <p style="margin: 0;">
+                                The golden thread breaks if you cannot mathematically prove the connection. Common breaks: mixers, privacy coins, or poor documentation. Document these as write-offs.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Reference Section -->
+                    <div id="batsQuickRef" style="background: white; border-radius: 8px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">⚡ Quick Reference Guide</h3>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+                            <div style="background: #e8f8f5; padding: 20px; border-radius: 8px;">
+                                <h4 style="color: #1abc9c; margin-bottom: 15px;">✅ B.A.T.S. Checklist</h4>
+                                <ul style="line-height: 1.8;">
+                                    <li>☐ Document all victim transactions</li>
+                                    <li>☐ Calculate and confirm root total</li>
+                                    <li>☐ Apply V-T-H notation consistently</li>
+                                    <li>☐ Classify wallets by color (permanent!)</li>
+                                    <li>☐ Validate totals at each hop level</li>
+                                    <li>☐ Document all write-offs with justification</li>
+                                    <li>☐ Identify terminal wallets (PURPLE/BLUE)</li>
+                                    <li>☐ Export comprehensive report</li>
+                                </ul>
+                            </div>
+
+                            <div style="background: #fef9e7; padding: 20px; border-radius: 8px;">
+                                <h4 style="color: #f39c12; margin-bottom: 15px;">🔑 Key Terms</h4>
+                                <dl style="line-height: 1.8;">
+                                    <dt><strong>ART</strong></dt>
+                                    <dd>Adjusted Root Total (after write-offs)</dd>
+                                    
+                                    <dt><strong>Thread Total</strong></dt>
+                                    <dd>Amount being traced at specific hop</dd>
+                                    
+                                    <dt><strong>Convergence</strong></dt>
+                                    <dd>Multiple traces meeting at one wallet</dd>
+                                    
+                                    <dt><strong>Write-off</strong></dt>
+                                    <dd>Documented abandonment of trace</dd>
+                                    
+                                    <dt><strong>Terminal Wallet</strong></dt>
+                                    <dd>Exchange or cold storage endpoint</dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <div style="background: #d5f4e6; padding: 20px; border-radius: 8px; margin-top: 20px; text-align: center;">
+                            <h4 style="color: #27ae60; margin-bottom: 15px;">🎯 Always Remember</h4>
+                            <p style="font-size: 1.2rem; font-weight: 600; margin: 0;">
+                                Standardized Process = Reproducible Results = Successful Forfeiture
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Getting Started -->
+                    <div style="background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%); color: white; padding: 30px; border-radius: 8px; text-align: center;">
+                        <h3 style="margin-bottom: 20px;">Ready to Begin?</h3>
+                        <p style="font-size: 1.1rem; margin-bottom: 20px;">
+                            Now that you understand the B.A.T.S. methodology, start your investigation with confidence!
+                        </p>
+                        <button class="btn btn-large" style="background: white; color: #6c5ce7;" onclick="switchTab('victims')">
+                            🚀 Start Investigation
+                        </button>
                     </div>
                 </div>
 
@@ -14011,6 +14312,13 @@ async function lookupVictimTransaction(victimId, transactionId) {
                 return;
             }
             
+            // Update transaction hash first
+            const txHashInput = document.getElementById(`txHash_victim_${victimId}_${transactionId}`);
+            if (txHashInput && txHash) {
+                txHashInput.value = txHash;
+                transaction.txHash = txHash;
+            }
+            
             // Update amount
             const amountInput = document.getElementById(`amount_victim_${victimId}_${transactionId}`);
             if (amountInput) {
@@ -14057,7 +14365,13 @@ async function lookupVictimTransaction(victimId, transactionId) {
             }
             
             // Store the transaction hash
-            transaction.transactionHash = txHash;
+            transaction.txHash = txHash;
+            
+            // Also update the transaction hash input field
+            const txHashInput = document.getElementById(`txHash_victim_${victimId}_${transactionId}`);
+            if (txHashInput) {
+                txHashInput.value = txHash;
+            }
             
             // Save and re-render
             saveToStorage();
@@ -14361,7 +14675,7 @@ Note: Block timestamp will be added when available.`);
                     document.getElementById('saveRequiredMessage').style.display = 'none';
                     document.getElementById('generateRootBtn').style.display = 'block';
                     
-                    alert(`✅ Investigation saved successfully!\n\nFile: ${savedFilePath}\n\nAutomatic saving is now enabled. Your investigation will be saved after each hop.`);
+                    alert(`✅ Investigation saved successfully!\n\nFile: ${savedFilePath}\nLocation: ${fileHandle.name}\n\n🔄 Automatic saving is now enabled!\nYour investigation will be automatically saved to this location after each hop.`);
                     
                 } else {
                     // Fallback to regular download
@@ -14386,7 +14700,15 @@ Note: Block timestamp will be added when available.`);
                     document.getElementById('saveRequiredMessage').style.display = 'none';
                     document.getElementById('generateRootBtn').style.display = 'block';
                     
-                    alert(`✅ Investigation saved successfully!\n\nFile: ${filename}\n\nNote: Automatic saving is not available in your browser. Please save manually using the "Save .bats File" button.`);
+                    let helpText = `✅ Investigation saved to Downloads folder!\n\nFile: ${filename}\n\n⚠️ Browser Limitation: `;
+                    
+                    if (window.location.protocol === 'file:') {
+                        helpText += `You're running this tool from a local file (file://), which limits some features.\n\nFor full functionality including custom save locations:\n• Host on a local server (e.g., python -m http.server)\n• Use a tool like Live Server in VS Code\n• Upload to a web server with HTTPS\n• Or continue with manual saves to Downloads folder`;
+                    } else {
+                        helpText += `Your browser doesn't support the File System API.\n\nFor custom save locations, use:\n• Chrome 86+ or Edge 86+ (Chromium-based)\n• Opera 72+\n• Make sure you're on HTTPS`;
+                    }
+                    
+                    alert(helpText);
                 }
             } catch (error) {
                 if (error.name === 'AbortError') {
@@ -15017,7 +15339,7 @@ Note: Block timestamp will be added when available.`);
             const card = document.getElementById('caseDetailsCard');
             
             if (setupContent.style.display === 'none') {
-                setupContent.style.display = 'grid';
+                setupContent.style.display = 'block';
                 toggleBtn.innerHTML = '▼';
                 card.style.paddingBottom = '25px';
             } else {
