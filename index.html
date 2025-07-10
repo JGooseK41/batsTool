@@ -1612,6 +1612,7 @@
         // Blockchain API Integration
         let targetEntryContext = null;
         let currentTxData = null;
+        let currentBulkVictimId = null;
         
         // Blockchain API configurations
         const blockchainAPIs = {
@@ -12768,8 +12769,6 @@ document.addEventListener('click', function(event) {
 });
 
 // Bulk Transaction Modal Functions
-let currentBulkVictimId = null;
-
 function openBulkTransactionModal(victimId) {
     currentBulkVictimId = victimId;
     document.getElementById('bulkTransactionHashes').value = '';
