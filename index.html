@@ -2193,14 +2193,27 @@ function renderHopEntry(entry) {
                 </div>
                 <div class="form-group">
                     <label>Transaction Hash</label>
-                    <input type="text" value="${entry.txHash || ''}" 
-                           placeholder="Blockchain transaction hash"
-                           onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'txHash', this.value)">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" 
+                               id="txHash_${entry.hopId}_${entry.id}"
+                               value="${entry.txHash || ''}" 
+                               placeholder="Blockchain transaction hash"
+                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'txHash', this.value)"
+                               style="flex: 1;">
+                        <button type="button" 
+                                class="btn btn-secondary" 
+                                onclick="openBlockchainLookup(${entry.hopId}, ${entry.id})"
+                                style="background: #3498db; color: white; padding: 8px 15px; font-size: 14px;">
+                            🔗 Lookup
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Timestamp with Timezone</label>
                     <div class="datetime-timezone">
-                        <input type="datetime-local" value="${entry.timestamp || ''}" 
+                        <input type="datetime-local" 
+                               id="timestamp_${entry.hopId}_${entry.id}"
+                               value="${entry.timestamp || ''}" 
                                onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timestamp', this.value)">
                         <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timezone', this.value)">
                             ${Object.entries(timezones).map(([key, value]) => 
@@ -3211,14 +3224,27 @@ function renderEnhancedHopEntry(entry) {
                 </div>
                 <div class="form-group">
                     <label>Transaction Hash</label>
-                    <input type="text" value="${entry.txHash || ''}" 
-                           placeholder="Blockchain transaction hash"
-                           onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'txHash', this.value)">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" 
+                               id="txHash_${entry.hopId}_${entry.id}"
+                               value="${entry.txHash || ''}" 
+                               placeholder="Blockchain transaction hash"
+                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'txHash', this.value)"
+                               style="flex: 1;">
+                        <button type="button" 
+                                class="btn btn-secondary" 
+                                onclick="openBlockchainLookup(${entry.hopId}, ${entry.id})"
+                                style="background: #3498db; color: white; padding: 8px 15px; font-size: 14px;">
+                            🔗 Lookup
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Timestamp with Timezone</label>
                     <div class="datetime-timezone">
-                        <input type="datetime-local" value="${entry.timestamp || ''}" 
+                        <input type="datetime-local" 
+                               id="timestamp_${entry.hopId}_${entry.id}"
+                               value="${entry.timestamp || ''}" 
                                onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timestamp', this.value)">
                         <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timezone', this.value)">
                             ${Object.entries(timezones).map(([key, value]) => 
@@ -9120,14 +9146,27 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                 </div>
                 <div class="form-group">
                     <label>Transaction Hash</label>
-                    <input type="text" value="${entry.txHash || ''}" 
-                           placeholder="Blockchain transaction hash"
-                           onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'txHash', this.value)">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" 
+                               id="txHash_${entry.hopId}_${entry.id}"
+                               value="${entry.txHash || ''}" 
+                               placeholder="Blockchain transaction hash"
+                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'txHash', this.value)"
+                               style="flex: 1;">
+                        <button type="button" 
+                                class="btn btn-secondary" 
+                                onclick="openBlockchainLookup(${entry.hopId}, ${entry.id})"
+                                style="background: #3498db; color: white; padding: 8px 15px; font-size: 14px;">
+                            🔗 Lookup
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Timestamp with Timezone</label>
                     <div class="datetime-timezone">
-                        <input type="datetime-local" value="${entry.timestamp || ''}" 
+                        <input type="datetime-local" 
+                               id="timestamp_${entry.hopId}_${entry.id}"
+                               value="${entry.timestamp || ''}" 
                                onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timestamp', this.value)">
                         <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timezone', this.value)">
                             ${Object.entries(timezones).map(([key, value]) => 
@@ -11672,6 +11711,184 @@ function clearAllAssignments(hopId, entryId) {
     entry.amount = '0';
     updateMultipleSourcePreview(hopId, entryId);
     saveToStorage();
+}
+
+// Blockchain API Integration Functions
+function detectBlockchainFromHash(hash) {
+    const detectedDiv = document.getElementById('detectedBlockchain');
+    
+    if (!hash || hash.length < 10) {
+        detectedDiv.innerHTML = '';
+        return null;
+    }
+    
+    // Check each blockchain pattern
+    for (const [chain, config] of Object.entries(blockchainAPIs)) {
+        if (config.txPattern.test(hash)) {
+            detectedDiv.innerHTML = `<span style="color: #27ae60;">✓ Detected: ${config.name} transaction</span>`;
+            return chain;
+        }
+    }
+    
+    detectedDiv.innerHTML = '<span style="color: #e74c3c;">✗ Unknown transaction format</span>';
+    return null;
+}
+
+function openBlockchainLookup(hopId, entryId) {
+    // Store context for applying data later
+    targetEntryContext = { hopId, entryId };
+    
+    // Clear previous data
+    currentTxData = null;
+    document.getElementById('txHashInput').value = '';
+    document.getElementById('detectedBlockchain').innerHTML = '';
+    document.getElementById('lookupResult').style.display = 'none';
+    document.getElementById('lookupError').style.display = 'none';
+    document.getElementById('applyTxDataBtn').style.display = 'none';
+    
+    document.getElementById('blockchainLookupModal').style.display = 'block';
+}
+
+function closeBlockchainLookupModal() {
+    document.getElementById('blockchainLookupModal').style.display = 'none';
+    targetEntryContext = null;
+    currentTxData = null;
+}
+
+async function lookupTransaction() {
+    const txHash = document.getElementById('txHashInput').value.trim();
+    const detectedChain = detectBlockchainFromHash(txHash);
+    
+    if (!txHash) {
+        showLookupError('Please enter a transaction hash');
+        return;
+    }
+    
+    if (!detectedChain) {
+        showLookupError('Unable to detect blockchain from transaction hash format');
+        return;
+    }
+    
+    const config = blockchainAPIs[detectedChain];
+    
+    // Show loading
+    document.getElementById('lookupLoading').style.display = 'block';
+    document.getElementById('lookupError').style.display = 'none';
+    document.getElementById('lookupResult').style.display = 'none';
+    
+    try {
+        let data;
+        
+        if (detectedChain === 'bitcoin') {
+            const response = await fetch(config.apiUrl + txHash);
+            if (!response.ok) throw new Error('Transaction not found');
+            data = await response.json();
+        } else if (detectedChain === 'ethereum') {
+            // Note: User needs to add their Etherscan API key
+            const apiKey = config.apiKey || 'YourEtherscanAPIKey';
+            const response = await fetch(`${config.apiUrl}${txHash}&apikey=${apiKey}`);
+            if (!response.ok) throw new Error('API request failed');
+            data = await response.json();
+            if (!data.result || data.result === null) throw new Error('Transaction not found');
+        } else if (detectedChain === 'tron') {
+            const response = await fetch(config.apiUrl + txHash);
+            if (!response.ok) throw new Error('Transaction not found');
+            data = await response.json();
+        } else if (detectedChain === 'solana') {
+            // Solana RPC call
+            const response = await fetch(config.apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'getTransaction',
+                    params: [txHash, { encoding: 'json', maxSupportedTransactionVersion: 0 }]
+                })
+            });
+            if (!response.ok) throw new Error('RPC request failed');
+            data = await response.json();
+            if (data.error) throw new Error(data.error.message);
+        }
+        
+        // Parse the response
+        currentTxData = config.parseResponse(data);
+        currentTxData.blockchain = config.name;
+        currentTxData.rawHash = txHash;
+        
+        // Display the results
+        displayTransactionData(currentTxData);
+        
+    } catch (error) {
+        console.error('Lookup error:', error);
+        showLookupError(`Failed to fetch transaction: ${error.message}`);
+    } finally {
+        document.getElementById('lookupLoading').style.display = 'none';
+    }
+}
+
+function showLookupError(message) {
+    const errorDiv = document.getElementById('lookupError');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+}
+
+function displayTransactionData(txData) {
+    const displayDiv = document.getElementById('txDetailsDisplay');
+    
+    const timeFormatted = new Date(txData.time).toLocaleString();
+    
+    displayDiv.innerHTML = `
+        <div style="display: grid; gap: 10px;">
+            <div><strong>Blockchain:</strong> ${txData.blockchain}</div>
+            <div><strong>Hash:</strong> <span style="font-family: monospace; font-size: 12px; word-break: break-all;">${txData.rawHash}</span></div>
+            <div><strong>Time:</strong> ${timeFormatted} (UTC)</div>
+            <div><strong>Amount:</strong> ${txData.amount.toFixed(8)} ${txData.currency}</div>
+            <div><strong>From:</strong> <span style="font-family: monospace; font-size: 12px; word-break: break-all;">${txData.from}</span></div>
+            <div><strong>To:</strong> <span style="font-family: monospace; font-size: 12px; word-break: break-all;">${txData.to}</span></div>
+            ${txData.fee ? `<div><strong>Fee:</strong> ${txData.fee} ${txData.currency}</div>` : ''}
+        </div>
+    `;
+    
+    document.getElementById('lookupResult').style.display = 'block';
+    document.getElementById('applyTxDataBtn').style.display = 'inline-block';
+}
+
+function applyTransactionData() {
+    if (!currentTxData || !targetEntryContext) return;
+    
+    const { hopId, entryId } = targetEntryContext;
+    const hop = investigation.hops.find(h => h.id === hopId);
+    const entry = hop.entries.find(e => e.id === entryId);
+    
+    // Apply the data to the entry
+    entry.txHash = currentTxData.rawHash;
+    entry.timestamp = new Date(currentTxData.time).toISOString().slice(0, 16); // Format for datetime-local
+    entry.timezone = 'UTC';
+    entry.amount = currentTxData.amount.toString();
+    entry.currency = currentTxData.currency;
+    entry.fromWallet = currentTxData.from;
+    entry.toWallet = currentTxData.to;
+    
+    // Update the form fields
+    document.getElementById(`txHash_${hopId}_${entryId}`).value = entry.txHash;
+    document.getElementById(`timestamp_${hopId}_${entryId}`).value = entry.timestamp;
+    document.getElementById(`assignAmount_${hopId}_${entryId}`).value = entry.amount;
+    document.getElementById(`toWallet_${hopId}_${entryId}`).value = entry.toWallet;
+    
+    // Note: fromWallet is stored but not displayed in the form
+    // It's used internally for transaction tracking
+    
+    // Update currency dropdown
+    const currencySelect = document.querySelector(`select[onchange*="updateEntry(${hopId}, ${entryId}, 'currency'"]`);
+    if (currencySelect) {
+        currencySelect.value = entry.currency;
+    }
+    
+    saveToStorage();
+    closeBlockchainLookupModal();
+    
+    alert(`✅ Transaction data applied successfully!\n\nAmount: ${entry.amount} ${entry.currency}\nFrom: ${entry.fromWallet.slice(0, 20)}...\nTo: ${entry.toWallet.slice(0, 20)}...`);
 }
     </script>
 </body>
