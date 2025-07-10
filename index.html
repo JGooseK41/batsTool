@@ -246,6 +246,20 @@
         .btn-secondary {
             background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
         }
+        
+        .btn-add-transaction {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            font-weight: 600;
+            padding: 10px 20px;
+            margin-right: 10px;
+        }
+        
+        .btn-add-transaction:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
 
         .btn-danger {
             background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
@@ -1444,7 +1458,7 @@
                                     Before proceeding, you must save your investigation file. This will enable automatic saving at each hop.
                                 </p>
                                 <button class="btn btn-confirm" onclick="saveAndCaptureFilePath()" style="background: #ffc107; color: #333; padding: 10px 30px;">
-                                    💾 Save Investigation File
+                                    💾 Save Investigation and Calculate ART
                                 </button>
                             </div>
                             <button class="btn btn-confirm btn-large" id="generateRootBtn" onclick="generateRootTotal()" style="display: none;">
@@ -1627,7 +1641,7 @@
                                     📊 Export CSV
                                 </button>
                                 <button class="btn btn-confirm" onclick="saveInvestigation()">
-                                    💾 Save Investigation
+                                    💾 Save Investigation and Calculate ART
                                 </button>
                             </div>
                         </div>
@@ -5398,18 +5412,42 @@ function updateFormFieldsFromInvestigation() {
         // Check for chronology errors in this victim's transactions
         const chronologyError = validateTransactionChronology(victim);
         
+        // Check if victim is completed (minimized)
+        const isMinimized = victim.isCompleted || false;
+        
+        // Calculate victim total losses
+        const totalLosses = victim.transactions.reduce((sum, t) => {
+            return sum + (parseFloat(t.amount) || 0);
+        }, 0);
+        
+        // Count valid transactions
+        const validTransactions = victim.transactions.filter(t => 
+            parseFloat(t.amount) > 0 && t.receivingWallet && t.receivingWallet.trim() !== ''
+        ).length;
+        
         victimDiv.innerHTML = `
-            <div class="trace-header">
-                <h3>Victim ${victim.id}</h3>
-                <button class="btn btn-danger" onclick="removeVictim(${victim.id})">Remove</button>
-            </div>
-            ${chronologyError ? `
-                <div style="background: #f8d7da; color: #721c24; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #f5c6cb;">
-                    <strong>⚠️ Chronological Order Warning:</strong><br>
-                    ${chronologyError.replace(/\n/g, '<br>')}
+            <div class="trace-header" style="background: ${isMinimized ? '#e8f4f8' : '#f8f9fa'};">
+                <h3>Victim ${victim.id} ${isMinimized ? `- ${validTransactions} transactions, Total: ${formatNumber(totalLosses)} ${victim.transactions[0]?.currency || 'USD'}` : ''}</h3>
+                <div>
+                    ${!isMinimized ? `<button class="btn btn-success" onclick="completeVictim(${victim.id})" 
+                        ${validTransactions === 0 ? 'disabled' : ''} 
+                        title="${validTransactions === 0 ? 'Add at least one valid transaction first' : 'Complete and minimize this victim'}">
+                        ✓ Complete
+                    </button>` : 
+                    `<button class="btn btn-secondary" onclick="reopenVictim(${victim.id})">
+                        ✏️ Edit
+                    </button>`}
+                    <button class="btn btn-danger" onclick="removeVictim(${victim.id})">Remove</button>
                 </div>
-            ` : ''}
-            ${victim.transactions.map(transaction => {
+            </div>
+            ${!isMinimized ? `
+                ${chronologyError ? `
+                    <div style="background: #f8d7da; color: #721c24; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #f5c6cb;">
+                        <strong>⚠️ Chronological Order Warning:</strong><br>
+                        ${chronologyError.replace(/\n/g, '<br>')}
+                    </div>
+                ` : ''}
+                ${victim.transactions.map(transaction => {
                 const hasAmount = parseFloat(transaction.amount) > 0;
                 const hasWallet = transaction.receivingWallet && transaction.receivingWallet.trim() !== '';
                 const isIncomplete = hasAmount && !hasWallet;
@@ -5497,8 +5535,41 @@ function updateFormFieldsFromInvestigation() {
                     </div>
                 `;
             }).join('')}
-            <button class="btn btn-secondary" onclick="addTransaction(${victim.id})">+ Add Transaction</button>
-            <button class="btn btn-secondary" onclick="openBulkTransactionModal(${victim.id})">📋 Bulk Add Transactions</button>
+            ${!isMinimized ? `
+                <button class="btn btn-add-transaction" onclick="addTransaction(${victim.id})">+ Add Transaction</button>
+                <button class="btn btn-secondary" onclick="openBulkTransactionModal(${victim.id})">📋 Bulk Add Transactions</button>
+            ` : `
+                <div style="padding: 15px; background: white; border-radius: 6px; margin-top: 10px;">
+                    <h4 style="margin-bottom: 10px; color: #2c3e50;">Transaction Summary:</h4>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">V-T</th>
+                                <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Date</th>
+                                <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">Amount</th>
+                                <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Asset</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${victim.transactions.filter(t => parseFloat(t.amount) > 0).map(transaction => `
+                                <tr>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">V${victim.id}-T${transaction.id}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${transaction.datetime || 'N/A'}</td>
+                                    <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">${formatNumber(transaction.amount)}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${transaction.currency}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: #e8f4f8; font-weight: bold;">
+                                <td colspan="2" style="padding: 8px; border: 1px solid #ddd;">Total Loss:</td>
+                                <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">${formatNumber(totalLosses)}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${victim.transactions[0]?.currency || 'USD'}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `}
         `;
         container.appendChild(victimDiv);
     });
@@ -11484,6 +11555,37 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                 updateWorkflowSteps();
             }
         }
+        
+        function completeVictim(victimId) {
+            const victim = investigation.victims.find(v => v.id === victimId);
+            if (!victim) return;
+            
+            // Validate all transactions have required data
+            const incompleteTransactions = victim.transactions.filter(t => 
+                parseFloat(t.amount) > 0 && (!t.receivingWallet || t.receivingWallet.trim() === '')
+            );
+            
+            if (incompleteTransactions.length > 0) {
+                alert(`Cannot complete victim ${victimId}: ${incompleteTransactions.length} transaction(s) are missing receiving wallet addresses.`);
+                return;
+            }
+            
+            if (confirm(`Complete Victim ${victimId}?\n\nThis will minimize the view to show only a summary. You can edit later if needed.`)) {
+                victim.isCompleted = true;
+                renderVictims();
+                saveToStorage();
+                updateWorkflowSteps();
+            }
+        }
+        
+        function reopenVictim(victimId) {
+            const victim = investigation.victims.find(v => v.id === victimId);
+            if (victim) {
+                victim.isCompleted = false;
+                renderVictims();
+                saveToStorage();
+            }
+        }
 
         function renderSummary() {
             const container = document.getElementById('summaryContent');
@@ -11699,8 +11801,8 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                 }
             }
             
-            // Default download method
-            const filename = `${investigation.caseId}_BATS_Investigation.bats`;
+            // Default download method - use case ID as filename
+            const filename = `${investigation.caseId}.bats`;
             downloadFile(dataStr, filename, 'application/json');
         }
 
