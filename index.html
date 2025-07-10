@@ -7874,14 +7874,9 @@ function exportUniversalWalletIndex() {
                                 <div style="margin-top: 15px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                                     <h4 style="margin-bottom: 15px; color: #2c3e50;">Add New Entry to Hop ${hop.hopNumber}</h4>
                                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                        <select id="newEntryType_${hop.id}" style="padding: 10px 15px; border: 2px solid #e8f0fe; border-radius: 6px; font-size: 16px;">
-                                            ${Object.entries(entryTypes).map(([key, value]) => 
-                                                `<option value="${key}">${value}</option>`
-                                            ).join('')}
-                                        </select>
-                                        <button class="btn" onclick="addHopEntry(${hop.id}, document.getElementById('newEntryType_${hop.id}').value)" 
-                                                style="padding: 10px 20px;">
-                                            + Add Entry
+                                        <button class="btn btn-primary" onclick="showAddEntryWizard(${hop.id})" 
+                                                style="padding: 12px 24px; background: #3498db; color: white; font-size: 16px;">
+                                            ➕ Add New Entry
                                         </button>
                                         <button class="btn btn-confirm" onclick="finalizeHop(${hop.id})" 
                                                 style="margin-left: auto; background: #27ae60; padding: 10px 30px;">
@@ -10859,7 +10854,91 @@ function assignMaxAmountMultiple(hopId, entryId) {
 }
 
 
+function showAddEntryWizard(hopId) {
+    const hop = investigation.hops.find(h => h.id === hopId);
+    if (!hop) return;
+    
+    const entryTypeDescriptions = {
+        'trace': {
+            icon: '🔍',
+            description: 'Track funds moving from one wallet to another. The standard way to follow money through the blockchain.',
+            color: '#3498db'
+        },
+        'writeoff': {
+            icon: '❌',
+            description: 'Mark funds as lost, stolen, or unrecoverable. Use when funds cannot be traced further.',
+            color: '#e74c3c'
+        },
+        'cold_storage': {
+            icon: '🧊',
+            description: 'Funds remain in current wallet but are marked as cold storage (BLUE wallet). Use when bad actors are holding funds.',
+            color: '#00bcd4'
+        }
+    };
+    
+    const wizardHTML = `
+        <div id="addEntryWizard" class="modal" style="display: block;">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2>➕ Add New Entry - Hop ${hop.hopNumber}</h2>
+                    <p>Choose the type of entry you want to add:</p>
+                </div>
+                
+                <div style="padding: 20px;">
+                    ${Object.entries(entryTypes).map(([key, value]) => {
+                        const info = entryTypeDescriptions[key] || { icon: '📄', description: '', color: '#95a5a6' };
+                        return `
+                            <div onclick="selectEntryType('${hopId}', '${key}')"
+                                 style="background: white; border: 2px solid #e8f0fe; border-radius: 8px; padding: 20px; margin-bottom: 15px; cursor: pointer; transition: all 0.2s;"
+                                 onmouseover="this.style.borderColor='${info.color}'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'"
+                                 onmouseout="this.style.borderColor='#e8f0fe'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <span style="font-size: 32px;">${info.icon}</span>
+                                    <div style="flex: 1;">
+                                        <h3 style="margin: 0; color: #2c3e50;">${value}</h3>
+                                        <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 14px;">${info.description}</p>
+                                    </div>
+                                    <span style="color: ${info.color}; font-size: 24px;">→</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeAddEntryWizard()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', wizardHTML);
+}
+
+function selectEntryType(hopId, entryType) {
+    closeAddEntryWizard();
+    
+    // Check if we should use wizards
+    const wizardDisabled = localStorage.getItem('bats_hop_wizard_disabled') === 'true';
+    
+    if (entryType === 'trace' && !wizardDisabled) {
+        // Use the existing trace wizard
+        showHopEntryWizard(hopId);
+    } else {
+        // For now, create other types directly
+        // In the future, we could add specific wizards for each type
+        createHopEntryDirectly(hopId, entryType);
+    }
+}
+
+function closeAddEntryWizard() {
+    const wizard = document.getElementById('addEntryWizard');
+    if (wizard) wizard.remove();
+}
+
 function addHopEntry(hopId, entryType = 'trace') {
+    // This function is now primarily used when wizards are disabled
+    // or called from other parts of the code
     const hop = investigation.hops.find(h => h.id === hopId);
     if (!hop) return;
     

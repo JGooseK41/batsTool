@@ -3,15 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 18:49)
+## Latest Commit (Auto-updated: 2025-07-10 18:53)
 
-**Commit:** 49a06360d3c47ae891b2f19d1c14a0fda2773a83
+**Commit:** d4eb0090241b03556bdde859a1e2f6506f943ed3
 **Author:** Your Name
-**Message:** Fix initial white screen and missing blockchain lookup functions
+**Message:** Improve hop entry workflow with wizard and better button explanations
 
-- Added switchTab('victims') on page load to show Victims tab by default
-- Created individual blockchain lookup functions (lookupEthereumTransaction, lookupBitcoinTransaction, etc.)
-- Fixed "lookupEthereumTransaction is not defined" error in hop entry
+- Added step-by-step wizard for hop trace entries:
+  - Step 1: Select source threads
+  - Step 2: Allocate amounts from each thread
+  - Step 3: Enter transaction hash and lookup details
+- Wizard is dismissible with "Don't show again" preference
+- Added clear explanations for Smart Amount Allocation vs Max buttons:
+  - Smart Allocation: For tracing specific total amounts across multiple sources
+  - Max button: For quickly allocating all available funds
+- Fixed workflow to select threads and amounts before entering transaction hash
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -19,23 +25,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  39 ++++++++-------
- index.html | 160 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 181 insertions(+), 18 deletions(-)
+ CLAUDE.md  |  38 +++---
+ index.html | 433 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 452 insertions(+), 19 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 49a0636 Fix initial white screen and missing blockchain lookup functions (0 seconds ago)
-- 58f3548 Fix template literal syntax errors on lines 5557 and 5592 (32 minutes ago)
-- c803494 Fix template literal syntax error on line 5557 (37 minutes ago)
-- ef38132 Fix template literal structure on line 5557 (63 minutes ago)
-- 6cd39e0 Fix missing backtick in template expression (65 minutes ago)
-- 4782757 Fix template literal syntax - swap backtick and brace position (69 minutes ago)
-- aa39a3a Remove carriage return characters causing syntax error (86 minutes ago)
-- a865d8b Fix extra closing brace in template literal (88 minutes ago)
+- d4eb009 Improve hop entry workflow with wizard and better button explanations (0 seconds ago)
+- 49a0636 Fix initial white screen and missing blockchain lookup functions (4 minutes ago)
+- 58f3548 Fix template literal syntax errors on lines 5557 and 5592 (35 minutes ago)
+- c803494 Fix template literal syntax error on line 5557 (41 minutes ago)
+- ef38132 Fix template literal structure on line 5557 (67 minutes ago)
+- 6cd39e0 Fix missing backtick in template expression (69 minutes ago)
+- 4782757 Fix template literal syntax - swap backtick and brace position (73 minutes ago)
+- aa39a3a Remove carriage return characters causing syntax error (2 hours ago)
+- a865d8b Fix extra closing brace in template literal (2 hours ago)
 - 8fbd79e Fix template literal syntax error in renderVictims function (2 hours ago)
-- 15406db Fix missing closing brace in template literal interpolation (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
