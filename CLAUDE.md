@@ -3,22 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 13:29)
+## Latest Commit (Auto-updated: 2025-07-10 15:01)
 
-**Commit:** 573287360c6374a523447ca4b620028cfaaa9ff3
+**Commit:** 49189494f12a2cbebd998c29b9f4e6ef5c3e277f
 **Author:** Your Name
-**Message:** Add comprehensive BATS Info tab and documentation
+**Message:** Fix JavaScript errors and duplicate variable declarations
 
-- Added BATS Info tab to the application with educational content
-- Created comprehensive documentation from BATS Desk Reference:
-  - BATS-FAQ.md: Frequently asked questions
-  - BATS-Methodology-Guide.md: Detailed methodology breakdown
-  - BATS-Benefits-Overview.md: Benefits documentation
-  - BATS-Quick-Start-Guide.md: Quick start guide for new users
-- Emphasized that standardized documentation creates reproducible results
-- Improved UI with collapsible setup card and visual workflow
-- Fixed transfer selection modal and file save messaging
-- Added color-coded cards with step labels for better UX
+- Fixed duplicate txHashInput variable declarations by renaming to unique names
+- Made switchTab, toggleFileMenu, and validateAndProceedSetup globally accessible
+- Resolved scope issues causing "function not defined" errors
+- BATS Info tab now functions correctly
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -26,28 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                      |  40 ++---
- docs/BATS Desk Reference.docx  | Bin 0 -> 47060 bytes
- docs/BATS-Benefits-Overview.md | 167 +++++++++++++++++++
- docs/BATS-FAQ.md               | 108 +++++++++++++
- docs/BATS-Methodology-Guide.md | 190 ++++++++++++++++++++++
- docs/BATS-Quick-Start-Guide.md | 173 ++++++++++++++++++++
- index.html                     | 354 +++++++++++++++++++++++++++++++++++++++--
- 7 files changed, 996 insertions(+), 36 deletions(-)
+ CLAUDE.md  | 53 +++++++++++++++++++++++++++++++----------------------
+ index.html | 23 +++++++++++++++--------
+ 2 files changed, 46 insertions(+), 30 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5732873 Add comprehensive BATS Info tab and documentation (0 seconds ago)
-- fcbd8cd Add submit button to investigation setup card (2 hours ago)
-- 5e7cad5 Improve UI workflow and fix transfer selection functionality (2 hours ago)
-- d724e0c Redesign case details layout for improved UX (3 hours ago)
-- efa7956 Fix null reference error in updateValidationStatus (3 hours ago)
-- bdbe95c Fix initialization error by moving event listener inside DOMContentLoaded (3 hours ago)
-- 175069e Improve UI and fix transfer selection functionality (3 hours ago)
-- e376652 Fix transfer selection and add asset filter (3 hours ago)
-- 45fb983 Add Flow Diagram visualization - Phase 1 (4 hours ago)
-- 31ec874 Fix white screen issue when starting investigation (4 hours ago)
+- 4918949 Fix JavaScript errors and duplicate variable declarations (0 seconds ago)
+- 5732873 Add comprehensive BATS Info tab and documentation (2 hours ago)
+- fcbd8cd Add submit button to investigation setup card (4 hours ago)
+- 5e7cad5 Improve UI workflow and fix transfer selection functionality (4 hours ago)
+- d724e0c Redesign case details layout for improved UX (4 hours ago)
+- efa7956 Fix null reference error in updateValidationStatus (4 hours ago)
+- bdbe95c Fix initialization error by moving event listener inside DOMContentLoaded (4 hours ago)
+- 175069e Improve UI and fix transfer selection functionality (4 hours ago)
+- e376652 Fix transfer selection and add asset filter (5 hours ago)
+- 45fb983 Add Flow Diagram visualization - Phase 1 (5 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

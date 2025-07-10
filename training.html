@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B.A.T.S. Training & Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .nav-bar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 15px 0;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #2c3e50;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .back-to-app {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-app:hover {
+            background: #229954;
+            transform: translateY(-1px);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .key-benefit {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 3px solid #fdcb6e;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .key-benefit h2 {
+            color: #f39c12;
+            margin-bottom: 15px;
+            font-size: 2rem;
+        }
+
+        .key-benefit .highlight {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .section h3 {
+            color: #27ae60;
+            margin: 25px 0 15px 0;
+            font-size: 1.4rem;
+        }
+
+        .section h4 {
+            color: #3498db;
+            margin: 20px 0 10px 0;
+            font-size: 1.2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .card {
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .card-red {
+            background: #ffebee;
+            border-color: #e74c3c;
+        }
+
+        .card-yellow {
+            background: #fff8e1;
+            border-color: #f39c12;
+        }
+
+        .card-purple {
+            background: #f3e5f5;
+            border-color: #9b59b6;
+        }
+
+        .card-blue {
+            background: #e3f2fd;
+            border-color: #3498db;
+        }
+
+        .card-black {
+            background: #f5f5f5;
+            border-color: #34495e;
+        }
+
+        .card-green {
+            background: #e8f5e8;
+            border-color: #27ae60;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .example-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #e9ecef;
+        }
+
+        .warning-box {
+            background: #fee;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #e74c3c;
+            margin: 15px 0;
+        }
+
+        .tip-box {
+            background: #d5f4e6;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+            margin: 20px 0;
+        }
+
+        .checklist {
+            background: #e8f8f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .checklist ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .checklist li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .checklist li:before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+        }
+
+        .toc {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+
+        .toc a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-links {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .nav-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>B.A.T.S. TRAINING CENTER</h1>
+        <p class="subtitle">Block Audit Tracing Standard - Complete Documentation & Training Materials</p>
+    </header>
+
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <div class="nav-links">
+                <a href="#overview">Overview</a>
+                <a href="#methodology">Methodology</a>
+                <a href="#notation">V-T-H Notation</a>
+                <a href="#colors">Wallet Colors</a>
+                <a href="#golden-thread">Golden Thread</a>
+                <a href="#quick-start">Quick Start</a>
+                <a href="#faq">FAQ</a>
+                <a href="#benefits">Benefits</a>
+            </div>
+            <a href="index.html" class="back-to-app">← Back to B.A.T.S. Tool</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Key Benefit Highlight -->
+        <div class="key-benefit">
+            <h2>🎯 The Key Benefit of B.A.T.S.</h2>
+            <p class="highlight">Standardized Documentation = Reproducible Results</p>
+            <p>Any investigator following the B.A.T.S. methodology will arrive at the same conclusions, creating legally defensible evidence that withstands scrutiny and enables successful asset forfeiture.</p>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>📑 Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">1. Overview - What is B.A.T.S.?</a></li>
+                <li><a href="#methodology">2. The B.A.T.S. Methodology</a></li>
+                <li><a href="#notation">3. Understanding V-T-H Notation</a></li>
+                <li><a href="#colors">4. Wallet Color Classification System</a></li>
+                <li><a href="#golden-thread">5. The Golden Thread Principle</a></li>
+                <li><a href="#quick-start">6. Quick Start Guide</a></li>
+                <li><a href="#faq">7. Frequently Asked Questions</a></li>
+                <li><a href="#benefits">8. Benefits Overview</a></li>
+            </ul>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="overview" class="section">
+            <h2>📖 Overview - What is B.A.T.S.?</h2>
+            <p>The <strong>Block Audit Tracing Standard (B.A.T.S.)</strong> is a revolutionary framework for cryptocurrency investigation that transforms blockchain analysis from an art into a science. It provides the mathematical certainty required for successful asset forfeiture cases.</p>
+            
+            <h3>Core Principles</h3>
+            <div class="grid">
+                <div class="card card-green">
+                    <h4>Mathematical Precision</h4>
+                    <p>Every satoshi, wei, or cent is accounted for with mathematical validation at each step.</p>
+                </div>
+                <div class="card card-blue">
+                    <h4>Standardized Process</h4>
+                    <p>Consistent methodology ensures any investigator reaches the same conclusions.</p>
+                </div>
+                <div class="card card-purple">
+                    <h4>Legal Compliance</h4>
+                    <p>Meets stringent court requirements for criminal asset forfeiture proceedings.</p>
+                </div>
+                <div class="card card-yellow">
+                    <h4>Scope Control</h4>
+                    <p>Prevents investigation creep by maintaining focus on traced funds only.</p>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <strong>Remember:</strong> B.A.T.S. ensures that two different investigators analyzing the same case will reach identical conclusions, providing the reproducibility that courts demand.
+            </div>
+        </section>
+
+        <!-- Methodology Section -->
+        <section id="methodology" class="section">
+            <h2>🔬 The B.A.T.S. Methodology</h2>
+            
+            <h3>Step 1: Establish Root Total</h3>
+            <p>Document all victim losses to create your mathematical baseline. This becomes your Adjusted Root Total (ART) after any justified write-offs.</p>
+            <div class="example-box">
+                Example: Victim 1 lost $10,000 + Victim 2 lost $5,000 = $15,000 Root Total
+            </div>
+
+            <h3>Step 2: Apply V-T-H Notation</h3>
+            <p>Assign unique identifiers to every transaction maintaining clear lineage from victims.</p>
+            <div class="example-box">
+                V1-T1 → V1-T1-H1 → V1-T1-H2 → Terminal Wallet
+            </div>
+
+            <h3>Step 3: Classify Wallets by Color</h3>
+            <p>Assign permanent colors based on wallet function, not ownership assumptions.</p>
+            
+            <h3>Step 4: Validate at Each Hop</h3>
+            <p>Ensure all thread totals at each hop level sum to your ART. This mathematical validation proves completeness.</p>
+            <div class="warning-box">
+                <strong>Critical:</strong> If totals don't match, you've missed transactions!
+            </div>
+
+            <h3>Step 5: Document Terminal Points</h3>
+            <p>Identify where funds reach exchanges (PURPLE) or cold storage (BLUE) for legal process or monitoring.</p>
+
+            <h3>The Four Levels of B.A.T.S.</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Level</th>
+                            <th>Purpose</th>
+                            <th>Key Activities</th>
+                            <th>Typical Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>B.A.T.S. 1 - Discovery</strong></td>
+                            <td>Quick case assessment</td>
+                            <td>Is this worth pursuing?</td>
+                            <td>Hours</td>
+                        </tr>
+                        <tr>
+                            <td><strong>B.A.T.S. 2 - Intelligence</strong></td>
+                            <td>Network understanding</td>
+                            <td>Who are the criminals?</td>
+                            <td>Days</td>
+                        </tr>
+                        <tr>
+                            <td><strong>B.A.T.S. 3 - Case Prep</strong></td>
+                            <td>Court-ready evidence</td>
+                            <td>Build prosecution case</td>
+                            <td>Weeks</td>
+                        </tr>
+                        <tr>
+                            <td><strong>B.A.T.S. 4 - Asset Forfeiture</strong></td>
+                            <td>Mathematical precision</td>
+                            <td>Support seizure/forfeiture</td>
+                            <td>Weeks to months</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- V-T-H Notation Section -->
+        <section id="notation" class="section">
+            <h2>🏷️ Understanding V-T-H Notation</h2>
+            
+            <div class="card card-green">
+                <h3>The Formula: V[#]-T[#]-H[#]</h3>
+                <ul style="line-height: 2; font-size: 1.1rem;">
+                    <li><strong>V</strong> = Victim number (V1, V2, V3...)</li>
+                    <li><strong>T</strong> = Transaction number (T1, T2, T3...)</li>
+                    <li><strong>H</strong> = Hop count from victim (H1, H2, H3...)</li>
+                </ul>
+            </div>
+
+            <h3>Practical Examples</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Notation</th>
+                            <th>Meaning</th>
+                            <th>Context</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>V1-T1</code></td>
+                            <td>First victim's first transaction</td>
+                            <td>At the RED (victim-facing) wallet</td>
+                        </tr>
+                        <tr>
+                            <td><code>V1-T1-H1</code></td>
+                            <td>One hop away from victim</td>
+                            <td>First movement after RED wallet</td>
+                        </tr>
+                        <tr>
+                            <td><code>V2-T3-H5</code></td>
+                            <td>Second victim's third transaction, five hops away</td>
+                            <td>Deep in the money trail</td>
+                        </tr>
+                        <tr>
+                            <td><code>V1,2,3-T1-H3</code></td>
+                            <td>Convergence of multiple victims</td>
+                            <td>Funds have combined</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tip-box">
+                <strong>Why This Matters:</strong> V-T-H notation creates an unambiguous audit trail that any investigator can follow, ensuring reproducible results.
+            </div>
+        </section>
+
+        <!-- Wallet Colors Section -->
+        <section id="colors" class="section">
+            <h2>🎨 Wallet Color Classification System</h2>
+            
+            <p>B.A.T.S. uses a standardized color system to classify wallets based on their function in the money trail:</p>
+
+            <div class="grid">
+                <div class="card card-red">
+                    <h3 style="color: #c0392b;">🔴 RED Wallets</h3>
+                    <p><strong>Definition:</strong> Victim-facing wallets</p>
+                    <p><strong>Rule:</strong> First wallet to receive victim funds</p>
+                    <p><strong>Example:</strong> Scammer's receiving address</p>
+                </div>
+
+                <div class="card card-yellow">
+                    <h3 style="color: #f39c12;">🟡 YELLOW Wallets</h3>
+                    <p><strong>Definition:</strong> Convergence/hub wallets</p>
+                    <p><strong>Rule:</strong> Where multiple victim traces meet</p>
+                    <p><strong>Example:</strong> Criminal consolidation wallet</p>
+                </div>
+
+                <div class="card card-purple">
+                    <h3 style="color: #8e44ad;">🟣 PURPLE Wallets</h3>
+                    <p><strong>Definition:</strong> Exchange deposit addresses</p>
+                    <p><strong>Rule:</strong> Known VASP/exchange wallets</p>
+                    <p><strong>Example:</strong> Binance deposit address</p>
+                </div>
+
+                <div class="card card-blue">
+                    <h3 style="color: #2980b9;">🔵 BLUE Wallets</h3>
+                    <p><strong>Definition:</strong> Cold storage wallets</p>
+                    <p><strong>Rule:</strong> Long-term holding addresses</p>
+                    <p><strong>Example:</strong> Criminal savings wallet</p>
+                </div>
+
+                <div class="card card-black">
+                    <h3 style="color: #2c3e50;">⚫ BLACK Wallets</h3>
+                    <p><strong>Definition:</strong> Standard intermediary</p>
+                    <p><strong>Rule:</strong> Default for unclassified</p>
+                    <p><strong>Example:</strong> Pass-through addresses</p>
+                </div>
+
+                <div class="card card-green">
+                    <h3 style="color: #27ae60;">🟢 Additional Colors</h3>
+                    <p><strong>PINK:</strong> Dividend/Deception</p>
+                    <p><strong>ORANGE:</strong> Bitcoin Change</p>
+                    <p><strong>BROWN:</strong> Asset Conversion</p>
+                    <p><strong>GRAY:</strong> Obfuscated/Diluted</p>
+                    <p><strong>GREEN:</strong> Victim Owned</p>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <strong>Important Rule:</strong> Colors are permanent! Once assigned, a wallet's color never changes, even if its function appears to change. This ensures consistency across the investigation.
+            </div>
+        </section>
+
+        <!-- Golden Thread Section -->
+        <section id="golden-thread" class="section">
+            <h2>🧵 The Golden Thread Principle</h2>
+            
+            <div class="card card-yellow">
+                <h3>Definition</h3>
+                <p>The unbroken connection between a victim's original funds and any assets ultimately seized by law enforcement. This principle is essential for proving in court that specific seized cryptocurrency originated from criminal activity.</p>
+            </div>
+
+            <h3>The PIFO Method (Proceeds In First Out)</h3>
+            <p>When traced funds enter a wallet, the very next outbound transaction contains those funds. Apply this strictly chronologically to maintain the golden thread through commingled funds.</p>
+            
+            <div class="example-box">
+                <strong>Example:</strong><br>
+                Wallet has 5 BTC existing balance<br>
+                Victim sends 2 BTC (our traced funds)<br>
+                Next transaction out is 3 BTC<br>
+                → We trace 2 BTC of that 3 BTC transaction
+            </div>
+
+            <h3>Maintaining the Thread</h3>
+            <div class="grid">
+                <div class="card card-green">
+                    <h4>✅ DO</h4>
+                    <ul>
+                        <li>Follow funds chronologically</li>
+                        <li>Document every hop</li>
+                        <li>Validate amounts at each level</li>
+                        <li>Apply PIFO consistently</li>
+                    </ul>
+                </div>
+                <div class="card card-red">
+                    <h4>❌ DON'T</h4>
+                    <ul>
+                        <li>Skip transactions</li>
+                        <li>Make assumptions</li>
+                        <li>Follow funds out of order</li>
+                        <li>Exceed your root total</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h4>⚠️ Breaking the Thread</h4>
+                <p>The golden thread breaks if you cannot mathematically prove the connection. Common breaks: mixers, privacy coins, or poor documentation. Document these as write-offs.</p>
+            </div>
+        </section>
+
+        <!-- Quick Start Section -->
+        <section id="quick-start" class="section">
+            <h2>⚡ Quick Start Guide</h2>
+            
+            <h3>Starting Your First Investigation</h3>
+            
+            <div class="checklist">
+                <h4>Step 1: Setup (5 minutes)</h4>
+                <ul>
+                    <li>Open the B.A.T.S. Tool</li>
+                    <li>Enter case details (Case ID, Investigator, Type)</li>
+                    <li>Write a brief synopsis</li>
+                    <li>Click "Complete Setup & Continue"</li>
+                </ul>
+            </div>
+
+            <div class="checklist">
+                <h4>Step 2: Document Victims (10 minutes per victim)</h4>
+                <ul>
+                    <li>Click "Add Victim"</li>
+                    <li>Paste transaction hash</li>
+                    <li>Click "Lookup" to auto-fill details</li>
+                    <li>Verify receiving wallet (RED wallet)</li>
+                    <li>Add any notes</li>
+                </ul>
+            </div>
+
+            <div class="checklist">
+                <h4>Step 3: Confirm Root Total (2 minutes)</h4>
+                <ul>
+                    <li>Click "Generate Root Total"</li>
+                    <li>Review the breakdown</li>
+                    <li>Confirm to establish baseline</li>
+                    <li>This becomes your Adjusted Root Total (ART)</li>
+                </ul>
+            </div>
+
+            <div class="checklist">
+                <h4>Step 4: Begin Tracing (Time varies)</h4>
+                <ul>
+                    <li>Start with Hop 1 from each RED wallet</li>
+                    <li>Follow the PIFO rule</li>
+                    <li>Document each transaction</li>
+                    <li>Assign wallet colors</li>
+                </ul>
+            </div>
+
+            <div class="checklist">
+                <h4>Step 5: Validate Progress (Continuous)</h4>
+                <ul>
+                    <li>Check hop totals = ART</li>
+                    <li>If not matching, find missing transactions</li>
+                    <li>Tool validates automatically</li>
+                    <li>Save work frequently</li>
+                </ul>
+            </div>
+
+            <h3>Common Scenarios</h3>
+            
+            <h4>Scenario 1: Simple Theft</h4>
+            <div class="example-box">
+                Victim → RED wallet → BLACK wallet → PURPLE exchange<br>
+                V1-T1  → V1-T1-H1  → V1-T1-H2
+            </div>
+
+            <h4>Scenario 2: Multiple Victims Converge</h4>
+            <div class="example-box">
+                V1-T1 → RED1 → BLACK1 ↘<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;YELLOW (hub) → PURPLE exchange<br>
+                V2-T1 → RED2 → BLACK2 ↗
+            </div>
+
+            <h4>Scenario 3: Funds Split</h4>
+            <div class="example-box">
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↗ BLACK2 ($3,000) → More hops<br>
+                V1-T1 → RED → BLACK1<br>
+                ($10,000)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↘ BLACK3 ($7,000) → More hops
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="faq" class="section">
+            <h2>❓ Frequently Asked Questions</h2>
+            
+            <h3>General Questions</h3>
+            
+            <h4>What is B.A.T.S.?</h4>
+            <p>B.A.T.S. (Block Audit Tracing Standard) is a revolutionary framework for cryptocurrency investigation that maintains the "golden thread" of traceability required for successful asset forfeiture cases.</p>
+
+            <h4>Why is B.A.T.S. necessary?</h4>
+            <p>Traditional blockchain analysis tools often fail to maintain the mathematical precision required for asset forfeiture. B.A.T.S. addresses this gap by:</p>
+            <ul>
+                <li>Maintaining an unbroken connection between victim funds and seized assets</li>
+                <li>Providing mathematical certainty that courts require</li>
+                <li>Preventing investigation scope creep</li>
+                <li>Standardizing documentation for legal proceedings</li>
+            </ul>
+
+            <h3>Technical Questions</h3>
+            
+            <h4>What is Root Validation?</h4>
+            <p>Root Validation is the mathematical verification process ensuring that all thread totals at any given hop level sum to the adjusted root total. This provides proof of investigation completeness and prevents scope creep.</p>
+
+            <h4>How are write-offs handled?</h4>
+            <p>B.A.T.S. recognizes practical investigation limitations through systematic write-offs:</p>
+            <ul>
+                <li><strong>Dust write-offs:</strong> Transactions below practical thresholds (typically <$50)</li>
+                <li><strong>Dilution write-offs:</strong> When amounts become impractically small percentages</li>
+                <li><strong>Obfuscation write-offs:</strong> Assets entering mixers or privacy coins</li>
+                <li><strong>Operational write-offs:</strong> Resource limitations requiring abandonment</li>
+            </ul>
+
+            <h4>What is the Sequential Hop Rule?</h4>
+            <p>When multiple trace paths converge at the same wallet and move out together, apply the highest hop count among all converging paths, plus one for the outbound transaction.</p>
+
+            <h3>Legal Questions</h3>
+            
+            <h4>How does B.A.T.S. support asset forfeiture cases?</h4>
+            <p>B.A.T.S. provides:</p>
+            <ul>
+                <li>Mathematical certainty required by courts</li>
+                <li>Documented chain of custody for digital assets</li>
+                <li>Standardized reports that prosecutors understand</li>
+                <li>Evidence that withstands defense challenges</li>
+            </ul>
+
+            <h4>What about privacy considerations?</h4>
+            <p>B.A.T.S. emphasizes proportionality to suspected criminal activity, scope discipline to avoid unnecessary exposure, and professional standards equivalent to traditional financial investigations.</p>
+
+            <h3>Troubleshooting</h3>
+            
+            <h4>"My totals don't match!"</h4>
+            <ol>
+                <li>Check for missed transactions</li>
+                <li>Verify your math</li>
+                <li>Look for convergences</li>
+                <li>Review write-offs</li>
+            </ol>
+
+            <h4>"Too many transactions to follow"</h4>
+            <ol>
+                <li>Use justified write-offs for dust</li>
+                <li>Focus on significant amounts</li>
+                <li>Document abandonment reasons</li>
+                <li>Maintain ART accuracy</li>
+            </ol>
+        </section>
+
+        <!-- Benefits Section -->
+        <section id="benefits" class="section">
+            <h2>🎯 Benefits Overview</h2>
+            
+            <p>The Block Audit Tracing Standard (B.A.T.S.) transforms cryptocurrency investigation from an art into a science, providing mathematical certainty where previously only probability existed.</p>
+
+            <h3>Legal Benefits</h3>
+            <div class="grid">
+                <div class="card card-purple">
+                    <h4>Court-Ready Documentation</h4>
+                    <ul>
+                        <li>Mathematical certainty for exact dollar amounts</li>
+                        <li>Unbreakable chain of evidence</li>
+                        <li>Standardized reporting formats</li>
+                        <li>Defense-proof methodology</li>
+                    </ul>
+                </div>
+                <div class="card card-green">
+                    <h4>Asset Forfeiture Success</h4>
+                    <ul>
+                        <li>Direct traceability to criminal proceeds</li>
+                        <li>Overcome commingling challenges</li>
+                        <li>Meet statutory requirements</li>
+                        <li>Enable victim restitution</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Operational Benefits</h3>
+            <div class="grid">
+                <div class="card card-blue">
+                    <h4>Investigation Efficiency</h4>
+                    <ul>
+                        <li>Prevent scope creep</li>
+                        <li>Completeness verification</li>
+                        <li>Resource optimization</li>
+                        <li>Systematic approach</li>
+                    </ul>
+                </div>
+                <div class="card card-yellow">
+                    <h4>Multi-Victim Management</h4>
+                    <ul>
+                        <li>Individual victim tracking</li>
+                        <li>Convergence identification</li>
+                        <li>Consolidated reporting</li>
+                        <li>Scalable methodology</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Strategic Benefits</h3>
+            <div class="grid">
+                <div class="card card-red">
+                    <h4>Criminal Network Mapping</h4>
+                    <ul>
+                        <li>Hub identification via YELLOW wallets</li>
+                        <li>Infrastructure analysis</li>
+                        <li>Behavioral intelligence</li>
+                        <li>Predictive value</li>
+                    </ul>
+                </div>
+                <div class="card card-black">
+                    <h4>Inter-Agency Collaboration</h4>
+                    <ul>
+                        <li>Standardized language</li>
+                        <li>Shareable intelligence</li>
+                        <li>Training efficiency</li>
+                        <li>International compatibility</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <h4>Bottom Line</h4>
+                <p>B.A.T.S. represents more than a methodology—it's a transformation in how cryptocurrency investigations deliver value. By providing mathematical certainty, operational efficiency, and legal reliability, B.A.T.S. enables investigators to achieve outcomes previously thought impossible in the complex world of blockchain forensics.</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 40px 0; color: #7f8c8d;">
+            <p>B.A.T.S. Framework Training Materials</p>
+            <p><a href="index.html" style="color: #3498db;">Return to B.A.T.S. Tool</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Highlight current section in navigation
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-links a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= (sectionTop - 200)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.style.background = '';
+                link.style.color = '';
+                if (link.getAttribute('href').slice(1) === current) {
+                    link.style.background = '#3498db';
+                    link.style.color = 'white';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
