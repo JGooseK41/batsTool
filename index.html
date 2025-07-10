@@ -4167,6 +4167,8 @@ function updateAssignmentPreview(hopId, entryId) {
 
 // 3.5 Assign Maximum Amount
 function assignMaxAmount(hopId, entryId) {
+    console.log(`🎯 assignMaxAmount called for hop ${hopId}, entry ${entryId}`);
+    
     const hop = investigation.hops.find(h => h.id === hopId);
     if (!hop) {
         console.error('Hop not found:', hopId);
@@ -4178,6 +4180,12 @@ function assignMaxAmount(hopId, entryId) {
         console.error('Entry not found:', entryId);
         return;
     }
+    
+    console.log('Entry state:', {
+        sourceThreadId: entry.sourceThreadId,
+        multipleSourceThreads: entry.multipleSourceThreads,
+        currentAmount: entry.amount
+    })
     
     let maxAmount = 0;
     let currency = '';
@@ -4234,10 +4242,15 @@ function assignMaxAmount(hopId, entryId) {
     // Update entry amount
     entry.amount = maxAmount.toString();
     
-    // Update the input field
+    // Update the input field - force update even if element seems unresponsive
     const amountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
     if (amountInput) {
+        console.log(`Updating amount input to ${maxAmount}`);
         amountInput.value = maxAmount;
+        // Force a change event to ensure updates propagate
+        amountInput.dispatchEvent(new Event('change', { bubbles: true }));
+    } else {
+        console.error(`Could not find amount input: assignAmount_${hopId}_${entryId}`);
     }
     
     // Trigger the amount update handler to ensure all related updates occur
@@ -14195,16 +14208,23 @@ async function lookupHopTransaction(hopId, entryId) {
         }
         
         if (txData) {
+            // Handle multiple transfers case (batch transactions)
+            if (txData.multipleTransfers) {
+                // Show transfer selection modal
+                showTransferSelectionForHop(hopId, entryId, txData.transfers);
+                return;
+            }
+            
             // Auto-populate hop entry fields
             updateHopEntry(hopId, entryId, 'fromWallet', txData.from);
             updateHopEntry(hopId, entryId, 'toWallet', txData.to);
-            updateHopEntry(hopId, entryId, 'amount', txData.value);
+            updateHopEntry(hopId, entryId, 'amount', txData.amount); // Use 'amount' not 'value'
             updateHopEntry(hopId, entryId, 'currency', txData.currency);
-            updateHopEntry(hopId, entryId, 'timestamp', txData.timestamp);
+            updateHopEntry(hopId, entryId, 'timestamp', formatDatetimeLocal(txData.time));
             
             // Update UI fields directly
             const amountField = document.getElementById(`amount_${hopId}_${entryId}`);
-            if (amountField) amountField.value = txData.value;
+            if (amountField) amountField.value = txData.amount; // Use 'amount' not 'value'
             
             const currencySelect = document.querySelector(`[onchange*="updateHopEntry(${hopId}, ${entryId}, 'currency'"]`);
             if (currencySelect) {
@@ -14214,12 +14234,16 @@ async function lookupHopTransaction(hopId, entryId) {
             }
             
             const timestampField = document.getElementById(`timestamp_${hopId}_${entryId}`);
-            if (timestampField) timestampField.value = formatDatetimeLocal(txData.timestamp);
+            if (timestampField) timestampField.value = formatDatetimeLocal(txData.time);
             
             const toWalletField = document.getElementById(`toWallet_${hopId}_${entryId}`);
             if (toWalletField) toWalletField.value = txData.to;
             
-            alert(`✅ Transaction data loaded:\n\nFrom: ${txData.from}\nTo: ${txData.to}\nAmount: ${txData.value} ${txData.currency}\nTime: ${new Date(txData.timestamp).toLocaleString()}`);
+            // Update from wallet field if it exists
+            const fromWalletField = document.querySelector(`input[onchange*="updateHopEntry(${hopId}, ${entryId}, 'fromWallet'"]`);
+            if (fromWalletField) fromWalletField.value = txData.from;
+            
+            alert(`✅ Transaction data loaded:\n\nFrom: ${txData.from}\nTo: ${txData.to}\nAmount: ${txData.amount} ${txData.currency}\nTime: ${new Date(txData.time).toLocaleString()}`);
         }
     } catch (error) {
         console.error('Lookup error:', error);
@@ -14228,6 +14252,82 @@ async function lookupHopTransaction(hopId, entryId) {
         button.textContent = originalText;
         button.disabled = false;
     }
+}
+
+function showTransferSelectionForHop(hopId, entryId, transfers) {
+    const modalHTML = `
+        <div id="hopTransferModal" class="modal" style="display: block;">
+            <div class="modal-content" style="max-width: 700px;">
+                <div class="modal-header">
+                    <h2>🔀 Multiple Transfers Detected</h2>
+                    <p>This transaction contains ${transfers.length} transfers. Select the one to use:</p>
+                </div>
+                
+                <div style="max-height: 400px; overflow-y: auto; margin: 20px 0;">
+                    ${transfers.map((transfer, index) => `
+                        <div style="background: white; border: 2px solid #e8f0fe; border-radius: 8px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;"
+                             onmouseover="this.style.borderColor='#3498db'; this.style.transform='translateY(-2px)'"
+                             onmouseout="this.style.borderColor='#e8f0fe'; this.style.transform='translateY(0)'"
+                             onclick="selectHopTransfer(${hopId}, ${entryId}, ${index})">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <strong>From:</strong><br>
+                                    <span style="font-family: monospace; font-size: 12px;">${transfer.from}</span>
+                                </div>
+                                <div>
+                                    <strong>To:</strong><br>
+                                    <span style="font-family: monospace; font-size: 12px;">${transfer.to}</span>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 18px; font-weight: bold; color: #2c3e50;">
+                                ${transfer.amount} ${transfer.currency}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="closeHopTransferModal()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Store transfers data for selection
+    window.hopTransferData = transfers;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function selectHopTransfer(hopId, entryId, transferIndex) {
+    const transfer = window.hopTransferData[transferIndex];
+    if (!transfer) return;
+    
+    // Populate the hop entry with selected transfer
+    updateHopEntry(hopId, entryId, 'fromWallet', transfer.from);
+    updateHopEntry(hopId, entryId, 'toWallet', transfer.to);
+    updateHopEntry(hopId, entryId, 'amount', transfer.amount);
+    updateHopEntry(hopId, entryId, 'currency', transfer.currency);
+    
+    // Update UI fields
+    const amountField = document.getElementById(`amount_${hopId}_${entryId}`);
+    if (amountField) amountField.value = transfer.amount;
+    
+    const toWalletField = document.getElementById(`toWallet_${hopId}_${entryId}`);
+    if (toWalletField) toWalletField.value = transfer.to;
+    
+    alert(`✅ Transfer selected:\n\nFrom: ${transfer.from}\nTo: ${transfer.to}\nAmount: ${transfer.amount} ${transfer.currency}`);
+    
+    closeHopTransferModal();
+}
+
+function closeHopTransferModal() {
+    const modal = document.getElementById('hopTransferModal');
+    if (modal) modal.remove();
+    window.hopTransferData = null;
 }
 
 async function lookupVictimTransaction(victimId, transactionId) {

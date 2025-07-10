@@ -3,18 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 16:46)
+## Latest Commit (Auto-updated: 2025-07-10 16:51)
 
-**Commit:** 2383e3f2974053f64f840643eeb0c5a54a944d52
+**Commit:** 07f9461bc704c5b467afea9cae4e292fb30f27c1
 **Author:** Your Name
-**Message:** UI improvements for victim transactions
+**Message:** Improve hop entry UX with transaction hash at top
 
-- Made Add Transaction button more prominent (blue instead of gray)
-- Added victim completion/minimize feature with transaction summary
-- Changed Save Investigation button text to include 'Calculate ART'
-- Fixed default filename to use case number only
-- Added total losses display in minimized victim view
-- Implemented collapsible victim cards after completion
+- Moved transaction hash field to top of hop entry form
+- Added prominent styling to match victim transaction layout
+- Implemented inline auto-fill functionality (no modal)
+- Added lookupHopTransaction function for direct API calls
+- Removed redundant transaction hash field from bottom
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  41 ++++++++++---------
- index.html | 134 +++++++++++++++++++++++++++++++++++++++++++++++++++++--------
- 2 files changed, 139 insertions(+), 36 deletions(-)
+ CLAUDE.md  |  43 +++++++++++-----------
+ index.html | 120 ++++++++++++++++++++++++++++++++++++++++++++++++++++---------
+ 2 files changed, 125 insertions(+), 38 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2383e3f UI improvements for victim transactions (0 seconds ago)
-- a0fecda Add SSL success documentation and update troubleshooting guides (25 minutes ago)
-- 7dd59b9 Add Netlify DNS setup guide (33 minutes ago)
-- c214168 Add SSL certificate troubleshooting guide (36 minutes ago)
-- 4145bde Fix error preventing progression after root total generation (45 minutes ago)
-- 1ae3b49 Add BATS Investigation Graph Structure illustration to training (49 minutes ago)
-- 4295dde Fix SSL certificate mismatch and improve domain handling (53 minutes ago)
-- 13e9872 Add HTTPS enforcement and security features (56 minutes ago)
-- f8a59a5 Fix critical transaction selection modal data population issue (67 minutes ago)
-- 6a44eb2 Update B.A.T.S. training to emphasize documentation over identical results (72 minutes ago)
+- 07f9461 Improve hop entry UX with transaction hash at top (0 seconds ago)
+- 2383e3f UI improvements for victim transactions (6 minutes ago)
+- a0fecda Add SSL success documentation and update troubleshooting guides (31 minutes ago)
+- 7dd59b9 Add Netlify DNS setup guide (39 minutes ago)
+- c214168 Add SSL certificate troubleshooting guide (42 minutes ago)
+- 4145bde Fix error preventing progression after root total generation (50 minutes ago)
+- 1ae3b49 Add BATS Investigation Graph Structure illustration to training (55 minutes ago)
+- 4295dde Fix SSL certificate mismatch and improve domain handling (59 minutes ago)
+- 13e9872 Add HTTPS enforcement and security features (61 minutes ago)
+- f8a59a5 Fix critical transaction selection modal data population issue (72 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
