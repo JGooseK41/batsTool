@@ -1634,8 +1634,12 @@
                         // blockchain.info format
                         const firstInput = data.inputs[0];
                         const firstOutput = data.outputs[0];
+                        
+                        // Validate timestamp
+                        const timestamp = data.time ? data.time * 1000 : Date.now();
+                        
                         return {
-                            time: data.time * 1000,
+                            time: timestamp,
                             amount: firstOutput.value / 100000000,
                             currency: 'BTC',
                             from: firstInput.prev_out ? firstInput.prev_out.addr : 'Unknown',
@@ -1644,8 +1648,16 @@
                         };
                     } else if (data.tx_hash) {
                         // blockcypher format
+                        let timestamp;
+                        try {
+                            timestamp = new Date(data.received).getTime();
+                            if (isNaN(timestamp)) timestamp = Date.now();
+                        } catch (e) {
+                            timestamp = Date.now();
+                        }
+                        
                         return {
-                            time: new Date(data.received).getTime(),
+                            time: timestamp,
                             amount: data.outputs[0].value / 100000000,
                             currency: 'BTC',
                             from: data.inputs[0].addresses ? data.inputs[0].addresses[0] : 'Unknown',
@@ -1653,6 +1665,7 @@
                             fee: data.fees ? data.fees / 100000000 : null
                         };
                     }
+                    return null;
                 }
             },
             ethereum: {
@@ -1674,25 +1687,47 @@
                     // If we have token transfer data, use that
                     if (tokenData && tokenData.result && tokenData.result.length > 0) {
                         const token = tokenData.result[0]; // Get first token transfer
+                        const timestamp = parseInt(token.timeStamp) * 1000;
+                        
+                        // Validate timestamp
+                        if (isNaN(timestamp) || timestamp <= 0) {
+                            console.error('Invalid token timestamp:', token.timeStamp);
+                            return null;
+                        }
+                        
                         return {
-                            time: parseInt(token.timeStamp) * 1000,
+                            time: timestamp,
                             amount: parseInt(token.value) / Math.pow(10, parseInt(token.tokenDecimal)),
                             currency: token.tokenSymbol,
                             from: token.from,
                             to: token.to,
-                            fee: (parseInt(token.gasUsed) * parseInt(token.gasPrice)) / 1e18
+                            fee: token.gasUsed && token.gasPrice ? 
+                                (parseInt(token.gasUsed) * parseInt(token.gasPrice)) / 1e18 : 0
                         };
                     }
                     // Otherwise use regular ETH transaction
                     else if (data.result) {
                         const tx = data.result;
+                        
+                        // Try to get timestamp from receipt if we have it
+                        let timestamp;
+                        if (tx.timestamp) {
+                            // Some APIs provide timestamp directly
+                            timestamp = parseInt(tx.timestamp, 16) * 1000;
+                        } else {
+                            // Fallback: use current time (transaction must be recent if we're looking it up)
+                            console.warn('No timestamp in ETH transaction, using current time');
+                            timestamp = Date.now();
+                        }
+                        
                         return {
-                            time: parseInt(tx.blockNumber, 16) * 12 * 1000 + Date.now() - 7000000 * 12 * 1000, // Approximate
+                            time: timestamp,
                             amount: parseInt(tx.value, 16) / 1e18,
                             currency: 'ETH',
                             from: tx.from,
                             to: tx.to,
-                            fee: parseInt(tx.gasPrice, 16) * parseInt(tx.gas, 16) / 1e18
+                            fee: tx.gasPrice && tx.gas ? 
+                                parseInt(tx.gasPrice, 16) * parseInt(tx.gas, 16) / 1e18 : 0
                         };
                     }
                     return null;
@@ -13143,11 +13178,21 @@ async function lookupVictimTransaction(victimId, transactionId) {
         document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`).value = txData.to;
         transaction.receivingWallet = txData.to;
         
-        // Update datetime
-        const date = new Date(txData.time);
-        const dateTimeLocal = date.toISOString().slice(0, 16);
-        document.getElementById(`datetime_victim_${victimId}_${transactionId}`).value = dateTimeLocal;
-        transaction.datetime = dateTimeLocal;
+        // Update datetime with validation
+        if (txData.time && !isNaN(txData.time)) {
+            const date = new Date(txData.time);
+            if (!isNaN(date.getTime())) {
+                const dateTimeLocal = date.toISOString().slice(0, 16);
+                document.getElementById(`datetime_victim_${victimId}_${transactionId}`).value = dateTimeLocal;
+                transaction.datetime = dateTimeLocal;
+            } else {
+                console.warn('Invalid date from transaction time:', txData.time);
+                // Leave datetime empty for manual entry
+            }
+        } else {
+            console.warn('No valid timestamp in transaction data');
+            // Leave datetime empty for manual entry
+        }
         
         // Set timezone to UTC
         document.getElementById(`timezone_victim_${victimId}_${transactionId}`).value = 'UTC';
@@ -13164,7 +13209,11 @@ async function lookupVictimTransaction(victimId, transactionId) {
         saveToStorage();
         renderVictims();
         
-        alert(`✅ Transaction data retrieved successfully!\n\nAmount: ${txData.amount} ${txData.currency}\nFrom: ${txData.from}\nTo (RED Wallet): ${txData.to}\nTime: ${new Date(txData.time).toLocaleString()} UTC`);
+        const timeString = txData.time && !isNaN(txData.time) ? 
+            `\nTime: ${new Date(txData.time).toLocaleString()} UTC` : 
+            '\nTime: Not available (please enter manually)';
+        
+        alert(`✅ Transaction data retrieved successfully!\n\nAmount: ${txData.amount} ${txData.currency}\nFrom: ${txData.from}\nTo (RED Wallet): ${txData.to}${timeString}`);
         
     } catch (error) {
         console.error('Lookup error:', error);
