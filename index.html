@@ -1425,6 +1425,26 @@
         </div>
     </div>
 
+    <!-- Transfer Selection Modal -->
+    <div id="transferSelectionModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>🔄 Select Transfer</h2>
+                <p>This transaction contains multiple token transfers. Please select the one that belongs to your victim:</p>
+            </div>
+            
+            <div id="transfersList" style="margin: 20px 0; max-height: 400px; overflow-y: auto;">
+                <!-- Transfers will be populated here -->
+            </div>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <button class="btn btn-secondary" onclick="closeTransferSelectionModal()">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- API Settings Modal -->
     <div id="apiSettingsModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
@@ -1613,6 +1633,8 @@
         let targetEntryContext = null;
         let currentTxData = null;
         let currentBulkVictimId = null;
+        let pendingTransfers = null;
+        let pendingTransferCallback = null;
         
         // Blockchain API configurations
         const blockchainAPIs = {
@@ -1688,14 +1710,69 @@
                     if (receiptData && receiptData.result && receiptData.result.logs && receiptData.result.logs.length > 0) {
                         console.log('Checking receipt logs for token transfers:', receiptData.result.logs);
                         
-                        // Look for Transfer event (topic0 = 0xddf252ad...)
+                        // Look for Transfer events (topic0 = 0xddf252ad...)
                         const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
-                        const transferLog = receiptData.result.logs.find(log => 
+                        const transferLogs = receiptData.result.logs.filter(log => 
                             log.topics && log.topics[0] === transferTopic && log.topics.length >= 3
                         );
                         
-                        if (transferLog) {
-                            console.log('Found token transfer log:', transferLog);
+                        console.log(`Found ${transferLogs.length} token transfers in this transaction`);
+                        
+                        if (transferLogs.length > 0) {
+                            // For batch transactions, return special indicator
+                            if (transferLogs.length > 1) {
+                                console.log('Multiple transfers detected - user selection required');
+                                
+                                // Parse all transfers for selection
+                                const transfers = transferLogs.map(log => {
+                                    const from = '0x' + log.topics[1].slice(26);
+                                    const to = '0x' + log.topics[2].slice(26);
+                                    const value = log.data;
+                                    const contractAddress = log.address;
+                                    
+                                    // Convert amount
+                                    let amount = 0;
+                                    try {
+                                        const amountBN = parseInt(value, 16);
+                                        const decimals = contractAddress.toLowerCase() === '0xdac17f958d2ee523a2206206994597c13d831ec7' || 
+                                                       contractAddress.toLowerCase() === '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' ? 6 : 18;
+                                        amount = amountBN / Math.pow(10, decimals);
+                                    } catch (e) {
+                                        console.error('Error parsing amount:', e);
+                                    }
+                                    
+                                    // Get token symbol
+                                    const knownTokens = {
+                                        '0xdac17f958d2ee523a2206206994597c13d831ec7': 'USDT',
+                                        '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 'USDC',
+                                        '0x6b175474e89094c44da98b954eedeac495271d0f': 'DAI',
+                                        '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': 'WBTC',
+                                        '0x514910771af9ca656af840dff83e8264ecf986ca': 'LINK'
+                                    };
+                                    
+                                    const currency = knownTokens[contractAddress.toLowerCase()] || 'Token';
+                                    
+                                    return {
+                                        from: from,
+                                        to: to,
+                                        amount: amount,
+                                        currency: currency,
+                                        contractAddress: contractAddress,
+                                        rawData: log
+                                    };
+                                });
+                                
+                                // Return special object indicating multiple transfers
+                                return {
+                                    multipleTransfers: true,
+                                    transfers: transfers,
+                                    transaction: data.result
+                                };
+                            }
+                            
+                            // Single transfer - process normally
+                            const transferLog = transferLogs[0];
+                            console.log('Processing single transfer:', transferLog);
                             
                             // Decode the transfer
                             const from = '0x' + transferLog.topics[1].slice(26); // Remove padding
@@ -1709,13 +1786,16 @@
                                 timestamp = Date.now();
                             }
                             
+                            // Get token symbol from contract address if possible
+                            const contractAddress = transferLog.address;
+                            
                             // Convert hex amount to decimal
                             let amount = 0;
                             try {
                                 const amountBN = parseInt(value, 16);
-                                // Common token decimals - would need token info for exact decimals
-                                // USDT/USDC use 6, most others use 18
-                                const decimals = 6; // Assume USDT/USDC for now
+                                // USDT and USDC use 6 decimals, most others use 18
+                                const decimals = (contractAddress.toLowerCase() === '0xdac17f958d2ee523a2206206994597c13d831ec7' || 
+                                                contractAddress.toLowerCase() === '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48') ? 6 : 18;
                                 amount = amountBN / Math.pow(10, decimals);
                                 
                                 if (isNaN(amount)) {
@@ -1725,9 +1805,6 @@
                             } catch (e) {
                                 console.error('Error parsing token amount:', e);
                             }
-                            
-                            // Get token symbol from contract address if possible
-                            const contractAddress = transferLog.address;
                             let currency = 'Token';
                             
                             // Known token addresses (mainnet)
@@ -13197,7 +13274,22 @@ async function lookupVictimTransaction(victimId, transactionId) {
                 txData = detectedChain === 'ethereum' ? 
                     config.parseResponse(data, tokenData) : 
                     config.parseResponse(data);
+                
                 if (!txData) throw new Error('Failed to parse transaction data');
+                
+                // Check if multiple transfers were detected
+                if (txData.multipleTransfers) {
+                    console.log('Multiple transfers detected, showing selection modal');
+                    pendingTransfers = txData.transfers;
+                    pendingTransferCallback = (selectedTransfer) => {
+                        // Apply the selected transfer
+                        applyTransferToVictim(victimId, transactionId, selectedTransfer, txHash);
+                    };
+                    showTransferSelectionModal(txData.transfers);
+                    lookupBtn.textContent = originalText;
+                    lookupBtn.disabled = false;
+                    return; // Exit early - will continue after selection
+                }
                 
                 // Success! Break out of the loop
                 break;
@@ -13279,6 +13371,151 @@ async function lookupVictimTransaction(victimId, transactionId) {
         lookupBtn.disabled = false;
     }
 }
+        // Transfer Selection Modal Functions
+        function showTransferSelectionModal(transfers) {
+            const modal = document.getElementById('transferSelectionModal');
+            const transfersList = document.getElementById('transfersList');
+            
+            // Clear existing content
+            transfersList.innerHTML = '';
+            
+            // Create a card for each transfer
+            transfers.forEach((transfer, index) => {
+                const transferCard = document.createElement('div');
+                transferCard.style.cssText = `
+                    background: white;
+                    border: 2px solid #e8f0fe;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin-bottom: 15px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                `;
+                
+                transferCard.onmouseover = () => {
+                    transferCard.style.borderColor = '#3498db';
+                    transferCard.style.backgroundColor = '#f0f8ff';
+                };
+                
+                transferCard.onmouseout = () => {
+                    transferCard.style.borderColor = '#e8f0fe';
+                    transferCard.style.backgroundColor = 'white';
+                };
+                
+                transferCard.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 15px; align-items: start;">
+                        <div>
+                            <h4 style="margin: 0 0 10px 0; color: #2c3e50;">
+                                Transfer ${index + 1}: ${transfer.amount} ${transfer.currency}
+                            </h4>
+                            <div style="font-size: 14px; color: #555;">
+                                <div style="margin-bottom: 5px;">
+                                    <strong>From:</strong> <span style="font-family: monospace;">${transfer.from}</span>
+                                </div>
+                                <div style="margin-bottom: 5px;">
+                                    <strong>To:</strong> <span style="font-family: monospace;">${transfer.to}</span>
+                                </div>
+                                <div>
+                                    <strong>Token Contract:</strong> <span style="font-family: monospace;">${transfer.contractAddress}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-confirm" onclick="selectTransfer(${index})" style="margin-top: 0;">
+                            Select This Transfer
+                        </button>
+                    </div>
+                `;
+                
+                transfersList.appendChild(transferCard);
+            });
+            
+            // Show the modal
+            modal.style.display = 'block';
+        }
+        
+        function closeTransferSelectionModal() {
+            const modal = document.getElementById('transferSelectionModal');
+            modal.style.display = 'none';
+            
+            // Clear pending data
+            pendingTransfers = null;
+            pendingTransferCallback = null;
+        }
+        
+        function selectTransfer(index) {
+            if (!pendingTransfers || !pendingTransferCallback) {
+                console.error('No pending transfer data');
+                return;
+            }
+            
+            const selectedTransfer = pendingTransfers[index];
+            
+            // Close the modal
+            closeTransferSelectionModal();
+            
+            // Execute the callback with the selected transfer
+            pendingTransferCallback(selectedTransfer);
+        }
+        
+        function applyTransferToVictim(victimId, transactionId, transfer, txHash) {
+            const victim = investigation.victims.find(v => v.id === victimId);
+            const transaction = victim.transactions.find(t => t.id === transactionId);
+            
+            // Update amount
+            document.getElementById(`amount_victim_${victimId}_${transactionId}`).value = transfer.amount;
+            transaction.amount = transfer.amount.toString();
+            
+            // Update currency
+            const currencySelect = document.getElementById(`currency_victim_${victimId}_${transactionId}`);
+            
+            // If the currency doesn't exist in the select, add it
+            const optionExists = Array.from(currencySelect.options).some(opt => opt.value === transfer.currency);
+            if (!optionExists && transfer.currency !== 'CUSTOM') {
+                const newOption = document.createElement('option');
+                newOption.value = transfer.currency;
+                newOption.textContent = transfer.currency;
+                currencySelect.appendChild(newOption);
+            }
+            
+            currencySelect.value = transfer.currency;
+            transaction.currency = transfer.currency;
+            
+            // Update receiving wallet (the "to" address is the RED wallet)
+            document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`).value = transfer.to;
+            transaction.receivingWallet = transfer.to;
+            
+            // Update datetime with current time (transaction receipt doesn't have block timestamp)
+            const now = new Date();
+            const dateTimeLocal = now.toISOString().slice(0, 16);
+            document.getElementById(`datetime_victim_${victimId}_${transactionId}`).value = dateTimeLocal;
+            transaction.datetime = dateTimeLocal;
+            
+            // Set timezone to UTC
+            document.getElementById(`timezone_victim_${victimId}_${transactionId}`).value = 'UTC';
+            transaction.timezone = 'UTC';
+            
+            // Add note about the transaction
+            const notesInput = document.querySelector(`input[onchange*="updateTransaction(${victimId}, ${transactionId}, 'notes'"]`);
+            if (notesInput) {
+                notesInput.value = `From: ${transfer.from} | Ethereum ${transfer.currency} transfer | Contract: ${transfer.contractAddress}`;
+                transaction.notes = notesInput.value;
+            }
+            
+            // Store the transaction hash
+            transaction.transactionHash = txHash;
+            
+            // Save and re-render
+            saveToStorage();
+            renderVictims();
+            
+            alert(`✅ Transaction data retrieved successfully!
+
+Amount: ${transfer.amount} ${transfer.currency}
+From: ${transfer.from}
+To (RED Wallet): ${transfer.to}
+
+Note: Block timestamp will be added when available.`);
+        }
     </script>
 </body>
 </html>
