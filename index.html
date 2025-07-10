@@ -474,6 +474,57 @@
             max-height: 85vh;
             overflow-y: auto;
         }
+        
+        /* Wallet Address Autocomplete Styles */
+        .wallet-autocomplete-container {
+            position: relative;
+        }
+        
+        .wallet-autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .wallet-autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        
+        .wallet-autocomplete-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .wallet-autocomplete-item.selected {
+            background-color: #e3f2fd;
+        }
+        
+        .wallet-autocomplete-blockchain {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+            font-family: sans-serif;
+        }
+        
+        .wallet-autocomplete-loading {
+            padding: 15px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+        }
 
         .modal-header {
             text-align: center;
@@ -1516,8 +1567,11 @@
             bitcoin: {
                 name: 'Bitcoin',
                 hashPattern: /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$|^bc1[a-z0-9]{39,59}$/,
+                addressPattern: /^([13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})$/,
+                addressPrefixes: ['1', '3', 'bc1'],
                 txPattern: /^[a-f0-9]{64}$/i,
                 apiUrl: 'https://blockchain.info/rawtx/',
+                addressApiUrl: 'https://blockchain.info/rawaddr/',
                 apiKey: null,
                 fallbackUrls: [
                     'https://api.blockcypher.com/v1/btc/main/txs/',
@@ -1552,8 +1606,11 @@
             ethereum: {
                 name: 'Ethereum',
                 hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
                 txPattern: /^0x[a-fA-F0-9]{64}$/,
                 apiUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=',
+                addressApiUrl: 'https://api.etherscan.io/api?module=account&action=txlist&address=',
                 apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
                 fallbackUrls: [
                     'https://api-ropsten.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=',
@@ -1577,8 +1634,11 @@
             tron: {
                 name: 'Tron',
                 hashPattern: /^T[a-zA-Z0-9]{33}$/,
+                addressPattern: /^T[a-zA-Z0-9]{33}$/,
+                addressPrefixes: ['T'],
                 txPattern: /^[a-f0-9]{64}$/i,
                 apiUrl: 'https://api.trongrid.io/v1/transactions/',
+                addressApiUrl: 'https://api.trongrid.io/v1/accounts/',
                 apiKey: null,
                 fallbackUrls: [
                     'https://apilist.tronscan.org/api/transaction-info?hash='
@@ -1601,8 +1661,11 @@
             solana: {
                 name: 'Solana',
                 hashPattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
+                addressPattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
+                addressPrefixes: ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
                 txPattern: /^[1-9A-HJ-NP-Za-km-z]{87,88}$/,
                 apiUrl: 'https://api.mainnet-beta.solana.com',
+                addressApiUrl: 'https://api.mainnet-beta.solana.com',
                 apiKey: null,
                 fallbackUrls: [
                     'https://solana-mainnet.g.alchemy.com/v2/demo',
@@ -2437,13 +2500,18 @@ function renderHopEntry(entry) {
                 <div class="form-group">
                     <label>To Wallet Address</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="text" 
-                               id="toWallet_${entry.hopId}_${entry.id}"
-                               list="walletList_${entry.hopId}_${entry.id}"
-                               value="${entry.toWallet || ''}" 
-                               placeholder="Select existing or enter new wallet address"
-                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
-                               style="flex: 1;">
+                        <div class="wallet-autocomplete-container" style="flex: 1;">
+                            <input type="text" 
+                                   id="toWallet_${entry.hopId}_${entry.id}"
+                                   value="${entry.toWallet || ''}" 
+                                   placeholder="Select existing or enter new wallet address"
+                                   onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
+                                   oninput="handleWalletAutocomplete(this, ${entry.hopId}, ${entry.id})"
+                                   autocomplete="off"
+                                   list="walletList_${entry.hopId}_${entry.id}"
+                                   style="width: 100%;">
+                            <div id="autocomplete_${entry.hopId}_${entry.id}" class="wallet-autocomplete-dropdown"></div>
+                        </div>
                         <datalist id="walletList_${entry.hopId}_${entry.id}">
                             ${(investigation.universalWalletIndex || []).map(wallet => `
                                 <option value="${wallet.address}">
@@ -2513,13 +2581,6 @@ function renderHopEntry(entry) {
                                placeholder="Select existing or enter new wallet address"
                                onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
                                style="flex: 1;">
-                        <datalist id="walletList_${entry.hopId}_${entry.id}">
-                            ${(investigation.universalWalletIndex || []).map(wallet => `
-                                <option value="${wallet.address}">
-                                    ${wallet.permanentId} - ${wallet.address.substring(0, 20)}...
-                                </option>
-                            `).join('')}
-                        </datalist>
                         <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;"
                                 onclick="showWalletSelector(${entry.hopId}, ${entry.id})">
                             📋 Browse
@@ -3468,13 +3529,18 @@ function renderEnhancedHopEntry(entry) {
                 <div class="form-group">
                     <label>To Wallet Address</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="text" 
-                               id="toWallet_${entry.hopId}_${entry.id}"
-                               list="walletList_${entry.hopId}_${entry.id}"
-                               value="${entry.toWallet || ''}" 
-                               placeholder="Select existing or enter new wallet address"
-                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
-                               style="flex: 1;">
+                        <div class="wallet-autocomplete-container" style="flex: 1;">
+                            <input type="text" 
+                                   id="toWallet_${entry.hopId}_${entry.id}"
+                                   value="${entry.toWallet || ''}" 
+                                   placeholder="Select existing or enter new wallet address"
+                                   onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
+                                   oninput="handleWalletAutocomplete(this, ${entry.hopId}, ${entry.id})"
+                                   autocomplete="off"
+                                   list="walletList_${entry.hopId}_${entry.id}"
+                                   style="width: 100%;">
+                            <div id="autocomplete_${entry.hopId}_${entry.id}" class="wallet-autocomplete-dropdown"></div>
+                        </div>
                         <datalist id="walletList_${entry.hopId}_${entry.id}">
                             ${(investigation.universalWalletIndex || []).map(wallet => `
                                 <option value="${wallet.address}">
@@ -9390,13 +9456,18 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                 <div class="form-group">
                     <label>To Wallet Address</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="text" 
-                               id="toWallet_${entry.hopId}_${entry.id}"
-                               list="walletList_${entry.hopId}_${entry.id}"
-                               value="${entry.toWallet || ''}" 
-                               placeholder="Select existing or enter new wallet address"
-                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
-                               style="flex: 1;">
+                        <div class="wallet-autocomplete-container" style="flex: 1;">
+                            <input type="text" 
+                                   id="toWallet_${entry.hopId}_${entry.id}"
+                                   value="${entry.toWallet || ''}" 
+                                   placeholder="Select existing or enter new wallet address"
+                                   onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
+                                   oninput="handleWalletAutocomplete(this, ${entry.hopId}, ${entry.id})"
+                                   autocomplete="off"
+                                   list="walletList_${entry.hopId}_${entry.id}"
+                                   style="width: 100%;">
+                            <div id="autocomplete_${entry.hopId}_${entry.id}" class="wallet-autocomplete-dropdown"></div>
+                        </div>
                         <datalist id="walletList_${entry.hopId}_${entry.id}">
                             ${(investigation.universalWalletIndex || []).map(wallet => `
                                 <option value="${wallet.address}">
@@ -12310,6 +12381,249 @@ function loadApiSettingsOnStartup() {
     if (savedTrongrid) blockchainAPIs.tron.apiKey = savedTrongrid;
     if (savedSolanaRpc) blockchainAPIs.solana.apiUrl = savedSolanaRpc;
 }
+
+// Wallet Address Autocomplete Functions
+let autocompleteTimeout = null;
+let currentAutocompleteRequest = null;
+
+function detectBlockchainFromAddress(address) {
+    if (!address || address.length < 3) return null;
+    
+    // Check each blockchain's address pattern
+    for (const [chain, config] of Object.entries(blockchainAPIs)) {
+        // First check prefixes for quick detection
+        if (config.addressPrefixes) {
+            for (const prefix of config.addressPrefixes) {
+                if (address.startsWith(prefix)) {
+                    // For longer prefixes like 'bc1', check if we have enough characters
+                    if (prefix.length > 1 && address.length < 10) continue;
+                    return chain;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+async function handleWalletAutocomplete(input, hopId, entryId) {
+    const value = input.value.trim();
+    const dropdown = document.getElementById(`autocomplete_${hopId}_${entryId}`);
+    
+    // Clear any pending timeout
+    if (autocompleteTimeout) {
+        clearTimeout(autocompleteTimeout);
+    }
+    
+    // Hide dropdown if input is too short
+    if (value.length < 9) {
+        dropdown.style.display = 'none';
+        return;
+    }
+    
+    // First check if it matches any existing wallet in UWI
+    const existingMatches = (investigation.universalWalletIndex || [])
+        .filter(wallet => wallet.address.toLowerCase().startsWith(value.toLowerCase()))
+        .slice(0, 5); // Limit to 5 matches
+    
+    if (existingMatches.length > 0) {
+        // Show existing matches immediately
+        showAutocompleteResults(dropdown, existingMatches.map(wallet => ({
+            address: wallet.address,
+            type: 'existing',
+            walletInfo: wallet
+        })), hopId, entryId);
+        return;
+    }
+    
+    // Detect blockchain type
+    const detectedChain = detectBlockchainFromAddress(value);
+    if (!detectedChain) {
+        dropdown.style.display = 'none';
+        return;
+    }
+    
+    // Show loading state
+    dropdown.innerHTML = '<div class="wallet-autocomplete-loading">Searching blockchain...</div>';
+    dropdown.style.display = 'block';
+    
+    // Debounce API calls
+    autocompleteTimeout = setTimeout(async () => {
+        try {
+            const suggestions = await fetchAddressSuggestions(value, detectedChain);
+            if (suggestions && suggestions.length > 0) {
+                showAutocompleteResults(dropdown, suggestions, hopId, entryId);
+            } else {
+                dropdown.innerHTML = `<div class="wallet-autocomplete-loading">No addresses found starting with "${value}"</div>`;
+                setTimeout(() => { dropdown.style.display = 'none'; }, 2000);
+            }
+        } catch (error) {
+            console.error('Autocomplete error:', error);
+            dropdown.style.display = 'none';
+        }
+    }, 300); // 300ms debounce
+}
+
+async function fetchAddressSuggestions(partialAddress, blockchain) {
+    const config = blockchainAPIs[blockchain];
+    if (!config) return [];
+    
+    try {
+        // For now, we'll validate the address format
+        // In a real implementation, you'd query blockchain explorers for similar addresses
+        // Most blockchains don't offer address autocomplete APIs, so we'll provide format validation
+        
+        const suggestions = [];
+        
+        // Check if the partial address could be valid when completed
+        if (blockchain === 'bitcoin') {
+            // Bitcoin addresses are 26-34 chars for P2PKH/P2SH, 42-62 for Bech32
+            if (partialAddress.startsWith('1') || partialAddress.startsWith('3')) {
+                // Legacy/SegWit addresses
+                if (partialAddress.length >= 26) {
+                    suggestions.push({
+                        address: partialAddress,
+                        type: 'valid',
+                        blockchain: 'Bitcoin',
+                        note: 'Valid Bitcoin address format'
+                    });
+                } else {
+                    suggestions.push({
+                        address: partialAddress + '...',
+                        type: 'partial',
+                        blockchain: 'Bitcoin',
+                        note: `Need ${26 - partialAddress.length} more characters (min 26)`
+                    });
+                }
+            } else if (partialAddress.startsWith('bc1')) {
+                // Bech32 addresses
+                if (partialAddress.length >= 42) {
+                    suggestions.push({
+                        address: partialAddress,
+                        type: 'valid',
+                        blockchain: 'Bitcoin',
+                        note: 'Valid Bitcoin Bech32 address format'
+                    });
+                } else {
+                    suggestions.push({
+                        address: partialAddress + '...',
+                        type: 'partial',
+                        blockchain: 'Bitcoin',
+                        note: `Need ${42 - partialAddress.length} more characters (min 42)`
+                    });
+                }
+            }
+        } else if (blockchain === 'ethereum') {
+            // Ethereum addresses are exactly 42 chars (including 0x)
+            if (partialAddress.length === 42) {
+                suggestions.push({
+                    address: partialAddress,
+                    type: 'valid',
+                    blockchain: 'Ethereum',
+                    note: 'Valid Ethereum address format'
+                });
+            } else if (partialAddress.length < 42) {
+                suggestions.push({
+                    address: partialAddress + '...',
+                    type: 'partial',
+                    blockchain: 'Ethereum',
+                    note: `Need ${42 - partialAddress.length} more characters (exactly 42)`
+                });
+            }
+        } else if (blockchain === 'tron') {
+            // Tron addresses are exactly 34 chars
+            if (partialAddress.length === 34) {
+                suggestions.push({
+                    address: partialAddress,
+                    type: 'valid',
+                    blockchain: 'Tron',
+                    note: 'Valid Tron address format'
+                });
+            } else if (partialAddress.length < 34) {
+                suggestions.push({
+                    address: partialAddress + '...',
+                    type: 'partial',
+                    blockchain: 'Tron',
+                    note: `Need ${34 - partialAddress.length} more characters (exactly 34)`
+                });
+            }
+        } else if (blockchain === 'solana') {
+            // Solana addresses are 32-44 chars
+            if (partialAddress.length >= 32 && partialAddress.length <= 44) {
+                suggestions.push({
+                    address: partialAddress,
+                    type: 'valid',
+                    blockchain: 'Solana',
+                    note: 'Valid Solana address format'
+                });
+            } else if (partialAddress.length < 32) {
+                suggestions.push({
+                    address: partialAddress + '...',
+                    type: 'partial',
+                    blockchain: 'Solana',
+                    note: `Need ${32 - partialAddress.length} more characters (min 32)`
+                });
+            }
+        }
+        
+        return suggestions;
+    } catch (error) {
+        console.error('Error fetching address suggestions:', error);
+        return [];
+    }
+}
+
+function showAutocompleteResults(dropdown, results, hopId, entryId) {
+    dropdown.innerHTML = '';
+    dropdown.style.display = 'block';
+    
+    results.forEach((result, index) => {
+        const item = document.createElement('div');
+        item.className = 'wallet-autocomplete-item';
+        
+        if (result.type === 'existing') {
+            // Existing wallet from UWI
+            item.innerHTML = `
+                <div>${result.address}</div>
+                <div class="wallet-autocomplete-blockchain">
+                    ${result.walletInfo.permanentId} - ${walletTypes[result.walletInfo.permanentType] || result.walletInfo.permanentType}
+                </div>
+            `;
+            item.onclick = () => selectAutocompleteAddress(result.address, hopId, entryId);
+        } else {
+            // Blockchain validation result
+            const statusColor = result.type === 'valid' ? '#27ae60' : '#e67e22';
+            item.innerHTML = `
+                <div style="color: ${statusColor};">${result.address}</div>
+                <div class="wallet-autocomplete-blockchain">${result.blockchain} - ${result.note}</div>
+            `;
+            if (result.type === 'valid') {
+                item.onclick = () => selectAutocompleteAddress(result.address, hopId, entryId);
+            }
+        }
+        
+        dropdown.appendChild(item);
+    });
+}
+
+function selectAutocompleteAddress(address, hopId, entryId) {
+    const input = document.getElementById(`toWallet_${hopId}_${entryId}`);
+    const dropdown = document.getElementById(`autocomplete_${hopId}_${entryId}`);
+    
+    input.value = address;
+    dropdown.style.display = 'none';
+    
+    // Trigger the change event
+    updateHopEntry(hopId, entryId, 'toWallet', address);
+}
+
+// Close autocomplete when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.matches('input[id^="toWallet_"]')) {
+        document.querySelectorAll('.wallet-autocomplete-dropdown').forEach(dropdown => {
+            dropdown.style.display = 'none';
+        });
+    }
+});
     </script>
 </body>
 </html>
