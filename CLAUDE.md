@@ -3,22 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 15:56)
+## Latest Commit (Auto-updated: 2025-07-10 16:13)
 
-**Commit:** 1ae3b49380afc177b368d9c3c0c566c11f472ace
+**Commit:** 7dd59b9dd7b8aea79fc83cb27ccee8f74fcbf403
 **Author:** Your Name
-**Message:** Add BATS Investigation Graph Structure illustration to training
+**Message:** Add Netlify DNS setup guide
 
-- Created comprehensive SVG diagram showing the mathematical graph structure
-- Illustrates flow from victims through RED, BLACK, YELLOW wallets to terminals
-- Shows convergence at YELLOW hub wallet demonstrating criminal consolidation
-- Includes mathematical validation box showing how totals are verified
-- Added explanatory cards about graph properties (DAG, completeness, traceability)
-- Demonstrates V-T-H notation on actual graph edges
-- Visual legend for all wallet color classifications
-- Shows why the graph structure makes evidence legally defensible
-
-This visual clearly articulates both the reason for the process and how it fundamentally functions as a mathematical proof system.
+- Step-by-step instructions for switching to Netlify DNS
+- Registrar-specific instructions (GoDaddy, Namecheap, Google Domains)
+- DNS propagation timeline and verification steps
+- Troubleshooting common issues
+- Benefits of using Netlify DNS
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -26,23 +21,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md     |  52 ++++++++--------
- training.html | 193 +++++++++++++++++++++++++++++++++++++++++++++++++++++++---
- 2 files changed, 211 insertions(+), 34 deletions(-)
+ Netlify-DNS-Setup-Guide.md | 177 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 177 insertions(+)
 ```
 
 ## Recent Commits History
 
-- 1ae3b49 Add BATS Investigation Graph Structure illustration to training (0 seconds ago)
-- 4295dde Fix SSL certificate mismatch and improve domain handling (4 minutes ago)
-- 13e9872 Add HTTPS enforcement and security features (6 minutes ago)
-- f8a59a5 Fix critical transaction selection modal data population issue (17 minutes ago)
-- 6a44eb2 Update B.A.T.S. training to emphasize documentation over identical results (23 minutes ago)
-- c775b9a Create dedicated B.A.T.S. Training page (38 minutes ago)
-- 4918949 Fix JavaScript errors and duplicate variable declarations (55 minutes ago)
-- 5732873 Add comprehensive BATS Info tab and documentation (2 hours ago)
-- fcbd8cd Add submit button to investigation setup card (5 hours ago)
-- 5e7cad5 Improve UI workflow and fix transfer selection functionality (5 hours ago)
+- 7dd59b9 Add Netlify DNS setup guide (0 seconds ago)
+- c214168 Add SSL certificate troubleshooting guide (3 minutes ago)
+- 4145bde Fix error preventing progression after root total generation (12 minutes ago)
+- 1ae3b49 Add BATS Investigation Graph Structure illustration to training (16 minutes ago)
+- 4295dde Fix SSL certificate mismatch and improve domain handling (20 minutes ago)
+- 13e9872 Add HTTPS enforcement and security features (23 minutes ago)
+- f8a59a5 Fix critical transaction selection modal data population issue (33 minutes ago)
+- 6a44eb2 Update B.A.T.S. training to emphasize documentation over identical results (39 minutes ago)
+- c775b9a Create dedicated B.A.T.S. Training page (54 minutes ago)
+- 4918949 Fix JavaScript errors and duplicate variable declarations (72 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
