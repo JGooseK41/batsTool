@@ -3,36 +3,36 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 17:21)
+## Latest Commit (Auto-updated: 2025-07-10 17:23)
 
-**Commit:** a865d8bad3d60aa34a580ee13df881591a76cd0a
+**Commit:** aa39a3a64bde9bfdc4d828b1aca1600506f37c12
 **Author:** Your Name
-**Message:** Fix extra closing brace in template literal
+**Message:** Remove carriage return characters causing syntax error
 
-Removed extra closing brace after join('') that was causing syntax error
+Fixed line ending issues that were causing 'Unexpected token' error on line 5592
 
 🤖 Generated with Claude Code
 Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 36 +++++++++++++++++-------------------
- index.html |  2 +-
- 2 files changed, 18 insertions(+), 20 deletions(-)
+ CLAUDE.md  |    32 +-
+ index.html | 31856 +++++++++++++++++++++++++++++------------------------------
+ 2 files changed, 15944 insertions(+), 15944 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a865d8b Fix extra closing brace in template literal (0 seconds ago)
-- 8fbd79e Fix template literal syntax error in renderVictims function (2 minutes ago)
-- 15406db Fix missing closing brace in template literal interpolation (7 minutes ago)
-- 84be191 Fix unexpected closing brace in template literal (11 minutes ago)
-- b9ab7bb Fix template literal syntax error in renderVictims (14 minutes ago)
-- b816ed6 Fix extra closing brace syntax error (16 minutes ago)
-- f64360d Fix syntax error in renderVictims function (19 minutes ago)
-- 4924b33 Fix hop entry functionality and token value handling (25 minutes ago)
-- 07f9461 Improve hop entry UX with transaction hash at top (30 minutes ago)
-- 2383e3f UI improvements for victim transactions (35 minutes ago)
+- aa39a3a Remove carriage return characters causing syntax error (0 seconds ago)
+- a865d8b Fix extra closing brace in template literal (2 minutes ago)
+- 8fbd79e Fix template literal syntax error in renderVictims function (4 minutes ago)
+- 15406db Fix missing closing brace in template literal interpolation (8 minutes ago)
+- 84be191 Fix unexpected closing brace in template literal (13 minutes ago)
+- b9ab7bb Fix template literal syntax error in renderVictims (15 minutes ago)
+- b816ed6 Fix extra closing brace syntax error (17 minutes ago)
+- f64360d Fix syntax error in renderVictims function (21 minutes ago)
+- 4924b33 Fix hop entry functionality and token value handling (27 minutes ago)
+- 07f9461 Improve hop entry UX with transaction hash at top (31 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
