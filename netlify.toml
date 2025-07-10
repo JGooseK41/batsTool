@@ -1,0 +1,69 @@
+# Netlify Configuration for B.A.T.S. Tool
+
+[build]
+  # No build command needed for static site
+  publish = "."
+
+# Redirect rules
+[[redirects]]
+  # Force HTTPS
+  from = "http://batstool.com/*"
+  to = "https://batstool.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  # Redirect www to non-www
+  from = "https://www.batstool.com/*"
+  to = "https://batstool.com/:splat"
+  status = 301
+  force = true
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Security headers
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "no-referrer-when-downgrade"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    
+    # HSTS (only enable after SSL is working)
+    # Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    
+    # Content Security Policy
+    Content-Security-Policy = '''
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data: https:;
+      font-src 'self' data:;
+      connect-src 'self' https://api.etherscan.io https://api.blockcypher.com https://blockchain.info https://api.blockchair.com https://*.infura.io;
+      frame-ancestors 'none';
+      base-uri 'self';
+      form-action 'self';
+    '''
+
+# Cache control
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# SPA fallback (not needed for this app, but included for reference)
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200

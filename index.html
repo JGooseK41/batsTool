@@ -2188,11 +2188,30 @@
     <script>
         // HTTPS Enforcement and Security Check
         (function() {
+            // List of trusted domains (add your domains here)
+            const trustedDomains = [
+                'batstool.com',
+                'www.batstool.com',
+                'netlify.app',
+                'localhost',
+                '127.0.0.1'
+            ];
+            
+            // Check if current domain is trusted
+            const currentHost = window.location.hostname;
+            const isTrusted = trustedDomains.some(domain => 
+                currentHost === domain || currentHost.endsWith('.' + domain)
+            );
+            
             // Check if we're running on HTTP (not HTTPS or file://)
-            if (window.location.protocol === 'http:') {
-                // Redirect to HTTPS version
-                window.location.href = 'https:' + window.location.href.substring(5);
-                return; // Stop execution
+            if (window.location.protocol === 'http:' && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+                // Only redirect to HTTPS for trusted domains
+                if (isTrusted) {
+                    window.location.href = 'https:' + window.location.href.substring(5);
+                    return; // Stop execution
+                } else {
+                    console.warn('⚠️ Running on HTTP. For security, please use HTTPS.');
+                }
             }
             
             // Security warning for file:// protocol
