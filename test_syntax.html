@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Syntax Test</title>
+</head>
+<body>
+    <button onclick="testFunction()">Test Function</button>
+    <div id="output"></div>
+    
+    <script>
+        // Test if functions are being defined
+        console.log('Script started');
+        
+        function testFunction() {
+            document.getElementById('output').innerHTML = 'Function works!';
+        }
+        
+        // Try to check if addVictim would be defined
+        try {
+            console.log('Before eval');
+            // This will help us identify syntax errors
+            eval(`
+                function addVictim() {
+                    console.log('addVictim called');
+                }
+            `);
+            console.log('After eval - no syntax error');
+        } catch (e) {
+            console.error('Syntax error:', e);
+        }
+    </script>
+</body>
+</html>

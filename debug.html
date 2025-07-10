@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug BATS</title>
+</head>
+<body>
+    <h1>BATS Debug Tool</h1>
+    <button onclick="checkSyntax()">Check Syntax</button>
+    <pre id="output"></pre>
+    
+    <script>
+        async function checkSyntax() {
+            const output = document.getElementById('output');
+            output.textContent = 'Checking syntax...\n';
+            
+            try {
+                const response = await fetch('/index.html');
+                const html = await response.text();
+                
+                // Extract script content
+                const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
+                if (scriptMatch) {
+                    const scriptContent = scriptMatch[1];
+                    output.textContent += `Script length: ${scriptContent.length} characters\n`;
+                    
+                    // Try to parse as a function to check syntax
+                    try {
+                        new Function(scriptContent);
+                        output.textContent += 'Syntax check passed!\n';
+                    } catch (e) {
+                        output.textContent += `Syntax error: ${e.message}\n`;
+                        
+                        // Try to find the approximate line
+                        const lines = scriptContent.split('\n');
+                        output.textContent += `Total lines in script: ${lines.length}\n`;
+                        
+                        // Look for the addVictim function
+                        const addVictimLine = lines.findIndex(line => line.includes('function addVictim'));
+                        if (addVictimLine !== -1) {
+                            output.textContent += `addVictim function found at script line ${addVictimLine + 1}\n`;
+                        } else {
+                            output.textContent += 'addVictim function NOT FOUND\n';
+                        }
+                    }
+                } else {
+                    output.textContent += 'No script tag found\n';
+                }
+            } catch (e) {
+                output.textContent += `Error: ${e.message}\n`;
+            }
+        }
+    </script>
+</body>
+</html>
