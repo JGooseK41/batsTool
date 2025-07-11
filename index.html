@@ -6658,7 +6658,22 @@ function exportUniversalWalletIndex() {
     const filename = `Universal_Wallet_Index_${investigation.caseId || 'Case'}_${new Date().toISOString().slice(0,10)}.csv`;
     downloadFile(csvContent, filename, 'text/csv');
 }
- 
+
+function renderUniversalWalletIndex() {
+    const container = document.getElementById('universalWalletIndexList');
+    
+    if (!container) return;
+    
+    if (!investigation.universalWalletIndex || investigation.universalWalletIndex.length === 0) {
+        container.innerHTML = `
+            <div class="no-traces-message">
+                <h3>Universal Wallet Index Empty</h3>
+                <p>The wallet index will be populated as you add victim transactions and trace hops. You can also manually add wallet entries for reference.</p>
+            </div>
+        `;
+        return;
+    }
+    
     // Add export button header
     const headerHTML = `
         <div style="background: #e8f4f8; border: 2px solid #3498db; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
@@ -6739,6 +6754,7 @@ function exportUniversalWalletIndex() {
     `;
     
     container.innerHTML = headerHTML + tableHTML;
+}
 
 function exportAllVictimTablesToExcel() {
     if (investigation.redWalletIndex.length === 0) {
@@ -8323,7 +8339,7 @@ function exportUniversalWalletIndex() {
                             ` : ''}
                             
                             <div id="hopEntries_${hop.id}">
-                                ${hop.entries.map((entry, entryIndex) => renderCollapsibleHopEntry(entry, entryIndex)).join('')}
+                                ${(hop.entries || []).map((entry, entryIndex) => renderCollapsibleHopEntry(entry, entryIndex)).join('')}
                             </div>
                             
                             ${!isComplete ? `
