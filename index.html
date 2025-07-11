@@ -5888,8 +5888,23 @@ function updateFormFieldsFromInvestigation() {
     });
     
     if (chronologyErrors.length > 0) {
-        alert(`❌ Cannot generate root total: Transaction chronology errors detected!\n\n${chronologyErrors.join('\n\n')}\n\nPlease ensure all transactions are entered in chronological order for PIFO compliance.`);
-        return;
+        const shouldFix = confirm(`❌ Transaction chronology errors detected!\n\n${chronologyErrors.join('\n\n')}\n\nTransactions must be in chronological order for PIFO compliance.\n\nWould you like to automatically fix the order for all victims?\n\nClick OK to reorder all transactions chronologically.\nClick Cancel to fix manually.`);
+        
+        if (shouldFix) {
+            // Fix order for all victims with errors
+            investigation.victims.forEach(victim => {
+                const error = validateTransactionChronology(victim);
+                if (error) {
+                    fixVictimTransactionOrder(victim.id);
+                }
+            });
+            
+            // Try to confirm root total again
+            setTimeout(() => confirmRootTotal(), 100);
+            return;
+        } else {
+            return;
+        }
     }
     
     const totalsByCurrency = {};
@@ -12787,8 +12802,14 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                     // Revert the change
                     transaction[field] = oldValue;
                     
-                    // Show error message
-                    alert(`❌ Chronological Order Error!\n\n${chronologyError}\n\nTransactions must be entered in chronological order for proper PIFO (Proceeds In First Out) compliance and smart allocation features.`);
+                    // Show error message with fix option
+                    const shouldFix = confirm(`❌ Chronological Order Error!\n\n${chronologyError}\n\nTransactions must be entered in chronological order for proper PIFO (Proceeds In First Out) compliance and smart allocation features.\n\nWould you like to automatically fix the order?\n\nClick OK to automatically reorder transactions chronologically.\nClick Cancel to revert your change.`);
+                    
+                    if (shouldFix) {
+                        // Fix the order
+                        fixVictimTransactionOrder(victimId);
+                        return;
+                    }
                     
                     // Re-render to show the reverted value
                     renderVictims();
@@ -13855,7 +13876,18 @@ function downloadFile(content, filename, mimeType) {
                 
                 // Show success message with chronology warning if needed
                 if (chronologyErrors.length > 0) {
-                    alert(`⚠️ Import Successful with Warnings!\n\nImported ${parsedExcelData.length} entries, but transaction chronology issues were detected:\n\n${chronologyErrors.join('\n\n')}\n\nThe V-T notation requires transactions to be numbered in chronological order. Please review and correct the transaction order to ensure PIFO (Proceeds In First Out) compliance.`);
+                    const shouldFix = confirm(`⚠️ Import Successful with Warnings!\n\nImported ${parsedExcelData.length} entries, but transaction chronology issues were detected:\n\n${chronologyErrors.join('\n\n')}\n\nThe V-T notation requires transactions to be numbered in chronological order.\n\nWould you like to automatically fix the order?\n\nClick OK to reorder transactions chronologically.\nClick Cancel to fix manually later.`);
+                    
+                    if (shouldFix) {
+                        // Fix order for all victims with errors
+                        investigation.victims.forEach(victim => {
+                            const error = validateTransactionChronology(victim);
+                            if (error) {
+                                fixVictimTransactionOrder(victim.id);
+                            }
+                        });
+                        alert(`✅ Transactions have been reordered chronologically!`);
+                    }
                 } else {
                     alert(`Successfully imported ${parsedExcelData.length} entries! Please review and confirm your root total.`);
                 }
