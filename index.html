@@ -2532,6 +2532,13 @@
                     else if (data.result) {
                         const tx = data.result;
                         
+                        // Skip 0 ETH transactions when there are no token transfers
+                        const ethAmount = parseInt(tx.value, 16) / 1e18;
+                        if (ethAmount === 0) {
+                            console.log('Skipping 0 ETH transaction with no token transfers');
+                            return null;
+                        }
+                        
                         // Get timestamp from block data
                         let timestamp = Date.now();
                         if (blockData && blockData.result && blockData.result.timestamp) {
@@ -2548,7 +2555,7 @@
                         
                         return {
                             time: timestamp,
-                            amount: parseInt(tx.value, 16) / 1e18,
+                            amount: ethAmount,
                             currency: 'ETH',
                             from: tx.from,
                             to: tx.to,
@@ -15797,6 +15804,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
                         const tokenResponse = await fetch(tokenUrl);
                         if (tokenResponse.ok) {
                             tokenData = await tokenResponse.json();
+                            console.log('Receipt/Token data received:', tokenData);
                         }
                     } catch (err) {
                         console.log('No token transfers found');
@@ -15842,11 +15850,13 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     config.parseResponse(data, tokenData, blockData) : 
                     config.parseResponse(data);
                 
-                if (!txData) throw new Error('Failed to parse transaction data');
+                console.log('Parsed transaction data:', txData);
+                
+                if (!txData) throw new Error('This is a 0 ETH transaction with no token transfers');
                 
                 // Check if multiple transfers were detected
                 if (txData.multipleTransfers) {
-                    console.log('Multiple transfers detected, showing selection modal');
+                    console.log('Multiple transfers detected, showing selection modal with', txData.transfers.length, 'transfers');
                     // Store the callback with proper context
                     window.pendingTransferContext = {
                         victimId: victimId,

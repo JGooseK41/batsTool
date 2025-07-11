@@ -3,18 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 21:05)
+## Latest Commit (Auto-updated: 2025-07-10 21:15)
 
-**Commit:** 5802230aa73773da68eeca89cedf8f0db648a703
+**Commit:** b69c7b913d46b06a7838c6efe2306037265b7ea0
 **Author:** Your Name
-**Message:** Fix blockchain API transaction date bug
+**Message:** Fix token transfer selection modal and display issues
 
-- Add blockApiUrl to Ethereum config for fetching block timestamps
-- Fetch block data when looking up Ethereum transactions
-- Extract actual timestamp from block data instead of using current time
-- Update parseResponse to use block timestamp for both ETH and token transfers
-- Fix applyTransferToVictim to accept and use transaction timestamp
-- Pass timestamp through multiple transfer selection flow
+- Fix modal not appearing for token transfers
+- Add missing modal CSS styles for proper centering
+- Change modal to use CSS classes instead of inline display styles
+- Only show ETH transactions with value > 0 (exclude 0 ETH transfers)
+- Always show transfer selection modal when token transfers exist
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  50 +++++++++++++--------------
- index.html | 112 +++++++++++++++++++++++++++++++++++++++++++++++--------------
- 2 files changed, 110 insertions(+), 52 deletions(-)
+ CLAUDE.md  |  39 +++++++++--------
+ index.html | 139 ++++++++++++++++++++++++++++---------------------------------
+ 2 files changed, 83 insertions(+), 95 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5802230 Fix blockchain API transaction date bug (0 seconds ago)
-- cc30ae1 Fix UI issues: center modals, make collapsed items thinner, ensure Next Step buttons visible (12 minutes ago)
-- c0280a6 Fix save/load functionality and improve state preservation (74 minutes ago)
+- b69c7b9 Fix token transfer selection modal and display issues (0 seconds ago)
+- 5802230 Fix blockchain API transaction date bug (10 minutes ago)
+- cc30ae1 Fix UI issues: center modals, make collapsed items thinner, ensure Next Step buttons visible (22 minutes ago)
+- c0280a6 Fix save/load functionality and improve state preservation (84 minutes ago)
 - 65a79eb Fix hop ID type mismatch preventing wizard from showing (2 hours ago)
 - feef15b Debug hop entry wizard not showing after trace selection (2 hours ago)
 - a48f4a5 Fix missing function and victim completion workflow (2 hours ago)
 - fd803ec Add purple segment to progress bars for VASP/exchange deposits (2 hours ago)
 - b7b101f Add visual ART progress bars for fund tracking (2 hours ago)
 - ff7f197 Add entry type selection wizard for better UX (2 hours ago)
-- d4eb009 Improve hop entry workflow with wizard and better button explanations (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
