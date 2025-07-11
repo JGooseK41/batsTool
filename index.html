@@ -14772,7 +14772,6 @@ async function lookupTransaction() {
                 
                 // Get block data for timestamp - but don't let it block token transfers
                 let blockData = null;
-                let blockTimestamp = null;
                 if (data.result && data.result.blockNumber) {
                     try {
                         const blockUrl = corsEnabled ?
@@ -14856,8 +14855,9 @@ async function lookupTransaction() {
                 if (data.error) throw new Error(data.error.message);
             }
             
-            // Parse the response (pass tokenData and blockTimestamp for Ethereum)
-            currentTxData = detectedChain === 'ethereum' ? 
+            // Parse the response (pass tokenData and blockTimestamp for EVM chains)
+            const isEVMChain = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc'].includes(detectedChain);
+            currentTxData = isEVMChain ? 
                 config.parseResponse(data, tokenData, blockTimestamp) : 
                 config.parseResponse(data);
             if (!currentTxData) throw new Error('Failed to parse transaction data');
@@ -15891,6 +15891,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
                 let data;
                 let url;
                 let tokenData = null; // Define tokenData at this scope
+                let blockTimestamp = null; // Define blockTimestamp at this scope
                 let blockData = null; // Define blockData at this scope
                 
                 if (detectedChain === 'bitcoin') {
@@ -15904,7 +15905,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     if (!response.ok) throw new Error('Transaction not found');
                     data = await response.json();
                     
-                } else if (detectedChain === 'ethereum') {
+                } else if (['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc'].includes(detectedChain)) {
                     const apiKey = localStorage.getItem('bats_etherscan_api_key') || config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
                     
                     // First get the basic transaction
@@ -15917,7 +15918,6 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     if (!data.result || data.result === null) throw new Error('Transaction not found');
                     
                     // Get block data for timestamp - but don't let it block token transfers
-                    let blockTimestamp = null;
                     if (data.result && data.result.blockNumber) {
                         try {
                             const blockUrl = corsEnabled ?
@@ -15998,8 +15998,9 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     if (data.error) throw new Error(data.error.message);
                 }
                 
-                // Parse the response (pass tokenData and blockTimestamp for Ethereum)
-                txData = detectedChain === 'ethereum' ? 
+                // Parse the response (pass tokenData and blockTimestamp for EVM chains)
+                const isEVMChain = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc'].includes(detectedChain);
+                txData = isEVMChain ? 
                     config.parseResponse(data, tokenData, blockTimestamp) : 
                     config.parseResponse(data);
                 
