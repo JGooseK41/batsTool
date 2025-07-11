@@ -6659,103 +6659,6 @@ function exportUniversalWalletIndex() {
     downloadFile(csvContent, filename, 'text/csv');
 }
 
-function renderUniversalWalletIndex() {
-    const container = document.getElementById('universalWalletIndexList');
-    
-    if (!container) return;
-    
-    if (!investigation.universalWalletIndex || investigation.universalWalletIndex.length === 0) {
-        container.innerHTML = `
-            <div class="no-traces-message">
-                <h3>Universal Wallet Index Empty</h3>
-                <p>The wallet index will be populated as you add victim transactions and trace hops. You can also manually add wallet entries for reference.</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Add export button header
-    const headerHTML = `
-        <div style="background: #e8f4f8; border: 2px solid #3498db; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h4 style="color: #2c3e50; margin-bottom: 10px;">📋 Universal Wallet Index</h4>
-                    <p style="color: #2c3e50; margin: 0;">Complete catalog of all wallets with permanent classifications and investigative notes.</p>
-                </div>
-                <button class="btn btn-success" onclick="exportUniversalWalletIndex()" style="background: #27ae60;">
-                    📊 Export to Excel
-                </button>
-            </div>
-        </div>
-    `;
-    
-    let tableHTML = `
-        <div style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="background: #f8f9fa;">
-                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left; font-weight: bold;">Wallet ID</th>
-                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left; font-weight: bold;">Classification</th>
-                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left; font-weight: bold;">Wallet Address</th>
-                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left; font-weight: bold;">First Seen</th>
-                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left; font-weight: bold;">Notes</th>
-                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left; font-weight: bold;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-    
-    // Sort by wallet type then by ID
-    const sortedWallets = [...investigation.universalWalletIndex].sort((a, b) => {
-        if (a.permanentType !== b.permanentType) {
-            const typeOrder = ['red', 'pink', 'yellow', 'orange', 'brown', 'black', 'blue', 'purple', 'gray', 'green'];
-            return typeOrder.indexOf(a.permanentType) - typeOrder.indexOf(b.permanentType);
-        }
-        return a.permanentId.localeCompare(b.permanentId);
-    });
-    
-    sortedWallets.forEach(wallet => {
-        const statusIndicator = wallet.currentStatus !== wallet.permanentType ? 
-            ` <span style="background: ${getWalletColor(wallet.currentStatus)}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px;">CURRENTLY ${wallet.currentStatus.toUpperCase()}</span>` : '';
-        
-        tableHTML += `
-            <tr>
-                <td style="border: 1px solid #ddd; padding: 12px;">
-                    <div class="wallet-display ${wallet.permanentType}" style="margin: 0;">
-                        ${wallet.permanentId}${statusIndicator}
-                    </div>
-                </td>
-                <td style="border: 1px solid #ddd; padding: 12px;">
-                    ${walletTypes[wallet.permanentType] || wallet.permanentType.toUpperCase()}
-                </td>
-                <td style="border: 1px solid #ddd; padding: 12px; font-family: monospace; font-size: 11px; word-break: break-all; max-width: 250px;">
-                    ${wallet.address}
-                </td>
-                <td style="border: 1px solid #ddd; padding: 12px; font-size: 12px;">
-                    ${wallet.firstSeen}
-                </td>
-                <td style="border: 1px solid #ddd; padding: 12px;">
-                    <textarea placeholder="Add notes about this wallet..." 
-                              style="width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;"
-                              onchange="updateUniversalWalletNotes('${wallet.address}', this.value)">${wallet.notes || ''}</textarea>
-                </td>
-                <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-                    <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" 
-                            onclick="removeWalletFromIndex('${wallet.address}')">Remove</button>
-                </td>
-            </tr>
-        `;
-    });
-    
-    tableHTML += `
-                </tbody>
-            </table>
-        </div>
-    `;
-    
-    container.innerHTML = headerHTML + tableHTML;
-}
-
 function exportAllVictimTablesToExcel() {
     if (investigation.redWalletIndex.length === 0) {
         alert('No red wallet data to export');
@@ -6977,6 +6880,21 @@ function exportRedWalletIndexCSV() {
                 return;
             }
             
+            // Add export button header
+            const headerHTML = `
+                <div style="background: #e8f4f8; border: 2px solid #3498db; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="color: #2c3e50; margin-bottom: 10px;">📋 Universal Wallet Index</h4>
+                            <p style="color: #2c3e50; margin: 0;">Complete catalog of all wallets with permanent classifications and investigative notes.</p>
+                        </div>
+                        <button class="btn btn-success" onclick="exportUniversalWalletIndex()" style="background: #27ae60;">
+                            📊 Export to Excel
+                        </button>
+                    </div>
+                </div>
+            `;
+            
             let tableHTML = `
                 <div style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
                     <table style="width: 100%; border-collapse: collapse;">
@@ -7041,7 +6959,7 @@ function exportRedWalletIndexCSV() {
                 </div>
             `;
             
-            container.innerHTML = tableHTML;
+            container.innerHTML = headerHTML + tableHTML;
         }
 
         function updateUniversalWalletNotes(address, notes) {
@@ -8400,7 +8318,8 @@ function renderARTProgressBars(hop) {
     });
     
     // Process entries
-    hop.entries.forEach(entry => {
+    if (hop.entries) {
+        hop.entries.forEach(entry => {
         const amount = parseFloat(entry.amount) || 0;
         if (amount > 0 && entry.currency) {
             const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
@@ -8437,6 +8356,7 @@ function renderARTProgressBars(hop) {
             }
         }
     });
+    }
     
     // Generate progress bars
     let html = '';
@@ -13721,6 +13641,16 @@ function downloadFile(content, filename, mimeType) {
         function loadFromStorage() {
             if (window.batsData) {
                 investigation = window.batsData;
+                
+                // Ensure all hops have entries arrays
+                if (investigation.hops) {
+                    investigation.hops.forEach(hop => {
+                        if (!hop.entries) {
+                            hop.entries = [];
+                        }
+                    });
+                }
+                
                 document.getElementById('caseId').value = investigation.caseId || '';
                 document.getElementById('investigator').value = investigation.investigator || '';
                 document.getElementById('caseType').value = investigation.caseType || '';
