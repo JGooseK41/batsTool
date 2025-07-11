@@ -3,18 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 22:52)
+## Latest Commit (Auto-updated: 2025-07-10 22:56)
 
-**Commit:** 9fbbc33bad3eb93538e4a7d13235a10a8ac738af
+**Commit:** 17741d5153228d82054d4642af6cb2cdcd6cbc98
 **Author:** Your Name
-**Message:** Add dynamic BATS training visualization to training page
+**Message:** Fix training visualization layout - clean structured flow
 
-- Replace static SVG with dynamic training example
-- Shows multiple victim types and wallet classifications
-- Demonstrates hub wallets, cold storage, exchanges, and write-offs
-- Includes color-coded legend and educational notes
-- Loads automatically when training page opens
-- Ledger-style visualization with hop lanes and sum calculations
+- Replace spaghetti-like connections with organized column layout
+- Use fixed positions for victims, hops, and final destinations
+- Add curved paths for better visual flow
+- Include V-T-H notation on connections
+- Add legend box at bottom with clear explanations
+- Show write-offs clearly in Hop 2
+- Use consistent spacing and alignment
+- Add column headers and guide lines
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md     |  46 +++--
- training.html | 554 ++++++++++++++++++++++++++++++++++++++++++++--------------
- 2 files changed, 440 insertions(+), 160 deletions(-)
+ CLAUDE.md     |  44 ++---
+ training.html | 507 ++++++++++++++++++++++++++++++++++------------------------
+ 2 files changed, 319 insertions(+), 232 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9fbbc33 Add dynamic BATS training visualization to training page (1 second ago)
-- 1cfb83b Add comprehensive BATS training example visualization (8 minutes ago)
-- cf80a17 Redesign flow diagram with ledger-style layout (12 minutes ago)
-- f1304c8 Add auto-fix option to chronological order errors (37 minutes ago)
-- b2528cf Fix blockTimestamp scope error for multi-chain support (48 minutes ago)
-- 53dc631 Add chain selector to blockchain lookup modal (57 minutes ago)
-- 38e3ce6 Upgrade to Etherscan API v2 and add multi-chain support (59 minutes ago)
-- 51c3e12 Add warnings when actual transaction timestamp cannot be retrieved (71 minutes ago)
-- 884ac3a Restore block timestamp fetching with better error handling (74 minutes ago)
-- 8286bde Remove block timestamp fetching to fix token transfer detection (77 minutes ago)
+- 17741d5 Fix training visualization layout - clean structured flow (0 seconds ago)
+- 9fbbc33 Add dynamic BATS training visualization to training page (4 minutes ago)
+- 1cfb83b Add comprehensive BATS training example visualization (12 minutes ago)
+- cf80a17 Redesign flow diagram with ledger-style layout (16 minutes ago)
+- f1304c8 Add auto-fix option to chronological order errors (42 minutes ago)
+- b2528cf Fix blockTimestamp scope error for multi-chain support (52 minutes ago)
+- 53dc631 Add chain selector to blockchain lookup modal (61 minutes ago)
+- 38e3ce6 Upgrade to Etherscan API v2 and add multi-chain support (63 minutes ago)
+- 51c3e12 Add warnings when actual transaction timestamp cannot be retrieved (75 minutes ago)
+- 884ac3a Restore block timestamp fetching with better error handling (78 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
