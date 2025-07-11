@@ -14668,6 +14668,9 @@ async function lookupTransaction() {
                 let blockData = null;
                 if (data.result && data.result.blockNumber) {
                     try {
+                        // Add small delay to avoid rate limit
+                        await new Promise(resolve => setTimeout(resolve, 600));
+                        
                         const blockUrl = corsEnabled ?
                             corsProxyUrl + `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}` :
                             `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}`;
@@ -14685,6 +14688,9 @@ async function lookupTransaction() {
                 // Also check for token transfers
                 let tokenData = null;
                 try {
+                    // Add delay to avoid rate limit (2 calls/sec limit)
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                    
                     const tokenUrl = corsEnabled ? 
                         corsProxyUrl + `${config.tokenApiUrl}${txHash}&apikey=${apiKey}` :
                         `${config.tokenApiUrl}${txHash}&apikey=${apiKey}`;
@@ -14693,6 +14699,12 @@ async function lookupTransaction() {
                     if (tokenResponse.ok) {
                         tokenData = await tokenResponse.json();
                         console.log('Receipt/Token data received:', tokenData);
+                        
+                        // Check if Etherscan returned an error
+                        if (tokenData && tokenData.status === '0' && tokenData.message === 'NOTOK') {
+                            console.error('Etherscan API error:', tokenData.result);
+                            throw new Error(tokenData.result);
+                        }
                     }
                 } catch (err) {
                     console.log('No token transfers found');
@@ -15346,6 +15358,12 @@ async function fetchTransactionData(hash, blockchain) {
                     if (tokenResponse.ok) {
                         tokenData = await tokenResponse.json();
                         console.log('Receipt/Token data received:', tokenData);
+                        
+                        // Check if Etherscan returned an error
+                        if (tokenData && tokenData.status === '0' && tokenData.message === 'NOTOK') {
+                            console.error('Etherscan API error:', tokenData.result);
+                            throw new Error(tokenData.result);
+                        }
                     }
                 } catch (err) {
                     console.log('No token transfers found');
@@ -15784,9 +15802,11 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     if (!data.result || data.result === null) throw new Error('Transaction not found');
                     
                     // Get block data for timestamp
-                    let blockData = null;
                     if (data.result && data.result.blockNumber) {
                         try {
+                            // Add small delay to avoid rate limit
+                            await new Promise(resolve => setTimeout(resolve, 600));
+                            
                             const blockUrl = corsEnabled ?
                                 corsProxyUrl + `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}` :
                                 `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}`;
@@ -15803,6 +15823,9 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     
                     // Also check for token transfers
                     try {
+                        // Add delay to avoid rate limit (2 calls/sec limit)
+                        await new Promise(resolve => setTimeout(resolve, 600));
+                        
                         const tokenUrl = corsEnabled ? 
                             corsProxyUrl + `${config.tokenApiUrl}${txHash}&apikey=${apiKey}` :
                             `${config.tokenApiUrl}${txHash}&apikey=${apiKey}`;
@@ -15811,6 +15834,12 @@ async function lookupVictimTransaction(victimId, transactionId) {
                         if (tokenResponse.ok) {
                             tokenData = await tokenResponse.json();
                             console.log('Receipt/Token data received:', tokenData);
+                            
+                            // Check if Etherscan returned an error
+                            if (tokenData && tokenData.status === '0' && tokenData.message === 'NOTOK') {
+                                console.error('Etherscan API error:', tokenData.result);
+                                throw new Error(tokenData.result);
+                            }
                         }
                     } catch (err) {
                         console.log('No token transfers found');
