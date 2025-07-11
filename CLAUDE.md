@@ -3,17 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 21:38)
+## Latest Commit (Auto-updated: 2025-07-10 21:42)
 
-**Commit:** 884ac3ab76697b53fbde35848249bcd20f979717
+**Commit:** 51c3e1288f6cdb26f2313015e95e6a51afa323a0
 **Author:** Your Name
-**Message:** Restore block timestamp fetching with better error handling
+**Message:** Add warnings when actual transaction timestamp cannot be retrieved
 
-- Restore eth_getBlockByNumber to get actual transaction timestamps
-- Ensure token transfers still work even if block fetch fails
-- Add 300ms delay between API calls only if block fetch succeeds
-- Pass blockTimestamp to parseResponse instead of blockData
-- Use actual timestamp when available, current time as fallback
+- Add hasRealTimestamp flag to track when real timestamps are available
+- Show warning in alerts when current time is used instead of actual timestamp
+- Prompt users to manually update date/time field when timestamp unavailable
+- Pass flag through all transaction lookup flows
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -21,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 37 +++++++++++++++---------------
- index.html | 77 ++++++++++++++++++++++++++++++++++++++++++++++++++++----------
- 2 files changed, 84 insertions(+), 30 deletions(-)
+ CLAUDE.md  | 41 +++++++++++++++++++++--------------------
+ index.html | 43 ++++++++++++++++++++++++++++++++-----------
+ 2 files changed, 53 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 884ac3a Restore block timestamp fetching with better error handling (0 seconds ago)
-- 8286bde Remove block timestamp fetching to fix token transfer detection (3 minutes ago)
-- 756e97e Remove delays and debug logging since rate limits aren't the issue (6 minutes ago)
-- 732ce97 Fix API key not being used from localStorage (10 minutes ago)
-- b88ff50 Fix Etherscan rate limit errors and add delays between API calls (13 minutes ago)
-- ed440c5 Add detailed logging for token transfer detection (16 minutes ago)
-- af55c18 Fix token transfer modal not showing and handle 0 ETH transactions (19 minutes ago)
-- b69c7b9 Fix token transfer selection modal and display issues (24 minutes ago)
-- 5802230 Fix blockchain API transaction date bug (33 minutes ago)
-- cc30ae1 Fix UI issues: center modals, make collapsed items thinner, ensure Next Step buttons visible (45 minutes ago)
+- 51c3e12 Add warnings when actual transaction timestamp cannot be retrieved (0 seconds ago)
+- 884ac3a Restore block timestamp fetching with better error handling (3 minutes ago)
+- 8286bde Remove block timestamp fetching to fix token transfer detection (6 minutes ago)
+- 756e97e Remove delays and debug logging since rate limits aren't the issue (10 minutes ago)
+- 732ce97 Fix API key not being used from localStorage (13 minutes ago)
+- b88ff50 Fix Etherscan rate limit errors and add delays between API calls (16 minutes ago)
+- ed440c5 Add detailed logging for token transfer detection (20 minutes ago)
+- af55c18 Fix token transfer modal not showing and handle 0 ETH transactions (23 minutes ago)
+- b69c7b9 Fix token transfer selection modal and display issues (27 minutes ago)
+- 5802230 Fix blockchain API transaction date bug (37 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

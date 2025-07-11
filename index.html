@@ -2372,6 +2372,126 @@
         let pendingTransfers = null;
         let pendingTransferCallback = null;
         
+        // Shared EVM chain response parser
+        const parseEVMResponse = (data, receiptData, blockTimestamp) => {
+            // This is the same parser used for all EVM chains
+            // Check if we have a token transfer in the receipt logs
+            if (receiptData && receiptData.result && receiptData.result.logs && receiptData.result.logs.length > 0) {
+                console.log('Checking receipt logs for token transfers:', receiptData.result.logs);
+                
+                // Look for Transfer events (topic0 = 0xddf252ad...)
+                const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+                const transferLogs = receiptData.result.logs.filter(log => 
+                    log.topics && log.topics[0] === transferTopic && log.topics.length >= 3
+                );
+                
+                console.log(`Found ${transferLogs.length} token transfers in this transaction`);
+                
+                if (transferLogs.length > 0) {
+                    // Always show selection modal when token transfers exist
+                    console.log('Token transfers detected - user selection required');
+                    
+                    // Parse all transfers for selection
+                    const transfers = transferLogs.map(log => {
+                            const from = '0x' + log.topics[1].slice(26);
+                            const to = '0x' + log.topics[2].slice(26);
+                            const value = log.data;
+                            const contractAddress = log.address;
+                            
+                            // Convert amount
+                            let amount = 0;
+                            try {
+                                const amountBN = parseInt(value, 16);
+                                const decimals = contractAddress.toLowerCase() === '0xdac17f958d2ee523a2206206994597c13d831ec7' || 
+                                               contractAddress.toLowerCase() === '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' ? 6 : 18;
+                                amount = amountBN / Math.pow(10, decimals);
+                            } catch (e) {
+                                console.error('Error parsing amount:', e);
+                            }
+                            
+                            // Get token symbol
+                            const knownTokens = {
+                                '0xdac17f958d2ee523a2206206994597c13d831ec7': 'USDT',
+                                '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 'USDC',
+                                '0x6b175474e89094c44da98b954eedeac495271d0f': 'DAI',
+                                '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': 'WBTC',
+                                '0x514910771af9ca656af840dff83e8264ecf986ca': 'LINK'
+                            };
+                            
+                            const currency = knownTokens[contractAddress.toLowerCase()] || 'Token';
+                            
+                            return {
+                                from: from,
+                                to: to,
+                                amount: amount,
+                                currency: currency,
+                                contractAddress: contractAddress,
+                                rawData: log
+                            };
+                        });
+                    
+                    // Use block timestamp if available, otherwise current time
+                    let timestamp = blockTimestamp || Date.now();
+                    const hasRealTimestamp = !!blockTimestamp;
+                    if (!blockTimestamp) {
+                        console.warn('No block timestamp available for token transfers');
+                    }
+                    
+                    // Only add the ETH transaction if it has value > 0
+                    const tx = data.result;
+                    if (tx && parseInt(tx.value, 16) > 0) {
+                        transfers.unshift({
+                            from: tx.from,
+                            to: tx.to,
+                            amount: parseInt(tx.value, 16) / 1e18,
+                            currency: 'ETH',
+                            contractAddress: 'Native ETH Transfer',
+                            rawData: tx
+                        });
+                    }
+                    
+                    // Always return multiple transfers to show selection modal
+                    return {
+                        multipleTransfers: true,
+                        transfers: transfers,
+                        transaction: data.result,
+                        time: timestamp,
+                        hasRealTimestamp: hasRealTimestamp
+                    };
+                }
+            }
+            // Otherwise use regular ETH transaction
+            else if (data.result) {
+                const tx = data.result;
+                
+                // Skip 0 ETH transactions when there are no token transfers
+                const ethAmount = parseInt(tx.value, 16) / 1e18;
+                if (ethAmount === 0) {
+                    console.log('Skipping 0 ETH transaction with no token transfers');
+                    return null;
+                }
+                
+                // Use block timestamp if available, otherwise current time
+                let timestamp = blockTimestamp || Date.now();
+                const hasRealTimestamp = !!blockTimestamp;
+                if (!blockTimestamp) {
+                    console.warn('No block timestamp available for ETH transaction');
+                }
+                
+                return {
+                    time: timestamp,
+                    amount: ethAmount,
+                    currency: 'ETH',
+                    from: tx.from,
+                    to: tx.to,
+                    fee: tx.gasPrice && tx.gas ? 
+                        parseInt(tx.gasPrice, 16) * parseInt(tx.gas, 16) / 1e18 : 0,
+                    hasRealTimestamp: hasRealTimestamp
+                };
+            }
+            return null;
+        };
+        
         // Blockchain API configurations
         const blockchainAPIs = {
             bitcoin: {
@@ -2433,134 +2553,89 @@
                 addressPattern: /^0x[a-fA-F0-9]{40}$/,
                 addressPrefixes: ['0x'],
                 txPattern: /^0x[a-fA-F0-9]{64}$/,
-                apiUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=',
-                tokenApiUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionReceipt&txhash=',
-                txReceiptUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getTransactionReceipt&txhash=',
-                blockApiUrl: 'https://api.etherscan.io/api?module=proxy&action=eth_getBlockByNumber&tag=',
-                addressApiUrl: 'https://api.etherscan.io/api?module=account&action=txlist&address=',
-                labelApiUrl: 'https://api.etherscan.io/api?module=account&action=addressinfo&address=',
+                chainId: 1, // Ethereum mainnet
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=1&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=1&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                txReceiptUrl: 'https://api.etherscan.io/v2/api?chainid=1&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=1&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=',
+                labelApiUrl: 'https://api.etherscan.io/v2/api?chainid=1&module=account&action=addressinfo&address=',
                 apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
                 fallbackUrls: [
                     // Removed Ropsten as it no longer exists
                     // Blockchair doesn't support transaction lookup by hash in this format
                 ],
-                parseResponse: (data, receiptData, blockTimestamp) => {
-                    // Check if we have a token transfer in the receipt logs
-                    if (receiptData && receiptData.result && receiptData.result.logs && receiptData.result.logs.length > 0) {
-                        console.log('Checking receipt logs for token transfers:', receiptData.result.logs);
-                        
-                        // Look for Transfer events (topic0 = 0xddf252ad...)
-                        const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
-                        const transferLogs = receiptData.result.logs.filter(log => 
-                            log.topics && log.topics[0] === transferTopic && log.topics.length >= 3
-                        );
-                        
-                        console.log(`Found ${transferLogs.length} token transfers in this transaction`);
-                        
-                        if (transferLogs.length > 0) {
-                            // Always show selection modal when token transfers exist
-                            console.log('Token transfers detected - user selection required');
-                            
-                            // Parse all transfers for selection
-                            const transfers = transferLogs.map(log => {
-                                    const from = '0x' + log.topics[1].slice(26);
-                                    const to = '0x' + log.topics[2].slice(26);
-                                    const value = log.data;
-                                    const contractAddress = log.address;
-                                    
-                                    // Convert amount
-                                    let amount = 0;
-                                    try {
-                                        const amountBN = parseInt(value, 16);
-                                        const decimals = contractAddress.toLowerCase() === '0xdac17f958d2ee523a2206206994597c13d831ec7' || 
-                                                       contractAddress.toLowerCase() === '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' ? 6 : 18;
-                                        amount = amountBN / Math.pow(10, decimals);
-                                    } catch (e) {
-                                        console.error('Error parsing amount:', e);
-                                    }
-                                    
-                                    // Get token symbol
-                                    const knownTokens = {
-                                        '0xdac17f958d2ee523a2206206994597c13d831ec7': 'USDT',
-                                        '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 'USDC',
-                                        '0x6b175474e89094c44da98b954eedeac495271d0f': 'DAI',
-                                        '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': 'WBTC',
-                                        '0x514910771af9ca656af840dff83e8264ecf986ca': 'LINK'
-                                    };
-                                    
-                                    const currency = knownTokens[contractAddress.toLowerCase()] || 'Token';
-                                    
-                                    return {
-                                        from: from,
-                                        to: to,
-                                        amount: amount,
-                                        currency: currency,
-                                        contractAddress: contractAddress,
-                                        rawData: log
-                                    };
-                                });
-                            
-                            // Use block timestamp if available, otherwise current time
-                            let timestamp = blockTimestamp || Date.now();
-                            const hasRealTimestamp = !!blockTimestamp;
-                            if (!blockTimestamp) {
-                                console.warn('No block timestamp available for token transfers');
-                            }
-                            
-                            // Only add the ETH transaction if it has value > 0
-                            const tx = data.result;
-                            if (tx && parseInt(tx.value, 16) > 0) {
-                                transfers.unshift({
-                                    from: tx.from,
-                                    to: tx.to,
-                                    amount: parseInt(tx.value, 16) / 1e18,
-                                    currency: 'ETH',
-                                    contractAddress: 'Native ETH Transfer',
-                                    rawData: tx
-                                });
-                            }
-                            
-                            // Always return multiple transfers to show selection modal
-                            return {
-                                multipleTransfers: true,
-                                transfers: transfers,
-                                transaction: data.result,
-                                time: timestamp,
-                                hasRealTimestamp: hasRealTimestamp
-                            };
-                        }
-                    }
-                    // Otherwise use regular ETH transaction
-                    else if (data.result) {
-                        const tx = data.result;
-                        
-                        // Skip 0 ETH transactions when there are no token transfers
-                        const ethAmount = parseInt(tx.value, 16) / 1e18;
-                        if (ethAmount === 0) {
-                            console.log('Skipping 0 ETH transaction with no token transfers');
-                            return null;
-                        }
-                        
-                        // Use block timestamp if available, otherwise current time
-                        let timestamp = blockTimestamp || Date.now();
-                        const hasRealTimestamp = !!blockTimestamp;
-                        if (!blockTimestamp) {
-                            console.warn('No block timestamp available for ETH transaction');
-                        }
-                        
-                        return {
-                            time: timestamp,
-                            amount: ethAmount,
-                            currency: 'ETH',
-                            from: tx.from,
-                            to: tx.to,
-                            fee: tx.gasPrice && tx.gas ? 
-                                parseInt(tx.gasPrice, 16) * parseInt(tx.gas, 16) / 1e18 : 0,
-                            hasRealTimestamp: hasRealTimestamp
-                        };
-                    }
-                    return null;
-                }
+                parseResponse: parseEVMResponse
+            },
+            base: {
+                name: 'Base',
+                chainId: 8453,
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=8453&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=8453&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=8453&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=8453&module=account&action=txlist&address=',
+                apiKey: localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
+                parseResponse: parseEVMResponse
+            },
+            arbitrum: {
+                name: 'Arbitrum',
+                chainId: 42161,
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=42161&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=42161&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=42161&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=42161&module=account&action=txlist&address=',
+                apiKey: localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
+                parseResponse: parseEVMResponse
+            },
+            optimism: {
+                name: 'Optimism',
+                chainId: 10,
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=10&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=10&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=10&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=10&module=account&action=txlist&address=',
+                apiKey: localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
+                parseResponse: parseEVMResponse
+            },
+            polygon: {
+                name: 'Polygon',
+                chainId: 137,
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=137&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=137&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=137&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=137&module=account&action=txlist&address=',
+                apiKey: localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
+                parseResponse: parseEVMResponse
+            },
+            bsc: {
+                name: 'BNB Chain',
+                chainId: 56,
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=56&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=56&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=56&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=56&module=account&action=txlist&address=',
+                apiKey: localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
+                parseResponse: parseEVMResponse
             },
             tron: {
                 name: 'Tron',
