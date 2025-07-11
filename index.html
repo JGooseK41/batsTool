@@ -2451,9 +2451,15 @@
                         
                         // Look for Transfer events (topic0 = 0xddf252ad...)
                         const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
-                        const transferLogs = receiptData.result.logs.filter(log => 
-                            log.topics && log.topics[0] === transferTopic && log.topics.length >= 3
-                        );
+                        console.log('Looking for transfer topic:', transferTopic);
+                        console.log('Total logs in receipt:', receiptData.result.logs.length);
+                        
+                        const transferLogs = receiptData.result.logs.filter(log => {
+                            console.log('Checking log:', log);
+                            const isTransfer = log.topics && log.topics[0] === transferTopic && log.topics.length >= 3;
+                            if (isTransfer) console.log('Found transfer log!');
+                            return isTransfer;
+                        });
                         
                         console.log(`Found ${transferLogs.length} token transfers in this transaction`);
                         
