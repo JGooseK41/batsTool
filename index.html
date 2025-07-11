@@ -927,6 +927,8 @@
 .flow-wallet-node {
     cursor: pointer;
     transition: all 0.2s ease;
+    stroke: #333;
+    stroke-width: 2;
 }
 
 .flow-wallet-node:hover {
@@ -936,36 +938,60 @@
 
 .flow-connection-line {
     fill: none;
-    stroke-width: 2;
-    opacity: 0.8;
-}
-
-.flow-connection-line:hover {
-    stroke-width: 3;
-    opacity: 1;
-}
-
-.flow-thread-label {
-    font-size: 12px;
-    font-weight: 600;
-    pointer-events: none;
-}
-
-.flow-hop-column {
-    fill: #f8f9fa;
-    stroke: #e8f0fe;
     stroke-width: 1;
+    stroke: #333;
 }
 
-.flow-art-text {
-    font-size: 16px;
+.flow-thread-amount {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    fill: #2c3e50;
+    background: white;
+    padding: 2px;
+}
+
+.flow-hop-lane {
+    opacity: 0.3;
+}
+
+.flow-hop-lane-1 {
+    fill: #FFB6C1;
+}
+
+.flow-hop-lane-2 {
+    fill: #87CEEB;
+}
+
+.flow-hop-lane-3 {
+    fill: #98FB98;
+}
+
+.flow-hop-lane-4 {
+    fill: #DDA0DD;
+}
+
+.flow-hop-lane-5 {
+    fill: #F0E68C;
+}
+
+.flow-hop-title {
+    font-size: 18px;
     font-weight: bold;
     fill: #2c3e50;
 }
 
-.flow-calculation-text {
+.flow-sum-text {
+    font-size: 16px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    fill: #2c3e50;
+}
+
+.flow-wallet-label {
     font-size: 12px;
-    fill: #666;
+    font-weight: bold;
+    fill: white;
 }
 
 @media print {
@@ -17090,164 +17116,280 @@ To (RED Wallet): ${transfer.to}`;
             }
             
             // Configuration
-            const hopWidth = 300;
-            const hopPadding = 50;
-            const nodeRadius = 25;
-            const verticalSpacing = 100;
-            const topMargin = 100;
-            const bottomMargin = 150;
+            const walletColumnWidth = 200;
+            const hopLaneWidth = 250;
+            const nodeRadius = 20;
+            const verticalSpacing = 80;
+            const topMargin = 60;
+            const bottomMargin = 100;
+            const leftMargin = 20;
             
             // Calculate dimensions
-            const numHops = investigation.hops.length + 1; // +1 for victims column
-            const totalWidth = numHops * (hopWidth + hopPadding) + hopPadding;
+            const numHops = investigation.hops.length;
+            const totalWidth = leftMargin + walletColumnWidth + (numHops * hopLaneWidth) + 50;
             
-            // Find max entries in any hop
-            let maxEntries = investigation.victims.length;
-            investigation.hops.forEach(hop => {
-                const nonWriteoffEntries = hop.entries.filter(e => !e.isWriteoff).length;
-                maxEntries = Math.max(maxEntries, nonWriteoffEntries);
+            // Calculate total height needed
+            let yPosition = topMargin + 40; // Start position after titles
+            const walletPositions = new Map();
+            
+            // Map all wallet positions
+            investigation.victims.forEach((victim, idx) => {
+                const walletId = `V${victim.id}`;
+                walletPositions.set(walletId, yPosition);
+                yPosition += verticalSpacing;
             });
             
-            const totalHeight = topMargin + (maxEntries * verticalSpacing) + bottomMargin;
+            // Add spacing between victims and other wallets
+            yPosition += 30;
+            
+            // Map all unique wallets from hops
+            const processedWallets = new Set();
+            investigation.hops.forEach(hop => {
+                hop.entries.filter(e => !e.isWriteoff).forEach(entry => {
+                    const walletKey = `${entry.toWallet}-${entry.toWalletType}`;
+                    if (!processedWallets.has(walletKey)) {
+                        processedWallets.add(walletKey);
+                        walletPositions.set(walletKey, yPosition);
+                        yPosition += verticalSpacing;
+                    }
+                });
+            });
+            
+            const totalHeight = yPosition + bottomMargin;
             
             // Set SVG dimensions
             svg.setAttribute('width', totalWidth);
             svg.setAttribute('height', totalHeight);
             svg.setAttribute('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
             
-            // Create hop columns
-            const columns = [];
-            
-            // Victims column
-            columns.push({
-                x: hopPadding,
-                width: hopWidth,
-                title: 'Victims',
-                entries: investigation.victims.map(v => ({
-                    id: `victim-${v.id}`,
-                    type: 'victim',
-                    label: `Victim ${v.id}`,
-                    amount: v.transactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0),
-                    wallet: v.transactions[0]?.receivingWallet || 'Unknown'
-                }))
-            });
-            
-            // Hop columns
-            investigation.hops.forEach((hop, index) => {
-                columns.push({
-                    x: (index + 1) * (hopWidth + hopPadding) + hopPadding,
-                    width: hopWidth,
-                    title: `Hop ${hop.number}`,
-                    hopId: hop.id,
-                    art: hop.aggregateRunningTotal,
-                    entries: hop.entries.filter(e => !e.isWriteoff).map(e => ({
-                        id: `hop-${hop.id}-entry-${e.id}`,
-                        hopId: hop.id,
-                        entryId: e.id,
-                        type: e.toWalletType || 'unknown',
-                        label: e.notation || `Entry ${e.id}`,
-                        amount: parseFloat(e.amount || 0),
-                        wallet: e.toWallet || 'Unknown',
-                        sourceThread: e.sourceThread
-                    }))
-                });
-            });
-            
-            // Draw hop columns
-            columns.forEach((col, colIndex) => {
-                // Column background
+            // Draw hop lanes (colored backgrounds)
+            for (let i = 0; i < numHops; i++) {
+                const laneX = leftMargin + walletColumnWidth + (i * hopLaneWidth);
                 const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                rect.setAttribute('x', col.x);
-                rect.setAttribute('y', 20);
-                rect.setAttribute('width', col.width);
-                rect.setAttribute('height', totalHeight - 40);
-                rect.setAttribute('class', 'flow-hop-column');
-                rect.setAttribute('rx', '8');
+                rect.setAttribute('x', laneX);
+                rect.setAttribute('y', 0);
+                rect.setAttribute('width', hopLaneWidth);
+                rect.setAttribute('height', totalHeight);
+                rect.setAttribute('class', `flow-hop-lane flow-hop-lane-${(i % 5) + 1}`);
                 svg.appendChild(rect);
                 
-                // Column title
+                // Hop title
                 const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                title.setAttribute('x', col.x + col.width / 2);
-                title.setAttribute('y', 50);
+                title.setAttribute('x', laneX + hopLaneWidth / 2);
+                title.setAttribute('y', 30);
                 title.setAttribute('text-anchor', 'middle');
-                title.setAttribute('class', 'flow-art-text');
-                title.textContent = col.title;
+                title.setAttribute('class', 'flow-hop-title');
+                title.textContent = `HOP ${i + 1}`;
                 svg.appendChild(title);
+            }
+            
+            // Draw all wallets on the left side
+            const walletData = [];
+            
+            // Draw victim wallets (RED)
+            investigation.victims.forEach(victim => {
+                const walletId = `V${victim.id}`;
+                const y = walletPositions.get(walletId);
+                const totalAmount = victim.transactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
                 
-                // ART display for hops
-                if (col.art !== undefined) {
-                    const artText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    artText.setAttribute('x', col.x + col.width / 2);
-                    artText.setAttribute('y', 75);
-                    artText.setAttribute('text-anchor', 'middle');
-                    artText.setAttribute('class', 'flow-art-text');
-                    artText.setAttribute('fill', '#27ae60');
-                    artText.textContent = `ART: ${formatCurrency(col.art)}`;
-                    svg.appendChild(artText);
-                }
+                // Red circle
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', leftMargin + walletColumnWidth / 2);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', nodeRadius);
+                circle.setAttribute('class', 'flow-wallet-node');
+                circle.setAttribute('fill', '#e74c3c');
+                circle.onclick = () => showWalletDetails({
+                    address: victim.transactions[0]?.receivingWallet || 'Unknown',
+                    type: 'victim',
+                    notation: `V-${victim.id}`
+                });
+                svg.appendChild(circle);
                 
-                // Draw wallet nodes
-                col.entries.forEach((entry, entryIndex) => {
-                    const y = topMargin + (entryIndex * verticalSpacing);
-                    
-                    // Wallet circle
-                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                    circle.setAttribute('cx', col.x + col.width / 2);
-                    circle.setAttribute('cy', y);
-                    circle.setAttribute('r', nodeRadius);
-                    circle.setAttribute('class', 'flow-wallet-node');
-                    circle.setAttribute('fill', getWalletColor(entry.type));
-                    circle.setAttribute('data-wallet', entry.wallet);
-                    circle.onclick = () => showWalletDetails(entry);
-                    svg.appendChild(circle);
-                    
-                    // Wallet label
-                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    label.setAttribute('x', col.x + col.width / 2);
-                    label.setAttribute('y', y + 5);
-                    label.setAttribute('text-anchor', 'middle');
-                    label.setAttribute('fill', 'white');
-                    label.setAttribute('font-size', '12px');
-                    label.setAttribute('font-weight', 'bold');
-                    label.textContent = entry.label;
-                    svg.appendChild(label);
-                    
-                    // Amount below node
-                    const amountText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    amountText.setAttribute('x', col.x + col.width / 2);
-                    amountText.setAttribute('y', y + nodeRadius + 20);
-                    amountText.setAttribute('text-anchor', 'middle');
-                    amountText.setAttribute('font-size', '11px');
-                    amountText.setAttribute('fill', '#666');
-                    amountText.textContent = formatCurrency(entry.amount);
-                    svg.appendChild(amountText);
-                    
-                    // Store position for connections
-                    entry.x = col.x + col.width / 2;
-                    entry.y = y;
+                // Wallet number inside circle
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', leftMargin + walletColumnWidth / 2);
+                label.setAttribute('y', y + 5);
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('class', 'flow-wallet-label');
+                label.textContent = victim.id;
+                svg.appendChild(label);
+                
+                // Wallet address to the right of circle
+                const addressText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                addressText.setAttribute('x', leftMargin + walletColumnWidth / 2 + nodeRadius + 10);
+                addressText.setAttribute('y', y + 5);
+                addressText.setAttribute('text-anchor', 'start');
+                addressText.setAttribute('font-size', '11px');
+                addressText.setAttribute('fill', '#666');
+                const address = victim.transactions[0]?.receivingWallet || 'Unknown';
+                addressText.textContent = address.length > 20 ? address.substring(0, 8) + '...' + address.slice(-6) : address;
+                svg.appendChild(addressText);
+                
+                walletData.push({
+                    id: walletId,
+                    x: leftMargin + walletColumnWidth / 2,
+                    y: y,
+                    amount: totalAmount,
+                    type: 'victim'
                 });
             });
             
-            // Draw connections between hops
-            for (let i = 0; i < columns.length - 1; i++) {
-                const fromCol = columns[i];
-                const toCol = columns[i + 1];
-                
-                toCol.entries.forEach(toEntry => {
-                    // Find source entries based on sourceThread
-                    if (toEntry.sourceThread) {
-                        fromCol.entries.forEach(fromEntry => {
-                            // Check if this entry matches the source thread pattern
-                            if (shouldConnect(fromEntry, toEntry)) {
-                                drawConnection(svg, fromEntry, toEntry);
-                            }
+            // Draw hop wallets
+            const walletsByAddress = new Map();
+            investigation.hops.forEach(hop => {
+                hop.entries.filter(e => !e.isWriteoff).forEach(entry => {
+                    const walletKey = `${entry.toWallet}-${entry.toWalletType}`;
+                    if (!walletsByAddress.has(walletKey)) {
+                        const y = walletPositions.get(walletKey);
+                        
+                        // Wallet circle
+                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.setAttribute('cx', leftMargin + walletColumnWidth / 2);
+                        circle.setAttribute('cy', y);
+                        circle.setAttribute('r', nodeRadius);
+                        circle.setAttribute('class', 'flow-wallet-node');
+                        circle.setAttribute('fill', getWalletColor(entry.toWalletType));
+                        circle.onclick = () => showWalletDetails({
+                            address: entry.toWallet,
+                            type: entry.toWalletType,
+                            notation: entry.notation
+                        });
+                        svg.appendChild(circle);
+                        
+                        // Wallet notation inside circle
+                        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        label.setAttribute('x', leftMargin + walletColumnWidth / 2);
+                        label.setAttribute('y', y + 5);
+                        label.setAttribute('text-anchor', 'middle');
+                        label.setAttribute('class', 'flow-wallet-label');
+                        // Extract number from notation (e.g., "V1-T1-H1" -> "1")
+                        const hopNum = entry.notation ? entry.notation.split('-H')[1] : '';
+                        label.textContent = hopNum || '';
+                        svg.appendChild(label);
+                        
+                        // Wallet entity name if known
+                        if (entry.entityName) {
+                            const entityText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                            entityText.setAttribute('x', leftMargin + walletColumnWidth / 2 + nodeRadius + 10);
+                            entityText.setAttribute('y', y + 5);
+                            entityText.setAttribute('text-anchor', 'start');
+                            entityText.setAttribute('font-size', '11px');
+                            entityText.setAttribute('fill', '#666');
+                            entityText.setAttribute('font-weight', 'bold');
+                            entityText.textContent = entry.entityName;
+                            svg.appendChild(entityText);
+                        }
+                        
+                        walletsByAddress.set(walletKey, {
+                            x: leftMargin + walletColumnWidth / 2,
+                            y: y,
+                            type: entry.toWalletType,
+                            notation: entry.notation
                         });
                     }
                 });
-            }
+            });
             
-            // Draw calculation summary at bottom
-            drawCalculationSummary(svg, columns, totalHeight - 100);
+            // Draw connections and amounts
+            const hopSums = [];
+            
+            investigation.hops.forEach((hop, hopIndex) => {
+                const laneX = leftMargin + walletColumnWidth + (hopIndex * hopLaneWidth);
+                const laneCenterX = laneX + hopLaneWidth / 2;
+                
+                hop.entries.forEach(entry => {
+                    if (entry.isWriteoff) {
+                        // Track writeoffs separately for display
+                        if (!hopSums[hopIndex]) hopSums[hopIndex] = { total: 0, writeoffs: 0 };
+                        hopSums[hopIndex].writeoffs += parseFloat(entry.amount || 0);
+                        return;
+                    }
+                    
+                    // Initialize hop sum if needed
+                    if (!hopSums[hopIndex]) hopSums[hopIndex] = { total: 0, writeoffs: 0 };
+                    
+                    // Find source wallet position
+                    let sourceY;
+                    if (entry.sourceThread) {
+                        // Check if it's from a victim
+                        const victimMatch = entry.sourceThread.match(/V-(\d+)/);
+                        if (victimMatch) {
+                            sourceY = walletPositions.get(`V${victimMatch[1]}`);
+                        } else {
+                            // Find the source hop entry
+                            for (let i = hopIndex - 1; i >= 0; i--) {
+                                const sourceHop = investigation.hops[i];
+                                const sourceEntry = sourceHop.entries.find(e => e.notation === entry.sourceThread);
+                                if (sourceEntry) {
+                                    const sourceKey = `${sourceEntry.toWallet}-${sourceEntry.toWalletType}`;
+                                    sourceY = walletPositions.get(sourceKey);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Find destination wallet position
+                    const destKey = `${entry.toWallet}-${entry.toWalletType}`;
+                    const destY = walletPositions.get(destKey);
+                    
+                    if (sourceY && destY) {
+                        // Draw straight line
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', leftMargin + walletColumnWidth / 2 + nodeRadius);
+                        line.setAttribute('y1', sourceY);
+                        line.setAttribute('x2', laneCenterX);
+                        line.setAttribute('y2', destY);
+                        line.setAttribute('class', 'flow-connection-line');
+                        svg.appendChild(line);
+                        
+                        // Add amount text on the line
+                        const amountText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        amountText.setAttribute('x', laneCenterX - 10);
+                        amountText.setAttribute('y', destY - 5);
+                        amountText.setAttribute('text-anchor', 'end');
+                        amountText.setAttribute('class', 'flow-thread-amount');
+                        amountText.textContent = formatCurrency(parseFloat(entry.amount || 0));
+                        svg.appendChild(amountText);
+                    }
+                    
+                    // Add to hop sum
+                    hopSums[hopIndex].total += parseFloat(entry.amount || 0);
+                });
+                
+                // Draw sum at bottom of hop lane
+                const sumData = hopSums[hopIndex] || { total: 0, writeoffs: 0 };
+                const sumText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                sumText.setAttribute('x', laneCenterX);
+                sumText.setAttribute('y', totalHeight - 30);
+                sumText.setAttribute('text-anchor', 'middle');
+                sumText.setAttribute('class', 'flow-sum-text');
+                sumText.textContent = formatCurrency(sumData.total);
+                svg.appendChild(sumText);
+                
+                // Show writeoffs if any
+                if (sumData.writeoffs > 0) {
+                    const writeoffText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    writeoffText.setAttribute('x', laneCenterX);
+                    writeoffText.setAttribute('y', totalHeight - 10);
+                    writeoffText.setAttribute('text-anchor', 'middle');
+                    writeoffText.setAttribute('font-size', '12px');
+                    writeoffText.setAttribute('fill', '#666');
+                    writeoffText.textContent = `(${formatCurrency(sumData.writeoffs)}) WO`;
+                    svg.appendChild(writeoffText);
+                }
+                
+                // Add "SUM:" label
+                const sumLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                sumLabel.setAttribute('x', laneCenterX);
+                sumLabel.setAttribute('y', totalHeight - 50);
+                sumLabel.setAttribute('text-anchor', 'middle');
+                sumLabel.setAttribute('font-size', '14px');
+                sumLabel.setAttribute('fill', '#666');
+                sumLabel.textContent = 'SUM:';
+                svg.appendChild(sumLabel);
+            });
         }
         
         function getWalletColor(type) {
@@ -17262,73 +17404,9 @@ To (RED Wallet): ${transfer.to}`;
             return colors[type] || colors.unknown;
         }
         
-        function shouldConnect(fromEntry, toEntry) {
-            if (!toEntry.sourceThread) return false;
-            
-            // For victim entries
-            if (fromEntry.type === 'victim') {
-                return toEntry.sourceThread.includes(`V-${fromEntry.label.split(' ')[1]}`);
-            }
-            
-            // For hop entries
-            return toEntry.sourceThread === fromEntry.label;
-        }
         
-        function drawConnection(svg, fromEntry, toEntry) {
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            
-            // Create curved path
-            const startX = fromEntry.x + 25; // Start from right edge of circle
-            const startY = fromEntry.y;
-            const endX = toEntry.x - 25; // End at left edge of circle
-            const endY = toEntry.y;
-            const midX = (startX + endX) / 2;
-            
-            const d = `M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`;
-            
-            path.setAttribute('d', d);
-            path.setAttribute('class', 'flow-connection-line');
-            path.setAttribute('stroke', '#666');
-            
-            svg.appendChild(path);
-            
-            // Add amount label on the line
-            const labelX = (startX + endX) / 2;
-            const labelY = (startY + endY) / 2;
-            
-            const amountLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            amountLabel.setAttribute('x', labelX);
-            amountLabel.setAttribute('y', labelY - 5);
-            amountLabel.setAttribute('text-anchor', 'middle');
-            amountLabel.setAttribute('class', 'flow-thread-label');
-            amountLabel.setAttribute('fill', '#e74c3c');
-            amountLabel.textContent = formatCurrency(toEntry.amount);
-            svg.appendChild(amountLabel);
-        }
-        
-        function drawCalculationSummary(svg, columns, y) {
-            // Draw calculation verification for each hop
-            columns.forEach((col, index) => {
-                if (index === 0) return; // Skip victims column
-                
-                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', col.x + col.width / 2);
-                text.setAttribute('y', y);
-                text.setAttribute('text-anchor', 'middle');
-                text.setAttribute('class', 'flow-calculation-text');
-                
-                // Calculate totals
-                const hopData = investigation.hops[index - 1];
-                const totalIn = col.entries.reduce((sum, e) => sum + e.amount, 0);
-                const writeoffs = hopData.entries.filter(e => e.isWriteoff).reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
-                
-                text.textContent = `Total: ${formatCurrency(totalIn)} + WO: ${formatCurrency(writeoffs)} = ART: ${formatCurrency(col.art)}`;
-                svg.appendChild(text);
-            });
-        }
-        
-        function showWalletDetails(entry) {
-            alert(`Wallet: ${entry.wallet}\nType: ${entry.type}\nAmount: ${formatCurrency(entry.amount)}`);
+        function showWalletDetails(walletData) {
+            alert(`Wallet: ${walletData.address || 'Unknown'}\nType: ${walletData.type}\nNotation: ${walletData.notation || 'N/A'}`);
         }
         
         function exportFlowDiagram(format) {

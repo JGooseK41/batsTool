@@ -3,16 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 22:04)
+## Latest Commit (Auto-updated: 2025-07-10 22:15)
 
-**Commit:** b2528cf27b4e30bc0ef93c84496e66e074ed89a7
+**Commit:** f1304c80a16cef537cfd33d4edcd0466f2e0f108
 **Author:** Your Name
-**Message:** Fix blockTimestamp scope error for multi-chain support
+**Message:** Add auto-fix option to chronological order errors
 
-- Move blockTimestamp declaration to outer scope to fix 'not defined' error
-- Add block timestamp fetching for all EVM chains (Base, Arbitrum, etc)
-- Update parseResponse calls to handle all EVM chains properly
-- Fix scope issues in both lookupTransaction and lookupVictimTransaction
+- Change error alerts to confirm dialogs with auto-fix option
+- Add 'OK to fix automatically' button when chronological errors detected
+- Auto-reorder transactions and update V-T notation when user confirms
+- Apply to: real-time entry validation, root total confirmation, and Excel import
+- Maintains PIFO compliance by keeping transactions in date order
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -20,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 42 +++++++++++++++++++++---------------------
- index.html | 15 ++++++++-------
- 2 files changed, 29 insertions(+), 28 deletions(-)
+ CLAUDE.md  | 41 ++++++++++++++++++++---------------------
+ index.html | 42 +++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 57 insertions(+), 26 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b2528cf Fix blockTimestamp scope error for multi-chain support (0 seconds ago)
-- 53dc631 Add chain selector to blockchain lookup modal (9 minutes ago)
-- 38e3ce6 Upgrade to Etherscan API v2 and add multi-chain support (11 minutes ago)
-- 51c3e12 Add warnings when actual transaction timestamp cannot be retrieved (22 minutes ago)
-- 884ac3a Restore block timestamp fetching with better error handling (26 minutes ago)
-- 8286bde Remove block timestamp fetching to fix token transfer detection (29 minutes ago)
-- 756e97e Remove delays and debug logging since rate limits aren't the issue (32 minutes ago)
-- 732ce97 Fix API key not being used from localStorage (36 minutes ago)
-- b88ff50 Fix Etherscan rate limit errors and add delays between API calls (38 minutes ago)
-- ed440c5 Add detailed logging for token transfer detection (42 minutes ago)
+- f1304c8 Add auto-fix option to chronological order errors (0 seconds ago)
+- b2528cf Fix blockTimestamp scope error for multi-chain support (11 minutes ago)
+- 53dc631 Add chain selector to blockchain lookup modal (20 minutes ago)
+- 38e3ce6 Upgrade to Etherscan API v2 and add multi-chain support (22 minutes ago)
+- 51c3e12 Add warnings when actual transaction timestamp cannot be retrieved (33 minutes ago)
+- 884ac3a Restore block timestamp fetching with better error handling (36 minutes ago)
+- 8286bde Remove block timestamp fetching to fix token transfer detection (40 minutes ago)
+- 756e97e Remove delays and debug logging since rate limits aren't the issue (43 minutes ago)
+- 732ce97 Fix API key not being used from localStorage (46 minutes ago)
+- b88ff50 Fix Etherscan rate limit errors and add delays between API calls (49 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
