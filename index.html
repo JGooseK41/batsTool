@@ -14653,7 +14653,7 @@ async function lookupTransaction() {
                 data = await response.json();
                 
             } else if (detectedChain === 'ethereum') {
-                const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                const apiKey = localStorage.getItem('bats_etherscan_api_key') || config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
                 
                 // First get the basic transaction
                 url = `${apiUrl}${txHash}&apikey=${apiKey}`;
@@ -15336,7 +15336,7 @@ async function fetchTransactionData(hash, blockchain) {
                 data = await response.json();
                 
             } else if (blockchain === 'ethereum') {
-                const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                const apiKey = localStorage.getItem('bats_etherscan_api_key') || config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
                 
                 // First get the basic transaction
                 url = `${apiUrl}${hash}&apikey=${apiKey}`;
@@ -15790,7 +15790,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     data = await response.json();
                     
                 } else if (detectedChain === 'ethereum') {
-                    const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                    const apiKey = localStorage.getItem('bats_etherscan_api_key') || config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
                     
                     // First get the basic transaction
                     url = `${apiUrl}${txHash}&apikey=${apiKey}`;
@@ -16336,7 +16336,7 @@ Note: Block timestamp will be added when available.`);
                     }
                 } else if (blockchain === 'ethereum' && config.labelApiUrl) {
                     // Etherscan labels API
-                    const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                    const apiKey = localStorage.getItem('bats_etherscan_api_key') || config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
                     let url = `${config.labelApiUrl}${address}&apikey=${apiKey}`;
                     if (corsEnabled) url = corsProxyUrl + url;
                     

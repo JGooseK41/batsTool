@@ -3,16 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 21:22)
+## Latest Commit (Auto-updated: 2025-07-10 21:26)
 
-**Commit:** ed440c534679062582f410f39f736ed8dbe88861
+**Commit:** b88ff5097f236d1971daa197584d26302de413e0
 **Author:** Your Name
-**Message:** Add detailed logging for token transfer detection
+**Message:** Fix Etherscan rate limit errors and add delays between API calls
 
-- Log transfer topic being searched for
-- Log total number of logs in receipt
-- Log each log being checked
-- Log when transfer is found
+- Check for Etherscan API errors (status: 0, message: NOTOK)
+- Add 600ms delay between API calls to stay under 2/sec rate limit
+- Throw proper error when rate limit is hit
+- Apply fix to both lookupTransaction and lookupVictimTransaction
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -20,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 31 +++++++++++++++----------------
- index.html | 12 +++++++++---
- 2 files changed, 24 insertions(+), 19 deletions(-)
+ CLAUDE.md  | 30 +++++++++++++++---------------
+ index.html | 31 ++++++++++++++++++++++++++++++-
+ 2 files changed, 45 insertions(+), 16 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ed440c5 Add detailed logging for token transfer detection (0 seconds ago)
-- af55c18 Fix token transfer modal not showing and handle 0 ETH transactions (3 minutes ago)
-- b69c7b9 Fix token transfer selection modal and display issues (7 minutes ago)
-- 5802230 Fix blockchain API transaction date bug (17 minutes ago)
-- cc30ae1 Fix UI issues: center modals, make collapsed items thinner, ensure Next Step buttons visible (29 minutes ago)
+- b88ff50 Fix Etherscan rate limit errors and add delays between API calls (0 seconds ago)
+- ed440c5 Add detailed logging for token transfer detection (3 minutes ago)
+- af55c18 Fix token transfer modal not showing and handle 0 ETH transactions (7 minutes ago)
+- b69c7b9 Fix token transfer selection modal and display issues (11 minutes ago)
+- 5802230 Fix blockchain API transaction date bug (21 minutes ago)
+- cc30ae1 Fix UI issues: center modals, make collapsed items thinner, ensure Next Step buttons visible (33 minutes ago)
 - c0280a6 Fix save/load functionality and improve state preservation (2 hours ago)
 - 65a79eb Fix hop ID type mismatch preventing wizard from showing (2 hours ago)
 - feef15b Debug hop entry wizard not showing after trace selection (2 hours ago)
 - a48f4a5 Fix missing function and victim completion workflow (2 hours ago)
-- fd803ec Add purple segment to progress bars for VASP/exchange deposits (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
