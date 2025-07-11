@@ -2500,11 +2500,8 @@
                                     };
                                 });
                             
-                            // Get timestamp from block data if available
+                            // Use current timestamp to avoid extra API calls
                             let timestamp = Date.now();
-                            if (blockData && blockData.result && blockData.result.timestamp) {
-                                timestamp = parseInt(blockData.result.timestamp, 16) * 1000;
-                            }
                             
                             // Only add the ETH transaction if it has value > 0
                             const tx = data.result;
@@ -2539,19 +2536,8 @@
                             return null;
                         }
                         
-                        // Get timestamp from block data
+                        // Use current timestamp to avoid extra API calls
                         let timestamp = Date.now();
-                        if (blockData && blockData.result && blockData.result.timestamp) {
-                            // Block timestamp is in hex seconds since epoch
-                            timestamp = parseInt(blockData.result.timestamp, 16) * 1000;
-                            console.log('Using block timestamp:', new Date(timestamp).toISOString());
-                        } else if (tx.timestamp) {
-                            // Some APIs provide timestamp directly
-                            timestamp = parseInt(tx.timestamp, 16) * 1000;
-                        } else {
-                            // Fallback: use current time (transaction must be recent if we're looking it up)
-                            console.warn('No block timestamp available, using current time');
-                        }
                         
                         return {
                             time: timestamp,
@@ -14658,30 +14644,12 @@ async function lookupTransaction() {
                 data = await response.json();
                 if (!data.result || data.result === null) throw new Error('Transaction not found');
                 
-                // Get block data for timestamp
+                // We'll get timestamp from the transaction receipt instead of separate block call
                 let blockData = null;
-                if (data.result && data.result.blockNumber) {
-                    try {
-                        const blockUrl = corsEnabled ?
-                            corsProxyUrl + `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}` :
-                            `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}`;
-                        
-                        const blockResponse = await fetch(blockUrl);
-                        if (blockResponse.ok) {
-                            blockData = await blockResponse.json();
-                            console.log('Block data received:', blockData);
-                        }
-                    } catch (err) {
-                        console.log('Failed to fetch block data:', err);
-                    }
-                }
                 
                 // Also check for token transfers
                 let tokenData = null;
                 try {
-                    // Add delay to avoid rate limit (2 calls/sec limit)
-                    await new Promise(resolve => setTimeout(resolve, 600));
-                    
                     const tokenUrl = corsEnabled ? 
                         corsProxyUrl + `${config.tokenApiUrl}${txHash}&apikey=${apiKey}` :
                         `${config.tokenApiUrl}${txHash}&apikey=${apiKey}`;
@@ -15792,25 +15760,8 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     data = await response.json();
                     if (!data.result || data.result === null) throw new Error('Transaction not found');
                     
-                    // Get block data for timestamp
-                    if (data.result && data.result.blockNumber) {
-                        try {
-                            // Add small delay to avoid rate limit
-                            await new Promise(resolve => setTimeout(resolve, 600));
-                            
-                            const blockUrl = corsEnabled ?
-                                corsProxyUrl + `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}` :
-                                `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}`;
-                            
-                            const blockResponse = await fetch(blockUrl);
-                            if (blockResponse.ok) {
-                                blockData = await blockResponse.json();
-                                console.log('Block data received:', blockData);
-                            }
-                        } catch (err) {
-                            console.log('Failed to fetch block data:', err);
-                        }
-                    }
+                    // We'll get timestamp from the transaction receipt instead of separate block call
+                    let blockData = null;
                     
                     // Also check for token transfers
                     try {
