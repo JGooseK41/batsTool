@@ -383,7 +383,7 @@
         }
 
         .tab-content.active {
-            display: block;
+            display: block !important;
         }
 
         .summary-grid {
@@ -506,11 +506,16 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
         }
 
         .modal-content {
             background-color: white;
-            margin: 3% auto;
             padding: 30px;
             border-radius: 12px;
             width: 90%;
@@ -518,6 +523,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             max-height: 85vh;
             overflow-y: auto;
+            position: relative;
         }
         
         /* Wallet Address Autocomplete Styles */
@@ -1466,6 +1472,15 @@
                             </button>
                         </div>
                     </div>
+                    
+                    <!-- Next Step Button -->
+                    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #3498db; text-align: center;">
+                        <h4 style="color: #2c3e50; margin-bottom: 15px;">Ready for the Next Step?</h4>
+                        <p style="color: #666; margin-bottom: 20px;">Once you've added all victim transactions, proceed to wallet indexes to understand your wallet classifications.</p>
+                        <button class="btn btn-confirm" onclick="switchTab('walletindexes')" style="background: #3498db; color: white; padding: 12px 30px; font-size: 16px;">
+                            📋 Next: Review Wallet Indexes →
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Wallet Indexes Tab -->
@@ -1547,6 +1562,15 @@
                         </div>
                         <div id="blueWalletIndexList"></div>
                         <button class="btn btn-success" onclick="exportWalletIndex('blue')">📊 Export Blue Index to Excel</button>
+                    </div>
+                    
+                    <!-- Next Step Button -->
+                    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e74c3c; text-align: center;">
+                        <h4 style="color: #2c3e50; margin-bottom: 15px;">Ready to Begin Tracing?</h4>
+                        <p style="color: #666; margin-bottom: 20px;">Now that you understand your wallet classifications, start documenting the cryptocurrency trace through hops.</p>
+                        <button class="btn btn-confirm" onclick="switchTab('traces')" style="background: #e74c3c; color: white; padding: 12px 30px; font-size: 16px;">
+                            🔍 Next: Begin Trace Documentation →
+                        </button>
                     </div>
                 </div>
 
@@ -1646,8 +1670,16 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Next Step Button -->
+                    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #9b59b6; text-align: center;">
+                        <h4 style="color: #2c3e50; margin-bottom: 15px;">Visualize Your Investigation</h4>
+                        <p style="color: #666; margin-bottom: 20px;">Create a visual flow diagram of your cryptocurrency trace to better understand fund movement patterns.</p>
+                        <button class="btn btn-confirm" onclick="switchTab('flowdiagram')" style="background: #9b59b6; color: white; padding: 12px 30px; font-size: 16px;">
+                            🌐 Next: Generate Flow Diagram →
+                        </button>
+                    </div>
                 </div>
-
 
                 <!-- Flow Diagram Tab -->
                 <div id="flowdiagram-tab" class="tab-content">
@@ -1673,6 +1705,15 @@
                             <!-- Flow diagram will be generated here -->
                         </svg>
                     </div>
+                    
+                    <!-- Next Step Button -->
+                    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #27ae60; text-align: center;">
+                        <h4 style="color: #2c3e50; margin-bottom: 15px;">Complete Your Investigation</h4>
+                        <p style="color: #666; margin-bottom: 20px;">Review your investigation summary and export your final B.A.T.S. report for legal proceedings.</p>
+                        <button class="btn btn-confirm" onclick="switchTab('summary')" style="background: #27ae60; color: white; padding: 12px 30px; font-size: 16px;">
+                            📊 Next: Generate Summary & Export →
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Summary Tab -->
@@ -1686,6 +1727,18 @@
                         <button class="btn btn-secondary" onclick="exportJSON()">💾 Export JSON Data</button>
                         <button class="btn" onclick="exportCSV()">📊 Export CSV</button>
                         <button class="btn" onclick="openApiSettings()" style="background: #95a5a6;">⚙️ API Settings</button>
+                    </div>
+                    
+                    <!-- Investigation Complete Message -->
+                    <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%); border-radius: 8px; border: 2px solid #27ae60; text-align: center;">
+                        <h4 style="color: #27ae60; margin-bottom: 15px;">🎉 Investigation Complete!</h4>
+                        <p style="color: #2c3e50; margin-bottom: 20px;">
+                            Congratulations! You have successfully completed your B.A.T.S. cryptocurrency investigation. 
+                            Your report is ready for legal proceedings and regulatory compliance.
+                        </p>
+                        <p style="color: #666; font-size: 14px;">
+                            Remember to save your investigation file regularly and keep backup copies of all exported reports.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -2741,7 +2794,7 @@
                 </div>
             `;
             
-            document.body.insertAdjacentHTML('beforeend', menuHTML);
+            createCenteredModal('navigationModal', menuHTML);
             
             // Add ESC key listener
             const escHandler = (e) => {
@@ -5428,6 +5481,62 @@ function updateFormFieldsFromInvestigation() {
             // Save the reordered data
             saveToStorage();
         }
+        
+        function fixVictimTransactionOrder(victimId) {
+            const victim = investigation.victims.find(v => v.id === victimId);
+            if (!victim) return;
+            
+            // Count transactions with dates
+            const transactionsWithDates = victim.transactions.filter(t => t.datetime && t.datetime.trim() !== '').length;
+            const totalTransactions = victim.transactions.length;
+            
+            if (transactionsWithDates === 0) {
+                alert('No transactions have dates. Please add dates to transactions before sorting.');
+                return;
+            }
+            
+            if (transactionsWithDates < totalTransactions) {
+                if (!confirm(`${totalTransactions - transactionsWithDates} transaction(s) are missing dates and will be placed at the end. Continue?`)) {
+                    return;
+                }
+            }
+            
+            // Save undo state
+            saveUndoState(`Fix transaction order for Victim ${victimId}`);
+            
+            // Sort this victim's transactions by datetime
+            victim.transactions.sort((a, b) => {
+                // Handle empty dates - put them at the end
+                if (!a.datetime && !b.datetime) return 0;
+                if (!a.datetime) return 1;
+                if (!b.datetime) return -1;
+                
+                // Convert to UTC timestamps for accurate comparison
+                const timestampA = convertToUTC(a.datetime, a.timezone || 'UTC');
+                const timestampB = convertToUTC(b.datetime, b.timezone || 'UTC');
+                
+                return timestampA - timestampB;
+            });
+            
+            // Re-assign transaction IDs based on new order
+            victim.transactions.forEach((transaction, index) => {
+                transaction.id = index + 1;
+            });
+            
+            // If root total was confirmed, we need to rebuild indexes
+            if (investigation.rootTotalConfirmed) {
+                buildUniversalWalletIndex();
+                buildRedWalletIndex();
+                buildAvailableThreadsIndex();
+            }
+            
+            // Re-render
+            renderVictims();
+            saveToStorage();
+            updateWorkflowSteps();
+            
+            alert(`✅ Transaction order fixed for Victim ${victimId}.\n\nTransactions have been renumbered in chronological order (T1, T2, T3, etc.).`);
+        }
 
         function renderVictims() {
     const container = document.getElementById('victimsList');
@@ -5483,9 +5592,18 @@ function updateFormFieldsFromInvestigation() {
             </div>
             ${!isMinimized ? `
                 ${chronologyError ? `
-                    <div style="background: #f8d7da; color: #721c24; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #f5c6cb;">
-                        <strong>⚠️ Chronological Order Warning:</strong><br>
-                        ${chronologyError.replace(/\n/g, '<br>')}
+                    <div style="background: #f8d7da; color: #721c24; padding: 15px; margin: 10px 0; border-radius: 4px; border: 1px solid #f5c6cb;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <strong>⚠️ Chronological Order Warning:</strong><br>
+                                ${chronologyError.replace(/\n/g, '<br>')}<br><br>
+                                <em style="font-size: 12px;">Transactions must be numbered in chronological order for PIFO (Proceeds In First Out) compliance.</em>
+                            </div>
+                            <button class="btn btn-sm btn-warning" onclick="fixVictimTransactionOrder(${victim.id})" 
+                                    style="background: #f39c12; color: white; white-space: nowrap; margin-left: 15px;">
+                                🔧 Fix Order
+                            </button>
+                        </div>
                     </div>
                 ` : ''}
                 ${victim.transactions.map(transaction => {
@@ -5789,7 +5907,7 @@ function updateFormFieldsFromInvestigation() {
     breakdown += '</div>';
     
     document.getElementById('rootTotalBreakdown').innerHTML = breakdown;
-    document.getElementById('rootTotalModal').style.display = 'block';
+    showModal('rootTotalModal');
 }
 
         function confirmAndProceed() {
@@ -6942,12 +7060,86 @@ function exportRedWalletIndexCSV() {
         }
 
         function closeModal() {
-            document.getElementById('rootTotalModal').style.display = 'none';
+            hideModal('rootTotalModal');
+        }
+        
+        // Generic modal show/hide functions for centered display
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }
+        
+        function hideModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+        
+        // Helper to create a modal with proper centered styling
+        function createCenteredModal(modalId, content) {
+            // Remove existing modal if present
+            const existingModal = document.getElementById(modalId);
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Create modal with show class for centered display
+            let modalHTML = content;
+            
+            // Replace all variations of modal display styles
+            modalHTML = modalHTML.replace(
+                /<div id="[^"]*" class="modal" style="display:\s*block[^"]*">/g,
+                function(match) {
+                    const idMatch = match.match(/id="([^"]*)"/);
+                    const modalIdFromMatch = idMatch ? idMatch[1] : modalId;
+                    return `<div id="${modalIdFromMatch}" class="modal show">`;
+                }
+            );
+            
+            // Add to body
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
         }
 
         function calculateRootTotal() {
             return investigation.victims.reduce((sum, v) => 
                 sum + v.transactions.reduce((tSum, t) => tSum + (parseFloat(t.amount) || 0), 0), 0);
+        }
+        
+        // Custom centered alert function
+        function showAlert(message, type = 'info') {
+            const alertId = 'customAlert_' + Date.now();
+            const iconMap = {
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️',
+                'info': 'ℹ️'
+            };
+            
+            const alertHTML = `
+                <div id="${alertId}" class="modal show">
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div style="text-align: center; padding: 20px;">
+                            <div style="font-size: 48px; margin-bottom: 20px;">${iconMap[type] || iconMap.info}</div>
+                            <div style="white-space: pre-wrap; line-height: 1.6; color: #2c3e50;">${message}</div>
+                            <button class="btn btn-confirm" onclick="document.getElementById('${alertId}').remove()" 
+                                    style="margin-top: 20px; padding: 10px 30px;">
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', alertHTML);
+            
+            // Focus the OK button
+            setTimeout(() => {
+                const okBtn = document.querySelector(`#${alertId} button`);
+                if (okBtn) okBtn.focus();
+            }, 100);
         }
 
   
@@ -7194,6 +7386,35 @@ function exportUniversalWalletIndex() {
                 artAmount = hop.artAtStartByCurrency[currency] || 0;
             }
             
+            // Calculate thread number within hop (sequential numbering for entries with notation)
+            let threadNumber = null;
+            if (entry.notation && parseFloat(entry.amount) > 0) {
+                const hopEntriesWithNotation = hop.entries.filter(e => e.notation && parseFloat(e.amount) > 0);
+                threadNumber = hopEntriesWithNotation.findIndex(e => e.id === entry.id) + 1;
+            }
+            
+            // Get source thread information
+            let sourceThreadsInfo = '';
+            if (entry.sourceThreadId) {
+                // Single source thread
+                const sourceMatch = entry.sourceThreadId.match(/^(V\d+-T\d+)-H(\d+)$/);
+                if (sourceMatch) {
+                    const [, vtPath, sourceHopNumber] = sourceMatch;
+                    sourceThreadsInfo = `from ${vtPath} (H${sourceHopNumber})`;
+                }
+            } else if (entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0) {
+                // Multiple source threads
+                const sourceThreads = entry.multipleSourceThreads.map(threadId => {
+                    const sourceMatch = threadId.match(/^(V\d+-T\d+)-H(\d+)$/);
+                    if (sourceMatch) {
+                        const [, vtPath, sourceHopNumber] = sourceMatch;
+                        return `${vtPath} (H${sourceHopNumber})`;
+                    }
+                    return threadId;
+                });
+                sourceThreadsInfo = `from ${sourceThreads.join(', ')}`;
+            }
+            
             // Entry background color based on type - thematically consistent
             let entryBgColor = '#f0f7ff'; // Very light blue for regular trace entries
             let entryBorderColor = '#b8daff'; // Soft blue border
@@ -7209,19 +7430,28 @@ function exportUniversalWalletIndex() {
             }
             
             return `
-                <div style="background: ${entryBgColor}; border: 2px solid ${entryBorderColor}; border-radius: 8px; margin-bottom: 10px; overflow: hidden;">
-                    <div style="padding: 15px;">
+                <div id="entry_${entry.hopId}_${entry.id}" style="background: ${entryBgColor}; border: 2px solid ${entryBorderColor}; border-radius: 8px; margin-bottom: 10px; overflow: hidden;">
+                    <div style="padding: ${isCollapsed ? '8px' : '15px'};">
                         <!-- Collapsed state header -->
-                        <div id="entrySummary_${entryKey}" style="display: ${isCollapsed ? 'block' : 'none'}; cursor: pointer; background: rgba(255,255,255,0.7); padding: 10px; border-radius: 6px;" onclick="toggleEntryCollapse('${entryKey}')">
+                        <div id="entrySummary_${entryKey}" style="display: ${isCollapsed ? 'block' : 'none'}; cursor: pointer; background: rgba(255,255,255,0.7); padding: 6px 10px; border-radius: 6px;" onclick="toggleEntryCollapse('${entryKey}')">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="transform: rotate(0deg); transition: transform 0.3s; display: inline-block; font-size: 16px;">▶</span>
-                                    <span style="font-weight: bold; color: #2c3e50;">
-                                        Hop ${hopNumber} Entry ${entry.id}
-                                    </span>
-                                    <span style="color: #7f8c8d; font-size: 12px;">
-                                        ${entryTypeLabel}
-                                    </span>
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <span style="transform: rotate(0deg); transition: transform 0.3s; display: inline-block; font-size: 16px;">▶</span>
+                                        <span style="font-weight: bold; color: #2c3e50;">
+                                            Hop ${hopNumber} Entry ${entry.id}${threadNumber ? ` (Thread ${threadNumber})` : ''}
+                                        </span>
+                                        <span style="color: #7f8c8d; font-size: 12px;">
+                                            ${entryTypeLabel}
+                                        </span>
+                                    </div>
+                                    ${sourceThreadsInfo ? `
+                                        <div style="margin-left: 26px; margin-top: 4px;">
+                                            <span style="color: #666; font-size: 11px; font-style: italic;">
+                                                ${sourceThreadsInfo}
+                                            </span>
+                                        </div>
+                                    ` : ''}
                                 </div>
                                 <div style="text-align: right;">
                                     ${amount > 0 ? `
@@ -7236,7 +7466,7 @@ function exportUniversalWalletIndex() {
                                 </div>
                             </div>
                             <!-- Add delete button in collapsed view -->
-                            <button class="btn btn-sm btn-danger" style="margin-left: 10px;" onclick="event.stopPropagation(); removeHopEntry(${entry.hopId}, ${entry.id})">Delete</button>
+                            ${!isCollapsed ? `<button class="btn btn-sm btn-danger" style="margin-left: 10px;" onclick="event.stopPropagation(); removeHopEntry(${entry.hopId}, ${entry.id})">Delete</button>` : ''}
                         </div>
                         
                         <!-- Expanded state -->
@@ -7244,17 +7474,26 @@ function exportUniversalWalletIndex() {
                             <!-- Expanded header - clickable to collapse -->
                             <div style="cursor: pointer; margin-bottom: 10px; background: rgba(255,255,255,0.7); padding: 10px; border-radius: 6px;" onclick="toggleEntryCollapse('${entryKey}')">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <span style="transform: rotate(90deg); transition: transform 0.3s; display: inline-block; font-size: 16px;">▶</span>
-                                        <span style="font-weight: bold; color: #2c3e50;">
-                                            Hop ${hopNumber} Entry ${entry.id}
-                                        </span>
-                                        <span style="color: #7f8c8d; font-size: 12px;">
-                                            ${entryTypeLabel}
-                                        </span>
-                                        <span style="color: #666; font-size: 11px;">
-                                            (Click to collapse)
-                                        </span>
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="transform: rotate(90deg); transition: transform 0.3s; display: inline-block; font-size: 16px;">▶</span>
+                                            <span style="font-weight: bold; color: #2c3e50;">
+                                                Hop ${hopNumber} Entry ${entry.id}${threadNumber ? ` (Thread ${threadNumber})` : ''}
+                                            </span>
+                                            <span style="color: #7f8c8d; font-size: 12px;">
+                                                ${entryTypeLabel}
+                                            </span>
+                                            <span style="color: #666; font-size: 11px;">
+                                                (Click to collapse)
+                                            </span>
+                                        </div>
+                                        ${sourceThreadsInfo ? `
+                                            <div style="margin-left: 26px; margin-top: 4px;">
+                                                <span style="color: #666; font-size: 11px; font-style: italic;">
+                                                    ${sourceThreadsInfo}
+                                                </span>
+                                            </div>
+                                        ` : ''}
                                     </div>
                                     <div style="text-align: right;">
                                         ${amount > 0 ? `
@@ -7477,7 +7716,7 @@ function exportUniversalWalletIndex() {
                 </div>
             `;
             
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            createCenteredModal('analysisModal', modalHTML);
             analyzeInvestigation();
         }
         
@@ -7873,8 +8112,8 @@ function exportUniversalWalletIndex() {
                     .join(' | ');
                 
                 hopDiv.innerHTML = `
-                    <div style="background: ${hopBgColor}; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
-                        <div class="hop-header" style="background: ${isComplete ? '#27ae60' : '#e67e22'}; color: white; padding: 20px; cursor: pointer;" 
+                    <div class="hop-container" data-hop-id="${hop.id}" style="background: ${hopBgColor}; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
+                        <div class="hop-header" style="background: ${isComplete ? '#27ae60' : '#e67e22'}; color: white; padding: ${isCollapsed ? '12px 20px' : '20px'}; cursor: pointer;" 
                              onclick="toggleHopCollapse(${hop.id})">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
@@ -8196,14 +8435,8 @@ function showARTCompletionModal(hop, validation) {
         </div>
     `;
     
-    // Remove existing modal if present
-    const existingModal = document.getElementById('artCompletionModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Add to body
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    // Create centered modal
+    createCenteredModal('artCompletionModal', modalHTML);
 }
 
 // Create maximum write-off entry to balance ART
@@ -8588,7 +8821,7 @@ function showWalletClassificationSuggestions(hop, suggestions) {
         </div>
     `;
     
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    createCenteredModal('walletSuggestionsModal', modalHTML);
 }
 
 // Accept wallet classification suggestion
@@ -8671,7 +8904,7 @@ function openSmartAllocationModal(hopId, entryId) {
     document.getElementById('confirmSmartAllocation').style.display = 'none';
     
     // Show modal
-    document.getElementById('smartAllocationModal').style.display = 'block';
+    showModal('smartAllocationModal');
     
     // Add event listeners
     document.getElementById('smartAllocationTargetAmount').addEventListener('input', updateSmartAllocationPreview);
@@ -8688,7 +8921,7 @@ function openSmartAllocationModal(hopId, entryId) {
 
 // Close Smart Allocation Modal
 function closeSmartAllocationModal() {
-    document.getElementById('smartAllocationModal').style.display = 'none';
+    hideModal('smartAllocationModal');
     window.smartAllocationContext = null;
 }
 
@@ -9055,8 +9288,8 @@ function showHopFinalizationModal(hop, remainingByCurrency, walletsWithRemaining
         existingModal.remove();
     }
     
-    // Add to body
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    // Create centered modal
+    createCenteredModal('hopFinalizationModal', modalHTML);
 }
 
 // Close hop finalization modal
@@ -9371,7 +9604,7 @@ function assignPartialAmount(hopId, currency, totalAmount) {
         </div>
     `;
     
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    createCenteredModal('partialAssignmentModal', modalHTML);
 }
 
 // Update partial assignment total
@@ -9509,7 +9742,7 @@ function confirmHopAndProceed(completedHop) {
         </div>
     `;
     
-    document.body.insertAdjacentHTML('beforeend', confirmHTML);
+    createCenteredModal('hopConfirmModal', confirmHTML);
 }
 
 // Confirm hop completion
@@ -9782,8 +10015,8 @@ function updateInvestigationCompletionStatus() {
                 existingModal.remove();
             }
             
-            // Add to body
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            // Create centered modal
+            createCenteredModal('walletClassificationModal', modalHTML);
             
             // Store the callback on the window for access
             window.walletClassificationCallback = onComplete;
@@ -9974,8 +10207,8 @@ function updateInvestigationCompletionStatus() {
                 existingModal.remove();
             }
             
-            // Add to body
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            // Create centered modal
+            createCenteredModal('walletSelectorModal', modalHTML);
         }
         
         // Filter wallet list in modal
@@ -11189,7 +11422,7 @@ function showAddEntryWizard(hopId) {
         </div>
     `;
     
-    document.body.insertAdjacentHTML('beforeend', wizardHTML);
+    createCenteredModal('addEntryWizard', wizardHTML);
 }
 
 function selectEntryType(hopId, entryType) {
@@ -11303,11 +11536,34 @@ function createHopEntryDirectly(hopId, entryType = 'trace') {
     
     hop.entries.push(entry);
     
+    // Store the original entry reference before sorting
+    const newEntry = entry;
+    
     // Sort entries by timestamp to maintain chronological order
     sortHopEntriesChronologically(hop);
     
+    // Find the entry's new ID after sorting
+    const sortedEntryIndex = hop.entries.indexOf(newEntry);
+    const sortedEntryId = sortedEntryIndex >= 0 ? hop.entries[sortedEntryIndex].id : entry.id;
+    
     renderHops();
     saveToStorage();
+    
+    // Scroll to the newly created entry after a short delay to allow DOM update
+    setTimeout(() => {
+        const entryElement = document.getElementById(`entry_${hop.id}_${sortedEntryId}`);
+        if (entryElement) {
+            // Scroll the entry into view, centered on screen
+            entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Add a temporary highlight effect
+            entryElement.style.transition = 'background-color 0.5s ease';
+            entryElement.style.backgroundColor = '#e3f2fd';
+            setTimeout(() => {
+                entryElement.style.backgroundColor = '';
+            }, 2000);
+        }
+    }, 300);
 }
 
 function sortHopEntriesChronologically(hop) {
@@ -11389,7 +11645,7 @@ function showHopEntryWizard(hopId) {
     `;
     
     console.log('About to insert hop entry wizard HTML');
-    document.body.insertAdjacentHTML('beforeend', wizardHTML);
+    createCenteredModal('hopEntryWizard', wizardHTML);
     console.log('Hop entry wizard HTML inserted');
     
     // Verify wizard was created
@@ -11749,12 +12005,35 @@ function createHopEntryFromWizard() {
     
     hop.entries.push(entry);
     
+    // Store the original entry reference before sorting
+    const newEntry = entry;
+    
     // Sort entries by timestamp to maintain chronological order
     sortHopEntriesChronologically(hop);
+    
+    // Find the entry's new ID after sorting
+    const sortedEntryIndex = hop.entries.indexOf(newEntry);
+    const sortedEntryId = sortedEntryIndex >= 0 ? hop.entries[sortedEntryIndex].id : entry.id;
     
     closeHopWizard();
     renderHops();
     saveToStorage();
+    
+    // Scroll to the newly created entry after a short delay to allow DOM update
+    setTimeout(() => {
+        const entryElement = document.getElementById(`entry_${hop.id}_${sortedEntryId}`);
+        if (entryElement) {
+            // Scroll the entry into view, centered on screen
+            entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Add a temporary highlight effect
+            entryElement.style.transition = 'background-color 0.5s ease';
+            entryElement.style.backgroundColor = '#e3f2fd';
+            setTimeout(() => {
+                entryElement.style.backgroundColor = '';
+            }, 2000);
+        }
+    }, 300);
 }
 // Calculate remaining ART for write-offs
 function calculateRemainingARTForHop(hopId, currency) {
@@ -12069,7 +12348,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
         }
 
         function openAssetConversionModal(hopId, entryId) {
-            document.getElementById('assetConversionModal').style.display = 'block';
+            showModal('assetConversionModal');
             
             // Store the hop and entry ID for later use
             window.currentConversionHopId = hopId;
@@ -12160,7 +12439,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
         }
 
         function closeAssetConversionModal() {
-            document.getElementById('assetConversionModal').style.display = 'none';
+            hideModal('assetConversionModal');
             window.currentConversionHopId = null;
             window.currentConversionEntryId = null;
         }
@@ -12186,7 +12465,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             });
             
             document.getElementById('convergenceTraceSelection').innerHTML = content;
-            document.getElementById('convergenceModal').style.display = 'block';
+            showModal('convergenceModal');
         }
 
         function updateConvergenceSelection() {
@@ -12275,7 +12554,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
         }
 
         function closeConvergenceModal() {
-            document.getElementById('convergenceModal').style.display = 'none';
+            hideModal('convergenceModal');
         }
 
         function setupConversionModalListeners() {
@@ -12413,7 +12692,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                     transaction[field] = oldValue;
                     
                     // Show error message
-                    alert(`❌ Chronological Order Error!\n\n${chronologyError}\n\nTransactions must be entered in chronological order for proper PIFO (Partial Input First Out) compliance and smart allocation features.`);
+                    alert(`❌ Chronological Order Error!\n\n${chronologyError}\n\nTransactions must be entered in chronological order for proper PIFO (Proceeds In First Out) compliance and smart allocation features.`);
                     
                     // Re-render to show the reverted value
                     renderVictims();
@@ -12755,9 +13034,25 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             // Update form fields
             updateFormFieldsFromInvestigation();
             
+            // Check chronological order of transactions
+            const chronologyErrors = [];
+            investigation.victims.forEach(victim => {
+                const error = validateTransactionChronology(victim);
+                if (error) {
+                    chronologyErrors.push(`Victim ${victim.id}:\n${error}`);
+                }
+            });
+            
             // Re-render everything
             renderAll();
             updateWorkflowSteps();
+            
+            // Alert about chronology errors after rendering
+            if (chronologyErrors.length > 0) {
+                setTimeout(() => {
+                    alert(`⚠️ WARNING: Transaction Chronology Issues Detected!\n\n${chronologyErrors.join('\n\n')}\n\nThe V-T notation requires transactions to be numbered in chronological order. Please review and correct the transaction order to ensure PIFO (Proceeds In First Out) compliance.\n\nYou can manually adjust the dates or re-number the transactions.`);
+                }, 500);
+            }
             
             // Clear the file input to allow re-loading the same file
             event.target.value = '';
@@ -13305,7 +13600,7 @@ function downloadFile(content, filename, mimeType) {
                     if (data && data.length > 0) {
                         parsedExcelData = data;
                         showImportPreview(data);
-                        document.getElementById('excelImportModal').style.display = 'block';
+                        showModal('excelImportModal');
                     } else {
                         alert('No valid data found in file. Please check the format.');
                     }
@@ -13447,13 +13742,27 @@ function downloadFile(content, filename, mimeType) {
                 // Process the imported data
                 processImportedData(parsedExcelData);
                 
+                // Check chronological order of imported transactions
+                const chronologyErrors = [];
+                investigation.victims.forEach(victim => {
+                    const error = validateTransactionChronology(victim);
+                    if (error) {
+                        chronologyErrors.push(`Victim ${victim.id}:\n${error}`);
+                    }
+                });
+                
                 // Update UI
                 renderAll();
                 updateWorkflowSteps();
                 
                 closeExcelImportModal();
                 
-                alert(`Successfully imported ${parsedExcelData.length} entries! Please review and confirm your root total.`);
+                // Show success message with chronology warning if needed
+                if (chronologyErrors.length > 0) {
+                    alert(`⚠️ Import Successful with Warnings!\n\nImported ${parsedExcelData.length} entries, but transaction chronology issues were detected:\n\n${chronologyErrors.join('\n\n')}\n\nThe V-T notation requires transactions to be numbered in chronological order. Please review and correct the transaction order to ensure PIFO (Proceeds In First Out) compliance.`);
+                } else {
+                    alert(`Successfully imported ${parsedExcelData.length} entries! Please review and confirm your root total.`);
+                }
                 
                 // Clear the file input
                 document.getElementById('excelInput').value = '';
@@ -13587,13 +13896,13 @@ function downloadFile(content, filename, mimeType) {
         }
 
         function closeExcelImportModal() {
-            document.getElementById('excelImportModal').style.display = 'none';
+            hideModal('excelImportModal');
             document.getElementById('importPreview').style.display = 'none';
             document.getElementById('confirmImportBtn').style.display = 'none';
             parsedExcelData = null;
         }
         function closeExcelImportModal() {
-            document.getElementById('excelImportModal').style.display = 'none';
+            hideModal('excelImportModal');
             document.getElementById('importPreview').style.display = 'none';
             document.getElementById('confirmImportBtn').style.display = 'none';
             parsedExcelData = null;
@@ -14274,11 +14583,11 @@ function openBlockchainLookup(hopId, entryId) {
     document.getElementById('lookupError').style.display = 'none';
     document.getElementById('applyTxDataBtn').style.display = 'none';
     
-    document.getElementById('blockchainLookupModal').style.display = 'block';
+    showModal('blockchainLookupModal');
 }
 
 function closeBlockchainLookupModal() {
-    document.getElementById('blockchainLookupModal').style.display = 'none';
+    hideModal('blockchainLookupModal');
     targetEntryContext = null;
     currentTxData = null;
 }
@@ -14509,11 +14818,11 @@ function openApiSettings() {
     document.getElementById('corsProxyUrl').disabled = !savedCorsEnabled;
     
     // Show modal
-    document.getElementById('apiSettingsModal').style.display = 'block';
+    showModal('apiSettingsModal');
 }
 
 function closeApiSettingsModal() {
-    document.getElementById('apiSettingsModal').style.display = 'none';
+    hideModal('apiSettingsModal');
 }
 
 function saveApiSettings() {
@@ -14832,11 +15141,11 @@ function openBulkTransactionModal(victimId) {
     document.getElementById('bulkProcessingStatus').style.display = 'none';
     document.getElementById('bulkProcessingResults').style.display = 'none';
     document.getElementById('bulkProcessBtn').disabled = false;
-    document.getElementById('bulkTransactionModal').style.display = 'block';
+    showModal('bulkTransactionModal');
 }
 
 function closeBulkTransactionModal() {
-    document.getElementById('bulkTransactionModal').style.display = 'none';
+    hideModal('bulkTransactionModal');
     currentBulkVictimId = null;
     // Re-render to show the new transactions with correct V-T notation
     renderVictims();
@@ -15346,8 +15655,8 @@ function showTransferSelectionForHop(hopId, entryId, transfers) {
     // Store transfers data for selection
     window.hopTransferData = transfers;
     
-    // Add modal to page
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    // Create centered modal
+    createCenteredModal('hopTransferModal', modalHTML);
 }
 
 function selectHopTransfer(hopId, entryId, transferIndex) {
