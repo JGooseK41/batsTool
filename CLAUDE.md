@@ -3,17 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 22:15)
+## Latest Commit (Auto-updated: 2025-07-10 22:40)
 
-**Commit:** f1304c80a16cef537cfd33d4edcd0466f2e0f108
+**Commit:** cf80a17d4acefaad6c5f2ec7fa4351339a13a5b6
 **Author:** Your Name
-**Message:** Add auto-fix option to chronological order errors
+**Message:** Redesign flow diagram with ledger-style layout
 
-- Change error alerts to confirm dialogs with auto-fix option
-- Add 'OK to fix automatically' button when chronological errors detected
-- Auto-reorder transactions and update V-T notation when user confirms
-- Apply to: real-time entry validation, root total confirmation, and Excel import
-- Maintains PIFO compliance by keeping transactions in date order
+- Move all wallets to left side with white background
+- Add colored vertical hop lanes (light pastel colors)
+- Display thread amounts on lines in monospace font
+- Show hop titles at top of each lane
+- Calculate and display sums at bottom of each lane
+- Show write-offs separately in parentheses
+- Use straight lines instead of curves
+- Add wallet addresses/entity names beside circles
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -21,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 41 ++++++++++++++++++++---------------------
- index.html | 42 +++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 57 insertions(+), 26 deletions(-)
+ CLAUDE.md  |  41 ++---
+ index.html | 504 +++++++++++++++++++++++++++++++++++--------------------------
+ 2 files changed, 312 insertions(+), 233 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f1304c8 Add auto-fix option to chronological order errors (0 seconds ago)
-- b2528cf Fix blockTimestamp scope error for multi-chain support (11 minutes ago)
-- 53dc631 Add chain selector to blockchain lookup modal (20 minutes ago)
-- 38e3ce6 Upgrade to Etherscan API v2 and add multi-chain support (22 minutes ago)
-- 51c3e12 Add warnings when actual transaction timestamp cannot be retrieved (33 minutes ago)
-- 884ac3a Restore block timestamp fetching with better error handling (36 minutes ago)
-- 8286bde Remove block timestamp fetching to fix token transfer detection (40 minutes ago)
-- 756e97e Remove delays and debug logging since rate limits aren't the issue (43 minutes ago)
-- 732ce97 Fix API key not being used from localStorage (46 minutes ago)
-- b88ff50 Fix Etherscan rate limit errors and add delays between API calls (49 minutes ago)
+- cf80a17 Redesign flow diagram with ledger-style layout (0 seconds ago)
+- f1304c8 Add auto-fix option to chronological order errors (25 minutes ago)
+- b2528cf Fix blockTimestamp scope error for multi-chain support (36 minutes ago)
+- 53dc631 Add chain selector to blockchain lookup modal (45 minutes ago)
+- 38e3ce6 Upgrade to Etherscan API v2 and add multi-chain support (47 minutes ago)
+- 51c3e12 Add warnings when actual transaction timestamp cannot be retrieved (58 minutes ago)
+- 884ac3a Restore block timestamp fetching with better error handling (62 minutes ago)
+- 8286bde Remove block timestamp fetching to fix token transfer detection (65 minutes ago)
+- 756e97e Remove delays and debug logging since rate limits aren't the issue (68 minutes ago)
+- 732ce97 Fix API key not being used from localStorage (72 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
