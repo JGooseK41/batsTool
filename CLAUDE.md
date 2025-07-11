@@ -3,16 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-10 21:26)
+## Latest Commit (Auto-updated: 2025-07-10 21:28)
 
-**Commit:** b88ff5097f236d1971daa197584d26302de413e0
+**Commit:** 732ce9770917ad62b2ad1df2423e11c46b52cd63
 **Author:** Your Name
-**Message:** Fix Etherscan rate limit errors and add delays between API calls
+**Message:** Fix API key not being used from localStorage
 
-- Check for Etherscan API errors (status: 0, message: NOTOK)
-- Add 600ms delay between API calls to stay under 2/sec rate limit
-- Throw proper error when rate limit is hit
-- Apply fix to both lookupTransaction and lookupVictimTransaction
+- Directly check localStorage for Etherscan API key
+- Ensures user's saved API key is used instead of default
+- Fixes rate limit issues when user has their own API key
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -20,23 +19,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 30 +++++++++++++++---------------
- index.html | 31 ++++++++++++++++++++++++++++++-
- 2 files changed, 45 insertions(+), 16 deletions(-)
+ CLAUDE.md  | 32 ++++++++++++++++----------------
+ index.html |  8 ++++----
+ 2 files changed, 20 insertions(+), 20 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b88ff50 Fix Etherscan rate limit errors and add delays between API calls (0 seconds ago)
-- ed440c5 Add detailed logging for token transfer detection (3 minutes ago)
-- af55c18 Fix token transfer modal not showing and handle 0 ETH transactions (7 minutes ago)
-- b69c7b9 Fix token transfer selection modal and display issues (11 minutes ago)
-- 5802230 Fix blockchain API transaction date bug (21 minutes ago)
-- cc30ae1 Fix UI issues: center modals, make collapsed items thinner, ensure Next Step buttons visible (33 minutes ago)
+- 732ce97 Fix API key not being used from localStorage (0 seconds ago)
+- b88ff50 Fix Etherscan rate limit errors and add delays between API calls (3 minutes ago)
+- ed440c5 Add detailed logging for token transfer detection (6 minutes ago)
+- af55c18 Fix token transfer modal not showing and handle 0 ETH transactions (9 minutes ago)
+- b69c7b9 Fix token transfer selection modal and display issues (14 minutes ago)
+- 5802230 Fix blockchain API transaction date bug (24 minutes ago)
+- cc30ae1 Fix UI issues: center modals, make collapsed items thinner, ensure Next Step buttons visible (35 minutes ago)
 - c0280a6 Fix save/load functionality and improve state preservation (2 hours ago)
 - 65a79eb Fix hop ID type mismatch preventing wizard from showing (2 hours ago)
 - feef15b Debug hop entry wizard not showing after trace selection (2 hours ago)
-- a48f4a5 Fix missing function and victim completion workflow (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

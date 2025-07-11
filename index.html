@@ -2451,15 +2451,9 @@
                         
                         // Look for Transfer events (topic0 = 0xddf252ad...)
                         const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
-                        console.log('Looking for transfer topic:', transferTopic);
-                        console.log('Total logs in receipt:', receiptData.result.logs.length);
-                        
-                        const transferLogs = receiptData.result.logs.filter(log => {
-                            console.log('Checking log:', log);
-                            const isTransfer = log.topics && log.topics[0] === transferTopic && log.topics.length >= 3;
-                            if (isTransfer) console.log('Found transfer log!');
-                            return isTransfer;
-                        });
+                        const transferLogs = receiptData.result.logs.filter(log => 
+                            log.topics && log.topics[0] === transferTopic && log.topics.length >= 3
+                        );
                         
                         console.log(`Found ${transferLogs.length} token transfers in this transaction`);
                         
@@ -14668,9 +14662,6 @@ async function lookupTransaction() {
                 let blockData = null;
                 if (data.result && data.result.blockNumber) {
                     try {
-                        // Add small delay to avoid rate limit
-                        await new Promise(resolve => setTimeout(resolve, 600));
-                        
                         const blockUrl = corsEnabled ?
                             corsProxyUrl + `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}` :
                             `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}`;
@@ -15823,9 +15814,6 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     
                     // Also check for token transfers
                     try {
-                        // Add delay to avoid rate limit (2 calls/sec limit)
-                        await new Promise(resolve => setTimeout(resolve, 600));
-                        
                         const tokenUrl = corsEnabled ? 
                             corsProxyUrl + `${config.tokenApiUrl}${txHash}&apikey=${apiKey}` :
                             `${config.tokenApiUrl}${txHash}&apikey=${apiKey}`;
