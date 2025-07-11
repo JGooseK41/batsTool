@@ -2502,6 +2502,7 @@
                             
                             // Use block timestamp if available, otherwise current time
                             let timestamp = blockTimestamp || Date.now();
+                            const hasRealTimestamp = !!blockTimestamp;
                             if (!blockTimestamp) {
                                 console.warn('No block timestamp available for token transfers');
                             }
@@ -2524,7 +2525,8 @@
                                 multipleTransfers: true,
                                 transfers: transfers,
                                 transaction: data.result,
-                                time: timestamp
+                                time: timestamp,
+                                hasRealTimestamp: hasRealTimestamp
                             };
                         }
                     }
@@ -2541,6 +2543,7 @@
                         
                         // Use block timestamp if available, otherwise current time
                         let timestamp = blockTimestamp || Date.now();
+                        const hasRealTimestamp = !!blockTimestamp;
                         if (!blockTimestamp) {
                             console.warn('No block timestamp available for ETH transaction');
                         }
@@ -2552,7 +2555,8 @@
                             from: tx.from,
                             to: tx.to,
                             fee: tx.gasPrice && tx.gas ? 
-                                parseInt(tx.gasPrice, 16) * parseInt(tx.gas, 16) / 1e18 : 0
+                                parseInt(tx.gasPrice, 16) * parseInt(tx.gas, 16) / 1e18 : 0,
+                            hasRealTimestamp: hasRealTimestamp
                         };
                     }
                     return null;
@@ -14830,7 +14834,13 @@ function applyTransactionData() {
     saveToStorage();
     closeBlockchainLookupModal();
     
-    alert(`✅ Transaction data applied successfully!\n\nAmount: ${entry.amount} ${entry.currency}\nFrom: ${entry.fromWallet.slice(0, 20)}...\nTo: ${entry.toWallet.slice(0, 20)}...`);
+    let alertMessage = `✅ Transaction data applied successfully!\n\nAmount: ${entry.amount} ${entry.currency}\nFrom: ${entry.fromWallet.slice(0, 20)}...\nTo: ${entry.toWallet.slice(0, 20)}...`;
+    
+    if (currentTxData.hasRealTimestamp === false) {
+        alertMessage += '\n\n⚠️ WARNING: Could not retrieve actual transaction timestamp. Please manually verify and update the date/time field!';
+    }
+    
+    alert(alertMessage);
 }
 
 // API Settings Management Functions
@@ -15890,11 +15900,12 @@ async function lookupVictimTransaction(victimId, transactionId) {
                         transactionId: transactionId,
                         txHash: txHash,
                         transfers: txData.transfers,
-                        timestamp: txData.time
+                        timestamp: txData.time,
+                        hasRealTimestamp: txData.hasRealTimestamp
                     };
                     pendingTransferCallback = (selectedTransfer) => {
                         // Apply the selected transfer with timestamp
-                        applyTransferToVictim(victimId, transactionId, selectedTransfer, txHash, txData.time);
+                        applyTransferToVictim(victimId, transactionId, selectedTransfer, txHash, txData.time, txData.hasRealTimestamp);
                     };
                     showTransferSelectionModal(txData.transfers);
                     lookupBtn.textContent = originalText;
@@ -15967,7 +15978,13 @@ async function lookupVictimTransaction(victimId, transactionId) {
             `\nTime: ${new Date(txData.time).toLocaleString()} UTC` : 
             '\nTime: Not available (please enter manually)';
         
-        alert(`✅ Transaction data retrieved successfully!\n\nAmount: ${txData.amount} ${txData.currency}\nFrom: ${txData.from}\nTo (RED Wallet): ${txData.to}${timeString}`);
+        let alertMessage = `✅ Transaction data retrieved successfully!\n\nAmount: ${txData.amount} ${txData.currency}\nFrom: ${txData.from}\nTo (RED Wallet): ${txData.to}${timeString}`;
+        
+        if (txData.hasRealTimestamp === false) {
+            alertMessage += '\n\n⚠️ WARNING: Could not retrieve actual transaction timestamp. Current time was used. Please manually update the date/time field!';
+        }
+        
+        alert(alertMessage);
         
     } catch (error) {
         console.error('Lookup error:', error);
@@ -16168,7 +16185,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
             callback(selectedTransfer);
         }
         
-        function applyTransferToVictim(victimId, transactionId, transfer, txHash, timestamp) {
+        function applyTransferToVictim(victimId, transactionId, transfer, txHash, timestamp, hasRealTimestamp) {
             console.log('Applying transfer to victim:', { victimId, transactionId, transfer, txHash });
             
             // Ensure transfer data is valid
@@ -16282,13 +16299,17 @@ async function lookupVictimTransaction(victimId, transactionId) {
             updateWorkflowSteps();
             
             // Show success message
-            alert(`✅ Transaction data retrieved successfully!
+            let alertMessage = `✅ Transaction data retrieved successfully!
 
 Amount: ${formatNumber(transfer.amount)} ${transfer.currency}
 From: ${transfer.from}
-To (RED Wallet): ${transfer.to}
-
-Note: Block timestamp will be added when available.`);
+To (RED Wallet): ${transfer.to}`;
+            
+            if (!hasRealTimestamp) {
+                alertMessage += '\n\n⚠️ WARNING: Could not retrieve actual transaction timestamp. Current time was used. Please manually update the date/time field!';
+            }
+            
+            alert(alertMessage);
             
             // Log for debugging
             console.log('Transfer applied successfully:', {
