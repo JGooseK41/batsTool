@@ -2258,6 +2258,21 @@
             </div>
             
             <div style="margin: 20px 0;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Select Blockchain</label>
+                    <select id="chainSelector" style="width: 100%; padding: 12px; border: 2px solid #3498db; border-radius: 6px; font-size: 14px;" onchange="updateChainDisplay()">
+                        <option value="">Auto-detect from transaction hash</option>
+                        <option value="bitcoin">Bitcoin</option>
+                        <option value="ethereum">Ethereum</option>
+                        <option value="base">Base</option>
+                        <option value="arbitrum">Arbitrum</option>
+                        <option value="optimism">Optimism</option>
+                        <option value="polygon">Polygon</option>
+                        <option value="bsc">BNB Chain</option>
+                        <option value="tron">Tron</option>
+                        <option value="solana">Solana</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>Transaction Hash</label>
                     <input type="text" id="txHashInput" placeholder="Enter transaction hash..." 
@@ -14634,6 +14649,12 @@ function clearAllAssignments(hopId, entryId) {
 // Blockchain API Integration Functions
 function detectBlockchainFromHash(hash) {
     const detectedDiv = document.getElementById('detectedBlockchain');
+    const chainSelector = document.getElementById('chainSelector');
+    
+    // If a chain is manually selected, don't auto-detect
+    if (chainSelector && chainSelector.value) {
+        return chainSelector.value;
+    }
     
     if (!hash || hash.length < 10) {
         detectedDiv.innerHTML = '';
@@ -14652,6 +14673,24 @@ function detectBlockchainFromHash(hash) {
     return null;
 }
 
+function updateChainDisplay() {
+    const chainSelector = document.getElementById('chainSelector');
+    const detectedDiv = document.getElementById('detectedBlockchain');
+    
+    if (chainSelector.value) {
+        const config = blockchainAPIs[chainSelector.value];
+        detectedDiv.innerHTML = `<span style="color: #3498db;">ℹ️ Selected: ${config.name}</span>`;
+    } else {
+        // Re-detect from hash if present
+        const txHash = document.getElementById('txHashInput').value;
+        if (txHash) {
+            detectBlockchainFromHash(txHash);
+        } else {
+            detectedDiv.innerHTML = '';
+        }
+    }
+}
+
 function openBlockchainLookup(hopId, entryId) {
     // Store context for applying data later
     targetEntryContext = { hopId, entryId };
@@ -14659,6 +14698,7 @@ function openBlockchainLookup(hopId, entryId) {
     // Clear previous data
     currentTxData = null;
     document.getElementById('txHashInput').value = '';
+    document.getElementById('chainSelector').value = '';
     document.getElementById('detectedBlockchain').innerHTML = '';
     document.getElementById('lookupResult').style.display = 'none';
     document.getElementById('lookupError').style.display = 'none';
@@ -14675,7 +14715,8 @@ function closeBlockchainLookupModal() {
 
 async function lookupTransaction() {
     const txHash = document.getElementById('txHashInput').value.trim();
-    const detectedChain = detectBlockchainFromHash(txHash);
+    const selectedChain = document.getElementById('chainSelector').value;
+    let detectedChain = selectedChain || detectBlockchainFromHash(txHash);
     
     if (!txHash) {
         showLookupError('Please enter a transaction hash');
@@ -14683,7 +14724,7 @@ async function lookupTransaction() {
     }
     
     if (!detectedChain) {
-        showLookupError('Unable to detect blockchain from transaction hash format');
+        showLookupError('Please select a blockchain or enter a valid transaction hash');
         return;
     }
     
