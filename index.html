@@ -2444,7 +2444,7 @@
                     // Removed Ropsten as it no longer exists
                     // Blockchair doesn't support transaction lookup by hash in this format
                 ],
-                parseResponse: (data, receiptData, blockData) => {
+                parseResponse: (data, receiptData, blockTimestamp) => {
                     // Check if we have a token transfer in the receipt logs
                     if (receiptData && receiptData.result && receiptData.result.logs && receiptData.result.logs.length > 0) {
                         console.log('Checking receipt logs for token transfers:', receiptData.result.logs);
@@ -2500,8 +2500,11 @@
                                     };
                                 });
                             
-                            // Use current timestamp to avoid extra API calls
-                            let timestamp = Date.now();
+                            // Use block timestamp if available, otherwise current time
+                            let timestamp = blockTimestamp || Date.now();
+                            if (!blockTimestamp) {
+                                console.warn('No block timestamp available for token transfers');
+                            }
                             
                             // Only add the ETH transaction if it has value > 0
                             const tx = data.result;
@@ -2536,8 +2539,11 @@
                             return null;
                         }
                         
-                        // Use current timestamp to avoid extra API calls
-                        let timestamp = Date.now();
+                        // Use block timestamp if available, otherwise current time
+                        let timestamp = blockTimestamp || Date.now();
+                        if (!blockTimestamp) {
+                            console.warn('No block timestamp available for ETH transaction');
+                        }
                         
                         return {
                             time: timestamp,
@@ -14644,8 +14650,32 @@ async function lookupTransaction() {
                 data = await response.json();
                 if (!data.result || data.result === null) throw new Error('Transaction not found');
                 
-                // We'll get timestamp from the transaction receipt instead of separate block call
+                // Get block data for timestamp - but don't let it block token transfers
                 let blockData = null;
+                let blockTimestamp = null;
+                if (data.result && data.result.blockNumber) {
+                    try {
+                        const blockUrl = corsEnabled ?
+                            corsProxyUrl + `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}` :
+                            `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}`;
+                        
+                        const blockResponse = await fetch(blockUrl);
+                        if (blockResponse.ok) {
+                            blockData = await blockResponse.json();
+                            if (blockData && blockData.result && blockData.result.timestamp) {
+                                blockTimestamp = parseInt(blockData.result.timestamp, 16) * 1000;
+                                console.log('Got block timestamp:', new Date(blockTimestamp).toISOString());
+                            }
+                        }
+                    } catch (err) {
+                        console.log('Failed to fetch block timestamp, will proceed without it:', err);
+                    }
+                }
+                
+                // Small delay to avoid rate limit
+                if (blockTimestamp) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
                 
                 // Also check for token transfers
                 let tokenData = null;
@@ -14706,9 +14736,9 @@ async function lookupTransaction() {
                 if (data.error) throw new Error(data.error.message);
             }
             
-            // Parse the response (pass tokenData and blockData for Ethereum)
+            // Parse the response (pass tokenData and blockTimestamp for Ethereum)
             currentTxData = detectedChain === 'ethereum' ? 
-                config.parseResponse(data, tokenData, blockData) : 
+                config.parseResponse(data, tokenData, blockTimestamp) : 
                 config.parseResponse(data);
             if (!currentTxData) throw new Error('Failed to parse transaction data');
             
@@ -15760,8 +15790,31 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     data = await response.json();
                     if (!data.result || data.result === null) throw new Error('Transaction not found');
                     
-                    // We'll get timestamp from the transaction receipt instead of separate block call
-                    let blockData = null;
+                    // Get block data for timestamp - but don't let it block token transfers
+                    let blockTimestamp = null;
+                    if (data.result && data.result.blockNumber) {
+                        try {
+                            const blockUrl = corsEnabled ?
+                                corsProxyUrl + `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}` :
+                                `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}`;
+                            
+                            const blockResponse = await fetch(blockUrl);
+                            if (blockResponse.ok) {
+                                const blockData = await blockResponse.json();
+                                if (blockData && blockData.result && blockData.result.timestamp) {
+                                    blockTimestamp = parseInt(blockData.result.timestamp, 16) * 1000;
+                                    console.log('Got block timestamp:', new Date(blockTimestamp).toISOString());
+                                }
+                            }
+                        } catch (err) {
+                            console.log('Failed to fetch block timestamp, will proceed without it:', err);
+                        }
+                    }
+                    
+                    // Small delay to avoid rate limit
+                    if (blockTimestamp) {
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
                     
                     // Also check for token transfers
                     try {
@@ -15819,9 +15872,9 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     if (data.error) throw new Error(data.error.message);
                 }
                 
-                // Parse the response (pass tokenData and blockData for Ethereum)
+                // Parse the response (pass tokenData and blockTimestamp for Ethereum)
                 txData = detectedChain === 'ethereum' ? 
-                    config.parseResponse(data, tokenData, blockData) : 
+                    config.parseResponse(data, tokenData, blockTimestamp) : 
                     config.parseResponse(data);
                 
                 console.log('Parsed transaction data:', txData);
