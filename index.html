@@ -8714,6 +8714,120 @@ function analyzeUntracedBalances(hop) {
     return walletsWithFunds;
 }
 
+// New function to show comprehensive hop finalization summary
+function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemainingFunds) {
+    // Calculate threads created in this hop
+    const threadsCreated = [];
+    hop.entries.forEach(entry => {
+        if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
+            const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+            threadsCreated.push({
+                notation: entry.notation,
+                amount: parseFloat(entry.amount),
+                currency: currency,
+                toWallet: entry.toWallet,
+                toWalletType: entry.toWalletType
+            });
+        }
+    });
+    
+    // Calculate balance status
+    const isBalanced = Object.keys(remainingByCurrency).length === 0;
+    const balanceStatusHTML = isBalanced ? `
+        <div style="background: #d4edda; border: 2px solid #27ae60; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="color: #155724; margin-top: 0;">✅ Hop is Balanced!</h3>
+            <p style="color: #155724; margin-bottom: 0;">All Available Running Total (ART) has been accounted for. You can proceed to the next hop.</p>
+        </div>
+    ` : `
+        <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="color: #856404; margin-top: 0;">⚠️ Hop Has Unaccounted Amounts</h3>
+            <p style="color: #856404;">The following amounts need to be accounted for before proceeding:</p>
+            <ul style="margin-bottom: 0;">
+                ${Object.entries(remainingByCurrency).map(([currency, amount]) => 
+                    `<li><strong>${amount.toLocaleString()} ${currency}</strong> remaining</li>`
+                ).join('')}
+            </ul>
+        </div>
+    `;
+    
+    // Thread summary
+    const threadSummaryHTML = threadsCreated.length > 0 ? `
+        <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="color: #0d47a1; margin-top: 0;">🧵 Threads Created in Hop ${hop.hopNumber}</h3>
+            <p style="color: #0d47a1; margin-bottom: 15px;">These threads will be available for tracing in Hop ${hop.hopNumber + 1}:</p>
+            <div style="max-height: 200px; overflow-y: auto;">
+                ${threadsCreated.map(thread => `
+                    <div style="background: white; padding: 10px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #2196f3;">
+                        <strong>${thread.notation}</strong> - ${thread.amount.toLocaleString()} ${thread.currency}
+                        <br><span style="font-size: 12px; color: #666;">To: ${thread.toWallet.substring(0, 16)}... (${walletTypes[thread.toWalletType] || thread.toWalletType})</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    ` : '';
+    
+    const modalHTML = `
+        <div id="hopFinalizationModal" class="modal" style="display: block;">
+            <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>🎯 Finalize Hop ${hop.hopNumber}</h2>
+                    <p>Review hop summary and balance any remaining amounts</p>
+                </div>
+                
+                ${balanceStatusHTML}
+                ${threadSummaryHTML}
+                
+                ${!isBalanced ? `
+                    <div style="margin-bottom: 20px;">
+                        <h3>Balance Remaining Amounts</h3>
+                        <p style="color: #666; margin-bottom: 15px;">Choose how to account for the remaining amounts. These options close out funds without creating new threads:</p>
+                        
+                        ${Object.entries(remainingByCurrency).map(([currency, amount]) => `
+                            <div style="background: white; border: 2px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                                <h4 style="margin-top: 0;">${amount.toLocaleString()} ${currency} Remaining</h4>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                    <button class="btn btn-warning" onclick="writeOffAmount(${hop.id}, '${currency}', ${amount})">
+                                        ❌ Write Off
+                                    </button>
+                                    <button class="btn btn-primary" onclick="markAsColdStorage(${hop.id}, '${currency}', ${amount})">
+                                        ❄️ Cold Storage
+                                    </button>
+                                    <button class="btn btn-success" onclick="markAsVASPArrival(${hop.id}, '${currency}', ${amount})">
+                                        🏦 VASP Arrival
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="assignPartialAmount(${hop.id}, '${currency}', ${amount})">
+                                        ✂️ Split Amount
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0; text-align: center;">
+                    ${isBalanced ? `
+                        <button class="btn btn-success btn-large" onclick="proceedWithHopFinalization(investigation.hops.find(h => h.id === ${hop.id}))">
+                            ✅ Complete Hop ${hop.hopNumber}
+                        </button>
+                    ` : `
+                        <p style="color: #666; margin-bottom: 10px;">Balance all remaining amounts to proceed</p>
+                        <button class="btn btn-secondary" onclick="closeFinalizationModal()">
+                            Cancel
+                        </button>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeFinalizationModal() {
+    const modal = document.getElementById('hopFinalizationModal');
+    if (modal) modal.remove();
+}
+
 function finalizeHop(hopId) {
     const hop = investigation.hops.find(h => h.id === hopId);
     if (!hop) {
@@ -8755,13 +8869,8 @@ function finalizeHop(hopId) {
     // Analyze wallets with untraced balances
     const walletsWithRemainingFunds = analyzeUntracedBalances(hop);
     
-    // If there are remaining amounts, show options modal
-    if (Object.keys(remainingByCurrency).length > 0) {
-        showHopFinalizationModal(hop, remainingByCurrency, walletsWithRemainingFunds);
-    } else {
-        // All balanced, proceed with wallet classification check
-        proceedWithHopFinalization(hop);
-    }
+    // Always show finalization summary, even if balanced
+    showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemainingFunds);
 }
 
 // Proceed with hop finalization after all amounts are accounted for
@@ -9426,13 +9535,13 @@ function createAutoWriteoff(hopId, currency, amount) {
     renderHops();
     saveToStorage();
     
-    // Check if hop is now complete
-    const validation = validateHopCompletion(hopId);
-    if (validation.valid || Object.keys(validation.remainingByCurrency || {}).length === 0) {
-        proceedWithHopFinalization(hop);
-    } else {
-        finalizeHop(hopId); // Re-run for any remaining amounts
-    }
+    // Close the modal and re-run finalization to refresh the view
+    closeFinalizationModal();
+    
+    // Re-run finalization to show updated state
+    setTimeout(() => {
+        finalizeHop(hopId);
+    }, 100);
 }
 
 // Mark funds as cold storage
@@ -9517,13 +9626,13 @@ function markAsColdStorage(hopId, currency, amount) {
     renderHops();
     saveToStorage();
     
-    // Check if hop is now complete
-    const validation = validateHopCompletion(hopId);
-    if (validation.valid || Object.keys(validation.remainingByCurrency || {}).length === 0) {
-        proceedWithHopFinalization(hop);
-    } else {
-        finalizeHop(hopId); // Re-run for any remaining amounts
-    }
+    // Close the modal and re-run finalization to refresh the view
+    closeFinalizationModal();
+    
+    // Re-run finalization to show updated state
+    setTimeout(() => {
+        finalizeHop(hopId);
+    }, 100);
 }
 
 
@@ -9627,13 +9736,13 @@ function markAsVASPArrival(hopId, currency, amount) {
     renderHops();
     saveToStorage();
     
-    // Check if hop is now complete
-    const validation = validateHopCompletion(hopId);
-    if (validation.valid || Object.keys(validation.remainingByCurrency || {}).length === 0) {
-        proceedWithHopFinalization(hop);
-    } else {
-        finalizeHop(hopId); // Re-run for any remaining amounts
-    }
+    // Close the modal and re-run finalization to refresh the view
+    closeFinalizationModal();
+    
+    // Re-run finalization to show updated state
+    setTimeout(() => {
+        finalizeHop(hopId);
+    }, 100);
 }
 
 // Handle partial amount assignment
@@ -9971,42 +10080,70 @@ function updateInvestigationCompletionStatus() {
     // Check if all threads have reached terminal wallets
     const threadStatus = checkAllThreadsTerminated();
     
+    // Calculate next hop ART
+    const lastHop = investigation.hops[investigation.hops.length - 1];
+    let nextHopART = {};
+    let hasActiveThreads = false;
+    
+    if (lastHop && lastHop.completed) {
+        // Calculate ART from trace outputs of last completed hop
+        lastHop.entries.forEach(entry => {
+            if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && 
+                entry.toWalletType !== 'purple' && entry.toWalletType !== 'gray') {
+                const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                if (!nextHopART[currency]) {
+                    nextHopART[currency] = 0;
+                }
+                nextHopART[currency] += parseFloat(entry.amount);
+                hasActiveThreads = true;
+            }
+        });
+    }
+    
     // Show different buttons based on state
     if (threadStatus.allTerminated && allHopsComplete && totalValidationErrors === 0) {
         // Investigation truly complete - all threads at terminal wallets
         addHopBtn.style.display = 'none';
         completeSection.style.display = 'block';
         updateFinalThreadSummary();
-    } else if (lastHopComplete && threadStatus.activeThreads.length > 0 && !threadStatus.allTerminated) {
-        // Last hop complete but threads not at terminal wallets - need more hops
-        addHopBtn.innerHTML = `📝 Continue Tracing - ${threadStatus.nonTerminalThreads.length} thread(s) not at terminal wallets`;
+    } else if (lastHopComplete && hasActiveThreads) {
+        // Last hop complete with active threads - show what will be traced
+        const artSummary = Object.entries(nextHopART)
+            .map(([currency, amount]) => `${amount.toLocaleString()} ${currency}`)
+            .join(' + ');
+        
+        addHopBtn.innerHTML = `📝 Start Hop ${lastHop.hopNumber + 1} (${artSummary} available)`;
         addHopBtn.style.display = 'inline-block';
         addHopBtn.onclick = function() { 
-            // Show which threads need to continue
-            const threadList = threadStatus.nonTerminalThreads.map(t => 
-                `• ${t.path}: ${t.amount.toLocaleString()} ${t.currency} at ${t.walletTypeDisplay} wallet`
-            ).join('\n');
-            
-            if (confirm(`The following threads have not reached terminal wallets:\n\n${threadList}\n\nContinue tracing these threads?`)) {
-                addNewHop();
-            }
+            addNewHop();
         };
         completeSection.style.display = 'none';
-    } else if (lastHopComplete && threadStatus.activeThreads.length === 0) {
-        // No active threads found - but allow adding new hop anyway
-        addHopBtn.innerHTML = `📝 Add New Hop (No Active Threads)`;
+    } else if (lastHopComplete && !hasActiveThreads) {
+        // No active threads found - investigation may be complete
+        addHopBtn.innerHTML = `🎯 Investigation Complete - No Active Threads`;
         addHopBtn.style.display = 'inline-block';
-        addHopBtn.disabled = false;
-        addHopBtn.onclick = function() { 
-            if (confirm('No active threads were found from the previous hop. Do you want to add a new hop anyway?')) {
-                addNewHop();
-            }
-        };
+        addHopBtn.disabled = true;
+        addHopBtn.style.opacity = '0.6';
+        addHopBtn.onclick = null;
+        
+        // Show completion section
+        completeSection.style.display = 'block';
+        updateFinalThreadSummary();
+    } else if (!lastHopComplete && investigation.hops.length > 0) {
+        // Current hop not complete
+        const currentHop = investigation.hops[investigation.hops.length - 1];
+        addHopBtn.innerHTML = `⏸️ Complete Hop ${currentHop.hopNumber} First`;
+        addHopBtn.style.display = 'inline-block';
+        addHopBtn.disabled = true;
+        addHopBtn.style.opacity = '0.6';
+        addHopBtn.onclick = null;
         completeSection.style.display = 'none';
     } else {
-        // Normal "add hop" state or validation errors
-        addHopBtn.innerHTML = `📝 Start Next Hop`;
+        // Initial state or validation errors
+        addHopBtn.innerHTML = `📝 Start First Hop`;
         addHopBtn.style.display = totalValidationErrors === 0 ? 'inline-block' : 'none';
+        addHopBtn.disabled = false;
+        addHopBtn.style.opacity = '1';
         addHopBtn.onclick = function() { addNewHop(); };
         completeSection.style.display = 'none';
         

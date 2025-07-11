@@ -3,15 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-11 09:37)
+## Latest Commit (Auto-updated: 2025-07-11 10:42)
 
-**Commit:** 2c6ef9fec3cf5ffd820d92b3fd9cc0dfe41924c5
+**Commit:** 9e8eb55de6feb5514f88a7745b0fec3d31c6b7df
 **Author:** Your Name
-**Message:** Fix critical JavaScript errors in hop creation
+**Message:** Fix persistent JavaScript errors in hop creation and wallet index
 
-- Fix undefined container error by wrapping orphaned code in renderUniversalWalletIndex function
-- Fix "Cannot read properties of undefined" error by adding null check for hop.entries
-- Both errors were preventing hop creation in the wizard tool
+- Remove duplicate renderUniversalWalletIndex function that was causing orphaned code
+- Add null check for hop.entries in renderARTProgressBars function
+- Add data sanitization on load to ensure all hops have entries arrays
+- Fix missing export button header in Universal Wallet Index
+
+These fixes address the "container is not defined" and "Cannot read properties of undefined" errors
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -19,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 44 ++++++++++++++++++++------------------------
- index.html | 20 ++++++++++++++++++--
- 2 files changed, 38 insertions(+), 26 deletions(-)
+ CLAUDE.md  |  39 +++++++++----------
+ index.html | 128 ++++++++++++++-----------------------------------------------
+ 2 files changed, 48 insertions(+), 119 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2c6ef9f Fix critical JavaScript errors in hop creation (0 seconds ago)
-- 85941f5 Remove inaccurate graph from training page (4 hours ago)
-- 17741d5 Fix training visualization layout - clean structured flow (11 hours ago)
-- 9fbbc33 Add dynamic BATS training visualization to training page (11 hours ago)
-- 1cfb83b Add comprehensive BATS training example visualization (11 hours ago)
-- cf80a17 Redesign flow diagram with ledger-style layout (11 hours ago)
-- f1304c8 Add auto-fix option to chronological order errors (11 hours ago)
-- b2528cf Fix blockTimestamp scope error for multi-chain support (12 hours ago)
-- 53dc631 Add chain selector to blockchain lookup modal (12 hours ago)
-- 38e3ce6 Upgrade to Etherscan API v2 and add multi-chain support (12 hours ago)
+- 9e8eb55 Fix persistent JavaScript errors in hop creation and wallet index (0 seconds ago)
+- 2c6ef9f Fix critical JavaScript errors in hop creation (65 minutes ago)
+- 85941f5 Remove inaccurate graph from training page (5 hours ago)
+- 17741d5 Fix training visualization layout - clean structured flow (12 hours ago)
+- 9fbbc33 Add dynamic BATS training visualization to training page (12 hours ago)
+- 1cfb83b Add comprehensive BATS training example visualization (12 hours ago)
+- cf80a17 Redesign flow diagram with ledger-style layout (12 hours ago)
+- f1304c8 Add auto-fix option to chronological order errors (12 hours ago)
+- b2528cf Fix blockTimestamp scope error for multi-chain support (13 hours ago)
+- 53dc631 Add chain selector to blockchain lookup modal (13 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
