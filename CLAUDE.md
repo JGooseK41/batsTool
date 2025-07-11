@@ -3,18 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-11 10:42)
+## Latest Commit (Auto-updated: 2025-07-11 18:52)
 
-**Commit:** 9e8eb55de6feb5514f88a7745b0fec3d31c6b7df
+**Commit:** 2ccef07bbbff89a85ae0eab8e9f36e52a219393a
 **Author:** Your Name
-**Message:** Fix persistent JavaScript errors in hop creation and wallet index
+**Message:** Improve hop progression clarity and finalization UX
 
-- Remove duplicate renderUniversalWalletIndex function that was causing orphaned code
-- Add null check for hop.entries in renderARTProgressBars function
-- Add data sanitization on load to ensure all hops have entries arrays
-- Fix missing export button header in Universal Wallet Index
+- Add comprehensive hop finalization summary showing balance status and threads created
+- Show clear "Hop is Balanced" or "Unaccounted Amounts" status with visual indicators
+- Display threads created in current hop that will be available for next hop
+- Improve "Add New Hop" button to show next hop number and available ART amounts
+- Fix button states to clearly indicate when hops must be completed first
+- Make finalization modal always appear, even when balanced, for better user understanding
+- Add explanatory text that wallet classification options are only for balancing unaccounted funds
 
-These fixes address the "container is not defined" and "Cannot read properties of undefined" errors
+These changes address user confusion about hop progression and make it clear when balancing is needed vs optional.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,23 +25,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  39 +++++++++----------
- index.html | 128 ++++++++++++++-----------------------------------------------
- 2 files changed, 48 insertions(+), 119 deletions(-)
+ CLAUDE.md  |  41 ++++++-----
+ index.html | 237 ++++++++++++++++++++++++++++++++++++++++++++++++-------------
+ 2 files changed, 209 insertions(+), 69 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9e8eb55 Fix persistent JavaScript errors in hop creation and wallet index (0 seconds ago)
-- 2c6ef9f Fix critical JavaScript errors in hop creation (65 minutes ago)
-- 85941f5 Remove inaccurate graph from training page (5 hours ago)
-- 17741d5 Fix training visualization layout - clean structured flow (12 hours ago)
-- 9fbbc33 Add dynamic BATS training visualization to training page (12 hours ago)
-- 1cfb83b Add comprehensive BATS training example visualization (12 hours ago)
-- cf80a17 Redesign flow diagram with ledger-style layout (12 hours ago)
-- f1304c8 Add auto-fix option to chronological order errors (12 hours ago)
-- b2528cf Fix blockTimestamp scope error for multi-chain support (13 hours ago)
-- 53dc631 Add chain selector to blockchain lookup modal (13 hours ago)
+- 2ccef07 Improve hop progression clarity and finalization UX (0 seconds ago)
+- 9e8eb55 Fix persistent JavaScript errors in hop creation and wallet index (8 hours ago)
+- 2c6ef9f Fix critical JavaScript errors in hop creation (9 hours ago)
+- 85941f5 Remove inaccurate graph from training page (13 hours ago)
+- 17741d5 Fix training visualization layout - clean structured flow (20 hours ago)
+- 9fbbc33 Add dynamic BATS training visualization to training page (20 hours ago)
+- 1cfb83b Add comprehensive BATS training example visualization (20 hours ago)
+- cf80a17 Redesign flow diagram with ledger-style layout (20 hours ago)
+- f1304c8 Add auto-fix option to chronological order errors (21 hours ago)
+- b2528cf Fix blockTimestamp scope error for multi-chain support (21 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

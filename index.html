@@ -11822,7 +11822,13 @@ function showHopEntryWizard(hopId) {
         selectedThreads: [],
         allocations: {},
         txHash: '',
-        txData: null
+        txData: null,
+        entryMode: 'lookup', // 'lookup' or 'manual'
+        manualData: {
+            fromWallet: '',
+            toWallet: '',
+            timestamp: new Date().toISOString().slice(0, 16)
+        }
     };
     
     const wizardHTML = `
@@ -11844,13 +11850,13 @@ function showHopEntryWizard(hopId) {
                 <div class="modal-footer" style="position: sticky; bottom: 0; background: white; border-top: 2px solid #eee; padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <input type="checkbox" id="disableWizardCheckbox" onchange="toggleWizardPreference()">
-                        <label for="disableWizardCheckbox" style="margin-left: 5px;">Don't show this wizard again</label>
+                        <label for="disableWizardCheckbox" style="margin-left: 5px;">Don't show wizard for future entries</label>
                     </div>
                     <div>
-                        <button class="btn btn-secondary" onclick="closeHopWizard()">Cancel</button>
+                        <button class="btn btn-secondary" onclick="cancelWizardToManual()" title="Transfer data to manual entry">Cancel to Manual</button>
                         <button class="btn btn-secondary" id="wizardBackBtn" onclick="hopWizardBack()" style="display: none;">Back</button>
                         <button class="btn btn-primary" id="wizardNextBtn" onclick="hopWizardNext()">Next</button>
-                        <button class="btn btn-secondary" onclick="skipHopWizard()">Skip Wizard</button>
+                        <button class="btn btn-secondary" onclick="skipWizardThisTime()" title="Skip wizard for this entry only">Skip This Time</button>
                     </div>
                 </div>
             </div>
@@ -11975,23 +11981,79 @@ function showHopWizardStep(step) {
         // Step 3: Transaction details
         content.innerHTML = `
             <h3>Step 3: Transaction Details</h3>
-            <p>Enter the transaction hash to automatically fill in the details.</p>
+            <p>Choose how to enter transaction details:</p>
             
-            <div style="margin-top: 20px;">
-                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; border: 2px solid #2196f3;">
-                    <label style="font-weight: bold; color: #0d47a1;">Transaction Hash:</label>
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <input type="text" 
-                               id="wizardTxHash"
-                               placeholder="Paste transaction hash here"
-                               value="${wizardData.txHash}"
-                               onchange="window.hopWizardData.txHash = this.value"
-                               style="flex: 1; padding: 12px; font-size: 16px;">
-                        <button class="btn btn-primary" onclick="lookupWizardTransaction()">
-                            🔍 Lookup
-                        </button>
-                    </div>
+            <div style="margin: 20px 0;">
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn ${wizardData.entryMode === 'lookup' ? 'btn-primary' : 'btn-secondary'}" 
+                            onclick="setWizardEntryMode('lookup')" style="flex: 1;">
+                        🔍 API Lookup
+                    </button>
+                    <button class="btn ${wizardData.entryMode === 'manual' ? 'btn-primary' : 'btn-secondary'}" 
+                            onclick="setWizardEntryMode('manual')" style="flex: 1;">
+                        ✏️ Manual Entry
+                    </button>
                 </div>
+                
+                ${wizardData.entryMode === 'lookup' ? `
+                    <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; border: 2px solid #2196f3;">
+                        <label style="font-weight: bold; color: #0d47a1;">Transaction Hash:</label>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <input type="text" 
+                                   id="wizardTxHash"
+                                   placeholder="Paste transaction hash here"
+                                   value="${wizardData.txHash || ''}"
+                                   onchange="window.hopWizardData.txHash = this.value"
+                                   style="flex: 1; padding: 12px; font-size: 16px;">
+                            <button class="btn btn-primary" onclick="lookupWizardTransaction()">
+                                🔍 Lookup
+                            </button>
+                        </div>
+                    </div>
+                ` : `
+                    <div style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding: 20px; border-radius: 8px; border: 2px solid #ff9800;">
+                        <h4 style="margin-top: 0; color: #e65100;">Manual Transaction Entry</h4>
+                        
+                        <div class="form-group">
+                            <label>Transaction Hash:</label>
+                            <input type="text" 
+                                   id="wizardTxHashManual"
+                                   placeholder="Enter transaction hash"
+                                   value="${wizardData.txHash || ''}"
+                                   onchange="window.hopWizardData.txHash = this.value"
+                                   style="width: 100%;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>From Wallet:</label>
+                            <input type="text" 
+                                   id="wizardFromWallet"
+                                   placeholder="Enter sending wallet address"
+                                   value="${wizardData.manualData?.fromWallet || ''}"
+                                   onchange="updateWizardManualData('fromWallet', this.value)"
+                                   style="width: 100%;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>To Wallet:</label>
+                            <input type="text" 
+                                   id="wizardToWallet"
+                                   placeholder="Enter receiving wallet address"
+                                   value="${wizardData.manualData?.toWallet || ''}"
+                                   onchange="updateWizardManualData('toWallet', this.value)"
+                                   style="width: 100%;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Timestamp:</label>
+                            <input type="datetime-local" 
+                                   id="wizardTimestamp"
+                                   value="${wizardData.manualData?.timestamp || ''}"
+                                   onchange="updateWizardManualData('timestamp', this.value)"
+                                   style="width: 100%;">
+                        </div>
+                    </div>
+                `}
                 
                 <div id="wizardTxResult" style="margin-top: 20px;">
                     <!-- Transaction details will appear here -->
@@ -12011,7 +12073,12 @@ function showHopWizardStep(step) {
         `;
         
         nextBtn.textContent = 'Create Entry';
-        nextBtn.disabled = !wizardData.txHash;
+        // Enable next button if we have required data
+        if (wizardData.entryMode === 'manual') {
+            nextBtn.disabled = !wizardData.txHash || !wizardData.manualData?.toWallet;
+        } else {
+            nextBtn.disabled = !wizardData.txHash || !wizardData.txData;
+        }
     }
     
     wizardData.step = step;
@@ -12044,6 +12111,124 @@ function closeHopWizard() {
 function skipHopWizard() {
     closeHopWizard();
     createHopEntryDirectly(window.hopWizardData.hopId, 'trace');
+}
+
+// Skip wizard just for this entry without disabling it permanently
+function skipWizardThisTime() {
+    const hopId = window.hopWizardData.hopId;
+    closeHopWizard();
+    createHopEntryDirectly(hopId, 'trace');
+}
+
+// Cancel wizard and transfer data to manual entry form
+function cancelWizardToManual() {
+    const wizardData = window.hopWizardData;
+    if (!wizardData) return;
+    
+    const hopId = wizardData.hopId;
+    
+    // Close wizard
+    closeHopWizard();
+    
+    // Create manual entry with pre-filled data
+    createHopEntryDirectly(hopId, 'trace');
+    
+    // Wait for DOM update then fill in the data
+    setTimeout(() => {
+        // Find the last added entry form
+        const hop = investigation.hops.find(h => h.id === hopId);
+        if (!hop) return;
+        
+        const lastEntry = hop.entries[hop.entries.length - 1];
+        if (!lastEntry) return;
+        
+        // Pre-fill amount if allocations exist
+        const totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+        if (totalAmount > 0) {
+            const amountInput = document.querySelector(`[onchange*="updateEntryAmount(${hopId}, ${lastEntry.id}"]`);
+            if (amountInput) {
+                amountInput.value = totalAmount;
+                updateEntryAmount(hopId, lastEntry.id, totalAmount.toString());
+            }
+        }
+        
+        // Pre-fill transaction hash
+        if (wizardData.txHash) {
+            const txHashInput = document.querySelector(`[onchange*="updateEntryField(${hopId}, ${lastEntry.id}, 'txHash'"]`);
+            if (txHashInput) {
+                txHashInput.value = wizardData.txHash;
+                updateEntryField(hopId, lastEntry.id, 'txHash', wizardData.txHash);
+            }
+        }
+        
+        // Pre-fill manual data if available
+        if (wizardData.manualData) {
+            if (wizardData.manualData.fromWallet) {
+                const fromInput = document.querySelector(`[onchange*="updateEntryField(${hopId}, ${lastEntry.id}, 'fromWallet'"]`);
+                if (fromInput) {
+                    fromInput.value = wizardData.manualData.fromWallet;
+                    updateEntryField(hopId, lastEntry.id, 'fromWallet', wizardData.manualData.fromWallet);
+                }
+            }
+            
+            if (wizardData.manualData.toWallet) {
+                const toInput = document.querySelector(`[onchange*="updateEntryField(${hopId}, ${lastEntry.id}, 'toWallet'"]`);
+                if (toInput) {
+                    toInput.value = wizardData.manualData.toWallet;
+                    updateEntryField(hopId, lastEntry.id, 'toWallet', wizardData.manualData.toWallet);
+                }
+            }
+            
+            if (wizardData.manualData.timestamp) {
+                const timestampInput = document.querySelector(`[onchange*="updateEntryField(${hopId}, ${lastEntry.id}, 'timestamp'"]`);
+                if (timestampInput) {
+                    timestampInput.value = wizardData.manualData.timestamp;
+                    updateEntryField(hopId, lastEntry.id, 'timestamp', wizardData.manualData.timestamp);
+                }
+            }
+        }
+        
+        // Pre-fill source threads if single thread
+        if (wizardData.selectedThreads.length === 1) {
+            const threadId = wizardData.selectedThreads[0];
+            const sourceSelect = document.querySelector(`[onchange*="updateSourceThread(${hopId}, ${lastEntry.id}"]`);
+            if (sourceSelect) {
+                sourceSelect.value = threadId;
+                updateSourceThread(hopId, lastEntry.id, threadId);
+            }
+        }
+        
+        // Scroll to the new entry
+        const entryElement = document.getElementById(`entry_${hopId}_${lastEntry.id}`);
+        if (entryElement) {
+            entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Highlight it briefly
+            entryElement.style.border = '3px solid #3498db';
+            setTimeout(() => {
+                entryElement.style.border = '';
+            }, 2000);
+        }
+    }, 100);
+}
+
+// Set wizard entry mode (lookup vs manual)
+function setWizardEntryMode(mode) {
+    window.hopWizardData.entryMode = mode;
+    showHopWizardStep(3); // Refresh step 3
+}
+
+// Update wizard manual data
+function updateWizardManualData(field, value) {
+    if (!window.hopWizardData.manualData) {
+        window.hopWizardData.manualData = {};
+    }
+    window.hopWizardData.manualData[field] = value;
+    
+    // Update next button state
+    const nextBtn = document.getElementById('wizardNextBtn');
+    if (window.hopWizardData.entryMode === 'manual') {
+        nextBtn.disabled = !window.hopWizardData.txHash || !window.hopWizardData.manualData.toWallet;
+    }
 }
 
 function toggleWizardPreference() {
@@ -12172,6 +12357,19 @@ function createHopEntryFromWizard() {
     const hop = investigation.hops.find(h => h.id === wizardData.hopId);
     if (!hop) return;
     
+    // Determine data source based on entry mode
+    let fromWallet, toWallet, timestamp;
+    
+    if (wizardData.entryMode === 'manual') {
+        fromWallet = wizardData.manualData?.fromWallet || '';
+        toWallet = wizardData.manualData?.toWallet || '';
+        timestamp = wizardData.manualData?.timestamp || '';
+    } else {
+        fromWallet = wizardData.txData?.from || '';
+        toWallet = wizardData.txData?.to || '';
+        timestamp = wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '';
+    }
+    
     // Create entry with wizard data
     const entry = {
         id: hop.entries.length + 1,
@@ -12179,10 +12377,10 @@ function createHopEntryFromWizard() {
         hopNumber: hop.hopNumber,
         entryType: 'trace',
         notation: '',
-        fromWallet: wizardData.txData?.from || '',
+        fromWallet: fromWallet,
         fromWalletType: hop.hopNumber === 1 ? 'red' : 'black',
         fromWalletId: '',
-        toWallet: wizardData.txData?.to || '',
+        toWallet: toWallet,
         toWalletType: '',
         toWalletId: '',
         amount: Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0).toString(),
@@ -12190,7 +12388,7 @@ function createHopEntryFromWizard() {
             getAvailableSourcesForHop(hop.hopNumber, null).find(t => t.threadId === wizardData.selectedThreads[0])?.currency : '',
         customCurrency: '',
         txHash: wizardData.txHash,
-        timestamp: wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '',
+        timestamp: timestamp,
         timezone: 'UTC',
         notes: '',
         category: '',
