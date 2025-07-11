@@ -882,6 +882,47 @@
     to { opacity: 1; }
 }
 
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background-color: white;
+    margin: auto;
+    padding: 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    position: relative;
+    animation: modalSlideIn 0.3s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 /* Flow Diagram Styles */
 .flow-wallet-node {
     cursor: pointer;
@@ -2417,12 +2458,11 @@
                         console.log(`Found ${transferLogs.length} token transfers in this transaction`);
                         
                         if (transferLogs.length > 0) {
-                            // For batch transactions, return special indicator
-                            if (transferLogs.length > 1) {
-                                console.log('Multiple transfers detected - user selection required');
-                                
-                                // Parse all transfers for selection
-                                const transfers = transferLogs.map(log => {
+                            // Always show selection modal when token transfers exist
+                            console.log('Token transfers detected - user selection required');
+                            
+                            // Parse all transfers for selection
+                            const transfers = transferLogs.map(log => {
                                     const from = '0x' + log.topics[1].slice(26);
                                     const to = '0x' + log.topics[2].slice(26);
                                     const value = log.data;
@@ -2459,83 +2499,32 @@
                                         rawData: log
                                     };
                                 });
-                                
-                                // Get timestamp from block data if available
-                                let timestamp = Date.now();
-                                if (blockData && blockData.result && blockData.result.timestamp) {
-                                    timestamp = parseInt(blockData.result.timestamp, 16) * 1000;
-                                }
-                                
-                                // Return special object indicating multiple transfers
-                                return {
-                                    multipleTransfers: true,
-                                    transfers: transfers,
-                                    transaction: data.result,
-                                    time: timestamp
-                                };
-                            }
-                            
-                            // Single transfer - process normally
-                            const transferLog = transferLogs[0];
-                            console.log('Processing single transfer:', transferLog);
-                            
-                            // Decode the transfer
-                            const from = '0x' + transferLog.topics[1].slice(26); // Remove padding
-                            const to = '0x' + transferLog.topics[2].slice(26);
-                            const value = transferLog.data; // This is the amount in hex
                             
                             // Get timestamp from block data if available
                             let timestamp = Date.now();
                             if (blockData && blockData.result && blockData.result.timestamp) {
-                                // Block timestamp is in hex seconds since epoch
                                 timestamp = parseInt(blockData.result.timestamp, 16) * 1000;
-                                console.log('Using block timestamp:', new Date(timestamp).toISOString());
-                            } else {
-                                console.warn('No block data available, using current time');
                             }
                             
-                            // Get token symbol from contract address if possible
-                            const contractAddress = transferLog.address;
-                            
-                            // Convert hex amount to decimal
-                            let amount = 0;
-                            try {
-                                const amountBN = parseInt(value, 16);
-                                // USDT and USDC use 6 decimals, most others use 18
-                                const decimals = (contractAddress.toLowerCase() === '0xdac17f958d2ee523a2206206994597c13d831ec7' || 
-                                                contractAddress.toLowerCase() === '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48') ? 6 : 18;
-                                amount = amountBN / Math.pow(10, decimals);
-                                
-                                if (isNaN(amount)) {
-                                    console.error('Failed to parse amount from:', value);
-                                    amount = 0;
-                                }
-                            } catch (e) {
-                                console.error('Error parsing token amount:', e);
-                            }
-                            let currency = 'Token';
-                            
-                            // Known token addresses (mainnet)
-                            const knownTokens = {
-                                '0xdac17f958d2ee523a2206206994597c13d831ec7': 'USDT',
-                                '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 'USDC',
-                                '0x6b175474e89094c44da98b954eedeac495271d0f': 'DAI',
-                                '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': 'WBTC',
-                                '0x514910771af9ca656af840dff83e8264ecf986ca': 'LINK'
-                            };
-                            
-                            if (knownTokens[contractAddress.toLowerCase()]) {
-                                currency = knownTokens[contractAddress.toLowerCase()];
+                            // Only add the ETH transaction if it has value > 0
+                            const tx = data.result;
+                            if (tx && parseInt(tx.value, 16) > 0) {
+                                transfers.unshift({
+                                    from: tx.from,
+                                    to: tx.to,
+                                    amount: parseInt(tx.value, 16) / 1e18,
+                                    currency: 'ETH',
+                                    contractAddress: 'Native ETH Transfer',
+                                    rawData: tx
+                                });
                             }
                             
+                            // Always return multiple transfers to show selection modal
                             return {
-                                time: timestamp,
-                                amount: amount,
-                                currency: currency,
-                                from: from,
-                                to: to,
-                                fee: receiptData.result.gasUsed ? 
-                                    (parseInt(receiptData.result.gasUsed, 16) * parseInt(receiptData.result.effectiveGasPrice || data.result.gasPrice, 16)) / 1e18 : 0
+                                multipleTransfers: true,
+                                transfers: transfers,
+                                transaction: data.result,
+                                time: timestamp
                             };
                         }
                     }
@@ -15990,7 +15979,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
             updateFilterInfo(transfers.length, transfers.length);
             
             // Show the modal
-            modal.style.display = 'block';
+            modal.classList.add('show');
         }
         
         function renderTransferCards(transfers) {
@@ -16117,7 +16106,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
         
         function closeTransferSelectionModal() {
             const modal = document.getElementById('transferSelectionModal');
-            modal.style.display = 'none';
+            modal.classList.remove('show');
             
             // Clear pending data
             pendingTransfers = null;
