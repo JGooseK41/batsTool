@@ -92,6 +92,77 @@
             background: #229954;
             transform: translateY(-1px);
         }
+        
+        /* Flow Diagram Styles */
+        .flow-wallet-node {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            stroke: #333;
+            stroke-width: 2;
+        }
+
+        .flow-wallet-node:hover {
+            filter: brightness(1.1);
+            transform: scale(1.05);
+        }
+
+        .flow-connection-line {
+            fill: none;
+            stroke-width: 1;
+            stroke: #333;
+        }
+
+        .flow-thread-amount {
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            fill: #2c3e50;
+            background: white;
+            padding: 2px;
+        }
+
+        .flow-hop-lane {
+            opacity: 0.3;
+        }
+
+        .flow-hop-lane-1 {
+            fill: #FFB6C1;
+        }
+
+        .flow-hop-lane-2 {
+            fill: #87CEEB;
+        }
+
+        .flow-hop-lane-3 {
+            fill: #98FB98;
+        }
+
+        .flow-hop-lane-4 {
+            fill: #DDA0DD;
+        }
+
+        .flow-hop-lane-5 {
+            fill: #F0E68C;
+        }
+
+        .flow-hop-title {
+            font-size: 18px;
+            font-weight: bold;
+            fill: #2c3e50;
+        }
+
+        .flow-sum-text {
+            font-size: 16px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            fill: #2c3e50;
+        }
+
+        .flow-wallet-label {
+            font-size: 12px;
+            font-weight: bold;
+            fill: white;
+        }
 
         .container {
             max-width: 1200px;
@@ -392,143 +463,10 @@
             
             <p>The power of B.A.T.S. lies in its mathematical graph structure that creates an unbreakable chain of evidence. This visual representation shows how investigations maintain the golden thread from victims to terminal wallets.</p>
             
-            <!-- SVG Graph Illustration -->
+            <!-- Dynamic BATS Training Example -->
             <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; overflow-x: auto;">
-                <svg width="1000" height="600" viewBox="0 0 1000 600" style="max-width: 100%; height: auto;">
-                    <!-- Title -->
-                    <text x="500" y="30" text-anchor="middle" style="font-size: 20px; font-weight: bold; fill: #2c3e50;">
-                        B.A.T.S. Investigation Graph Structure
-                    </text>
-                    
-                    <!-- Legend -->
-                    <g id="legend" transform="translate(20, 50)">
-                        <text x="0" y="0" style="font-size: 14px; font-weight: bold;">Legend:</text>
-                        <circle cx="10" cy="20" r="8" fill="#e74c3c"/>
-                        <text x="25" y="25" style="font-size: 12px;">RED - Victim Facing</text>
-                        <circle cx="10" cy="40" r="8" fill="#f39c12"/>
-                        <text x="25" y="45" style="font-size: 12px;">YELLOW - Convergence Hub</text>
-                        <circle cx="10" cy="60" r="8" fill="#34495e"/>
-                        <text x="25" y="65" style="font-size: 12px;">BLACK - Intermediary</text>
-                        <circle cx="10" cy="80" r="8" fill="#9b59b6"/>
-                        <text x="25" y="85" style="font-size: 12px;">PURPLE - Exchange</text>
-                        <circle cx="10" cy="100" r="8" fill="#3498db"/>
-                        <text x="25" y="105" style="font-size: 12px;">BLUE - Cold Storage</text>
-                    </g>
-                    
-                    <!-- Victim Level -->
-                    <g id="victims">
-                        <text x="100" y="200" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Victims</text>
-                        <rect x="50" y="220" width="100" height="40" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
-                        <text x="100" y="245" text-anchor="middle" style="font-size: 12px;">V1-T1</text>
-                        <text x="100" y="280" text-anchor="middle" style="font-size: 10px;">$10,000 BTC</text>
-                        
-                        <rect x="50" y="290" width="100" height="40" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
-                        <text x="100" y="315" text-anchor="middle" style="font-size: 12px;">V2-T1</text>
-                        <text x="100" y="350" text-anchor="middle" style="font-size: 10px;">$5,000 ETH</text>
-                        
-                        <rect x="50" y="360" width="100" height="40" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
-                        <text x="100" y="385" text-anchor="middle" style="font-size: 12px;">V3-T1</text>
-                        <text x="100" y="420" text-anchor="middle" style="font-size: 10px;">$3,000 USDT</text>
-                    </g>
-                    
-                    <!-- RED Wallets (Hop 0) -->
-                    <g id="red-wallets">
-                        <text x="250" y="200" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Hop 0 (RED)</text>
-                        <circle cx="250" cy="240" r="20" fill="#e74c3c"/>
-                        <text x="250" y="245" text-anchor="middle" style="font-size: 10px; fill: white;">RED1</text>
-                        
-                        <circle cx="250" cy="310" r="20" fill="#e74c3c"/>
-                        <text x="250" y="315" text-anchor="middle" style="font-size: 10px; fill: white;">RED2</text>
-                        
-                        <circle cx="250" cy="380" r="20" fill="#e74c3c"/>
-                        <text x="250" y="385" text-anchor="middle" style="font-size: 10px; fill: white;">RED3</text>
-                    </g>
-                    
-                    <!-- Hop 1 -->
-                    <g id="hop1">
-                        <text x="400" y="200" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Hop 1</text>
-                        <circle cx="400" cy="240" r="20" fill="#34495e"/>
-                        <text x="400" y="245" text-anchor="middle" style="font-size: 10px; fill: white;">BLACK1</text>
-                        <text x="400" y="265" text-anchor="middle" style="font-size: 9px;">V1-T1-H1</text>
-                        
-                        <circle cx="400" cy="310" r="20" fill="#34495e"/>
-                        <text x="400" y="315" text-anchor="middle" style="font-size: 10px; fill: white;">BLACK2</text>
-                        <text x="400" y="335" text-anchor="middle" style="font-size: 9px;">V2-T1-H1</text>
-                        
-                        <circle cx="400" cy="380" r="20" fill="#34495e"/>
-                        <text x="400" y="385" text-anchor="middle" style="font-size: 10px; fill: white;">BLACK3</text>
-                        <text x="400" y="405" text-anchor="middle" style="font-size: 9px;">V3-T1-H1</text>
-                    </g>
-                    
-                    <!-- Convergence Point (YELLOW) -->
-                    <g id="convergence">
-                        <text x="550" y="200" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Hop 2</text>
-                        <circle cx="550" cy="310" r="25" fill="#f39c12"/>
-                        <text x="550" y="315" text-anchor="middle" style="font-size: 12px; fill: white;">YELLOW1</text>
-                        <text x="550" y="340" text-anchor="middle" style="font-size: 9px;">V1,2,3-T1-H2</text>
-                        <text x="550" y="355" text-anchor="middle" style="font-size: 10px; font-weight: bold;">$18,000 Total</text>
-                    </g>
-                    
-                    <!-- Hop 3 - Split -->
-                    <g id="hop3">
-                        <text x="700" y="200" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Hop 3</text>
-                        <circle cx="700" cy="260" r="20" fill="#9b59b6"/>
-                        <text x="700" y="265" text-anchor="middle" style="font-size: 10px; fill: white;">PURPLE1</text>
-                        <text x="700" y="285" text-anchor="middle" style="font-size: 9px;">Exchange A</text>
-                        <text x="700" y="300" text-anchor="middle" style="font-size: 9px;">$8,000</text>
-                        
-                        <circle cx="700" cy="360" r="20" fill="#3498db"/>
-                        <text x="700" y="365" text-anchor="middle" style="font-size: 10px; fill: white;">BLUE1</text>
-                        <text x="700" y="385" text-anchor="middle" style="font-size: 9px;">Cold Storage</text>
-                        <text x="700" y="400" text-anchor="middle" style="font-size: 9px;">$10,000</text>
-                    </g>
-                    
-                    <!-- Arrows showing flow -->
-                    <defs>
-                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                            <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
-                        </marker>
-                    </defs>
-                    
-                    <!-- Victim to RED connections -->
-                    <line x1="150" y1="240" x2="230" y2="240" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                    <line x1="150" y1="310" x2="230" y2="310" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                    <line x1="150" y1="380" x2="230" y2="380" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                    
-                    <!-- RED to Hop 1 connections -->
-                    <line x1="270" y1="240" x2="380" y2="240" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                    <line x1="270" y1="310" x2="380" y2="310" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                    <line x1="270" y1="380" x2="380" y2="380" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                    
-                    <!-- Hop 1 to Convergence -->
-                    <line x1="420" y1="245" x2="525" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                    <line x1="420" y1="310" x2="525" y2="310" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                    <line x1="420" y1="375" x2="525" y2="320" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                    
-                    <!-- Convergence to terminals -->
-                    <line x1="575" y1="300" x2="680" y2="265" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                    <line x1="575" y1="320" x2="680" y2="355" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                    
-                    <!-- Mathematical Validation Box -->
-                    <g id="validation" transform="translate(750, 450)">
-                        <rect x="0" y="0" width="220" height="120" fill="#e8f5e8" stroke="#27ae60" stroke-width="2" rx="5"/>
-                        <text x="110" y="20" text-anchor="middle" style="font-size: 14px; font-weight: bold;">Mathematical Validation</text>
-                        <text x="10" y="40" style="font-size: 12px;">Root Total: $18,000</text>
-                        <text x="10" y="60" style="font-size: 12px;">Hop 2 Total: $18,000 ✓</text>
-                        <text x="10" y="80" style="font-size: 12px;">Terminal Total: $18,000 ✓</text>
-                        <text x="10" y="100" style="font-size: 10px; fill: #27ae60;">All funds accounted for!</text>
-                    </g>
-                    
-                    <!-- Annotations -->
-                    <text x="500" y="450" text-anchor="middle" style="font-size: 12px; fill: #666;">
-                        Every transaction maintains V-T-H notation, creating an unbreakable audit trail
-                    </text>
-                    <text x="500" y="470" text-anchor="middle" style="font-size: 12px; fill: #666;">
-                        Mathematical validation at each hop ensures no funds are lost or created
-                    </text>
-                    <text x="500" y="490" text-anchor="middle" style="font-size: 12px; fill: #27ae60; font-weight: bold;">
-                        This graph structure is what makes B.A.T.S. evidence legally defensible
-                    </text>
+                <svg id="trainingExampleSVG" width="100%" height="100%">
+                    <!-- Dynamic content will be generated here -->
                 </svg>
             </div>
             
@@ -1172,6 +1110,350 @@
     </div>
 
     <script>
+        // Helper function to format currency
+        function formatCurrency(amount) {
+            return '$' + amount.toLocaleString();
+        }
+        
+        // Helper function to get wallet color
+        function getWalletColor(type) {
+            const colors = {
+                'victim': '#e74c3c',
+                'red': '#e74c3c',
+                'purple': '#9b59b6',
+                'blue': '#3498db',
+                'gray': '#95a5a6',
+                'unknown': '#95a5a6'
+            };
+            return colors[type] || colors.unknown;
+        }
+        
+        // Generate BATS Training Example Visualization
+        function generateBATSTrainingExample() {
+            const svg = document.getElementById('trainingExampleSVG');
+            svg.innerHTML = ''; // Clear existing content
+            
+            // Configuration
+            const walletColumnWidth = 250;
+            const hopLaneWidth = 300;
+            const nodeRadius = 25;
+            const verticalSpacing = 100;
+            const topMargin = 80;
+            const bottomMargin = 120;
+            const leftMargin = 20;
+            
+            // Example data structure
+            const exampleData = {
+                victims: [
+                    { id: 1, wallet: '0xVictim1...ABC', amount: 50000, label: 'Exchange Hack Victim' },
+                    { id: 2, wallet: '0xVictim2...DEF', amount: 75000, label: 'DeFi Protocol Hack' },
+                    { id: 3, wallet: '0xVictim3...GHI', amount: 25000, label: 'Phishing Victim' }
+                ],
+                hops: [
+                    {
+                        number: 1,
+                        entries: [
+                            { from: 'V1', to: '0xHub1...123', amount: 50000, type: 'purple', label: 'Hub Wallet', notation: 'V1-T1-H1' },
+                            { from: 'V2', to: '0xHub1...123', amount: 75000, type: 'purple', label: 'Hub Wallet', notation: 'V2-T1-H1' },
+                            { from: 'V3', to: '0xCold1...456', amount: 25000, type: 'gray', label: 'Cold Storage', notation: 'V3-T1-H1' }
+                        ]
+                    },
+                    {
+                        number: 2,
+                        entries: [
+                            { from: 'V1-T1-H1', to: '0xExchange1...789', amount: 45000, type: 'blue', label: 'Binance', notation: 'V1-T1-H2', entity: true },
+                            { from: 'V1-T1-H1', to: '0xMixer...ABC', amount: 5000, type: 'red', label: 'Mixer', notation: 'V1-T1-H2', writeoff: true },
+                            { from: 'V2-T1-H1', to: '0xExchange2...DEF', amount: 70000, type: 'blue', label: 'Coinbase', notation: 'V2-T1-H2', entity: true },
+                            { from: 'V2-T1-H1', to: '0xUnknown...123', amount: 5000, type: 'red', label: 'Unknown', notation: 'V2-T1-H2', writeoff: true }
+                        ]
+                    },
+                    {
+                        number: 3,
+                        entries: [
+                            { from: 'V1-T1-H2', to: '0xExchange3...GHI', amount: 40000, type: 'blue', label: 'Kraken', notation: 'V1-T1-H3', entity: true },
+                            { from: 'V1-T1-H2', to: '0xCold2...JKL', amount: 5000, type: 'gray', label: 'Cold Storage', notation: 'V1-T1-H3' },
+                            { from: 'V2-T1-H2', to: '0xExchange3...GHI', amount: 70000, type: 'blue', label: 'Kraken', notation: 'V2-T1-H3', entity: true }
+                        ]
+                    }
+                ]
+            };
+            
+            // Calculate dimensions
+            const numHops = exampleData.hops.length;
+            const totalWidth = leftMargin + walletColumnWidth + (numHops * hopLaneWidth) + 50;
+            const totalHeight = topMargin + (8 * verticalSpacing) + bottomMargin;
+            
+            // Set SVG dimensions
+            svg.setAttribute('width', totalWidth);
+            svg.setAttribute('height', totalHeight);
+            svg.setAttribute('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
+            
+            // Add title
+            const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            title.setAttribute('x', totalWidth / 2);
+            title.setAttribute('y', 30);
+            title.setAttribute('text-anchor', 'middle');
+            title.setAttribute('font-size', '24px');
+            title.setAttribute('font-weight', 'bold');
+            title.setAttribute('fill', '#2c3e50');
+            title.textContent = 'BATS Training Example - Multiple Principles';
+            svg.appendChild(title);
+            
+            // Draw hop lanes
+            for (let i = 0; i < numHops; i++) {
+                const laneX = leftMargin + walletColumnWidth + (i * hopLaneWidth);
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', laneX);
+                rect.setAttribute('y', 50);
+                rect.setAttribute('width', hopLaneWidth);
+                rect.setAttribute('height', totalHeight - 70);
+                rect.setAttribute('class', `flow-hop-lane flow-hop-lane-${(i % 5) + 1}`);
+                svg.appendChild(rect);
+                
+                // Hop title
+                const hopTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                hopTitle.setAttribute('x', laneX + hopLaneWidth / 2);
+                hopTitle.setAttribute('y', 75);
+                hopTitle.setAttribute('text-anchor', 'middle');
+                hopTitle.setAttribute('class', 'flow-hop-title');
+                hopTitle.textContent = `HOP ${i + 1}`;
+                svg.appendChild(hopTitle);
+            }
+            
+            // Draw victim wallets
+            let yPosition = topMargin + 50;
+            exampleData.victims.forEach((victim, idx) => {
+                // Red circle
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', leftMargin + 40);
+                circle.setAttribute('cy', yPosition);
+                circle.setAttribute('r', nodeRadius);
+                circle.setAttribute('class', 'flow-wallet-node');
+                circle.setAttribute('fill', '#e74c3c');
+                svg.appendChild(circle);
+                
+                // Victim number
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', leftMargin + 40);
+                label.setAttribute('y', yPosition + 5);
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('fill', 'white');
+                label.setAttribute('font-weight', 'bold');
+                label.textContent = victim.id;
+                svg.appendChild(label);
+                
+                // Description
+                const desc = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                desc.setAttribute('x', leftMargin + 75);
+                desc.setAttribute('y', yPosition + 5);
+                desc.setAttribute('font-size', '12px');
+                desc.setAttribute('fill', '#666');
+                desc.textContent = victim.label;
+                svg.appendChild(desc);
+                
+                yPosition += verticalSpacing;
+            });
+            
+            // Add legend
+            const legendY = yPosition + 20;
+            const legendItems = [
+                { color: '#e74c3c', label: 'RED - Victim/High Risk' },
+                { color: '#9b59b6', label: 'PURPLE - Hub Wallet' },
+                { color: '#3498db', label: 'BLUE - Exchange/Service' },
+                { color: '#95a5a6', label: 'GRAY - Cold Storage' }
+            ];
+            
+            legendItems.forEach((item, idx) => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', leftMargin + 40);
+                circle.setAttribute('cy', legendY + (idx * 30));
+                circle.setAttribute('r', 10);
+                circle.setAttribute('fill', item.color);
+                svg.appendChild(circle);
+                
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', leftMargin + 60);
+                text.setAttribute('y', legendY + (idx * 30) + 5);
+                text.setAttribute('font-size', '12px');
+                text.setAttribute('fill', '#2c3e50');
+                text.textContent = item.label;
+                svg.appendChild(text);
+            });
+            
+            // Draw hop wallets and connections
+            const walletPositions = new Map();
+            let currentY = topMargin + 50;
+            
+            // Position all wallets
+            exampleData.hops.forEach((hop, hopIdx) => {
+                const uniqueWallets = new Map();
+                hop.entries.forEach(entry => {
+                    if (!entry.writeoff && !uniqueWallets.has(entry.to)) {
+                        uniqueWallets.set(entry.to, { type: entry.type, label: entry.label, entity: entry.entity });
+                    }
+                });
+                
+                uniqueWallets.forEach((wallet, address) => {
+                    if (!walletPositions.has(address)) {
+                        walletPositions.set(address, { y: currentY, ...wallet });
+                        currentY += verticalSpacing * 0.8;
+                    }
+                });
+            });
+            
+            // Draw wallet nodes
+            walletPositions.forEach((wallet, address) => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', leftMargin + walletColumnWidth - 50);
+                circle.setAttribute('cy', wallet.y);
+                circle.setAttribute('r', nodeRadius);
+                circle.setAttribute('class', 'flow-wallet-node');
+                circle.setAttribute('fill', getWalletColor(wallet.type));
+                svg.appendChild(circle);
+                
+                // Wallet type icon/number
+                const icon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                icon.setAttribute('x', leftMargin + walletColumnWidth - 50);
+                icon.setAttribute('y', wallet.y + 5);
+                icon.setAttribute('text-anchor', 'middle');
+                icon.setAttribute('fill', 'white');
+                icon.setAttribute('font-weight', 'bold');
+                icon.textContent = wallet.entity ? 'E' : wallet.type === 'gray' ? 'C' : 'H';
+                svg.appendChild(icon);
+                
+                // Wallet label
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', leftMargin + walletColumnWidth - 15);
+                label.setAttribute('y', wallet.y + 5);
+                label.setAttribute('font-size', '12px');
+                label.setAttribute('fill', '#2c3e50');
+                label.setAttribute('font-weight', wallet.entity ? 'bold' : 'normal');
+                label.textContent = wallet.label;
+                svg.appendChild(label);
+            });
+            
+            // Draw connections and amounts
+            exampleData.hops.forEach((hop, hopIdx) => {
+                const laneX = leftMargin + walletColumnWidth + (hopIdx * hopLaneWidth);
+                const laneCenterX = laneX + hopLaneWidth / 2;
+                let hopTotal = 0;
+                let hopWriteoffs = 0;
+                
+                hop.entries.forEach(entry => {
+                    let sourceY;
+                    
+                    // Find source position
+                    if (entry.from.startsWith('V')) {
+                        const victimId = parseInt(entry.from.substring(1));
+                        sourceY = topMargin + 50 + ((victimId - 1) * verticalSpacing);
+                    } else {
+                        // Find from previous hop
+                        for (let i = hopIdx - 1; i >= 0; i--) {
+                            const prevHop = exampleData.hops[i];
+                            const prevEntry = prevHop.entries.find(e => e.notation === entry.from);
+                            if (prevEntry) {
+                                sourceY = walletPositions.get(prevEntry.to)?.y;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (entry.writeoff) {
+                        hopWriteoffs += entry.amount;
+                        
+                        // Draw writeoff notation
+                        const writeoffText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        writeoffText.setAttribute('x', laneCenterX);
+                        writeoffText.setAttribute('y', sourceY);
+                        writeoffText.setAttribute('text-anchor', 'middle');
+                        writeoffText.setAttribute('font-size', '12px');
+                        writeoffText.setAttribute('fill', '#e74c3c');
+                        writeoffText.setAttribute('font-weight', 'bold');
+                        writeoffText.textContent = `Write-off: ${formatCurrency(entry.amount)} (${entry.label})`;
+                        svg.appendChild(writeoffText);
+                    } else {
+                        hopTotal += entry.amount;
+                        const destY = walletPositions.get(entry.to)?.y;
+                        
+                        if (sourceY && destY) {
+                            // Draw line
+                            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                            line.setAttribute('x1', entry.from.startsWith('V') ? leftMargin + 65 : leftMargin + walletColumnWidth - 25);
+                            line.setAttribute('y1', sourceY);
+                            line.setAttribute('x2', laneCenterX);
+                            line.setAttribute('y2', destY);
+                            line.setAttribute('class', 'flow-connection-line');
+                            svg.appendChild(line);
+                            
+                            // Amount on line
+                            const amountText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                            amountText.setAttribute('x', laneCenterX - 10);
+                            amountText.setAttribute('y', destY - 5);
+                            amountText.setAttribute('text-anchor', 'end');
+                            amountText.setAttribute('class', 'flow-thread-amount');
+                            amountText.textContent = formatCurrency(entry.amount);
+                            svg.appendChild(amountText);
+                        }
+                    }
+                });
+                
+                // Draw hop totals
+                const sumY = totalHeight - 60;
+                const sumText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                sumText.setAttribute('x', laneCenterX);
+                sumText.setAttribute('y', sumY);
+                sumText.setAttribute('text-anchor', 'middle');
+                sumText.setAttribute('class', 'flow-sum-text');
+                sumText.textContent = formatCurrency(hopTotal);
+                svg.appendChild(sumText);
+                
+                if (hopWriteoffs > 0) {
+                    const writeoffSumText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    writeoffSumText.setAttribute('x', laneCenterX);
+                    writeoffSumText.setAttribute('y', sumY + 20);
+                    writeoffSumText.setAttribute('text-anchor', 'middle');
+                    writeoffSumText.setAttribute('font-size', '12px');
+                    writeoffSumText.setAttribute('fill', '#e74c3c');
+                    writeoffSumText.textContent = `WO: (${formatCurrency(hopWriteoffs)})`;
+                    svg.appendChild(writeoffSumText);
+                }
+                
+                // Sum label
+                const sumLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                sumLabel.setAttribute('x', laneCenterX);
+                sumLabel.setAttribute('y', sumY - 20);
+                sumLabel.setAttribute('text-anchor', 'middle');
+                sumLabel.setAttribute('font-size', '14px');
+                sumLabel.setAttribute('fill', '#666');
+                sumLabel.textContent = 'SUM:';
+                svg.appendChild(sumLabel);
+            });
+            
+            // Add explanatory notes
+            const notesY = totalHeight - 30;
+            const notes = [
+                'Hub Wallets (Purple): Consolidate funds from multiple sources',
+                'Cold Storage (Gray): Long-term storage, harder to trace',
+                'Exchanges (Blue): Known entities, potential recovery points',
+                'Write-offs (Red): Lost/untraceable funds, reduce ART'
+            ];
+            
+            notes.forEach((note, idx) => {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', leftMargin);
+                text.setAttribute('y', notesY + (idx * 15));
+                text.setAttribute('font-size', '11px');
+                text.setAttribute('fill', '#666');
+                text.textContent = `• ${note}`;
+                svg.appendChild(text);
+            });
+        }
+        
+        // Generate the training example when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            generateBATSTrainingExample();
+        });
+        
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
