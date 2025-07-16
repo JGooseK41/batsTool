@@ -1570,6 +1570,10 @@
                 <div id="victims-tab" class="tab-content">
                     <div class="section-title">Step 2: Victim Transactions</div>
                     
+                    <div id="addVictimSection" style="text-align: center; margin: 30px 0;">
+                        <!-- Add New Victim button will be shown conditionally -->
+                    </div>
+                    
                     <!-- Enhanced Instructions -->
                     <div id="victimInstructions" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #2196f3; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
                         <h3 style="color: #1976d2; margin-bottom: 15px;">Document All Victim Transactions</h3>
@@ -1599,12 +1603,9 @@
                     </div>
                     
                     <div id="victimsList"></div>
-                    <div id="addVictimSection" style="text-align: center; margin: 30px 0;">
-                        <!-- Add New Victim button will be shown conditionally -->
-                    </div>
                     
                     <!-- Generate Root Total Section -->
-                    <div id="generateRootSection" style="display: none;">
+                    <div id="generateRootSection" style="display: none; max-width: 800px; margin: 0 auto;">
                         <div class="generate-root-section">
                             <h3>Ready to Generate Root Total?</h3>
                             <p>You've entered victim transaction data. The next step is to establish your investigation baseline by generating and confirming your Root Total.</p>
@@ -2049,17 +2050,33 @@
     <div id="smartAllocationModal" class="modal">
         <div class="modal-content" style="max-width: 700px;">
             <div class="modal-header">
-                <h2>Smart Amount Allocation</h2>
-                <p>Automatically distribute amounts across multiple source threads</p>
+                <h2>🎯 Smart Amount Allocation</h2>
+                <p>Automatically calculate how to split a transaction amount across available funds</p>
+            </div>
+            
+            <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h4 style="color: #1976d2; margin-bottom: 15px;">📚 What is this for?</h4>
+                <p style="margin-bottom: 15px; font-size: 16px;">
+                    When you see a transaction on the blockchain (e.g., 50 BTC sent), but you have funds from multiple sources 
+                    (e.g., 30 BTC from one victim, 40 BTC from another), this tool helps you determine which funds were used.
+                </p>
+                <div style="background: white; border-radius: 6px; padding: 15px; margin-top: 10px;">
+                    <strong>Example:</strong> If the scammer has 30 BTC from Victim 1 and 40 BTC from Victim 2, and sends 50 BTC:
+                    <ul style="margin: 10px 0 0 20px;">
+                        <li>The tool will automatically use all 30 BTC from Victim 1</li>
+                        <li>Then take 20 BTC from Victim 2</li>
+                        <li>Following FIFO (First In, First Out) principle</li>
+                    </ul>
+                </div>
             </div>
             
             <div style="background: #e8f5e8; border: 2px solid #27ae60; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                <h4 style="color: #27ae60; margin-bottom: 15px;">How it works:</h4>
-                <p style="margin-bottom: 10px;">Enter the total amount you need to allocate, and the system will automatically:</p>
+                <h4 style="color: #27ae60; margin-bottom: 15px;">🔧 How it works:</h4>
+                <p style="margin-bottom: 10px;">Enter the total amount from the blockchain transaction, and the system will:</p>
                 <ol style="margin-left: 20px; color: #2c3e50;">
-                    <li>Use available source threads in chronological order</li>
-                    <li>Deplete each source before moving to the next</li>
-                    <li>Show you exactly how the amount will be distributed</li>
+                    <li>Use available funds in chronological order (oldest first)</li>
+                    <li>Fully deplete each source before using the next</li>
+                    <li>Show you exactly how the amount is distributed across sources</li>
                 </ol>
                 <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 6px; font-family: monospace; font-size: 12px;">
                     <div style="margin-bottom: 5px;"><strong>Example:</strong> You need 20 BTC</div>
@@ -3452,7 +3469,10 @@ function renderHopEntry(entry) {
                         `<br><span style="background: #27ae60; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">✓ ${parseFloat(entry.amount).toLocaleString()} ${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency || ''} counted</span>` : 
                         `<br><span style="background: #e74c3c; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">⚠️ Entry not counted - ${parseFloat(entry.amount) > 0 ? 'check entry type' : 'add amount'}</span>`}
                 </div>
-                <button class="btn btn-danger" onclick="removeHopEntry(${entry.hopId}, ${entry.id})">Remove</button>
+                <div>
+                    ${isTrace ? `<button class="btn btn-primary" onclick="reopenHopWizard(${entry.hopId}, ${entry.id})" style="margin-right: 10px;">🔄 Reopen Wizard</button>` : ''}
+                    <button class="btn btn-danger" onclick="removeHopEntry(${entry.hopId}, ${entry.id})">Remove</button>
+                </div>
             </div>
             
             ${isTrace ? `
@@ -3569,17 +3589,17 @@ function renderHopEntry(entry) {
                         class="btn btn-confirm"
                         onclick="openSmartAllocationModal(${entry.hopId}, ${entry.id})"
                         style="background: linear-gradient(135deg, #27ae60 0%, #219a52 100%); padding: 12px 30px;">
-                    🎯 Smart Amount Allocation
+                    🎯 Smart Amount Allocation - Auto-Calculate Source Usage
                 </button>
                 <div style="font-size: 11px; color: #666; margin-top: 8px;">
                     ${availableSourceThreads.length > 1 
-                        ? `Automatically distribute amounts across ${availableSourceThreads.length} available source threads`
-                        : `Allocate partial or full amount from source thread`
+                        ? `You have ${availableSourceThreads.length} fund sources. This tool helps split the transaction amount across them.`
+                        : `Calculate how much of the available ${availableSourceThreads[0]?.availableAmount.toLocaleString()} ${availableSourceThreads[0]?.currency} to use`
                     }
                 </div>
                 <div style="background: #e8f5e8; border: 1px solid #27ae60; border-radius: 4px; padding: 8px; margin-top: 8px; font-size: 11px;">
-                    <strong>💡 Use this when:</strong> You want to trace a specific total amount and need the tool to automatically 
-                    calculate how much to take from each available source thread.
+                    <strong>💡 When to use:</strong> You know the transaction amount from the blockchain, but need help determining 
+                    which victim funds were used. The tool follows FIFO (First In, First Out) to match real blockchain behavior.
                 </div>
             </div>
             ` : ''}
@@ -5897,6 +5917,14 @@ function updateFormFieldsFromInvestigation() {
             ${!isMinimized ? `
                 <button class="btn btn-add-transaction" onclick="addTransaction(${victim.id})">+ Add Transaction</button>
                 <button class="btn btn-secondary" onclick="openBulkTransactionModal(${victim.id})">📋 Bulk Add Transactions</button>
+                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                    <button class="btn btn-success" onclick="completeVictim(${victim.id})" 
+                        ${validTransactions === 0 ? 'disabled' : ''} 
+                        title="${validTransactions === 0 ? 'Add at least one valid transaction first' : 'Mark this victim as complete'}"
+                        style="padding: 12px 30px; font-size: 16px;">
+                        ✓ Complete Victim
+                    </button>
+                </div>
             ` : `
                 <div style="padding: 15px; background: white; border-radius: 6px; margin-top: 10px;">
                     <h4 style="margin-bottom: 10px; color: #2c3e50;">Transaction Summary:</h4>
@@ -8372,6 +8400,10 @@ function exportUniversalWalletIndex() {
                                                 style="padding: 12px 24px; background: #3498db; color: white; font-size: 16px;">
                                             + Add Transaction to This Hop
                                         </button>
+                                        <button class="btn btn-secondary" onclick="viewAvailableThreads(${hop.id})" 
+                                                style="padding: 12px 24px; font-size: 16px;">
+                                            📊 View Available Threads
+                                        </button>
                                         <button class="btn btn-confirm" onclick="finalizeHop(${hop.id})" 
                                                 style="margin-left: auto; background: #27ae60; padding: 10px 30px;">
                                             Finalize Hop ${hop.hopNumber}
@@ -8930,6 +8962,88 @@ function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemaini
 function closeFinalizationModal() {
     const modal = document.getElementById('hopFinalizationModal');
     if (modal) modal.remove();
+}
+
+function viewAvailableThreads(hopId) {
+    const hop = investigation.hops.find(h => h.id === hopId);
+    if (!hop) return;
+    
+    const availableThreads = getAvailableSourcesForHop(hop.hopNumber, null);
+    
+    const modalHTML = `
+        <div id="availableThreadsModal" class="modal" style="display: block; z-index: 9999;">
+            <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>📊 Available Threads for Hop ${hop.hopNumber}</h2>
+                    <span class="close" onclick="document.getElementById('availableThreadsModal').remove()">&times;</span>
+                </div>
+                <div style="padding: 20px;">
+                    ${availableThreads.length === 0 ? `
+                        <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; text-align: center;">
+                            <p style="margin: 0; color: #856404;">No available threads for this hop.</p>
+                            <small>Threads become available from previous hop entries that have been traced.</small>
+                        </div>
+                    ` : `
+                        <div style="background: #e8f4f8; border: 1px solid #3498db; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                            <p style="margin: 0; color: #2c3e50;">
+                                <strong>Available threads:</strong> These are the funds you can trace in this hop.
+                                Each thread represents a transaction output from a previous hop that hasn't been fully assigned yet.
+                            </p>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                    <th style="padding: 12px; text-align: left;">Thread ID</th>
+                                    <th style="padding: 12px; text-align: left;">Source</th>
+                                    <th style="padding: 12px; text-align: right;">Available Amount</th>
+                                    <th style="padding: 12px; text-align: left;">Currency</th>
+                                    <th style="padding: 12px; text-align: left;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${availableThreads.map(thread => {
+                                    const isFullyAssigned = thread.availableAmount === 0;
+                                    return `
+                                        <tr style="border-bottom: 1px solid #dee2e6;">
+                                            <td style="padding: 10px; font-family: monospace;">${thread.threadId}</td>
+                                            <td style="padding: 10px;">${thread.displayText}</td>
+                                            <td style="padding: 10px; text-align: right; font-weight: bold; color: ${isFullyAssigned ? '#dc3545' : '#28a745'};">
+                                                ${thread.availableAmount.toLocaleString()}
+                                            </td>
+                                            <td style="padding: 10px;">${thread.currency}</td>
+                                            <td style="padding: 10px;">
+                                                ${isFullyAssigned ? 
+                                                    '<span style="color: #dc3545;">✗ Fully Assigned</span>' : 
+                                                    '<span style="color: #28a745;">✓ Available</span>'
+                                                }
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                            <h4 style="margin-bottom: 10px;">Summary by Currency:</h4>
+                            ${Object.entries(availableThreads.reduce((acc, thread) => {
+                                if (!acc[thread.currency]) acc[thread.currency] = 0;
+                                acc[thread.currency] += thread.availableAmount;
+                                return acc;
+                            }, {})).map(([currency, total]) => `
+                                <div style="margin: 5px 0;">
+                                    <strong>${currency}:</strong> ${total.toLocaleString()} available
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button class="btn btn-primary" onclick="document.getElementById('availableThreadsModal').remove()">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
 function finalizeHop(hopId) {
@@ -11420,17 +11534,17 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                         class="btn btn-confirm"
                         onclick="openSmartAllocationModal(${entry.hopId}, ${entry.id})"
                         style="background: linear-gradient(135deg, #27ae60 0%, #219a52 100%); padding: 12px 30px;">
-                    🎯 Smart Amount Allocation
+                    🎯 Smart Amount Allocation - Auto-Calculate Source Usage
                 </button>
                 <div style="font-size: 11px; color: #666; margin-top: 8px;">
                     ${availableSourceThreads.length > 1 
-                        ? `Automatically distribute amounts across ${availableSourceThreads.length} available source threads`
-                        : `Allocate partial or full amount from source thread`
+                        ? `You have ${availableSourceThreads.length} fund sources. This tool helps split the transaction amount across them.`
+                        : `Calculate how much of the available ${availableSourceThreads[0]?.availableAmount.toLocaleString()} ${availableSourceThreads[0]?.currency} to use`
                     }
                 </div>
                 <div style="background: #e8f5e8; border: 1px solid #27ae60; border-radius: 4px; padding: 8px; margin-top: 8px; font-size: 11px;">
-                    <strong>💡 Use this when:</strong> You want to trace a specific total amount and need the tool to automatically 
-                    calculate how much to take from each available source thread.
+                    <strong>💡 When to use:</strong> You know the transaction amount from the blockchain, but need help determining 
+                    which victim funds were used. The tool follows FIFO (First In, First Out) to match real blockchain behavior.
                 </div>
             </div>
             ` : ''}
@@ -12212,6 +12326,37 @@ function closeHopWizard() {
     window.hopWizardData = null;
 }
 
+function reopenHopWizard(hopId, entryId) {
+    const hop = investigation.hops.find(h => h.id === hopId);
+    const entry = hop?.entries.find(e => e.id === entryId);
+    if (!hop || !entry) return;
+    
+    // Initialize wizard data with existing entry data
+    window.hopWizardData = {
+        hopId: hopId,
+        entryId: entryId,  // Store the entry ID for updating
+        hopNumber: hop.hopNumber,
+        selectedThreads: entry.multipleSourceThreads || (entry.sourceThreadId ? [entry.sourceThreadId] : []),
+        allocations: entry.individualSourceAssignments || {},
+        step: 1,
+        txHash: entry.txHash || '',
+        entryMode: 'lookup',
+        manualData: {
+            fromWallet: entry.fromWallet || '',
+            toWallet: entry.toWallet || '',
+            timestamp: entry.timestamp || new Date().toISOString().slice(0, 16)
+        },
+        isEditMode: true  // Flag to indicate we're editing an existing entry
+    };
+    
+    // If entry has a single source thread and amount, set the allocation
+    if (entry.sourceThreadId && !entry.multipleSourceThreads) {
+        window.hopWizardData.allocations[entry.sourceThreadId] = parseFloat(entry.amount) || 0;
+    }
+    
+    openHopEntryWizard(hopId);
+}
+
 function skipHopWizard() {
     closeHopWizard();
     createHopEntryDirectly(window.hopWizardData.hopId, 'trace');
@@ -12543,7 +12688,52 @@ function createHopEntryFromWizard() {
         timestamp = wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '';
     }
     
-    // Create entry with wizard data
+    // Check if we're in edit mode
+    if (wizardData.isEditMode && wizardData.entryId) {
+        // Update existing entry
+        const existingEntry = hop.entries.find(e => e.id === wizardData.entryId);
+        if (existingEntry) {
+            saveUndoState(`Update trace entry in Hop ${hop.hopNumber}`);
+            
+            // Update the existing entry
+            existingEntry.txHash = wizardData.txHash;
+            existingEntry.fromWallet = fromWallet;
+            existingEntry.toWallet = toWallet;
+            existingEntry.timestamp = timestamp;
+            existingEntry.amount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0).toString();
+            existingEntry.sourceThreadId = wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '';
+            existingEntry.multipleSourceThreads = wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [];
+            existingEntry.individualSourceAssignments = wizardData.selectedThreads.length > 1 ? wizardData.allocations : {};
+            
+            // Update currency if single source
+            if (wizardData.selectedThreads.length === 1) {
+                const source = getAvailableSourcesForHop(hop.hopNumber, null).find(t => t.threadId === wizardData.selectedThreads[0]);
+                if (source) {
+                    existingEntry.currency = source.currency;
+                }
+            }
+            
+            closeHopWizard();
+            renderHops();
+            saveToStorage();
+            
+            // Scroll to the updated entry
+            setTimeout(() => {
+                const entryElement = document.getElementById(`entry_${hop.id}_${existingEntry.id}`);
+                if (entryElement) {
+                    entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    entryElement.style.border = '3px solid #27ae60';
+                    setTimeout(() => {
+                        entryElement.style.border = '';
+                    }, 2000);
+                }
+            }, 100);
+            
+            return;
+        }
+    }
+    
+    // Create new entry with wizard data
     const entry = {
         id: hop.entries.length + 1,
         hopId: wizardData.hopId,
@@ -15172,6 +15362,10 @@ function clearAllAssignments(hopId, entryId) {
 }
 
 // Blockchain API Integration Functions
+function formatDatetimeLocal(timestamp) {
+    return new Date(timestamp).toISOString().slice(0, 16);
+}
+
 function detectBlockchainFromHash(hash) {
     const detectedDiv = document.getElementById('detectedBlockchain');
     const chainSelector = document.getElementById('chainSelector');
@@ -16313,7 +16507,14 @@ async function lookupHopTransaction(hopId, entryId) {
             const fromWalletField = document.querySelector(`input[onchange*="updateHopEntry(${hopId}, ${entryId}, 'fromWallet'"]`);
             if (fromWalletField) fromWalletField.value = txData.from;
             
-            alert(` Transaction data loaded:\n\nFrom: ${txData.from}\nTo: ${txData.to}\nAmount: ${txData.amount} ${txData.currency}\nTime: ${new Date(txData.time).toLocaleString()}`);
+            let alertMessage = ` Transaction data loaded:\n\nFrom: ${txData.from}\nTo: ${txData.to}\nAmount: ${txData.amount} ${txData.currency}\nTime: ${new Date(txData.time).toLocaleString()}`;
+            
+            // Add warning if timestamp is not from blockchain
+            if (txData.hasRealTimestamp === false) {
+                alertMessage += '\n\n⚠️ WARNING: Could not retrieve actual transaction timestamp from blockchain. Please manually verify and update the date/time field!';
+            }
+            
+            alert(alertMessage);
         }
     } catch (error) {
         console.error('Lookup error:', error);
