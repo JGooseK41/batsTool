@@ -3,19 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-16 15:34)
+## Latest Commit (Auto-updated: 2025-07-16 16:17)
 
-**Commit:** c4f08907cc147b0813549e63d49b2f6cdb508464
+**Commit:** 29e2b27521e364ed3b681f8df8587833798809ec
 **Author:** Your Name
-**Message:** Reorganize case setup workflow
+**Message:** Major UI/UX improvements and token transfer fix
 
-- Move case details card to dedicated 'Case Details' tab
-- Add case synopsis field to welcome screen quick start form
-- Remove duplicate setup card from main area
-- Add investigation progress statistics to Case Details tab
-- Make welcome screen the primary entry point for new investigations
-- Clean up obsolete setup card functions
-- Improve overall workflow by eliminating duplicate data entry
+- Remove all emojis for professional appearance
+- Center 'Add New Victim' and 'Generate Root Total' buttons
+- Remove confusing 'Next: Review Wallet Index' button
+- Make 'Start Hop 1' button prominent with pulse animation
+- Reduce Investigation Dashboard visual prominence
+- Clarify terminology: 'Add Transaction to This Hop' instead of 'Add New Entry'
+- Update entry types to be clearer (Outgoing Transaction, Dead End, Still in Wallet)
+- Fix API lookup to properly detect and select ERC-20 token transfers
+- Add transfer selection UI when multiple transfers detected in transaction
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -23,15 +25,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  50 +++++-----
- index.html | 321 ++++++++++++++++++++++++++++++-------------------------------
- 2 files changed, 183 insertions(+), 188 deletions(-)
+ CLAUDE.md  |  31 ++--
+ index.html | 595 ++++++++++++++++++++++++++++++++++---------------------------
+ 2 files changed, 347 insertions(+), 279 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c4f0890 Reorganize case setup workflow (0 seconds ago)
-- 260d643 Enhance welcome screen and onboarding workflow (8 minutes ago)
+- 29e2b27 Major UI/UX improvements and token transfer fix (0 seconds ago)
+- c4f0890 Reorganize case setup workflow (43 minutes ago)
+- 260d643 Enhance welcome screen and onboarding workflow (52 minutes ago)
 - fdb325b Enhance hop entry wizard with manual entry and better control options (5 days ago)
 - 2ccef07 Improve hop progression clarity and finalization UX (5 days ago)
 - 9e8eb55 Fix persistent JavaScript errors in hop creation and wallet index (5 days ago)
@@ -39,7 +42,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 85941f5 Remove inaccurate graph from training page (5 days ago)
 - 17741d5 Fix training visualization layout - clean structured flow (6 days ago)
 - 9fbbc33 Add dynamic BATS training visualization to training page (6 days ago)
-- 1cfb83b Add comprehensive BATS training example visualization (6 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

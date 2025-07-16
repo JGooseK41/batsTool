@@ -1040,13 +1040,13 @@
                 </button>
                 <div id="fileDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: white; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; min-width: 200px;">
                     <button onclick="saveInvestigation(); toggleFileMenu();" style="display: block; width: 100%; padding: 12px 20px; border: none; background: none; text-align: left; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
-                        Save .bats File
+                        💾 Save .bats File
                     </button>
                     <button onclick="handleLoadFile(); toggleFileMenu();" style="display: block; width: 100%; padding: 12px 20px; border: none; background: none; text-align: left; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
-                        Load .bats File
+                        📂 Load .bats File
                     </button>
                     <button onclick="document.getElementById('excelInput').click(); toggleFileMenu();" style="display: block; width: 100%; padding: 12px 20px; border: none; background: none; text-align: left; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
-                        Import Excel Traces
+                        📊 Import Excel Traces
                     </button>
                 </div>
             </div>
@@ -1102,15 +1102,15 @@
                         <button id="undoButton" class="btn" onclick="performUndo()" disabled 
                                 style="background: #95a5a6; padding: 8px 16px;" 
                                 title="No actions to undo">
-                            Undo
+                            ↶ Undo
                         </button>
                         <button class="btn" onclick="showNavigationMenu()" 
                                 style="background: #3498db; padding: 8px 16px;">
-                            Navigate
+                            📍 Navigate
                         </button>
                         <a href="training.html" target="_blank" class="btn" 
                            style="background: #27ae60; padding: 8px 16px; text-decoration: none; display: inline-block;">
-                            Training Materials
+                            📚 Training Materials
                         </a>
                     </div>
                     <div id="breadcrumbs" style="font-size: 14px; color: #666;">
@@ -1599,8 +1599,8 @@
                     </div>
                     
                     <div id="victimsList"></div>
-                    <div style="text-align: center; margin: 30px 0;">
-                        <button class="btn" onclick="addVictim()" style="font-size: 1.1rem; padding: 12px 30px; background: #ff9800; color: white;">+ Add New Victim</button>
+                    <div id="addVictimSection" style="text-align: center; margin: 30px 0;">
+                        <!-- Add New Victim button will be shown conditionally -->
                     </div>
                     
                     <!-- Generate Root Total Section -->
@@ -5776,16 +5776,16 @@ function updateFormFieldsFromInvestigation() {
         ).length;
         
         victimDiv.innerHTML = `
-            <div class="trace-header" style="background: ${isMinimized ? '#e8f4f8' : '#f8f9fa'};">
-                <h3>Victim ${victim.id} ${isMinimized ? `- ${validTransactions} transactions, Total: ${formatNumber(totalLosses)} ${victim.transactions[0]?.currency || 'USD'}` : ''}</h3>
+            <div class="trace-header" style="background: ${isMinimized ? '#e8f5e9' : '#fff3e0'}; border: 2px solid ${isMinimized ? '#4caf50' : '#ff9800'};">
+                <h3>Victim ${victim.id} ${isMinimized ? `✓ - ${validTransactions} transaction${validTransactions !== 1 ? 's' : ''}, Total Loss: ${formatNumber(totalLosses)} ${victim.transactions[0]?.currency || 'USD'}` : ''}</h3>
                 <div>
                     ${!isMinimized ? `<button class="btn btn-success" onclick="completeVictim(${victim.id})" 
                         ${validTransactions === 0 ? 'disabled' : ''} 
-                        title="${validTransactions === 0 ? 'Add at least one valid transaction first' : 'Complete and minimize this victim'}">
-                        ✓ Complete
+                        title="${validTransactions === 0 ? 'Add at least one valid transaction first' : 'Mark this victim as complete'}">
+                        ✓ Complete Victim
                     </button>` : 
                     `<button class="btn btn-secondary" onclick="reopenVictim(${victim.id})">
-                        ✏️ Edit
+                        Edit
                     </button>`}
                     <button class="btn btn-danger" onclick="removeVictim(${victim.id})">Remove</button>
                 </div>
@@ -5932,6 +5932,33 @@ function updateFormFieldsFromInvestigation() {
         `;
         container.appendChild(victimDiv);
     });
+    
+    // Update Add New Victim button visibility
+    const addVictimSection = document.getElementById('addVictimSection');
+    if (addVictimSection) {
+        // Check if there are any incomplete victims
+        const hasIncompleteVictim = investigation.victims.some(v => !v.isCompleted);
+        
+        if (investigation.victims.length === 0 || !hasIncompleteVictim) {
+            // Show the Add New Victim button
+            addVictimSection.innerHTML = `
+                <button class="btn" onclick="addVictim()" 
+                        style="font-size: 1rem; padding: 10px 25px; background: #3498db; color: white;">
+                    + Add ${investigation.victims.length > 0 ? 'Another' : 'New'} Victim
+                </button>
+            `;
+        } else {
+            // Show a message that current victim needs to be completed
+            addVictimSection.innerHTML = `
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; max-width: 600px; margin: 0 auto;">
+                    <p style="margin: 0; color: #856404;">
+                        <strong>Complete the current victim before adding another.</strong><br>
+                        <small>Click "Complete Victim" after adding all transactions for this victim.</small>
+                    </p>
+                </div>
+            `;
+        }
+    }
     
     updateGenerateRootSection();
 }
@@ -11660,17 +11687,17 @@ function showAddEntryWizard(hopId) {
     
     const entryTypeDescriptions = {
         'trace': {
-            icon: '',
+            icon: '🔍',
             description: 'Outgoing Transaction - Track where funds moved to another wallet',
             color: '#3498db'
         },
         'writeoff': {
-            icon: '',
+            icon: '❌',
             description: 'Dead End - Funds went to mixer, DeFi, or cannot be traced further',
             color: '#e74c3c'
         },
         'cold_storage': {
-            icon: '',
+            icon: '🧊',
             description: 'Still in Wallet - Funds haven\'t moved yet (mark as cold storage)',
             color: '#00bcd4'
         }
@@ -13297,6 +13324,16 @@ function updateWriteoffAmount(hopId, entryId, amount) {
         function completeVictim(victimId) {
             const victim = investigation.victims.find(v => v.id === victimId);
             if (!victim) return;
+            
+            // Validate victim has at least one transaction
+            const validTransactions = victim.transactions.filter(t => 
+                parseFloat(t.amount) > 0 && t.receivingWallet && t.receivingWallet.trim() !== ''
+            );
+            
+            if (validTransactions.length === 0) {
+                alert('Please add at least one transaction with amount and receiving wallet before completing this victim.');
+                return;
+            }
             
             // Validate all transactions have required data
             const incompleteTransactions = victim.transactions.filter(t => 
@@ -16054,8 +16091,29 @@ async function lookupEthereumTransaction(txHash) {
                 console.log('No token transfers found');
             }
             
-            // Parse the response
-            const txData = config.parseResponse(data, tokenData);
+            // Get block timestamp
+            let blockTimestamp = null;
+            if (data.result && data.result.blockNumber) {
+                try {
+                    const blockUrl = corsEnabled ?
+                        corsProxyUrl + `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}` :
+                        `${config.blockApiUrl}${data.result.blockNumber}&boolean=true&apikey=${apiKey}`;
+                    
+                    const blockResponse = await fetch(blockUrl);
+                    if (blockResponse.ok) {
+                        const blockData = await blockResponse.json();
+                        if (blockData && blockData.result && blockData.result.timestamp) {
+                            blockTimestamp = parseInt(blockData.result.timestamp, 16) * 1000;
+                            console.log('Got block timestamp:', new Date(blockTimestamp).toISOString());
+                        }
+                    }
+                } catch (err) {
+                    console.log('Failed to fetch block timestamp:', err);
+                }
+            }
+            
+            // Parse the response with blockTimestamp
+            const txData = config.parseResponse(data, tokenData, blockTimestamp);
             if (txData) {
                 txData.blockchain = config.name;
                 txData.rawHash = txHash;
