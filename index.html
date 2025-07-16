@@ -683,6 +683,22 @@
         .wallet-display.purple { background: #f3e5f5; border-color: #9b59b6; color: #8e44ad; }
         .wallet-display.gray { background: #f5f5f5; border-color: #95a5a6; color: #7f8c8d; }
         .wallet-display.green { background: #e8f5e8; border-color: #27ae60; color: #229954; }
+        
+        /* Pulse animation for call-to-action buttons */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 20px 10px rgba(255, 152, 0, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+            }
+        }
 
         @media (max-width: 1200px) {
             .main-content {
@@ -1080,8 +1096,8 @@
         <div id="caseDetailsCard" class="case-details-card" style="background: linear-gradient(135deg, #fff5e6 0%, #ffe4cc 100%); border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 2px solid #ff9800; transition: all 0.3s ease;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div>
-                    <div class="section-title" style="margin-bottom: 5px; color: #e65100;">Step 1: Investigation Setup</div>
-                    <div style="font-size: 12px; color: #666;">Complete all fields to begin your investigation</div>
+                    <div class="section-title" style="margin-bottom: 5px; color: #e65100;">Investigation Setup</div>
+                    <div id="setupStatusText" style="font-size: 12px; color: #666;">Complete all fields to begin your investigation</div>
                 </div>
                 <button id="toggleSetupBtn" onclick="toggleSetupCard()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #e65100; display: none;">▼</button>
             </div>
@@ -1157,47 +1173,97 @@
                 </div>
 
                 <!-- Welcome Screen -->
-                <div id="welcomeScreen" style="display: none; padding: 40px; text-align: center;">
-                    <div style="max-width: 800px; margin: 0 auto;">
-                        <h1 style="color: #2c3e50; font-size: 3rem; margin-bottom: 20px;">Welcome to B.A.T.S.</h1>
-                        <p style="font-size: 1.3rem; color: #7f8c8d; margin-bottom: 40px;">
-                            Block Audit Tracing Standard - Professional Cryptocurrency Investigation Tool
-                        </p>
-                        
-                        <div style="background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%); border: 2px solid #27ae60; border-radius: 12px; padding: 40px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.1);">
-                            <h2 style="color: #27ae60; margin-bottom: 20px;">🚀 Let's Get Started!</h2>
-                            <p style="font-size: 1.1rem; color: #2c3e50; margin-bottom: 30px;">
-                                Follow the steps below to begin your cryptocurrency investigation
+                <div id="welcomeScreen" style="display: none; padding: 40px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 600px;">
+                    <div style="max-width: 900px; margin: 0 auto;">
+                        <div style="text-align: center; margin-bottom: 50px;">
+                            <h1 style="color: #2c3e50; font-size: 3.5rem; margin-bottom: 20px; font-weight: 700;">
+                                Welcome to B.A.T.S. 🦇
+                            </h1>
+                            <p style="font-size: 1.4rem; color: #5a6c7d; margin-bottom: 10px;">
+                                Block Audit Tracing Standard
                             </p>
+                            <p style="font-size: 1.1rem; color: #7f8c8d;">
+                                Professional Cryptocurrency Investigation & Recovery Tool
+                            </p>
+                        </div>
+                        
+                        <!-- Quick Start Section -->
+                        <div style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 40px;">
+                            <h2 style="color: #2c3e50; margin-bottom: 30px; text-align: center;">
+                                🚀 Quick Start Your Investigation
+                            </h2>
                             
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
-                                <div style="background: linear-gradient(135deg, #fff5e6 0%, #ffe4cc 100%); padding: 20px; border-radius: 8px; text-align: left; border: 2px solid #ff9800; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1);">
-                                    <h3 style="color: #e65100; margin-bottom: 10px;">📝 Step 1a: Case Details</h3>
-                                    <p style="color: #666;">Complete the investigation setup above</p>
+                            <!-- Step Progress Indicator -->
+                            <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 40px;">
+                                <div style="text-align: center;">
+                                    <div style="width: 60px; height: 60px; background: #ff9800; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin: 0 auto 10px;">1</div>
+                                    <div style="font-weight: 600; color: #e65100;">Setup Case</div>
                                 </div>
-                                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; text-align: left; border: 2px solid #2196f3; box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);">
-                                    <h3 style="color: #0d47a1; margin-bottom: 10px;">👥 Step 1b: Add Victims</h3>
-                                    <p style="color: #666;">Document all victim transactions with hashes</p>
+                                <div style="width: 100px; height: 3px; background: #ddd; margin: 0 20px;"></div>
+                                <div style="text-align: center;">
+                                    <div style="width: 60px; height: 60px; background: #ddd; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin: 0 auto 10px;">2</div>
+                                    <div style="font-weight: 600; color: #999;">Add Victims</div>
                                 </div>
-                                <div style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding: 20px; border-radius: 8px; text-align: left; border: 2px solid #ff9800; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1);">
-                                    <h3 style="color: #e65100; margin-bottom: 10px;">✅ Step 2: Confirm Total</h3>
-                                    <p style="color: #666;">Establish your investigation's root total</p>
+                                <div style="width: 100px; height: 3px; background: #ddd; margin: 0 20px;"></div>
+                                <div style="text-align: center;">
+                                    <div style="width: 60px; height: 60px; background: #ddd; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin: 0 auto 10px;">3</div>
+                                    <div style="font-weight: 600; color: #999;">Trace Funds</div>
                                 </div>
                             </div>
                             
-                            <button class="btn btn-confirm btn-large" onclick="startInvestigation()" style="font-size: 1.2rem; padding: 15px 40px;">
-                                Get Started →
-                            </button>
+                            <!-- Quick Setup Form -->
+                            <div style="background: linear-gradient(135deg, #fff5e6 0%, #ffe4cc 100%); border: 2px solid #ff9800; border-radius: 12px; padding: 30px; margin-bottom: 30px;">
+                                <h3 style="color: #e65100; margin-bottom: 20px;">📋 Step 1: Basic Case Information</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                                    <div>
+                                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Case ID *</label>
+                                        <input type="text" id="welcomeCaseId" placeholder="e.g., CASE-2024-001" style="width: 100%; padding: 12px; border: 2px solid #ff9800; border-radius: 6px; font-size: 16px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Investigator Name *</label>
+                                        <input type="text" id="welcomeInvestigator" placeholder="Your name" style="width: 100%; padding: 12px; border: 2px solid #ff9800; border-radius: 6px; font-size: 16px;">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Case Type *</label>
+                                    <select id="welcomeCaseType" style="width: 100%; padding: 12px; border: 2px solid #ff9800; border-radius: 6px; font-size: 16px; background: white;">
+                                        <option value="">Select case type...</option>
+                                        <option value="scam">Investment/Trading Scam</option>
+                                        <option value="romance">Romance/Pig Butchering Scam</option>
+                                        <option value="ransomware">Ransomware</option>
+                                        <option value="theft">Theft/Hack</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div style="text-align: center;">
+                                <button class="btn btn-large" onclick="quickStartInvestigation()" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); padding: 20px 50px; font-size: 20px;">
+                                    Start Investigation →
+                                </button>
+                                <div style="margin-top: 15px;">
+                                    <a href="#" onclick="skipWelcome()" style="color: #666; text-decoration: underline;">Skip and set up manually</a>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; text-align: left;">
-                            <h3 style="color: #2c3e50; margin-bottom: 15px;">💡 Quick Tips:</h3>
-                            <ul style="list-style: none; padding: 0;">
-                                <li style="margin-bottom: 10px;">✓ Have transaction hashes ready for quick import</li>
-                                <li style="margin-bottom: 10px;">✓ Use the API integration to auto-fetch transaction details</li>
-                                <li style="margin-bottom: 10px;">✓ Save your work regularly using the "Save .bats File" button</li>
-                                <li style="margin-bottom: 10px;">✓ The tool will guide you through each step of the investigation</li>
-                            </ul>
+                        <!-- Feature Cards -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                            <div style="background: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: transform 0.3s;">
+                                <div style="font-size: 3rem; margin-bottom: 15px;">🔗</div>
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">Multi-Chain Support</h4>
+                                <p style="color: #666; font-size: 0.95rem;">Track stolen funds across Bitcoin, Ethereum, and all ERC-20 tokens seamlessly</p>
+                            </div>
+                            <div style="background: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: transform 0.3s;">
+                                <div style="font-size: 3rem; margin-bottom: 15px;">🎯</div>
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">Precision Tracking</h4>
+                                <p style="color: #666; font-size: 0.95rem;">Follow every satoshi and wei through complex transaction paths</p>
+                            </div>
+                            <div style="background: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: transform 0.3s;">
+                                <div style="font-size: 3rem; margin-bottom: 15px;">📈</div>
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">Visual Analysis</h4>
+                                <p style="color: #666; font-size: 0.95rem;">Generate professional flow diagrams and comprehensive investigation reports</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -5298,8 +5364,15 @@ const entryTypes = {
         // Show Victims tab by default to avoid white screen
         switchTab('victims');
         
-        // Check onboarding state on load
-        setTimeout(() => checkOnboardingState(), 100);
+        // Check onboarding state on load - show welcome for new users
+        setTimeout(() => {
+            checkOnboardingState();
+            
+            // If this is a new investigation, show welcome screen
+            if (!investigation.caseId && !investigation.victims?.length) {
+                showWelcomeScreen();
+            }
+        }, 100);
         
         // Setup event listeners for case info with better error handling
         const caseIdInput = document.getElementById('caseId');
@@ -18061,6 +18134,86 @@ To (RED Wallet): ${transfer.to}`;
             window.print();
         }
         
+        // New function to show welcome screen
+        function showWelcomeScreen() {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Show welcome screen
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            welcomeScreen.style.display = 'block';
+            
+            // Update nav tabs to show welcome is active
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+        }
+        
+        // Quick start from welcome screen
+        function quickStartInvestigation() {
+            const caseId = document.getElementById('welcomeCaseId').value.trim();
+            const investigator = document.getElementById('welcomeInvestigator').value.trim();
+            const caseType = document.getElementById('welcomeCaseType').value;
+            
+            if (!caseId || !investigator || !caseType) {
+                // Highlight missing fields
+                if (!caseId) document.getElementById('welcomeCaseId').style.borderColor = '#e74c3c';
+                if (!investigator) document.getElementById('welcomeInvestigator').style.borderColor = '#e74c3c';
+                if (!caseType) document.getElementById('welcomeCaseType').style.borderColor = '#e74c3c';
+                
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Save to investigation object
+            investigation.caseId = caseId;
+            investigation.investigator = investigator;
+            investigation.caseType = caseType;
+            investigation.setupComplete = true;
+            
+            // Update main form fields
+            document.getElementById('caseId').value = caseId;
+            document.getElementById('investigator').value = investigator;
+            document.getElementById('caseType').value = caseType;
+            
+            // Save to storage
+            saveToStorage();
+            
+            // Hide welcome screen
+            document.getElementById('welcomeScreen').style.display = 'none';
+            
+            // Switch to victims tab
+            switchTab('victims');
+            
+            // Update setup card
+            updateSetupCard();
+            
+            // Auto-collapse setup card
+            setTimeout(() => {
+                const setupContent = document.getElementById('setupContent');
+                if (setupContent && setupContent.style.display !== 'none') {
+                    toggleSetupCard();
+                }
+                
+                // Focus on add victim button
+                const addVictimBtn = document.querySelector('button[onclick="addVictim()"]');
+                if (addVictimBtn) {
+                    addVictimBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Add pulsing animation
+                    addVictimBtn.style.animation = 'pulse 2s infinite';
+                    addVictimBtn.style.boxShadow = '0 0 20px rgba(255, 152, 0, 0.5)';
+                }
+            }, 300);
+        }
+        
+        // Skip welcome screen
+        function skipWelcome() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            switchTab('victims');
+        }
+        
         function startInvestigation() {
             // Check if case details are filled
             const caseId = document.getElementById('caseId').value;
@@ -18136,11 +18289,24 @@ To (RED Wallet): ${transfer.to}`;
         function updateSetupCard() {
             const toggleBtn = document.getElementById('toggleSetupBtn');
             const card = document.getElementById('caseDetailsCard');
+            const statusText = document.getElementById('setupStatusText');
             
             if (isSetupComplete()) {
                 toggleBtn.style.display = 'block';
                 card.style.background = 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)';
                 card.style.borderColor = '#28a745';
+                
+                // Update status text
+                const caseId = document.getElementById('caseId').value;
+                const investigator = document.getElementById('investigator').value;
+                statusText.innerHTML = `✅ Setup Complete - Case: ${caseId} | Investigator: ${investigator}`;
+                statusText.style.color = '#155724';
+            } else {
+                toggleBtn.style.display = 'none';
+                card.style.background = 'linear-gradient(135deg, #fff5e6 0%, #ffe4cc 100%)';
+                card.style.borderColor = '#ff9800';
+                statusText.innerHTML = 'Complete all fields to begin your investigation';
+                statusText.style.color = '#666';
             }
         }
         

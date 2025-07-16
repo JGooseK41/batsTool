@@ -3,21 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-11 18:52)
+## Latest Commit (Auto-updated: 2025-07-11 19:04)
 
-**Commit:** 2ccef07bbbff89a85ae0eab8e9f36e52a219393a
+**Commit:** fdb325bdc8267cc8daf63085c5dcd2bd7faa7871
 **Author:** Your Name
-**Message:** Improve hop progression clarity and finalization UX
+**Message:** Enhance hop entry wizard with manual entry and better control options
 
-- Add comprehensive hop finalization summary showing balance status and threads created
-- Show clear "Hop is Balanced" or "Unaccounted Amounts" status with visual indicators
-- Display threads created in current hop that will be available for next hop
-- Improve "Add New Hop" button to show next hop number and available ART amounts
-- Fix button states to clearly indicate when hops must be completed first
-- Make finalization modal always appear, even when balanced, for better user understanding
-- Add explanatory text that wallet classification options are only for balancing unaccounted funds
+- Add manual transaction entry mode in wizard without requiring API lookup
+- Add toggle between API Lookup and Manual Entry modes in step 3
+- Add "Cancel to Manual" button that transfers wizard data to manual entry form
+- Add "Skip This Time" button to skip wizard for current entry only
+- Rename "Don't show this wizard again" to clarify it disables for future entries
+- Pre-fill manual entry form when canceling wizard with any data already entered
+- Manual mode includes fields for tx hash, from/to wallets, and timestamp
+- Automatically scroll to and highlight new entry when canceling to manual
 
-These changes address user confusion about hop progression and make it clear when balancing is needed vs optional.
+These improvements give users more flexibility to use the wizard when helpful while easily bypassing it when needed.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,14 +26,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  41 ++++++-----
- index.html | 237 ++++++++++++++++++++++++++++++++++++++++++++++++-------------
- 2 files changed, 209 insertions(+), 69 deletions(-)
+ CLAUDE.md  |  45 ++++++------
+ index.html | 244 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 245 insertions(+), 44 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2ccef07 Improve hop progression clarity and finalization UX (0 seconds ago)
+- fdb325b Enhance hop entry wizard with manual entry and better control options (0 seconds ago)
+- 2ccef07 Improve hop progression clarity and finalization UX (12 minutes ago)
 - 9e8eb55 Fix persistent JavaScript errors in hop creation and wallet index (8 hours ago)
 - 2c6ef9f Fix critical JavaScript errors in hop creation (9 hours ago)
 - 85941f5 Remove inaccurate graph from training page (13 hours ago)
@@ -41,7 +43,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 1cfb83b Add comprehensive BATS training example visualization (20 hours ago)
 - cf80a17 Redesign flow diagram with ledger-style layout (20 hours ago)
 - f1304c8 Add auto-fix option to chronological order errors (21 hours ago)
-- b2528cf Fix blockTimestamp scope error for multi-chain support (21 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
