@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>B.A.T.S. Tool - Blockchain Investigation Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f5f7fa;
+            color: #2c3e50;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            position: sticky;
+            top: 85px;
+            z-index: 99;
+        }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 100px;
+            padding: 15px 10px;
+            text-align: center;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .nav-tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+            font-weight: 600;
+        }
+
+        /* Content Sections */
+        .content {
+            padding: 20px;
+            min-height: calc(100vh - 140px);
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .card h3 {
+            font-size: 18px;
+            margin: 20px 0 10px 0;
+            color: #34495e;
+        }
+
+        .card p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        /* Feature List */
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .feature-content h4 {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .feature-content p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Workflow Steps */
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .workflow-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 50px;
+            width: 2px;
+            height: calc(100% + 10px);
+            background: #e0e0e0;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-right: 15px;
+            z-index: 1;
+        }
+
+        .step-content {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .step-content h4 {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .step-content p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Demo Box */
+        .demo-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 2px solid #2196f3;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .demo-box h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        /* Code Examples */
+        .code-example {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 10px 0;
+        }
+
+        /* Benefits List */
+        .benefits-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .benefit-card {
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .benefit-card h4 {
+            color: #2e7d32;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .benefit-card p {
+            font-size: 14px;
+            color: #555;
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: block;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 20px auto;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            transition: transform 0.3s;
+        }
+
+        .cta-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .footer p {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 375px) {
+            .header h1 {
+                font-size: 20px;
+            }
+            .nav-tab {
+                font-size: 13px;
+                padding: 12px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>B.A.T.S. Tool</h1>
+        <p>Block Audit Tracing Standard</p>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="showSection('overview')">Overview</button>
+        <button class="nav-tab" onclick="showSection('features')">Features</button>
+        <button class="nav-tab" onclick="showSection('workflow')">Workflow</button>
+        <button class="nav-tab" onclick="showSection('demo')">Demo</button>
+    </div>
+
+    <div class="content">
+        <!-- Overview Section -->
+        <section id="overview" class="section active">
+            <div class="card">
+                <h2>🔍 What is B.A.T.S.?</h2>
+                <p>B.A.T.S. (Block Audit Tracing Standard) is a professional blockchain investigation tool designed for tracking cryptocurrency movements across multiple chains.</p>
+                
+                <div class="demo-box">
+                    <h4>Perfect for:</h4>
+                    <ul style="margin-left: 20px;">
+                        <li>Law enforcement investigations</li>
+                        <li>Compliance teams</li>
+                        <li>Forensic accountants</li>
+                        <li>Cryptocurrency recovery specialists</li>
+                    </ul>
+                </div>
+
+                <h3>🎯 Key Benefits</h3>
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <h4>Multi-Chain Support</h4>
+                        <p>Track funds across Bitcoin, Ethereum, and ERC-20 tokens seamlessly</p>
+                    </div>
+                    <div class="benefit-card">
+                        <h4>Professional Reports</h4>
+                        <p>Generate court-ready documentation with complete audit trails</p>
+                    </div>
+                    <div class="benefit-card">
+                        <h4>Real-Time Validation</h4>
+                        <p>Automatic validation ensures accuracy throughout your investigation</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="section">
+            <div class="card">
+                <h2>⚡ Powerful Features</h2>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">🔗</div>
+                    <div class="feature-content">
+                        <h4>Blockchain API Integration</h4>
+                        <p>Direct connection to Etherscan, Blockchain.com, and other major explorers for real-time data</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-content">
+                        <h4>V-T-H Notation System</h4>
+                        <p>Track funds with our unique Victim-Transaction-Hop notation for clear audit trails</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-content">
+                        <h4>Smart Amount Allocation</h4>
+                        <p>Automatically calculate fund distribution across multiple source transactions</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">🏦</div>
+                    <div class="feature-content">
+                        <h4>Exchange Detection</h4>
+                        <p>Identify deposits to major exchanges and service providers</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">💾</div>
+                    <div class="feature-content">
+                        <h4>Auto-Save & Undo</h4>
+                        <p>Never lose your work with automatic saving and 20-level undo system</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-content">
+                        <h4>Wallet Classification</h4>
+                        <p>Color-coded wallet system: RED (victim-facing), PURPLE (exchanges), GRAY (abandoned), and more</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Workflow Section -->
+        <section id="workflow" class="section">
+            <div class="card">
+                <h2>🚀 Investigation Workflow</h2>
+                <p>Follow our proven 4-step process for thorough blockchain investigations:</p>
+
+                <div class="workflow-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Case Setup</h4>
+                        <p>Create your investigation with case ID, type, and synopsis</p>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Document Victims</h4>
+                        <p>Enter all victim transactions with automated blockchain lookups</p>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Trace Hops</h4>
+                        <p>Follow funds through the blockchain with our guided wizard</p>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Generate Reports</h4>
+                        <p>Export professional reports in HTML, JSON, or CSV formats</p>
+                    </div>
+                </div>
+
+                <div class="demo-box">
+                    <h4>💡 Pro Tip</h4>
+                    <p>The tool automatically validates your entries and maintains the Available Running Total (ART) to ensure accuracy at every step!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Demo Section -->
+        <section id="demo" class="section">
+            <div class="card">
+                <h2>👀 See It In Action</h2>
+                
+                <h3>Example: Tracking Stolen Funds</h3>
+                <div class="code-example">
+Victim 1 sends 10 BTC → RED Wallet (1A2b3C...)
+└─ Hop 1: 10 BTC → Exchange Deposit (3X4y5Z...)
+   └─ Status: PURPLE wallet identified
+   └─ Exchange: Binance (auto-detected)
+                </div>
+
+                <h3>Smart Features in Action</h3>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-content">
+                        <h4>Automatic Transaction Lookup</h4>
+                        <p>Just paste a transaction hash and all details are filled automatically!</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">🧮</div>
+                    <div class="feature-content">
+                        <h4>Multi-Source Tracking</h4>
+                        <p>When funds from multiple victims combine, B.A.T.S. tracks each source precisely</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">✅</div>
+                    <div class="feature-content">
+                        <h4>Real-Time Validation</h4>
+                        <p>Green checkmarks show when your amounts balance correctly</p>
+                    </div>
+                </div>
+
+                <a href="index.html" class="cta-button">Try B.A.T.S. Tool Now</a>
+
+                <div class="demo-box">
+                    <h4>📋 Sample Investigation Flow</h4>
+                    <p><strong>Victim Deposits:</strong> $50,000 USDT + $30,000 USDC</p>
+                    <p><strong>Hop 1:</strong> Combined into 2.5 BTC via DEX</p>
+                    <p><strong>Hop 2:</strong> Split to 3 different wallets</p>
+                    <p><strong>Result:</strong> Complete trace with audit trail</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🎓 Training Available</h2>
+                <p>Learn how to use B.A.T.S. effectively with our comprehensive training resources:</p>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">📚</div>
+                    <div class="feature-content">
+                        <h4>Interactive Tutorial</h4>
+                        <p>Step-by-step guide through a real investigation</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">🎥</div>
+                    <div class="feature-content">
+                        <h4>Video Walkthroughs</h4>
+                        <p>See experienced investigators use B.A.T.S. in action</p>
+                    </div>
+                </div>
+
+                <a href="training.html" class="cta-button">View Training Materials</a>
+            </div>
+        </section>
+    </div>
+
+    <div class="footer">
+        <p>B.A.T.S. Tool - Professional Blockchain Investigation</p>
+        <p>© 2024 Block Audit Tracing Standard</p>
+        <p style="margin-top: 20px; font-size: 12px;">
+            For professional use only. Always verify findings independently.
+        </p>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Mark the clicked tab as active
+            event.target.classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
