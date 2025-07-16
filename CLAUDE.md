@@ -3,22 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-11 19:04)
+## Latest Commit (Auto-updated: 2025-07-16 15:26)
 
-**Commit:** fdb325bdc8267cc8daf63085c5dcd2bd7faa7871
+**Commit:** 260d643707235b22f478d296f1fb350483a65bdb
 **Author:** Your Name
-**Message:** Enhance hop entry wizard with manual entry and better control options
+**Message:** Enhance welcome screen and onboarding workflow
 
-- Add manual transaction entry mode in wizard without requiring API lookup
-- Add toggle between API Lookup and Manual Entry modes in step 3
-- Add "Cancel to Manual" button that transfers wizard data to manual entry form
-- Add "Skip This Time" button to skip wizard for current entry only
-- Rename "Don't show this wizard again" to clarify it disables for future entries
-- Pre-fill manual entry form when canceling wizard with any data already entered
-- Manual mode includes fields for tx hash, from/to wallets, and timestamp
-- Automatically scroll to and highlight new entry when canceling to manual
-
-These improvements give users more flexibility to use the wizard when helpful while easily bypassing it when needed.
+- Add professional gradient background to welcome screen
+- Implement step progress indicator (Setup → Add Victims → Trace Funds)
+- Add quick start form directly on welcome screen
+- Include feature cards highlighting B.A.T.S. capabilities
+- Auto-show welcome screen for new users
+- Add pulse animation to guide users to next steps
+- Improve transition from setup to victim entry
+- Add validation for required fields in quick start form
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -26,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  45 ++++++------
- index.html | 244 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 245 insertions(+), 44 deletions(-)
+ CLAUDE.md  |  33 ++++-----
+ index.html | 238 +++++++++++++++++++++++++++++++++++++++++++++++++++----------
+ 2 files changed, 219 insertions(+), 52 deletions(-)
 ```
 
 ## Recent Commits History
 
-- fdb325b Enhance hop entry wizard with manual entry and better control options (0 seconds ago)
-- 2ccef07 Improve hop progression clarity and finalization UX (12 minutes ago)
-- 9e8eb55 Fix persistent JavaScript errors in hop creation and wallet index (8 hours ago)
-- 2c6ef9f Fix critical JavaScript errors in hop creation (9 hours ago)
-- 85941f5 Remove inaccurate graph from training page (13 hours ago)
-- 17741d5 Fix training visualization layout - clean structured flow (20 hours ago)
-- 9fbbc33 Add dynamic BATS training visualization to training page (20 hours ago)
-- 1cfb83b Add comprehensive BATS training example visualization (20 hours ago)
-- cf80a17 Redesign flow diagram with ledger-style layout (20 hours ago)
-- f1304c8 Add auto-fix option to chronological order errors (21 hours ago)
+- 260d643 Enhance welcome screen and onboarding workflow (0 seconds ago)
+- fdb325b Enhance hop entry wizard with manual entry and better control options (5 days ago)
+- 2ccef07 Improve hop progression clarity and finalization UX (5 days ago)
+- 9e8eb55 Fix persistent JavaScript errors in hop creation and wallet index (5 days ago)
+- 2c6ef9f Fix critical JavaScript errors in hop creation (5 days ago)
+- 85941f5 Remove inaccurate graph from training page (5 days ago)
+- 17741d5 Fix training visualization layout - clean structured flow (6 days ago)
+- 9fbbc33 Add dynamic BATS training visualization to training page (6 days ago)
+- 1cfb83b Add comprehensive BATS training example visualization (6 days ago)
+- cf80a17 Redesign flow diagram with ledger-style layout (6 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

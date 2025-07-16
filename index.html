@@ -1092,52 +1092,6 @@
             </div>
         </div>
 
-        <!-- Case Details Card (Horizontal) -->
-        <div id="caseDetailsCard" class="case-details-card" style="background: linear-gradient(135deg, #fff5e6 0%, #ffe4cc 100%); border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 2px solid #ff9800; transition: all 0.3s ease;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <div>
-                    <div class="section-title" style="margin-bottom: 5px; color: #e65100;">Investigation Setup</div>
-                    <div id="setupStatusText" style="font-size: 12px; color: #666;">Complete all fields to begin your investigation</div>
-                </div>
-                <button id="toggleSetupBtn" onclick="toggleSetupCard()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #e65100; display: none;">▼</button>
-            </div>
-            
-            <div id="setupContent" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label for="caseId">Case ID</label>
-                    <input type="text" id="caseId" placeholder="e.g., CASE-2025-001">
-                </div>
-
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label for="investigator">Investigator</label>
-                    <input type="text" id="investigator" placeholder="Your name">
-                </div>
-
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label for="caseType">Case Type</label>
-                    <select id="caseType">
-                        <option value="">Select type...</option>
-                        <option value="investment_fraud">Investment Fraud</option>
-                        <option value="ransomware">Ransomware</option>
-                        <option value="romance_scam">Romance Scam</option>
-                        <option value="business_email_compromise">Business Email Compromise</option>
-                        <option value="crypto_theft">Cryptocurrency Theft</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-top: 20px;">
-                    <label for="caseSynopsis">Case Synopsis</label>
-                    <textarea id="caseSynopsis" rows="3" placeholder="Briefly describe the circumstances that led to the victim's asset loss (e.g., investment platform, romance scam details, ransomware attack, etc.)" style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px; resize: vertical;"></textarea>
-                    <div style="font-size: 11px; color: #666; margin-top: 5px;">This will be included in the final report</div>
-                </div>
-                
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="btn btn-confirm" onclick="validateAndProceedSetup()" style="padding: 12px 30px; font-size: 16px;">
-                        ✓ Complete Setup & Continue
-                    </button>
-                </div>
-            </div>
-        </div>
 
         <div class="main-content" style="display: block;">
             <!-- Main Panel -->
@@ -1165,6 +1119,7 @@
                 </div>
                 
                 <div class="nav-tabs">
+                    <button class="nav-tab" onclick="switchTab('casedetails')">Case Details</button>
                     <button class="nav-tab active" onclick="switchTab('victims')">Victims & Transactions</button>
                     <button class="nav-tab" onclick="switchTab('traces')">Trace Documentation</button>
                     <button class="nav-tab" onclick="switchTab('walletindexes')">Wallet Indexes</button>
@@ -1224,16 +1179,21 @@
                                         <input type="text" id="welcomeInvestigator" placeholder="Your name" style="width: 100%; padding: 12px; border: 2px solid #ff9800; border-radius: 6px; font-size: 16px;">
                                     </div>
                                 </div>
-                                <div>
+                                <div style="margin-bottom: 20px;">
                                     <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Case Type *</label>
                                     <select id="welcomeCaseType" style="width: 100%; padding: 12px; border: 2px solid #ff9800; border-radius: 6px; font-size: 16px; background: white;">
                                         <option value="">Select case type...</option>
-                                        <option value="scam">Investment/Trading Scam</option>
-                                        <option value="romance">Romance/Pig Butchering Scam</option>
+                                        <option value="investment_fraud">Investment Fraud</option>
                                         <option value="ransomware">Ransomware</option>
-                                        <option value="theft">Theft/Hack</option>
+                                        <option value="romance_scam">Romance Scam</option>
+                                        <option value="business_email_compromise">Business Email Compromise</option>
+                                        <option value="crypto_theft">Cryptocurrency Theft</option>
                                         <option value="other">Other</option>
                                     </select>
+                                </div>
+                                <div>
+                                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Case Synopsis</label>
+                                    <textarea id="welcomeCaseSynopsis" placeholder="Brief description of the case..." style="width: 100%; padding: 12px; border: 2px solid #ff9800; border-radius: 6px; font-size: 16px; min-height: 80px; resize: vertical;"></textarea>
                                 </div>
                             </div>
                             
@@ -1551,8 +1511,63 @@
                     </div>
                 </div>
 
+                <!-- Case Details Tab -->
+                <div id="casedetails-tab" class="tab-content">
+                    <div class="section-title">📋 Case Information & Management</div>
+                    
+                    <div class="case-details-card" style="max-width: 900px; margin: 0 auto;">
+                        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px;">
+                            <h3 style="color: #2c3e50; margin-bottom: 25px;">Investigation Details</h3>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                                <div class="form-group">
+                                    <label for="caseId">Case ID</label>
+                                    <input type="text" id="caseId" placeholder="e.g., CASE-2025-001">
+                                </div>
+                                <div class="form-group">
+                                    <label for="investigator">Investigator</label>
+                                    <input type="text" id="investigator" placeholder="Your name">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="caseType">Case Type</label>
+                                <select id="caseType">
+                                    <option value="">Select type...</option>
+                                    <option value="investment_fraud">Investment Fraud</option>
+                                    <option value="ransomware">Ransomware</option>
+                                    <option value="romance_scam">Romance Scam</option>
+                                    <option value="business_email_compromise">Business Email Compromise</option>
+                                    <option value="crypto_theft">Cryptocurrency Theft</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="caseSynopsis">Case Synopsis</label>
+                                <textarea id="caseSynopsis" rows="5" placeholder="Briefly describe the circumstances that led to the victim's asset loss (e.g., investment platform, romance scam details, ransomware attack, etc.)" style="width: 100%; padding: 12px; border: 2px solid #e8f0fe; border-radius: 6px; resize: vertical;"></textarea>
+                                <div style="font-size: 12px; color: #666; margin-top: 5px;">This will be included in the final report</div>
+                            </div>
+                            
+                            <div style="text-align: center; margin-top: 30px;">
+                                <button class="btn btn-confirm" onclick="saveCaseDetails()" style="padding: 15px 40px; font-size: 18px;">
+                                    💾 Save Case Details
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Investigation Statistics -->
+                        <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                            <h3 style="color: #2c3e50; margin-bottom: 25px;">📊 Investigation Progress</h3>
+                            <div id="caseStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                                <!-- Stats will be populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Victims Tab -->
-                <div id="victims-tab" class="tab-content active">
+                <div id="victims-tab" class="tab-content">
                     <div class="section-title">Step 2: Victim Transactions</div>
                     
                     <!-- Enhanced Instructions -->
@@ -5462,8 +5477,6 @@ function updateFormFieldsFromInvestigation() {
         caseSynopsisField.value = investigation.caseSynopsis || '';
     }
     
-    // Update the setup card appearance to reflect loaded state
-    updateSetupCard();
     
     console.log('Form fields updated');
 }
@@ -5589,15 +5602,8 @@ function updateFormFieldsFromInvestigation() {
                 renderBlueWalletIndex();
             } else if (tabName === 'victims') {
                 renderVictims();
-                // Auto-collapse setup card if it's complete
-                if (isSetupComplete()) {
-                    const setupContent = document.getElementById('setupContent');
-                    const toggleBtn = document.getElementById('toggleSetupBtn');
-                    const card = document.getElementById('caseDetailsCard');
-                    if (setupContent && setupContent.style.display !== 'none') {
-                        toggleSetupCard();
-                    }
-                }
+            } else if (tabName === 'casedetails') {
+                updateCaseStats();
             } else if (tabName === 'flowdiagram') {
                 // Flow diagram will be generated on demand
                 // Check if we have data to visualize
@@ -18167,16 +18173,21 @@ To (RED Wallet): ${transfer.to}`;
                 return;
             }
             
+            // Get synopsis value
+            const caseSynopsis = document.getElementById('welcomeCaseSynopsis').value.trim();
+            
             // Save to investigation object
             investigation.caseId = caseId;
             investigation.investigator = investigator;
             investigation.caseType = caseType;
+            investigation.caseSynopsis = caseSynopsis;
             investigation.setupComplete = true;
             
             // Update main form fields
             document.getElementById('caseId').value = caseId;
             document.getElementById('investigator').value = investigator;
             document.getElementById('caseType').value = caseType;
+            document.getElementById('caseSynopsis').value = caseSynopsis;
             
             // Save to storage
             saveToStorage();
@@ -18186,9 +18197,6 @@ To (RED Wallet): ${transfer.to}`;
             
             // Switch to victims tab
             switchTab('victims');
-            
-            // Update setup card
-            updateSetupCard();
             
             // Auto-collapse setup card
             setTimeout(() => {
@@ -18252,21 +18260,32 @@ To (RED Wallet): ${transfer.to}`;
             }, 300);
         }
 
-        // Toggle setup card collapse
-        function toggleSetupCard() {
-            const setupContent = document.getElementById('setupContent');
-            const toggleBtn = document.getElementById('toggleSetupBtn');
-            const card = document.getElementById('caseDetailsCard');
+        // Save case details from Case Details tab
+        function saveCaseDetails() {
+            const caseId = document.getElementById('caseId').value.trim();
+            const investigator = document.getElementById('investigator').value.trim();
+            const caseType = document.getElementById('caseType').value;
+            const caseSynopsis = document.getElementById('caseSynopsis').value.trim();
             
-            if (setupContent.style.display === 'none') {
-                setupContent.style.display = 'block';
-                toggleBtn.innerHTML = '▼';
-                card.style.paddingBottom = '25px';
-            } else {
-                setupContent.style.display = 'none';
-                toggleBtn.innerHTML = '▶';
-                card.style.paddingBottom = '15px';
+            // Update investigation object
+            investigation.caseId = caseId;
+            investigation.investigator = investigator;
+            investigation.caseType = caseType;
+            investigation.caseSynopsis = caseSynopsis;
+            
+            // Mark as complete if all required fields are filled
+            if (caseId && investigator && caseType) {
+                investigation.setupComplete = true;
             }
+            
+            // Save to storage
+            saveToStorage();
+            
+            // Show success message
+            alert('Case details saved successfully!');
+            
+            // Update stats
+            updateCaseStats();
         }
         
         // Check if setup is complete
@@ -18285,84 +18304,68 @@ To (RED Wallet): ${transfer.to}`;
             return caseId && investigator && caseType && caseSynopsis;
         }
         
-        // Update setup card based on completion
-        function updateSetupCard() {
-            const toggleBtn = document.getElementById('toggleSetupBtn');
-            const card = document.getElementById('caseDetailsCard');
-            const statusText = document.getElementById('setupStatusText');
+        // Update case statistics
+        function updateCaseStats() {
+            const statsContainer = document.getElementById('caseStats');
+            if (!statsContainer) return;
             
-            if (isSetupComplete()) {
-                toggleBtn.style.display = 'block';
-                card.style.background = 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)';
-                card.style.borderColor = '#28a745';
-                
-                // Update status text
-                const caseId = document.getElementById('caseId').value;
-                const investigator = document.getElementById('investigator').value;
-                statusText.innerHTML = `✅ Setup Complete - Case: ${caseId} | Investigator: ${investigator}`;
-                statusText.style.color = '#155724';
-            } else {
-                toggleBtn.style.display = 'none';
-                card.style.background = 'linear-gradient(135deg, #fff5e6 0%, #ffe4cc 100%)';
-                card.style.borderColor = '#ff9800';
-                statusText.innerHTML = 'Complete all fields to begin your investigation';
-                statusText.style.color = '#666';
-            }
+            const totalVictims = investigation.victims.length;
+            const totalTransactions = investigation.victims.reduce((sum, v) => sum + v.transactions.length, 0);
+            const totalHops = investigation.hops.length;
+            const totalWallets = investigation.universalWalletIndex.length;
+            
+            // Calculate total traced amounts
+            let totalTracedAmounts = {};
+            investigation.victims.forEach(victim => {
+                victim.transactions.forEach(tx => {
+                    const currency = tx.customCurrency || tx.currency;
+                    totalTracedAmounts[currency] = (totalTracedAmounts[currency] || 0) + parseFloat(tx.amount || 0);
+                });
+            });
+            
+            // Format amounts
+            const amountsHtml = Object.entries(totalTracedAmounts)
+                .map(([currency, amount]) => `<div>${formatCurrency(amount, currency)}</div>`)
+                .join('');
+            
+            statsContainer.innerHTML = `
+                <div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #2e7d32;">${totalVictims}</div>
+                    <div style="color: #388e3c;">Victims</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #1565c0;">${totalTransactions}</div>
+                    <div style="color: #1976d2;">Transactions</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #6a1b9a;">${totalHops}</div>
+                    <div style="color: #7b1fa2;">Hops Traced</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #e65100;">${totalWallets}</div>
+                    <div style="color: #f57c00;">Wallets Tracked</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); padding: 20px; border-radius: 8px; text-align: center; grid-column: span 2;">
+                    <div style="font-size: 1.2rem; font-weight: bold; color: #c2185b;">Total Traced:</div>
+                    <div style="color: #d81b60;">${amountsHtml || 'No amounts traced yet'}</div>
+                </div>
+            `;
         }
         
-        // Validate and proceed with setup
+        // Helper function to toggle setup card (kept for compatibility)
+        function toggleSetupCard() {
+            // No longer needed since setup card is in its own tab
+        }
+        
+        // Helper function to update setup card (kept for compatibility)
+        function updateSetupCard() {
+            // No longer needed since setup card is in its own tab
+        }
+        
+        // Helper function to validate and proceed (kept for compatibility)
         function validateAndProceedSetup() {
-            const caseId = document.getElementById('caseId').value.trim();
-            const investigator = document.getElementById('investigator').value.trim();
-            const caseType = document.getElementById('caseType').value;
-            const caseSynopsis = document.getElementById('caseSynopsis').value.trim();
-            
-            // Validate all fields are filled
-            const errors = [];
-            if (!caseId) errors.push('Case ID');
-            if (!investigator) errors.push('Investigator');
-            if (!caseType) errors.push('Case Type');
-            if (!caseSynopsis) errors.push('Case Synopsis');
-            
-            if (errors.length > 0) {
-                alert(`Please complete the following fields:\n\n• ${errors.join('\n• ')}`);
-                
-                // Highlight empty fields
-                if (!caseId) document.getElementById('caseId').style.borderColor = '#e74c3c';
-                if (!investigator) document.getElementById('investigator').style.borderColor = '#e74c3c';
-                if (!caseType) document.getElementById('caseType').style.borderColor = '#e74c3c';
-                if (!caseSynopsis) document.getElementById('caseSynopsis').style.borderColor = '#e74c3c';
-                
-                // Reset highlighting after 3 seconds
-                setTimeout(() => {
-                    ['caseId', 'investigator', 'caseType', 'caseSynopsis'].forEach(id => {
-                        document.getElementById(id).style.borderColor = '';
-                    });
-                }, 3000);
-                
-                return;
-            }
-            
-            // Save case details to investigation object
-            investigation.caseId = caseId;
-            investigation.investigator = investigator;
-            investigation.caseType = caseType;
-            investigation.caseSynopsis = caseSynopsis;
-            investigation.setupComplete = true;
-            
-            // Update the setup card appearance
-            updateSetupCard();
-            
-            // Save to storage
-            saveToStorage();
-            
-            // Hide welcome screen if visible
-            const welcomeScreen = document.getElementById('welcomeScreen');
-            if (welcomeScreen && welcomeScreen.style.display !== 'none') {
-                welcomeScreen.style.display = 'none';
-            }
-            
-            // Switch to victims tab
+            // This functionality is now handled by saveCaseDetails()
+            saveCaseDetails();
             switchTab('victims');
             
             // Show success message
@@ -18371,19 +18374,13 @@ To (RED Wallet): ${transfer.to}`;
             }, 100);
         }
         
-        // Make validateAndProceedSetup globally accessible
+        // Make functions globally accessible
         window.validateAndProceedSetup = validateAndProceedSetup;
+        window.saveCaseDetails = saveCaseDetails;
+        window.updateCaseStats = updateCaseStats;
 
         // Add event listeners to setup fields
         document.addEventListener('DOMContentLoaded', function() {
-            ['caseId', 'investigator', 'caseType', 'caseSynopsis'].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.addEventListener('change', updateSetupCard);
-                    element.addEventListener('blur', updateSetupCard);
-                }
-            });
-            
             // Load existing values if they exist
             if (investigation.caseId) document.getElementById('caseId').value = investigation.caseId;
             if (investigation.investigator) document.getElementById('investigator').value = investigation.investigator;
