@@ -4,6 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>B.A.T.S. - Block Audit Tracing Standard</title>
+    
+    <script>
+        // Mobile detection and redirect
+        (function() {
+            // Check if user has explicitly chosen to view desktop version
+            const forceDesktop = localStorage.getItem('bats_force_desktop') === 'true';
+            
+            if (!forceDesktop) {
+                // Detect mobile devices
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                               (window.matchMedia && window.matchMedia("(max-width: 768px)").matches);
+                
+                // Check if we're not already on mobile.html to avoid redirect loop
+                const currentPage = window.location.pathname.split('/').pop();
+                
+                if (isMobile && currentPage !== 'mobile.html') {
+                    // Show a brief notice before redirecting
+                    if (confirm('📱 Mobile device detected!\n\nWould you like to view the mobile-optimized version of B.A.T.S.?\n\n(You can always switch to desktop version from the mobile site)')) {
+                        window.location.href = 'mobile.html';
+                    } else {
+                        // User chose to stay on desktop version
+                        localStorage.setItem('bats_force_desktop', 'true');
+                    }
+                }
+            }
+        })();
+    </script>
+    
     <!-- 
     DEPLOYMENT INSTRUCTIONS:
     For full functionality (custom save locations, autosave), serve this file over HTTPS:
@@ -1111,6 +1139,11 @@
                         <a href="training.html" target="_blank" class="btn" 
                            style="background: #27ae60; padding: 8px 16px; text-decoration: none; display: inline-block;">
                             📚 Training Materials
+                        </a>
+                        <a href="mobile.html" class="btn" 
+                           style="background: #9b59b6; padding: 8px 16px; text-decoration: none; display: inline-block;"
+                           onclick="localStorage.removeItem('bats_force_desktop')">
+                            📱 Mobile Version
                         </a>
                     </div>
                     <div id="breadcrumbs" style="font-size: 14px; color: #666;">
