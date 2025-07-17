@@ -709,7 +709,7 @@
                         <li>Follow funds chronologically</li>
                         <li>Document every hop</li>
                         <li>Validate amounts at each level</li>
-                        <li>Apply PIFO consistently (or document LIBR exception when necessary)</li>
+                        <li>Apply PIFO consistently (or document LIBR choice for asset preservation)</li>
                         <li>Document judgment calls clearly</li>
                     </ul>
                 </div>
@@ -740,7 +740,7 @@
             <div class="grid">
                 <div class="card card-yellow">
                     <h4>Transaction Attribution</h4>
-                    <p><strong>PIFO vs. LIBR:</strong> While PIFO is the default method, rare circumstances may require LIBR (Lowest Intermediate Balance Rule) application.</p>
+                    <p><strong>PIFO vs. LIBR:</strong> While PIFO is the default method, investigators may choose LIBR (Lowest Intermediate Balance Rule) when seeking to arrest the flow of assets and maintain them in as few wallets as possible, as close to the RED wallet as possible.</p>
                     <p><strong>Key:</strong> Document why you chose your method and maintain consistency throughout the investigation.</p>
                 </div>
                 
@@ -868,8 +868,8 @@
             
             <div class="card card-yellow">
                 <h4>LIBR (Lowest Intermediate Balance Rule)</h4>
-                <p>Used in rare exceptions when PIFO cannot apply. LIBR traces the lowest balance a wallet held between the time traced funds entered and a specific transaction occurred.</p>
-                <p><strong>When to use:</strong> When specific circumstances prevent chronological PIFO application.</p>
+                <p>Traditional asset tracing principle that tracks the lowest balance point in an account to determine maximum traceable amounts. Has the effect of holding traceable assets to fewer hops, keeping them closer to the RED wallet.</p>
+                <p><strong>When to use:</strong> When the investigator seeks to arrest the flow of assets for stablecoin burn and reissue, or when they may obtain private keys or wallet access through suspect cooperation or compelled assistance.</p>
                 <p><strong>Warning:</strong> Requires extensive documentation and manual balance analysis.</p>
             </div>
             
@@ -961,7 +961,7 @@
                         </tr>
                         <tr>
                             <td><strong>LIBR Method</strong></td>
-                            <td>Lowest Intermediate Balance Rule - Traditional asset tracing principle applicable to cryptocurrency investigations that tracks the lowest balance point in an account to determine maximum traceable amounts. Has the effect of holding traceable assets to fewer hops.</td>
+                            <td>Lowest Intermediate Balance Rule - Traditional asset tracing principle applicable to cryptocurrency investigations that tracks the lowest balance point in an account to determine maximum traceable amounts. Has the effect of holding traceable assets to fewer hops. Used when investigators seek to arrest the flow of assets and maintain them in as few wallets as possible, as close to the RED wallet as possible, which may be useful if stablecoin burn and reissue is the goal or if they are able through their investigation to obtain private keys or access to private wallets through suspect cooperation or compelled assistance.</td>
                         </tr>
                         <tr>
                             <td><strong>Matching Transactions Principle (MTP)</strong></td>

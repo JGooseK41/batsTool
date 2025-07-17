@@ -1596,10 +1596,10 @@
                                     </label>
                                     <label style="flex: 1; cursor: pointer;">
                                         <input type="radio" name="tracingMethod" value="LIBR" onchange="updateTracingMethod('LIBR')">
-                                        <strong>LIBR (Rare Exception)</strong> - Lowest Intermediate Balance Rule
+                                        <strong>LIBR</strong> - Lowest Intermediate Balance Rule
                                         <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                                            Tracks based on lowest balance point between deposits. 
-                                            Use for accumulation patterns or stablecoin seizure tactics.
+                                            Arrests asset flow, keeping funds in fewer wallets closer to RED wallet.
+                                            Use for stablecoin burn/reissue or when wallet access may be obtained.
                                         </div>
                                     </label>
                                 </div>
@@ -14614,9 +14614,9 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             // Show warning if switching methods mid-investigation
             if (investigation.hops.length > 0) {
                 const warning = method === 'LIBR' ? 
-                    'Warning: LIBR method should only be used in rare exceptions when PIFO cannot apply. Ensure consistency throughout your investigation.' :
+                    'LIBR method selected: This will arrest asset flow and keep funds in fewer wallets closer to the RED wallet. Useful for stablecoin burn/reissue strategies or when private key access may be obtained. Ensure consistency throughout your investigation.' :
                     'Switched back to PIFO (default method). Ensure all previous entries follow PIFO methodology.';
-                showNotification(warning, 'warning');
+                showNotification(warning, 'info');
             }
             
             // Update any UI elements that might display the method
