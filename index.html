@@ -2517,6 +2517,155 @@
             'gray': 'GRAY - Obfuscated/Diluted',
             'green': 'GREEN - Victim Owned'
         };
+        
+        // Helper function to safely get currency with validation
+        function getCurrencyFromTransaction(transaction) {
+            if (!transaction) return null;
+            
+            if (transaction.currency === 'CUSTOM') {
+                if (!transaction.customCurrency || transaction.customCurrency.trim() === '') {
+                    console.warn('Transaction has CUSTOM currency but no customCurrency value:', transaction);
+                    return null;
+                }
+                return transaction.customCurrency.trim();
+            }
+            
+            return transaction.currency || null;
+        }
+        
+        // Helper function to safely get currency from entry
+        function getCurrencyFromEntry(entry) {
+            if (!entry) return null;
+            
+            if (entry.currency === 'CUSTOM') {
+                if (!entry.customCurrency || entry.customCurrency.trim() === '') {
+                    console.warn('Entry has CUSTOM currency but no customCurrency value:', entry);
+                    return null;
+                }
+                return entry.customCurrency.trim();
+            }
+            
+            return entry.currency || null;
+        }
+        
+        // Validate wallet address format
+        function validateWalletAddress(address, currency) {
+            if (!address || address.trim() === '') return { valid: false, error: 'Wallet address cannot be empty' };
+            
+            const trimmedAddress = address.trim();
+            
+            // Basic validation patterns for common cryptocurrencies
+            const patterns = {
+                'BTC': /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/,  // Bitcoin (Legacy, SegWit, Native SegWit)
+                'ETH': /^0x[a-fA-F0-9]{40}$/,  // Ethereum
+                'USDT': /^0x[a-fA-F0-9]{40}$/,  // USDT on Ethereum
+                'USDC': /^0x[a-fA-F0-9]{40}$/,  // USDC on Ethereum
+                'TRX': /^T[a-zA-Z0-9]{33}$/,    // TRON
+                'SOL': /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,  // Solana
+                'ADA': /^(addr1|DdzFF|Ae2)[a-zA-Z0-9]{50,}$/,  // Cardano
+                'BNB': /^(bnb1|0x)[a-zA-Z0-9]+$/,  // BNB (Beacon Chain or BSC)
+            };
+            
+            // If we have a pattern for this currency, validate it
+            if (patterns[currency]) {
+                if (!patterns[currency].test(trimmedAddress)) {
+                    return { 
+                        valid: false, 
+                        error: `Invalid ${currency} wallet address format`,
+                        suggestion: getWalletFormatHint(currency)
+                    };
+                }
+            }
+            
+            // General validation for any address
+            if (trimmedAddress.length < 10) {
+                return { valid: false, error: 'Wallet address seems too short' };
+            }
+            
+            if (trimmedAddress.length > 150) {
+                return { valid: false, error: 'Wallet address seems too long' };
+            }
+            
+            // Check for common invalid patterns
+            if (/\s/.test(trimmedAddress)) {
+                return { valid: false, error: 'Wallet address cannot contain spaces' };
+            }
+            
+            return { valid: true };
+        }
+        
+        // Get wallet format hint for a currency
+        function getWalletFormatHint(currency) {
+            const hints = {
+                'BTC': 'Bitcoin addresses start with 1, 3, or bc1',
+                'ETH': 'Ethereum addresses start with 0x and are 42 characters long',
+                'USDT': 'USDT addresses depend on the blockchain (usually Ethereum: 0x...)',
+                'USDC': 'USDC addresses depend on the blockchain (usually Ethereum: 0x...)',
+                'TRX': 'TRON addresses start with T and are 34 characters long',
+                'SOL': 'Solana addresses are 32-44 characters of base58',
+                'ADA': 'Cardano addresses start with addr1, DdzFF, or Ae2',
+                'BNB': 'BNB addresses start with bnb1 (Beacon) or 0x (BSC)'
+            };
+            
+            return hints[currency] || 'Please check the address format for this currency';
+        }
+        
+        // Get decimal precision for currency
+        function getCurrencyPrecision(currency) {
+            const precisions = {
+                'USD': 2,
+                'BTC': 8,
+                'ETH': 18,
+                'USDT': 6,
+                'USDC': 6,
+                'TRX': 6,
+                'SOL': 9,
+                'ADA': 6,
+                'DAI': 18,
+                'BNB': 8
+            };
+            return precisions[currency] || 2;
+        }
+        
+        // Safe addition for currency amounts
+        function addCurrencyAmounts(amount1, amount2, currency) {
+            const precision = getCurrencyPrecision(currency);
+            const factor = Math.pow(10, precision);
+            return Math.round((amount1 * factor) + (amount2 * factor)) / factor;
+        }
+        
+        // Safe subtraction for currency amounts
+        function subtractCurrencyAmounts(amount1, amount2, currency) {
+            const precision = getCurrencyPrecision(currency);
+            const factor = Math.pow(10, precision);
+            return Math.round((amount1 * factor) - (amount2 * factor)) / factor;
+        }
+        
+        // Format currency amount with proper precision
+        function formatCurrencyAmount(amount, currency) {
+            const precision = getCurrencyPrecision(currency);
+            return parseFloat(amount).toFixed(precision);
+        }
+        
+        // Add entry to validation history
+        function addValidationHistoryEntry(type, details, status = 'info') {
+            if (!investigation.validationHistory) {
+                investigation.validationHistory = [];
+            }
+            
+            investigation.validationHistory.push({
+                timestamp: new Date().toISOString(),
+                type: type,
+                status: status, // 'success', 'warning', 'error', 'info'
+                details: details,
+                user: investigation.investigator || 'Unknown'
+            });
+            
+            // Keep only last 100 entries
+            if (investigation.validationHistory.length > 100) {
+                investigation.validationHistory = investigation.validationHistory.slice(-100);
+            }
+        }
 
         // Global state
         let investigation = {
@@ -5679,8 +5828,11 @@ function updateFormFieldsFromInvestigation() {
             const victimId = investigation.victims.length + 1;
             const victim = {
                 id: victimId,
+                isCompleted: false,  // Initialize completion state
+                name: '',  // Initialize name
                 transactions: [{
                     id: 1,
+                    txHash: '',  // Initialize txHash
                     amount: '',
                     currency: 'USD',
                     customCurrency: '',
@@ -5713,6 +5865,32 @@ function updateFormFieldsFromInvestigation() {
             renderVictims();
             saveToStorage();
             updateWorkflowSteps();
+        }
+        
+        // Check if a transaction hash already exists across all victims
+        function checkTransactionDuplicate(txHash, excludeVictimId, excludeTransactionId) {
+            if (!txHash || txHash.trim() === '') return null;
+            
+            const normalizedHash = txHash.trim().toLowerCase();
+            
+            for (const victim of investigation.victims) {
+                for (const transaction of victim.transactions) {
+                    // Skip the current transaction being edited
+                    if (victim.id === excludeVictimId && transaction.id === excludeTransactionId) {
+                        continue;
+                    }
+                    
+                    if (transaction.txHash && transaction.txHash.trim().toLowerCase() === normalizedHash) {
+                        return {
+                            victimId: victim.id,
+                            transactionId: transaction.id,
+                            victimName: victim.name || `Victim ${victim.id}`
+                        };
+                    }
+                }
+            }
+            
+            return null;
         }
 
         function sortTransactionsChronologically() {
@@ -13723,10 +13901,16 @@ function updateWriteoffAmount(hopId, entryId, amount) {
         
         function convertToUTC(datetime, timezone) {
             // Convert datetime string to UTC timestamp for comparison
-            // This is a simplified conversion - in production you'd use a library like moment.js
             const date = new Date(datetime);
             
-            // Timezone offset map (simplified - doesn't account for DST)
+            // For better timezone handling, check if the date is in DST period
+            const isDST = (d) => {
+                const jan = new Date(d.getFullYear(), 0, 1).getTimezoneOffset();
+                const jul = new Date(d.getFullYear(), 6, 1).getTimezoneOffset();
+                return Math.max(jan, jul) !== d.getTimezoneOffset();
+            };
+            
+            // Timezone offset map with DST handling
             const timezoneOffsets = {
                 'UTC': 0,
                 'EST': -5,
@@ -13739,7 +13923,13 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                 'PDT': -7,
                 'GMT': 0,
                 'CET': 1,
-                'JST': 9
+                'CEST': 2,
+                'JST': 9,
+                // Auto-detect DST for common US timezones
+                'ET': isDST(date) ? -4 : -5,  // Eastern Time
+                'CT': isDST(date) ? -5 : -6,  // Central Time
+                'MT': isDST(date) ? -6 : -7,  // Mountain Time
+                'PT': isDST(date) ? -7 : -8   // Pacific Time
             };
             
             const offset = timezoneOffsets[timezone] || 0;
@@ -13766,6 +13956,45 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             
             // Store the old value in case we need to revert
             const oldValue = transaction[field];
+            
+            // Check for duplicate transaction hash
+            if (field === 'txHash' && value && value.trim() !== '') {
+                const duplicate = checkTransactionDuplicate(value, victimId, transactionId);
+                if (duplicate) {
+                    alert(`⚠️ Duplicate Transaction Hash!\n\nThis transaction hash already exists:\n- ${duplicate.victimName}, Transaction ${duplicate.transactionId}\n\nEach transaction hash must be unique.`);
+                    // Don't update the value
+                    const input = document.getElementById(`txHash_victim_${victimId}_${transactionId}`);
+                    if (input) {
+                        input.value = oldValue || '';
+                    }
+                    return;
+                }
+            }
+            
+            // Validate wallet address format
+            if (field === 'receivingWallet' && value && value.trim() !== '') {
+                const currency = getCurrencyFromTransaction(transaction);
+                if (currency) {
+                    const validation = validateWalletAddress(value, currency);
+                    if (!validation.valid) {
+                        const message = validation.suggestion ? 
+                            `${validation.error}\n\n${validation.suggestion}` : 
+                            validation.error;
+                        
+                        const proceed = confirm(`⚠️ Wallet Address Warning!\n\n${message}\n\nDo you want to use this address anyway?`);
+                        
+                        if (!proceed) {
+                            // Revert the value
+                            const input = document.querySelector(`input[onchange*="updateTransaction(${victimId}, ${transactionId}, 'receivingWallet'"]`);
+                            if (input) {
+                                input.value = oldValue || '';
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+            
             transaction[field] = value;
             
             // Validate chronological order when datetime is updated
