@@ -8294,6 +8294,7 @@ function exportUniversalWalletIndex() {
                         // Include all entry types that account for funds
                         if (['trace', 'writeoff', 'cold_storage', 'vasp_arrival'].includes(entry.entryType)) {
                             entryTotalsByCurrency[currency] += parseFloat(entry.amount);
+                            console.log(`Hop ${hop.hopNumber} Entry ${entry.id}: ${entry.entryType} ${entry.amount} ${currency} (Total so far: ${entryTotalsByCurrency[currency]})`);
                         }
                     }
                 });
@@ -12154,6 +12155,9 @@ function createHopEntryDirectly(hopId, entryType = 'trace') {
     const sortedEntryIndex = hop.entries.indexOf(newEntry);
     const sortedEntryId = sortedEntryIndex >= 0 ? hop.entries[sortedEntryIndex].id : entry.id;
     
+    // Rebuild thread index to ensure available amounts are updated
+    buildAvailableThreadsIndex();
+    
     renderHops();
     saveToStorage();
     
@@ -12910,8 +12914,17 @@ function createHopEntryFromWizard() {
             }
             
             closeHopWizard();
+            
+            // Rebuild thread index to ensure available amounts are updated
+            buildAvailableThreadsIndex();
+            
             renderHops();
             saveToStorage();
+            
+            // Log the thread usage update
+            console.log(`✅ Updated hop entry threads:`, wizardData.selectedThreads);
+            console.log(`   Total amount: ${Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0)}`);
+            console.log(`   Thread allocations:`, wizardData.allocations);
             
             // Scroll to the updated entry
             setTimeout(() => {
@@ -12986,8 +12999,17 @@ function createHopEntryFromWizard() {
     const sortedEntryId = sortedEntryIndex >= 0 ? hop.entries[sortedEntryIndex].id : entry.id;
     
     closeHopWizard();
+    
+    // Rebuild thread index to ensure available amounts are updated
+    buildAvailableThreadsIndex();
+    
     renderHops();
     saveToStorage();
+    
+    // Log the thread usage
+    console.log(`✅ Created hop entry consuming threads:`, wizardData.selectedThreads);
+    console.log(`   Total amount used: ${Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0)}`);
+    console.log(`   Thread allocations:`, wizardData.allocations);
     
     // Scroll to the newly created entry after a short delay to allow DOM update
     setTimeout(() => {
