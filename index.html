@@ -2845,6 +2845,7 @@
         // Timezones
         const timezones = {
             'UTC': 'UTC',
+            'LOCAL': 'Local',
             'EST': 'EST',
             'EDT': 'EDT',
             'CST': 'CST',
@@ -2871,6 +2872,11 @@
             'USDC': { name: 'USD Coin', symbol: '$', decimals: 6 },
             'MATIC': { name: 'Polygon', symbol: 'MATIC', decimals: 18 },
             'USD': { name: 'US Dollar', symbol: '$', decimals: 2 },
+            'TRX': { name: 'TRON', symbol: 'TRX', decimals: 6 },
+            'SOL': { name: 'Solana', symbol: 'SOL', decimals: 9 },
+            'ADA': { name: 'Cardano', symbol: 'ADA', decimals: 6 },
+            'DAI': { name: 'DAI', symbol: 'DAI', decimals: 18 },
+            'BNB': { name: 'BNB', symbol: 'BNB', decimals: 18 },
             'CUSTOM': { name: 'Custom', symbol: '', decimals: 8 }
         };
         let currentTxData = null;
@@ -5667,31 +5673,9 @@ const entryTypes = {
 };
 
 
-        const currencies = {
-            'USD': { name: 'US Dollar' },
-            'BTC': { name: 'Bitcoin' },
-            'ETH': { name: 'Ethereum' },
-            'USDT': { name: 'Tether' },
-            'USDC': { name: 'USD Coin' },
-            'TRX': { name: 'TRON' },
-            'SOL': { name: 'Solana' },
-            'ADA': { name: 'Cardano' },
-            'DAI': { name: 'DAI' },
-            'BNB': { name: 'BNB' },
-            'CUSTOM': { name: 'Custom Currency' }
-        };
+        // currencies already defined earlier with more complete information including decimals
 
-        const timezones = {
-            'UTC': 'UTC',
-            'LOCAL': 'Local',
-            'EST': 'EST',
-            'CST': 'CST',
-            'MST': 'MST',
-            'PST': 'PST',
-            'GMT': 'GMT',
-            'CET': 'CET',
-            'JST': 'JST'
-        };
+        // timezones already defined earlier
 
         const writeoffCategories = {
             'dust': 'Dust - Below threshold',
