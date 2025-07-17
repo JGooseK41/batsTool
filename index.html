@@ -2531,18 +2531,49 @@
         })();
 
         // Global constants
-        const walletTypes = {
-            'red': 'RED - Victim Facing',
-            'pink': 'PINK - Dividend/Deception',
-            'yellow': 'YELLOW - Hub/Convergence',
-            'orange': 'ORANGE - Bitcoin Change',
-            'brown': 'BROWN - Asset Conversion',
-            'black': 'BLACK - Intermediary',
-            'blue': 'BLUE - Cold Storage',
-            'purple': 'PURPLE - Exchange Deposit',
-            'gray': 'GRAY - Obfuscated/Diluted',
-            'green': 'GREEN - Victim Owned'
-        };
+        // Note: walletTypes is declared later with full emoji support
+        
+        // Define switchTab function early to ensure it's available when HTML loads
+        function switchTab(tabName) {
+            // First, ensure all tabs are visible (in case they were hidden)
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = '';
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            const tabElement = document.getElementById(tabName + '-tab');
+            if (tabElement) tabElement.classList.add('active');
+            
+            const tabContent = document.getElementById(tabName + 'Tab');
+            if (tabContent) tabContent.classList.add('active');
+            
+            // Find and activate the corresponding nav tab
+            const navTab = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+            if (navTab) {
+                navTab.classList.add('active');
+            }
+
+            // Tab-specific actions (these functions will be defined later)
+            if (typeof window.tabActions !== 'undefined' && window.tabActions[tabName]) {
+                window.tabActions[tabName]();
+            }
+            
+            // Update the workflow indicators (function will be defined later)
+            if (typeof updateWorkflowSteps !== 'undefined') {
+                updateWorkflowSteps();
+            }
+            
+            // Update breadcrumbs if function exists
+            if (typeof updateBreadcrumbs !== 'undefined') {
+                updateBreadcrumbs();
+            }
+        }
+        
+        // Make switchTab globally available immediately
+        window.switchTab = switchTab;
         
         // Helper function to safely get currency with validation
         function getCurrencyFromTransaction(transaction) {
@@ -5982,50 +6013,42 @@ function updateFormFieldsFromInvestigation() {
             }
         }
 
-        function switchTab(tabName) {
-            // First, ensure all tabs are visible (in case they were hidden)
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.style.display = '';
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-
-            document.getElementById(tabName + '-tab').classList.add('active');
-            
-            // Find and activate the corresponding nav tab
-            const navTab = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
-            if (navTab) {
-                navTab.classList.add('active');
-            }
-
-            if (tabName === 'summary') {
-                renderSummary();
-            } else if (tabName === 'walletindexes') {
-                // Render all wallet indexes
-                renderUniversalWalletIndex();
-                renderRedWalletIndex();
-                renderPurpleWalletIndex();
-                renderBlueWalletIndex();
-            } else if (tabName === 'victims') {
-                renderVictims();
-            } else if (tabName === 'casedetails') {
-                updateCaseStats();
-            } else if (tabName === 'flowdiagram') {
-                // Flow diagram will be generated on demand
-                // Check if we have data to visualize
-                if (investigation.hops && investigation.hops.length > 0) {
-                    document.getElementById('flowDiagramControls').style.display = 'block';
-                } else {
-                    document.getElementById('flowDiagramControls').style.display = 'none';
-                    document.getElementById('flowDiagramSVG').innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#999">No trace data available. Complete at least one hop to generate flow diagram.</text>';
+        // Setup tab-specific actions
+        window.tabActions = {
+            'summary': () => {
+                if (typeof renderSummary !== 'undefined') renderSummary();
+            },
+            'walletindexes': () => {
+                if (typeof renderUniversalWalletIndex !== 'undefined') {
+                    renderUniversalWalletIndex();
+                    renderRedWalletIndex();
+                    renderPurpleWalletIndex();
+                    renderBlueWalletIndex();
                 }
+            },
+            'victims': () => {
+                if (typeof renderVictims !== 'undefined') renderVictims();
+            },
+            'casedetails': () => {
+                if (typeof updateCaseStats !== 'undefined') updateCaseStats();
+            },
+            'flowdiagram': () => {
+                if (investigation.hops && investigation.hops.length > 0) {
+                    const controls = document.getElementById('flowDiagramControls');
+                    if (controls) controls.style.display = 'block';
+                } else {
+                    const controls = document.getElementById('flowDiagramControls');
+                    if (controls) controls.style.display = 'none';
+                    const svg = document.getElementById('flowDiagramSVG');
+                    if (svg) svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#999">No trace data available. Complete at least one hop to generate flow diagram.</text>';
+                }
+            },
+            'traces': () => {
+                if (typeof renderHops !== 'undefined') renderHops();
             }
-            
-            // Update breadcrumbs
-            updateBreadcrumbs();
-        }
+        };
+        
+        // switchTab is already defined globally earlier
 
         function addVictim() {
             const victimId = investigation.victims.length + 1;
