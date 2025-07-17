@@ -2666,6 +2666,67 @@
                 investigation.validationHistory = investigation.validationHistory.slice(-100);
             }
         }
+        
+        // Convert datetime from any timezone to UTC for reports
+        function convertDateTimeToUTC(datetime, timezone) {
+            if (!datetime) return null;
+            
+            // If already UTC, just return it
+            if (timezone === 'UTC') {
+                return new Date(datetime);
+            }
+            
+            // Convert to UTC timestamp using our timezone conversion
+            const utcTimestamp = convertToUTC(datetime, timezone);
+            return new Date(utcTimestamp);
+        }
+        
+        // Format datetime for UTC display in reports
+        function formatDateTimeForReport(datetime, timezone) {
+            if (!datetime) return 'No date';
+            
+            const utcDate = convertDateTimeToUTC(datetime, timezone);
+            if (!utcDate) return 'Invalid date';
+            
+            // Format as ISO string but make it more readable
+            const year = utcDate.getUTCFullYear();
+            const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(utcDate.getUTCDate()).padStart(2, '0');
+            const hours = String(utcDate.getUTCHours()).padStart(2, '0');
+            const minutes = String(utcDate.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(utcDate.getUTCSeconds()).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} UTC`;
+        }
+        
+        // Convert all investigation timestamps to UTC for reporting
+        function prepareInvestigationForUTCReport() {
+            const utcInvestigation = JSON.parse(JSON.stringify(investigation)); // Deep clone
+            
+            // Convert victim transaction times
+            utcInvestigation.victims.forEach(victim => {
+                victim.transactions.forEach(transaction => {
+                    if (transaction.datetime && transaction.timezone) {
+                        transaction.utcDatetime = formatDateTimeForReport(transaction.datetime, transaction.timezone);
+                        transaction.originalDatetime = transaction.datetime;
+                        transaction.originalTimezone = transaction.timezone;
+                    }
+                });
+            });
+            
+            // Convert hop entry times
+            utcInvestigation.hops.forEach(hop => {
+                hop.entries.forEach(entry => {
+                    if (entry.timestamp && entry.timezone) {
+                        entry.utcTimestamp = formatDateTimeForReport(entry.timestamp, entry.timezone);
+                        entry.originalTimestamp = entry.timestamp;
+                        entry.originalTimezone = entry.timezone;
+                    }
+                });
+            });
+            
+            return utcInvestigation;
+        }
 
         // Global state
         let investigation = {
@@ -6765,7 +6826,7 @@ function renderRedWalletIndex() {
                     <tbody>
                         ${entries.map(entry => {
                             const dateDisplay = entry.depositDate ? 
-                                `${entry.depositDate} ${entry.timezone}` : 
+                                formatDateTimeForReport(entry.depositDate, entry.timezone) : 
                                 'Not specified';
                             
                             return `
@@ -6931,7 +6992,7 @@ function exportVictimTableToExcel(victimId) {
     let csvContent = 'V-T Notation,Wallet ID,Deposit Date,Amount,Currency,Wallet Address,Transaction Notes,Investigative Notes\n';
     
     victimEntries.forEach(entry => {
-        const dateDisplay = entry.depositDate ? `${entry.depositDate} ${entry.timezone}` : 'Not specified';
+        const dateDisplay = entry.depositDate ? formatDateTimeForReport(entry.depositDate, entry.timezone) : 'Not specified';
         const walletId = entry.walletId || 'Not assigned';
         const transactionNotes = (entry.notes || '').replace(/"/g, '""');
         const investigativeNotes = (entry.investigativeNotes || '').replace(/"/g, '""');
@@ -6996,7 +7057,8 @@ function exportUniversalWalletIndex() {
             `${walletTypes[wallet.currentStatus] || wallet.currentStatus} (Currently)` : 
             permanentClassification;
         const address = wallet.address || '';
-        const firstSeen = wallet.firstSeen || '';
+        const firstSeen = wallet.firstSeen ? 
+            (wallet.firstSeenTimezone ? formatDateTimeForReport(wallet.firstSeen, wallet.firstSeenTimezone) : wallet.firstSeen + ' UTC') : '';
         const totalAmount = wallet.totalAmount ? wallet.totalAmount.toLocaleString() : '0';
         const notes = (wallet.notes || '').replace(/"/g, '""').replace(/\n/g, ' ');
         
@@ -7031,7 +7093,7 @@ function exportAllVictimTablesToExcel() {
     
     Object.entries(entriesByVictim).forEach(([victimId, entries]) => {
         entries.forEach(entry => {
-            const dateDisplay = entry.depositDate ? `${entry.depositDate} ${entry.timezone}` : 'Not specified';
+            const dateDisplay = entry.depositDate ? formatDateTimeForReport(entry.depositDate, entry.timezone) : 'Not specified';
             const walletId = entry.walletId || 'Not assigned';
             const transactionNotes = (entry.notes || '').replace(/"/g, '""');
             const investigativeNotes = (entry.investigativeNotes || '').replace(/"/g, '""');
@@ -7049,7 +7111,7 @@ function exportRedWalletIndexCSV() {
     let csvContent = 'V-T Notation,Wallet ID,Deposit Date,Amount,Currency,Wallet Address,Transaction Notes,Investigative Notes\n';
     
     investigation.redWalletIndex.forEach(entry => {
-        const dateDisplay = entry.depositDate ? `${entry.depositDate} ${entry.timezone}` : 'Not specified';
+        const dateDisplay = entry.depositDate ? formatDateTimeForReport(entry.depositDate, entry.timezone) : 'Not specified';
         const walletId = entry.walletId || 'Not assigned';
         const transactionNotes = (entry.notes || '').replace(/"/g, '""');
         const investigativeNotes = (entry.investigativeNotes || '').replace(/"/g, '""');
@@ -7667,7 +7729,8 @@ function exportUniversalWalletIndex() {
             `${walletTypes[wallet.currentStatus] || wallet.currentStatus} (Currently)` : 
             permanentClassification;
         const address = wallet.address || '';
-        const firstSeen = wallet.firstSeen || '';
+        const firstSeen = wallet.firstSeen ? 
+            (wallet.firstSeenTimezone ? formatDateTimeForReport(wallet.firstSeen, wallet.firstSeenTimezone) : wallet.firstSeen + ' UTC') : '';
         const totalAmount = wallet.totalAmount ? wallet.totalAmount.toLocaleString() : '0';
         const notes = (wallet.notes || '').replace(/"/g, '""').replace(/\n/g, ' ');
         
@@ -14425,7 +14488,8 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             investigation.hops.forEach(hop => {
                 hop.entries.forEach(entry => {
                     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-                    csv += `${entry.entryType},"${entry.notation}","${entry.amount}","${currency}","${entry.fromWallet}","${entry.toWallet}","${entry.toWalletType}","${entry.hopNumber}","${entry.timestamp}","${entry.timezone}","${entry.notes || entry.justification || ''}"\n`;
+                    const utcTimestamp = entry.timestamp ? formatDateTimeForReport(entry.timestamp, entry.timezone || 'UTC') : 'Not specified';
+                    csv += `${entry.entryType},"${entry.notation}","${entry.amount}","${currency}","${entry.fromWallet}","${entry.toWallet}","${entry.toWalletType}","${entry.hopNumber}","${utcTimestamp}","UTC","${entry.notes || entry.justification || ''}"\n`;
                 });
             });
             
@@ -14469,7 +14533,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                             <tr>
                                 <td>${entry.vtNotation}</td>
                                 <td>${entry.walletId || 'Not assigned'}</td>
-                                <td>${entry.depositDate ? `${entry.depositDate} ${entry.timezone}` : 'Not specified'}</td>
+                                <td>${entry.depositDate ? formatDateTimeForReport(entry.depositDate, entry.timezone) : 'Not specified'}</td>
                                 <td>${entry.amount.toLocaleString()}</td>
                                 <td>${entry.currency}</td>
                                 <td style="font-family: monospace; font-size: 11px; word-break: break-all;">${entry.walletAddress}</td>
@@ -14502,7 +14566,8 @@ function updateWriteoffAmount(hopId, entryId, amount) {
         <h2>Block Audit Tracing Standard</h2>
         <p><strong>Case ID:</strong> ${investigation.caseId}</p>
         <p><strong>Investigator:</strong> ${investigation.investigator}</p>
-        <p><strong>Report Generated:</strong> ${new Date().toLocaleString()}</p>
+        <p><strong>Report Generated:</strong> ${new Date().toISOString().replace('T', ' ').replace('.000Z', ' UTC')}</p>
+        <p style="font-style: italic; color: #666;">All timestamps in this report are displayed in UTC for compliance and consistency.</p>
     </div>
 
     <div class="section">
@@ -14550,7 +14615,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                         <td style="font-family: monospace; font-size: 11px; word-break: break-all;">${entry.toWallet}</td>
                         <td>${walletTypes[entry.toWalletType] || entry.toWalletType}</td>
                         <td style="font-family: monospace; font-size: 11px; word-break: break-all;">${entry.txHash}</td>
-                        <td>${entry.timestamp}</td>
+                        <td>${entry.timestamp ? formatDateTimeForReport(entry.timestamp, entry.timezone || 'UTC') : 'Not specified'}</td>
                         <td>${entry.notes || entry.justification || ''}</td>
                     </tr>
                 `).join('')}
