@@ -2500,6 +2500,18 @@
         })();
 
         // Global constants
+        const walletTypes = {
+            'red': 'RED - Victim Facing',
+            'pink': 'PINK - Dividend/Deception',
+            'yellow': 'YELLOW - Hub/Convergence',
+            'orange': 'ORANGE - Bitcoin Change',
+            'brown': 'BROWN - Asset Conversion',
+            'black': 'BLACK - Intermediary',
+            'blue': 'BLUE - Cold Storage',
+            'purple': 'PURPLE - Exchange Deposit',
+            'gray': 'GRAY - Obfuscated/Diluted',
+            'green': 'GREEN - Victim Owned'
+        };
 
         // Global state
         let investigation = {
@@ -7368,12 +7380,6 @@ function exportRedWalletIndexCSV() {
                 if (okBtn) okBtn.focus();
             }, 100);
         }
-
-  
-    investigation.hops.push(hop);
-    renderHops();
-    saveToStorage();
-    updateWorkflowSteps();
 
         function getNextHopNumber() {
             if (investigation.hops.length === 0) {
