@@ -7366,20 +7366,37 @@ function exportRedWalletIndexCSV() {
                             // Existing wallet - check if we need to update permanent classification
                             const wallet = walletMap.get(address);
                             
-                            // Special handling for yellow (convergence) and brown (conversion) wallets
-                            if ((walletType === 'yellow' || walletType === 'brown') && 
-                                wallet.permanentType !== walletType && 
-                                wallet.permanentType !== 'red') {
-                                // Update permanent classification
-                                const oldType = wallet.permanentType;
-                                wallet.permanentType = walletType;
-                                wallet.permanentId = `${walletType.toUpperCase()} ${colorCounters[walletType]}`;
-                                colorCounters[walletType]++;
-                                
-                                // Add to status history
-                                if (!wallet.statusHistory.includes(`Reclassified from ${oldType} to ${walletType}`)) {
-                                    wallet.statusHistory.push(`Reclassified from ${oldType} to ${walletType}`);
+                            // Check if wallet classification should be updated
+                            if (wallet.permanentType !== walletType) {
+                                // Check if this is an allowed progression
+                                if (canChangeWalletClassification(wallet.permanentType, walletType)) {
+                                    // For automatic classifications during hop building, skip manual auth
+                                    const oldType = wallet.permanentType;
+                                    
+                                    // Record the automatic change
+                                    if (!wallet.classificationHistory) {
+                                        wallet.classificationHistory = [];
+                                    }
+                                    
+                                    wallet.classificationHistory.push({
+                                        timestamp: new Date().toISOString(),
+                                        fromType: oldType,
+                                        toType: walletType,
+                                        justification: `Automatic classification: ${walletType === 'yellow' ? 'Multiple traces converged at this wallet' : walletType === 'brown' ? 'Asset conversion detected' : 'Behavioral pattern detected'}`,
+                                        investigator: investigation.investigator || 'System'
+                                    });
+                                    
+                                    // Update the classification
+                                    wallet.permanentType = walletType;
+                                    wallet.permanentId = `${walletType.toUpperCase()} ${colorCounters[walletType]}`;
+                                    colorCounters[walletType]++;
+                                    
+                                    // Add to status history
+                                    if (!wallet.statusHistory.includes(`Auto-reclassified from ${oldType} to ${walletType}`)) {
+                                        wallet.statusHistory.push(`Auto-reclassified from ${oldType} to ${walletType}`);
+                                    }
                                 }
+                            }
                             }
                             
                             // Always update current status
@@ -9809,20 +9826,14 @@ function showWalletClassificationSuggestions(hop, suggestions) {
 
 // Accept wallet classification suggestion
 function acceptWalletSuggestion(walletAddress, newType, suggestionIndex) {
-    // Update wallet in UWI
-    const wallet = investigation.universalWalletIndex.find(w => w.address === walletAddress);
-    if (wallet) {
-        wallet.permanentType = newType;
-        wallet.currentStatus = newType;
-        wallet.statusHistory.push(newType);
-        
-        // Retroactively update all entries with this wallet
-        updateWalletClassificationRetroactively(walletAddress, newType);
-    }
+    // Use the new authorization system
+    const success = updateWalletClassificationWithAuth(walletAddress, newType, false);
     
-    // Hide this suggestion
-    const suggestionDiv = document.querySelectorAll('#walletSuggestionsModal .modal-content > div')[1].children[suggestionIndex];
-    suggestionDiv.style.display = 'none';
+    if (success) {
+        // Hide this suggestion
+        const suggestionDiv = document.querySelectorAll('#walletSuggestionsModal .modal-content > div')[1].children[suggestionIndex];
+        suggestionDiv.style.display = 'none';
+    }
     
     saveToStorage();
 }
@@ -10140,6 +10151,112 @@ function getWalletColor(walletType) {
         'green': '#27ae60'
     };
     return colorMap[walletType] || '#95a5a6';
+}
+
+// Define criminal hierarchy for wallet classifications
+const walletHierarchy = {
+    'green': 1,   // Victim-owned (legitimate)
+    'gray': 2,    // Obfuscated (write-off)
+    'black': 3,   // Default intermediary
+    'orange': 4,  // Bitcoin change (technical)
+    'brown': 4,   // Asset conversion (technical)
+    'blue': 5,    // Cold storage
+    'yellow': 6,  // Hub (convergence)
+    'pink': 7,    // Deception/Dividend
+    'purple': 8,  // Exchange (terminal)
+    'red': 9      // Victim-facing (highest exposure)
+};
+
+// Check if wallet classification change is allowed (only up the hierarchy)
+function canChangeWalletClassification(currentType, newType) {
+    const currentLevel = walletHierarchy[currentType] || 0;
+    const newLevel = walletHierarchy[newType] || 0;
+    return newLevel > currentLevel;
+}
+
+// Update wallet classification with authorization
+function updateWalletClassificationWithAuth(walletAddress, newType, skipAuth = false) {
+    const wallet = investigation.universalWalletIndex.find(w => w.address === walletAddress);
+    if (!wallet) {
+        alert('Wallet not found in index');
+        return false;
+    }
+    
+    const oldType = wallet.permanentType;
+    
+    // Check if change is allowed
+    if (!canChangeWalletClassification(oldType, newType)) {
+        alert(`Cannot change wallet classification from ${oldType.toUpperCase()} to ${newType.toUpperCase()}. Wallets can only progress UP the criminal hierarchy.`);
+        return false;
+    }
+    
+    // Get authorization unless skipped (for automatic updates)
+    let justification = '';
+    if (!skipAuth) {
+        justification = prompt(
+            `Changing wallet classification from ${walletTypes[oldType]} to ${walletTypes[newType]}.\n\n` +
+            `This is a significant change that will affect all entries using this wallet.\n\n` +
+            `Please provide justification for this classification change:`
+        );
+        
+        if (!justification || justification.trim() === '') {
+            alert('Classification change cancelled - justification required.');
+            return false;
+        }
+    } else {
+        justification = 'Automatic classification based on observed behavior';
+    }
+    
+    // Record the change
+    if (!wallet.classificationHistory) {
+        wallet.classificationHistory = [];
+    }
+    
+    wallet.classificationHistory.push({
+        timestamp: new Date().toISOString(),
+        fromType: oldType,
+        toType: newType,
+        justification: justification,
+        investigator: investigation.investigator || 'Unknown'
+    });
+    
+    // Update the wallet
+    wallet.permanentType = newType;
+    wallet.currentStatus = newType;
+    
+    // Update wallet ID if needed
+    const colorCounters = {};
+    investigation.universalWalletIndex.forEach(w => {
+        const type = w.permanentType;
+        if (!colorCounters[type]) colorCounters[type] = 0;
+        const match = w.permanentId.match(/\d+$/);
+        if (match) {
+            colorCounters[type] = Math.max(colorCounters[type], parseInt(match[0]));
+        }
+    });
+    
+    if (!colorCounters[newType]) colorCounters[newType] = 0;
+    wallet.permanentId = `${newType.toUpperCase()} ${colorCounters[newType] + 1}`;
+    
+    // Add to status history
+    if (!wallet.statusHistory) wallet.statusHistory = [];
+    wallet.statusHistory.push(`Reclassified from ${oldType} to ${newType}: ${justification}`);
+    
+    // Update all entries retroactively
+    updateWalletClassificationRetroactively(walletAddress, newType);
+    
+    // Save and refresh
+    saveToStorage();
+    buildUniversalWalletIndex();
+    renderHops();
+    
+    showNotification(
+        `Wallet reclassified from ${oldType.toUpperCase()} to ${newType.toUpperCase()}.\n` +
+        `Justification: ${justification}`,
+        'success'
+    );
+    
+    return true;
 }
 
 // Update wallet classification retroactively across all entries
