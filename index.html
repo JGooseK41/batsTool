@@ -5676,7 +5676,6 @@ function updateFullNotationDisplayMultiple(hopId, entryId) {
         // currencies already defined earlier with more complete information including decimals
 
         // timezones already defined earlier
-
         const writeoffCategories = {
             'dust': 'Dust - Below threshold',
             'dilution': 'Dilution - Too diluted to trace',
@@ -7396,8 +7395,6 @@ function exportRedWalletIndexCSV() {
                                     }
                                 }
                             }
-                            }
-                            
                             // Always update current status
                             if (wallet.currentStatus !== walletType) {
                                 wallet.currentStatus = walletType;
