@@ -9001,7 +9001,11 @@ function viewAvailableThreads(hopId) {
     const hop = investigation.hops.find(h => h.id === hopId);
     if (!hop) return;
     
+    console.log('Viewing available threads for hop:', hop.hopNumber);
+    console.log('Current hop entries:', hop.entries);
+    
     const availableThreads = getAvailableSourcesForHop(hop.hopNumber, null);
+    console.log('Available threads returned:', availableThreads);
     
     const modalHTML = `
         <div id="availableThreadsModal" class="modal" style="display: block; z-index: 9999;">
@@ -11390,6 +11394,23 @@ function getMaxAssignableAmount(sourceThreadId, currency, excludeEntryId = null,
     const availableAmount = thread.totalAmount - totalAssignedInCurrentSession;
     console.log(`Thread ${sourceThreadId}: Original ${thread.totalAmount}, Assigned across all entries ${totalAssignedInCurrentSession}, Available ${availableAmount}`);
     
+    // Log more details about assignments
+    if (totalAssignedInCurrentSession > 0) {
+        console.log(`  Assignments breakdown for ${sourceThreadId}:`);
+        investigation.hops.forEach(hop => {
+            hop.entries.forEach(entry => {
+                if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0) {
+                    if (entry.sourceThreadId === sourceThreadId) {
+                        console.log(`    - Hop ${hop.hopNumber} Entry ${entry.id}: ${entry.amount} (single source)`);
+                    }
+                    if (entry.individualSourceAssignments && entry.individualSourceAssignments[sourceThreadId]) {
+                        console.log(`    - Hop ${hop.hopNumber} Entry ${entry.id}: ${entry.individualSourceAssignments[sourceThreadId]} (multiple sources)`);
+                    }
+                }
+            });
+        });
+    }
+    
     return Math.max(0, availableAmount);
 }
 
@@ -12146,6 +12167,9 @@ function showHopWizardStep(step) {
         // Step 1: Select source threads
         const availableThreads = getAvailableSourcesForHop(wizardData.hopNumber, null);
         
+        console.log('Step 1 - Available threads for hop', wizardData.hopNumber, ':', availableThreads);
+        console.log('Available threads count:', availableThreads.length);
+        
         content.innerHTML = `
             <h3>Step 1: Select Source Threads</h3>
             <p>Choose which thread(s) you want to trace from. You can select multiple threads if the transaction combines funds.</p>
@@ -12276,13 +12300,21 @@ function showHopWizardStep(step) {
                         </div>
                         
                         <div class="form-group">
-                            <label>From Wallet:</label>
-                            <input type="text" 
-                                   id="wizardFromWallet"
-                                   placeholder="Enter sending wallet address"
-                                   value="${wizardData.manualData?.fromWallet || ''}"
-                                   onchange="updateWizardManualData('fromWallet', this.value)"
-                                   style="width: 100%;">
+                            <label>From Wallet (Auto-filled from source):</label>
+                            <div style="background: #f5f5f5; padding: 10px; border-radius: 4px; border: 1px solid #ddd;">
+                                ${(() => {
+                                    // Get the source wallet address from selected threads
+                                    if (wizardData.selectedThreads.length > 0) {
+                                        const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+                                        const sourceWallets = wizardData.selectedThreads.map(threadId => {
+                                            const thread = threads.find(t => t.threadId === threadId);
+                                            return thread ? `${thread.displayText}: ${thread.sourceWallet}` : 'Unknown';
+                                        });
+                                        return sourceWallets.join('<br>');
+                                    }
+                                    return 'No source thread selected';
+                                })()}
+                            </div>
                         </div>
                         
                         <div class="form-group">
@@ -12712,7 +12744,15 @@ function createHopEntryFromWizard() {
     let fromWallet, toWallet, timestamp;
     
     if (wizardData.entryMode === 'manual') {
-        fromWallet = wizardData.manualData?.fromWallet || '';
+        // Get from wallet from the source thread(s)
+        const threads = getAvailableSourcesForHop(hop.hopNumber, null);
+        if (wizardData.selectedThreads.length === 1) {
+            const thread = threads.find(t => t.threadId === wizardData.selectedThreads[0]);
+            fromWallet = thread ? thread.sourceWallet : '';
+        } else {
+            // For multiple sources, use the first one or combine them
+            fromWallet = 'Multiple Sources';
+        }
         toWallet = wizardData.manualData?.toWallet || '';
         timestamp = wizardData.manualData?.timestamp || '';
     } else {

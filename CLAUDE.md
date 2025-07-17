@@ -3,18 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-16 17:06)
+## Latest Commit (Auto-updated: 2025-07-16 17:12)
 
-**Commit:** 3e9c8e6343dcdb7704bc03ed58268aa0e18095b1
+**Commit:** d3c18fae944042c264ff9f05fda1143e7e7da5ab
 **Author:** Your Name
-**Message:** Add mobile showcase version for browsing B.A.T.S. capabilities
+**Message:** Add mobile device detection and automatic redirection
 
-- Create mobile-optimized showcase page (mobile.html)
-- Design responsive layout with tab navigation
-- Add overview, features, workflow, and demo sections
-- Include visual workflow steps and feature descriptions
-- Optimize for browsing and understanding, not usage
-- Add CTAs linking to main tool and training resources
+- Implement automatic mobile detection in index.html
+- Show confirmation dialog before redirecting to mobile version
+- Add user preference storage to remember desktop/mobile choice
+- Add "Mobile Version" button to desktop navigation
+- Add "View Desktop Version" link to mobile footer
+- Show notice bar when desktop users view mobile version
+- Clear preferences when manually switching versions
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,22 +23,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- mobile.html | 554 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 554 insertions(+)
+ CLAUDE.md   | 36 +++++++++++++++++-------------------
+ index.html  | 33 +++++++++++++++++++++++++++++++++
+ mobile.html | 30 +++++++++++++++++++++++++++++-
+ 3 files changed, 79 insertions(+), 20 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3e9c8e6 Add mobile showcase version for browsing B.A.T.S. capabilities (0 seconds ago)
-- 1af5938 Implement UI/UX improvements and bug fixes (3 minutes ago)
-- 6a29b42 Improve victim workflow and fix hop entry timestamps (31 minutes ago)
-- 29e2b27 Major UI/UX improvements and token transfer fix (48 minutes ago)
+- d3c18fa Add mobile device detection and automatic redirection (0 seconds ago)
+- 3e9c8e6 Add mobile showcase version for browsing B.A.T.S. capabilities (6 minutes ago)
+- 1af5938 Implement UI/UX improvements and bug fixes (9 minutes ago)
+- 6a29b42 Improve victim workflow and fix hop entry timestamps (38 minutes ago)
+- 29e2b27 Major UI/UX improvements and token transfer fix (55 minutes ago)
 - c4f0890 Reorganize case setup workflow (2 hours ago)
 - 260d643 Enhance welcome screen and onboarding workflow (2 hours ago)
 - fdb325b Enhance hop entry wizard with manual entry and better control options (5 days ago)
 - 2ccef07 Improve hop progression clarity and finalization UX (5 days ago)
 - 9e8eb55 Fix persistent JavaScript errors in hop creation and wallet index (5 days ago)
-- 2c6ef9f Fix critical JavaScript errors in hop creation (5 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
