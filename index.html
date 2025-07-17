@@ -388,22 +388,41 @@
         .nav-tab {
             padding: 15px 25px;
             border: none;
-            background: none;
+            background: #f8f9fa;
             cursor: pointer;
             font-weight: 500;
             color: #7f8c8d;
             border-bottom: 3px solid transparent;
             transition: all 0.3s ease;
             font-size: 14px;
+            position: relative;
+            margin-right: 5px;
+            border-radius: 8px 8px 0 0;
         }
 
         .nav-tab.active {
-            color: #3498db;
+            color: #ffffff;
+            background: #3498db;
             border-bottom-color: #3498db;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
         }
 
         .nav-tab:hover:not(.active) {
             color: #2c3e50;
+            background: #e8f0fe;
+        }
+        
+        /* Additional styling for better active tab visibility */
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #3498db;
+            border-radius: 2px 2px 0 0;
         }
 
         .tab-content {
@@ -6431,6 +6450,13 @@ function updateFormFieldsFromInvestigation() {
                 const decimals = getCurrencyDecimals(currency);
                 amountInput.title = `${currencies[currency]?.name || currency} supports ${decimals} decimal places`;
             }
+            
+            // Trigger recalculation of any dependent calculations
+            updateWorkflowSteps();
+            saveToStorage();
+            
+            // Log for debugging currency issues
+            console.log(`Currency updated for victim ${victimId}, transaction ${transactionId}: ${currency}`);
         }
 
         function generateRootTotal() {
@@ -9686,6 +9712,11 @@ function completeHopAndCreateNext(hop) {
     // Trigger autosave after hop completion
     if (isFileSystemAvailable) {
         autosaveInvestigation();
+    }
+    
+    // Ensure we stay on the traces tab to see the new hop
+    if (typeof switchTab === 'function') {
+        switchTab('traces');
     }
 }
 
