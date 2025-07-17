@@ -3,16 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-16 23:00)
+## Latest Commit (Auto-updated: 2025-07-16 23:04)
 
-**Commit:** 558ebe961960045e0bf91f368e566ccf79293a35
+**Commit:** 8a04692d2abe677afe67eec70405561ca39817bb
 **Author:** Your Name
-**Message:** Fix JavaScript errors - add missing walletTypes global and fix orphaned code
+**Message:** Ensure thread availability updates properly after creating/editing entries
 
-- Add walletTypes as global constant (was missing after previous edit)
-- Remove orphaned code that referenced undefined 'hop' variable
-- Fix hop is not defined error at line 7373
-- Fix walletTypes is not defined error at line 11086
+- Add buildAvailableThreadsIndex() call after creating hop entries
+- Add logging to track thread consumption and ART calculations
+- Ensure UI refreshes to show updated thread availability
+- Add detailed logging for hop entry totals to debug ART issues
+
+This ensures that:
+1. Threads can be used multiple times as long as value remains
+2. Thread availability is reduced by the amount of every entry that uses it
+3. The UI properly reflects the updated availability
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -20,23 +25,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 34 ++++++++++++++--------------------
- index.html | 18 ++++++++++++------
- 2 files changed, 26 insertions(+), 26 deletions(-)
+ CLAUDE.md  | 28 ++++++++++++++--------------
+ index.html | 22 ++++++++++++++++++++++
+ 2 files changed, 36 insertions(+), 14 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 558ebe9 Fix JavaScript errors - add missing walletTypes global and fix orphaned code (0 seconds ago)
-- ebad042 Fix JavaScript errors in hop finalization (8 minutes ago)
-- 1ca5ecd Fix hop finalization loop - add thread review before moving to next hop (15 minutes ago)
-- 27b4b51 Fix manual entry modal and add debugging for thread availability (30 minutes ago)
+- 8a04692 Ensure thread availability updates properly after creating/editing entries (0 seconds ago)
+- 558ebe9 Fix JavaScript errors - add missing walletTypes global and fix orphaned code (4 minutes ago)
+- ebad042 Fix JavaScript errors in hop finalization (11 minutes ago)
+- 1ca5ecd Fix hop finalization loop - add thread review before moving to next hop (19 minutes ago)
+- 27b4b51 Fix manual entry modal and add debugging for thread availability (33 minutes ago)
 - d3c18fa Add mobile device detection and automatic redirection (6 hours ago)
 - 3e9c8e6 Add mobile showcase version for browsing B.A.T.S. capabilities (6 hours ago)
 - 1af5938 Implement UI/UX improvements and bug fixes (6 hours ago)
 - 6a29b42 Improve victim workflow and fix hop entry timestamps (6 hours ago)
 - 29e2b27 Major UI/UX improvements and token transfer fix (7 hours ago)
-- c4f0890 Reorganize case setup workflow (7 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

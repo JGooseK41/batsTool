@@ -2054,7 +2054,12 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                 <div class="form-group">
                     <label>Original Amount</label>
-                    <input type="number" step="0.01" id="conversionFromAmount" placeholder="Amount sent">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" step="0.01" id="conversionFromAmount" placeholder="Amount sent" style="flex: 1;">
+                        <button class="btn btn-sm" onclick="copyConversionAmount()" title="Copy amount for stablecoin swaps" style="padding: 8px 12px;">
+                            📋 Copy
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Converted Amount</label>
@@ -12549,6 +12554,63 @@ function reopenHopWizard(hopId, entryId) {
     openHopEntryWizard(hopId);
 }
 
+function openHopEntryWizard(hopId) {
+    // Get hop data
+    const hop = investigation.hops.find(h => h.id === hopId);
+    if (!hop) return;
+    
+    // Initialize wizard data if not already editing
+    if (!window.hopWizardData || !window.hopWizardData.isEditMode) {
+        window.hopWizardData = {
+            hopId: hopId,
+            hopNumber: hop.hopNumber,
+            selectedThreads: [],
+            allocations: {},
+            step: 1,
+            txHash: '',
+            entryMode: 'lookup'
+        };
+    }
+    
+    const wizardHTML = `
+        <div id="hopEntryWizard" class="modal show">
+            <div class="modal-content" style="max-width: 900px; width: 90%;">
+                <div class="modal-header">
+                    <h2>🔍 Add Trace Entry - Hop ${hop.hopNumber}</h2>
+                    <span class="close" onclick="closeHopWizard()">&times;</span>
+                </div>
+                
+                <div class="wizard-progress" id="wizardProgress">
+                    <div class="wizard-step active" id="wizStep1">1. Select Source</div>
+                    <div class="wizard-step" id="wizStep2">2. Lookup Transaction</div>
+                    <div class="wizard-step" id="wizStep3">3. Review & Create</div>
+                </div>
+                
+                <div id="wizardContent" style="min-height: 400px; padding: 20px;">
+                    <!-- Content will be loaded here -->
+                </div>
+                
+                <div class="wizard-footer" style="display: flex; justify-content: space-between; padding: 20px; border-top: 1px solid #ddd;">
+                    <div>
+                        <input type="checkbox" id="disableWizardCheckbox" onchange="toggleWizardPreference(this.checked)">
+                        <label for="disableWizardCheckbox">Don't show wizard for trace entries</label>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary" id="wizardBackBtn" onclick="hopWizardBack()" disabled>Back</button>
+                        <button class="btn btn-primary" id="wizardNextBtn" onclick="hopWizardNext()">Next</button>
+                        <button class="btn btn-secondary" onclick="skipWizardThisTime()" title="Skip wizard for this entry only">Skip This Time</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    createCenteredModal('hopEntryWizard', wizardHTML);
+    
+    // Show first step
+    showHopWizardStep(1);
+}
+
 function skipHopWizard() {
     closeHopWizard();
     createHopEntryDirectly(window.hopWizardData.hopId, 'trace');
@@ -13212,45 +13274,6 @@ function updateWriteoffAmount(hopId, entryId, amount) {
     updateWriteoffPreview(hopId, entryId);
     updateHopEntry(hopId, entryId, 'amount', amount);
 }
-    const entry = {
-        // Existing fields (keep exactly as they were)
-        id: hop.entries.length + 1,
-        hopId: hopId,
-        hopNumber: hop.hopNumber,
-        entryType: entryType,
-        notation: '',
-        fromWallet: '',
-        fromWalletType: hop.hopNumber === 1 ? 'red' : 'black',
-        fromWalletId: '',
-        toWallet: '',
-        toWalletType: '',
-        toWalletId: '',
-        amount: '',
-        currency: 'USD',
-        customCurrency: '',
-        txHash: '',
-        timestamp: '',
-        timezone: 'UTC',
-        notes: '',
-        category: '',
-        justification: '',
-        sourceChain: [],                // Array of source thread objects
-        displayNotation: '',            // Full chain notation for display
-        summaryNotation: '',            // Compressed notation for summary
-        victimNumbers: '',              // Comma-separated victim numbers for notation building
-        transactionNumbers: '',         // Comma-separated transaction numbers for notation building
-        availableSourceAmount: 0,       // Available amount from selected source
-        sourceThreadId: '',             // Selected source thread identifier
-        sourceThreadData: null,         // Full source thread information
-        assignmentPercentage: 0,        // Percentage of source thread being used
-        generatedNotation: '',          // Auto-generated V-T-H notation
-        isConvergence: false,           // Flag for convergence scenarios
-        convergenceData: null           // Data for convergence handling
-    };
-    
-    hop.entries.push(entry);
-    renderHops();
-    saveToStorage();
 
         function updateHopEntry(hopId, entryId, field, value) {
             const hop = investigation.hops.find(h => h.id === hopId);
@@ -13426,6 +13449,13 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             investigation.conversions.push(conversion);
             
             closeAssetConversionModal();
+            
+            // Rebuild thread index to ensure new currency is tracked
+            buildAvailableThreadsIndex();
+            
+            // Update ART calculations for the hop
+            updateHopARTForConversion(hop, originalCurrency, originalAmount, toCurrency === 'CUSTOM' ? toCustom : toCurrency, toAmount);
+            
             renderHops();
             saveToStorage();
         }
@@ -13434,6 +13464,68 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             hideModal('assetConversionModal');
             window.currentConversionHopId = null;
             window.currentConversionEntryId = null;
+        }
+        
+        function updateHopARTForConversion(hop, fromCurrency, fromAmount, toCurrency, toAmount) {
+            // Ensure hop has ART tracking by currency
+            if (!hop.artAtStartByCurrency) {
+                hop.artAtStartByCurrency = {};
+            }
+            
+            // For conversions, we need to track both currencies
+            // The original currency is consumed and the new currency is created
+            
+            // If this is the first time we see the new currency in this hop
+            if (!hop.artAtStartByCurrency[toCurrency]) {
+                hop.artAtStartByCurrency[toCurrency] = 0;
+            }
+            
+            // Mark the hop as having a conversion
+            if (!hop.hasConversions) {
+                hop.hasConversions = true;
+            }
+            
+            // Store conversion tracking data
+            if (!hop.conversions) {
+                hop.conversions = [];
+            }
+            
+            hop.conversions.push({
+                fromCurrency: fromCurrency,
+                fromAmount: parseFloat(fromAmount),
+                toCurrency: toCurrency,
+                toAmount: parseFloat(toAmount),
+                timestamp: new Date().toISOString()
+            });
+            
+            console.log(`Conversion tracked in Hop ${hop.hopNumber}: ${fromAmount} ${fromCurrency} → ${toAmount} ${toCurrency}`);
+            console.log('Updated hop ART by currency:', hop.artAtStartByCurrency);
+        }
+        
+        function copyConversionAmount() {
+            const fromAmount = document.getElementById('conversionFromAmount').value;
+            if (fromAmount) {
+                // Copy to clipboard
+                navigator.clipboard.writeText(fromAmount).then(() => {
+                    // Also populate the converted amount field
+                    document.getElementById('conversionToAmount').value = fromAmount;
+                    
+                    // Show success feedback
+                    const button = event.target;
+                    const originalText = button.innerHTML;
+                    button.innerHTML = '✅ Copied!';
+                    button.style.background = '#27ae60';
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.style.background = '';
+                    }, 1500);
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    // Fallback - just copy to the field
+                    document.getElementById('conversionToAmount').value = fromAmount;
+                });
+            }
         }
 
         function openConvergenceHelper() {
