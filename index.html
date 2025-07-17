@@ -1582,6 +1582,32 @@
                                 <div style="font-size: 12px; color: #666; margin-top: 5px;">This will be included in the final report</div>
                             </div>
                             
+                            <!-- Tracing Method Selection -->
+                            <div class="form-group" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                                <label style="font-weight: bold; margin-bottom: 10px; display: block;">Tracing Method</label>
+                                <div style="display: flex; gap: 20px; align-items: flex-start;">
+                                    <label style="flex: 1; cursor: pointer;">
+                                        <input type="radio" name="tracingMethod" value="PIFO" checked onchange="updateTracingMethod('PIFO')">
+                                        <strong>PIFO (Default)</strong> - Proceeds In First Out
+                                        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                                            When traced funds enter a wallet, the very next outbound transaction contains those funds. 
+                                            Best for rapid fund movement scenarios.
+                                        </div>
+                                    </label>
+                                    <label style="flex: 1; cursor: pointer;">
+                                        <input type="radio" name="tracingMethod" value="LIBR" onchange="updateTracingMethod('LIBR')">
+                                        <strong>LIBR (Rare Exception)</strong> - Lowest Intermediate Balance Rule
+                                        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                                            Tracks based on lowest balance point between deposits. 
+                                            Use for accumulation patterns or stablecoin seizure tactics.
+                                        </div>
+                                    </label>
+                                </div>
+                                <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 10px; margin-top: 15px; font-size: 12px;">
+                                    <strong>⚠️ Important:</strong> Once chosen, maintain the same method throughout your investigation for consistency.
+                                </div>
+                            </div>
+                            
                             <div style="text-align: center; margin-top: 30px;">
                                 <button class="btn btn-confirm" onclick="saveCaseDetails()" style="padding: 15px 40px; font-size: 18px;">
                                     Save Case Details
@@ -2753,7 +2779,8 @@
             lastValidationTimestamp: null,
             threadValidationErrors: [],
             sourceChainReports: [],
-            integrationVersion: '4.0'
+            integrationVersion: '4.0',
+            tracingMethod: 'PIFO' // Default to PIFO, can be changed to 'LIBR'
         };
         
         // Undo system
@@ -2767,6 +2794,62 @@
         
         // Blockchain API Integration
         let targetEntryContext = null;
+        
+        // Wallet Types - Per B.A.T.S. Official Framework
+        const walletTypes = {
+            'red': '🔴 RED - Victim-Facing',
+            'pink': '🌸 PINK - Dividend/Deception',
+            'yellow': '🟡 YELLOW - Hub (Convergence)',
+            'orange': '🟠 ORANGE - Bitcoin Change',
+            'brown': '🟤 BROWN - Asset Conversion',
+            'black': '⚫ BLACK - Default Intermediary',
+            'blue': '🔵 BLUE - Cold Storage',
+            'purple': '🟣 PURPLE - Exchange Deposit',
+            'gray': '⚪ GRAY - Obfuscated/Diluted',
+            'green': '🟢 GREEN - Victim Owned'
+        };
+        
+        // Entry Types
+        const entryTypes = {
+            'trace': 'Trace',
+            'writeoff': 'Write-off',
+            'cold_storage': 'Cold Storage',
+            'vasp_arrival': 'VASP Arrival',
+            'vasp_withdrawal': 'VASP Withdrawal',
+            'chain_conversion': 'Chain Conversion'
+        };
+        
+        // Timezones
+        const timezones = {
+            'UTC': 'UTC',
+            'EST': 'EST',
+            'EDT': 'EDT',
+            'CST': 'CST',
+            'CDT': 'CDT',
+            'MST': 'MST',
+            'MDT': 'MDT',
+            'PST': 'PST',
+            'PDT': 'PDT',
+            'GMT': 'GMT',
+            'CET': 'CET',
+            'CEST': 'CEST',
+            'JST': 'JST',
+            'ET': 'Eastern Time',
+            'CT': 'Central Time',
+            'MT': 'Mountain Time',
+            'PT': 'Pacific Time'
+        };
+        
+        // Currencies
+        const currencies = {
+            'BTC': { name: 'Bitcoin', symbol: '₿', decimals: 8 },
+            'ETH': { name: 'Ethereum', symbol: 'Ξ', decimals: 18 },
+            'USDT': { name: 'Tether', symbol: '₮', decimals: 6 },
+            'USDC': { name: 'USD Coin', symbol: '$', decimals: 6 },
+            'MATIC': { name: 'Polygon', symbol: 'MATIC', decimals: 18 },
+            'USD': { name: 'US Dollar', symbol: '$', decimals: 2 },
+            'CUSTOM': { name: 'Custom', symbol: '', decimals: 8 }
+        };
         let currentTxData = null;
         let currentBulkVictimId = null;
         let pendingTransfers = null;
@@ -3702,11 +3785,15 @@ function renderHopEntry(entry) {
     const availableSourceThreads = getAvailableSourcesForHop(entry.hopNumber, null);
     
     // Build source options with real-time amounts
-    const sourceOptions = availableSourceThreads.map(source => 
-        `<option value="${source.threadId}" ${entry.sourceThreadId === source.threadId ? 'selected' : ''}>
-            ${source.displayText} - ${source.availableAmount.toLocaleString()} ${source.currency} available
-        </option>`
-    ).join('');
+    const sourceOptions = availableSourceThreads.map(source => {
+        const dateStr = source.datetime ? 
+            ` (${formatDateTimeForReport(source.datetime, source.timezone)})` : '';
+        return `<option value="${source.threadId}" 
+                ${entry.sourceThreadId === source.threadId ? 'selected' : ''}
+                title="${source.displayText}${dateStr}">
+            ${source.displayText} - ${source.availableAmount.toLocaleString()} ${source.currency} available${dateStr}
+        </option>`;
+    }).join('');
     
     // Calculate max amount for input field
     let maxAmount = 0;
@@ -3720,20 +3807,71 @@ function renderHopEntry(entry) {
         maxAmount = getMaxAssignableAmount(entry.sourceThreadId, currency);
     }
     
+    // Visual flow indicators
+    const isFinalized = entry.isFinalized || false;
+    const hasAmount = parseFloat(entry.amount) > 0;
+    const hasRequiredData = (isTrace && entry.txHash && entry.fromWallet && entry.toWallet) || 
+                           (isWriteoff && hasAmount) || 
+                           (isColdStorage && hasAmount);
+    
     return `
-        <div style="background: ${isColdStorage ? '#e3f2fd' : isWriteoff ? '#f5f5f5' : '#f0f7ff'}; border: 2px solid ${isColdStorage ? '#3498db' : isWriteoff ? '#9e9e9e' : '#b8daff'}; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <div class="trace-header">
-                <div>
-                    <span class="trace-notation">Entry ${entry.id} - ${entryTypes[entry.entryType]}</span>
-                    ${entry.notation ? `<br><small style="color: #666;">${entry.notation}</small>` : ''}
-                    ${isColdStorage ? `<br><span style="background: #3498db; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">BLUE WALLET</span>` : ''}
-                    ${parseFloat(entry.amount) > 0 && ['trace', 'writeoff', 'cold_storage', 'vasp_arrival'].includes(entry.entryType) ? 
-                        `<br><span style="background: #27ae60; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">✓ ${parseFloat(entry.amount).toLocaleString()} ${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency || ''} counted</span>` : 
-                        `<br><span style="background: #e74c3c; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">⚠️ Entry not counted - ${parseFloat(entry.amount) > 0 ? 'check entry type' : 'add amount'}</span>`}
+        <div style="background: ${isFinalized ? '#f0f8ff' : hasRequiredData ? '#f8fdff' : '#fffbf0'}; 
+                    border: 2px solid ${isFinalized ? '#4a90e2' : hasRequiredData ? '#5cb85c' : '#f0ad4e'}; 
+                    border-left-width: 8px;
+                    border-radius: 8px; 
+                    padding: 20px; 
+                    margin-bottom: 15px; 
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    position: relative;
+                    transition: all 0.3s ease;">
+            
+            <!-- Flow Arrow Indicator -->
+            ${hasRequiredData && isTrace ? `
+                <div style="position: absolute; right: -25px; top: 50%; transform: translateY(-50%); 
+                            width: 40px; height: 40px; background: #5cb85c; border-radius: 50%;
+                            display: flex; align-items: center; justify-content: center;
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                    <span style="color: white; font-size: 20px;">→</span>
                 </div>
+            ` : ''}
+            
+            <div class="trace-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                 <div>
-                    ${isTrace ? `<button class="btn btn-primary" onclick="reopenHopWizard(${entry.hopId}, ${entry.id})" style="margin-right: 10px;">🔄 Reopen Wizard</button>` : ''}
-                    <button class="btn btn-danger" onclick="removeHopEntry(${entry.hopId}, ${entry.id})">Remove</button>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="trace-notation" style="font-size: 18px; font-weight: bold; color: #2c3e50;">
+                            ${entry.notation || `Entry ${entry.id}`}
+                        </span>
+                        <span style="background: ${isWriteoff ? '#9e9e9e' : isColdStorage ? '#3498db' : '#5cb85c'}; 
+                                   color: white; 
+                                   padding: 4px 12px; 
+                                   border-radius: 20px; 
+                                   font-size: 12px; 
+                                   font-weight: 600;">
+                            ${entryTypes[entry.entryType]}
+                        </span>
+                    </div>
+                    
+                    <!-- Status Indicators -->
+                    <div style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+                        ${hasAmount ? 
+                            `<span style="background: #27ae60; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+                                <span style="font-size: 14px;">✓</span> ${parseFloat(entry.amount).toLocaleString()} ${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency || ''}
+                            </span>` : 
+                            `<span style="background: #e74c3c; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px;">⚠️ No amount</span>`}
+                        
+                        ${isTrace && entry.txHash ? 
+                            `<span style="background: #3498db; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px;">📋 Tx: ${entry.txHash.substring(0, 8)}...</span>` : ''}
+                        
+                        ${entry.toWalletType ? 
+                            `<span style="background: ${getWalletColor(entry.toWalletType)}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px;">
+                                ${walletTypes[entry.toWalletType] || entry.toWalletType}
+                            </span>` : ''}
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    ${isTrace && !isFinalized ? `<button class="btn btn-primary" onclick="reopenHopWizard(${entry.hopId}, ${entry.id})" style="padding: 8px 15px;">🔄 Wizard</button>` : ''}
+                    ${hasRequiredData && !isFinalized ? `<button class="btn btn-success" onclick="finalizeHopEntry(${entry.hopId}, ${entry.id})" style="padding: 8px 15px;">✓ Finalize</button>` : ''}
+                    <button class="btn btn-danger" onclick="removeHopEntry(${entry.hopId}, ${entry.id})" style="padding: 8px 15px;">✕</button>
                 </div>
             </div>
             
@@ -3991,7 +4129,7 @@ function renderHopEntry(entry) {
                                id="timestamp_${entry.hopId}_${entry.id}"
                                value="${entry.timestamp || ''}" 
                                onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timestamp', this.value)">
-                        <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timezone', this.value)">
+                        <select onchange="onTimezoneChange('timestamp_${entry.hopId}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
                             ${Object.entries(timezones).map(([key, value]) => 
                                 `<option value="${key}" ${entry.timezone === key ? 'selected' : ''}>${value}</option>`
                             ).join('')}
@@ -4246,7 +4384,9 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
                                 currency: currency, // ENSURE CURRENCY IS INCLUDED
                                 sourceWallet: transaction.receivingWallet,
                                 sourceType: 'victim_transaction',
-                                hopLevel: 0
+                                hopLevel: 0,
+                                datetime: transaction.datetime || null,
+                                timezone: transaction.timezone || 'UTC'
                             };
                             
                             console.log(` Adding source:`, source);
@@ -4282,7 +4422,9 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
                                     currency: currency, // ENSURE CURRENCY IS INCLUDED
                                     sourceWallet: entry.toWallet,
                                     sourceType: 'hop_output',
-                                    hopLevel: previousHopNumber
+                                    hopLevel: previousHopNumber,
+                                    datetime: entry.timestamp || null,
+                                    timezone: entry.timezone || 'UTC'
                                 });
                             }
                         }
@@ -5033,7 +5175,7 @@ function renderEnhancedHopEntry(entry) {
                                id="timestamp_${entry.hopId}_${entry.id}"
                                value="${entry.timestamp || ''}" 
                                onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timestamp', this.value)">
-                        <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timezone', this.value)">
+                        <select onchange="onTimezoneChange('timestamp_${entry.hopId}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
                             ${Object.entries(timezones).map(([key, value]) => 
                                 `<option value="${key}" ${entry.timezone === key ? 'selected' : ''}>${value}</option>`
                             ).join('')}
@@ -6176,7 +6318,7 @@ function updateFormFieldsFromInvestigation() {
                                            value="${transaction.datetime}" 
                                            onchange="updateTransaction(${victim.id}, ${transaction.id}, 'datetime', this.value)">
                                     <select id="timezone_victim_${victim.id}_${transaction.id}"
-                                            onchange="updateTransaction(${victim.id}, ${transaction.id}, 'timezone', this.value)">
+                                            onchange="onTimezoneChange('datetime_victim_${victim.id}_${transaction.id}', 'victim', ${victim.id}, ${transaction.id})">
                                         ${Object.entries(timezones).map(([key, value]) => 
                                             `<option value="${key}" ${transaction.timezone === key ? 'selected' : ''}>${value}</option>`
                                         ).join('')}
@@ -9275,6 +9417,7 @@ function viewAvailableThreads(hopId) {
                                 <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
                                     <th style="padding: 12px; text-align: left;">Thread ID</th>
                                     <th style="padding: 12px; text-align: left;">Source</th>
+                                    <th style="padding: 12px; text-align: left;">Date/Time</th>
                                     <th style="padding: 12px; text-align: right;">Available Amount</th>
                                     <th style="padding: 12px; text-align: left;">Currency</th>
                                     <th style="padding: 12px; text-align: left;">Status</th>
@@ -9287,6 +9430,12 @@ function viewAvailableThreads(hopId) {
                                         <tr style="border-bottom: 1px solid #dee2e6;">
                                             <td style="padding: 10px; font-family: monospace;">${thread.threadId}</td>
                                             <td style="padding: 10px;">${thread.displayText}</td>
+                                            <td style="padding: 10px; font-size: 13px;">
+                                                ${thread.datetime ? 
+                                                    formatDateTimeForReport(thread.datetime, thread.timezone) : 
+                                                    '<span style="color: #999;">Not specified</span>'
+                                                }
+                                            </td>
                                             <td style="padding: 10px; text-align: right; font-weight: bold; color: ${isFullyAssigned ? '#dc3545' : '#28a745'};">
                                                 ${thread.availableAmount.toLocaleString()}
                                             </td>
@@ -9902,12 +10051,37 @@ function confirmSmartAllocation() {
     entry.amount = formatCurrencyAmount(allocation.totalAllocated, targetCurrency, true);
     entry.currency = targetCurrency;
     
-    // Mark as convergence if multiple sources
+    // Mark as convergence if multiple sources and apply Sequential Hop Rule
     if (allocation.allocations.length > 1) {
         entry.isConvergence = true;
+        
+        // Apply Sequential Hop Rule: find the highest hop number among converging paths
+        let maxSourceHopNumber = 0;
+        allocation.allocations.forEach(alloc => {
+            const threadMatch = alloc.threadId.match(/-H(\d+)$/);
+            if (threadMatch) {
+                const sourceHopNumber = parseInt(threadMatch[1]);
+                maxSourceHopNumber = Math.max(maxSourceHopNumber, sourceHopNumber);
+            }
+        });
+        
+        // The convergence output should be at maxHop + 1
+        if (investigation.tracingMethod === 'PIFO') {
+            // For PIFO, we track the highest hop number and add 1
+            entry.hopNumber = maxSourceHopNumber + 1;
+            
+            // Show notification about Sequential Hop Rule application
+            showNotification(
+                `Sequential Hop Rule applied: Convergence of ${allocation.allocations.length} sources at hop ${entry.hopNumber}`,
+                'info'
+            );
+        }
+        
         entry.convergenceData = {
             sourceCount: allocation.allocations.length,
-            sources: allocation.allocations
+            sources: allocation.allocations,
+            maxSourceHop: maxSourceHopNumber,
+            sequentialHopRuleApplied: true
         };
     }
     
@@ -11823,11 +11997,15 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
     console.log(`Available sources for Hop ${entry.hopNumber}:`, availableSourceThreads);
     
     // Build source options properly with real-time amounts
-    const sourceOptions = availableSourceThreads.map(source => 
-        `<option value="${source.threadId}" ${entry.sourceThreadId === source.threadId ? 'selected' : ''}>
-            ${source.displayText} - ${source.availableAmount.toLocaleString()} ${source.currency} available
-        </option>`
-    ).join('');
+    const sourceOptions = availableSourceThreads.map(source => {
+        const dateStr = source.datetime ? 
+            ` (${formatDateTimeForReport(source.datetime, source.timezone)})` : '';
+        return `<option value="${source.threadId}" 
+                ${entry.sourceThreadId === source.threadId ? 'selected' : ''}
+                title="${source.displayText}${dateStr}">
+            ${source.displayText} - ${source.availableAmount.toLocaleString()} ${source.currency} available${dateStr}
+        </option>`;
+    }).join('');
     
     // Determine if we should show single or multiple source selection
     const showMultipleSelection = availableSourceThreads.length > 1;
@@ -12114,7 +12292,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                                id="timestamp_${entry.hopId}_${entry.id}"
                                value="${entry.timestamp || ''}" 
                                onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timestamp', this.value)">
-                        <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timezone', this.value)">
+                        <select onchange="onTimezoneChange('timestamp_${entry.hopId}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
                             ${Object.entries(timezones).map(([key, value]) => 
                                 `<option value="${key}" ${entry.timezone === key ? 'selected' : ''}>${value}</option>`
                             ).join('')}
@@ -12350,10 +12528,21 @@ function createHopEntryDirectly(hopId, entryType = 'trace') {
         return;
     }
     
+    // Apply Sequential Hop Rule for convergence scenarios
+    let effectiveHopNumber = hop.hopNumber;
+    if (entryType === 'trace' && hop.entries.length > 0) {
+        // Check if this entry will have multiple source threads (convergence)
+        const availableSources = getAvailableSourcesForHop(hop.hopNumber, null);
+        if (availableSources.length > 1) {
+            // This could be a convergence - prepare for Sequential Hop Rule
+            effectiveHopNumber = hop.hopNumber; // Will be updated when sources are selected
+        }
+    }
+    
     const entry = {
         id: hop.entries.length + 1,
         hopId: hopId,
-        hopNumber: hop.hopNumber,
+        hopNumber: effectiveHopNumber,
         entryType: entryType,
         notation: '',
         fromWallet: '',
@@ -12708,6 +12897,26 @@ function showHopWizardStep(step) {
                                    onchange="updateWizardManualData('timestamp', this.value)"
                                    style="width: 100%;">
                         </div>
+                        
+                        <div class="form-group">
+                            <label>Wallet Type (can be updated later):</label>
+                            <select id="wizardWalletType" 
+                                    onchange="updateWizardManualData('walletType', this.value)"
+                                    style="width: 100%;">
+                                <option value="black" ${wizardData.manualData?.walletType === 'black' ? 'selected' : ''}>⚫ BLACK - Default Intermediary</option>
+                                <option value="yellow" ${wizardData.manualData?.walletType === 'yellow' ? 'selected' : ''}>🟡 YELLOW - Hub (Convergence)</option>
+                                <option value="pink" ${wizardData.manualData?.walletType === 'pink' ? 'selected' : ''}>🌸 PINK - Dividend/Deception</option>
+                                <option value="orange" ${wizardData.manualData?.walletType === 'orange' ? 'selected' : ''}>🟠 ORANGE - Bitcoin Change</option>
+                                <option value="brown" ${wizardData.manualData?.walletType === 'brown' ? 'selected' : ''}>🟤 BROWN - Asset Conversion</option>
+                                <option value="blue" ${wizardData.manualData?.walletType === 'blue' ? 'selected' : ''}>🔵 BLUE - Cold Storage</option>
+                                <option value="purple" ${wizardData.manualData?.walletType === 'purple' ? 'selected' : ''}>🟣 PURPLE - Exchange Deposit</option>
+                                <option value="gray" ${wizardData.manualData?.walletType === 'gray' ? 'selected' : ''}>⚪ GRAY - Obfuscated/Diluted</option>
+                                <option value="green" ${wizardData.manualData?.walletType === 'green' ? 'selected' : ''}>🟢 GREEN - Victim Owned</option>
+                            </select>
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                💡 Tip: BLACK is the default for intermediary wallets. Update classification as patterns emerge (e.g., YELLOW for convergence hubs, PURPLE for exchanges).
+                            </small>
+                        </div>
                     </div>
                 `}
                 
@@ -12735,6 +12944,22 @@ function showHopWizardStep(step) {
         } else {
             nextBtn.disabled = !wizardData.txHash || !wizardData.txData;
         }
+        
+        // Add Create & Finalize button
+        const createFinalizeBtn = document.getElementById('wizardCreateFinalizeBtn');
+        if (!createFinalizeBtn) {
+            const btnContainer = nextBtn.parentElement;
+            const newBtn = document.createElement('button');
+            newBtn.id = 'wizardCreateFinalizeBtn';
+            newBtn.className = 'btn btn-success';
+            newBtn.textContent = 'Create & Finalize';
+            newBtn.style.marginLeft = '10px';
+            newBtn.onclick = () => createAndFinalizeEntry();
+            newBtn.disabled = nextBtn.disabled;
+            btnContainer.insertBefore(newBtn, nextBtn.nextSibling);
+        } else {
+            createFinalizeBtn.disabled = nextBtn.disabled;
+        }
     }
     
     wizardData.step = step;
@@ -12743,18 +12968,22 @@ function showHopWizardStep(step) {
 function hopWizardNext() {
     const wizardData = window.hopWizardData;
     
+    if (!wizardData) return;
+    
     if (wizardData.step === 3) {
         // Create the entry
         createHopEntryFromWizard();
     } else {
-        showHopWizardStep(wizardData.step + 1);
+        wizardData.step = wizardData.step + 1;
+        showHopWizardStep(wizardData.step);
     }
 }
 
 function hopWizardBack() {
     const wizardData = window.hopWizardData;
-    if (wizardData.step > 1) {
-        showHopWizardStep(wizardData.step - 1);
+    if (wizardData && wizardData.step > 1) {
+        wizardData.step = wizardData.step - 1;
+        showHopWizardStep(wizardData.step);
     }
 }
 
@@ -12762,6 +12991,12 @@ function closeHopWizard() {
     const wizard = document.getElementById('hopEntryWizard');
     if (wizard) wizard.remove();
     window.hopWizardData = null;
+}
+
+function createAndFinalizeEntry() {
+    // Set a flag to indicate we want to finalize after creation
+    window.hopWizardData.shouldFinalize = true;
+    createHopEntryFromWizard();
 }
 
 function reopenHopWizard(hopId, entryId) {
@@ -13202,6 +13437,7 @@ function createHopEntryFromWizard() {
             existingEntry.txHash = wizardData.txHash;
             existingEntry.fromWallet = fromWallet;
             existingEntry.toWallet = toWallet;
+            existingEntry.toWalletType = wizardData.manualData?.walletType || existingEntry.toWalletType || 'black';
             existingEntry.timestamp = timestamp;
             existingEntry.amount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0).toString();
             existingEntry.sourceThreadId = wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '';
@@ -13245,18 +13481,50 @@ function createHopEntryFromWizard() {
         }
     }
     
+    // Apply Sequential Hop Rule for convergence
+    let effectiveHopNumber = hop.hopNumber;
+    let convergenceData = null;
+    
+    if (wizardData.selectedThreads.length > 1) {
+        // This is a convergence - apply Sequential Hop Rule
+        let maxSourceHopNumber = 0;
+        wizardData.selectedThreads.forEach(threadId => {
+            const threadMatch = threadId.match(/-H(\d+)$/);
+            if (threadMatch) {
+                const sourceHopNumber = parseInt(threadMatch[1]);
+                maxSourceHopNumber = Math.max(maxSourceHopNumber, sourceHopNumber);
+            }
+        });
+        
+        if (investigation.tracingMethod === 'PIFO') {
+            // Sequential Hop Rule: convergence output is at max source hop + 1
+            effectiveHopNumber = maxSourceHopNumber + 1;
+            
+            convergenceData = {
+                sourceCount: wizardData.selectedThreads.length,
+                maxSourceHop: maxSourceHopNumber,
+                sequentialHopRuleApplied: true
+            };
+            
+            showNotification(
+                `Sequential Hop Rule applied: Convergence of ${wizardData.selectedThreads.length} sources, output at hop ${effectiveHopNumber}`,
+                'info'
+            );
+        }
+    }
+    
     // Create new entry with wizard data
     const entry = {
         id: hop.entries.length + 1,
         hopId: wizardData.hopId,
-        hopNumber: hop.hopNumber,
+        hopNumber: effectiveHopNumber,
         entryType: 'trace',
         notation: '',
         fromWallet: fromWallet,
         fromWalletType: hop.hopNumber === 1 ? 'red' : 'black',
         fromWalletId: '',
         toWallet: toWallet,
-        toWalletType: '',
+        toWalletType: wizardData.manualData?.walletType || 'black',
         toWalletId: '',
         amount: Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0).toString(),
         currency: wizardData.selectedThreads.length === 1 ? 
@@ -13279,8 +13547,8 @@ function createHopEntryFromWizard() {
         sourceThreadData: null,
         assignmentPercentage: 0,
         generatedNotation: '',
-        isConvergence: false,
-        convergenceData: null,
+        isConvergence: wizardData.selectedThreads.length > 1,
+        convergenceData: convergenceData,
         // New fields for multiple sources
         multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
         individualSourceAssignments: wizardData.selectedThreads.length > 1 ? wizardData.allocations : {}
@@ -13314,19 +13582,29 @@ function createHopEntryFromWizard() {
     console.log(`   Total amount used: ${Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0)}`);
     console.log(`   Thread allocations:`, wizardData.allocations);
     
+    // Check if we should finalize the entry
+    const shouldFinalize = wizardData.shouldFinalize;
+    
     // Scroll to the newly created entry after a short delay to allow DOM update
     setTimeout(() => {
         const entryElement = document.getElementById(`entry_${hop.id}_${sortedEntryId}`);
         if (entryElement) {
-            // Scroll the entry into view, centered on screen
-            entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Add a temporary highlight effect
-            entryElement.style.transition = 'background-color 0.5s ease';
-            entryElement.style.backgroundColor = '#e3f2fd';
-            setTimeout(() => {
-                entryElement.style.backgroundColor = '';
-            }, 2000);
+            if (shouldFinalize) {
+                // Finalize the entry (minimize it)
+                finalizeHopEntry(hop.id, sortedEntryId);
+                // Still scroll to it briefly to show where it was created
+                entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // Normal behavior - scroll and highlight
+                entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Add a temporary highlight effect
+                entryElement.style.transition = 'background-color 0.5s ease';
+                entryElement.style.backgroundColor = '#e3f2fd';
+                setTimeout(() => {
+                    entryElement.style.backgroundColor = '';
+                }, 2000);
+            }
         }
     }, 300);
 }
@@ -14012,6 +14290,91 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             };
             return `${date.toLocaleDateString('en-US', options)} ${timezone}`;
         }
+        
+        // Get timezone offset in hours
+        function getTimezoneOffset(timezone) {
+            const timezoneOffsets = {
+                'UTC': 0,
+                'EST': -5,
+                'EDT': -4,
+                'CST': -6,
+                'CDT': -5,
+                'MST': -7,
+                'MDT': -6,
+                'PST': -8,
+                'PDT': -7,
+                'GMT': 0,
+                'CET': 1,
+                'CEST': 2,
+                'JST': 9,
+                'ET': -5,  // Will be handled with DST check
+                'CT': -6,  // Will be handled with DST check
+                'MT': -7,  // Will be handled with DST check
+                'PT': -8   // Will be handled with DST check
+            };
+            
+            return timezoneOffsets[timezone] !== undefined ? timezoneOffsets[timezone] : null;
+        }
+        
+        // Convert datetime between timezones for display
+        function convertDateTimeBetweenTimezones(datetime, fromTimezone, toTimezone) {
+            if (!datetime) return '';
+            
+            // First convert to UTC
+            const utcTimestamp = convertToUTC(datetime, fromTimezone);
+            if (!utcTimestamp) return datetime;
+            
+            // Then convert to target timezone
+            const toOffset = getTimezoneOffset(toTimezone);
+            if (toOffset === null) return datetime;
+            
+            const targetDate = new Date(utcTimestamp + (toOffset * 60 * 60 * 1000));
+            
+            // Format as YYYY-MM-DDTHH:MM for datetime-local input
+            const year = targetDate.getFullYear();
+            const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const day = String(targetDate.getDate()).padStart(2, '0');
+            const hours = String(targetDate.getHours()).padStart(2, '0');
+            const minutes = String(targetDate.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        
+        // Handle timezone change in UI
+        function onTimezoneChange(elementId, entryType, ...ids) {
+            const timezoneSelect = event.target;
+            const newTimezone = timezoneSelect.value;
+            const datetimeInput = document.getElementById(elementId);
+            
+            if (!datetimeInput || !datetimeInput.value) return;
+            
+            // Get the current stored timezone
+            let currentTimezone;
+            if (entryType === 'victim') {
+                const [victimId, transactionId] = ids;
+                const victim = investigation.victims.find(v => v.id === victimId);
+                const transaction = victim?.transactions.find(t => t.id === transactionId);
+                currentTimezone = transaction?.timezone || 'UTC';
+            } else if (entryType === 'hop') {
+                const [hopId, entryId] = ids;
+                const hop = investigation.hops.find(h => h.id === hopId);
+                const entry = hop?.entries.find(e => e.id === entryId);
+                currentTimezone = entry?.timezone || 'UTC';
+            }
+            
+            // Convert the displayed time to the new timezone
+            const convertedTime = convertDateTimeBetweenTimezones(datetimeInput.value, currentTimezone, newTimezone);
+            if (convertedTime && convertedTime !== datetimeInput.value) {
+                datetimeInput.value = convertedTime;
+            }
+            
+            // Update the stored timezone
+            if (entryType === 'victim') {
+                updateTransaction(...ids, 'timezone', newTimezone);
+            } else if (entryType === 'hop') {
+                updateHopEntry(...ids, 'timezone', newTimezone);
+            }
+        }
 
         function updateTransaction(victimId, transactionId, field, value) {
             const victim = investigation.victims.find(v => v.id === victimId);
@@ -14243,6 +14606,41 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             `;
         }
 
+        // Update tracing method (PIFO vs LIBR)
+        function updateTracingMethod(method) {
+            investigation.tracingMethod = method;
+            saveToUndoHistory();
+            
+            // Show warning if switching methods mid-investigation
+            if (investigation.hops.length > 0) {
+                const warning = method === 'LIBR' ? 
+                    'Warning: LIBR method should only be used in rare exceptions when PIFO cannot apply. Ensure consistency throughout your investigation.' :
+                    'Switched back to PIFO (default method). Ensure all previous entries follow PIFO methodology.';
+                showNotification(warning, 'warning');
+            }
+            
+            // Update any UI elements that might display the method
+            const methodDisplay = document.getElementById('currentTracingMethod');
+            if (methodDisplay) {
+                methodDisplay.textContent = method;
+            }
+        }
+        
+        // Apply LIBR (Lowest Intermediate Balance Rule) when needed
+        function applyLIBRMethod(walletAddress, startTime, endTime) {
+            // LIBR: Find the lowest balance between two time points
+            // This is a placeholder for when we implement blockchain lookups
+            console.log(`LIBR method would analyze wallet ${walletAddress} between ${startTime} and ${endTime}`);
+            
+            // For now, return a warning that this needs manual calculation
+            showNotification(
+                'LIBR method requires manual balance analysis. Please determine the lowest intermediate balance for the wallet during the specified period.',
+                'warning'
+            );
+            
+            return null; // Would return the lowest balance amount
+        }
+
         function updateValidationStatus() {
             const validationPanel = document.getElementById('validationStatus');
             
@@ -14284,7 +14682,8 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                             tracePathsByCurrency[currency][vtPath].push({
                                 hopNumber: entry.hopNumber,
                                 amount: parseFloat(entry.amount),
-                                notation: entry.notation
+                                notation: entry.notation,
+                                isConvergence: entry.isConvergence || false
                             });
                         }
                     }
