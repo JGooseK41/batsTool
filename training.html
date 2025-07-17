@@ -394,6 +394,8 @@
                 <a href="#golden-thread">Golden Thread</a>
                 <a href="#judgment">Professional Judgment</a>
                 <a href="#quick-start">Quick Start</a>
+                <a href="#advanced">Advanced</a>
+                <a href="#glossary">Glossary</a>
                 <a href="#faq">FAQ</a>
                 <a href="#benefits">Benefits</a>
             </div>
@@ -539,26 +541,26 @@
                     <tbody>
                         <tr>
                             <td><strong>B.A.T.S. 1 - Discovery</strong></td>
-                            <td>Quick case assessment</td>
-                            <td>Is this worth pursuing?</td>
+                            <td>Quick case assessment & lead generation</td>
+                            <td>Identify victims, assess scope, determine viability</td>
                             <td>Hours</td>
                         </tr>
                         <tr>
                             <td><strong>B.A.T.S. 2 - Intelligence</strong></td>
-                            <td>Network understanding</td>
-                            <td>Who are the criminals?</td>
+                            <td>Criminal network mapping</td>
+                            <td>Create RED wallet index, identify criminal infrastructure</td>
                             <td>Days</td>
                         </tr>
                         <tr>
                             <td><strong>B.A.T.S. 3 - Case Prep</strong></td>
-                            <td>Court-ready evidence</td>
-                            <td>Build prosecution case</td>
+                            <td>Court-ready evidence with V-T notation</td>
+                            <td>Build prosecution case, legal process preparation</td>
                             <td>Weeks</td>
                         </tr>
                         <tr>
                             <td><strong>B.A.T.S. 4 - Asset Forfeiture</strong></td>
-                            <td>Mathematical precision</td>
-                            <td>Support seizure/forfeiture</td>
+                            <td>Mathematical precision with V-T-H notation</td>
+                            <td>Support seizure/forfeiture with hop counting</td>
                             <td>Weeks to months</td>
                         </tr>
                     </tbody>
@@ -617,6 +619,10 @@
             <div class="tip-box">
                 <strong>Why This Matters:</strong> V-T-H notation creates an unambiguous audit trail that clearly documents every decision in your investigation, allowing reviewers to understand your methodology and reasoning.
             </div>
+            
+            <div class="warning-box">
+                <strong>Note on Investigation Levels:</strong> B.A.T.S. Level 3 uses V-T notation (without hop counting), while Level 4 introduces full V-T-H notation with hop counting for asset forfeiture precision.
+            </div>
         </section>
 
         <!-- Wallet Colors Section -->
@@ -656,18 +662,18 @@
 
                 <div class="card card-black">
                     <h3 style="color: #2c3e50;">⚫ BLACK Wallets</h3>
-                    <p><strong>Definition:</strong> Standard intermediary</p>
-                    <p><strong>Rule:</strong> Default for unclassified</p>
-                    <p><strong>Example:</strong> Pass-through addresses</p>
+                    <p><strong>Definition:</strong> Default intermediary with no direct victim exposure</p>
+                    <p><strong>Rule:</strong> Default classification for intermediary wallets</p>
+                    <p><strong>Example:</strong> Pass-through addresses in the money trail</p>
                 </div>
 
                 <div class="card card-green">
                     <h3 style="color: #27ae60;">🟢 Additional Colors</h3>
-                    <p><strong>PINK:</strong> Dividend/Deception</p>
-                    <p><strong>ORANGE:</strong> Bitcoin Change</p>
-                    <p><strong>BROWN:</strong> Asset Conversion</p>
-                    <p><strong>GRAY:</strong> Obfuscated/Diluted</p>
-                    <p><strong>GREEN:</strong> Victim Owned</p>
+                    <p><strong>PINK:</strong> Dividend/Deception - Proves criminal intent and implicates all BLACK wallets between PINK and RED</p>
+                    <p><strong>ORANGE:</strong> Bitcoin change addresses essential for UTXO tracing</p>
+                    <p><strong>BROWN:</strong> Asset Conversion services (DEX, swap services)</p>
+                    <p><strong>GRAY:</strong> Obfuscated/Diluted funds (mixers, privacy services)</p>
+                    <p><strong>GREEN:</strong> Victim Owned (legitimate recovery addresses)</p>
                 </div>
             </div>
 
@@ -686,7 +692,7 @@
             </div>
 
             <h3>The PIFO Method (Proceeds In First Out)</h3>
-            <p>When traced funds enter a wallet, the very next outbound transaction contains those funds. Apply this strictly chronologically to maintain the golden thread through commingled funds.</p>
+            <p>The principle that when traced funds enter a wallet, the very next outbound transaction contains those funds, applied chronologically. <strong>Important:</strong> PIFO is fundamentally different from FIFO (First In First Out) inventory accounting - the practice of following 'dirty' funds does not reset upon each subsequent deposit to the wallet. PIFO is grounded in its own specific case law, not inventory accounting methods.</p>
             
             <div class="example-box">
                 <strong>Example:</strong><br>
@@ -704,7 +710,7 @@
                         <li>Follow funds chronologically</li>
                         <li>Document every hop</li>
                         <li>Validate amounts at each level</li>
-                        <li>Apply PIFO consistently (or document LIFO choice)</li>
+                        <li>Apply PIFO consistently (or document LIBR exception when necessary)</li>
                         <li>Document judgment calls clearly</li>
                     </ul>
                 </div>
@@ -735,8 +741,8 @@
             <div class="grid">
                 <div class="card card-yellow">
                     <h4>Transaction Attribution</h4>
-                    <p><strong>PIFO vs. LIFO:</strong> While PIFO is strongly preferred, certain circumstances may warrant LIFO application.</p>
-                    <p><strong>Key:</strong> Document why you chose your method.</p>
+                    <p><strong>PIFO vs. LIBR:</strong> While PIFO is the default method, rare circumstances may require LIBR (Lowest Intermediate Balance Rule) application.</p>
+                    <p><strong>Key:</strong> Document why you chose your method and maintain consistency throughout the investigation.</p>
                 </div>
                 
                 <div class="card card-blue">
@@ -852,6 +858,156 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↗ BLACK2 ($3,000) → More hops<br>
                 V1-T1 → RED → BLACK1<br>
                 ($10,000)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↘ BLACK3 ($7,000) → More hops
+            </div>
+        </section>
+
+        <!-- Advanced Concepts Section -->
+        <section id="advanced" class="section">
+            <h2>🔬 Advanced Concepts</h2>
+            
+            <h3>Alternative Attribution Methods</h3>
+            
+            <div class="card card-yellow">
+                <h4>LIBR (Lowest Intermediate Balance Rule)</h4>
+                <p>Used in rare exceptions when PIFO cannot apply. LIBR traces the lowest balance a wallet held between the time traced funds entered and a specific transaction occurred.</p>
+                <p><strong>When to use:</strong> When specific circumstances prevent chronological PIFO application.</p>
+                <p><strong>Warning:</strong> Requires extensive documentation and manual balance analysis.</p>
+            </div>
+            
+            <div class="card card-blue">
+                <h4>Sequential Hop Rule</h4>
+                <p>When multiple trace paths converge at the same wallet and move out together, apply the highest hop count among all converging paths, plus one for the outbound transaction.</p>
+                <p><strong>Example:</strong> If V1-T1-H3 and V2-T1-H5 converge at a YELLOW wallet, the output is at H6 (highest input + 1).</p>
+            </div>
+            
+            <div class="card card-purple">
+                <h4>Dirty Wallet Principle</h4>
+                <p>Applied <strong>only at terminal points</strong> (PURPLE exchanges) to identify additional victims. Never apply during active tracing to prevent scope creep.</p>
+                <p><strong>Purpose:</strong> Victim discovery at investigation endpoints.</p>
+                <p><strong>Caution:</strong> Improper application can exponentially expand investigation scope.</p>
+            </div>
+            
+            <h3>Special Considerations</h3>
+            
+            <div class="card card-orange">
+                <h4>UTXO Tracing for Bitcoin</h4>
+                <p>Bitcoin's Unspent Transaction Output (UTXO) model requires special attention:</p>
+                <ul>
+                    <li>Track specific outputs, not just addresses</li>
+                    <li>Identify and classify ORANGE change addresses</li>
+                    <li>Consider coin selection algorithms</li>
+                    <li>Document UTXO splits and consolidations</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Glossary Section -->
+        <section id="glossary" class="section">
+            <h2>📖 B.A.T.S. Glossary of Terms</h2>
+            
+            <p>Essential terminology for B.A.T.S. practitioners, organized alphabetically:</p>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Term</th>
+                            <th>Definition</th>
+                            <th>Context/Usage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Adjusted Root Total (ART)</strong></td>
+                            <td>The root minus any documented write-offs. This becomes the accounting baseline that all threads must sum to at each hop level for mathematical validation.</td>
+                            <td>Used throughout investigation for validation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>B.A.T.S.</strong></td>
+                            <td>Block Audit Tracing Standard - A standardized framework for cryptocurrency investigation that maintains the golden thread of traceability required for successful asset forfeiture cases.</td>
+                            <td>The overall methodology</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Commingling</strong></td>
+                            <td>When traced criminal proceeds mix with existing wallet balances or other fund sources, requiring careful application of PIFO principles to maintain the golden thread.</td>
+                            <td>Courts have established that commingling does not cleanse tainted funds</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Convergence</strong></td>
+                            <td>When multiple trace paths arrive at the same wallet and subsequently move out together as a single transaction. Requires application of the Sequential Hop Rule.</td>
+                            <td>Often occurs at YELLOW (hub) wallets</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dirty Wallet Principle</strong></td>
+                            <td>The investigative technique of identifying all deposits to known criminal wallets to discover additional victims. Applied ONLY at terminal points to prevent scope creep.</td>
+                            <td>Used at PURPLE exchanges for victim discovery</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Golden Thread</strong></td>
+                            <td>The unbroken connection between a victim's original funds and any assets ultimately seized by law enforcement, essential for proving direct traceability in asset forfeiture cases.</td>
+                            <td>Core principle throughout investigation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hop Count</strong></td>
+                            <td>The measurement of distance from the victim-facing wallet rather than chronological discovery order. Each blockchain transaction increments the hop count by one.</td>
+                            <td>H1, H2, H3 in V-T-H notation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>LIBR Method</strong></td>
+                            <td>Lowest Intermediate Balance Rule - Traces the lowest balance a wallet held between traced funds entering and a specific transaction occurring. Rare exception to PIFO.</td>
+                            <td>Used only when PIFO cannot apply</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PIFO Method</strong></td>
+                            <td>Proceeds In First Out - The principle that when traced funds enter a wallet, the very next outbound transaction contains those funds. NOT the same as FIFO inventory accounting.</td>
+                            <td>Default attribution method</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Root Total</strong></td>
+                            <td>The sum of all victim deposits that forms the mathematical basis for the entire investigation. Must be confirmed before beginning trace operations.</td>
+                            <td>Established at investigation start</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Sequential Hop Rule</strong></td>
+                            <td>When multiple trace paths converge at the same wallet and move out together, apply the highest hop count among all converging paths, plus one for the outbound transaction.</td>
+                            <td>Maintains accurate hop counting</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Thread</strong></td>
+                            <td>An individual trace path following specific victim funds through the blockchain. Threads can split, converge, or terminate based on transaction patterns.</td>
+                            <td>Each V-T creates a thread</td>
+                        </tr>
+                        <tr>
+                            <td><strong>UTXO</strong></td>
+                            <td>Unspent Transaction Output - Bitcoin's transaction model requiring special attention to change addresses (ORANGE wallets) and output tracking.</td>
+                            <td>Bitcoin-specific consideration</td>
+                        </tr>
+                        <tr>
+                            <td><strong>V-T Notation</strong></td>
+                            <td>The standardized identification system used in B.A.T.S. Level 3 where V represents victim number, T represents transaction number.</td>
+                            <td>Used without hop counting in Level 3</td>
+                        </tr>
+                        <tr>
+                            <td><strong>V-T-H Notation</strong></td>
+                            <td>The complete notation system used in B.A.T.S. Level 4 adding H for hop count, enabling precise fund tracking for asset forfeiture.</td>
+                            <td>Full notation for Level 4 investigations</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Wallet Classification</strong></td>
+                            <td>The color-coded system for categorizing wallets based on their function: RED (victim-facing), YELLOW (hub), PURPLE (exchange), etc.</td>
+                            <td>Permanent classification system</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Write-off</strong></td>
+                            <td>Systematic documentation of funds that cannot be traced further due to dust amounts, dilution, obfuscation, or operational constraints.</td>
+                            <td>Reduces ART for next hop</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="tip-box">
+                <strong>Note:</strong> This glossary contains the essential terms for B.A.T.S. practitioners. For complete definitions and legal context, refer to the official B.A.T.S. Desk Reference.
             </div>
         </section>
 
