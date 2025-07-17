@@ -2499,6 +2499,8 @@
             }
         })();
 
+        // Global constants
+
         // Global state
         let investigation = {
             caseId: '',
@@ -5272,18 +5274,6 @@ const entryTypes = {
     'cold_storage': 'Still in Wallet'
 };
 
-        const walletTypes = {
-            'red': 'RED - Victim Facing',
-            'pink': 'PINK - Dividend/Deception',
-            'yellow': 'YELLOW - Hub/Convergence',
-            'orange': 'ORANGE - Bitcoin Change',
-            'brown': 'BROWN - Asset Conversion',
-            'black': 'BLACK - Intermediary',
-            'blue': 'BLUE - Cold Storage',
-            'purple': 'PURPLE - Exchange Deposit',
-            'gray': 'GRAY - Obfuscated/Diluted',
-            'green': 'GREEN - Victim Owned'
-        };
 
         const currencies = {
             'USD': { name: 'US Dollar' },
@@ -6091,8 +6081,8 @@ function updateFormFieldsFromInvestigation() {
                 }
             });
             
-            // Try to confirm root total again
-            setTimeout(() => confirmRootTotal(), 100);
+            // Try to generate root total again
+            setTimeout(() => generateRootTotal(), 100);
             return;
         } else {
             return;
@@ -9194,7 +9184,7 @@ function showThreadReviewForNextHop(completedHop) {
                                                 <div style="color: #666; font-size: 14px;">
                                                     <div>Amount: <strong>${thread.amount.toLocaleString()} ${thread.currency}</strong></div>
                                                     <div>From: ${thread.fromWallet.substring(0, 16)}...</div>
-                                                    <div>To: ${thread.toWallet.substring(0, 16)}... <span style="color: ${walletTypeColors[thread.toWalletType] || '#000'};">(${walletTypes[thread.toWalletType] || thread.toWalletType})</span></div>
+                                                    <div>To: ${thread.toWallet.substring(0, 16)}... <span>(${walletTypes[thread.toWalletType] || thread.toWalletType})</span></div>
                                                 </div>
                                             </div>
                                             <div style="text-align: right;">
