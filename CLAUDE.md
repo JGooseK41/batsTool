@@ -3,21 +3,24 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-16 23:04)
+## Latest Commit (Auto-updated: 2025-07-16 23:22)
 
-**Commit:** 8a04692d2abe677afe67eec70405561ca39817bb
+**Commit:** a3f9e2918d831ad30210d32febef8505cbf5f59c
 **Author:** Your Name
-**Message:** Ensure thread availability updates properly after creating/editing entries
+**Message:** Fix conversion tracking and UI issues
 
-- Add buildAvailableThreadsIndex() call after creating hop entries
-- Add logging to track thread consumption and ART calculations
-- Ensure UI refreshes to show updated thread availability
-- Add detailed logging for hop entry totals to debug ART issues
+- Add copy amount button to brown wallet conversion modal
+- Auto-populate converted amount field for stablecoin swaps
+- Fix orphaned code causing 'hop is not defined' error
+- Add missing openHopEntryWizard function
+- Track conversions properly with multi-currency ART support
+- Rebuild thread index after conversions
+- Add conversion tracking to hop data
 
-This ensures that:
-1. Threads can be used multiple times as long as value remains
-2. Thread availability is reduced by the amount of every entry that uses it
-3. The UI properly reflects the updated availability
+This ensures:
+1. Easy stablecoin swaps with copy button
+2. Proper multi-currency tracking after conversions
+3. Fixed JavaScript errors for wizard functionality
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,23 +28,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 28 ++++++++++++++--------------
- index.html | 22 ++++++++++++++++++++++
- 2 files changed, 36 insertions(+), 14 deletions(-)
+ CLAUDE.md  |  35 +++++++------
+ index.html | 172 +++++++++++++++++++++++++++++++++++++++++++++++--------------
+ 2 files changed, 152 insertions(+), 55 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8a04692 Ensure thread availability updates properly after creating/editing entries (0 seconds ago)
-- 558ebe9 Fix JavaScript errors - add missing walletTypes global and fix orphaned code (4 minutes ago)
-- ebad042 Fix JavaScript errors in hop finalization (11 minutes ago)
-- 1ca5ecd Fix hop finalization loop - add thread review before moving to next hop (19 minutes ago)
-- 27b4b51 Fix manual entry modal and add debugging for thread availability (33 minutes ago)
+- a3f9e29 Fix conversion tracking and UI issues (0 seconds ago)
+- 8a04692 Ensure thread availability updates properly after creating/editing entries (19 minutes ago)
+- 558ebe9 Fix JavaScript errors - add missing walletTypes global and fix orphaned code (22 minutes ago)
+- ebad042 Fix JavaScript errors in hop finalization (30 minutes ago)
+- 1ca5ecd Fix hop finalization loop - add thread review before moving to next hop (37 minutes ago)
+- 27b4b51 Fix manual entry modal and add debugging for thread availability (52 minutes ago)
 - d3c18fa Add mobile device detection and automatic redirection (6 hours ago)
 - 3e9c8e6 Add mobile showcase version for browsing B.A.T.S. capabilities (6 hours ago)
 - 1af5938 Implement UI/UX improvements and bug fixes (6 hours ago)
-- 6a29b42 Improve victim workflow and fix hop entry timestamps (6 hours ago)
-- 29e2b27 Major UI/UX improvements and token transfer fix (7 hours ago)
+- 6a29b42 Improve victim workflow and fix hop entry timestamps (7 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

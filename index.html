@@ -6098,8 +6098,8 @@ function updateFormFieldsFromInvestigation() {
                 }
             });
             
-            // Try to generate root total again
-            setTimeout(() => generateRootTotal(), 100);
+            // Try to generate root total again - using longer delay to avoid race conditions
+            setTimeout(() => generateRootTotal(), 500);
             return;
         } else {
             return;
@@ -14043,7 +14043,8 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             updateValidationStatus();
         }
 
-        function getWalletColor(type) {
+        // DUPLICATE FUNCTION REMOVED - Using the global version at line 9714
+        /*function getWalletColor(type) {
             const colors = {
                 'red': '#e74c3c',
                 'pink': '#e91e63', 
@@ -14057,7 +14058,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                 'green': '#27ae60'
             };
             return colors[type] || '#3498db';
-        }
+        }*/
 
         async function saveInvestigation() {
             if (!investigation.caseId) {
@@ -15060,7 +15061,8 @@ function downloadFile(content, filename, mimeType) {
     }
 }
 
-function validateHopCompletion(hopId) {
+// DUPLICATE FUNCTION REMOVED - Using the more complete version at line 10336
+/*function validateHopCompletion(hopId) {
     const hop = investigation.hops.find(h => h.id === hopId);
     if (!hop) return { valid: false, errors: ['Hop not found'] };
     
@@ -15140,7 +15142,7 @@ function validateHopCompletion(hopId) {
         warnings: warnings,
         balanceStatus: entryTotalsByCurrency
     };
-}
+}*/
 
 function autoGenerateNotationFromSource(hopId, entryId, sourceThreadId) {
     const hop = investigation.hops.find(h => h.id === hopId);
@@ -18391,7 +18393,8 @@ To (RED Wallet): ${transfer.to}`;
             });
         }
         
-        function getWalletColor(type) {
+        // DUPLICATE FUNCTION REMOVED - Using the global version at line 9714
+        /*function getWalletColor(type) {
             const colors = {
                 'victim': '#e74c3c',
                 'red': '#e74c3c',
@@ -18401,7 +18404,7 @@ To (RED Wallet): ${transfer.to}`;
                 'unknown': '#95a5a6'
             };
             return colors[type] || colors.unknown;
-        }
+        }*/
         
         
         function showWalletDetails(walletData) {
