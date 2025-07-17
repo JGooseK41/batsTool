@@ -3,28 +3,13 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-17 10:05)
+## Latest Commit (Auto-updated: 2025-07-17 10:24)
 
-**Commit:** ac74c4bb7e573a57e49524adc19f3959e93559ed
+**Commit:** 211cbd9c7dea6f08e901de3ec199465e345c24bb
 **Author:** Your Name
-**Message:** Fix training page accuracy and add comprehensive glossary
+**Message:** Fix remaining LIFO reference to LIBR in training FAQ
 
-- Update wallet color definitions to match official B.A.T.S. framework
-  - BLACK: Emphasize 'no direct victim exposure'
-  - PINK: Add critical function of implicating intervening wallets
-  - ORANGE: Mention 'essential for UTXO tracing'
-- Fix PIFO description to clarify it's NOT FIFO inventory accounting
-- Change LIFO references to LIBR (Lowest Intermediate Balance Rule)
-- Add investigation level distinctions (V-T for Level 3, V-T-H for Level 4)
-- Add Advanced Concepts section with:
-  - LIBR method explanation
-  - Sequential Hop Rule
-  - Dirty Wallet Principle (terminal points only)
-  - UTXO tracing considerations
-- Add comprehensive Glossary section with all key B.A.T.S. terms
-- Update navigation to include Advanced and Glossary tabs
-
-All content now accurately reflects the official B.A.T.S. Desk Reference
+Changed 'PIFO vs. LIFO' to 'PIFO vs. LIBR' in the FAQ section to maintain consistency with B.A.T.S. framework terminology.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -32,23 +17,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md     |  53 ++++++++--------
- training.html | 196 ++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 204 insertions(+), 45 deletions(-)
+ CLAUDE.md     | 45 ++++++++++++++++++++++++---------------------
+ training.html |  2 +-
+ 2 files changed, 25 insertions(+), 22 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ac74c4b Fix training page accuracy and add comprehensive glossary (0 seconds ago)
-- 55d4bdb Implement LIBR method support and Sequential Hop Rule (12 minutes ago)
+- 211cbd9 Fix remaining LIFO reference to LIBR in training FAQ (0 seconds ago)
+- ac74c4b Fix training page accuracy and add comprehensive glossary (18 minutes ago)
+- 55d4bdb Implement LIBR method support and Sequential Hop Rule (30 minutes ago)
 - 0f263be Implement UTC timezone compliance for all reports (3 hours ago)
 - accef56 Add comprehensive validation and safety improvements (3 hours ago)
 - 64c99a1 Fix critical bugs in hop completion and validation (11 hours ago)
 - a3f9e29 Fix conversion tracking and UI issues (11 hours ago)
 - 8a04692 Ensure thread availability updates properly after creating/editing entries (11 hours ago)
 - 558ebe9 Fix JavaScript errors - add missing walletTypes global and fix orphaned code (11 hours ago)
-- ebad042 Fix JavaScript errors in hop finalization (11 hours ago)
-- 1ca5ecd Fix hop finalization loop - add thread review before moving to next hop (11 hours ago)
+- ebad042 Fix JavaScript errors in hop finalization (12 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

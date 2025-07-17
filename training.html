@@ -424,8 +424,7 @@
                 <li><a href="#judgment">7. Professional Judgment in B.A.T.S.</a></li>
                 <li><a href="#quick-start">8. Quick Start Guide</a></li>
                 <li><a href="#faq">9. Frequently Asked Questions</a></li>
-                <li><a href="#deployment">10. Deployment & Security</a></li>
-                <li><a href="#benefits">11. Benefits Overview</a></li>
+                <li><a href="#benefits">10. Benefits Overview</a></li>
             </ul>
         </div>
 
@@ -913,94 +912,120 @@
                         <tr>
                             <th>Term</th>
                             <th>Definition</th>
-                            <th>Context/Usage</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td><strong>Adjusted Root Total (ART)</strong></td>
                             <td>The root minus any documented write-offs. This becomes the accounting baseline that all threads must sum to at each hop level for mathematical validation.</td>
-                            <td>Used throughout investigation for validation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Back Tracing</strong></td>
+                            <td>The investigative technique of working backward from known criminal infrastructure or terminal wallets to identify additional victims or funding sources. When performed during Level 3 or 4 investigations, back tracing functions as Level 1 discovery.</td>
                         </tr>
                         <tr>
                             <td><strong>B.A.T.S.</strong></td>
-                            <td>Block Audit Tracing Standard - A standardized framework for cryptocurrency investigation that maintains the golden thread of traceability required for successful asset forfeiture cases.</td>
-                            <td>The overall methodology</td>
+                            <td>Block Audit Tracing Standard - A standardized framework for cryptocurrency investigation that maintains the golden thread of traceability required for successful asset forfeiture cases through systematic color classification, hierarchical notation, and accounting validation.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cluster Analysis</strong></td>
+                            <td>Examines relationships and patterns across multiple addresses without focusing on specific transaction flows, identifying relationships through behavioral patterns revealing common ownership.</td>
                         </tr>
                         <tr>
                             <td><strong>Commingling</strong></td>
-                            <td>When traced criminal proceeds mix with existing wallet balances or other fund sources, requiring careful application of PIFO principles to maintain the golden thread.</td>
-                            <td>Courts have established that commingling does not cleanse tainted funds</td>
+                            <td>When traced criminal proceeds mix with existing wallet balances or other fund sources, requiring careful application of PIFO principles to maintain the golden thread. Courts have established that commingling does not cleanse tainted funds.</td>
                         </tr>
                         <tr>
                             <td><strong>Convergence</strong></td>
                             <td>When multiple trace paths arrive at the same wallet and subsequently move out together as a single transaction. Requires application of the Sequential Hop Rule.</td>
-                            <td>Often occurs at YELLOW (hub) wallets</td>
                         </tr>
                         <tr>
-                            <td><strong>Dirty Wallet Principle</strong></td>
-                            <td>The investigative technique of identifying all deposits to known criminal wallets to discover additional victims. Applied ONLY at terminal points to prevent scope creep.</td>
-                            <td>Used at PURPLE exchanges for victim discovery</td>
+                            <td><strong>Exchange Deposit Addresses</strong></td>
+                            <td>Wallets where the on-chain trail terminates and legal process becomes necessary to continue tracing. Classified as PURPLE wallets in B.A.T.S.</td>
                         </tr>
                         <tr>
                             <td><strong>Golden Thread</strong></td>
-                            <td>The unbroken connection between a victim's original funds and any assets ultimately seized by law enforcement, essential for proving direct traceability in asset forfeiture cases.</td>
-                            <td>Core principle throughout investigation</td>
+                            <td>The unbroken connection between a victim's original funds and any assets ultimately seized by law enforcement, essential for proving direct traceability in asset forfeiture cases. This principle aligns with judicial standards that examine direct connections between assets and criminal activity.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>High-Risk Customer</strong></td>
+                            <td>A customer or wallet identified through risk assessment procedures as presenting elevated money laundering or terrorist financing risk based on factors such as transaction patterns, geographic exposure, or business type.</td>
                         </tr>
                         <tr>
                             <td><strong>Hop Count</strong></td>
                             <td>The measurement of distance from the victim-facing wallet rather than chronological discovery order. Each blockchain transaction increments the hop count by one.</td>
-                            <td>H1, H2, H3 in V-T-H notation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hub Wallets</strong></td>
+                            <td>Wallets where multiple victim traces converge, proving common criminal control. Classified as YELLOW wallets and crucial for linking separate criminal operations.</td>
                         </tr>
                         <tr>
                             <td><strong>LIBR Method</strong></td>
-                            <td>Lowest Intermediate Balance Rule - Traces the lowest balance a wallet held between traced funds entering and a specific transaction occurring. Rare exception to PIFO.</td>
-                            <td>Used only when PIFO cannot apply</td>
+                            <td>Lowest Intermediate Balance Rule - Traditional asset tracing principle applicable to cryptocurrency investigations that tracks the lowest balance point in an account to determine maximum traceable amounts. Has the effect of holding traceable assets to fewer hops.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Matching Transactions Principle (MTP)</strong></td>
+                            <td>An exception to strict PIFO methodology when outgoing transactions precisely match incoming thread totals in amount and occur in close temporal proximity.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Off-Ramping</strong></td>
+                            <td>The process by which criminals convert cryptocurrency to fiat currency or other assets, typically through exchanges.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>On-Ramping</strong></td>
+                            <td>The process by which stolen funds initially enter the criminal cryptocurrency infrastructure.</td>
                         </tr>
                         <tr>
                             <td><strong>PIFO Method</strong></td>
-                            <td>Proceeds In First Out - The principle that when traced funds enter a wallet, the very next outbound transaction contains those funds. NOT the same as FIFO inventory accounting.</td>
-                            <td>Default attribution method</td>
+                            <td>Proceeds In First Out - The principle that when traced funds enter a wallet, the very next outbound transaction contains those funds, applied chronologically. This method is often mischaracterized as first-in-first-out, but PIFO works fundamentally different as the practice of following "dirty" funds does not reset upon each subsequent deposit to the wallet, and PIFO is grounded in its own specific case law; not inventory accounting methods.</td>
                         </tr>
                         <tr>
-                            <td><strong>Root Total</strong></td>
-                            <td>The sum of all victim deposits that forms the mathematical basis for the entire investigation. Must be confirmed before beginning trace operations.</td>
-                            <td>Established at investigation start</td>
+                            <td><strong>Red Wallet Index</strong></td>
+                            <td>The formal inventory of all victim-facing wallets (RED wallets) identified in an investigation, with each assigned a permanent identifier (R1, R2, R3, etc.).</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Root</strong></td>
+                            <td>The original amount of a victim's transaction that forms the baseline for all subsequent tracing.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Root Validation</strong></td>
+                            <td>The mathematical verification process ensuring that all thread totals at any given hop level sum to the adjusted root total, providing proof of investigation completeness and preventing scope creep.</td>
                         </tr>
                         <tr>
                             <td><strong>Sequential Hop Rule</strong></td>
-                            <td>When multiple trace paths converge at the same wallet and move out together, apply the highest hop count among all converging paths, plus one for the outbound transaction.</td>
-                            <td>Maintains accurate hop counting</td>
+                            <td>The rule for handling convergence by applying the highest hop count among all converging paths, plus one for the outbound transaction.</td>
                         </tr>
                         <tr>
                             <td><strong>Thread</strong></td>
-                            <td>An individual trace path following specific victim funds through the blockchain. Threads can split, converge, or terminate based on transaction patterns.</td>
-                            <td>Each V-T creates a thread</td>
+                            <td>The specific amount being traced through a particular transaction path at any given hop level.</td>
                         </tr>
                         <tr>
-                            <td><strong>UTXO</strong></td>
-                            <td>Unspent Transaction Output - Bitcoin's transaction model requiring special attention to change addresses (ORANGE wallets) and output tracking.</td>
-                            <td>Bitcoin-specific consideration</td>
+                            <td><strong>Thread Exposure</strong></td>
+                            <td>The percentage of a wallet's total balance comprised of traced criminal proceeds.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Travel Rule</strong></td>
+                            <td>Regulatory requirement mandating that VASPs collect and transmit specific originator and beneficiary information for cryptocurrency transfers exceeding designated thresholds.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Universal Wallet Index (UWI)</strong></td>
+                            <td>A comprehensive index of all wallets involved in the money laundering process.</td>
                         </tr>
                         <tr>
                             <td><strong>V-T Notation</strong></td>
                             <td>The standardized identification system used in B.A.T.S. Level 3 where V represents victim number, T represents transaction number.</td>
-                            <td>Used without hop counting in Level 3</td>
                         </tr>
                         <tr>
                             <td><strong>V-T-H Notation</strong></td>
-                            <td>The complete notation system used in B.A.T.S. Level 4 adding H for hop count, enabling precise fund tracking for asset forfeiture.</td>
-                            <td>Full notation for Level 4 investigations</td>
+                            <td>The standardized identification system where V represents victim number, T represents transaction number, and H represents hop count from the victim-facing wallet.</td>
                         </tr>
                         <tr>
-                            <td><strong>Wallet Classification</strong></td>
-                            <td>The color-coded system for categorizing wallets based on their function: RED (victim-facing), YELLOW (hub), PURPLE (exchange), etc.</td>
-                            <td>Permanent classification system</td>
+                            <td><strong>Victim Facing Wallets</strong></td>
+                            <td>The first wallets to receive stolen funds where criminal acts are initiated. Classified as RED wallets and serving as the starting point for all hop counting.</td>
                         </tr>
                         <tr>
                             <td><strong>Write-off</strong></td>
-                            <td>Systematic documentation of funds that cannot be traced further due to dust amounts, dilution, obfuscation, or operational constraints.</td>
-                            <td>Reduces ART for next hop</td>
+                            <td>Documented abandonment of trace paths for practical reasons including dust amounts, dilution, obfuscation, or operational constraints.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1081,102 +1106,6 @@
                 <li>Document abandonment reasons</li>
                 <li>Maintain ART accuracy</li>
             </ol>
-        </section>
-
-        <!-- Deployment Section -->
-        <section id="deployment" class="section">
-            <h2>🚀 Deployment & Security</h2>
-            
-            <div class="warning-box">
-                <h3>⚠️ HTTPS Required for Full Functionality</h3>
-                <p>The B.A.T.S. tool requires HTTPS for features like custom save locations, autosave, and secure API communications. Running from <code>file://</code> protocol limits functionality.</p>
-            </div>
-            
-            <h3>Deployment Options</h3>
-            
-            <h4>Option 1: Local Development Server (Quick Testing)</h4>
-            <div class="example-box">
-                # Python (built-in to most systems)<br>
-                python -m http.server 8000<br>
-                # Then visit: http://localhost:8000<br><br>
-                
-                # Node.js<br>
-                npx http-server<br><br>
-                
-                # VS Code<br>
-                # Install "Live Server" extension and right-click index.html → "Open with Live Server"
-            </div>
-            
-            <h4>Option 2: Free HTTPS Hosting (Recommended)</h4>
-            <div class="grid">
-                <div class="card card-green">
-                    <h4>GitHub Pages (Free)</h4>
-                    <ol>
-                        <li>Push code to GitHub repository</li>
-                        <li>Go to Settings → Pages</li>
-                        <li>Select source branch</li>
-                        <li>Access at: https://[username].github.io/[repo]</li>
-                    </ol>
-                </div>
-                
-                <div class="card card-blue">
-                    <h4>Netlify Drop (Free)</h4>
-                    <ol>
-                        <li>Visit <a href="https://app.netlify.com/drop" target="_blank">app.netlify.com/drop</a></li>
-                        <li>Drag project folder to browser</li>
-                        <li>Instant HTTPS deployment</li>
-                        <li>Custom domain available</li>
-                    </ol>
-                </div>
-                
-                <div class="card card-purple">
-                    <h4>Vercel (Free)</h4>
-                    <ol>
-                        <li>Install Vercel CLI: <code>npm i -g vercel</code></li>
-                        <li>Run: <code>vercel</code> in project directory</li>
-                        <li>Follow prompts</li>
-                        <li>Automatic HTTPS deployment</li>
-                    </ol>
-                </div>
-            </div>
-            
-            <h4>Option 3: Self-Hosted Server</h4>
-            <div class="example-box">
-                # Nginx configuration<br>
-                server {<br>
-                &nbsp;&nbsp;listen 443 ssl;<br>
-                &nbsp;&nbsp;server_name your-domain.com;<br>
-                &nbsp;&nbsp;ssl_certificate /path/to/cert.pem;<br>
-                &nbsp;&nbsp;ssl_certificate_key /path/to/key.pem;<br>
-                &nbsp;&nbsp;<br>
-                &nbsp;&nbsp;location / {<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;root /path/to/batsTool;<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;index index.html;<br>
-                &nbsp;&nbsp;}<br>
-                }
-            </div>
-            
-            <h3>Security Best Practices</h3>
-            <div class="checklist">
-                <ul>
-                    <li>Always use HTTPS in production</li>
-                    <li>Never commit sensitive data or API keys</li>
-                    <li>Use environment variables for configuration</li>
-                    <li>Implement proper CORS policies</li>
-                    <li>Regular security updates</li>
-                    <li>Consider authentication for sensitive deployments</li>
-                </ul>
-            </div>
-            
-            <div class="tip-box">
-                <h4>Why HTTPS Matters</h4>
-                <ul>
-                    <li><strong>File System Access API</strong>: Requires secure context for custom save locations</li>
-                    <li><strong>API Communications</strong>: Blockchain APIs require secure connections</li>
-                    <li><strong>Data Protection</strong>: Encrypts sensitive investigation data in transit</li>
-                    <li><strong>Browser Features</strong>: Modern browser APIs require HTTPS</li>
-                </ul>
-            </div>
         </section>
 
         <!-- Benefits Section -->
