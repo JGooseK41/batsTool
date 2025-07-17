@@ -634,45 +634,81 @@
                 <div class="card card-red">
                     <h3 style="color: #c0392b;">🔴 RED Wallets</h3>
                     <p><strong>Definition:</strong> Victim-facing wallets</p>
-                    <p><strong>Rule:</strong> First wallet to receive victim funds</p>
-                    <p><strong>Example:</strong> Scammer's receiving address</p>
+                    <p><strong>Rule:</strong> The first wallet to receive stolen funds where criminal acts are initiated</p>
+                    <p><strong>Significance:</strong> Starting point for all hop counting</p>
+                    <p><strong>Example:</strong> Scammer's receiving address, phishing wallet, hack destination</p>
+                </div>
+
+                <div class="card" style="background: #fce4ec; border-color: #e91e63;">
+                    <h3 style="color: #e91e63;">🌸 PINK Wallets</h3>
+                    <p><strong>Definition:</strong> Dividend and deception operations</p>
+                    <p><strong>Rule:</strong> Where fake returns are sent to victims in investment scams</p>
+                    <p><strong>Significance:</strong> Provides undeniable proof of criminal intent and implicates all BLACK wallets between PINK and RED as part of the criminal network</p>
+                    <p><strong>Example:</strong> Ponzi scheme dividend payments, fake profit distributions</p>
                 </div>
 
                 <div class="card card-yellow">
                     <h3 style="color: #f39c12;">🟡 YELLOW Wallets</h3>
-                    <p><strong>Definition:</strong> Convergence/hub wallets</p>
-                    <p><strong>Rule:</strong> Where multiple victim traces meet</p>
-                    <p><strong>Example:</strong> Criminal consolidation wallet</p>
+                    <p><strong>Definition:</strong> Hub wallets where multiple victim traces converge</p>
+                    <p><strong>Rule:</strong> Where multiple trace paths arrive and subsequently move out together</p>
+                    <p><strong>Significance:</strong> Proves common criminal control and links separate criminal operations</p>
+                    <p><strong>Example:</strong> Criminal consolidation wallet, money laundering hub</p>
                 </div>
 
-                <div class="card card-purple">
-                    <h3 style="color: #8e44ad;">🟣 PURPLE Wallets</h3>
-                    <p><strong>Definition:</strong> Exchange deposit addresses</p>
-                    <p><strong>Rule:</strong> Known VASP/exchange wallets</p>
-                    <p><strong>Example:</strong> Binance deposit address</p>
+                <div class="card" style="background: #fff3e0; border-color: #ff9800;">
+                    <h3 style="color: #ff9800;">🟠 ORANGE Wallets</h3>
+                    <p><strong>Definition:</strong> Bitcoin change addresses</p>
+                    <p><strong>Rule:</strong> Change outputs from Bitcoin transactions using UTXO model</p>
+                    <p><strong>Significance:</strong> Essential for UTXO tracing and maintaining accurate fund tracking</p>
+                    <p><strong>Example:</strong> Bitcoin transaction change returning to sender</p>
                 </div>
 
-                <div class="card card-blue">
-                    <h3 style="color: #2980b9;">🔵 BLUE Wallets</h3>
-                    <p><strong>Definition:</strong> Cold storage wallets</p>
-                    <p><strong>Rule:</strong> Long-term holding addresses</p>
-                    <p><strong>Example:</strong> Criminal savings wallet</p>
+                <div class="card" style="background: #efebe9; border-color: #795548;">
+                    <h3 style="color: #795548;">🟤 BROWN Wallets</h3>
+                    <p><strong>Definition:</strong> Asset conversion services</p>
+                    <p><strong>Rule:</strong> Wallets facilitating currency or asset swaps</p>
+                    <p><strong>Significance:</strong> Marks transition points between different cryptocurrencies</p>
+                    <p><strong>Example:</strong> DEX router addresses, swap service wallets, instant exchangers</p>
                 </div>
 
                 <div class="card card-black">
                     <h3 style="color: #2c3e50;">⚫ BLACK Wallets</h3>
                     <p><strong>Definition:</strong> Default intermediary with no direct victim exposure</p>
-                    <p><strong>Rule:</strong> Default classification for intermediary wallets</p>
-                    <p><strong>Example:</strong> Pass-through addresses in the money trail</p>
+                    <p><strong>Rule:</strong> Default classification for all intermediary wallets not fitting other categories</p>
+                    <p><strong>Significance:</strong> Standard pass-through addresses in the laundering chain</p>
+                    <p><strong>Example:</strong> Mixer output addresses, tumbler wallets, layering addresses</p>
+                </div>
+
+                <div class="card card-blue">
+                    <h3 style="color: #2980b9;">🔵 BLUE Wallets</h3>
+                    <p><strong>Definition:</strong> Cold storage wallets</p>
+                    <p><strong>Rule:</strong> Long-term holding addresses with minimal transaction activity</p>
+                    <p><strong>Significance:</strong> Indicates criminal savings or reserve funds</p>
+                    <p><strong>Example:</strong> Hardware wallet addresses, paper wallets, dormant addresses</p>
+                </div>
+
+                <div class="card card-purple">
+                    <h3 style="color: #8e44ad;">🟣 PURPLE Wallets</h3>
+                    <p><strong>Definition:</strong> Exchange deposit addresses</p>
+                    <p><strong>Rule:</strong> Known VASP/exchange wallets where on-chain trail terminates</p>
+                    <p><strong>Significance:</strong> Requires legal process to continue tracing</p>
+                    <p><strong>Example:</strong> Binance deposit, Coinbase wallet, Kraken address</p>
+                </div>
+
+                <div class="card" style="background: #f5f5f5; border-color: #9e9e9e;">
+                    <h3 style="color: #616161;">⚪ GRAY Wallets</h3>
+                    <p><strong>Definition:</strong> Obfuscated or diluted funds</p>
+                    <p><strong>Rule:</strong> Wallets where tracing becomes impractical or impossible</p>
+                    <p><strong>Significance:</strong> Often results in write-offs due to privacy enhancement</p>
+                    <p><strong>Example:</strong> Mixer deposits, privacy coin conversions, coinjoin participants</p>
                 </div>
 
                 <div class="card card-green">
-                    <h3 style="color: #27ae60;">🟢 Additional Colors</h3>
-                    <p><strong>PINK:</strong> Dividend/Deception - Proves criminal intent and implicates all BLACK wallets between PINK and RED</p>
-                    <p><strong>ORANGE:</strong> Bitcoin change addresses essential for UTXO tracing</p>
-                    <p><strong>BROWN:</strong> Asset Conversion services (DEX, swap services)</p>
-                    <p><strong>GRAY:</strong> Obfuscated/Diluted funds (mixers, privacy services)</p>
-                    <p><strong>GREEN:</strong> Victim Owned (legitimate recovery addresses)</p>
+                    <h3 style="color: #27ae60;">🟢 GREEN Wallets</h3>
+                    <p><strong>Definition:</strong> Victim-owned recovery addresses</p>
+                    <p><strong>Rule:</strong> Legitimate addresses controlled by victims for fund recovery</p>
+                    <p><strong>Significance:</strong> Marks successful recovery or restitution</p>
+                    <p><strong>Example:</strong> Victim's personal wallet receiving recovered funds</p>
                 </div>
             </div>
 
