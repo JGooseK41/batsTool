@@ -3,15 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-17 14:03)
+## Latest Commit (Auto-updated: 2025-07-17 19:41)
 
-**Commit:** 564e24771e97ce7f8ea59dc9b76dbda1be073515
+**Commit:** db2a50ac8d501b885aa400788d3cb32930b87da9
 **Author:** Your Name
-**Message:** Fix duplicate entryTypes declaration error
+**Message:** Make active tab blue much darker for better contrast
 
-Remove the first entryTypes object declaration that was causing
-"Identifier 'entryTypes' has already been declared" error.
-Keep the more detailed declaration that appears later in the code.
+- Changed active tab background from #3498db to #1a5490
+- Updated shadow color to match darker blue
+- Improved readability with white text on dark blue background
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -19,23 +19,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 40 ++++++++++++++++++++++++----------------
- index.html | 10 +---------
- 2 files changed, 25 insertions(+), 25 deletions(-)
+ index.html | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 564e247 Fix duplicate entryTypes declaration error (0 seconds ago)
-- 7a3113c Fix JavaScript errors preventing page from loading (4 minutes ago)
-- 428cb65 Update CLAUDE.md with latest commit info (3 hours ago)
-- 5acd918 Complete wallet classification hierarchy system implementation (3 hours ago)
-- 2de6ec0 Revert PINK wallet to flower emoji - no pink circle exists (3 hours ago)
-- 6408417 Change PINK wallet icon from flower to pink circle for consistency (3 hours ago)
-- a0065cc Expand wallet color section with complete breakdown of all 10 colors (3 hours ago)
-- ce8dd9f Fix LIBR method definition and usage description (4 hours ago)
-- cc32af8 Remove deployment section and update glossary to match official B.A.T.S. document (4 hours ago)
-- 211cbd9 Fix remaining LIFO reference to LIBR in training FAQ (4 hours ago)
+- db2a50a Make active tab blue much darker for better contrast (0 seconds ago)
+- 89e87dc Enhance tab visibility with distinct active state styling (12 minutes ago)
+- 489d501 Fix syntax error - remove extra closing brace (5 hours ago)
+- e0e4fb0 Fix indentation of entryTypes declaration (5 hours ago)
+- 7e5e367 Fix duplicate currencies and timezones declarations (5 hours ago)
+- 564e247 Fix duplicate entryTypes declaration error (6 hours ago)
+- 7a3113c Fix JavaScript errors preventing page from loading (6 hours ago)
+- 428cb65 Update CLAUDE.md with latest commit info (9 hours ago)
+- 5acd918 Complete wallet classification hierarchy system implementation (9 hours ago)
+- 2de6ec0 Revert PINK wallet to flower emoji - no pink circle exists (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

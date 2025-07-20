@@ -1,0 +1,31 @@
+<\!DOCTYPE html>
+<html>
+<head>
+    <title>Test Split Source Thread Fix</title>
+</head>
+<body>
+    <h1>Testing Split Source Thread Fix</h1>
+    <p>To test the fix:</p>
+    <ol>
+        <li>Open the main index.html file in your browser</li>
+        <li>Create a victim with transactions</li>
+        <li>Confirm root total and go to traces</li>
+        <li>Create a hop entry</li>
+        <li>Select multiple source threads (split sources)</li>
+        <li>Assign amounts to each source thread individually</li>
+        <li>Try to apply them together - the first entry should now be passable</li>
+    </ol>
+    
+    <h2>What was fixed:</h2>
+    <p>The <code>getMaxAssignableAmount</code> function was double-counting assignments when entries had multiple source threads. It was checking both single source assignments AND individual source assignments, causing the available amount to be incorrectly calculated as 0 for the first entry.</p>
+    
+    <h2>The fix:</h2>
+    <p>Now the function properly distinguishes between:</p>
+    <ul>
+        <li>Entries with multiple sources (uses only individualSourceAssignments)</li>
+        <li>Entries with single source (uses only sourceThreadId)</li>
+    </ul>
+    
+    <p>This prevents double-counting and ensures accurate available amount calculations.</p>
+</body>
+</html>

@@ -12065,14 +12065,17 @@ function getMaxAssignableAmount(sourceThreadId, currency, excludeEntryId = null,
                 const entryCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
                 
                 if (entryCurrency === actualCurrency) {
-                    // Check single source assignment
-                    if (entry.sourceThreadId === sourceThreadId) {
-                        totalAssignedInCurrentSession += parseFloat(entry.amount);
-                    }
-                    
-                    // Check individual source assignments (for multiple source entries)
-                    if (entry.individualSourceAssignments && entry.individualSourceAssignments[sourceThreadId]) {
-                        totalAssignedInCurrentSession += parseFloat(entry.individualSourceAssignments[sourceThreadId]);
+                    // For entries with multiple sources, ONLY use individualSourceAssignments
+                    if (entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0) {
+                        // Multiple source entry - only check individual assignments
+                        if (entry.individualSourceAssignments && entry.individualSourceAssignments[sourceThreadId]) {
+                            totalAssignedInCurrentSession += parseFloat(entry.individualSourceAssignments[sourceThreadId]);
+                        }
+                    } else {
+                        // Single source entry - check sourceThreadId
+                        if (entry.sourceThreadId === sourceThreadId) {
+                            totalAssignedInCurrentSession += parseFloat(entry.amount);
+                        }
                     }
                 }
             }
