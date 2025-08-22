@@ -1831,7 +1831,7 @@
                             
                             <!-- ART Progress -->
                             <div style="background: white; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
-                                <h4 style="color: #2c3e50; margin-bottom: 15px;">Available Remaining Total (ART) by Currency</h4>
+                                <h4 style="color: #2c3e50; margin-bottom: 15px;">Adjusted Root Total (ART) by Currency</h4>
                                 <div id="artProgressBars"></div>
                             </div>
                             
@@ -9373,7 +9373,7 @@ function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemaini
     const balanceStatusHTML = isBalanced ? `
         <div style="background: #d4edda; border: 2px solid #27ae60; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
             <h3 style="color: #155724; margin-top: 0;">✅ Hop is Balanced!</h3>
-            <p style="color: #155724; margin-bottom: 0;">All Available Running Total (ART) has been accounted for. You can proceed to the next hop.</p>
+            <p style="color: #155724; margin-bottom: 0;">All Adjusted Root Total (ART) has been accounted for. You can proceed to the next hop.</p>
         </div>
     ` : `
         <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
@@ -9686,7 +9686,7 @@ function showThreadReviewForNextHop(completedHop) {
                         
                         ${totalActiveAmount > 0 ? `
                             <div style="background: #d4edda; border: 2px solid #27ae60; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                                <h3 style="color: #155724; margin-top: 0;">Available Running Total for Hop ${completedHop.hopNumber + 1}</h3>
+                                <h3 style="color: #155724; margin-top: 0;">Adjusted Root Total (ART) for Hop ${completedHop.hopNumber + 1}</h3>
                                 <div style="display: grid; gap: 10px;">
                                     ${Object.entries(nextHopART).map(([currency, amount]) => `
                                         <div style="font-size: 18px;">
@@ -9700,16 +9700,22 @@ function showThreadReviewForNextHop(completedHop) {
                     
                     <div style="margin-top: 30px; text-align: center; padding-top: 20px; border-top: 2px solid #e0e0e0;">
                         ${totalActiveAmount > 0 ? `
-                            <button class="btn btn-success btn-large" onclick="proceedToWalletClassification(${completedHop.id})">
-                                Continue to Wallet Classification →
+                            <button class="btn btn-success btn-large" onclick="proceedToNextHop(${completedHop.id})">
+                                Continue to Hop ${completedHop.hopNumber + 1} →
+                            </button>
+                            <button class="btn btn-primary" onclick="saveInvestigationFile()" style="margin-left: 10px;">
+                                💾 Save Progress
                             </button>
                         ` : `
                             <button class="btn btn-primary btn-large" onclick="completeInvestigation(${completedHop.id})">
                                 Complete Investigation
                             </button>
+                            <button class="btn btn-primary" onclick="saveInvestigationFile()" style="margin-left: 10px;">
+                                💾 Save Progress
+                            </button>
                         `}
                         <button class="btn btn-secondary" onclick="document.getElementById('threadReviewModal').remove()" style="margin-left: 10px;">
-                            Cancel
+                            Review Later
                         </button>
                     </div>
                 </div>
@@ -9720,23 +9726,148 @@ function showThreadReviewForNextHop(completedHop) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-// Proceed to wallet classification after thread review
-function proceedToWalletClassification(hopId) {
+// Check if a hop is fully accounted for and notify user
+function checkHopCompletionStatus(hop) {
+    if (!hop || hop.completed) return;
+    
+    const validation = validateHopCompletion(hop.id);
+    
+    // Check if all source threads are accounted for
+    const startingART = hop.artAtStartByCurrency || {};
+    const entryTotalsByCurrency = {};
+    
+    // Calculate totals from entries
+    hop.entries.forEach(entry => {
+        if (parseFloat(entry.amount) > 0) {
+            const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+            if (!entryTotalsByCurrency[currency]) {
+                entryTotalsByCurrency[currency] = 0;
+            }
+            entryTotalsByCurrency[currency] += parseFloat(entry.amount);
+        }
+    });
+    
+    // Check if fully accounted
+    let fullyAccounted = true;
+    for (const currency in startingART) {
+        const starting = startingART[currency] || 0;
+        const accounted = entryTotalsByCurrency[currency] || 0;
+        if (Math.abs(starting - accounted) > 0.01) { // Allow small rounding differences
+            fullyAccounted = false;
+            break;
+        }
+    }
+    
+    // Show notification if fully accounted
+    if (fullyAccounted && hop.entries.length > 0) {
+        // Check if we've already notified (to avoid spam)
+        if (!hop.completionNotified) {
+            hop.completionNotified = true;
+            
+            // Show success notification with action prompt
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: #d4edda;
+                border: 2px solid #27ae60;
+                border-radius: 12px;
+                padding: 30px;
+                z-index: 10000;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                max-width: 500px;
+                text-align: center;
+            `;
+            
+            notification.innerHTML = `
+                <h2 style="color: #155724; margin: 0 0 15px 0;">✅ Hop ${hop.hopNumber} Fully Accounted!</h2>
+                <p style="color: #155724; margin: 0 0 20px 0;">
+                    All source threads have been accounted for in this hop.
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="closeHopAndProceed(${hop.id}, this.parentElement.parentElement)">
+                        Close Hop ${hop.hopNumber} & Continue
+                    </button>
+                    <button class="btn btn-primary" onclick="saveInvestigationFile(); this.parentElement.parentElement.remove()">
+                        💾 Save Progress
+                    </button>
+                    <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">
+                        Add More Entries
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 10 seconds if no action taken
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 10000);
+        }
+    } else {
+        // Reset notification flag if no longer fully accounted
+        hop.completionNotified = false;
+    }
+}
+
+// Close hop and proceed to next
+function closeHopAndProceed(hopId, notificationElement) {
+    if (notificationElement) {
+        notificationElement.remove();
+    }
+    
+    const hop = investigation.hops.find(h => h.id === hopId);
+    if (!hop) return;
+    
+    // Show thread review modal
+    showThreadReviewModal(hop);
+}
+
+// Proceed to next hop after thread review
+function proceedToNextHop(hopId) {
     const modal = document.getElementById('threadReviewModal');
     if (modal) modal.remove();
     
     const hop = investigation.hops.find(h => h.id === hopId);
     if (!hop) return;
     
-    // Check wallet classifications for suggestions
-    const walletSuggestions = analyzeWalletBehaviors(hop);
+    // Mark current hop as completed
+    hop.completed = true;
     
-    if (walletSuggestions.length > 0) {
-        showWalletClassificationSuggestions(hop, walletSuggestions);
-    } else {
-        // No suggestions, complete the hop
-        completeHopAndCreateNext(hop);
-    }
+    // Create the next hop
+    const nextHopNumber = hop.hopNumber + 1;
+    const nextHop = {
+        id: Date.now(),
+        hopNumber: nextHopNumber,
+        entries: [],
+        completed: false
+    };
+    
+    investigation.hops.push(nextHop);
+    
+    // Save and render
+    saveToStorage();
+    renderHops();
+    
+    // Scroll to the new hop
+    setTimeout(() => {
+        const newHopElement = document.querySelector(`#hop_${nextHop.id}`);
+        if (newHopElement) {
+            newHopElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 100);
+    
+    // Show success notification
+    showNotification(`✅ Hop ${hop.hopNumber} completed! Starting Hop ${nextHopNumber}`, 'success');
+}
+
+// Keep the old function for backward compatibility but redirect to simpler flow
+function proceedToWalletClassification(hopId) {
+    proceedToNextHop(hopId);
 }
 
 // Complete the hop and create the next one
@@ -12787,6 +12918,9 @@ function createHopEntryDirectly(hopId, entryType = 'trace') {
     renderHops();
     saveToStorage();
     
+    // Check if hop is now fully accounted for
+    checkHopCompletionStatus(hop);
+    
     // Scroll to the newly created entry after a short delay to allow DOM update
     setTimeout(() => {
         const entryElement = document.getElementById(`entry_${hop.id}_${sortedEntryId}`);
@@ -13768,6 +13902,9 @@ function createHopEntryFromWizard() {
     renderHops();
     saveToStorage();
     
+    // Check if hop is now fully accounted for
+    checkHopCompletionStatus(hop);
+    
     // Log the thread usage
     console.log(`✅ Created hop entry consuming threads:`, wizardData.selectedThreads);
     console.log(`   Total amount used: ${Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0)}`);
@@ -14059,6 +14196,9 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             saveToStorage();
             updateValidationStatus();
             buildAvailableThreadsIndex(); // Rebuild thread index when entry is updated
+            
+            // Check if hop is now fully accounted for
+            checkHopCompletionStatus(hop);
         }
         
         // Mark all hops downstream from a given hop number for validation

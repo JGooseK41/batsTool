@@ -3,20 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-07-20 14:33)
+## Latest Commit (Auto-updated: 2025-08-22 04:52)
 
-**Commit:** e53c443ee3fa92ba422ad9c0d4d9b8f6c7ede253
+**Commit:** 25b820072ab58a68c464f2fc6112e334c9b7f563
 **Author:** Your Name
-**Message:** Fix split source thread assignment blocking issue
+**Message:** Add Arkham & Etherscan attribution API integration
 
-Fixed double-counting in getMaxAssignableAmount function that was preventing
-the first entry from being passed when applying multiple source threads together.
+- Embedded Arkham API key for automatic attribution checking
+- Added Etherscan label/tag checking for Ethereum addresses
+- Dual-source attribution from both Arkham and Etherscan
+- Attribution popup shows entity name, type, service, and source
+- Works automatically for all users without configuration
+- Advanced users can override with their own API keys
+- Attribution data added to transaction/entry notes
+- Shows source badges (🔍 Arkham / 🔷 Etherscan)
 
-The function now properly distinguishes between:
-- Entries with multiple sources (uses only individualSourceAssignments)
-- Entries with single source (uses only sourceThreadId)
-
-This prevents double-counting and ensures accurate available amount calculations.
+Attribution now checks both services in parallel when addresses are entered,
+providing comprehensive entity identification for blockchain investigations.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -24,24 +27,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md        | 37 ++++++++++++++++++-------------------
- index.html       | 19 +++++++++++--------
- test-syntax.html | 31 +++++++++++++++++++++++++++++++
- 3 files changed, 60 insertions(+), 27 deletions(-)
+ CLAUDE.md  |  43 ++++----
+ index.html | 338 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 363 insertions(+), 18 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e53c443 Fix split source thread assignment blocking issue (0 seconds ago)
-- db2a50a Make active tab blue much darker for better contrast (3 days ago)
-- 89e87dc Enhance tab visibility with distinct active state styling (3 days ago)
-- 489d501 Fix syntax error - remove extra closing brace (3 days ago)
-- e0e4fb0 Fix indentation of entryTypes declaration (3 days ago)
-- 7e5e367 Fix duplicate currencies and timezones declarations (3 days ago)
-- 564e247 Fix duplicate entryTypes declaration error (3 days ago)
-- 7a3113c Fix JavaScript errors preventing page from loading (3 days ago)
-- 428cb65 Update CLAUDE.md with latest commit info (3 days ago)
-- 5acd918 Complete wallet classification hierarchy system implementation (3 days ago)
+- 25b8200 Add Arkham & Etherscan attribution API integration (0 seconds ago)
+- e53c443 Fix split source thread assignment blocking issue (5 weeks ago)
+- db2a50a Make active tab blue much darker for better contrast (5 weeks ago)
+- 89e87dc Enhance tab visibility with distinct active state styling (5 weeks ago)
+- 489d501 Fix syntax error - remove extra closing brace (5 weeks ago)
+- e0e4fb0 Fix indentation of entryTypes declaration (5 weeks ago)
+- 7e5e367 Fix duplicate currencies and timezones declarations (5 weeks ago)
+- 564e247 Fix duplicate entryTypes declaration error (5 weeks ago)
+- 7a3113c Fix JavaScript errors preventing page from loading (5 weeks ago)
+- 428cb65 Update CLAUDE.md with latest commit info (5 weeks ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
