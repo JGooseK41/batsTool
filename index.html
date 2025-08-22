@@ -2346,6 +2346,29 @@
         </div>
     </div>
 
+    <!-- Address Attribution Modal -->
+    <div id="attributionModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>🔍 Address Attribution Detected</h2>
+                <button class="close" onclick="hideModal('attributionModal')">&times;</button>
+            </div>
+            
+            <div id="attributionContent" style="padding: 20px;">
+                <!-- Content will be dynamically populated -->
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e8f0fe;">
+                <button class="btn btn-primary" onclick="applyAttribution()">
+                    Apply Attribution to Wallet
+                </button>
+                <button class="btn btn-secondary" onclick="hideModal('attributionModal')">
+                    Ignore
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- API Settings Modal -->
     <div id="apiSettingsModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
@@ -2410,6 +2433,27 @@
                     <div style="font-size: 12px; color: #666; margin-top: 5px;">
                         Default public RPC or use: <a href="https://www.helius.dev/" target="_blank" style="color: #3498db;">Helius</a>, 
                         <a href="https://www.quicknode.com/" target="_blank" style="color: #3498db;">QuickNode</a>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: #e6f3ff; border-radius: 6px; border: 2px solid #0066cc;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #0066cc;">
+                        🔍 Arkham Intelligence API (Attribution Enabled by Default)
+                    </label>
+                    <div style="background: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                        <strong style="color: #27ae60;">✓ Attribution is enabled for all users</strong><br>
+                        <span style="font-size: 12px; color: #555;">Both Arkham and Etherscan attribution checks are active by default</span>
+                    </div>
+                    <input type="text" id="arkhamApiKey" placeholder="Optional: Override with your own API key" 
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Advanced users can override with their own key. Get one at: <a href="https://info.arkm.com/api-platform" target="_blank" style="color: #3498db;">https://info.arkm.com/api-platform</a>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label style="display: flex; align-items: center; font-size: 13px;">
+                            <input type="checkbox" id="arkhamAutoCheck" style="margin-right: 8px;" checked>
+                            Automatically check addresses for attribution (recommended)
+                        </label>
                     </div>
                 </div>
                 
@@ -13989,6 +14033,13 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                             typeSelect.value = knownWallet.permanentType;
                         }
                     }
+                    
+                    // Check all attribution sources for the address
+                    checkAllAttributions(value.trim()).then(attributions => {
+                        if (attributions && attributions.length > 0) {
+                            showAttributionModal(attributions, hopId, entryId);
+                        }
+                    });
                 }
                 
                 buildUniversalWalletIndex();
@@ -14566,6 +14617,38 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                         }
                     }
                 }
+                
+                // Check all attribution sources for the address
+                checkAllAttributions(value.trim()).then(attributions => {
+                    if (attributions && attributions.length > 0) {
+                        // Build attribution notes from all sources
+                        let attributionNotes = [];
+                        let displayInfo = [];
+                        
+                        attributions.forEach(attr => {
+                            const entity = attr.entity;
+                            const source = attr.source || 'Arkham';
+                            attributionNotes.push(`[${source}] Entity: ${entity.name}${entity.type ? ` (${entity.type})` : ''}${entity.service ? ` - ${entity.service}` : ''}`);
+                            displayInfo.push(`${source}: ${entity.name}${entity.type ? ` (${entity.type})` : ''}`);
+                        });
+                        
+                        const attributionNote = attributionNotes.join('\n');
+                        const displayText = displayInfo.join('\n');
+                        
+                        // Show a notification for victim transactions
+                        const shouldAddNote = confirm(`🔍 Attribution Found!\n\n${displayText}\n\nWould you like to add this attribution to the transaction notes?`);
+                        
+                        if (shouldAddNote) {
+                            if (transaction.notes) {
+                                transaction.notes = attributionNote + '\n' + transaction.notes;
+                            } else {
+                                transaction.notes = attributionNote;
+                            }
+                            saveToStorage();
+                            renderVictims();
+                        }
+                    }
+                });
             }
             
             transaction[field] = value;
@@ -16837,6 +16920,8 @@ function openApiSettings() {
     const savedBlockchain = localStorage.getItem('bats_blockchain_api_key');
     const savedTrongrid = localStorage.getItem('bats_trongrid_api_key');
     const savedSolanaRpc = localStorage.getItem('bats_solana_rpc_endpoint');
+    const savedArkham = localStorage.getItem('bats_arkham_api_key');
+    const savedArkhamAutoCheck = localStorage.getItem('bats_arkham_auto_check') !== 'false';
     const savedCorsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
     const savedCorsUrl = localStorage.getItem('bats_cors_proxy_url');
     
@@ -16845,6 +16930,8 @@ function openApiSettings() {
     document.getElementById('blockchainApiKey').value = savedBlockchain || '';
     document.getElementById('trongridApiKey').value = savedTrongrid || '';
     document.getElementById('solanaRpcEndpoint').value = savedSolanaRpc || 'https://api.mainnet-beta.solana.com';
+    document.getElementById('arkhamApiKey').value = savedArkham || '';
+    document.getElementById('arkhamAutoCheck').checked = savedArkhamAutoCheck;
     document.getElementById('enableCorsProxy').checked = savedCorsEnabled;
     document.getElementById('corsProxyUrl').value = savedCorsUrl || 'https://cors-anywhere.herokuapp.com/';
     document.getElementById('corsProxyUrl').disabled = !savedCorsEnabled;
@@ -16863,6 +16950,8 @@ function saveApiSettings() {
     const blockchainKey = document.getElementById('blockchainApiKey').value.trim();
     const trongridKey = document.getElementById('trongridApiKey').value.trim();
     const solanaRpc = document.getElementById('solanaRpcEndpoint').value.trim();
+    const arkhamKey = document.getElementById('arkhamApiKey').value.trim();
+    const arkhamAutoCheck = document.getElementById('arkhamAutoCheck').checked;
     const corsEnabled = document.getElementById('enableCorsProxy').checked;
     const corsUrl = document.getElementById('corsProxyUrl').value.trim();
     
@@ -16879,6 +16968,10 @@ function saveApiSettings() {
     if (solanaRpc) localStorage.setItem('bats_solana_rpc_endpoint', solanaRpc);
     else localStorage.removeItem('bats_solana_rpc_endpoint');
     
+    if (arkhamKey) localStorage.setItem('bats_arkham_api_key', arkhamKey);
+    else localStorage.removeItem('bats_arkham_api_key');
+    
+    localStorage.setItem('bats_arkham_auto_check', arkhamAutoCheck.toString());
     localStorage.setItem('bats_cors_proxy_enabled', corsEnabled.toString());
     
     if (corsUrl) localStorage.setItem('bats_cors_proxy_url', corsUrl);
@@ -16921,6 +17014,251 @@ function loadApiSettingsOnStartup() {
     if (savedBlockchain) blockchainAPIs.bitcoin.apiKey = savedBlockchain;
     if (savedTrongrid) blockchainAPIs.tron.apiKey = savedTrongrid;
     if (savedSolanaRpc) blockchainAPIs.solana.apiUrl = savedSolanaRpc;
+}
+
+// Attribution API Integration (Arkham & Etherscan)
+let currentAttributionData = null;
+let pendingAttributionForEntry = null;
+
+// Check Etherscan for attribution/labels
+async function checkEtherscanAttribution(address) {
+    // Only check Ethereum addresses
+    if (!address || !address.startsWith('0x') || address.length !== 42) {
+        return null;
+    }
+    
+    try {
+        const apiKey = localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+        const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
+        const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+        
+        // Use Etherscan's address info endpoint
+        let url = `https://api.etherscan.io/v2/api?chainid=1&module=account&action=addressinfo&address=${address}&apikey=${apiKey}`;
+        if (corsEnabled) {
+            url = corsProxyUrl + url;
+        }
+        
+        const response = await fetch(url);
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        
+        if (data.status === '1' && data.result) {
+            const result = data.result;
+            
+            // Check if there's a public name tag or label
+            if (result.publicTag || result.publicName || (result.labels && result.labels.length > 0)) {
+                const attribution = {
+                    chain: 'ethereum',
+                    source: 'Etherscan',
+                    entity: {
+                        name: result.publicName || result.publicTag || (result.labels && result.labels[0]) || 'Unknown',
+                        type: result.contractCreator ? 'Contract' : 'Address',
+                        service: result.publicTag || null,
+                        description: result.publicNote || null,
+                        website: result.website || null
+                    },
+                    address: address
+                };
+                
+                return [attribution];
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error checking Etherscan attribution:', error);
+        return null;
+    }
+}
+
+// Combined attribution check (Arkham + Etherscan)
+async function checkAllAttributions(address) {
+    if (!address || address.trim() === '') return null;
+    
+    const attributions = [];
+    
+    // Check both sources in parallel
+    const [arkhamData, etherscanData] = await Promise.all([
+        checkArkhamAttribution(address),
+        checkEtherscanAttribution(address)
+    ]);
+    
+    if (arkhamData) {
+        attributions.push(...arkhamData);
+    }
+    
+    if (etherscanData) {
+        attributions.push(...etherscanData);
+    }
+    
+    return attributions.length > 0 ? attributions : null;
+}
+
+async function checkArkhamAttribution(address) {
+    // Use embedded API key or user override
+    const apiKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
+    const autoCheck = localStorage.getItem('bats_arkham_auto_check') !== 'false';
+    
+    if (!autoCheck) {
+        return null;
+    }
+    
+    // Validate it's a valid address format (basic check)
+    if (!address || address.length < 26) {
+        return null;
+    }
+    
+    try {
+        // Check if we need CORS proxy
+        const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
+        const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+        
+        let url = `https://api.arkm.com/intelligence/address/${address}/all`;
+        if (corsEnabled) {
+            url = corsProxyUrl + url;
+        }
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'API-Key': apiKey,
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.error('Arkham API: Invalid API key');
+            } else if (response.status === 429) {
+                console.error('Arkham API: Rate limit exceeded');
+            }
+            return null;
+        }
+        
+        const data = await response.json();
+        
+        // Check if there's attribution data
+        if (data && Object.keys(data).length > 0) {
+            // Process the response to find entities
+            const attributions = [];
+            
+            for (const [chain, addressData] of Object.entries(data)) {
+                if (addressData && addressData.arkhamEntity) {
+                    attributions.push({
+                        chain: chain,
+                        source: 'Arkham',
+                        entity: addressData.arkhamEntity,
+                        address: address
+                    });
+                }
+            }
+            
+            if (attributions.length > 0) {
+                return attributions;
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error checking Arkham attribution:', error);
+        return null;
+    }
+}
+
+function showAttributionModal(attributions, hopId, entryId) {
+    if (!attributions || attributions.length === 0) return;
+    
+    // Store for later use
+    currentAttributionData = attributions;
+    pendingAttributionForEntry = { hopId, entryId };
+    
+    // Build the content
+    let content = '<div style="background: #e6f3ff; border: 2px solid #0066cc; border-radius: 8px; padding: 15px; margin-bottom: 20px;">';
+    content += '<h4 style="color: #0066cc; margin-bottom: 10px;">Attribution Information Found!</h4>';
+    
+    attributions.forEach(attr => {
+        const entity = attr.entity;
+        const sourceColor = attr.source === 'Etherscan' ? '#627eea' : '#0066cc';
+        const sourceEmoji = attr.source === 'Etherscan' ? '🔷' : '🔍';
+        
+        content += `
+            <div style="margin: 15px 0; padding: 15px; background: white; border-radius: 6px; border: 1px solid ${sourceColor}20;">
+                <div style="display: flex; align-items: start; gap: 15px;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <h5 style="color: #2c3e50; margin: 0; font-size: 18px;">
+                                ${entity.name || 'Unknown Entity'}
+                            </h5>
+                            <span style="background: ${sourceColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">
+                                ${sourceEmoji} ${attr.source || 'Arkham'}
+                            </span>
+                        </div>
+                        ${entity.type ? `<div style="color: #666; margin-bottom: 5px;"><strong>Type:</strong> ${entity.type}</div>` : ''}
+                        ${entity.service ? `<div style="color: #666; margin-bottom: 5px;"><strong>Service:</strong> ${entity.service}</div>` : ''}
+                        <div style="color: #666; margin-bottom: 5px;"><strong>Chain:</strong> ${attr.chain}</div>
+                        <div style="color: #666; margin-bottom: 5px; font-family: monospace; font-size: 12px;">
+                            <strong>Address:</strong> ${attr.address}
+                        </div>
+                        ${entity.description ? `<div style="color: #666; margin-top: 10px; font-style: italic;">${entity.description}</div>` : ''}
+                    </div>
+                </div>
+                ${entity.website || entity.twitter ? `
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e8f0fe;">
+                        ${entity.website ? `<a href="${entity.website}" target="_blank" style="color: #3498db; margin-right: 15px;">🌐 Website</a>` : ''}
+                        ${entity.twitter ? `<a href="https://twitter.com/${entity.twitter}" target="_blank" style="color: #3498db;">🐦 Twitter</a>` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    });
+    
+    content += '</div>';
+    content += '<p style="color: #666; font-size: 14px;">Would you like to apply this attribution information to the wallet entry?</p>';
+    
+    document.getElementById('attributionContent').innerHTML = content;
+    showModal('attributionModal');
+}
+
+function applyAttribution() {
+    if (!currentAttributionData || !pendingAttributionForEntry) return;
+    
+    const { hopId, entryId } = pendingAttributionForEntry;
+    
+    // Combine all attribution sources into notes
+    let attributionNotes = [];
+    currentAttributionData.forEach(attr => {
+        const entity = attr.entity;
+        const source = attr.source || 'Arkham';
+        attributionNotes.push(`[${source}] Entity: ${entity.name}${entity.type ? ` (${entity.type})` : ''}${entity.service ? ` - ${entity.service}` : ''}`);
+    });
+    
+    const attributionNote = attributionNotes.join('\n');
+    
+    // Find the entry and add notes about the attribution
+    const hop = investigation.hops.find(h => h.id === hopId);
+    if (hop) {
+        const entry = hop.entries.find(e => e.id === entryId);
+        if (entry) {
+            if (entry.notes) {
+                entry.notes = attributionNote + '\n' + entry.notes;
+            } else {
+                entry.notes = attributionNote;
+            }
+            
+            // Update the notes field if it exists
+            const notesField = document.querySelector(`textarea[onchange*="updateHopEntry(${hopId}, ${entryId}, 'notes'"]`);
+            if (notesField) {
+                notesField.value = entry.notes;
+            }
+            
+            saveToStorage();
+        }
+    }
+    
+    hideModal('attributionModal');
+    currentAttributionData = null;
+    pendingAttributionForEntry = null;
 }
 
 // Wallet Address Autocomplete Functions
