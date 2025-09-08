@@ -6865,9 +6865,14 @@ function updateFormFieldsFromInvestigation() {
                 // Force re-render hops to show ready state
                 renderHops();
                 
-                // Show success message
+                // Show success message with clear next steps
                 setTimeout(() => {
-                    alert(' Root Total Confirmed!\n\nYour investigation baseline has been established. You can now begin tracing funds from the RED wallets.');
+                    alert('✅ Root Total Confirmed!\n\n' +
+                          'Your investigation baseline has been established.\n\n' +
+                          '🎯 NEXT STEP:\n' +
+                          'You will now be taken to the Trace Documentation tab.\n' +
+                          'Click "Create Hop 1" to start tracking where the funds went from the RED wallets.\n\n' +
+                          'Hop 1 = First movement of funds AFTER leaving the RED wallets');
                 }, 100);
             } catch (error) {
                 console.error('Error switching to traces tab:', error);
@@ -8855,13 +8860,43 @@ function exportUniversalWalletIndex() {
                 ).join(' | ');
                 
                 container.innerHTML = `
-                    <div class="no-traces-message" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 3px solid #4caf50; padding: 60px 40px;">
-                        <h2 style="color: #2e7d32; margin-bottom: 20px;">Ready to Begin Tracing</h2>
-                        <p style="font-size: 1.2rem; color: #1b5e20; margin-bottom: 25px;">Your root total has been confirmed! Start documenting blockchain movements with your first hop.</p>
-                        <div class="art-display" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 30px; font-size: 1.1rem; font-weight: bold;">Current ART: ${artDisplay}</div>
-                        <button class="btn btn-confirm" onclick="addNewHop()" style="padding: 20px 50px; font-size: 1.3rem; background: #4caf50; animation: pulse 2s infinite;">
-                            Start Hop 1 - Track Where Funds Went
+                    <div class="no-traces-message" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 3px solid #4caf50; padding: 40px; max-width: 900px; margin: 0 auto;">
+                        <h2 style="color: #2e7d32; margin-bottom: 30px; font-size: 2rem;">🚀 Ready to Start Tracing Your Funds!</h2>
+                        
+                        <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <h3 style="color: #1565c0; margin-bottom: 20px;">📋 What is Hop 1?</h3>
+                            <p style="font-size: 1.1rem; line-height: 1.6; color: #424242; margin-bottom: 20px;">
+                                <strong>Hop 1 documents where the stolen funds went IMMEDIATELY after leaving the RED wallets.</strong>
+                            </p>
+                            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="margin: 0 0 15px 0; font-weight: bold; color: #1976d2;">You will need:</p>
+                                <ul style="margin: 0; padding-left: 25px; color: #424242; line-height: 1.8;">
+                                    <li>Transaction hash from each RED wallet showing outgoing funds</li>
+                                    <li>Destination wallet addresses where funds were sent</li>
+                                    <li>Amount and date/time of each transfer</li>
+                                </ul>
+                            </div>
+                            <div style="background: #fff3e0; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800;">
+                                <p style="margin: 0; color: #e65100;">
+                                    <strong>💡 Example:</strong> If victim's funds went from RED wallet → Exchange wallet, that's your first Hop 1 entry
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="art-display" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; font-size: 1.15rem; font-weight: bold; border: 2px solid #4caf50;">
+                            <div style="color: #1b5e20; margin-bottom: 5px;">Funds Available to Trace:</div>
+                            <div style="color: #2e7d32; font-size: 1.3rem;">${artDisplay}</div>
+                        </div>
+                        
+                        <button class="btn btn-confirm" onclick="addNewHop()" style="padding: 20px 50px; font-size: 1.3rem; background: #4caf50; animation: pulse 2s infinite; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(76,175,80,0.3);">
+                            ➕ Create Hop 1 - Start Tracing
                         </button>
+                        
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(255,255,255,0.3);">
+                            <p style="color: #1b5e20; font-size: 0.95rem; margin: 0;">
+                                <strong>Need help?</strong> Each hop represents one "jump" in the blockchain. Start with Hop 1 to track where funds went from the RED wallets.
+                            </p>
+                        </div>
                     </div>
                 `;
                 return;
@@ -13641,9 +13676,18 @@ function showHopWizardStep(step) {
         console.log('Step 1 - Available threads for hop', wizardData.hopNumber, ':', availableThreads);
         console.log('Available threads count:', availableThreads.length);
         
+        const isHop1 = wizardData.hopNumber === 1;
+        
         content.innerHTML = `
-            <h3>Step 1: Select Source Threads</h3>
-            <p>Choose which thread(s) you want to trace from. You can select multiple threads if the transaction combines funds.</p>
+            <h3>Step 1: Select Source ${isHop1 ? 'RED Wallet(s)' : 'Threads'}</h3>
+            ${isHop1 ? `
+                <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin-bottom: 20px;">
+                    <strong>🎯 For Hop 1:</strong> Select the RED wallet(s) that sent funds in the first transaction after the theft.
+                    <br><br>
+                    These are the wallets where victim funds were initially received (your RED wallets from Step 2).
+                </div>
+            ` : ''}
+            <p>Choose which ${isHop1 ? 'RED wallet' : 'thread'}(s) you want to trace from. You can select multiple if the transaction combines funds.</p>
             
             <div style="margin-top: 20px;">
                 ${availableThreads.length > 0 ? `
@@ -13725,9 +13769,18 @@ function showHopWizardStep(step) {
         
     } else if (step === 3) {
         // Step 3: Transaction details
+        const isHop1 = wizardData.hopNumber === 1;
+        
         content.innerHTML = `
             <h3>Step 3: Transaction Details</h3>
-            <p>Choose how to enter transaction details:</p>
+            ${isHop1 ? `
+                <div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin-bottom: 20px;">
+                    <strong>🎯 For Hop 1:</strong> Enter the transaction where funds LEFT the RED wallet(s).
+                    <br><br>
+                    This is the FIRST movement of stolen funds after the initial theft.
+                </div>
+            ` : ''}
+            <p>Enter the transaction hash showing where the funds went:</p>
             
             <div style="margin: 20px 0;">
                 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
