@@ -3099,7 +3099,15 @@
                     if (data.hash) {
                         // blockchain.info format
                         console.log('Bitcoin transaction data from blockchain.info:', data);
-                        const firstInput = data.inputs[0];
+                        
+                        // blockchain.info may use 'inputs' or 'in' for inputs array
+                        const inputs = data.inputs || data.in;
+                        if (!inputs || !Array.isArray(inputs) || inputs.length === 0) {
+                            console.error('No inputs found in transaction');
+                            return null;
+                        }
+                        
+                        const firstInput = inputs[0];
                         
                         // Check for timestamp - blockchain.info provides 'time' in unix seconds
                         if (!data.time) {
@@ -3117,11 +3125,15 @@
                         // For victim transaction selection, we want to see ALL outputs
                         // The user will select which one represents their victim's transaction
                         
-                        // Check if outputs exist
-                        if (!data.outputs || !Array.isArray(data.outputs)) {
-                            console.error('No outputs array in transaction data');
+                        // Check if outputs exist - blockchain.info uses 'out' not 'outputs'
+                        const outputs = data.outputs || data.out;
+                        if (!outputs || !Array.isArray(outputs)) {
+                            console.error('No outputs array in transaction data. Keys available:', Object.keys(data));
                             return null;
                         }
+                        
+                        // Use the correct outputs array for consistency
+                        data.outputs = outputs;
                         
                         console.log(`Bitcoin transaction has ${data.outputs.length} total outputs`);
                         
