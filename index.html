@@ -1847,6 +1847,12 @@
                                 <div id="artProgressBars"></div>
                             </div>
                             
+                            <!-- Thread Status Bar -->
+                            <div style="background: white; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 15px;">Thread Status Overview</h4>
+                                <div id="threadStatusBar"></div>
+                            </div>
+                            
                             <!-- Quick Navigation -->
                             <div style="background: white; border-radius: 6px; padding: 15px;">
                                 <h4 style="color: #2c3e50; margin-bottom: 15px;">Quick Navigation</h4>
@@ -8387,8 +8393,120 @@ function exportUniversalWalletIndex() {
             // Update ART progress bars
             updateARTProgressBars();
             
+            // Update thread status bar
+            updateThreadStatusBar(threadStatus);
+            
             // Update hop jump menu
             updateHopJumpMenu();
+        }
+        
+        function updateThreadStatusBar(threadStatus) {
+            const container = document.getElementById('threadStatusBar');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (!investigation.rootTotalConfirmed) {
+                container.innerHTML = '<p style="color: #7f8c8d;">Confirm root total to see thread status</p>';
+                return;
+            }
+            
+            if (!threadStatus || threadStatus.activeThreads.length === 0) {
+                container.innerHTML = '<p style="color: #7f8c8d;">No active threads yet</p>';
+                return;
+            }
+            
+            // Group threads by currency
+            const threadsByCurrency = {};
+            threadStatus.activeThreads.forEach(thread => {
+                if (!threadsByCurrency[thread.currency]) {
+                    threadsByCurrency[thread.currency] = [];
+                }
+                threadsByCurrency[thread.currency].push(thread);
+            });
+            
+            // Create a visual bar for each currency
+            Object.entries(threadsByCurrency).forEach(([currency, threads]) => {
+                const barContainer = document.createElement('div');
+                barContainer.style.cssText = 'margin-bottom: 15px;';
+                
+                // Currency label
+                const label = document.createElement('div');
+                label.style.cssText = 'font-weight: bold; margin-bottom: 5px; color: #2c3e50;';
+                label.textContent = `${currency} Threads (${threads.length})`;
+                barContainer.appendChild(label);
+                
+                // Thread bar
+                const barBg = document.createElement('div');
+                barBg.style.cssText = 'background: #e0e0e0; border-radius: 8px; height: 30px; position: relative; overflow: hidden;';
+                
+                // Calculate total amount for this currency
+                const totalAmount = threads.reduce((sum, t) => sum + t.amount, 0);
+                
+                // Add segments for each thread
+                let currentPosition = 0;
+                threads.forEach((thread, index) => {
+                    const percentage = (thread.amount / totalAmount) * 100;
+                    const segment = document.createElement('div');
+                    
+                    // Use wallet color for terminal wallets, green for active threads
+                    const isTerminal = ['purple', 'blue', 'gray'].includes(thread.toWalletType);
+                    const segmentColor = isTerminal ? getWalletColor(thread.toWalletType) : '#27ae60';
+                    
+                    segment.style.cssText = `
+                        position: absolute;
+                        left: ${currentPosition}%;
+                        width: ${percentage}%;
+                        height: 100%;
+                        background: ${segmentColor};
+                        border-right: 1px solid white;
+                        cursor: pointer;
+                        transition: opacity 0.2s;
+                    `;
+                    
+                    // Add hover effect and tooltip
+                    segment.title = `${thread.path}: ${thread.amount.toLocaleString()} ${currency}\nTo: ${thread.toWallet}\nType: ${walletTypes[thread.toWalletType] || thread.toWalletType}`;
+                    segment.onmouseover = () => { segment.style.opacity = '0.8'; };
+                    segment.onmouseout = () => { segment.style.opacity = '1'; };
+                    
+                    barBg.appendChild(segment);
+                    currentPosition += percentage;
+                });
+                
+                barContainer.appendChild(barBg);
+                
+                // Legend for this currency
+                const legend = document.createElement('div');
+                legend.style.cssText = 'margin-top: 5px; font-size: 12px; color: #666;';
+                
+                const terminalCount = threads.filter(t => ['purple', 'blue', 'gray'].includes(t.toWalletType)).length;
+                const activeCount = threads.length - terminalCount;
+                
+                const legendItems = [];
+                if (activeCount > 0) {
+                    legendItems.push(`<span style="color: #27ae60;">● ${activeCount} Active</span>`);
+                }
+                
+                // Count by terminal type
+                const purpleCount = threads.filter(t => t.toWalletType === 'purple').length;
+                const blueCount = threads.filter(t => t.toWalletType === 'blue').length;
+                const grayCount = threads.filter(t => t.toWalletType === 'gray').length;
+                
+                if (purpleCount > 0) {
+                    legendItems.push(`<span style="color: #9b59b6;">● ${purpleCount} Exchange</span>`);
+                }
+                if (blueCount > 0) {
+                    legendItems.push(`<span style="color: #3498db;">● ${blueCount} Cold Storage</span>`);
+                }
+                if (grayCount > 0) {
+                    legendItems.push(`<span style="color: #95a5a6;">● ${grayCount} Obfuscated</span>`);
+                }
+                
+                legend.innerHTML = legendItems.join(' | ');
+                barContainer.appendChild(legend);
+                
+                container.appendChild(barContainer);
+            });
         }
         
         function updateARTProgressBars() {
@@ -10383,8 +10501,10 @@ function checkHopCompletionStatus(hop) {
         if (!hop.completionNotified) {
             hop.completionNotified = true;
             
-            // Show success notification with action prompt
-            const notification = document.createElement('div');
+            // Delay the notification to give user time to classify wallets
+            setTimeout(() => {
+                // Show success notification with action prompt
+                const notification = document.createElement('div');
             notification.style.cssText = `
                 position: fixed;
                 top: 50%;
@@ -10420,12 +10540,13 @@ function checkHopCompletionStatus(hop) {
             
             document.body.appendChild(notification);
             
-            // Auto-remove after 10 seconds if no action taken
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, 10000);
+                // Auto-remove after 10 seconds if no action taken
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 10000);
+            }, 3000); // Delay notification by 3 seconds to allow wallet classification
         }
     } else {
         // Reset notification flag if no longer fully accounted
