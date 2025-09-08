@@ -3101,14 +3101,29 @@
                         const firstInput = data.inputs[0];
                         const timestamp = data.time ? data.time * 1000 : Date.now();
                         
-                        // Check if there are multiple outputs (excluding change outputs)
-                        // Filter out likely change outputs (those going back to sender)
+                        // Check if there are multiple outputs
+                        // Show ALL outputs for selection so user can choose the correct one
                         const senderAddress = firstInput.prev_out ? firstInput.prev_out.addr : null;
+                        
+                        // For victim transaction selection, we want to see ALL outputs
+                        // The user will select which one represents their victim's transaction
+                        console.log(`Bitcoin transaction has ${data.outputs.length} total outputs`);
+                        
                         const significantOutputs = data.outputs.filter(output => {
-                            // Include outputs that are not back to sender or have significant value
-                            return output.addr !== senderAddress || output.value > 100000; // > 0.001 BTC
+                            // Only filter out tiny dust outputs (< 546 satoshis, Bitcoin's dust limit)
+                            if (output.value < 546) {
+                                console.log(`Filtering out dust output: ${output.value} satoshis to ${output.addr}`);
+                                return false;
+                            }
+                            
+                            // Include everything else - let the user decide which output is relevant
+                            return true;
                         });
                         
+                        console.log(`After filtering: ${significantOutputs.length} significant outputs`);
+                        
+                        // Show selection modal if there are 2 or more outputs
+                        // Even with just 2, user needs to choose which one is theirs
                         if (significantOutputs.length > 1) {
                             // Multiple outputs - return them as transfers for selection
                             const transfers = significantOutputs.map((output, index) => ({
@@ -3152,9 +3167,14 @@
                         
                         // Check for multiple outputs
                         const senderAddress = data.inputs[0].addresses ? data.inputs[0].addresses[0] : null;
+                        
+                        // For victim transaction selection, show ALL non-dust outputs
                         const significantOutputs = data.outputs.filter(output => {
-                            const outputAddr = output.addresses ? output.addresses[0] : null;
-                            return outputAddr !== senderAddress || output.value > 100000;
+                            // Only filter out tiny dust outputs (< 546 satoshis)
+                            if (output.value < 546) return false;
+                            
+                            // Include everything else for user selection
+                            return true;
                         });
                         
                         if (significantOutputs.length > 1) {
