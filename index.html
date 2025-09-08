@@ -3116,6 +3116,13 @@
                         
                         // For victim transaction selection, we want to see ALL outputs
                         // The user will select which one represents their victim's transaction
+                        
+                        // Check if outputs exist
+                        if (!data.outputs || !Array.isArray(data.outputs)) {
+                            console.error('No outputs array in transaction data');
+                            return null;
+                        }
+                        
                         console.log(`Bitcoin transaction has ${data.outputs.length} total outputs`);
                         
                         const significantOutputs = data.outputs.filter(output => {
@@ -3170,12 +3177,22 @@
                         try {
                             timestamp = new Date(data.received).getTime();
                             if (isNaN(timestamp)) timestamp = Date.now();
+                            console.log(`BlockCypher timestamp: ${data.received} -> ${new Date(timestamp).toISOString()}`);
                         } catch (e) {
                             timestamp = Date.now();
+                            console.warn('Failed to parse BlockCypher timestamp, using current time');
+                        }
+                        
+                        // Check if outputs exist
+                        if (!data.outputs || !Array.isArray(data.outputs)) {
+                            console.error('No outputs array in BlockCypher data');
+                            return null;
                         }
                         
                         // Check for multiple outputs
-                        const senderAddress = data.inputs[0].addresses ? data.inputs[0].addresses[0] : null;
+                        const senderAddress = data.inputs && data.inputs[0] && data.inputs[0].addresses ? data.inputs[0].addresses[0] : null;
+                        
+                        console.log(`BlockCypher transaction has ${data.outputs.length} total outputs`);
                         
                         // For victim transaction selection, show ALL non-dust outputs
                         const significantOutputs = data.outputs.filter(output => {
