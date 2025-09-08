@@ -1103,6 +1103,18 @@
         <input type="file" id="fileInput" accept=".bats,.json" onchange="loadInvestigation(event)" style="display: none;">
         <input type="file" id="excelInput" accept=".xlsx,.xls,.csv" onchange="importExcelTraces(event)" style="display: none;">
 
+        <!-- Progress Indicator (hidden by default, shown when case is loaded) -->
+        <div id="progressIndicator" style="display: none; background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 16px;">Investigation Progress</h3>
+                <span id="progressPercentage" style="font-weight: bold;">0%</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); border-radius: 10px; height: 8px; overflow: hidden;">
+                <div id="progressBar" style="background: #27ae60; height: 100%; width: 0%; transition: width 0.3s ease; border-radius: 10px;"></div>
+            </div>
+            <div id="progressStatus" style="margin-top: 10px; font-size: 14px; opacity: 0.9;">Loading...</div>
+        </div>
+
         <!-- Workflow Steps -->
         <div class="workflow-steps">
             <div class="steps-grid">
@@ -3087,19 +3099,47 @@
                     if (data.hash) {
                         // blockchain.info format
                         const firstInput = data.inputs[0];
-                        const firstOutput = data.outputs[0];
-                        
-                        // Validate timestamp
                         const timestamp = data.time ? data.time * 1000 : Date.now();
                         
-                        return {
-                            time: timestamp,
-                            amount: firstOutput.value / 100000000,
-                            currency: 'BTC',
-                            from: firstInput.prev_out ? firstInput.prev_out.addr : 'Unknown',
-                            to: firstOutput.addr || 'Unknown',
-                            fee: data.fee ? data.fee / 100000000 : null
-                        };
+                        // Check if there are multiple outputs (excluding change outputs)
+                        // Filter out likely change outputs (those going back to sender)
+                        const senderAddress = firstInput.prev_out ? firstInput.prev_out.addr : null;
+                        const significantOutputs = data.outputs.filter(output => {
+                            // Include outputs that are not back to sender or have significant value
+                            return output.addr !== senderAddress || output.value > 100000; // > 0.001 BTC
+                        });
+                        
+                        if (significantOutputs.length > 1) {
+                            // Multiple outputs - return them as transfers for selection
+                            const transfers = significantOutputs.map((output, index) => ({
+                                from: senderAddress || 'Unknown',
+                                to: output.addr || 'Unknown',
+                                amount: output.value / 100000000,
+                                currency: 'BTC',
+                                outputIndex: index,
+                                scriptType: output.script ? output.script.substring(0, 6) : 'unknown',
+                                rawData: output
+                            }));
+                            
+                            return {
+                                multipleTransfers: true,
+                                transfers: transfers,
+                                time: timestamp,
+                                hasRealTimestamp: !!data.time,
+                                fee: data.fee ? data.fee / 100000000 : null
+                            };
+                        } else {
+                            // Single output transaction
+                            const firstOutput = significantOutputs[0] || data.outputs[0];
+                            return {
+                                time: timestamp,
+                                amount: firstOutput.value / 100000000,
+                                currency: 'BTC',
+                                from: senderAddress || 'Unknown',
+                                to: firstOutput.addr || 'Unknown',
+                                fee: data.fee ? data.fee / 100000000 : null
+                            };
+                        }
                     } else if (data.tx_hash) {
                         // blockcypher format
                         let timestamp;
@@ -3110,14 +3150,44 @@
                             timestamp = Date.now();
                         }
                         
-                        return {
-                            time: timestamp,
-                            amount: data.outputs[0].value / 100000000,
-                            currency: 'BTC',
-                            from: data.inputs[0].addresses ? data.inputs[0].addresses[0] : 'Unknown',
-                            to: data.outputs[0].addresses ? data.outputs[0].addresses[0] : 'Unknown',
-                            fee: data.fees ? data.fees / 100000000 : null
-                        };
+                        // Check for multiple outputs
+                        const senderAddress = data.inputs[0].addresses ? data.inputs[0].addresses[0] : null;
+                        const significantOutputs = data.outputs.filter(output => {
+                            const outputAddr = output.addresses ? output.addresses[0] : null;
+                            return outputAddr !== senderAddress || output.value > 100000;
+                        });
+                        
+                        if (significantOutputs.length > 1) {
+                            // Multiple outputs - return them as transfers for selection
+                            const transfers = significantOutputs.map((output, index) => ({
+                                from: senderAddress || 'Unknown',
+                                to: output.addresses ? output.addresses[0] : 'Unknown',
+                                amount: output.value / 100000000,
+                                currency: 'BTC',
+                                outputIndex: index,
+                                scriptType: output.script_type || 'unknown',
+                                rawData: output
+                            }));
+                            
+                            return {
+                                multipleTransfers: true,
+                                transfers: transfers,
+                                time: timestamp,
+                                hasRealTimestamp: true,
+                                fee: data.fees ? data.fees / 100000000 : null
+                            };
+                        } else {
+                            // Single output transaction
+                            const firstOutput = significantOutputs[0] || data.outputs[0];
+                            return {
+                                time: timestamp,
+                                amount: firstOutput.value / 100000000,
+                                currency: 'BTC',
+                                from: senderAddress || 'Unknown',
+                                to: firstOutput.addresses ? firstOutput.addresses[0] : 'Unknown',
+                                fee: data.fees ? data.fees / 100000000 : null
+                            };
+                        }
                     }
                     return null;
                 }
@@ -5446,15 +5516,25 @@ function updateMultipleSourceSelection(hopId, entryId) {
     const hop = investigation.hops.find(h => h.id === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
+    // Check if we were already in multiple source mode
+    const wasMultipleMode = entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0;
+    
     // Store multiple source threads
     entry.multipleSourceThreads = selectedSources;
     entry.isConvergence = selectedSources.length > 1;
     
-    // Clear single source if multiple are selected
-    if (selectedSources.length > 1) {
-        entry.sourceThreadId = '';
-    } else if (selectedSources.length === 1) {
+    // Only switch to single source mode if we weren't already in multiple mode
+    // This preserves the multiple source UI even when only one thread is selected
+    if (!wasMultipleMode && selectedSources.length === 1) {
+        // Starting fresh with single selection - use single source mode
         entry.sourceThreadId = selectedSources[0];
+        entry.multipleSourceThreads = [];
+    } else if (wasMultipleMode) {
+        // We were in multiple mode - stay in multiple mode even with 1 selection
+        entry.sourceThreadId = '';
+    } else {
+        // No sources selected
+        entry.sourceThreadId = '';
     }
     
     if (selectedSources.length > 0) {
@@ -8801,10 +8881,15 @@ function exportUniversalWalletIndex() {
                     `${artAtStart.toLocaleString()}`;
                 
                 // Initialize collapse state - completed hops start collapsed
-                // Auto-collapse old hops for performance
+                // Auto-collapse old hops for performance and clarity
                 if (window.hopCollapseState[hop.id] === undefined) {
-                    // Collapse completed hops or hops that are more than 5 positions from the end
-                    window.hopCollapseState[hop.id] = isComplete || (investigation.hops.length > 10 && hopIndex < investigation.hops.length - 5);
+                    // When loading a saved investigation, collapse completed hops
+                    // to reduce clutter and help users focus on current work
+                    const isCurrentHop = !hop.completed && hop.entries && hop.entries.length > 0;
+                    const isLastHop = hopIndex === investigation.hops.length - 1;
+                    
+                    // Collapse if: completed, or old hop (not in last 3), unless it's the current working hop
+                    window.hopCollapseState[hop.id] = isComplete && !isCurrentHop && !isLastHop;
                 }
                 const isCollapsed = window.hopCollapseState[hop.id];
                 
@@ -9724,6 +9809,447 @@ function showThreadReviewForNextHop(completedHop) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Update the progress indicator bar
+function updateProgressIndicator() {
+    const status = analyzeCaseStatus();
+    const indicator = document.getElementById('progressIndicator');
+    const bar = document.getElementById('progressBar');
+    const percentage = document.getElementById('progressPercentage');
+    const statusText = document.getElementById('progressStatus');
+    
+    if (!indicator) return;
+    
+    // Show the indicator
+    indicator.style.display = 'block';
+    
+    // Calculate progress percentage
+    let progress = 0;
+    let progressSteps = 0;
+    const totalSteps = 5; // Setup, Victims, Root Total, Hops, Analysis
+    
+    if (investigation.caseId || investigation.investigatorName) progressSteps += 0.5;
+    if (status.victimsComplete) progressSteps += 1;
+    if (status.rootTotalConfirmed) progressSteps += 0.5;
+    
+    // Calculate hop progress
+    if (status.hops.length > 0) {
+        const completeHops = status.hops.filter(h => h.status === 'complete').length;
+        const inProgressHops = status.hops.filter(h => h.status === 'in-progress' || h.status === 'current').length;
+        progressSteps += completeHops + (inProgressHops * 0.5);
+    }
+    
+    if (status.analysisReady) progressSteps += 1;
+    
+    // Cap at 100%
+    progress = Math.min(100, Math.round((progressSteps / totalSteps) * 100));
+    
+    // Update UI
+    bar.style.width = progress + '%';
+    percentage.textContent = progress + '%';
+    
+    // Update status text
+    if (status.currentPhase === 'complete') {
+        statusText.textContent = '✅ Investigation complete - Ready for analysis';
+        bar.style.background = '#27ae60';
+    } else if (status.currentHopId) {
+        const currentHop = status.hops.find(h => h.id === status.currentHopId);
+        if (currentHop) {
+            statusText.innerHTML = `🔄 Currently on <strong>Hop ${currentHop.number}</strong> - ${currentHop.entryCount} entries${currentHop.remainingART ? ` • Remaining: ${currentHop.remainingART}` : ''}`;
+        }
+        bar.style.background = '#3498db';
+    } else if (!status.victimsComplete) {
+        statusText.textContent = '📝 Add victim transactions to begin';
+        bar.style.background = '#f39c12';
+    } else if (!status.rootTotalConfirmed) {
+        statusText.textContent = '⏳ Confirm root total to proceed';
+        bar.style.background = '#f39c12';
+    } else {
+        statusText.textContent = status.summary;
+        bar.style.background = '#3498db';
+    }
+}
+
+// Show case status dashboard after loading investigation
+function showCaseStatusDashboard() {
+    // Analyze the investigation status
+    const status = analyzeCaseStatus();
+    
+    // Update the progress indicator
+    updateProgressIndicator();
+    
+    // Create dashboard modal
+    const dashboard = document.createElement('div');
+    dashboard.id = 'caseStatusDashboard';
+    dashboard.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        max-width: 700px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    `;
+    
+    // Build status HTML
+    let statusHTML = `
+        <h2 style="margin: 0 0 20px 0; color: #2c3e50; border-bottom: 2px solid #e8f0fe; padding-bottom: 15px;">
+            📊 Case Status: ${investigation.caseId || 'Investigation'}
+        </h2>
+        
+        <div style="background: ${status.currentPhase === 'complete' ? '#d4edda' : '#e3f2fd'}; 
+                    border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 10px 0; color: ${status.currentPhase === 'complete' ? '#155724' : '#0d47a1'};">
+                ${status.currentPhase === 'complete' ? '✅ Investigation Complete' : '🔄 Investigation In Progress'}
+            </h3>
+            ${status.summary}
+        </div>
+    `;
+    
+    // Progress sections
+    statusHTML += '<div style="margin: 20px 0;">';
+    
+    // Setup & Victims
+    statusHTML += `
+        <div style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${status.victimsComplete ? '#27ae60' : '#ffc107'};">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>${status.victimsComplete ? '✅' : '⏳'} Victims & Root Total</strong>
+                    <div style="color: #666; font-size: 14px; margin-top: 5px;">
+                        ${status.victimCount} victim${status.victimCount !== 1 ? 's' : ''} • 
+                        ${status.transactionCount} transaction${status.transactionCount !== 1 ? 's' : ''} • 
+                        Root Total: ${status.rootTotal}
+                    </div>
+                </div>
+                ${!status.victimsComplete ? 
+                    '<button class="btn btn-primary btn-small" onclick="closeCaseStatusDashboard(); focusOnVictims()">Add Victims</button>' : 
+                    '<span style="color: #27ae60; font-weight: bold;">Complete</span>'
+                }
+            </div>
+        </div>
+    `;
+    
+    // Hops
+    status.hops.forEach(hop => {
+        const hopStatus = hop.status;
+        const statusColor = hopStatus === 'complete' ? '#27ae60' : hopStatus === 'in-progress' ? '#3498db' : '#999';
+        const statusIcon = hopStatus === 'complete' ? '✅' : hopStatus === 'in-progress' ? '🔄' : '⏳';
+        
+        statusHTML += `
+            <div style="margin-bottom: 15px; padding: 15px; background: ${hopStatus === 'current' ? '#fff3cd' : '#f8f9fa'}; 
+                        border-radius: 8px; border-left: 4px solid ${statusColor};
+                        ${hopStatus === 'current' ? 'border: 2px solid #ffc107;' : ''}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${statusIcon} Hop ${hop.number}</strong>
+                        ${hopStatus === 'current' ? '<span style="color: #856404; margin-left: 10px;">← You were here</span>' : ''}
+                        <div style="color: #666; font-size: 14px; margin-top: 5px;">
+                            ${hop.entryCount} entr${hop.entryCount !== 1 ? 'ies' : 'y'} • 
+                            ${hop.amountTraced} traced
+                            ${hop.remainingART ? ` • Remaining: ${hop.remainingART}` : ''}
+                        </div>
+                    </div>
+                    ${hopStatus === 'current' || hopStatus === 'in-progress' ? 
+                        `<button class="btn btn-primary btn-small" onclick="closeCaseStatusDashboard(); focusOnHop(${hop.id})">
+                            ${hopStatus === 'current' ? 'Continue Here' : 'Go to Hop'}
+                        </button>` : 
+                        hopStatus === 'complete' ? 
+                            '<span style="color: #27ae60; font-weight: bold;">Complete</span>' :
+                            '<span style="color: #999;">Not Started</span>'
+                    }
+                </div>
+            </div>
+        `;
+    });
+    
+    // Analysis
+    if (status.showAnalysis) {
+        statusHTML += `
+            <div style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${status.analysisReady ? '#27ae60' : '#999'};">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${status.analysisReady ? '✅' : '⏳'} Analysis & Reports</strong>
+                        <div style="color: #666; font-size: 14px; margin-top: 5px;">
+                            ${status.analysisReady ? 'Ready to generate reports' : 'Complete hops first'}
+                        </div>
+                    </div>
+                    ${status.analysisReady ? 
+                        '<button class="btn btn-success btn-small" onclick="closeCaseStatusDashboard(); focusOnAnalysis()">View Analysis</button>' : 
+                        '<span style="color: #999;">Not Ready</span>'
+                    }
+                </div>
+            </div>
+        `;
+    }
+    
+    statusHTML += '</div>';
+    
+    // Action buttons
+    statusHTML += `
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e8f0fe; text-align: center;">
+            ${status.currentHopId ? 
+                `<button class="btn btn-success btn-large" onclick="closeCaseStatusDashboard(); focusOnHop(${status.currentHopId})">
+                    🎯 Continue Investigation
+                </button>` :
+                status.nextAction ? 
+                    `<button class="btn btn-success btn-large" onclick="closeCaseStatusDashboard(); ${status.nextAction}">
+                        Continue
+                    </button>` :
+                    ''
+            }
+            <button class="btn btn-secondary" onclick="closeCaseStatusDashboard()" style="margin-left: 10px;">
+                View Full Investigation
+            </button>
+        </div>
+    `;
+    
+    content.innerHTML = statusHTML;
+    dashboard.appendChild(content);
+    document.body.appendChild(dashboard);
+    
+    // Add click-outside to close
+    dashboard.addEventListener('click', (e) => {
+        if (e.target === dashboard) {
+            closeCaseStatusDashboard();
+        }
+    });
+}
+
+// Analyze case status to determine current state
+function analyzeCaseStatus() {
+    const status = {
+        currentPhase: 'setup',
+        victimsComplete: false,
+        rootTotalConfirmed: false,
+        victimCount: 0,
+        transactionCount: 0,
+        rootTotal: '$0',
+        hops: [],
+        currentHopId: null,
+        showAnalysis: false,
+        analysisReady: false,
+        nextAction: null,
+        summary: ''
+    };
+    
+    // Check victims
+    if (investigation.victims && investigation.victims.length > 0) {
+        status.victimCount = investigation.victims.length;
+        status.transactionCount = investigation.victims.reduce((sum, v) => sum + (v.transactions?.length || 0), 0);
+        
+        // Calculate root total
+        let rootTotal = 0;
+        const currencies = {};
+        investigation.victims.forEach(victim => {
+            victim.transactions?.forEach(tx => {
+                if (tx.amount) {
+                    const currency = tx.currency === 'CUSTOM' ? tx.customCurrency : tx.currency;
+                    if (!currencies[currency]) currencies[currency] = 0;
+                    currencies[currency] += parseFloat(tx.amount);
+                    rootTotal += parseFloat(tx.amount);
+                }
+            });
+        });
+        
+        // Format root total
+        if (Object.keys(currencies).length === 1) {
+            const curr = Object.keys(currencies)[0];
+            status.rootTotal = `${currencies[curr].toLocaleString()} ${curr}`;
+        } else {
+            status.rootTotal = Object.entries(currencies)
+                .map(([curr, amt]) => `${amt.toLocaleString()} ${curr}`)
+                .join(' + ');
+        }
+        
+        status.victimsComplete = status.transactionCount > 0;
+        status.rootTotalConfirmed = investigation.rootTotalConfirmed || false;
+    }
+    
+    // Check hops
+    let lastCompleteHop = null;
+    let firstIncompleteHop = null;
+    
+    if (investigation.hops && investigation.hops.length > 0) {
+        investigation.hops.forEach(hop => {
+            const hopInfo = {
+                id: hop.id,
+                number: hop.hopNumber,
+                entryCount: hop.entries?.length || 0,
+                status: 'not-started',
+                amountTraced: '0',
+                remainingART: null
+            };
+            
+            // Calculate hop amounts
+            const hopCurrencies = {};
+            hop.entries?.forEach(entry => {
+                if (entry.amount) {
+                    const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                    if (!hopCurrencies[currency]) hopCurrencies[currency] = 0;
+                    hopCurrencies[currency] += parseFloat(entry.amount);
+                }
+            });
+            
+            if (Object.keys(hopCurrencies).length > 0) {
+                hopInfo.amountTraced = Object.entries(hopCurrencies)
+                    .map(([curr, amt]) => `${amt.toLocaleString()} ${curr}`)
+                    .join(' + ');
+            }
+            
+            // Determine hop status
+            if (hop.completed) {
+                hopInfo.status = 'complete';
+                lastCompleteHop = hop;
+            } else if (hopInfo.entryCount > 0) {
+                hopInfo.status = 'in-progress';
+                if (!firstIncompleteHop) {
+                    firstIncompleteHop = hop;
+                    hopInfo.status = 'current';
+                    status.currentHopId = hop.id;
+                    
+                    // Calculate remaining ART
+                    const validation = validateHopCompletion(hop.id);
+                    if (validation.remainingByCurrency) {
+                        const remaining = Object.entries(validation.remainingByCurrency)
+                            .filter(([_, amt]) => amt > 0)
+                            .map(([curr, amt]) => `${amt.toLocaleString()} ${curr}`)
+                            .join(' + ');
+                        if (remaining) {
+                            hopInfo.remainingART = remaining;
+                        }
+                    }
+                }
+            }
+            
+            status.hops.push(hopInfo);
+        });
+    }
+    
+    // Determine current phase and next action
+    if (!status.victimsComplete) {
+        status.currentPhase = 'victims';
+        status.nextAction = 'focusOnVictims()';
+        status.summary = 'Add victim transactions to begin your investigation.';
+    } else if (!status.rootTotalConfirmed) {
+        status.currentPhase = 'root-total';
+        status.nextAction = 'confirmRootTotal()';
+        status.summary = 'Confirm your root total to proceed with tracing.';
+    } else if (firstIncompleteHop) {
+        status.currentPhase = 'hops';
+        status.summary = `Currently tracing funds through Hop ${firstIncompleteHop.hopNumber}.`;
+    } else if (lastCompleteHop) {
+        // Check if there are any active threads
+        const hasActiveThreads = checkForActiveThreads(lastCompleteHop);
+        if (hasActiveThreads) {
+            status.currentPhase = 'hops';
+            status.nextAction = `createNextHop(${lastCompleteHop.id})`;
+            status.summary = 'Continue tracing remaining funds in the next hop.';
+        } else {
+            status.currentPhase = 'complete';
+            status.showAnalysis = true;
+            status.analysisReady = true;
+            status.summary = 'All funds have been traced. Generate reports in the Analysis section.';
+        }
+    } else {
+        status.currentPhase = 'hops';
+        status.nextAction = 'startHop1()';
+        status.summary = 'Begin tracing funds from victim wallets.';
+    }
+    
+    return status;
+}
+
+// Check if there are active threads from a hop
+function checkForActiveThreads(hop) {
+    if (!hop || !hop.entries) return false;
+    
+    let hasActive = false;
+    hop.entries.forEach(entry => {
+        if (entry.entryType === 'trace' && 
+            entry.toWalletType !== 'purple' && 
+            entry.toWalletType !== 'blue' &&
+            parseFloat(entry.amount) > 0) {
+            hasActive = true;
+        }
+    });
+    
+    return hasActive;
+}
+
+// Close the case status dashboard
+function closeCaseStatusDashboard() {
+    const dashboard = document.getElementById('caseStatusDashboard');
+    if (dashboard) {
+        dashboard.remove();
+    }
+}
+
+// Focus functions for different sections
+function focusOnVictims() {
+    document.getElementById('victimsTab').click();
+    setTimeout(() => {
+        const firstInput = document.querySelector('#victimsContent input');
+        if (firstInput) firstInput.focus();
+    }, 100);
+}
+
+function focusOnHop(hopId) {
+    document.getElementById('hopsTab').click();
+    setTimeout(() => {
+        const hopElement = document.querySelector(`#hop_${hopId}`);
+        if (hopElement) {
+            hopElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Highlight the hop
+            hopElement.style.border = '3px solid #ffc107';
+            hopElement.style.boxShadow = '0 0 20px rgba(255, 193, 7, 0.3)';
+            setTimeout(() => {
+                hopElement.style.border = '';
+                hopElement.style.boxShadow = '';
+            }, 3000);
+        }
+    }, 100);
+}
+
+function focusOnAnalysis() {
+    document.getElementById('analysisTab').click();
+}
+
+function startHop1() {
+    if (!investigation.hops || investigation.hops.length === 0) {
+        investigation.hops = [{
+            id: Date.now(),
+            hopNumber: 1,
+            entries: [],
+            completed: false
+        }];
+        saveToStorage();
+        renderHops();
+    }
+    document.getElementById('hopsTab').click();
+}
+
+function createNextHop(previousHopId) {
+    const prevHop = investigation.hops.find(h => h.id === previousHopId);
+    if (prevHop) {
+        proceedToNextHop(previousHopId);
+    }
 }
 
 // Check if a hop is fully accounted for and notify user
@@ -14197,6 +14723,9 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             updateValidationStatus();
             buildAvailableThreadsIndex(); // Rebuild thread index when entry is updated
             
+            // Update progress indicator
+            updateProgressIndicator();
+            
             // Check if hop is now fully accounted for
             checkHopCompletionStatus(hop);
         }
@@ -15220,7 +15749,9 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             event.target.value = '';
             
             console.log('Investigation loaded successfully!');
-            alert('Investigation loaded successfully!');
+            
+            // Show case status dashboard instead of simple alert
+            showCaseStatusDashboard();
             
         } catch (error) {
             console.error('Error loading file:', error);
