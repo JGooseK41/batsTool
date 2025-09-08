@@ -3098,7 +3098,16 @@
                 parseResponse: (data) => {
                     if (data.hash) {
                         // blockchain.info format
+                        console.log('Bitcoin transaction data from blockchain.info:', data);
                         const firstInput = data.inputs[0];
+                        
+                        // Check for timestamp - blockchain.info provides 'time' in unix seconds
+                        if (!data.time) {
+                            console.warn('No timestamp in Bitcoin transaction data! Using current time as fallback.');
+                        } else {
+                            console.log(`Bitcoin transaction timestamp: ${data.time} (${new Date(data.time * 1000).toISOString()})`);
+                        }
+                        
                         const timestamp = data.time ? data.time * 1000 : Date.now();
                         
                         // Check if there are multiple outputs
@@ -19306,12 +19315,23 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     if (datetimeInput) {
                         datetimeInput.value = dateTimeLocal;
                         transaction.datetime = dateTimeLocal;
+                        console.log(`Set transaction datetime to: ${dateTimeLocal}`);
+                    }
+                    
+                    // Show warning if this is not a real timestamp
+                    if (!hasRealTimestamp) {
+                        setTimeout(() => {
+                            alert('⚠️ Transaction timestamp could not be retrieved from the blockchain.\n\nCurrent time has been used as a placeholder.\n\nPlease manually update the date/time field with the correct transaction time.');
+                        }, 100);
                     }
                 } else {
                     console.warn('Invalid timestamp provided:', timestamp);
                 }
             } else {
                 console.warn('No timestamp provided for transfer');
+                setTimeout(() => {
+                    alert('⚠️ No timestamp available for this transaction.\n\nPlease manually enter the date/time.');
+                }, 100);
             }
             
             // Set timezone to UTC
@@ -19324,7 +19344,14 @@ async function lookupVictimTransaction(victimId, transactionId) {
             // Add note about the transaction
             const notesInput = document.querySelector(`input[onchange*="updateTransaction(${victimId}, ${transactionId}, 'notes'"]`);
             if (notesInput) {
-                notesInput.value = `From: ${transfer.from} | Ethereum ${transfer.currency} transfer | Contract: ${transfer.contractAddress}`;
+                // Create appropriate note based on currency type
+                if (transfer.currency === 'BTC') {
+                    notesInput.value = `From: ${transfer.from} | Bitcoin transfer${transfer.outputIndex !== undefined ? ` | Output #${transfer.outputIndex}` : ''}`;
+                } else if (transfer.contractAddress) {
+                    notesInput.value = `From: ${transfer.from} | ${transfer.currency} token transfer | Contract: ${transfer.contractAddress}`;
+                } else {
+                    notesInput.value = `From: ${transfer.from} | ${transfer.currency} transfer`;
+                }
                 transaction.notes = notesInput.value;
             }
             
