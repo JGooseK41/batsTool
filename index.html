@@ -14393,30 +14393,111 @@ async function lookupWizardTransaction() {
             window.hopWizardData.pendingTransfers = txData.transfers;
             window.hopWizardData.txData = txData;
             
+            // Initialize selection tracking
+            window.hopWizardData.selectedOutputs = window.hopWizardData.selectedOutputs || [];
+            window.hopWizardData.outputClassifications = window.hopWizardData.outputClassifications || {};
+            
+            // Auto-detect potential change outputs
+            const sourceWallet = wizardData.selectedThreads.length > 0 ? 
+                getThreadById(wizardData.selectedThreads[0])?.fromWallet : null;
+            
             resultDiv.innerHTML = `
                 <div style="background: #fff3e0; border: 2px solid #ff9800; border-radius: 8px; padding: 15px;">
-                    <h4 style="margin-top: 0; color: #e65100;">Multiple Transfers Detected</h4>
-                    <p>This transaction contains ${txData.transfers.length} transfer(s). Please select the one you want to track:</p>
-                    <div style="max-height: 300px; overflow-y: auto;">
-                        ${txData.transfers.map((transfer, index) => `
-                            <div style="background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin: 10px 0;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <strong>${transfer.amount} ${transfer.currency}</strong><br>
-                                        <span style="font-size: 12px; color: #666;">
-                                            From: ${transfer.from.slice(0, 10)}...${transfer.from.slice(-8)}<br>
-                                            To: ${transfer.to.slice(0, 10)}...${transfer.to.slice(-8)}
-                                        </span>
+                    <h4 style="margin-top: 0; color: #e65100;">Multiple Outputs Detected - Select All to Track</h4>
+                    <p style="margin-bottom: 10px;">This transaction has ${txData.transfers.length} outputs. Select each output you want to track and classify it:</p>
+                    
+                    <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px;">
+                        <strong>💡 Change Detection:</strong><br>
+                        • Outputs returning to sender address are likely change<br>
+                        • Round amounts are likely payments<br>
+                        • Decimal amounts are often change<br>
+                        • Change creates ORANGE threads (same custody)
+                    </div>
+                    
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${txData.transfers.map((transfer, index) => {
+                            const isRoundAmount = transfer.amount % 1 === 0 || transfer.amount % 10 === 0;
+                            const isBackToSender = sourceWallet && transfer.to === sourceWallet;
+                            const likelyChange = !isRoundAmount || isBackToSender;
+                            
+                            return `
+                            <div style="background: white; border: 2px solid #ddd; border-radius: 6px; padding: 15px; margin: 10px 0;" id="wizardOutput_${index}">
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <div style="flex: 1;">
+                                        <div style="margin-bottom: 10px;">
+                                            <strong style="font-size: 16px;">${transfer.amount} ${transfer.currency}</strong>
+                                            ${likelyChange ? '<span style="color: #ff9800; margin-left: 10px;">⚠️ Possible Change</span>' : ''}
+                                        </div>
+                                        <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                                            <div>From: ${transfer.from.slice(0, 15)}...${transfer.from.slice(-10)}</div>
+                                            <div>To: ${transfer.to.slice(0, 15)}...${transfer.to.slice(-10)}</div>
+                                        </div>
+                                        
+                                        <div style="background: #f5f5f5; padding: 10px; border-radius: 4px;">
+                                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Classification:</label>
+                                            <div>
+                                                <label style="display: inline-block; margin-right: 15px; cursor: pointer;">
+                                                    <input type="radio" name="outputType_${index}" value="payment" 
+                                                           ${!likelyChange ? 'checked' : ''}
+                                                           onchange="classifyWizardOutput(${index}, 'payment')">
+                                                    <span style="color: #27ae60;">✓ Payment (New Thread)</span>
+                                                </label>
+                                                <label style="display: inline-block; margin-right: 15px; cursor: pointer;">
+                                                    <input type="radio" name="outputType_${index}" value="change" 
+                                                           ${likelyChange ? 'checked' : ''}
+                                                           onchange="classifyWizardOutput(${index}, 'change')">
+                                                    <span style="color: #ff9800;">↻ Change (Orange Thread)</span>
+                                                </label>
+                                                <label style="display: inline-block; cursor: pointer;">
+                                                    <input type="radio" name="outputType_${index}" value="ignore" 
+                                                           onchange="classifyWizardOutput(${index}, 'ignore')">
+                                                    <span style="color: #95a5a6;">✗ Ignore</span>
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <button class="btn btn-sm btn-primary" onclick="selectWizardTransfer(${index})">
-                                        Select
-                                    </button>
+                                    
+                                    <div style="margin-left: 15px;">
+                                        <label style="display: block; text-align: center;">
+                                            <input type="checkbox" 
+                                                   id="wizardOutputSelect_${index}"
+                                                   value="${index}" 
+                                                   onchange="toggleWizardOutput(${index})"
+                                                   ${!likelyChange ? 'checked' : ''}
+                                                   style="width: 20px; height: 20px; cursor: pointer;">
+                                            <div style="margin-top: 5px; font-size: 12px;">Track</div>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
+                    
+                    <div style="margin-top: 15px; padding: 15px; background: #f0f0f0; border-radius: 4px;">
+                        <strong>Selected Outputs Summary:</strong>
+                        <div id="wizardOutputSummary" style="margin-top: 10px;"></div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="confirmWizardOutputSelection()" style="margin-top: 15px; width: 100%;">
+                        Confirm Selection and Continue
+                    </button>
                 </div>
             `;
+            
+            // Initialize classifications
+            txData.transfers.forEach((transfer, index) => {
+                const isRoundAmount = transfer.amount % 1 === 0 || transfer.amount % 10 === 0;
+                const isBackToSender = sourceWallet && transfer.to === sourceWallet;
+                const likelyChange = !isRoundAmount || isBackToSender;
+                
+                wizardData.outputClassifications[index] = likelyChange ? 'change' : 'payment';
+                if (!likelyChange) {
+                    toggleWizardOutput(index);
+                }
+            });
+            
+            updateWizardOutputSummary();
         } else {
             // Single transfer or no token transfers
             window.hopWizardData.txData = txData;
@@ -14447,46 +14528,202 @@ async function lookupWizardTransaction() {
     }
 }
 
-function selectWizardTransfer(index) {
-    const transfers = window.hopWizardData.pendingTransfers;
-    if (!transfers || !transfers[index]) return;
+function toggleWizardOutput(index) {
+    const wizardData = window.hopWizardData;
+    const checkbox = document.getElementById(`wizardOutputSelect_${index}`);
     
-    const selectedTransfer = transfers[index];
-    const txData = window.hopWizardData.txData;
+    if (!wizardData.selectedOutputs) {
+        wizardData.selectedOutputs = [];
+    }
     
-    // Update txData with selected transfer
-    window.hopWizardData.txData = {
-        ...txData,
-        amount: selectedTransfer.amount,
-        currency: selectedTransfer.currency,
-        from: selectedTransfer.from,
-        to: selectedTransfer.to,
-        selectedTransfer: selectedTransfer
-    };
+    if (checkbox.checked) {
+        if (!wizardData.selectedOutputs.includes(index)) {
+            wizardData.selectedOutputs.push(index);
+        }
+    } else {
+        wizardData.selectedOutputs = wizardData.selectedOutputs.filter(i => i !== index);
+    }
     
-    // Update display
+    updateWizardOutputSummary();
+}
+
+function classifyWizardOutput(index, type) {
+    window.hopWizardData.outputClassifications[index] = type;
+    
+    // Auto-check/uncheck based on classification
+    const checkbox = document.getElementById(`wizardOutputSelect_${index}`);
+    if (type === 'ignore') {
+        checkbox.checked = false;
+        toggleWizardOutput(index);
+    } else if (!checkbox.checked) {
+        checkbox.checked = true;
+        toggleWizardOutput(index);
+    }
+    
+    updateWizardOutputSummary();
+}
+
+function updateWizardOutputSummary() {
+    const wizardData = window.hopWizardData;
+    const summaryDiv = document.getElementById('wizardOutputSummary');
+    if (!summaryDiv) return;
+    
+    const selectedOutputs = wizardData.selectedOutputs || [];
+    const transfers = wizardData.pendingTransfers || [];
+    
+    if (selectedOutputs.length === 0) {
+        summaryDiv.innerHTML = '<em style="color: #666;">No outputs selected</em>';
+        return;
+    }
+    
+    let paymentCount = 0;
+    let changeCount = 0;
+    let totalAmount = {};
+    
+    selectedOutputs.forEach(index => {
+        const transfer = transfers[index];
+        const classification = wizardData.outputClassifications[index];
+        
+        if (classification === 'payment') paymentCount++;
+        if (classification === 'change') changeCount++;
+        
+        if (!totalAmount[transfer.currency]) {
+            totalAmount[transfer.currency] = 0;
+        }
+        totalAmount[transfer.currency] += transfer.amount;
+    });
+    
+    summaryDiv.innerHTML = `
+        <div style="color: #27ae60;">✓ ${paymentCount} Payment${paymentCount !== 1 ? 's' : ''}</div>
+        <div style="color: #ff9800;">↻ ${changeCount} Change Output${changeCount !== 1 ? 's' : ''}</div>
+        <div style="margin-top: 5px; font-weight: bold;">
+            Total: ${Object.entries(totalAmount).map(([curr, amt]) => `${amt} ${curr}`).join(' + ')}
+        </div>
+    `;
+}
+
+function confirmWizardOutputSelection() {
+    const wizardData = window.hopWizardData;
+    const selectedOutputs = wizardData.selectedOutputs || [];
+    
+    if (selectedOutputs.length === 0) {
+        alert('Please select at least one output to track');
+        return;
+    }
+    
+    // Store the selected outputs info for creating multiple entries
+    wizardData.multipleOutputs = selectedOutputs.map(index => {
+        const transfer = wizardData.pendingTransfers[index];
+        const classification = wizardData.outputClassifications[index];
+        
+        return {
+            ...transfer,
+            classification: classification,
+            isChange: classification === 'change'
+        };
+    });
+    
+    // Clear the selection UI and show summary
     const resultDiv = document.getElementById('wizardTxResult');
     resultDiv.innerHTML = `
         <div style="background: #e8f4f8; border: 1px solid #3498db; border-radius: 8px; padding: 15px;">
-            <h4 style="margin-top: 0;">Transfer Selected</h4>
-            <div style="display: grid; gap: 8px; font-size: 14px;">
-                <div><strong>Chain:</strong> ${txData.blockchain}</div>
-                <div><strong>Amount:</strong> ${selectedTransfer.amount} ${selectedTransfer.currency}</div>
-                <div><strong>From:</strong> <span style="font-family: monospace; font-size: 12px;">${selectedTransfer.from}</span></div>
-                <div><strong>To:</strong> <span style="font-family: monospace; font-size: 12px;">${selectedTransfer.to}</span></div>
-                <div><strong>Time:</strong> ${new Date(txData.time).toLocaleString()} UTC</div>
+            <h4 style="margin-top: 0;">✅ ${selectedOutputs.length} Output${selectedOutputs.length !== 1 ? 's' : ''} Selected</h4>
+            <div style="margin-top: 10px;">
+                ${wizardData.multipleOutputs.map((output, i) => `
+                    <div style="padding: 8px; background: white; border-radius: 4px; margin: 5px 0;">
+                        <strong>${i + 1}.</strong> ${output.amount} ${output.currency} → 
+                        <span style="font-family: monospace; font-size: 11px;">${output.to.slice(0, 8)}...</span>
+                        <span style="color: ${output.isChange ? '#ff9800' : '#27ae60'}; margin-left: 10px;">
+                            (${output.isChange ? 'CHANGE' : 'PAYMENT'})
+                        </span>
+                    </div>
+                `).join('')}
             </div>
         </div>
     `;
     
-    // Clear pending transfers
-    window.hopWizardData.pendingTransfers = null;
+    document.getElementById('wizardNextBtn').disabled = false;
+}
+
+// Keep the old function for backward compatibility but update it
+function selectWizardTransfer(index) {
+    // This function is now replaced by the multi-select system
+    // Convert single selection to multi-select format
+    window.hopWizardData.selectedOutputs = [index];
+    window.hopWizardData.outputClassifications = { [index]: 'payment' };
+    confirmWizardOutputSelection();
+}
+
+function createSingleHopEntry(hop, wizardData, output, outputIndex) {
+    // Calculate how much of the source amount goes to this output
+    const totalSelectedAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+    const outputProportion = output.amount / wizardData.multipleOutputs.reduce((sum, o) => sum + o.amount, 0);
+    const allocatedAmount = totalSelectedAmount * outputProportion;
+    
+    // Generate thread notation
+    let notation = '';
+    if (wizardData.selectedThreads.length === 1) {
+        const baseNotation = wizardData.selectedThreads[0];
+        // For change outputs, add -C suffix
+        notation = output.isChange ? `${baseNotation}-C` : baseNotation;
+    } else {
+        // Convergence notation for multiple sources
+        notation = wizardData.selectedThreads.map(t => t.split('-').slice(0, 2).join('-')).join('+') + `-H${hop.hopNumber}`;
+        if (output.isChange) notation += '-C';
+    }
+    
+    // Create the entry
+    const entry = {
+        id: Date.now() + outputIndex, // Ensure unique IDs for multiple outputs
+        hopId: hop.id,
+        entryType: 'trace',
+        sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
+        multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
+        individualSourceAssignments: wizardData.selectedThreads.length > 1 ? 
+            Object.fromEntries(Object.entries(wizardData.allocations).map(([k, v]) => [k, v * outputProportion])) : {},
+        amount: allocatedAmount.toString(),
+        currency: output.currency,
+        fromWallet: output.from,
+        fromWalletType: 'black',
+        toWallet: output.to,
+        toWalletType: output.isChange ? 'orange' : 'black', // ORANGE for change
+        txHash: wizardData.txHash,
+        timestamp: wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '',
+        timezone: 'UTC',
+        notes: output.isChange ? 
+            `Change output - funds remain in sender's custody (${output.amount} ${output.currency})` : 
+            `Payment output ${outputIndex + 1} of ${wizardData.multipleOutputs.length}`,
+        notation: notation,
+        isConvergence: wizardData.selectedThreads.length > 1,
+        isChange: output.isChange
+    };
+    
+    hop.entries.push(entry);
+    
+    console.log(`Created ${output.isChange ? 'CHANGE' : 'PAYMENT'} thread:`, notation, allocatedAmount, output.currency);
 }
 
 function createHopEntryFromWizard() {
     const wizardData = window.hopWizardData;
     const hop = investigation.hops.find(h => h.id === wizardData.hopId);
     if (!hop) return;
+    
+    // Check if we have multiple outputs to process
+    if (wizardData.multipleOutputs && wizardData.multipleOutputs.length > 0) {
+        // Create an entry for each selected output
+        wizardData.multipleOutputs.forEach((output, index) => {
+            createSingleHopEntry(hop, wizardData, output, index);
+        });
+        
+        closeHopWizard();
+        buildAvailableThreadsIndex();
+        renderHops();
+        saveToStorage();
+        checkHopCompletionStatus(hop);
+        return;
+    }
+    
+    // Original single entry logic continues below...
     
     // Determine data source based on entry mode
     let fromWallet, toWallet, timestamp;
