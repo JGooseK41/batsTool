@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B.A.T.S. - Streamlined Investigation Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+
+        /* B.A.T.S. Level Selector */
+        .level-selector-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .level-selector-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 1200px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .level-selector-modal h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        .level-intro {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .level-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .level-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .level-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .level-number {
+            position: absolute;
+            top: -15px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .level-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .level-time {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .level-card p {
+            color: #666;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .level-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .level-card li {
+            padding: 5px 0;
+            color: #495057;
+            font-size: 0.95rem;
+        }
+
+        .level-card li:before {
+            content: "✓ ";
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .select-level-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .select-level-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .level-help {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .skip-btn {
+            background: transparent;
+            border: 2px solid #dee2e6;
+            color: #6c757d;
+            padding: 10px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .skip-btn:hover {
+            background: #f8f9fa;
+            border-color: #adb5bd;
+        }
+
+        /* Main Investigation Interface */
+        .main-container {
+            display: none;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .progress-bar {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-level {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .progress-status {
+            color: #666;
+        }
+
+        .progress-track {
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .investigation-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel-header {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .panel-description {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        /* Contextual Help */
+        .help-tooltip {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #667eea;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .help-tooltip:hover {
+            transform: scale(1.1);
+        }
+
+        .help-content {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+
+        .help-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- B.A.T.S. Level Selector -->
+    <div id="levelSelector" class="level-selector-overlay">
+        <div class="level-selector-modal">
+            <h2>Welcome to B.A.T.S. Investigation Tool</h2>
+            <p class="level-intro">Select your investigation level based on your goals and available time:</p>
+            
+            <div class="level-cards">
+                <div class="level-card" onclick="selectBATSLevel(1)">
+                    <div class="level-number">L1</div>
+                    <h3>Discovery</h3>
+                    <div class="level-time">⏱ 10-60 minutes</div>
+                    <p>Quick assessment & lead generation</p>
+                    <ul>
+                        <li>Go/no-go decision</li>
+                        <li>Scope estimation</li>
+                        <li>Pattern recognition</li>
+                    </ul>
+                    <button class="select-level-btn">Start Discovery</button>
+                </div>
+                
+                <div class="level-card" onclick="selectBATSLevel(2)">
+                    <div class="level-number">L2</div>
+                    <h3>Intelligence</h3>
+                    <div class="level-time">⏱ 1-40 hours</div>
+                    <p>Network behavior mapping</p>
+                    <ul>
+                        <li>RED wallet index</li>
+                        <li>Hub identification</li>
+                        <li>Criminal patterns</li>
+                    </ul>
+                    <button class="select-level-btn">Start Intelligence</button>
+                </div>
+                
+                <div class="level-card" onclick="selectBATSLevel(3)">
+                    <div class="level-number">L3</div>
+                    <h3>Case Preparation</h3>
+                    <div class="level-time">⏱ 1-4 weeks</div>
+                    <p>Prosecution-ready evidence</p>
+                    <ul>
+                        <li>V-T notation</li>
+                        <li>Universal wallet index</li>
+                        <li>Legal narratives</li>
+                    </ul>
+                    <button class="select-level-btn">Start Case Prep</button>
+                </div>
+                
+                <div class="level-card" onclick="selectBATSLevel(4)">
+                    <div class="level-number">L4</div>
+                    <h3>Asset Forfeiture</h3>
+                    <div class="level-time">⏱ 1-6 months</div>
+                    <p>Mathematical precision for seizures</p>
+                    <ul>
+                        <li>V-T-H notation</li>
+                        <li>Hop counting</li>
+                        <li>Root validation</li>
+                    </ul>
+                    <button class="select-level-btn">Start Asset Forfeiture</button>
+                </div>
+            </div>
+            
+            <div class="level-help">
+                <p><strong>Not sure which level?</strong> Start with Discovery (L1) for initial assessment, then progress as needed.</p>
+                <p style="color: #666; font-size: 0.9rem; margin-top: 10px;">
+                    Each level builds on the previous one. You can always upgrade your investigation level as new evidence emerges.
+                </p>
+                <button onclick="skipLevelSelector()" class="skip-btn">Skip & Use Full Interface</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Investigation Interface -->
+    <div id="mainContainer" class="main-container">
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-info">
+                <span class="progress-level" id="currentLevel">B.A.T.S. Level 1 - Discovery</span>
+                <span class="progress-status" id="progressStatus">0% Complete</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Investigation Panel -->
+        <div class="investigation-panel">
+            <div class="panel-header">
+                <h1 class="panel-title" id="panelTitle">Begin Your Investigation</h1>
+                <p class="panel-description" id="panelDescription">
+                    Follow the B.A.T.S. methodology to maintain the golden thread of traceability
+                </p>
+            </div>
+            <div id="investigationContent">
+                <!-- Dynamic content based on selected level -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Contextual Help -->
+    <div class="help-tooltip" onclick="toggleHelp()">?</div>
+    <div id="helpContent" class="help-content">
+        <h3>B.A.T.S. Principles</h3>
+        <ul style="padding-left: 20px; margin-top: 10px;">
+            <li><strong>Golden Thread:</strong> Maintain unbroken connection from victim to seized assets</li>
+            <li><strong>Mathematical Precision:</strong> All threads must sum to adjusted root total</li>
+            <li><strong>Scope Control:</strong> Avoid expansion through strict accounting</li>
+            <li><strong>Documentation:</strong> Enable independent verification</li>
+        </ul>
+    </div>
+
+    <script>
+        let currentBATSLevel = 0;
+        let investigationProgress = 0;
+
+        function selectBATSLevel(level) {
+            currentBATSLevel = level;
+            document.getElementById('levelSelector').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+            
+            // Update UI based on level
+            updateLevelInterface(level);
+            
+            // Show appropriate tools
+            loadLevelTools(level);
+        }
+
+        function skipLevelSelector() {
+            // Load full interface without level restrictions
+            window.location.href = 'index.html';
+        }
+
+        function updateLevelInterface(level) {
+            const levelNames = ['', 'Discovery', 'Intelligence', 'Case Preparation', 'Asset Forfeiture'];
+            const levelDescriptions = [
+                '',
+                'Quick assessment and lead generation - 10-60 minutes',
+                'Network behavior mapping and RED wallet index - 1-40 hours',
+                'Building prosecution-ready evidence with V-T notation - 1-4 weeks',
+                'Mathematical precision for asset seizure with V-T-H notation - 1-6 months'
+            ];
+            
+            document.getElementById('currentLevel').textContent = `B.A.T.S. Level ${level} - ${levelNames[level]}`;
+            document.getElementById('panelTitle').textContent = `Level ${level}: ${levelNames[level]} Investigation`;
+            document.getElementById('panelDescription').textContent = levelDescriptions[level];
+        }
+
+        function loadLevelTools(level) {
+            const content = document.getElementById('investigationContent');
+            
+            // Load appropriate tools based on level
+            switch(level) {
+                case 1:
+                    content.innerHTML = `
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                            <h3>Discovery Tools</h3>
+                            <p>Focus on rapid assessment:</p>
+                            <ul style="margin-top: 10px; padding-left: 20px;">
+                                <li>Screenshot key transactions</li>
+                                <li>Note obvious patterns</li>
+                                <li>Identify exchange connections</li>
+                                <li>Estimate investigation scope</li>
+                            </ul>
+                            <button onclick="updateProgress(25)" style="margin-top: 20px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Start Discovery Analysis
+                            </button>
+                        </div>
+                    `;
+                    break;
+                case 2:
+                    content.innerHTML = `
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                            <h3>Intelligence Tools</h3>
+                            <p>Build network understanding:</p>
+                            <ul style="margin-top: 10px; padding-left: 20px;">
+                                <li>Create RED wallet index</li>
+                                <li>Map network structure</li>
+                                <li>Identify hub wallets (YELLOW)</li>
+                                <li>Document behavioral patterns</li>
+                            </ul>
+                            <button onclick="updateProgress(25)" style="margin-top: 20px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Begin Intelligence Mapping
+                            </button>
+                        </div>
+                    `;
+                    break;
+                case 3:
+                    content.innerHTML = `
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                            <h3>Case Preparation Tools</h3>
+                            <p>Create prosecution-ready evidence:</p>
+                            <ul style="margin-top: 10px; padding-left: 20px;">
+                                <li>Universal wallet index</li>
+                                <li>V-T notation system</li>
+                                <li>PIFO/LIBR methodology</li>
+                                <li>Legal narrative development</li>
+                            </ul>
+                            <button onclick="updateProgress(25)" style="margin-top: 20px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Start Case Documentation
+                            </button>
+                        </div>
+                    `;
+                    break;
+                case 4:
+                    content.innerHTML = `
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                            <h3>Asset Forfeiture Tools</h3>
+                            <p>Mathematical precision for seizures:</p>
+                            <ul style="margin-top: 10px; padding-left: 20px;">
+                                <li>V-T-H notation with hop counting</li>
+                                <li>Thread reconstruction</li>
+                                <li>Root validation mathematics</li>
+                                <li>Golden thread verification</li>
+                            </ul>
+                            <button onclick="updateProgress(25)" style="margin-top: 20px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Begin Asset Forfeiture Analysis
+                            </button>
+                        </div>
+                    `;
+                    break;
+            }
+        }
+
+        function updateProgress(increment) {
+            investigationProgress = Math.min(100, investigationProgress + increment);
+            document.getElementById('progressFill').style.width = investigationProgress + '%';
+            document.getElementById('progressStatus').textContent = investigationProgress + '% Complete';
+        }
+
+        function toggleHelp() {
+            const helpContent = document.getElementById('helpContent');
+            helpContent.classList.toggle('active');
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            // Show level selector by default
+            document.getElementById('levelSelector').style.display = 'flex';
+        };
+    </script>
+</body>
+</html>
