@@ -1092,6 +1092,46 @@
    </style>
 </head>
 <body>
+    <script>
+        // Define utility functions early so they're available for onclick handlers
+        window.openPKConverter = function() {
+            const modal = document.getElementById('pkConverterModal');
+            if (modal) {
+                // Force display the modal
+                modal.style.display = 'flex';
+                modal.style.position = 'fixed';
+                modal.style.zIndex = '10001';
+                modal.style.top = '0';
+                modal.style.left = '0';
+                modal.style.width = '100%';
+                modal.style.height = '100%';
+                modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                modal.style.alignItems = 'center';
+                modal.style.justifyContent = 'center';
+            } else {
+                console.error('PK Converter modal not found - will be available after page loads');
+            }
+        };
+
+        window.openAddressFinder = function() {
+            const modal = document.getElementById('addressFinderModal');
+            if (modal) {
+                // Force display the modal
+                modal.style.display = 'flex';
+                modal.style.position = 'fixed';
+                modal.style.zIndex = '10001';
+                modal.style.top = '0';
+                modal.style.left = '0';
+                modal.style.width = '100%';
+                modal.style.height = '100%';
+                modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                modal.style.alignItems = 'center';
+                modal.style.justifyContent = 'center';
+            } else {
+                console.error('Address Finder modal not found - will be available after page loads');
+            }
+        };
+    </script>
     <div class="container">
         <div class="header">
             <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); margin-right: 30px;">
@@ -1215,57 +1255,52 @@
                 </div>
 
                 <!-- Welcome Screen / Landing Page -->
-                <div id="welcomeScreen" style="display: none; padding: 0; background: #f8f9fa; min-height: 100vh;">
-                    <!-- Clean Header -->
-                    <div style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); padding: 40px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <div id="welcomeScreen" style="display: none; padding: 0; background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%); min-height: 100vh;">
+                    <!-- Clean Minimal Header -->
+                    <div style="background: white; padding: 30px 0; border-bottom: 1px solid #e0e0e0;">
                         <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; text-align: center;">
-                            <h1 style="color: white; font-size: 3rem; margin-bottom: 10px; font-weight: 300; letter-spacing: 2px;">
+                            <h1 style="color: #2c3e50; font-size: 2.5rem; margin-bottom: 5px; font-weight: 600;">
                                 B.A.T.S.
                             </h1>
-                            <p style="font-size: 1.2rem; color: #ecf0f1; font-weight: 400;">
+                            <p style="font-size: 1rem; color: #666; font-weight: 400;">
                                 Block Audit Tracing Standard
                             </p>
                         </div>
                     </div>
 
-                    <div style="max-width: 1200px; margin: 0 auto; padding: 40px 20px;">
+                    <div style="max-width: 900px; margin: 0 auto; padding: 50px 20px;">
 
-                        <!-- About B.A.T.S. Section -->
-                        <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                            <h2 style="color: #2c3e50; margin-bottom: 20px; text-align: center;">What is B.A.T.S.?</h2>
-                            <p style="color: #666; line-height: 1.8; font-size: 16px; text-align: center; max-width: 800px; margin: 0 auto 25px;">
-                                B.A.T.S. (Block Audit Tracing Standard) is a documentation methodology for cryptocurrency investigations.
-                                It provides a systematic approach to recording fund movements across blockchains, ensuring your
-                                investigation documentation meets legal and regulatory standards.
+                        <!-- Brief Info Section -->
+                        <div style="text-align: center; margin-bottom: 50px;">
+                            <h2 style="color: #2c3e50; margin-bottom: 20px; font-size: 1.8rem;">Documentation Standard for Blockchain Investigations</h2>
+                            <p style="color: #666; line-height: 1.8; font-size: 1.1rem; max-width: 700px; margin: 0 auto 30px;">
+                                B.A.T.S. provides a systematic methodology for documenting cryptocurrency fund movements.
+                                Designed to work alongside your blockchain analysis tools to ensure legally compliant investigation records.
                             </p>
-                            <div style="background: #fff8e1; border-left: 4px solid #ff9800; padding: 15px 20px; margin: 20px 0;">
-                                <p style="color: #333; margin: 0;">
-                                    <strong>⚠️ Important:</strong> B.A.T.S. is a documentation standard, not a tracing tool.
-                                    It works alongside blockchain analysis platforms like Chainalysis, TRM Labs, Elliptic, or Qlue.
-                                </p>
+                            <div style="display: inline-block; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 20px; color: #856404;">
+                                <strong>Note:</strong> B.A.T.S. requires training • Not a standalone tracing tool
                             </div>
                         </div>
 
-                        <!-- Main Action Cards -->
-                        <div style="margin-bottom: 40px;">
-                            <!-- Primary Card - BATS Documentation Tool -->
-                            <div style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); border-radius: 20px; padding: 40px; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(44, 62, 80, 0.2); text-align: center; cursor: pointer; transition: transform 0.3s ease;" onclick="startBATSDocumentation()" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                                <h2 style="color: white; font-size: 2rem; margin-bottom: 15px;">Enter B.A.T.S. Documentation Tool</h2>
-                                <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 25px;">
-                                    Start documenting your blockchain investigation with the official B.A.T.S. methodology
-                                </p>
-                                <div style="display: inline-block; background: white; color: #2c3e50; padding: 12px 30px; border-radius: 30px; font-weight: 600; font-size: 1.1rem;">
-                                    Begin Documentation →
-                                </div>
-                                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-top: 20px;">
-                                    Requires B.A.T.S. training • Works alongside your blockchain analysis tools
-                                </p>
-                            </div>
+                        <!-- Primary Action Card -->
+                        <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border-radius: 16px; padding: 40px; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(52, 152, 219, 0.3); text-align: center; cursor: pointer; transition: all 0.3s ease;" onclick="startBATSDocumentation()" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 15px 40px rgba(52, 152, 219, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(52, 152, 219, 0.3)'">
+                            <h2 style="color: white; font-size: 1.8rem; margin-bottom: 10px; font-weight: 500;">
+                                Enter B.A.T.S. Documentation Tool
+                            </h2>
+                            <p style="color: rgba(255,255,255,0.95); font-size: 1rem; margin-bottom: 20px;">
+                                Begin documenting your investigation with the official B.A.T.S. methodology
+                            </p>
+                            <button style="background: white; color: #2980b9; border: none; padding: 12px 35px; border-radius: 25px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onmouseover="event.stopPropagation(); this.style.background='#f8f9fa'" onmouseout="event.stopPropagation(); this.style.background='white'">
+                                Start Documentation
+                            </button>
+                        </div>
 
-                            <!-- Utility Tools Cards -->
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                        <!-- Utility Tools - Smaller Cards -->
+                        <div style="margin-bottom: 30px;">
+                            <h3 style="color: #666; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; text-align: center;">Utility Tools</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                                 <!-- PK Converter Card -->
-                                <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease;" onclick="openPKConverter()" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.08)'">
+                                <div style="background: white; border-radius: 10px; padding: 20px; border: 1px solid #e0e0e0; cursor: pointer; transition: all 0.3s ease; text-align: center;" onclick="openPKConverter()" onmouseover="this.style.borderColor='#3498db'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.1)'" onmouseout="this.style.borderColor='#e0e0e0'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
                                     <div style="font-size: 2rem; margin-bottom: 15px;">🔑</div>
                                     <h3 style="color: #2c3e50; margin-bottom: 10px;">Public Key Converter</h3>
                                     <p style="color: #666; font-size: 0.95rem; line-height: 1.5;">
@@ -6205,6 +6240,10 @@ function updateFullNotationDisplayMultiple(hopId, entryId) {
         // Make sure these functions are globally accessible
         window.switchTab = switchTab;
         window.toggleFileMenu = toggleFileMenu;
+        window.openPKConverter = openPKConverter;
+        window.closePKConverterModal = closePKConverterModal;
+        window.openAddressFinder = openAddressFinder;
+        window.closeAddressFinderModal = closeAddressFinderModal;
 
         document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing B.A.T.S. application...');
@@ -22340,7 +22379,7 @@ To (RED Wallet): ${transfer.to}`;
             const tracker = document.querySelector('.investigation-step-tracker');
             if (tracker) tracker.style.display = 'none';
 
-            // Hide nav tabs
+            // Hide nav tabs - they should start hidden
             const navTabs = document.getElementById('mainNavTabs');
             if (navTabs) navTabs.style.display = 'none';
 
@@ -22349,6 +22388,10 @@ To (RED Wallet): ${transfer.to}`;
             if (actionBar && actionBar.parentElement) {
                 actionBar.parentElement.style.display = 'none';
             }
+
+            // Hide case details sidebar
+            const sidebar = document.querySelector('.case-details-sidebar');
+            if (sidebar) sidebar.style.display = 'none';
 
             // Show welcome screen
             const welcomeScreen = document.getElementById('welcomeScreen');
@@ -22387,6 +22430,10 @@ To (RED Wallet): ${transfer.to}`;
             // Show nav tabs
             const navTabs = document.getElementById('mainNavTabs');
             if (navTabs) navTabs.style.display = 'flex';
+
+            // Show case details sidebar
+            const sidebar = document.querySelector('.case-details-sidebar');
+            if (sidebar) sidebar.style.display = 'block';
 
             // Show action bar
             const actionBar = document.querySelector('div[style*="Undo"]');
