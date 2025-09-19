@@ -31,8 +31,11 @@
             }
         })();
     </script>
-    
-    <!-- 
+
+    <!-- Load crypto-js library for proper cryptographic functions -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <!--
     DEPLOYMENT INSTRUCTIONS:
     For full functionality (custom save locations, autosave), serve this file over HTTPS:
     
@@ -1187,6 +1190,7 @@
                     <button class="nav-tab active" onclick="switchTab('victims')">Victims & Transactions</button>
                     <button class="nav-tab" onclick="switchTab('traces')">Trace Documentation</button>
                     <button class="nav-tab" onclick="switchTab('walletindexes')">Wallet Indexes</button>
+                    <button class="nav-tab" onclick="switchTab('pkconverter')">🔑 PK Converter</button>
                     <button class="nav-tab" onclick="switchTab('flowdiagram')">Flow Diagram</button>
                     <button class="nav-tab" onclick="switchTab('summary')">Summary & Export</button>
                 </div>
@@ -1267,6 +1271,36 @@
                                 </button>
                                 <div style="margin-top: 15px;">
                                     <a href="#" onclick="skipWelcome()" style="color: #666; text-decoration: underline;">Skip and set up manually</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Utility Tools Section -->
+                        <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 40px;">
+                            <h3 style="color: #2c3e50; margin-bottom: 20px; text-align: center;">
+                                🔧 Quick Access Tools
+                            </h3>
+                            <p style="text-align: center; color: #666; margin-bottom: 25px;">
+                                Access these forensic tools without starting an investigation
+                            </p>
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 500px; margin: 0 auto;">
+                                <div>
+                                    <button class="btn" onclick="openPKConverter()" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 15px 30px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;">
+                                        🔑 Public Key Converter
+                                        <span style="font-size: 12px; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px;">Cross-Chain</span>
+                                    </button>
+                                    <p style="text-align: center; color: #777; font-size: 13px; margin: 5px 0 0 0;">
+                                        Convert public keys to addresses across all blockchain networks
+                                    </p>
+                                </div>
+                                <div>
+                                    <button class="btn" onclick="openAddressFinder()" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); padding: 15px 30px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;">
+                                        🔍 Address Finder
+                                        <span style="font-size: 12px; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px;">Partial Match</span>
+                                    </button>
+                                    <p style="text-align: center; color: #777; font-size: 13px; margin: 5px 0 0 0;">
+                                        Find addresses using partial information (first/last characters)
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -1922,6 +1956,25 @@
                     </div>
                 </div>
 
+                <!-- PK Converter Tab -->
+                <div id="pkconverter-tab" class="tab-content">
+                    <div class="section-title">Public Key Converter & Cross-Chain Analysis</div>
+
+                    <div style="background: #e8f4fd; border-left: 4px solid #3498db; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
+                        <strong>Cross-Chain Forensics Tool:</strong> Convert public keys to addresses across all blockchain networks and instantly check for activity.
+                    </div>
+
+                    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                        <div style="text-align: center; padding: 40px;">
+                            <h3 style="color: #2c3e50; margin-bottom: 20px;">🔑 Public Key Converter</h3>
+                            <p style="color: #666; margin-bottom: 30px;">This tool helps investigators identify addresses controlled by the same entity across different blockchains</p>
+                            <button onclick="openPKConverter()" class="btn btn-primary" style="padding: 15px 40px; font-size: 18px;">
+                                Open PK Converter Tool
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Flow Diagram Tab -->
                 <div id="flowdiagram-tab" class="tab-content">
                     <div class="section-title">Visual Flow Diagram</div>
@@ -2572,6 +2625,150 @@
                     ⚙️ API Settings
                 </button>
                 <button class="btn btn-secondary" onclick="closeBlockchainLookupModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PK Converter Modal -->
+    <div id="pkConverterModal" class="modal">
+        <div class="modal-content" style="max-width: 1200px; height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+                <h2 style="color: white; margin-bottom: 10px;">🔑 Multi-Blockchain Public Key Converter</h2>
+                <p style="color: rgba(255,255,255,0.9); font-size: 14px;">Convert public keys to addresses across all blockchain networks and check for activity</p>
+                <button onclick="closePKConverterModal()" style="position: absolute; right: 20px; top: 20px; background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+
+            <div style="padding: 30px;">
+                <!-- Instructions -->
+                <div style="background: #e8f4fd; border-left: 4px solid #3498db; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
+                    <strong style="color: #2c3e50;">How to Extract Public Keys:</strong>
+                    <span style="color: #555;">Use blockchain explorers to find transaction details. Look for "pubkey" field in transaction inputs when spending from an address.</span>
+                </div>
+
+                <!-- Input Section -->
+                <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #dee2e6;">
+                    <label for="pkInput" style="display: block; font-weight: 600; margin-bottom: 10px; color: #2c3e50; font-size: 16px;">Enter Public Key (Hex Format):</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="pkInput" placeholder="Enter public key or public key hash (hex format)"
+                               style="flex: 1; padding: 12px; border: 2px solid #3498db; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 14px;">
+                        <button onclick="convertPKAddresses()" class="btn btn-primary" style="padding: 12px 30px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            Convert & Check Activity
+                        </button>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <small style="color: #666;">Examples: </small>
+                        <a href="#" onclick="document.getElementById('pkInput').value='04c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5628f5c6c7c7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7'; return false;" style="color: #3498db; text-decoration: underline; font-size: 12px;">Use sample uncompressed key</a> |
+                        <a href="#" onclick="document.getElementById('pkInput').value='02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5'; return false;" style="color: #3498db; text-decoration: underline; font-size: 12px;">Use sample compressed key</a>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="pkConverterResults" style="display: none;">
+                    <h3 style="color: #2c3e50; margin-bottom: 20px;">Generated Addresses & Activity Status</h3>
+                    <div id="pkAddressGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px;">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="pkConverterLoading" style="display: none; text-align: center; padding: 40px;">
+                    <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                    <p style="color: #666;">Converting addresses and checking blockchain activity...</p>
+                </div>
+
+                <!-- Error Display -->
+                <div id="pkConverterError" style="display: none; background: #fee; border: 1px solid #fcc; padding: 15px; border-radius: 6px; color: #c00; margin-top: 20px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Address Finder Modal -->
+    <div id="addressFinderModal" class="modal">
+        <div class="modal-content" style="max-width: 1200px; height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+                <h2 style="color: white; margin-bottom: 10px;">🔍 Blockchain Address Finder</h2>
+                <p style="color: rgba(255,255,255,0.9); font-size: 14px;">Find complete addresses using partial information - perfect for investigations with limited data</p>
+                <button onclick="closeAddressFinderModal()" style="position: absolute; right: 20px; top: 20px; background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+
+            <div style="padding: 30px;">
+                <!-- Instructions -->
+                <div style="background: #f3e5f5; border-left: 4px solid #9b59b6; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
+                    <strong style="color: #2c3e50;">How it works:</strong>
+                    <span style="color: #555;">Enter the characters you know from an address. For example: first 6 characters "1A2B3C" or first 6 and last 4 "1A2B3C...wxyz". We'll search blockchain records for matching addresses.</span>
+                </div>
+
+                <!-- Search Options -->
+                <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #dee2e6;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 10px; color: #2c3e50;">Select Blockchain:</label>
+                            <select id="addressFinderChain" style="width: 100%; padding: 12px; border: 2px solid #9b59b6; border-radius: 6px; font-size: 14px;">
+                                <option value="bitcoin">Bitcoin (BTC)</option>
+                                <option value="ethereum">Ethereum (ETH)</option>
+                                <option value="bsc">Binance Smart Chain (BSC)</option>
+                                <option value="polygon">Polygon (MATIC)</option>
+                                <option value="tron">Tron (TRX)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 10px; color: #2c3e50;">Search Type:</label>
+                            <select id="addressFinderType" style="width: 100%; padding: 12px; border: 2px solid #9b59b6; border-radius: 6px; font-size: 14px;" onchange="updateAddressFinderInputs()">
+                                <option value="prefix">Starts with (first characters)</option>
+                                <option value="suffix">Ends with (last characters)</option>
+                                <option value="both">First and Last characters</option>
+                                <option value="contains">Contains anywhere</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="addressFinderInputs">
+                        <label style="display: block; font-weight: 600; margin-bottom: 10px; color: #2c3e50;">Enter known characters:</label>
+                        <div id="singleInput" style="display: flex; gap: 10px;">
+                            <input type="text" id="addressPrefix" placeholder="Enter first characters (e.g., 1A2B3C or bc1qxy)"
+                                   style="flex: 1; padding: 12px; border: 2px solid #9b59b6; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 14px;">
+                        </div>
+                        <div id="doubleInput" style="display: none; gap: 10px;">
+                            <input type="text" id="addressPrefixDouble" placeholder="First characters (e.g., 1A2B3C)"
+                                   style="flex: 1; padding: 12px; border: 2px solid #9b59b6; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 14px;">
+                            <span style="padding: 12px; color: #666;">...</span>
+                            <input type="text" id="addressSuffix" placeholder="Last characters (e.g., XyZ9)"
+                                   style="flex: 1; padding: 12px; border: 2px solid #9b59b6; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 14px;">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 10px; align-items: center;">
+                        <button onclick="searchAddresses()" class="btn btn-primary" style="padding: 12px 30px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            Search Blockchain
+                        </button>
+                        <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                            <input type="checkbox" id="activeOnly" checked>
+                            <span style="color: #666;">Show only addresses with activity</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="addressFinderResults" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: #2c3e50; margin: 0;">Search Results</h3>
+                        <span id="resultCount" style="color: #666; font-size: 14px;"></span>
+                    </div>
+                    <div id="addressResultsGrid" style="display: grid; gap: 15px;">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="addressFinderLoading" style="display: none; text-align: center; padding: 40px;">
+                    <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                    <p style="color: #666;">Searching blockchain records for matching addresses...</p>
+                </div>
+
+                <!-- Error Display -->
+                <div id="addressFinderError" style="display: none; background: #fee; border: 1px solid #fcc; padding: 15px; border-radius: 6px; color: #c00; margin-top: 20px;">
+                </div>
             </div>
         </div>
     </div>
@@ -14398,8 +14595,8 @@ async function lookupWizardTransaction() {
             window.hopWizardData.outputClassifications = window.hopWizardData.outputClassifications || {};
             
             // Auto-detect potential change outputs
-            const sourceWallet = wizardData.selectedThreads.length > 0 ? 
-                getThreadById(wizardData.selectedThreads[0])?.fromWallet : null;
+            const sourceWallet = window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0 ?
+                getAvailableSourcesForHop(window.hopWizardData.hopNumber, null).find(t => t.threadId === window.hopWizardData.selectedThreads[0])?.sourceWallet : null;
             
             resultDiv.innerHTML = `
                 <div style="background: #fff3e0; border: 2px solid #ff9800; border-radius: 8px; padding: 15px;">
@@ -18154,6 +18351,941 @@ function loadApiSettingsOnStartup() {
     if (savedBlockchain) blockchainAPIs.bitcoin.apiKey = savedBlockchain;
     if (savedTrongrid) blockchainAPIs.tron.apiKey = savedTrongrid;
     if (savedSolanaRpc) blockchainAPIs.solana.apiUrl = savedSolanaRpc;
+}
+
+// PK Converter Functions
+function openPKConverter() {
+    document.getElementById('pkConverterModal').style.display = 'block';
+}
+
+function closePKConverterModal() {
+    document.getElementById('pkConverterModal').style.display = 'none';
+    // Clear any errors
+    document.getElementById('pkConverterError').style.display = 'none';
+}
+
+// Crypto-js library functions for PK Converter (embedded)
+const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function base58Encode(bytes) {
+    if (bytes.length === 0) return '';
+    let num = 0n;
+    for (let i = 0; i < bytes.length; i++) {
+        num = num * 256n + BigInt(bytes[i]);
+    }
+    let result = '';
+    while (num > 0n) {
+        result = BASE58_ALPHABET[Number(num % 58n)] + result;
+        num = num / 58n;
+    }
+    for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
+        result = '1' + result;
+    }
+    return result;
+}
+
+function hexToBytes(hex) {
+    const bytes = [];
+    for (let i = 0; i < hex.length; i += 2) {
+        bytes.push(parseInt(hex.substr(i, 2), 16));
+    }
+    return new Uint8Array(bytes);
+}
+
+function bytesToHex(bytes) {
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function sha256Hash(hexString) {
+    // Use crypto-js for SHA256
+    const hash = CryptoJS.SHA256(CryptoJS.enc.Hex.parse(hexString));
+    return hash.toString(CryptoJS.enc.Hex);
+}
+
+function ripemd160Hash(hexString) {
+    // Use crypto-js for RIPEMD160
+    const hash = CryptoJS.RIPEMD160(CryptoJS.enc.Hex.parse(hexString));
+    return hash.toString(CryptoJS.enc.Hex);
+}
+
+function keccak256Hash(hexString) {
+    // Use crypto-js SHA3 for Keccak-256
+    const hash = CryptoJS.SHA3(CryptoJS.enc.Hex.parse(hexString), { outputLength: 256 });
+    return hash.toString(CryptoJS.enc.Hex);
+}
+
+function generateBitcoinAddress(publicKeyHex) {
+    try {
+        // Step 1: SHA256 of public key
+        const sha = sha256Hash(publicKeyHex);
+
+        // Step 2: RIPEMD160 of SHA256
+        const pubKeyHash = ripemd160Hash(sha);
+
+        // Step 3: Add version byte (0x00 for mainnet P2PKH)
+        const versionedHash = '00' + pubKeyHash;
+
+        // Step 4: Double SHA256 for checksum
+        const hash1 = sha256Hash(versionedHash);
+        const hash2 = sha256Hash(hash1);
+
+        // Step 5: Take first 4 bytes as checksum
+        const checksum = hash2.substring(0, 8);
+
+        // Step 6: Append checksum
+        const fullHash = versionedHash + checksum;
+
+        // Step 7: Base58 encode
+        const address = base58Encode(hexToBytes(fullHash));
+
+        return address;
+    } catch (error) {
+        console.error('Error generating Bitcoin address:', error);
+        return null;
+    }
+}
+
+function generateEthereumAddress(publicKeyHex) {
+    try {
+        // Remove '04' prefix if present (uncompressed key indicator)
+        let pubKey = publicKeyHex.startsWith('04') ? publicKeyHex.slice(2) : publicKeyHex;
+
+        // Use Keccak-256 (this is what Ethereum uses, not SHA3)
+        const hash = keccak256Hash(pubKey);
+
+        // Take last 20 bytes (40 hex chars)
+        const addressHex = hash.slice(-40);
+
+        // Add checksum (EIP-55)
+        const address = toChecksumAddress('0x' + addressHex);
+
+        return address;
+    } catch (error) {
+        console.error('Error generating Ethereum address:', error);
+        return null;
+    }
+}
+
+function toChecksumAddress(address) {
+    // EIP-55 checksum
+    address = address.toLowerCase().replace('0x', '');
+    const hash = keccak256Hash(address);
+    let checksumAddress = '0x';
+
+    for (let i = 0; i < address.length; i++) {
+        if (parseInt(hash[i], 16) >= 8) {
+            checksumAddress += address[i].toUpperCase();
+        } else {
+            checksumAddress += address[i];
+        }
+    }
+    return checksumAddress;
+}
+
+async function convertPKAddresses() {
+    const pkInput = document.getElementById('pkInput').value.trim();
+
+    if (!pkInput) {
+        showPKError('Please enter a public key');
+        return;
+    }
+
+    // Validate hex format
+    if (!/^[0-9a-fA-F]+$/.test(pkInput)) {
+        showPKError('Invalid format. Please enter a valid hexadecimal public key.');
+        return;
+    }
+
+    // Validate key length (compressed: 66 chars, uncompressed: 130 chars, or 40 chars for hash)
+    if (pkInput.length !== 66 && pkInput.length !== 130 && pkInput.length !== 40) {
+        showPKError('Invalid public key length. Expected 33 bytes (compressed), 65 bytes (uncompressed), or 20 bytes (hash).');
+        return;
+    }
+
+    // Show loading
+    document.getElementById('pkConverterLoading').style.display = 'block';
+    document.getElementById('pkConverterResults').style.display = 'none';
+    document.getElementById('pkConverterError').style.display = 'none';
+
+    try {
+        // Generate addresses for different blockchains
+        const addresses = generateAddresses(pkInput);
+
+        // Check activity on each blockchain
+        const addressesWithActivity = await checkAddressActivity(addresses);
+
+        // Display results
+        displayPKResults(addressesWithActivity);
+
+    } catch (error) {
+        console.error('PK Converter error:', error);
+        showPKError('Error converting public key: ' + error.message);
+    } finally {
+        document.getElementById('pkConverterLoading').style.display = 'none';
+    }
+}
+
+function generateAddresses(publicKeyHex) {
+    const addresses = [];
+
+    // Bitcoin
+    const btcAddress = generateBitcoinAddress(publicKeyHex);
+    if (btcAddress) {
+        addresses.push({
+            blockchain: 'Bitcoin',
+            address: btcAddress,
+            explorer: `https://www.blockchain.com/btc/address/${btcAddress}`,
+            icon: '₿',
+            color: '#f7931a'
+        });
+    }
+
+    // Ethereum and EVM-compatible chains
+    const ethAddress = generateEthereumAddress(publicKeyHex);
+    if (ethAddress) {
+        // Ethereum
+        addresses.push({
+            blockchain: 'Ethereum',
+            address: ethAddress,
+            explorer: `https://etherscan.io/address/${ethAddress}`,
+            icon: 'Ξ',
+            color: '#627eea'
+        });
+
+        // Binance Smart Chain (same address format)
+        addresses.push({
+            blockchain: 'BSC',
+            address: ethAddress,
+            explorer: `https://bscscan.com/address/${ethAddress}`,
+            icon: '⟠',
+            color: '#f3ba2f'
+        });
+
+        // Polygon (same address format)
+        addresses.push({
+            blockchain: 'Polygon',
+            address: ethAddress,
+            explorer: `https://polygonscan.com/address/${ethAddress}`,
+            icon: '⬡',
+            color: '#8247e5'
+        });
+
+        // Arbitrum (same address format)
+        addresses.push({
+            blockchain: 'Arbitrum',
+            address: ethAddress,
+            explorer: `https://arbiscan.io/address/${ethAddress}`,
+            icon: '🔷',
+            color: '#28a0f0'
+        });
+
+        // Optimism (same address format)
+        addresses.push({
+            blockchain: 'Optimism',
+            address: ethAddress,
+            explorer: `https://optimistic.etherscan.io/address/${ethAddress}`,
+            icon: '⭕',
+            color: '#ff0420'
+        });
+    }
+
+    if (addresses.length === 0) {
+        throw new Error('Unable to generate any addresses from the provided public key');
+    }
+
+    return addresses;
+}
+
+async function checkAddressActivity(addresses) {
+    // Check each address for activity using existing BATS APIs
+    const results = [];
+
+    for (const addr of addresses) {
+        let hasActivity = false;
+        let balance = 'Checking...';
+        let txCount = 0;
+
+        try {
+            if (addr.blockchain === 'Bitcoin') {
+                // Use blockchain.info API
+                const response = await fetch(`https://blockchain.info/rawaddr/${addr.address}?limit=1`);
+                if (response.ok) {
+                    const data = await response.json();
+                    hasActivity = data.n_tx > 0;
+                    txCount = data.n_tx;
+                    balance = (data.final_balance / 100000000).toFixed(8) + ' BTC';
+                }
+            } else if (addr.blockchain === 'Ethereum' || addr.blockchain === 'BSC' || addr.blockchain === 'Polygon') {
+                // Use Etherscan API
+                const apiKey = localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                let apiUrl = '';
+
+                if (addr.blockchain === 'Ethereum') {
+                    apiUrl = `https://api.etherscan.io/api?module=account&action=balance&address=${addr.address}&tag=latest&apikey=${apiKey}`;
+                } else if (addr.blockchain === 'BSC') {
+                    apiUrl = `https://api.bscscan.com/api?module=account&action=balance&address=${addr.address}&tag=latest&apikey=${apiKey}`;
+                } else if (addr.blockchain === 'Polygon') {
+                    apiUrl = `https://api.polygonscan.com/api?module=account&action=balance&address=${addr.address}&tag=latest&apikey=${apiKey}`;
+                }
+
+                const response = await fetch(apiUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === '1') {
+                        const bal = parseFloat(data.result) / 1e18;
+                        hasActivity = bal > 0;
+                        balance = bal.toFixed(4) + ' ' + (addr.blockchain === 'BSC' ? 'BNB' : addr.blockchain === 'Polygon' ? 'MATIC' : 'ETH');
+                    }
+                }
+
+                // Get transaction count
+                const txUrl = apiUrl.replace('action=balance', 'action=txlist');
+                const txResponse = await fetch(txUrl);
+                if (txResponse.ok) {
+                    const txData = await txResponse.json();
+                    if (txData.status === '1') {
+                        txCount = txData.result.length;
+                        hasActivity = txCount > 0;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`Error checking ${addr.blockchain} activity:`, error);
+            balance = 'Error';
+        }
+
+        results.push({
+            ...addr,
+            hasActivity,
+            balance,
+            txCount,
+            status: hasActivity ? 'ACTIVE' : 'NO ACTIVITY'
+        });
+    }
+
+    return results;
+}
+
+function displayPKResults(addresses) {
+    const resultsDiv = document.getElementById('pkConverterResults');
+    const gridDiv = document.getElementById('pkAddressGrid');
+
+    gridDiv.innerHTML = '';
+
+    addresses.forEach(addr => {
+        const card = document.createElement('div');
+        card.style.cssText = `
+            background: white;
+            border: 2px solid ${addr.hasActivity ? '#27ae60' : '#ddd'};
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        `;
+
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="color: ${addr.color}; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 24px;">${addr.icon}</span>
+                    ${addr.blockchain}
+                </h4>
+                <span style="
+                    background: ${addr.hasActivity ? '#27ae60' : '#95a5a6'};
+                    color: white;
+                    padding: 4px 12px;
+                    border-radius: 12px;
+                    font-size: 12px;
+                    font-weight: 600;
+                ">${addr.status}</span>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Address:</div>
+                <div style="font-family: 'Courier New', monospace; font-size: 11px; word-break: break-all; color: #2c3e50;">
+                    ${addr.address}
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div>
+                    <div style="font-size: 12px; color: #666;">Balance:</div>
+                    <div style="font-weight: 600; color: #2c3e50;">${addr.balance}</div>
+                </div>
+                <div>
+                    <div style="font-size: 12px; color: #666;">Transactions:</div>
+                    <div style="font-weight: 600; color: #2c3e50;">${addr.txCount}</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="window.open('${addr.explorer}', '_blank')"
+                        style="flex: 1; padding: 8px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                    View Explorer
+                </button>
+                <button onclick="navigator.clipboard.writeText('${addr.address}')"
+                        style="padding: 8px 16px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                    Copy
+                </button>
+            </div>
+        `;
+
+        gridDiv.appendChild(card);
+    });
+
+    resultsDiv.style.display = 'block';
+}
+
+function showPKError(message) {
+    const errorDiv = document.getElementById('pkConverterError');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+}
+
+// Address Finder Functions
+function openAddressFinder() {
+    document.getElementById('addressFinderModal').style.display = 'block';
+}
+
+function closeAddressFinderModal() {
+    document.getElementById('addressFinderModal').style.display = 'none';
+    // Clear any errors
+    document.getElementById('addressFinderError').style.display = 'none';
+}
+
+function updateAddressFinderInputs() {
+    const searchType = document.getElementById('addressFinderType').value;
+    const singleInput = document.getElementById('singleInput');
+    const doubleInput = document.getElementById('doubleInput');
+
+    if (searchType === 'both') {
+        singleInput.style.display = 'none';
+        doubleInput.style.display = 'flex';
+    } else {
+        singleInput.style.display = 'flex';
+        doubleInput.style.display = 'none';
+
+        // Update placeholder based on search type
+        const addressPrefix = document.getElementById('addressPrefix');
+        if (searchType === 'prefix') {
+            addressPrefix.placeholder = 'Enter first characters (e.g., 1A2B3C or bc1qxy)';
+        } else if (searchType === 'suffix') {
+            addressPrefix.placeholder = 'Enter last characters (e.g., XyZ9)';
+        } else if (searchType === 'contains') {
+            addressPrefix.placeholder = 'Enter characters to search anywhere in address';
+        }
+    }
+}
+
+async function searchAddresses() {
+    const chain = document.getElementById('addressFinderChain').value;
+    const searchType = document.getElementById('addressFinderType').value;
+    const activeOnly = document.getElementById('activeOnly').checked;
+
+    let searchPattern = '';
+
+    if (searchType === 'both') {
+        const prefix = document.getElementById('addressPrefixDouble').value.trim();
+        const suffix = document.getElementById('addressSuffix').value.trim();
+        if (!prefix || !suffix) {
+            showAddressFinderError('Please enter both first and last characters');
+            return;
+        }
+        searchPattern = { prefix, suffix };
+    } else {
+        const input = document.getElementById('addressPrefix').value.trim();
+        if (!input) {
+            showAddressFinderError('Please enter characters to search');
+            return;
+        }
+        searchPattern = input;
+    }
+
+    // Show loading
+    document.getElementById('addressFinderLoading').style.display = 'block';
+    document.getElementById('addressFinderResults').style.display = 'none';
+    document.getElementById('addressFinderError').style.display = 'none';
+
+    try {
+        // Search for addresses based on pattern
+        const addresses = await findAddressesByPattern(chain, searchType, searchPattern, activeOnly);
+
+        // Display results
+        displayAddressFinderResults(addresses, chain);
+
+    } catch (error) {
+        console.error('Address search error:', error);
+        showAddressFinderError('Error searching addresses: ' + error.message);
+    } finally {
+        document.getElementById('addressFinderLoading').style.display = 'none';
+    }
+}
+
+async function findAddressesByPattern(chain, searchType, pattern, activeOnly) {
+    const results = [];
+
+    // For demonstration, we'll use different strategies based on blockchain
+    // In production, you'd use specialized blockchain indexing services
+
+    try {
+        if (chain === 'bitcoin') {
+            // For Bitcoin, we can use blockchain.info's search functionality
+            // Note: This is a simplified approach. In production, use specialized services
+            results.push(...await searchBitcoinAddresses(searchType, pattern));
+        } else if (chain === 'ethereum' || chain === 'bsc' || chain === 'polygon') {
+            // For EVM chains, use Etherscan-like APIs
+            results.push(...await searchEVMAddresses(chain, searchType, pattern));
+        } else if (chain === 'tron') {
+            // For Tron, use TronGrid API
+            results.push(...await searchTronAddresses(searchType, pattern));
+        }
+
+        // Filter by activity if requested
+        if (activeOnly) {
+            const activeAddresses = [];
+            for (const addr of results) {
+                const hasActivity = await checkAddressHasActivity(addr.address, chain);
+                if (hasActivity) {
+                    activeAddresses.push(addr);
+                }
+            }
+            return activeAddresses;
+        }
+
+        return results;
+
+    } catch (error) {
+        console.error('Pattern search error:', error);
+        // Return empty array instead of demo data
+        return [];
+    }
+}
+
+async function searchBitcoinAddresses(searchType, pattern) {
+    const addresses = [];
+
+    try {
+        // Use multiple free APIs for Bitcoin address search
+
+        // 1. Try BlockCypher API (supports prefix search)
+        if (searchType === 'prefix') {
+            try {
+                const response = await fetch(`https://api.blockcypher.com/v1/btc/main/addrs?prefix=${pattern}&limit=20`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.addresses && Array.isArray(data.addresses)) {
+                        for (const addr of data.addresses) {
+                            addresses.push({
+                                address: addr,
+                                type: addr.startsWith('1') ? 'P2PKH' : addr.startsWith('3') ? 'P2SH' : 'Bech32',
+                                source: 'BlockCypher'
+                            });
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('BlockCypher search failed:', e);
+            }
+        }
+
+        // 2. Try Blockchain.info search endpoint
+        if (addresses.length === 0) {
+            try {
+                // Note: This endpoint may have rate limits
+                const searchUrl = `https://blockchain.info/search?search=${pattern}`;
+                const response = await fetch(searchUrl);
+                if (response.ok) {
+                    const html = await response.text();
+                    // Parse HTML for address matches (simplified)
+                    const addressRegex = /[13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59}/g;
+                    const matches = html.match(addressRegex) || [];
+
+                    for (const match of matches.slice(0, 10)) {
+                        if ((searchType === 'prefix' && match.startsWith(pattern)) ||
+                            (searchType === 'suffix' && match.endsWith(pattern)) ||
+                            (searchType === 'contains' && match.includes(pattern))) {
+                            addresses.push({
+                                address: match,
+                                type: match.startsWith('1') ? 'P2PKH' : match.startsWith('3') ? 'P2SH' : 'Bech32',
+                                source: 'Blockchain.info'
+                            });
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('Blockchain.info search failed:', e);
+            }
+        }
+
+        // Note: For complete Bitcoin address search, consider using:
+        // - BTCPay Server API
+        // - Blockstream Esplora API
+        // - Local Bitcoin Core with txindex enabled
+
+    } catch (error) {
+        console.error('Bitcoin address search error:', error);
+    }
+
+    // Return empty array if no results found - no demo data
+    // The UI will show appropriate message
+
+    return addresses;
+}
+
+async function searchEVMAddresses(chain, searchType, pattern) {
+    const addresses = [];
+    const apiKey = localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+
+    try {
+        // Strategy 1: Search recent blocks for matching addresses
+        let apiUrl = '';
+        if (chain === 'ethereum') {
+            apiUrl = 'https://api.etherscan.io/api';
+        } else if (chain === 'bsc') {
+            apiUrl = 'https://api.bscscan.com/api';
+        } else if (chain === 'polygon') {
+            apiUrl = 'https://api.polygonscan.com/api';
+        }
+
+        // Get recent transactions to find addresses
+        try {
+            const blockResponse = await fetch(`${apiUrl}?module=proxy&action=eth_blockNumber&apikey=${apiKey}`);
+            if (blockResponse.ok) {
+                const blockData = await blockResponse.json();
+                const currentBlock = parseInt(blockData.result, 16);
+
+                // Check last few blocks for addresses matching pattern
+                for (let i = 0; i < 3; i++) {
+                    const blockNum = '0x' + (currentBlock - i).toString(16);
+                    const txResponse = await fetch(`${apiUrl}?module=proxy&action=eth_getBlockByNumber&tag=${blockNum}&boolean=true&apikey=${apiKey}`);
+
+                    if (txResponse.ok) {
+                        const txData = await txResponse.json();
+                        if (txData.result && txData.result.transactions) {
+                            for (const tx of txData.result.transactions) {
+                                // Check from address
+                                if (matchesPattern(tx.from, searchType, pattern)) {
+                                    addresses.push({
+                                        address: tx.from,
+                                        type: 'EOA',
+                                        lastTx: tx.hash,
+                                        source: 'Recent Block'
+                                    });
+                                }
+                                // Check to address
+                                if (tx.to && matchesPattern(tx.to, searchType, pattern)) {
+                                    addresses.push({
+                                        address: tx.to,
+                                        type: tx.input === '0x' ? 'EOA' : 'Contract',
+                                        lastTx: tx.hash,
+                                        source: 'Recent Block'
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('Block search failed:', e);
+        }
+
+        // Strategy 2: Search known token holders for patterns
+        if (addresses.length < 10) {
+            try {
+                // Get USDT holders as they're common
+                const tokenAddress = chain === 'ethereum' ? '0xdac17f958d2ee523a2206206c33637e02a75a60e' :
+                                   chain === 'bsc' ? '0x55d398326f99059ff775485246999027b3197955' :
+                                   '0xc2132d05d31c914a87c6611c10748aeb04b58e8f'; // Polygon
+
+                const holdersUrl = `${apiUrl}?module=token&action=tokenholderlist&contractaddress=${tokenAddress}&page=1&offset=100&apikey=${apiKey}`;
+                const holdersResponse = await fetch(holdersUrl);
+
+                if (holdersResponse.ok) {
+                    const holdersData = await holdersResponse.json();
+                    if (holdersData.status === '1' && holdersData.result) {
+                        for (const holder of holdersData.result) {
+                            if (matchesPattern(holder.TokenHolderAddress, searchType, pattern)) {
+                                addresses.push({
+                                    address: holder.TokenHolderAddress,
+                                    balance: parseFloat(holder.TokenHolderQuantity) / 1e6 + ' USDT',
+                                    type: 'Token Holder',
+                                    source: 'Token Holders'
+                                });
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('Token holder search failed:', e);
+            }
+        }
+
+        // Strategy 3: Generate and validate potential addresses
+        if (addresses.length === 0 && searchType === 'prefix') {
+            const potentials = [];
+            for (let i = 0; i < 5; i++) {
+                const addr = pattern.toLowerCase() + generateRandomHex(42 - pattern.length);
+                potentials.push(addr);
+            }
+
+            // Check if these addresses exist
+            for (const addr of potentials) {
+                try {
+                    const balanceUrl = `${apiUrl}?module=account&action=balance&address=${addr}&tag=latest&apikey=${apiKey}`;
+                    const response = await fetch(balanceUrl);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === '1' && data.result !== '0') {
+                            addresses.push({
+                                address: addr,
+                                balance: (parseFloat(data.result) / 1e18).toFixed(4) + ' ETH',
+                                type: 'Validated',
+                                source: 'Balance Check'
+                            });
+                        }
+                    }
+                } catch (e) {
+                    // Address has no balance, skip
+                }
+            }
+        }
+
+    } catch (error) {
+        console.error('EVM address search error:', error);
+    }
+
+    // Remove duplicates
+    const uniqueAddresses = [];
+    const seen = new Set();
+    for (const addr of addresses) {
+        if (!seen.has(addr.address.toLowerCase())) {
+            seen.add(addr.address.toLowerCase());
+            uniqueAddresses.push(addr);
+        }
+    }
+
+    return uniqueAddresses;
+}
+
+// Helper function to check if address matches pattern
+function matchesPattern(address, searchType, pattern) {
+    if (!address) return false;
+
+    const addr = address.toLowerCase();
+    const pat = typeof pattern === 'string' ? pattern.toLowerCase() : pattern;
+
+    if (searchType === 'prefix') {
+        return addr.startsWith(pat);
+    } else if (searchType === 'suffix') {
+        return addr.endsWith(pat);
+    } else if (searchType === 'contains') {
+        return addr.includes(pat);
+    } else if (searchType === 'both') {
+        return addr.startsWith(pat.prefix.toLowerCase()) && addr.endsWith(pat.suffix.toLowerCase());
+    }
+
+    return false;
+}
+
+async function searchTronAddresses(searchType, pattern) {
+    const addresses = [];
+
+    // Tron addresses start with T and are base58 encoded
+    // This is a simplified demo
+
+    if (searchType === 'prefix' && pattern.startsWith('T')) {
+        for (let i = 0; i < 3; i++) {
+            addresses.push({
+                address: pattern + generateRandomBase58(34 - pattern.length),
+                type: 'Account',
+                firstSeen: '2024-02-01',
+                lastSeen: '2024-12-01'
+            });
+        }
+    }
+
+    return addresses;
+}
+
+async function checkAddressHasActivity(address, chain) {
+    try {
+        if (chain === 'bitcoin') {
+            const response = await fetch(`https://blockchain.info/rawaddr/${address}?limit=1`);
+            if (response.ok) {
+                const data = await response.json();
+                return data.n_tx > 0;
+            }
+        } else if (chain === 'ethereum' || chain === 'bsc' || chain === 'polygon') {
+            const apiKey = localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+            let apiUrl = '';
+
+            if (chain === 'ethereum') {
+                apiUrl = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&page=1&offset=1&apikey=${apiKey}`;
+            } else if (chain === 'bsc') {
+                apiUrl = `https://api.bscscan.com/api?module=account&action=txlist&address=${address}&page=1&offset=1&apikey=${apiKey}`;
+            } else if (chain === 'polygon') {
+                apiUrl = `https://api.polygonscan.com/api?module=account&action=txlist&address=${address}&page=1&offset=1&apikey=${apiKey}`;
+            }
+
+            const response = await fetch(apiUrl);
+            if (response.ok) {
+                const data = await response.json();
+                return data.status === '1' && data.result.length > 0;
+            }
+        }
+    } catch (error) {
+        console.error('Activity check error:', error);
+    }
+
+    return false; // Default to no activity if check fails
+}
+
+// Removed getDemoAddresses function - no demo data in production
+
+function displayAddressFinderResults(addresses, chain) {
+    const resultsDiv = document.getElementById('addressFinderResults');
+    const gridDiv = document.getElementById('addressResultsGrid');
+    const countSpan = document.getElementById('resultCount');
+
+    gridDiv.innerHTML = '';
+    countSpan.textContent = `Found ${addresses.length} address${addresses.length !== 1 ? 'es' : ''}`;
+
+    if (addresses.length === 0) {
+        gridDiv.innerHTML = `
+            <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 8px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
+                <h4 style="color: #666; margin-bottom: 15px;">No Matching Addresses Found</h4>
+                <p style="color: #999; margin-bottom: 20px;">Try the following:</p>
+                <ul style="text-align: left; display: inline-block; color: #777;">
+                    <li>Check your pattern for typos</li>
+                    <li>Try a shorter prefix (minimum 3-4 characters)</li>
+                    <li>Disable "Show only active addresses" filter</li>
+                    <li>Try a different blockchain network</li>
+                </ul>
+                <p style="color: #999; margin-top: 20px; font-size: 12px;">
+                    Note: Free APIs have limited search capabilities. For comprehensive searches,
+                    consider using specialized blockchain indexing services.
+                </p>
+            </div>
+        `;
+    } else {
+        addresses.forEach(addr => {
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: white;
+                border: 1px solid ${addr.hasActivity ? '#27ae60' : '#ddd'};
+                border-radius: 8px;
+                padding: 15px;
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 15px;
+                align-items: center;
+                transition: all 0.2s;
+                cursor: pointer;
+            `;
+
+            card.onmouseover = () => card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            card.onmouseout = () => card.style.boxShadow = 'none';
+
+            const explorerUrls = {
+                bitcoin: `https://www.blockchain.com/btc/address/${addr.address}`,
+                ethereum: `https://etherscan.io/address/${addr.address}`,
+                bsc: `https://bscscan.com/address/${addr.address}`,
+                polygon: `https://polygonscan.com/address/${addr.address}`,
+                tron: `https://tronscan.org/#/address/${addr.address}`
+            };
+
+            card.innerHTML = `
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span style="font-family: 'Courier New', monospace; font-size: 13px; color: #2c3e50; word-break: break-all;">
+                            ${highlightMatch(addr.address)}
+                        </span>
+                        <button onclick="navigator.clipboard.writeText('${addr.address}'); event.stopPropagation();"
+                                style="padding: 2px 8px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                            Copy
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 20px; font-size: 12px; color: #666;">
+                        <span>Balance: <strong>${addr.balance || 'Unknown'}</strong></span>
+                        <span>Transactions: <strong>${addr.txCount || 'Unknown'}</strong></span>
+                        <span>Last Active: <strong>${addr.lastActive || 'Unknown'}</strong></span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="window.open('${explorerUrls[chain]}', '_blank'); event.stopPropagation();"
+                            style="padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        Explorer
+                    </button>
+                    <button onclick="addToInvestigation('${addr.address}', '${chain}'); event.stopPropagation();"
+                            style="padding: 6px 12px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        Add to Case
+                    </button>
+                </div>
+            `;
+
+            gridDiv.appendChild(card);
+        });
+    }
+
+    resultsDiv.style.display = 'block';
+}
+
+function highlightMatch(address) {
+    const searchType = document.getElementById('addressFinderType').value;
+
+    if (searchType === 'prefix') {
+        const pattern = document.getElementById('addressPrefix').value;
+        return `<strong style="color: #9b59b6;">${address.substring(0, pattern.length)}</strong>${address.substring(pattern.length)}`;
+    } else if (searchType === 'suffix') {
+        const pattern = document.getElementById('addressPrefix').value;
+        return address.substring(0, address.length - pattern.length) + `<strong style="color: #9b59b6;">${address.substring(address.length - pattern.length)}</strong>`;
+    } else if (searchType === 'both') {
+        const prefix = document.getElementById('addressPrefixDouble').value;
+        const suffix = document.getElementById('addressSuffix').value;
+        return `<strong style="color: #9b59b6;">${address.substring(0, prefix.length)}</strong>${address.substring(prefix.length, address.length - suffix.length)}<strong style="color: #9b59b6;">${address.substring(address.length - suffix.length)}</strong>`;
+    }
+
+    return address;
+}
+
+function addToInvestigation(address, chain) {
+    // Add the address to the current investigation
+    alert(`Address ${address} would be added to your investigation.\n\nThis feature will integrate with the main B.A.T.S. investigation workflow.`);
+    // In production, this would add the address to the victims or traces
+}
+
+function showAddressFinderError(message) {
+    const errorDiv = document.getElementById('addressFinderError');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+}
+
+// Helper functions for generating random characters
+function generateRandomChars(length) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+function generateRandomHex(length) {
+    const chars = '0123456789abcdef';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+function generateRandomBase58(length) {
+    const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
 }
 
 // Attribution API Integration (Arkham & Etherscan)

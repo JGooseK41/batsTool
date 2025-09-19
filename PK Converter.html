@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Blockchain Address Converter | The Block Audit</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2980b9 100%);
+            min-height: 100vh;
+            color: #ecf0f1;
+            line-height: 1.6;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        .header { text-align: center; margin-bottom: 40px; padding: 30px 0; }
+        .header h1 { font-size: 2.8em; margin-bottom: 15px; font-weight: 700; color: #ffffff; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
+        .header .subtitle { font-size: 1.3em; color: #3498db; font-weight: 600; margin-bottom: 10px; }
+        .header p { font-size: 1.1em; color: #b8b8b8; max-width: 700px; margin: 0 auto; line-height: 1.7; }
+        
+        .law-enforcement-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #3498db, #5dade2);
+            color: #ffffff;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .input-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 35px;
+            margin-bottom: 40px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+        
+        .input-group { margin-bottom: 25px; }
+        label { display: block; font-weight: 600; margin-bottom: 10px; color: #ffffff; font-size: 1.1em; }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 18px 25px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.5); }
+        
+        .convert-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #ffffff;
+            border: none;
+            padding: 18px 45px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+        }
+        
+        .convert-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(52, 152, 219, 0.4);
+            background: linear-gradient(135deg, #2980b9 0%, #1f618d 100%);
+        }
+        
+        .results { display: grid; gap: 25px; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); }
+        
+        .address-group {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .address-group:hover { transform: translateY(-5px); }
+        
+        .group-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .address-item {
+            margin-bottom: 18px;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .address-item:hover {
+            transform: translateX(8px);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .network-name {
+            font-weight: 700;
+            font-size: 14px;
+            color: #ffffff;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .address-value {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: #e8e8e8;
+            word-break: break-all;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        
+        .bitcoin { border-left-color: #f7931a; }
+        .ethereum { border-left-color: #627eea; }
+        .tron { border-left-color: #ff060a; }
+        .binance { border-left-color: #f3ba2f; }
+        .avalanche { border-left-color: #e84142; }
+        .polygon { border-left-color: #8247e5; }
+        .cosmos { border-left-color: #2e3148; }
+        .litecoin { border-left-color: #bfbbbb; }
+        
+        .copy-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 12px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .copy-btn:hover {
+            background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+            transform: scale(1.05);
+        }
+        
+        .error {
+            background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            font-weight: 600;
+        }
+        
+        .example-keys { margin-top: 15px; font-size: 12px; color: #b8b8b8; }
+        
+        .example-key {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .example-key:hover {
+            background: rgba(52, 152, 219, 0.2);
+            border-color: #3498db;
+            transform: translateX(5px);
+        }
+        
+        .footer-branding {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer-branding h3 {
+            color: #3498db;
+            font-size: 1.4em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .footer-branding p {
+            color: #b8b8b8;
+            font-size: 1em;
+            max-width: 600px;
+            margin: 0 auto;
+            margin-bottom: 20px;
+        }
+        
+        .investigative-note {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: #3498db;
+            font-weight: 600;
+        }
+        
+        .investigative-note .icon {
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+        
+        .info-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .info-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .info-modal-content {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border: 2px solid #3498db;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+        
+        .info-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #3498db;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .info-modal h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        
+        .info-modal p {
+            color: #ecf0f1;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .info-modal .tech-specs {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .info-modal .tech-specs strong {
+            color: #3498db;
+        }
+        
+        .info-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 16px;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: background 0.2s ease;
+        }
+        
+        .info-icon:hover {
+            background: #2980b9;
+        }
+        
+        @media (max-width: 768px) {
+            .results { grid-template-columns: 1fr; }
+            .header h1 { font-size: 2.2em; }
+            .container { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="law-enforcement-badge">Forensic Analysis Tool</div>
+            <h1>Multi-Blockchain Address Converter</h1>
+            <div class="subtitle">Cryptocurrency Investigation & Forensic Analysis</div>
+            <p>Advanced blockchain forensic tool for converting public key hashes to addresses across all major blockchain networks. Identify wallet addresses controlled by the same private key for comprehensive cryptocurrency investigations.</p>
+        </div>
+
+        <div class="investigative-note">
+            <span class="icon">How to Extract Public Keys:</span> Use blockchain explorers like Blockchair.com or OXT.me. Navigate to any transaction → Click "Advanced Details" or "Raw Transaction" → Look for "pubkey" field in the transaction inputs. The public key is revealed when spending from an address.
+        </div>
+
+        <div class="investigative-note">
+            <span class="icon">Cross-Chain Bridge Tracking:</span> If assets were bridged to another chain, check the generated addresses on destination networks for equivalent token values. Many bridges maintain 1:1 value ratios (e.g., 1 ETH bridged = 1 WETH on BSC). Look for transactions occurring within similar timeframes on multiple chains.
+        </div>
+
+        <div class="investigative-note">
+            <span class="icon">Address Format Guide:</span> Each blockchain uses different encoding schemes which is why the same private key produces different-looking addresses. Click any address type info icon to see technical details about its format, length, and encoding method.
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="publicKey">Public Key (Uncompressed/Compressed) or Public Key Hash:</label>
+                <input type="text" id="publicKey" placeholder="Enter public key or hash (hex format) - Extract from transaction signatures">
+                <div class="example-keys">
+                    <div><strong>Public Key Extraction Resources:</strong></div>
+                    <div class="example-key" onclick="window.open('https://blockchair.com', '_blank')">Blockchair.com - Universal blockchain explorer with raw transaction data</div>
+                    <div class="example-key" onclick="window.open('https://oxt.me', '_blank')">OXT.me - Advanced Bitcoin transaction analysis</div>
+                    <div class="example-key" onclick="window.open('https://etherscan.io', '_blank')">Etherscan.io - Ethereum transaction details</div>
+                    <div class="example-key" onclick="fillExample('04c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5628f5c6c7c7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7')">Test with sample public key</div>
+                </div>
+            </div>
+            <button class="convert-btn" onclick="convertAddresses()">Generate Cross-Chain Address Analysis</button>
+        </div>
+
+        <div id="error"></div>
+        <div id="results" class="results"></div>
+
+        <div id="infoModal" class="info-modal">
+            <div class="info-modal-content">
+                <button class="info-modal-close" onclick="closeInfoModal()">&times;</button>
+                <div id="modalContent"></div>
+            </div>
+        </div>
+
+        <div class="footer-branding">
+            <h3>Investigation Use Case Example</h3>
+            <p><strong>Scenario:</strong> Suspect steals $100,000 USDC on Ethereum, then uses a bridge to convert to equivalent tokens on BSC.</p>
+            <p><strong>Process:</strong> 1) Find the Ethereum transaction where funds were sent to bridge contract 2) Extract public key from that transaction 3) Use this tool to generate the suspect's BSC address 4) Search BSC explorer for the equivalent $100,000 in bridged tokens (BUSD/USDT) arriving at that address around the same time.</p>
+            <p><strong>Result:</strong> Complete cross-chain money trail despite attempted obfuscation.</p>
+            
+            <h3>The Block Audit</h3>
+            <p>Empowering law enforcement agencies with cutting-edge cryptocurrency knowledge and advanced forensic tools to recover victim funds, close cases, and effectively serve citizens.</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        // Embedded Base58 Library
+        const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+        const ALPHABET_MAP = {};
+        for (let i = 0; i < BASE58_ALPHABET.length; i++) {
+            ALPHABET_MAP[BASE58_ALPHABET[i]] = i;
+        }
+
+        function base58Encode(bytes) {
+            if (bytes.length === 0) return '';
+            let num = 0n;
+            for (let i = 0; i < bytes.length; i++) {
+                num = num * 256n + BigInt(bytes[i]);
+            }
+            let result = '';
+            while (num > 0n) {
+                result = BASE58_ALPHABET[Number(num % 58n)] + result;
+                num = num / 58n;
+            }
+            for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
+                result = '1' + result;
+            }
+            return result;
+        }
+
+        function base58Decode(str) {
+            if (str.length === 0) return new Uint8Array(0);
+            let num = 0n;
+            for (let i = 0; i < str.length; i++) {
+                const char = str[i];
+                if (!(char in ALPHABET_MAP)) {
+                    throw new Error('Invalid character: ' + char);
+                }
+                num = num * 58n + BigInt(ALPHABET_MAP[char]);
+            }
+            const bytes = [];
+            while (num > 0n) {
+                bytes.unshift(Number(num % 256n));
+                num = num / 256n;
+            }
+            for (let i = 0; i < str.length && str[i] === '1'; i++) {
+                bytes.unshift(0);
+            }
+            return new Uint8Array(bytes);
+        }
+
+        // Embedded Bech32 Library
+        const BECH32_CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+        const BECH32_CHARSET_MAP = {};
+        for (let i = 0; i < BECH32_CHARSET.length; i++) {
+            BECH32_CHARSET_MAP[BECH32_CHARSET[i]] = i;
+        }
+
+        function bech32Polymod(values) {
+            const GEN = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+            let chk = 1;
+            for (const value of values) {
+                const top = chk >> 25;
+                chk = (chk & 0x1ffffff) << 5 ^ value;
+                for (let i = 0; i < 5; i++) {
+                    chk ^= ((top >> i) & 1) ? GEN[i] : 0;
+                }
+            }
+            return chk;
+        }
+
+        function bech32HrpExpand(hrp) {
+            const ret = [];
+            for (let i = 0; i < hrp.length; i++) {
+                ret.push(hrp.charCodeAt(i) >> 5);
+            }
+            ret.push(0);
+            for (let i = 0; i < hrp.length; i++) {
+                ret.push(hrp.charCodeAt(i) & 31);
+            }
+            return ret;
+        }
+
+        function bech32CreateChecksum(hrp, data) {
+            const values = bech32HrpExpand(hrp).concat(data).concat([0, 0, 0, 0, 0, 0]);
+            const mod = bech32Polymod(values) ^ 1;
+            const ret = [];
+            for (let i = 0; i < 6; i++) {
+                ret.push((mod >> (5 * (5 - i))) & 31);
+            }
+            return ret;
+        }
+
+        function bech32Encode(hrp, data) {
+            const combined = data.concat(bech32CreateChecksum(hrp, data));
+            let ret = hrp + '1';
+            for (const d of combined) {
+                ret += BECH32_CHARSET[d];
+            }
+            return ret;
+        }
+
+        function bech32Decode(str) {
+            if (str.length < 8 || str.length > 90) {
+                throw new Error('Invalid bech32 length');
+            }
+            const pos = str.lastIndexOf('1');
+            if (pos === -1) {
+                throw new Error('Missing separator');
+            }
+            const hrp = str.substring(0, pos);
+            const data = str.substring(pos + 1);
+            const decoded = [];
+            for (let i = 0; i < data.length; i++) {
+                const char = data[i];
+                if (!(char in BECH32_CHARSET_MAP)) {
+                    throw new Error('Invalid character: ' + char);
+                }
+                decoded.push(BECH32_CHARSET_MAP[char]);
+            }
+            const hrpExpanded = bech32HrpExpand(hrp);
+            if (bech32Polymod(hrpExpanded.concat(decoded)) !== 1) {
+                throw new Error('Invalid checksum');
+            }
+            return { hrp: hrp, data: decoded.slice(0, -6) };
+        }
+
+        function convertBits(data, fromBits, toBits, pad) {
+            let acc = 0;
+            let bits = 0;
+            const result = [];
+            const maxv = (1 << toBits) - 1;
+            const padValue = pad !== false;
+            for (const value of data) {
+                if (value < 0 || (value >> fromBits)) return null;
+                acc = (acc << fromBits) | value;
+                bits += fromBits;
+                while (bits >= toBits) {
+                    bits -= toBits;
+                    result.push((acc >> bits) & maxv);
+                }
+            }
+            if (padValue) {
+                if (bits) result.push((acc << (toBits - bits)) & maxv);
+            } else if (bits >= fromBits || ((acc << (toBits - bits)) & maxv)) {
+                return null;
+            }
+            return result;
+        }
+
+        // Address Format Specifications
+        const ADDRESS_FORMATS = {
+            'Bitcoin': {
+                encoding: 'base58check',
+                prefixes: ['1', '3'],
+                versions: [0x00, 0x05],
+                length: [25, 34],
+                caseSensitive: true
+            },
+            'Bitcoin Testnet': {
+                encoding: 'base58check', 
+                prefixes: ['m', 'n', '2'],
+                versions: [0x6f, 0xc4],
+                length: [25, 34],
+                caseSensitive: true
+            },
+            'Litecoin': {
+                encoding: 'base58check',
+                prefixes: ['L', 'M'],
+                versions: [0x30, 0x32],
+                length: [25, 34], 
+                caseSensitive: true
+            },
+            'Dogecoin': {
+                encoding: 'base58check',
+                prefixes: ['D'],
+                versions: [0x1e],
+                length: [25, 34],
+                caseSensitive: true
+            },
+            'Ethereum': {
+                encoding: 'hex',
+                prefixes: ['0x'],
+                length: [42],
+                caseSensitive: false,
+                checksummed: true
+            },
+            'TRON': {
+                encoding: 'base58check',
+                prefixes: ['T'],
+                versions: [0x41],
+                length: [34],
+                caseSensitive: true
+            },
+            'Bitcoin Bech32': {
+                encoding: 'bech32',
+                prefixes: ['bc1'],
+                length: [42, 62],
+                caseSensitive: false
+            },
+            'Cosmos': {
+                encoding: 'bech32',
+                prefixes: ['cosmos1', 'osmo1', 'juno1'],
+                length: [39, 59],
+                caseSensitive: false
+            }
+        };
+
+        // Utility Functions
+        function hexToBytes(hex) {
+            const bytes = [];
+            for (let i = 0; i < hex.length; i += 2) {
+                bytes.push(parseInt(hex.substr(i, 2), 16));
+            }
+            return new Uint8Array(bytes);
+        }
+
+        function bytesToHex(bytes) {
+            return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function sha256(data) {
+            const hash = CryptoJS.SHA256(CryptoJS.enc.Hex.parse(data));
+            return hash.toString();
+        }
+
+        function ripemd160(data) {
+            const hash = CryptoJS.RIPEMD160(CryptoJS.enc.Hex.parse(data));
+            return hash.toString();
+        }
+
+        function keccak256(data) {
+            const hash = CryptoJS.SHA3(CryptoJS.enc.Hex.parse(data), { outputLength: 256 });
+            return hash.toString();
+        }
+
+        // Address Generation Functions
+        function generateBitcoinAddress(publicKeyHash, version) {
+            try {
+                const versionedPayload = new Uint8Array([version, ...publicKeyHash]);
+                const hash1 = sha256(bytesToHex(versionedPayload));
+                const hash2 = sha256(hash1);
+                const checksum = hexToBytes(hash2).slice(0, 4);
+                const fullPayload = new Uint8Array([...versionedPayload, ...checksum]);
+                return base58Encode(fullPayload);
+            } catch (error) {
+                console.error('Bitcoin address generation error:', error);
+                return 'Error generating Bitcoin address';
+            }
+        }
+
+        function generateEthereumAddress(publicKey) {
+            try {
+                let pubKey = publicKey.startsWith('04') ? publicKey.slice(2) : publicKey;
+                const hash = keccak256(pubKey);
+                const address = '0x' + hash.slice(-40);
+                const hashAddress = keccak256(address.slice(2).toLowerCase()).toLowerCase();
+                let checksumAddress = '0x';
+                for (let i = 0; i < 40; i++) {
+                    checksumAddress += parseInt(hashAddress[i], 16) >= 8 ? 
+                        address[i + 2].toUpperCase() : address[i + 2].toLowerCase();
+                }
+                return checksumAddress;
+            } catch (error) {
+                console.error('Ethereum address generation error:', error);
+                return 'Error generating Ethereum address';
+            }
+        }
+
+        function generateTronAddress(publicKey) {
+            try {
+                let pubKey = publicKey.startsWith('04') ? publicKey.slice(2) : publicKey;
+                const hash = keccak256(pubKey);
+                const addressBytes = hexToBytes('41' + hash.slice(-40));
+                const hash1 = sha256(bytesToHex(addressBytes));
+                const hash2 = sha256(hash1);
+                const checksum = hexToBytes(hash2).slice(0, 4);
+                const fullPayload = new Uint8Array([...addressBytes, ...checksum]);
+                return base58Encode(fullPayload);
+            } catch (error) {
+                console.error('TRON address generation error:', error);
+                return 'Error generating TRON address';
+            }
+        }
+
+        function generateBech32Address(publicKeyHash, hrp) {
+            try {
+                const words = convertBits(publicKeyHash, 8, 5);
+                if (!words) throw new Error('convertBits failed');
+                return bech32Encode(hrp, [0].concat(words));
+            } catch (error) {
+                console.error('Bech32 address generation error:', error);
+                return 'Error generating Bech32 address';
+            }
+        }
+
+        // Address Validation
+        function validateAddress(address, format) {
+            const spec = ADDRESS_FORMATS[format];
+            if (!spec) return false;
+            if (address.length < spec.length[0] || address.length > spec.length[spec.length.length - 1]) {
+                return false;
+            }
+            const hasValidPrefix = spec.prefixes.some(prefix => address.startsWith(prefix));
+            if (!hasValidPrefix) return false;
+            switch (spec.encoding) {
+                case 'base58check':
+                    try {
+                        base58Decode(address);
+                        return true;
