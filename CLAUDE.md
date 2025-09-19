@@ -3,20 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-19 16:18)
+## Latest Commit (Auto-updated: 2025-09-19 16:23)
 
-**Commit:** 7325a84aad2a014c7f9e3f2d375e18c57e46f37d
+**Commit:** 8e5b570c6426538c7a23b19b003eb1dee7251b90
 **Author:** Your Name
-**Message:** Transform landing page to professional dark theme design
+**Message:** Fix landing page scrolling and improve tool purpose explanation
 
-- Changed background from light gradient to dark navy/black gradient
-- Updated header with dark gradient background and professional typography
-- Redesigned cards with dark backgrounds and subtle borders
-- Enhanced typography with better letter-spacing and weights
-- Made hover effects more subtle and corporate-appropriate
-- Updated color scheme to dark theme throughout (grays, blues)
-- Improved visual hierarchy for serious blockchain investigation tool
-- Maintained accessibility while achieving professional aesthetic
+- Add overflow-y: auto and height: 100vh to welcome screen for proper scrolling
+- Add overflow-x: hidden to body to prevent horizontal scroll
+- Update Note text to clarify BATS tool purpose and recommended usage workflow
+- Emphasize role as documentation guardrails rather than standalone tracer
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -24,14 +20,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 37 ++++++++++++++++++-----------------
- index.html | 66 +++++++++++++++++++++++++++++++-------------------------------
- 2 files changed, 52 insertions(+), 51 deletions(-)
+ CLAUDE.md  | 8 ++++----
+ index.html | 7 ++++---
+ 2 files changed, 8 insertions(+), 7 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7325a84 Transform landing page to professional dark theme design (0 seconds ago)
+- 8e5b570 Fix landing page scrolling and improve tool purpose explanation (0 seconds ago)
+- 57b7772 Transform landing page to professional dark theme design (4 minutes ago)
 - 23813d6 Simplify landing page with clean card-based design (2 hours ago)
 - e0c57df Fix utility tools accessibility and update branding colors (2 hours ago)
 - e2b2f8f Fix utility tools accessibility from landing page (2 hours ago)
@@ -40,7 +37,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - f92e381 Simplify CORS handling to work seamlessly without user configuration (7 hours ago)
 - f807b20 Simplify landing page and fix Address Finder CORS/CSP issues (7 hours ago)
 - 1305e25 Redesign landing page to emphasize B.A.T.S. as a documentation standard (9 hours ago)
-- 10be1b4 Add production-ready PK Converter and Address Finder tools (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
