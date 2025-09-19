@@ -5,29 +5,20 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-09-19 16:23)
 
-**Commit:** 10c1febc028a266827f1a43f2a3d4d1717397384
+**Commit:** 86570d63e31cd4ca398196d1152bde12a62a0c83
 **Author:** Your Name
-**Message:** Fix landing page scrolling and improve tool purpose explanation
-
-- Add overflow-y: auto and height: 100vh to welcome screen for proper scrolling
-- Add overflow-x: hidden to body to prevent horizontal scroll
-- Update Note text to clarify BATS tool purpose and recommended usage workflow
-- Emphasize role as documentation guardrails rather than standalone tracer
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit information
 
 ### Changed Files:
 ```
- CLAUDE.md  | 28 ++++++++++++----------------
- index.html |  7 ++++---
- 2 files changed, 16 insertions(+), 19 deletions(-)
+ CLAUDE.md | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 10c1feb Fix landing page scrolling and improve tool purpose explanation (0 seconds ago)
+- 86570d6 Update CLAUDE.md with latest commit information (0 seconds ago)
+- 10c1feb Fix landing page scrolling and improve tool purpose explanation (7 seconds ago)
 - 57b7772 Transform landing page to professional dark theme design (4 minutes ago)
 - 23813d6 Simplify landing page with clean card-based design (2 hours ago)
 - e0c57df Fix utility tools accessibility and update branding colors (2 hours ago)
@@ -36,7 +27,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 96ebc4e Major UI restructuring: Clean landing page separate from app (7 hours ago)
 - f92e381 Simplify CORS handling to work seamlessly without user configuration (7 hours ago)
 - f807b20 Simplify landing page and fix Address Finder CORS/CSP issues (7 hours ago)
-- 1305e25 Redesign landing page to emphasize B.A.T.S. as a documentation standard (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
