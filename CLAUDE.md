@@ -3,52 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-19 07:02)
+## Latest Commit (Auto-updated: 2025-09-19 07:14)
 
-**Commit:** 10be1b41f8d16f09d70eb0c81fe36bb5c29a3149
+**Commit:** 1305e259b84034bfb7f69bded170f4ab93303921
 **Author:** Your Name
-**Message:** Add production-ready PK Converter and Address Finder tools
+**Message:** Redesign landing page to emphasize B.A.T.S. as a documentation standard
 
-- Integrated Public Key Converter tool for cross-chain address generation
-  - Converts public keys to addresses for Bitcoin, Ethereum, BSC, Polygon, Arbitrum, Optimism
-  - Uses proper cryptographic functions (RIPEMD-160, Keccak-256)
-  - Checks real-time blockchain activity via APIs
-  - Accessible from welcome screen without login
+- Complete redesign of welcome screen as professional landing page
+- Clear messaging that B.A.T.S. is a documentation standard, not a tracing tool
+- Added prominent training requirement notice
+- Emphasized B.A.T.S. works alongside commercial tools (Chainalysis, TRM, Qlue, etc.)
+- Added 'What B.A.T.S. Does' vs 'What B.A.T.S. Doesn't Do' sections
+- Created clear primary CTA: 'Start B.A.T.S. Documentation' button
+- Added quick links to training portal, quick start guide, and API settings
+- Reorganized Utility Tools section below main documentation flow
+- Added proper prerequisite checklist before starting
+- Improved messaging about V-T-H notation and ART system
+- Added showQuickStartGuide() function for inline help
+- Updated startBATSDocumentation() to guide users to case details first
 
-- Added Address Finder tool for partial address searches
-  - Find complete addresses from partial patterns (prefix, suffix, both, contains)
-  - Real blockchain search using BlockCypher API for Bitcoin
-  - Searches recent blocks and token holders for Ethereum/EVM chains
-  - Shows activity status and balance information
-  - Professional error handling and user guidance
-
-- Production improvements:
-  - Removed all demo/random data generation
-  - Fixed cryptographic implementations using crypto-js library
-  - Added EIP-55 checksum for Ethereum addresses
-  - Enhanced error messages and empty state handling
-  - Created test suite for verification (test-tools.html)
-
-- API integrations:
-  - BlockCypher for Bitcoin prefix search (200 req/hr free)
-  - Blockchain.info for address validation
-  - Etherscan APIs for EVM chains
-  - All results from real blockchain data
-
-Both tools are forensic-grade and ready for production use in investigations.
+The landing page now properly sets expectations that B.A.T.S. is for trained investigators to document their work, not a standalone analysis tool.
 
 ### Changed Files:
 ```
- CLAUDE.md         |   50 +--
- PK Converter.html |  706 +++++++++++++++++++++++++++++++++
- index.html        | 1140 ++++++++++++++++++++++++++++++++++++++++++++++++++++-
- test-tools.html   |  178 +++++++++
- 4 files changed, 2037 insertions(+), 37 deletions(-)
+ CLAUDE.md  |  69 +++++++++++-------
+ index.html | 241 ++++++++++++++++++++++++++++++++++++++++++-------------------
+ 2 files changed, 209 insertions(+), 101 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 10be1b4 Add production-ready PK Converter and Address Finder tools (0 seconds ago)
+- 1305e25 Redesign landing page to emphasize B.A.T.S. as a documentation standard (1 second ago)
+- 10be1b4 Add production-ready PK Converter and Address Finder tools (11 minutes ago)
 - 5c52cc0 Add streamlined B.A.T.S. workflow with level selector (9 days ago)
 - 2861c83 Add multi-output selection and change address tracking (10 days ago)
 - 4d20525 Fix hop completion and thread status visualization issues (11 days ago)
@@ -57,7 +43,6 @@ Both tools are forensic-grade and ready for production use in investigations.
 - 86b9ea0 Fix Bitcoin timestamp retrieval bug (11 days ago)
 - ab704ec Fix Bitcoin timestamp handling and improve debugging (11 days ago)
 - 1a139f1 Improve Bitcoin output selection for all multi-output transactions (11 days ago)
-- 8c7bb6d Fix multi-thread handling and Bitcoin UTXO selection (11 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
