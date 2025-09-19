@@ -569,7 +569,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 10000;
             left: 0;
             top: 0;
             width: 100%;
@@ -971,7 +971,7 @@
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 10000;
     left: 0;
     top: 0;
     width: 100%;
@@ -18394,13 +18394,23 @@ function loadApiSettingsOnStartup() {
 
 // PK Converter Functions
 function openPKConverter() {
-    document.getElementById('pkConverterModal').style.display = 'block';
+    const modal = document.getElementById('pkConverterModal');
+    if (modal) {
+        modal.style.display = 'block';
+        modal.style.zIndex = '10000'; // Ensure it's above the landing page
+    }
 }
 
 function closePKConverterModal() {
-    document.getElementById('pkConverterModal').style.display = 'none';
+    const modal = document.getElementById('pkConverterModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
     // Clear any errors
-    document.getElementById('pkConverterError').style.display = 'none';
+    const errorDiv = document.getElementById('pkConverterError');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
 }
 
 // Crypto-js library functions for PK Converter (embedded)
@@ -18781,13 +18791,23 @@ function showPKError(message) {
 
 // Address Finder Functions
 function openAddressFinder() {
-    document.getElementById('addressFinderModal').style.display = 'block';
+    const modal = document.getElementById('addressFinderModal');
+    if (modal) {
+        modal.style.display = 'block';
+        modal.style.zIndex = '10000'; // Ensure it's above the landing page
+    }
 }
 
 function closeAddressFinderModal() {
-    document.getElementById('addressFinderModal').style.display = 'none';
+    const modal = document.getElementById('addressFinderModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
     // Clear any errors
-    document.getElementById('addressFinderError').style.display = 'none';
+    const errorDiv = document.getElementById('addressFinderError');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
 }
 
 function updateAddressFinderInputs() {
