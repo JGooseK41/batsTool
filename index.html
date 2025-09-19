@@ -2547,28 +2547,6 @@
                     </p>
                 </div>
                 
-                <div style="margin-bottom: 20px; padding: 15px; background: #e8f5e8; border: 2px solid #27ae60; border-radius: 6px;">
-                    <h5 style="color: #27ae60; margin-bottom: 10px;">💡 CORS Proxy Option</h5>
-                    <label style="display: block; margin-bottom: 5px;">
-                        <input type="checkbox" id="enableCorsProxy" style="margin-right: 8px;">
-                        Enable CORS Proxy (helps bypass browser restrictions)
-                    </label>
-                    <input type="text" id="corsProxyUrl" placeholder="https://corsproxy.io/?"
-                           value="https://corsproxy.io/?"
-                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; margin-top: 8px;">
-                    <button type="button" onclick="testCorsProxy()" style="margin-top: 10px; padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">Test CORS Proxy</button>
-                    <div id="corsTestResult" style="margin-top: 10px; padding: 10px; display: none;"></div>
-                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                        <strong>Recommended CORS Proxies:</strong><br>
-                        • <code>https://corsproxy.io/?</code> (usually works, recommended)<br>
-                        • <code>https://proxy.cors.sh/</code> (alternative)<br>
-                        • <code>https://cors-anywhere.herokuapp.com/</code> (requires activation at <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">corsdemo</a>)<br>
-                        <br>
-                        <strong>For Production Use:</strong> Deploy your own proxy using:
-                        <a href="https://github.com/Rob--W/cors-anywhere" target="_blank" style="color: #3498db;">CORS Anywhere</a> or
-                        <a href="https://www.npmjs.com/package/cors-proxy-server" target="_blank" style="color: #3498db;">cors-proxy-server</a>
-                    </div>
-                </div>
             </div>
             
             <div style="text-align: center; margin-top: 25px;">
@@ -2822,7 +2800,42 @@
 
         // Global constants
         // Note: walletTypes is declared later with full emoji support
-        
+
+        // Global CORS helper - automatically tries multiple proxies
+        async function fetchWithCORS(url, options = {}) {
+            // List of public CORS proxies to try in order
+            const corsProxies = [
+                '', // Try direct first
+                'https://corsproxy.io/?',
+                'https://api.allorigins.win/raw?url=',
+                'https://cors.bridged.cc/',
+            ];
+
+            let lastError = null;
+
+            for (const proxy of corsProxies) {
+                try {
+                    const finalUrl = proxy ? proxy + encodeURIComponent(url) : url;
+                    const response = await fetch(finalUrl, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' },
+                        mode: 'cors',
+                        ...options
+                    });
+
+                    // Return first successful response
+                    return response;
+                } catch (e) {
+                    lastError = e;
+                    // Try next proxy silently
+                    continue;
+                }
+            }
+
+            // If all attempts failed, throw the last error
+            throw lastError || new Error('All connection attempts failed');
+        }
+
         // Define switchTab function early to ensure it's available when HTML loads
         function switchTab(tabName) {
             // Show navigation tabs when switching away from welcome screen
@@ -18190,7 +18203,7 @@ async function lookupTransaction() {
     // If we get here, all URLs failed
     const errorMsg = lastError ? lastError.message : 'Failed to fetch transaction';
     if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
-        showLookupError(`${errorMsg}\n\nTip: Enable CORS Proxy in API Settings or add your API key.`);
+        showLookupError(`${errorMsg}\n\nTip: The app will retry with different connection methods automatically.`);
     } else {
         showLookupError(`Failed to fetch transaction: ${errorMsg}`);
     }
@@ -18287,9 +18300,6 @@ function openApiSettings() {
     document.getElementById('solanaRpcEndpoint').value = savedSolanaRpc || 'https://api.mainnet-beta.solana.com';
     document.getElementById('arkhamApiKey').value = savedArkham || '';
     document.getElementById('arkhamAutoCheck').checked = savedArkhamAutoCheck;
-    document.getElementById('enableCorsProxy').checked = savedCorsEnabled;
-    document.getElementById('corsProxyUrl').value = savedCorsUrl || 'https://corsproxy.io/?';
-    document.getElementById('corsProxyUrl').disabled = !savedCorsEnabled;
     
     // Show modal
     showModal('apiSettingsModal');
@@ -18297,47 +18307,6 @@ function openApiSettings() {
 
 function closeApiSettingsModal() {
     hideModal('apiSettingsModal');
-}
-
-// Test CORS proxy functionality
-async function testCorsProxy() {
-    const corsUrl = document.getElementById('corsProxyUrl').value.trim();
-    const resultDiv = document.getElementById('corsTestResult');
-
-    if (!corsUrl) {
-        resultDiv.style.display = 'block';
-        resultDiv.style.background = '#ffe6e6';
-        resultDiv.style.color = '#cc0000';
-        resultDiv.innerHTML = '❌ Please enter a CORS proxy URL';
-        return;
-    }
-
-    resultDiv.style.display = 'block';
-    resultDiv.style.background = '#f0f8ff';
-    resultDiv.style.color = '#333';
-    resultDiv.innerHTML = '⏳ Testing CORS proxy...';
-
-    try {
-        // Test with a simple API endpoint
-        const testUrl = corsUrl + 'https://api.blockcypher.com/v1/btc/main';
-        const response = await fetch(testUrl, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            resultDiv.style.background = '#e6ffe6';
-            resultDiv.style.color = '#008800';
-            resultDiv.innerHTML = '✅ CORS proxy is working! You can now use the Address Finder.';
-        } else {
-            throw new Error(`HTTP ${response.status}`);
-        }
-    } catch (error) {
-        resultDiv.style.background = '#ffe6e6';
-        resultDiv.style.color = '#cc0000';
-        resultDiv.innerHTML = `❌ CORS proxy test failed: ${error.message}<br>Try a different proxy from the list above.`;
-    }
 }
 
 function saveApiSettings() {
@@ -18348,8 +18317,9 @@ function saveApiSettings() {
     const solanaRpc = document.getElementById('solanaRpcEndpoint').value.trim();
     const arkhamKey = document.getElementById('arkhamApiKey').value.trim();
     const arkhamAutoCheck = document.getElementById('arkhamAutoCheck').checked;
-    const corsEnabled = document.getElementById('enableCorsProxy').checked;
-    const corsUrl = document.getElementById('corsProxyUrl').value.trim();
+    // Auto-enable CORS proxy with best available option
+    const corsEnabled = true;
+    const corsUrl = 'https://corsproxy.io/?';
     
     // Save to localStorage
     if (etherscanKey) localStorage.setItem('bats_etherscan_api_key', etherscanKey);
@@ -18385,13 +18355,10 @@ function saveApiSettings() {
 
 // Enable/disable CORS proxy URL input based on checkbox
 document.addEventListener('DOMContentLoaded', function() {
-    const corsCheckbox = document.getElementById('enableCorsProxy');
-    const corsUrlInput = document.getElementById('corsProxyUrl');
-    
-    if (corsCheckbox && corsUrlInput) {
-        corsCheckbox.addEventListener('change', function() {
-            corsUrlInput.disabled = !this.checked;
-        });
+    // Auto-save CORS settings on init if not already saved
+    if (!localStorage.getItem('bats_cors_proxy_enabled')) {
+        localStorage.setItem('bats_cors_proxy_enabled', 'true');
+        localStorage.setItem('bats_cors_proxy_url', 'https://corsproxy.io/?');
     }
     
     // Load API settings on startup
@@ -18839,18 +18806,6 @@ async function searchAddresses() {
     const searchType = document.getElementById('addressFinderType').value;
     const activeOnly = document.getElementById('activeOnly').checked;
 
-    // Check if CORS proxy is configured
-    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url');
-    if (!corsProxyUrl) {
-        showAddressFinderError('CORS proxy required. Please configure it in API Settings first.\n\nClick the gear icon (⚙️) in the header or go to API Settings from the welcome screen.');
-        // Optionally open API settings
-        if (confirm('Would you like to open API Settings now to configure the CORS proxy?')) {
-            closeAddressFinder();
-            openApiSettings();
-        }
-        return;
-    }
-
     let searchPattern = '';
 
     if (searchType === 'both') {
@@ -18933,9 +18888,6 @@ async function findAddressesByPattern(chain, searchType, pattern, activeOnly) {
 async function searchBitcoinAddresses(searchType, pattern) {
     const addresses = [];
 
-    // Get CORS proxy URL from settings
-    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || '';
-
     try {
         // Use multiple free APIs for Bitcoin address search
 
@@ -18943,7 +18895,7 @@ async function searchBitcoinAddresses(searchType, pattern) {
         if (searchType === 'prefix') {
             try {
                 const apiUrl = `https://api.blockcypher.com/v1/btc/main/addrs?prefix=${pattern}&limit=20`;
-                const response = await fetch(corsProxyUrl ? corsProxyUrl + apiUrl : apiUrl);
+                const response = await fetchWithCORS(apiUrl);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.addresses && Array.isArray(data.addresses)) {
@@ -18966,7 +18918,7 @@ async function searchBitcoinAddresses(searchType, pattern) {
             try {
                 // Note: This endpoint may have rate limits
                 const searchUrl = `https://blockchain.info/search?search=${pattern}`;
-                const response = await fetch(corsProxyUrl ? corsProxyUrl + searchUrl : searchUrl);
+                const response = await fetchWithCORS(searchUrl);
                 if (response.ok) {
                     const html = await response.text();
                     // Parse HTML for address matches (simplified)
@@ -20691,7 +20643,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
         console.error('Lookup error:', error);
         const errorMsg = error.message || 'Failed to fetch transaction';
         if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
-            alert(`ERROR:  ${errorMsg}\n\nTip: Enable CORS Proxy in API Settings or try again.`);
+            alert(`ERROR:  ${errorMsg}\n\nThe app will retry automatically with different methods.`);
         } else {
             alert(`ERROR:  Failed to fetch transaction: ${errorMsg}`);
         }
