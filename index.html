@@ -1255,14 +1255,14 @@
                 </div>
 
                 <!-- Welcome Screen / Landing Page -->
-                <div id="welcomeScreen" style="display: none; padding: 0; background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%); min-height: 100vh;">
-                    <!-- Clean Minimal Header -->
-                    <div style="background: white; padding: 30px 0; border-bottom: 1px solid #e0e0e0;">
+                <div id="welcomeScreen" style="display: none; padding: 0; background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%); min-height: 100vh;">
+                    <!-- Professional Dark Header -->
+                    <div style="background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%); padding: 40px 0; border-bottom: 2px solid #34495e; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
                         <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; text-align: center;">
-                            <h1 style="color: #2c3e50; font-size: 2.5rem; margin-bottom: 5px; font-weight: 600;">
+                            <h1 style="color: #ecf0f1; font-size: 3rem; margin-bottom: 10px; font-weight: 700; letter-spacing: 3px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
                                 B.A.T.S.
                             </h1>
-                            <p style="font-size: 1rem; color: #666; font-weight: 400;">
+                            <p style="font-size: 1.1rem; color: #bdc3c7; font-weight: 300; letter-spacing: 1px;">
                                 Block Audit Tracing Standard
                             </p>
                         </div>
@@ -1272,61 +1272,61 @@
 
                         <!-- Brief Info Section -->
                         <div style="text-align: center; margin-bottom: 50px;">
-                            <h2 style="color: #2c3e50; margin-bottom: 20px; font-size: 1.8rem;">Documentation Standard for Blockchain Investigations</h2>
-                            <p style="color: #666; line-height: 1.8; font-size: 1.1rem; max-width: 700px; margin: 0 auto 30px;">
+                            <h2 style="color: #ecf0f1; margin-bottom: 20px; font-size: 1.8rem; font-weight: 300;">Documentation Standard for Blockchain Investigations</h2>
+                            <p style="color: #95a5a6; line-height: 1.8; font-size: 1.1rem; max-width: 700px; margin: 0 auto 30px;">
                                 B.A.T.S. provides a systematic methodology for documenting cryptocurrency fund movements.
                                 Designed to work alongside your blockchain analysis tools to ensure legally compliant investigation records.
                             </p>
-                            <div style="display: inline-block; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 20px; color: #856404;">
+                            <div style="display: inline-block; background: rgba(241, 196, 15, 0.1); border: 1px solid #f39c12; border-radius: 6px; padding: 12px 20px; color: #f39c12;">
                                 <strong>Note:</strong> B.A.T.S. requires training • Not a standalone tracing tool
                             </div>
                         </div>
 
                         <!-- Primary Action Card -->
-                        <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border-radius: 16px; padding: 40px; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(52, 152, 219, 0.3); text-align: center; cursor: pointer; transition: all 0.3s ease;" onclick="startBATSDocumentation()" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 15px 40px rgba(52, 152, 219, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(52, 152, 219, 0.3)'">
-                            <h2 style="color: white; font-size: 1.8rem; margin-bottom: 10px; font-weight: 500;">
+                        <div style="background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%); border-radius: 8px; padding: 40px; margin-bottom: 40px; box-shadow: 0 5px 20px rgba(0,0,0,0.4); text-align: center; cursor: pointer; transition: all 0.2s ease; border: 1px solid #4a5f7a;" onclick="startBATSDocumentation()" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 5px 20px rgba(0,0,0,0.4)'">
+                            <h2 style="color: #ecf0f1; font-size: 1.6rem; margin-bottom: 15px; font-weight: 400; letter-spacing: 1px;">
                                 Enter B.A.T.S. Documentation Tool
                             </h2>
-                            <p style="color: rgba(255,255,255,0.95); font-size: 1rem; margin-bottom: 20px;">
+                            <p style="color: #95a5a6; font-size: 1rem; margin-bottom: 25px; line-height: 1.6;">
                                 Begin documenting your investigation with the official B.A.T.S. methodology
                             </p>
-                            <button style="background: white; color: #2980b9; border: none; padding: 12px 35px; border-radius: 25px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onmouseover="event.stopPropagation(); this.style.background='#f8f9fa'" onmouseout="event.stopPropagation(); this.style.background='white'">
+                            <button style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; border: none; padding: 12px 35px; border-radius: 4px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 10px rgba(52, 152, 219, 0.3);" onmouseover="event.stopPropagation(); this.style.boxShadow='0 4px 15px rgba(52, 152, 219, 0.5)'" onmouseout="event.stopPropagation(); this.style.boxShadow='0 2px 10px rgba(52, 152, 219, 0.3)'">
                                 Start Documentation
                             </button>
                         </div>
 
                         <!-- Utility Tools - Smaller Cards -->
                         <div style="margin-bottom: 30px;">
-                            <h3 style="color: #666; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; text-align: center;">Utility Tools</h3>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <h3 style="color: #7f8c8d; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px; text-align: center; font-weight: 400;">Utility Tools</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                                 <!-- PK Converter Card -->
-                                <div style="background: white; border-radius: 10px; padding: 20px; border: 1px solid #e0e0e0; cursor: pointer; transition: all 0.3s ease; text-align: center;" onclick="openPKConverter()" onmouseover="this.style.borderColor='#3498db'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.1)'" onmouseout="this.style.borderColor='#e0e0e0'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                                    <div style="font-size: 2rem; margin-bottom: 15px;">🔑</div>
-                                    <h3 style="color: #2c3e50; margin-bottom: 10px;">Public Key Converter</h3>
-                                    <p style="color: #666; font-size: 0.95rem; line-height: 1.5;">
+                                <div style="background: #2c3e50; border-radius: 6px; padding: 25px; border: 1px solid #34495e; cursor: pointer; transition: all 0.2s ease; text-align: center;" onclick="openPKConverter()" onmouseover="this.style.borderColor='#3498db'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.3)'" onmouseout="this.style.borderColor='#34495e'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                    <div style="font-size: 2rem; margin-bottom: 15px; filter: grayscale(30%);">🔑</div>
+                                    <h3 style="color: #ecf0f1; margin-bottom: 10px; font-weight: 400;">Public Key Converter</h3>
+                                    <p style="color: #95a5a6; font-size: 0.9rem; line-height: 1.5;">
                                         Convert public keys to addresses across Bitcoin, Ethereum, and other blockchains
                                     </p>
-                                    <div style="margin-top: 15px; color: #3498db; font-weight: 600;">Open Tool →</div>
+                                    <div style="margin-top: 15px; color: #3498db; font-weight: 500; font-size: 0.95rem;">Open Tool →</div>
                                 </div>
 
                                 <!-- Address Finder Card -->
-                                <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease;" onclick="openAddressFinder()" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.08)'">
-                                    <div style="font-size: 2rem; margin-bottom: 15px;">🔍</div>
-                                    <h3 style="color: #2c3e50; margin-bottom: 10px;">Address Finder</h3>
-                                    <p style="color: #666; font-size: 0.95rem; line-height: 1.5;">
+                                <div style="background: #2c3e50; border-radius: 6px; padding: 25px; border: 1px solid #34495e; cursor: pointer; transition: all 0.2s ease; text-align: center;" onclick="openAddressFinder()" onmouseover="this.style.borderColor='#3498db'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.3)'" onmouseout="this.style.borderColor='#34495e'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                    <div style="font-size: 2rem; margin-bottom: 15px; filter: grayscale(30%);">🔍</div>
+                                    <h3 style="color: #ecf0f1; margin-bottom: 10px; font-weight: 400;">Address Finder</h3>
+                                    <p style="color: #95a5a6; font-size: 0.9rem; line-height: 1.5;">
                                         Search for addresses using partial information like first and last characters
                                     </p>
-                                    <div style="margin-top: 15px; color: #9b59b6; font-weight: 600;">Open Tool →</div>
+                                    <div style="margin-top: 15px; color: #3498db; font-weight: 500; font-size: 0.95rem;">Open Tool →</div>
                                 </div>
 
                                 <!-- Training Card -->
-                                <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease;" onclick="window.open('https://theblockaudit.com/bats-training', '_blank')" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.08)'">
-                                    <div style="font-size: 2rem; margin-bottom: 15px;">📚</div>
-                                    <h3 style="color: #2c3e50; margin-bottom: 10px;">B.A.T.S. Training</h3>
-                                    <p style="color: #666; font-size: 0.95rem; line-height: 1.5;">
+                                <div style="background: #2c3e50; border-radius: 6px; padding: 25px; border: 1px solid #34495e; cursor: pointer; transition: all 0.2s ease; text-align: center;" onclick="window.open('https://theblockaudit.com/bats-training', '_blank')" onmouseover="this.style.borderColor='#3498db'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.3)'" onmouseout="this.style.borderColor='#34495e'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                    <div style="font-size: 2rem; margin-bottom: 15px; filter: grayscale(30%);">📚</div>
+                                    <h3 style="color: #ecf0f1; margin-bottom: 10px; font-weight: 400;">B.A.T.S. Training</h3>
+                                    <p style="color: #95a5a6; font-size: 0.9rem; line-height: 1.5;">
                                         Access official training materials and certification for the B.A.T.S. methodology
                                     </p>
-                                    <div style="margin-top: 15px; color: #ff9800; font-weight: 600;">Learn More →</div>
+                                    <div style="margin-top: 15px; color: #3498db; font-weight: 500; font-size: 0.95rem;">Learn More →</div>
                                 </div>
                             </div>
                         </div>
@@ -1363,11 +1363,11 @@
                         </div>
 
                         <!-- Footer Section -->
-                        <div style="text-align: center; padding: 20px; color: #666; font-size: 0.9rem;">
+                        <div style="text-align: center; padding: 30px 20px; color: #7f8c8d; font-size: 0.9rem; border-top: 1px solid #34495e; margin-top: 50px;">
                             <p style="margin-bottom: 10px;">
-                                            B.A.T.S. is a documentation standard for blockchain investigations
-                        </p>
-                        <p>For training and certification, visit <a href="https://theblockaudit.com/bats-training" target="_blank">theblockaudit.com/bats-training</a></p>
+                                B.A.T.S. is a documentation standard for blockchain investigations
+                            </p>
+                            <p>For training and certification, visit <a href="https://theblockaudit.com/bats-training" target="_blank" style="color: #3498db; text-decoration: none;">theblockaudit.com/bats-training</a></p>
                         </div>
                     </div>
                 </div>

@@ -3,20 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-19 14:20)
+## Latest Commit (Auto-updated: 2025-09-19 16:18)
 
-**Commit:** e0c57dfa99470817ec83aa82ed9300af541b8b43
+**Commit:** 7325a84aad2a014c7f9e3f2d375e18c57e46f37d
 **Author:** Your Name
-**Message:** Fix utility tools accessibility and update branding colors
+**Message:** Transform landing page to professional dark theme design
 
-- Changed main BATS card from purple gradient to professional blue/gray (#2c3e50 to #34495e)
-- Updated modal display functions to force visibility with inline styles
-- Set explicit flex display, position, and z-index for modals
-- Added error logging when modals not found
-- Ensured modals appear above landing page with z-index 10001
-- Replaced purple accent color with matching blue/gray theme
-
-The utility tools (PK Converter and Address Finder) now properly open from the landing page, and the branding maintains professional blue/gray colors throughout.
+- Changed background from light gradient to dark navy/black gradient
+- Updated header with dark gradient background and professional typography
+- Redesigned cards with dark backgrounds and subtle borders
+- Enhanced typography with better letter-spacing and weights
+- Made hover effects more subtle and corporate-appropriate
+- Updated color scheme to dark theme throughout (grays, blues)
+- Improved visual hierarchy for serious blockchain investigation tool
+- Maintained accessibility while achieving professional aesthetic
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -24,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 27 +++++++++++++++++++--------
- index.html | 46 ++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 59 insertions(+), 14 deletions(-)
+ CLAUDE.md  | 37 ++++++++++++++++++-----------------
+ index.html | 66 +++++++++++++++++++++++++++++++-------------------------------
+ 2 files changed, 52 insertions(+), 51 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e0c57df Fix utility tools accessibility and update branding colors (1 second ago)
-- e2b2f8f Fix utility tools accessibility from landing page (5 minutes ago)
-- 741a016 Fix syntax error in initializeApp function - remove extra closing parenthesis (8 minutes ago)
-- 96ebc4e Major UI restructuring: Clean landing page separate from app (5 hours ago)
-- f92e381 Simplify CORS handling to work seamlessly without user configuration (5 hours ago)
-- f807b20 Simplify landing page and fix Address Finder CORS/CSP issues (5 hours ago)
-- 1305e25 Redesign landing page to emphasize B.A.T.S. as a documentation standard (7 hours ago)
-- 10be1b4 Add production-ready PK Converter and Address Finder tools (7 hours ago)
-- 5c52cc0 Add streamlined B.A.T.S. workflow with level selector (9 days ago)
-- 2861c83 Add multi-output selection and change address tracking (10 days ago)
+- 7325a84 Transform landing page to professional dark theme design (0 seconds ago)
+- 23813d6 Simplify landing page with clean card-based design (2 hours ago)
+- e0c57df Fix utility tools accessibility and update branding colors (2 hours ago)
+- e2b2f8f Fix utility tools accessibility from landing page (2 hours ago)
+- 741a016 Fix syntax error in initializeApp function - remove extra closing parenthesis (2 hours ago)
+- 96ebc4e Major UI restructuring: Clean landing page separate from app (7 hours ago)
+- f92e381 Simplify CORS handling to work seamlessly without user configuration (7 hours ago)
+- f807b20 Simplify landing page and fix Address Finder CORS/CSP issues (7 hours ago)
+- 1305e25 Redesign landing page to emphasize B.A.T.S. as a documentation standard (9 hours ago)
+- 10be1b4 Add production-ready PK Converter and Address Finder tools (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
