@@ -3,44 +3,61 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-10 13:54)
+## Latest Commit (Auto-updated: 2025-09-19 07:02)
 
-**Commit:** 5c52cc0bde975e35bea9ecf19a4411e028751b10
+**Commit:** 10be1b41f8d16f09d70eb0c81fe36bb5c29a3149
 **Author:** Your Name
-**Message:** Add streamlined B.A.T.S. workflow with level selector
+**Message:** Add production-ready PK Converter and Address Finder tools
 
-- Created new streamlined interface (bats-streamlined.html)
-- Added B.A.T.S. level selector modal with 4 investigation levels
-- Implemented progressive disclosure based on investigation depth
-- Added visual progress tracking for investigation status
-- Simplified UI to highlight core B.A.T.S. methodology
-- Each level shows appropriate tools and time investment
-- Maintains golden thread principle throughout workflow
+- Integrated Public Key Converter tool for cross-chain address generation
+  - Converts public keys to addresses for Bitcoin, Ethereum, BSC, Polygon, Arbitrum, Optimism
+  - Uses proper cryptographic functions (RIPEMD-160, Keccak-256)
+  - Checks real-time blockchain activity via APIs
+  - Accessible from welcome screen without login
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
+- Added Address Finder tool for partial address searches
+  - Find complete addresses from partial patterns (prefix, suffix, both, contains)
+  - Real blockchain search using BlockCypher API for Bitcoin
+  - Searches recent blocks and token holders for Ethereum/EVM chains
+  - Shows activity status and balance information
+  - Professional error handling and user guidance
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+- Production improvements:
+  - Removed all demo/random data generation
+  - Fixed cryptographic implementations using crypto-js library
+  - Added EIP-55 checksum for Ethereum addresses
+  - Enhanced error messages and empty state handling
+  - Created test suite for verification (test-tools.html)
+
+- API integrations:
+  - BlockCypher for Bitcoin prefix search (200 req/hr free)
+  - Blockchain.info for address validation
+  - Etherscan APIs for EVM chains
+  - All results from real blockchain data
+
+Both tools are forensic-grade and ready for production use in investigations.
 
 ### Changed Files:
 ```
- CLAUDE.md             |  65 ++++---
- bats-streamlined.html | 527 ++++++++++++++++++++++++++++++++++++++++++++++++++
- test-case-resume.html |  66 +++++++
- 3 files changed, 632 insertions(+), 26 deletions(-)
+ CLAUDE.md         |   50 +--
+ PK Converter.html |  706 +++++++++++++++++++++++++++++++++
+ index.html        | 1140 ++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ test-tools.html   |  178 +++++++++
+ 4 files changed, 2037 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5c52cc0 Add streamlined B.A.T.S. workflow with level selector (1 second ago)
-- 2861c83 Add multi-output selection and change address tracking (19 hours ago)
-- 4d20525 Fix hop completion and thread status visualization issues (2 days ago)
-- 7f4018d Improve transition from victims to Hop 1 with clearer guidance (2 days ago)
-- 68b8964 Fix blockchain.info API field naming issue (2 days ago)
-- 86b9ea0 Fix Bitcoin timestamp retrieval bug (2 days ago)
-- ab704ec Fix Bitcoin timestamp handling and improve debugging (2 days ago)
-- 1a139f1 Improve Bitcoin output selection for all multi-output transactions (2 days ago)
-- 8c7bb6d Fix multi-thread handling and Bitcoin UTXO selection (2 days ago)
-- 91d5bed Fix terminology and improve hop progression flow (3 weeks ago)
+- 10be1b4 Add production-ready PK Converter and Address Finder tools (0 seconds ago)
+- 5c52cc0 Add streamlined B.A.T.S. workflow with level selector (9 days ago)
+- 2861c83 Add multi-output selection and change address tracking (10 days ago)
+- 4d20525 Fix hop completion and thread status visualization issues (11 days ago)
+- 7f4018d Improve transition from victims to Hop 1 with clearer guidance (11 days ago)
+- 68b8964 Fix blockchain.info API field naming issue (11 days ago)
+- 86b9ea0 Fix Bitcoin timestamp retrieval bug (11 days ago)
+- ab704ec Fix Bitcoin timestamp handling and improve debugging (11 days ago)
+- 1a139f1 Improve Bitcoin output selection for all multi-output transactions (11 days ago)
+- 8c7bb6d Fix multi-thread handling and Bitcoin UTXO selection (11 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
