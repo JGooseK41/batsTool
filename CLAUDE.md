@@ -5,7 +5,7 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-09-19 16:23)
 
-**Commit:** 8e5b570c6426538c7a23b19b003eb1dee7251b90
+**Commit:** 10c1febc028a266827f1a43f2a3d4d1717397384
 **Author:** Your Name
 **Message:** Fix landing page scrolling and improve tool purpose explanation
 
@@ -20,14 +20,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 8 ++++----
- index.html | 7 ++++---
- 2 files changed, 8 insertions(+), 7 deletions(-)
+ CLAUDE.md  | 28 ++++++++++++----------------
+ index.html |  7 ++++---
+ 2 files changed, 16 insertions(+), 19 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8e5b570 Fix landing page scrolling and improve tool purpose explanation (0 seconds ago)
+- 10c1feb Fix landing page scrolling and improve tool purpose explanation (0 seconds ago)
 - 57b7772 Transform landing page to professional dark theme design (4 minutes ago)
 - 23813d6 Simplify landing page with clean card-based design (2 hours ago)
 - e0c57df Fix utility tools accessibility and update branding colors (2 hours ago)
