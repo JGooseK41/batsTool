@@ -6208,34 +6208,47 @@ function updateFullNotationDisplayMultiple(hopId, entryId) {
 
         document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing B.A.T.S. application...');
-    
+
     // Display security status
     displaySecurityStatus();
-    
+
+    // Check if user is entering app or should see landing page
+    const urlParams = new URLSearchParams(window.location.search);
+    const enterApp = urlParams.get('app') === 'true';
+    const hasExistingCase = investigation.caseId || (investigation.victims && investigation.victims.length > 0);
+
+    if (enterApp || hasExistingCase) {
+        // User is entering the app or has existing work
+        initializeApp();
+    } else {
+        // Show landing page
+        showLandingPage();
+    }
+});
+
+function initializeApp() {
     try {
         // Enhanced structure initialization
         initializeCompleteIntegration();
-        
+
         // Build thread tracking index
         buildAvailableThreadsIndex();
-        
+
         // Original initialization
         loadFromStorage();
         renderAll();
         updateWorkflowSteps();
         setupConversionModalListeners();
-        
+
+        // Show app UI
+        showAppUI();
+
         // Show Victims tab by default to avoid white screen
         switchTab('victims');
-        
-        // Check onboarding state on load - show welcome for new users
+
+        // Check onboarding state on load
         setTimeout(() => {
             checkOnboardingState();
-            
-            // If this is a new investigation, show welcome screen
-            if (!investigation.caseId && !investigation.victims?.length) {
-                showWelcomeScreen();
-            }
         }, 100);
         
         // Setup event listeners for case info with better error handling
@@ -22274,21 +22287,63 @@ To (RED Wallet): ${transfer.to}`;
             window.print();
         }
         
-        // New function to show welcome screen
-        function showWelcomeScreen() {
-            // Hide all tabs
+        // Function to show landing page
+        function showLandingPage() {
+            // Hide all app UI elements
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.style.display = 'none';
             });
-            
+
+            // Hide investigation tracker
+            const tracker = document.querySelector('.investigation-step-tracker');
+            if (tracker) tracker.style.display = 'none';
+
+            // Hide nav tabs
+            const navTabs = document.getElementById('mainNavTabs');
+            if (navTabs) navTabs.style.display = 'none';
+
+            // Hide action bar
+            const actionBar = document.querySelector('div[style*="Undo"]');
+            if (actionBar && actionBar.parentElement) {
+                actionBar.parentElement.style.display = 'none';
+            }
+
             // Show welcome screen
             const welcomeScreen = document.getElementById('welcomeScreen');
-            welcomeScreen.style.display = 'block';
-            
-            // Update nav tabs to show welcome is active
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
+            if (welcomeScreen) {
+                welcomeScreen.style.display = 'block';
+                welcomeScreen.style.position = 'fixed';
+                welcomeScreen.style.top = '0';
+                welcomeScreen.style.left = '0';
+                welcomeScreen.style.right = '0';
+                welcomeScreen.style.bottom = '0';
+                welcomeScreen.style.zIndex = '9999';
+            }
+        }
+
+        function showAppUI() {
+            // Hide welcome screen
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            if (welcomeScreen) welcomeScreen.style.display = 'none';
+
+            // Show investigation tracker
+            const tracker = document.querySelector('.investigation-step-tracker');
+            if (tracker) tracker.style.display = 'block';
+
+            // Show nav tabs
+            const navTabs = document.getElementById('mainNavTabs');
+            if (navTabs) navTabs.style.display = 'flex';
+
+            // Show action bar
+            const actionBar = document.querySelector('div[style*="Undo"]');
+            if (actionBar && actionBar.parentElement) {
+                actionBar.parentElement.style.display = 'flex';
+            }
+        }
+
+        // Legacy function to show welcome screen
+        function showWelcomeScreen() {
+            showLandingPage();
         }
         
         // Quick start from welcome screen
@@ -22357,19 +22412,36 @@ To (RED Wallet): ${transfer.to}`;
         }
 
         function startBATSDocumentation() {
-            // Hide welcome screen and switch to case details tab
-            document.getElementById('welcomeScreen').style.display = 'none';
+            // Initialize app if not done already
+            if (!window.appInitialized) {
+                initializeApp();
+                window.appInitialized = true;
+            }
+
+            // Show app UI
+            showAppUI();
+
+            // Switch to case details tab
             switchTab('casedetails');
 
-            // Show a brief introduction
-            setTimeout(() => {
-                alert('Welcome to B.A.T.S. Documentation\n\n' +
-                      'Step 1: Fill in your case details\n' +
-                      'Step 2: Add victim information and transactions\n' +
-                      'Step 3: Document fund traces using V-T-H notation\n' +
-                      'Step 4: Generate your investigation report\n\n' +
-                      'Remember: Use your blockchain analysis tools alongside B.A.T.S. for actual tracing.');
-            }, 100);
+            // Show intro for new users only
+            if (!localStorage.getItem('bats_intro_shown')) {
+                setTimeout(() => {
+                    alert('Welcome to B.A.T.S. Documentation\n\n' +
+                          'Step 1: Fill in your case details\n' +
+                          'Step 2: Add victim information and transactions\n' +
+                          'Step 3: Document fund traces using V-T-H notation\n' +
+                          'Step 4: Generate your investigation report\n\n' +
+                          'Remember: Use your blockchain analysis tools alongside B.A.T.S. for actual tracing.');
+                    localStorage.setItem('bats_intro_shown', 'true');
+                }, 100);
+            }
+        }
+
+        function returnToLanding() {
+            if (confirm('Return to landing page? Your work is auto-saved.')) {
+                showLandingPage();
+            }
         }
 
         function showQuickStartGuide() {

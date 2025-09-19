@@ -3,21 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-19 08:59)
+## Latest Commit (Auto-updated: 2025-09-19 09:06)
 
-**Commit:** f807b20a55221fe9b73f499a103f458bba9b22c3
+**Commit:** f92e38183cad94117c99058c3af58fa03719c3d5
 **Author:** Your Name
-**Message:** Simplify landing page and fix Address Finder CORS/CSP issues
+**Message:** Simplify CORS handling to work seamlessly without user configuration
 
-- Redesigned landing page with clean header and card-based layout
-- Created prominent card for BATS Documentation Tool
-- Added smaller utility cards for PK Converter, Address Finder, and Training
-- Fixed CSP blocking crypto-js by adding dynamic loading fallback
-- Fixed CORS issues in Address Finder by adding proxy support
-- Updated default CORS proxy to corsproxy.io (more reliable)
-- Added CORS proxy test button in API Settings
-- Added user prompts when CORS proxy not configured
-- Hide navigation tabs on welcome screen for cleaner appearance
+- Remove CORS proxy configuration from API settings UI
+- Implement automatic CORS proxy fallback that tries multiple proxies
+- Add global fetchWithCORS() helper function
+- Auto-enable CORS proxy with best available option (corsproxy.io)
+- Update error messages to remove CORS configuration references
+- Make Address Finder work out-of-the-box without setup
+
+Users no longer need to configure CORS proxies - the app handles it automatically.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,14 +24,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  57 ++++------
- index.html | 359 ++++++++++++++++++++++++++++++++-----------------------------
- 2 files changed, 209 insertions(+), 207 deletions(-)
+ CLAUDE.md  |  43 +++++++++----------
+ index.html | 142 ++++++++++++++++++++-----------------------------------------
+ 2 files changed, 68 insertions(+), 117 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f807b20 Simplify landing page and fix Address Finder CORS/CSP issues (1 second ago)
+- f92e381 Simplify CORS handling to work seamlessly without user configuration (0 seconds ago)
+- f807b20 Simplify landing page and fix Address Finder CORS/CSP issues (7 minutes ago)
 - 1305e25 Redesign landing page to emphasize B.A.T.S. as a documentation standard (2 hours ago)
 - 10be1b4 Add production-ready PK Converter and Address Finder tools (2 hours ago)
 - 5c52cc0 Add streamlined B.A.T.S. workflow with level selector (9 days ago)
@@ -41,7 +41,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 7f4018d Improve transition from victims to Hop 1 with clearer guidance (11 days ago)
 - 68b8964 Fix blockchain.info API field naming issue (11 days ago)
 - 86b9ea0 Fix Bitcoin timestamp retrieval bug (11 days ago)
-- ab704ec Fix Bitcoin timestamp handling and improve debugging (11 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
