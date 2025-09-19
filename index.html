@@ -1249,12 +1249,12 @@
                         <!-- Main Action Cards -->
                         <div style="margin-bottom: 40px;">
                             <!-- Primary Card - BATS Documentation Tool -->
-                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 40px; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3); text-align: center; cursor: pointer; transition: transform 0.3s ease;" onclick="startBATSDocumentation()" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                            <div style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); border-radius: 20px; padding: 40px; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(44, 62, 80, 0.2); text-align: center; cursor: pointer; transition: transform 0.3s ease;" onclick="startBATSDocumentation()" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                                 <h2 style="color: white; font-size: 2rem; margin-bottom: 15px;">Enter B.A.T.S. Documentation Tool</h2>
                                 <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 25px;">
                                     Start documenting your blockchain investigation with the official B.A.T.S. methodology
                                 </p>
-                                <div style="display: inline-block; background: white; color: #667eea; padding: 12px 30px; border-radius: 30px; font-weight: 600; font-size: 1.1rem;">
+                                <div style="display: inline-block; background: white; color: #2c3e50; padding: 12px 30px; border-radius: 30px; font-weight: 600; font-size: 1.1rem;">
                                     Begin Documentation →
                                 </div>
                                 <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-top: 20px;">
@@ -18396,8 +18396,19 @@ function loadApiSettingsOnStartup() {
 function openPKConverter() {
     const modal = document.getElementById('pkConverterModal');
     if (modal) {
-        modal.style.display = 'block';
-        modal.style.zIndex = '10000'; // Ensure it's above the landing page
+        // Force display the modal regardless of parent visibility
+        modal.style.display = 'flex';
+        modal.style.position = 'fixed';
+        modal.style.zIndex = '10001';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+    } else {
+        console.error('PK Converter modal not found');
     }
 }
 
@@ -18793,8 +18804,19 @@ function showPKError(message) {
 function openAddressFinder() {
     const modal = document.getElementById('addressFinderModal');
     if (modal) {
-        modal.style.display = 'block';
-        modal.style.zIndex = '10000'; // Ensure it's above the landing page
+        // Force display the modal regardless of parent visibility
+        modal.style.display = 'flex';
+        modal.style.position = 'fixed';
+        modal.style.zIndex = '10001';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+    } else {
+        console.error('Address Finder modal not found');
     }
 }
 
@@ -22338,6 +22360,18 @@ To (RED Wallet): ${transfer.to}`;
                 welcomeScreen.style.right = '0';
                 welcomeScreen.style.bottom = '0';
                 welcomeScreen.style.zIndex = '9999';
+            }
+
+            // Keep modals accessible
+            const pkModal = document.getElementById('pkConverterModal');
+            if (pkModal && pkModal.parentElement) {
+                pkModal.style.position = 'fixed';
+                pkModal.style.zIndex = '10001';
+            }
+            const addressModal = document.getElementById('addressFinderModal');
+            if (addressModal && addressModal.parentElement) {
+                addressModal.style.position = 'fixed';
+                addressModal.style.zIndex = '10001';
             }
         }
 
