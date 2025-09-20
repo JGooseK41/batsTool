@@ -3,17 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-20 13:53)
+## Latest Commit (Auto-updated: 2025-09-20 14:21)
 
-**Commit:** e417e9275969a87d9c6b55b4622f208dbbeca271
+**Commit:** 05061c101b8d99514edfb239f38dc9c150e4674e
 **Author:** Your Name
-**Message:** Clean up UI by removing cluttered buttons and reorganizing menu
+**Message:** Improve UI professionalism and focus
 
-- Removed cluttered action bar with unnecessary buttons
-- Moved undo button to right side of breadcrumbs bar for cleaner layout
-- Added Navigate and Training Materials to File dropdown menu
-- Removed mobile version link entirely
-- Simplified overall UI for better user experience
+- Replaced rainbow/bright colors with consistent blue-gray professional color scheme
+- Changed progress indicators from green to blue for consistency
+- Updated step indicators to use subtle grays and blues instead of bright greens
+- Enhanced main work panel with subtle blue border and shadow for better focus
+- Converted validation panels from gradient backgrounds to bordered cards
+- Standardized wallet display colors to be more muted and professional
+- Removed excessive use of gradients in favor of clean, flat design
+- Added subtle shadow effect to main panel to differentiate work area
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -21,16 +24,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md              |    43 +-
- index.html             |    34 +-
- index.html.backup      | 22793 +++++++++++++++++++++++++++++++++++++++++++++++
- restructure_landing.py |    32 +
- 4 files changed, 22859 insertions(+), 43 deletions(-)
+ CLAUDE.md  | 44 ++++++++++++++++---------------
+ index.html | 87 +++++++++++++++++++++++++++++++++++++++-----------------------
+ 2 files changed, 78 insertions(+), 53 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e417e92 Clean up UI by removing cluttered buttons and reorganizing menu (0 seconds ago)
+- 05061c1 Improve UI professionalism and focus (0 seconds ago)
+- e417e92 Clean up UI by removing cluttered buttons and reorganizing menu (28 minutes ago)
 - 0fe0e9d Separate landing page from app structure (4 hours ago)
 - 007d264 Implement URL-based routing to fix single-click navigation (7 hours ago)
 - 9080882 Fix landing page UX issues and improve navigation (7 hours ago)
@@ -38,8 +40,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 86570d6 Update CLAUDE.md with latest commit information (22 hours ago)
 - 10c1feb Fix landing page scrolling and improve tool purpose explanation (22 hours ago)
 - 57b7772 Transform landing page to professional dark theme design (22 hours ago)
-- 23813d6 Simplify landing page with clean card-based design (23 hours ago)
-- e0c57df Fix utility tools accessibility and update branding colors (24 hours ago)
+- 23813d6 Simplify landing page with clean card-based design (24 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
