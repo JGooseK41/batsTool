@@ -18173,8 +18173,9 @@ async function lookupTransaction() {
     }
     
     const config = blockchainAPIs[detectedChain];
-    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
-    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+    // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
+    const corsEnabled = false;
+    const corsProxyUrl = '';
     
     // Show loading
     document.getElementById('lookupLoading').style.display = 'block';
@@ -18439,9 +18440,9 @@ function saveApiSettings() {
     const solanaRpc = document.getElementById('solanaRpcEndpoint').value.trim();
     const arkhamKey = document.getElementById('arkhamApiKey').value.trim();
     const arkhamAutoCheck = document.getElementById('arkhamAutoCheck').checked;
-    // Auto-enable CORS proxy with best available option
-    const corsEnabled = true;
-    const corsUrl = 'https://corsproxy.io/?';
+    // Disable CORS proxy to avoid CSP issues
+    const corsEnabled = false;
+    const corsUrl = '';
     
     // Save to localStorage
     if (etherscanKey) localStorage.setItem('bats_etherscan_api_key', etherscanKey);
@@ -18478,10 +18479,9 @@ function saveApiSettings() {
 // Enable/disable CORS proxy URL input based on checkbox
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-save CORS settings on init if not already saved
-    if (!localStorage.getItem('bats_cors_proxy_enabled')) {
-        localStorage.setItem('bats_cors_proxy_enabled', 'true');
-        localStorage.setItem('bats_cors_proxy_url', 'https://corsproxy.io/?');
-    }
+    // Remove any existing CORS proxy settings to avoid CSP issues
+    localStorage.removeItem('bats_cors_proxy_enabled');
+    localStorage.removeItem('bats_cors_proxy_url');
     
     // Load API settings on startup
     loadApiSettingsOnStartup();
@@ -20101,8 +20101,9 @@ function showBulkResults(results) {
 
 async function fetchTransactionData(hash, blockchain) {
     const config = blockchainAPIs[blockchain];
-    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
-    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+    // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
+    const corsEnabled = false;
+    const corsProxyUrl = '';
     
     // Try primary and fallback URLs
     const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
@@ -20205,8 +20206,9 @@ async function fetchTransactionData(hash, blockchain) {
 // Individual blockchain lookup functions for hop transactions
 async function lookupEthereumTransaction(txHash) {
     const config = blockchainAPIs.ethereum;
-    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
-    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+    // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
+    const corsEnabled = false;
+    const corsProxyUrl = '';
     const apiKey = config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
     
     // Build array of URLs to try (primary + fallbacks)
@@ -20276,8 +20278,9 @@ async function lookupEthereumTransaction(txHash) {
 
 async function lookupBitcoinTransaction(txHash) {
     const config = blockchainAPIs.bitcoin;
-    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
-    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+    // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
+    const corsEnabled = false;
+    const corsProxyUrl = '';
     
     const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
     
@@ -20309,8 +20312,9 @@ async function lookupBitcoinTransaction(txHash) {
 
 async function lookupTronTransaction(txHash) {
     const config = blockchainAPIs.tron;
-    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
-    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+    // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
+    const corsEnabled = false;
+    const corsProxyUrl = '';
     
     const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
     
@@ -20341,8 +20345,9 @@ async function lookupTronTransaction(txHash) {
 
 async function lookupSolanaTransaction(txHash) {
     const config = blockchainAPIs.solana;
-    const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
-    const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
+    // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
+    const corsEnabled = false;
+    const corsProxyUrl = '';
     
     const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
     
