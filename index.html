@@ -169,17 +169,17 @@
         }
 
         .step-item.active {
-            background: #e8f5e8;
-            border-color: #27ae60;
+            background: #e8f4f8;
+            border-color: #3498db;
         }
 
         .step-item.completed {
-            background: #d4edda;
-            border-color: #27ae60;
+            background: #f0f0f0;
+            border-color: #95a5a6;
         }
 
         .step-number {
-            background: #3498db;
+            background: #95a5a6;
             color: white;
             width: 30px;
             height: 30px;
@@ -191,8 +191,12 @@
             font-weight: bold;
         }
 
+        .step-item.active .step-number {
+            background: #3498db;
+        }
+
         .step-item.completed .step-number {
-            background: #27ae60;
+            background: #2c3e50;
         }
 
         .main-content {
@@ -213,10 +217,24 @@
             background: white;
             border-radius: 8px;
             padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.15);
             min-height: 600px;
-            border: 1px solid #e8f0fe;
+            border: 2px solid rgba(52, 152, 219, 0.2);
             width: 100%;
+            position: relative;
+        }
+
+        .main-panel::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border-radius: 8px;
+            opacity: 0.05;
+            z-index: -1;
         }
 
         .section-title {
@@ -317,11 +335,11 @@
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
         }
 
         .btn-confirm {
-            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
             font-size: 16px;
             padding: 15px 30px;
         }
@@ -334,17 +352,17 @@
         }
 
         .generate-root-section {
-            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
-            border: 3px solid #27ae60;
+            background: #f8f9fa;
+            border: 2px solid #3498db;
             border-radius: 12px;
             padding: 30px;
             text-align: center;
             margin-top: 30px;
-            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         .generate-root-section h3 {
-            color: #27ae60;
+            color: #2c3e50;
             font-size: 1.5rem;
             margin-bottom: 15px;
         }
@@ -385,8 +403,9 @@
         }
 
         .validation-panel {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-            color: white;
+            background: #e8f4f8;
+            color: #2c3e50;
+            border: 2px solid #3498db;
             padding: 20px;
             border-radius: 8px;
             margin: 20px 0;
@@ -395,11 +414,15 @@
         }
 
         .validation-error {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            background: #fef2f2;
+            border: 2px solid #dc3545;
+            color: #dc3545;
         }
 
         .validation-warning {
-            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            background: #fff8e1;
+            border: 2px solid #f39c12;
+            color: #856404;
         }
 
         .nav-tabs {
@@ -658,8 +681,8 @@
         }
 
         .root-total-display {
-            background: #e8f5e8;
-            border: 2px solid #27ae60;
+            background: #f8f9fa;
+            border: 2px solid #3498db;
             border-radius: 8px;
             padding: 20px;
             text-align: center;
@@ -669,7 +692,7 @@
         .root-total-amount {
             font-size: 2.5rem;
             font-weight: bold;
-            color: #27ae60;
+            color: #2c3e50;
             margin: 10px 0;
         }
 
@@ -743,16 +766,16 @@
             color: #2c3e50;
         }
 
-        .wallet-display.red { background: #ffe6e6; border-color: #e74c3c; color: #c0392b; }
-        .wallet-display.pink { background: #fce4ec; border-color: #e91e63; color: #c2185b; }
-        .wallet-display.yellow { background: #fff8e1; border-color: #f1c40f; color: #f39c12; }
-        .wallet-display.orange { background: #fff3e0; border-color: #f39c12; color: #e67e22; }
+        .wallet-display.red { background: #fef2f2; border-color: #dc3545; color: #dc3545; }
+        .wallet-display.pink { background: #fef2f8; border-color: #d63384; color: #d63384; }
+        .wallet-display.yellow { background: #fff8e1; border-color: #ffc107; color: #856404; }
+        .wallet-display.orange { background: #fff3e0; border-color: #fd7e14; color: #fd7e14; }
         .wallet-display.black { background: #f5f5f5; border-color: #2c3e50; color: #2c3e50; }
-        .wallet-display.brown { background: #efebe9; border-color: #8d6e63; color: #5d4037; }
-        .wallet-display.blue { background: #e3f2fd; border-color: #3498db; color: #2980b9; }
-        .wallet-display.purple { background: #f3e5f5; border-color: #9b59b6; color: #8e44ad; }
+        .wallet-display.brown { background: #f5f5f5; border-color: #795548; color: #795548; }
+        .wallet-display.blue { background: #e8f4f8; border-color: #3498db; color: #3498db; }
+        .wallet-display.purple { background: #f3e5f5; border-color: #6f42c1; color: #6f42c1; }
         .wallet-display.gray { background: #f5f5f5; border-color: #95a5a6; color: #7f8c8d; }
-        .wallet-display.green { background: #e8f5e8; border-color: #27ae60; color: #229954; }
+        .wallet-display.green { background: #e8f8f5; border-color: #198754; color: #198754; }
         
         /* Pulse animation for call-to-action buttons */
         @keyframes pulse {
@@ -1310,7 +1333,7 @@
                 <span id="progressPercentage" style="font-weight: bold;">0%</span>
             </div>
             <div style="background: rgba(255,255,255,0.2); border-radius: 10px; height: 8px; overflow: hidden;">
-                <div id="progressBar" style="background: #27ae60; height: 100%; width: 0%; transition: width 0.3s ease; border-radius: 10px;"></div>
+                <div id="progressBar" style="background: #3498db; height: 100%; width: 0%; transition: width 0.3s ease; border-radius: 10px;"></div>
             </div>
             <div id="progressStatus" style="margin-top: 10px; font-size: 14px; opacity: 0.9;">Loading...</div>
         </div>
@@ -1384,8 +1407,8 @@
                     <div class="section-title">B.A.T.S. Framework Education Center</div>
                     
                     <!-- Key Benefit Highlight -->
-                    <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 3px solid #fdcb6e; border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center;">
-                        <h2 style="color: #f39c12; margin-bottom: 15px;">The Key Benefit of B.A.T.S.</h2>
+                    <div style="background: #e8f4f8; border: 2px solid #3498db; border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center;">
+                        <h2 style="color: #2c3e50; margin-bottom: 15px;">The Key Benefit of B.A.T.S.</h2>
                         <p style="font-size: 1.3rem; color: #2c3e50; font-weight: 600; margin-bottom: 15px;">
                             Standardized Documentation = Reproducible Results
                         </p>
