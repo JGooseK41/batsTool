@@ -3,17 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-20 18:05)
+## Latest Commit (Auto-updated: 2025-09-20 18:15)
 
-**Commit:** d3a73d87a80c0a7bef6649d6442c23d289f4c57e
+**Commit:** e10954cdf9cf67a120a306073d9341ad4e1b72c7
 **Author:** Your Name
-**Message:** Fix critical currency mixing bug in victim transaction totals
+**Message:** Strengthen currency separation to ensure proper scaling
 
-- Fixed bug where ETH and LINK (or any different currencies) were being added together
-- Properly calculate and display totals by currency separately
-- Show '2.653457 ETH | 408.943 LINK' instead of incorrect '411.595457 ETH'
-- Updated victim header and table footer to show proper multi-currency totals
-- Each currency is now tracked and displayed independently as required by BATS
+- Fixed calculateRootTotal() to return object with totals by currency
+- Fixed convergence handling to track each currency separately
+- Removed duplicate currency calculation in import function
+- Ensured all currency totals are kept separate throughout the system
+- Convergence now shows '100 ETH | 50 LINK' instead of mixing currencies
+
+This ensures the fix scales properly for any number of different currencies
+and maintains BATS requirement of never mixing different asset types.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -21,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 39 +++++++++++++++++++++++++--------------
- index.html | 33 ++++++++++++++++++++++-----------
- 2 files changed, 47 insertions(+), 25 deletions(-)
+ CLAUDE.md  | 42 +++++++++++++++++++++---------------------
+ index.html | 52 +++++++++++++++++++++++++++++++++-------------------
+ 2 files changed, 54 insertions(+), 40 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d3a73d8 Fix critical currency mixing bug in victim transaction totals (0 seconds ago)
-- 62bc539 Fix CSP issues by removing CORS proxy usage (3 hours ago)
-- 1558665 Auto-update CLAUDE.md (3 hours ago)
-- 28311c6 Improve visual contrast for work area and input fields (3 hours ago)
+- e10954c Strengthen currency separation to ensure proper scaling (0 seconds ago)
+- d3a73d8 Fix critical currency mixing bug in victim transaction totals (10 minutes ago)
+- 62bc539 Fix CSP issues by removing CORS proxy usage (4 hours ago)
+- 1558665 Auto-update CLAUDE.md (4 hours ago)
+- 28311c6 Improve visual contrast for work area and input fields (4 hours ago)
 - 0ba9e4f Auto-update CLAUDE.md (4 hours ago)
 - 2c9a44e Enhance main work area visual differentiation (4 hours ago)
 - 7d2dff8 Remove rainbow colors from investigation progress cards (4 hours ago)
 - c535605 Auto-update CLAUDE.md with latest changes (4 hours ago)
 - 05061c1 Improve UI professionalism and focus (4 hours ago)
-- e417e92 Clean up UI by removing cluttered buttons and reorganizing menu (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

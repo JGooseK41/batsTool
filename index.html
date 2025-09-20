@@ -2038,13 +2038,13 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Next Step Button -->
-                    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #9b59b6; text-align: center;">
-                        <h4 style="color: #2c3e50; margin-bottom: 15px;">Visualize Your Investigation</h4>
+
+                    <!-- Visualization prompt section - only shown when investigation is complete -->
+                    <div id="visualizationPromptSection" style="display: none; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #9b59b6; text-align: center;">
+                        <h4 style="color: #2c3e50; margin-bottom: 15px;">Ready to Visualize Your Investigation</h4>
                         <p style="color: #666; margin-bottom: 20px;">Create a visual flow diagram of your cryptocurrency trace to better understand fund movement patterns.</p>
                         <button class="btn btn-confirm" onclick="switchTab('flowdiagram')" style="background: #9b59b6; color: white; padding: 12px 30px; font-size: 16px;">
-                            Next: Generate Flow Diagram
+                            Generate Flow Diagram
                         </button>
                     </div>
                 </div>
@@ -2095,15 +2095,7 @@
                             <!-- Flow diagram will be generated here -->
                         </svg>
                     </div>
-                    
-                    <!-- Next Step Button -->
-                    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #27ae60; text-align: center;">
-                        <h4 style="color: #2c3e50; margin-bottom: 15px;">Complete Your Investigation</h4>
-                        <p style="color: #666; margin-bottom: 20px;">Review your investigation summary and export your final B.A.T.S. report for legal proceedings.</p>
-                        <button class="btn btn-confirm" onclick="switchTab('summary')" style="background: #27ae60; color: white; padding: 12px 30px; font-size: 16px;">
-                            Next: Generate Summary & Export
-                        </button>
-                    </div>
+                    <!-- Summary prompt will be added dynamically when investigation is complete -->
                 </div>
 
                 <!-- Summary Tab -->
@@ -12279,9 +12271,15 @@ function validateHopCompletion(hopId) {
 function updateInvestigationCompletionStatus() {
     const addHopBtn = document.getElementById('addHopBtn');
     const completeSection = document.getElementById('completeInvestigationSection');
-    
+    const visualizationSection = document.getElementById('visualizationPromptSection');
+
     if (!addHopBtn || !completeSection) return;
-    
+
+    // Hide visualization by default
+    if (visualizationSection) {
+        visualizationSection.style.display = 'none';
+    }
+
     if (investigation.hops.length === 0) {
         addHopBtn.style.display = 'inline-block';
         completeSection.style.display = 'none';
@@ -12336,6 +12334,9 @@ function updateInvestigationCompletionStatus() {
         // Investigation truly complete - all threads at terminal wallets
         addHopBtn.style.display = 'none';
         completeSection.style.display = 'block';
+        if (visualizationSection) {
+            visualizationSection.style.display = 'block';
+        }
         updateFinalThreadSummary();
     } else if (lastHopComplete && hasActiveThreads) {
         // Last hop complete with active threads - show what will be traced
@@ -12356,9 +12357,12 @@ function updateInvestigationCompletionStatus() {
         addHopBtn.disabled = true;
         addHopBtn.style.opacity = '0.6';
         addHopBtn.onclick = null;
-        
+
         // Show completion section
         completeSection.style.display = 'block';
+        if (visualizationSection) {
+            visualizationSection.style.display = 'block';
+        }
         updateFinalThreadSummary();
     } else if (!lastHopComplete && investigation.hops.length > 0) {
         // Current hop not complete
