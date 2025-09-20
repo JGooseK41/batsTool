@@ -1321,7 +1321,7 @@
                                 </div>
 
                                 <!-- Training Card -->
-                                <div style="background: #2c3e50; border-radius: 6px; padding: 25px; border: 1px solid #34495e; cursor: pointer; transition: all 0.2s ease; text-align: center;" onclick="window.open('https://theblockaudit.com/bats-training', '_blank')" onmouseover="this.style.borderColor='#3498db'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.3)'" onmouseout="this.style.borderColor='#34495e'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                <div style="background: #2c3e50; border-radius: 6px; padding: 25px; border: 1px solid #34495e; cursor: pointer; transition: all 0.2s ease; text-align: center;" onclick="window.open('training.html', '_blank')" onmouseover="this.style.borderColor='#3498db'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.3)'" onmouseout="this.style.borderColor='#34495e'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
                                     <div style="font-size: 2rem; margin-bottom: 15px; filter: grayscale(30%);">📚</div>
                                     <h3 style="color: #ecf0f1; margin-bottom: 10px; font-weight: 400;">B.A.T.S. Training</h3>
                                     <p style="color: #95a5a6; font-size: 0.9rem; line-height: 1.5;">
@@ -1368,7 +1368,7 @@
                             <p style="margin-bottom: 10px;">
                                 B.A.T.S. is a documentation standard for blockchain investigations
                             </p>
-                            <p>For training and certification, visit <a href="https://theblockaudit.com/bats-training" target="_blank" style="color: #3498db; text-decoration: none;">theblockaudit.com/bats-training</a></p>
+                            <p>For training and certification, visit <a href="training.html" target="_blank" style="color: #3498db; text-decoration: none;">B.A.T.S. Training</a></p>
                         </div>
                     </div>
                 </div>
@@ -1724,6 +1724,11 @@
                                 <button class="btn btn-confirm" onclick="saveCaseDetails()" style="padding: 15px 40px; font-size: 18px;">
                                     Save Case Details
                                 </button>
+                                <div id="nextStepContainer" style="display: none; margin-top: 20px;">
+                                    <button class="btn btn-primary" onclick="switchTab('victims')" style="padding: 15px 40px; font-size: 18px; background: #27ae60;">
+                                        Next: Add Victims →
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
@@ -6260,6 +6265,7 @@ function updateFullNotationDisplayMultiple(hopId, entryId) {
     if (enterApp || hasExistingCase) {
         // User is entering the app or has existing work
         initializeApp();
+        window.appInitialized = true;
     } else {
         // Show landing page
         showLandingPage();
@@ -22520,11 +22526,13 @@ To (RED Wallet): ${transfer.to}`;
                 window.appInitialized = true;
             }
 
-            // Show app UI
+            // Show app UI immediately
             showAppUI();
 
-            // Switch to case details tab
-            switchTab('casedetails');
+            // Switch to case details tab with a small delay to ensure UI is ready
+            setTimeout(() => {
+                switchTab('casedetails');
+            }, 100);
 
             // Show intro for new users only
             if (!localStorage.getItem('bats_intro_shown')) {
@@ -22560,7 +22568,7 @@ To (RED Wallet): ${transfer.to}`;
                   '   - Note timestamps and fees\n' +
                   '   - Document wallet attributions\n' +
                   '   - Maintain chain of custody\n\n' +
-                  'For full training, visit theblockaudit.com/bats-training');
+                  'For full training, open the B.A.T.S. Training page from the utility tools.');
         }
         
         function startInvestigation() {
@@ -22607,26 +22615,35 @@ To (RED Wallet): ${transfer.to}`;
             const investigator = document.getElementById('investigator').value.trim();
             const caseType = document.getElementById('caseType').value;
             const caseSynopsis = document.getElementById('caseSynopsis').value.trim();
-            
+
+            // Validate required fields
+            if (!caseId || !investigator || !caseType) {
+                alert('Please fill in all required fields (Case ID, Investigator, and Case Type)');
+                return;
+            }
+
             // Update investigation object
             investigation.caseId = caseId;
             investigation.investigator = investigator;
             investigation.caseType = caseType;
             investigation.caseSynopsis = caseSynopsis;
-            
+
             // Mark as complete if all required fields are filled
             if (caseId && investigator && caseType) {
                 investigation.setupComplete = true;
             }
-            
+
             // Save to storage
             saveToStorage();
-            
-            // Show success message
-            alert('Case details saved successfully!');
-            
+
+            // Show success message with next step
+            alert('✅ Case details saved successfully!\n\nClick "Next: Add Victims" to continue your investigation.');
+
             // Update stats
             updateCaseStats();
+
+            // Show the next step button
+            showNextStepButton();
         }
         
         // Check if setup is complete
@@ -22715,10 +22732,24 @@ To (RED Wallet): ${transfer.to}`;
             }, 100);
         }
         
+        // Function to show next step button after saving case details
+        function showNextStepButton() {
+            const nextStepContainer = document.getElementById('nextStepContainer');
+            if (nextStepContainer) {
+                nextStepContainer.style.display = 'block';
+                // Add pulsing animation to draw attention
+                const nextButton = nextStepContainer.querySelector('button');
+                if (nextButton) {
+                    nextButton.style.animation = 'pulse 2s infinite';
+                }
+            }
+        }
+
         // Make functions globally accessible
         window.validateAndProceedSetup = validateAndProceedSetup;
         window.saveCaseDetails = saveCaseDetails;
         window.updateCaseStats = updateCaseStats;
+        window.showNextStepButton = showNextStepButton;
         window.lookupWizardTransaction = lookupWizardTransaction;
         window.selectWizardTransfer = selectWizardTransfer;
 
@@ -22728,6 +22759,13 @@ To (RED Wallet): ${transfer.to}`;
             if (investigation.caseId) document.getElementById('caseId').value = investigation.caseId;
             if (investigation.investigator) document.getElementById('investigator').value = investigation.investigator;
             if (investigation.caseType) document.getElementById('caseType').value = investigation.caseType;
+
+            // If case details are already complete, show the next step button
+            if (investigation.setupComplete) {
+                setTimeout(() => {
+                    showNextStepButton();
+                }, 500);
+            }
             if (investigation.caseSynopsis) document.getElementById('caseSynopsis').value = investigation.caseSynopsis;
             
             // Update card appearance on load
