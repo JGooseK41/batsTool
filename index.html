@@ -1246,6 +1246,7 @@
                 </div>
                 
                 <div class="nav-tabs" id="mainNavTabs" style="display: none;">
+                    <button class="nav-tab" onclick="returnToLanding()" style="background: #34495e; color: white;">🏠 Home</button>
                     <button class="nav-tab" onclick="switchTab('casedetails')">Case Details</button>
                     <button class="nav-tab active" onclick="switchTab('victims')">Victims & Transactions</button>
                     <button class="nav-tab" onclick="switchTab('traces')">Trace Documentation</button>
@@ -6266,6 +6267,28 @@ function updateFullNotationDisplayMultiple(hopId, entryId) {
         // User is entering the app or has existing work
         initializeApp();
         window.appInitialized = true;
+
+        // If entering from landing page, show app UI and welcome message
+        if (enterApp && !hasExistingCase) {
+            showAppUI();
+            switchTab('casedetails');
+
+            // Show intro for new users only
+            if (!localStorage.getItem('bats_intro_shown')) {
+                setTimeout(() => {
+                    alert('Welcome to B.A.T.S. Documentation\n\n' +
+                          'Step 1: Fill in your case details\n' +
+                          'Step 2: Add victim information and transactions\n' +
+                          'Step 3: Document fund traces using V-T-H notation\n' +
+                          'Step 4: Generate your investigation report\n\n' +
+                          'Remember: Use your blockchain analysis tools alongside B.A.T.S. for actual tracing.');
+                    localStorage.setItem('bats_intro_shown', 'true');
+                }, 500);
+            }
+        } else if (hasExistingCase) {
+            // Show app UI for existing cases
+            showAppUI();
+        }
     } else {
         // Show landing page
         showLandingPage();
@@ -22520,37 +22543,19 @@ To (RED Wallet): ${transfer.to}`;
         }
 
         function startBATSDocumentation() {
-            // Initialize app if not done already
-            if (!window.appInitialized) {
-                initializeApp();
-                window.appInitialized = true;
-            }
-
-            // Show app UI immediately
-            showAppUI();
-
-            // Switch to case details tab with a small delay to ensure UI is ready
-            setTimeout(() => {
-                switchTab('casedetails');
-            }, 100);
-
-            // Show intro for new users only
-            if (!localStorage.getItem('bats_intro_shown')) {
-                setTimeout(() => {
-                    alert('Welcome to B.A.T.S. Documentation\n\n' +
-                          'Step 1: Fill in your case details\n' +
-                          'Step 2: Add victim information and transactions\n' +
-                          'Step 3: Document fund traces using V-T-H notation\n' +
-                          'Step 4: Generate your investigation report\n\n' +
-                          'Remember: Use your blockchain analysis tools alongside B.A.T.S. for actual tracing.');
-                    localStorage.setItem('bats_intro_shown', 'true');
-                }, 100);
-            }
+            // Navigate to the app URL instead of trying to initialize here
+            // This ensures a clean separation between landing page and app
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('app', 'true');
+            window.location.href = currentUrl.toString();
         }
 
         function returnToLanding() {
             if (confirm('Return to landing page? Your work is auto-saved.')) {
-                showLandingPage();
+                // Navigate back to the landing page by removing the app parameter
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete('app');
+                window.location.href = currentUrl.toString();
             }
         }
 

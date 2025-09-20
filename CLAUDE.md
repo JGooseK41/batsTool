@@ -3,30 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-19 16:23)
+## Latest Commit (Auto-updated: 2025-09-20 06:56)
 
-**Commit:** ccdd8167fe213758c24ed6b745f95bd4fd4d4a49
+**Commit:** 9080882461b8dd1a85ea11af0845ca3f9de90c95
 **Author:** Your Name
-**Message:** Final CLAUDE.md auto-update
+**Message:** Fix landing page UX issues and improve navigation
+
+- Fixed double-click issue on Start Documentation button by properly managing app initialization state
+- Added "Next: Add Victims" button after saving case details to improve workflow navigation
+- Fixed training links to point to local training.html instead of external URL
+- Added validation for required fields when saving case details
+- Added visual feedback with pulse animation for action buttons
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 22 ++++++----------------
- 1 file changed, 6 insertions(+), 16 deletions(-)
+ CLAUDE.md  | 14 +++++++-------
+ index.html | 64 +++++++++++++++++++++++++++++++++++++++++++++++++-------------
+ 2 files changed, 58 insertions(+), 20 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ccdd816 Final CLAUDE.md auto-update (0 seconds ago)
-- 86570d6 Update CLAUDE.md with latest commit information (8 seconds ago)
-- 10c1feb Fix landing page scrolling and improve tool purpose explanation (15 seconds ago)
-- 57b7772 Transform landing page to professional dark theme design (4 minutes ago)
-- 23813d6 Simplify landing page with clean card-based design (2 hours ago)
-- e0c57df Fix utility tools accessibility and update branding colors (2 hours ago)
-- e2b2f8f Fix utility tools accessibility from landing page (2 hours ago)
-- 741a016 Fix syntax error in initializeApp function - remove extra closing parenthesis (2 hours ago)
-- 96ebc4e Major UI restructuring: Clean landing page separate from app (7 hours ago)
-- f92e381 Simplify CORS handling to work seamlessly without user configuration (7 hours ago)
+- 9080882 Fix landing page UX issues and improve navigation (0 seconds ago)
+- ccdd816 Final CLAUDE.md auto-update (15 hours ago)
+- 86570d6 Update CLAUDE.md with latest commit information (15 hours ago)
+- 10c1feb Fix landing page scrolling and improve tool purpose explanation (15 hours ago)
+- 57b7772 Transform landing page to professional dark theme design (15 hours ago)
+- 23813d6 Simplify landing page with clean card-based design (16 hours ago)
+- e0c57df Fix utility tools accessibility and update branding colors (17 hours ago)
+- e2b2f8f Fix utility tools accessibility from landing page (17 hours ago)
+- 741a016 Fix syntax error in initializeApp function - remove extra closing parenthesis (17 hours ago)
+- 96ebc4e Major UI restructuring: Clean landing page separate from app (21 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
