@@ -3,30 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-20 14:39)
+## Latest Commit (Auto-updated: 2025-09-20 14:43)
 
-**Commit:** 1558665c24c98d97856dd4ba142c537276bb0b3c
+**Commit:** 62bc53987c093bc4df5fa8e35f2ebeea5698e8c2
 **Author:** Your Name
-**Message:** Auto-update CLAUDE.md
+**Message:** Fix CSP issues by removing CORS proxy usage
+
+- Disabled all CORS proxy usage to comply with Content Security Policy
+- APIs should handle CORS natively without proxy
+- Removed corsproxy.io references that were causing CSP violations
+- Direct API calls should work for Etherscan, Blockchain.info, etc.
+- Cleaned up localStorage CORS proxy settings on startup
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 37 +++++++++++++++++++++++++------------
- 1 file changed, 25 insertions(+), 12 deletions(-)
+ CLAUDE.md  | 27 +++++++--------------------
+ index.html | 43 ++++++++++++++++++++++++-------------------
+ 2 files changed, 31 insertions(+), 39 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1558665 Auto-update CLAUDE.md (1 second ago)
-- 28311c6 Improve visual contrast for work area and input fields (19 seconds ago)
-- 0ba9e4f Auto-update CLAUDE.md (7 minutes ago)
-- 2c9a44e Enhance main work area visual differentiation (7 minutes ago)
-- 7d2dff8 Remove rainbow colors from investigation progress cards (10 minutes ago)
-- c535605 Auto-update CLAUDE.md with latest changes (16 minutes ago)
-- 05061c1 Improve UI professionalism and focus (18 minutes ago)
-- e417e92 Clean up UI by removing cluttered buttons and reorganizing menu (46 minutes ago)
+- 62bc539 Fix CSP issues by removing CORS proxy usage (0 seconds ago)
+- 1558665 Auto-update CLAUDE.md (4 minutes ago)
+- 28311c6 Improve visual contrast for work area and input fields (4 minutes ago)
+- 0ba9e4f Auto-update CLAUDE.md (11 minutes ago)
+- 2c9a44e Enhance main work area visual differentiation (11 minutes ago)
+- 7d2dff8 Remove rainbow colors from investigation progress cards (14 minutes ago)
+- c535605 Auto-update CLAUDE.md with latest changes (20 minutes ago)
+- 05061c1 Improve UI professionalism and focus (22 minutes ago)
+- e417e92 Clean up UI by removing cluttered buttons and reorganizing menu (50 minutes ago)
 - 0fe0e9d Separate landing page from app structure (4 hours ago)
-- 007d264 Implement URL-based routing to fix single-click navigation (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

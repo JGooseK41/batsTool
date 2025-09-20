@@ -6761,19 +6761,31 @@ function updateFormFieldsFromInvestigation() {
         // Check if victim is completed (minimized)
         const isMinimized = victim.isCompleted || false;
         
-        // Calculate victim total losses
-        const totalLosses = victim.transactions.reduce((sum, t) => {
-            return sum + (parseFloat(t.amount) || 0);
-        }, 0);
-        
+        // Calculate victim total losses by currency
+        const totalsByCurrency = {};
+        victim.transactions.forEach(t => {
+            if (parseFloat(t.amount) > 0) {
+                const currency = t.currency === 'CUSTOM' ? t.customCurrency : t.currency;
+                if (!totalsByCurrency[currency]) {
+                    totalsByCurrency[currency] = 0;
+                }
+                totalsByCurrency[currency] += parseFloat(t.amount);
+            }
+        });
+
+        // Format totals display
+        const totalsDisplay = Object.entries(totalsByCurrency)
+            .map(([currency, amount]) => `${formatNumber(amount)} ${currency}`)
+            .join(' | ');
+
         // Count valid transactions
-        const validTransactions = victim.transactions.filter(t => 
+        const validTransactions = victim.transactions.filter(t =>
             parseFloat(t.amount) > 0 && t.receivingWallet && t.receivingWallet.trim() !== ''
         ).length;
-        
+
         victimDiv.innerHTML = `
             <div class="trace-header" style="background: ${isMinimized ? '#e8f5e9' : '#fff3e0'}; border: 2px solid ${isMinimized ? '#4caf50' : '#ff9800'};">
-                <h3>Victim ${victim.id} ${isMinimized ? `✓ - ${validTransactions} transaction${validTransactions !== 1 ? 's' : ''}, Total Loss: ${formatNumber(totalLosses)} ${victim.transactions[0]?.currency || 'USD'}` : ''}</h3>
+                <h3>Victim ${victim.id} ${isMinimized ? `✓ - ${validTransactions} transaction${validTransactions !== 1 ? 's' : ''}, Total Loss: ${totalsDisplay}` : ''}</h3>
                 <div>
                     ${!isMinimized ? `<button class="btn btn-success" onclick="completeVictim(${victim.id})" 
                         ${validTransactions === 0 ? 'disabled' : ''} 
@@ -6919,15 +6931,14 @@ function updateFormFieldsFromInvestigation() {
                                     <td style="padding: 8px; border: 1px solid #ddd;">V${victim.id}-T${transaction.id}</td>
                                     <td style="padding: 8px; border: 1px solid #ddd;">${transaction.datetime || 'N/A'}</td>
                                     <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">${formatNumber(transaction.amount)}</td>
-                                    <td style="padding: 8px; border: 1px solid #ddd;">${transaction.currency}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${transaction.currency === 'CUSTOM' ? transaction.customCurrency : transaction.currency}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
                         <tfoot>
                             <tr style="background: #e8f4f8; font-weight: bold;">
                                 <td colspan="2" style="padding: 8px; border: 1px solid #ddd;">Total Loss:</td>
-                                <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">${formatNumber(totalLosses)}</td>
-                                <td style="padding: 8px; border: 1px solid #ddd;">${victim.transactions[0]?.currency || 'USD'}</td>
+                                <td colspan="2" style="padding: 8px; border: 1px solid #ddd;">${totalsDisplay || '0'}</td>
                             </tr>
                         </tfoot>
                     </table>
