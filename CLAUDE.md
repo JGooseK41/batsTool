@@ -3,30 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-20 14:23)
+## Latest Commit (Auto-updated: 2025-09-20 14:29)
 
-**Commit:** c53560572714b789f95f267195bf86a4758c3df1
+**Commit:** 7d2dff836747930af1bd333a4810ea58f26ea044
 **Author:** Your Name
-**Message:** Auto-update CLAUDE.md with latest changes
+**Message:** Remove rainbow colors from investigation progress cards
+
+- Replaced rainbow gradient colors in investigation statistics cards
+- Changed from green/blue/purple/orange/pink gradients to consistent blue-gray scheme
+- All progress cards now use #f8f9fa background with #3498db borders
+- Total Traced card slightly emphasized with #e8f4f8 background
+- Maintains professional appearance consistent with rest of UI
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 33 +++++++++++++++++----------------
- 1 file changed, 17 insertions(+), 16 deletions(-)
+ CLAUDE.md  | 30 ++++++++----------------------
+ index.html | 30 +++++++++++++++---------------
+ 2 files changed, 23 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c535605 Auto-update CLAUDE.md with latest changes (1 second ago)
-- 05061c1 Improve UI professionalism and focus (2 minutes ago)
-- e417e92 Clean up UI by removing cluttered buttons and reorganizing menu (30 minutes ago)
+- 7d2dff8 Remove rainbow colors from investigation progress cards (1 second ago)
+- c535605 Auto-update CLAUDE.md with latest changes (6 minutes ago)
+- 05061c1 Improve UI professionalism and focus (8 minutes ago)
+- e417e92 Clean up UI by removing cluttered buttons and reorganizing menu (36 minutes ago)
 - 0fe0e9d Separate landing page from app structure (4 hours ago)
 - 007d264 Implement URL-based routing to fix single-click navigation (7 hours ago)
-- 9080882 Fix landing page UX issues and improve navigation (7 hours ago)
+- 9080882 Fix landing page UX issues and improve navigation (8 hours ago)
 - ccdd816 Final CLAUDE.md auto-update (22 hours ago)
 - 86570d6 Update CLAUDE.md with latest commit information (22 hours ago)
 - 10c1feb Fix landing page scrolling and improve tool purpose explanation (22 hours ago)
-- 57b7772 Transform landing page to professional dark theme design (22 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
