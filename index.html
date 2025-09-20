@@ -8323,8 +8323,20 @@ function exportRedWalletIndexCSV() {
         }
 
         function calculateRootTotal() {
-            return investigation.victims.reduce((sum, v) => 
-                sum + v.transactions.reduce((tSum, t) => tSum + (parseFloat(t.amount) || 0), 0), 0);
+            // This should return totals by currency, not a single sum
+            const totalsByCurrency = {};
+            investigation.victims.forEach(v => {
+                v.transactions.forEach(t => {
+                    if (parseFloat(t.amount) > 0) {
+                        const currency = t.currency === 'CUSTOM' ? t.customCurrency : t.currency;
+                        if (!totalsByCurrency[currency]) {
+                            totalsByCurrency[currency] = 0;
+                        }
+                        totalsByCurrency[currency] += parseFloat(t.amount);
+                    }
+                });
+            });
+            return totalsByCurrency;
         }
         
         // Custom centered alert function
@@ -15781,8 +15793,21 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             const maxHop = Math.max(...selectedEntries.map(e => e.hopNumber));
             document.getElementById('convergenceHopLevel').value = maxHop + 1;
             
-            const totalAmount = selectedEntries.reduce((sum, entry) => sum + (parseFloat(entry.amount) || 0), 0);
-            document.getElementById('convergenceAmount').value = totalAmount;
+            // Group amounts by currency for convergence
+            const amountsByCurrency = {};
+            selectedEntries.forEach(entry => {
+                const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                if (!amountsByCurrency[currency]) {
+                    amountsByCurrency[currency] = 0;
+                }
+                amountsByCurrency[currency] += parseFloat(entry.amount) || 0;
+            });
+
+            // Display all currencies in convergence amount
+            const amountDisplay = Object.entries(amountsByCurrency)
+                .map(([currency, amount]) => `${amount} ${currency}`)
+                .join(' | ');
+            document.getElementById('convergenceAmount').value = amountDisplay;
             
             const victimSets = new Set();
             const transactionSets = new Set();
@@ -17407,22 +17432,11 @@ function downloadFile(content, filename, mimeType) {
             investigation.hops = Array.from(hopMap.values());
             
             // Calculate root total and ART for each hop
-            investigation.confirmedRootTotal = calculateRootTotal();
+            investigation.confirmedRootTotalsByCurrency = calculateRootTotal();
             investigation.rootTotalConfirmed = true;
-            
-            // Calculate confirmed root totals by currency
-            investigation.confirmedRootTotalsByCurrency = {};
-            investigation.victims.forEach(victim => {
-                victim.transactions.forEach(transaction => {
-                    if (parseFloat(transaction.amount) > 0) {
-                        const currency = transaction.currency === 'CUSTOM' ? transaction.customCurrency : transaction.currency;
-                        if (!investigation.confirmedRootTotalsByCurrency[currency]) {
-                            investigation.confirmedRootTotalsByCurrency[currency] = 0;
-                        }
-                        investigation.confirmedRootTotalsByCurrency[currency] += parseFloat(transaction.amount);
-                    }
-                });
-            });
+
+            // Keep legacy confirmedRootTotal for backward compatibility (sum of all)
+            investigation.confirmedRootTotal = Object.values(investigation.confirmedRootTotalsByCurrency).reduce((sum, amount) => sum + amount, 0);
             
             investigation.hops.forEach(hop => {
                 hop.artAtStartByCurrency = getCurrentART();
