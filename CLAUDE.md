@@ -3,18 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-20 07:10)
+## Latest Commit (Auto-updated: 2025-09-20 10:16)
 
-**Commit:** 007d264c1646d2b64fb4bd67cbef74ac1bc9829e
+**Commit:** 0fe0e9da9084ef8a63789413a3637280c83d9d95
 **Author:** Your Name
-**Message:** Implement URL-based routing to fix single-click navigation
+**Message:** Separate landing page from app structure
 
-- Changed landing page to load at index.html (no parameters)
-- App/tool now loads at index.html?app=true
-- Fixed double-click issue by navigating directly to app URL
-- Added Home button in app navigation to return to landing page
-- Moved welcome message to app initialization logic
-- Clean separation between landing page and app states
+- Moved landing page out of tab structure into its own container
+- Landing page now in landingPageContainer, completely separate from app
+- Fixed issue where landing page appeared as tab when entering app
+- Updated show/hide functions to work with separated structure
+- Cleaned up tab management to not interfere with landing page
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 41 ++++++++++++++++++++++++++---------------
- index.html | 59 ++++++++++++++++++++++++++++++++---------------------------
- 2 files changed, 58 insertions(+), 42 deletions(-)
+ CLAUDE.md  |  29 +++---
+ index.html | 335 ++++++++++++++++++++++++++++++-------------------------------
+ 2 files changed, 177 insertions(+), 187 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 007d264 Implement URL-based routing to fix single-click navigation (0 seconds ago)
-- 9080882 Fix landing page UX issues and improve navigation (14 minutes ago)
-- ccdd816 Final CLAUDE.md auto-update (15 hours ago)
-- 86570d6 Update CLAUDE.md with latest commit information (15 hours ago)
-- 10c1feb Fix landing page scrolling and improve tool purpose explanation (15 hours ago)
-- 57b7772 Transform landing page to professional dark theme design (15 hours ago)
-- 23813d6 Simplify landing page with clean card-based design (17 hours ago)
-- e0c57df Fix utility tools accessibility and update branding colors (17 hours ago)
-- e2b2f8f Fix utility tools accessibility from landing page (17 hours ago)
-- 741a016 Fix syntax error in initializeApp function - remove extra closing parenthesis (17 hours ago)
+- 0fe0e9d Separate landing page from app structure (1 second ago)
+- 007d264 Implement URL-based routing to fix single-click navigation (3 hours ago)
+- 9080882 Fix landing page UX issues and improve navigation (3 hours ago)
+- ccdd816 Final CLAUDE.md auto-update (18 hours ago)
+- 86570d6 Update CLAUDE.md with latest commit information (18 hours ago)
+- 10c1feb Fix landing page scrolling and improve tool purpose explanation (18 hours ago)
+- 57b7772 Transform landing page to professional dark theme design (18 hours ago)
+- 23813d6 Simplify landing page with clean card-based design (20 hours ago)
+- e0c57df Fix utility tools accessibility and update branding colors (20 hours ago)
+- e2b2f8f Fix utility tools accessibility from landing page (20 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
