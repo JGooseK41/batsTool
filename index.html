@@ -6177,6 +6177,7 @@ function updateFullNotationDisplayMultiple(hopId, entryId) {
 
         const entryTypes = {
             'trace': 'Outgoing Transaction',
+            'swap': 'DEX/Asset Conversion',
             'writeoff': 'Dead End (Mixer/DeFi)',
             'cold_storage': 'Still in Wallet'
         };
@@ -14903,6 +14904,9 @@ async function lookupWizardTransaction() {
 
             // Check if this might be a DEX swap
             let swapWarning = '';
+            let isSwap = false;
+            let swapFromCurrency = null;
+
             if (window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0) {
                 const threads = getAvailableSourcesForHop(window.hopWizardData.hopNumber, null);
                 const sourceCurrencies = new Set();
@@ -14915,11 +14919,35 @@ async function lookupWizardTransaction() {
                 if (sourceCurrencies.size === 1) {
                     const sourceCurrency = Array.from(sourceCurrencies)[0];
                     if (txData.currency && sourceCurrency !== txData.currency) {
+                        isSwap = true;
+                        swapFromCurrency = sourceCurrency;
+                        window.hopWizardData.isSwap = true;
+                        window.hopWizardData.swapDetails = {
+                            fromCurrency: sourceCurrency,
+                            toCurrency: txData.currency,
+                            fromAmount: Object.values(window.hopWizardData.allocations).reduce((sum, val) => sum + val, 0),
+                            toAmount: txData.amount,
+                            dexAddress: txData.to
+                        };
+
                         swapWarning = `
-                            <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 10px; margin-top: 10px;">
-                                <strong>🔄 DEX Swap Detected:</strong> Source threads are ${sourceCurrency} but transaction is ${txData.currency}.<br>
-                                This will be classified as a <span style="color: #8B4513; font-weight: bold;">🟤 BROWN wallet</span> (Asset Conversion).<br>
-                                <small>The swap will be documented in the entry notes.</small>
+                            <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 15px; margin-top: 10px;">
+                                <h4 style="margin-top: 0; color: #e65100;">🔄 DEX Swap Detected</h4>
+                                <div style="margin: 10px 0;">
+                                    <strong>Swap Details:</strong><br>
+                                    • Input: ${window.hopWizardData.swapDetails.fromAmount} ${sourceCurrency}<br>
+                                    • Output: ${txData.amount} ${txData.currency}<br>
+                                    • DEX: <span style="font-family: monospace; font-size: 11px;">${txData.to}</span>
+                                </div>
+                                <div style="background: white; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                                    <strong>This will create:</strong><br>
+                                    1. A <strong>swap entry</strong> documenting the conversion<br>
+                                    2. DEX marked as <span style="color: #8B4513; font-weight: bold;">🟤 BROWN wallet</span><br>
+                                    3. Thread converts from ${sourceCurrency} to ${txData.currency} (no hop increment)
+                                </div>
+                                <div style="margin-top: 10px; padding: 8px; background: #e3f2fd; border-radius: 4px;">
+                                    ℹ️ The next hop will continue with ${txData.currency} threads
+                                </div>
                             </div>
                         `;
                     }
@@ -15092,6 +15120,117 @@ function selectWizardTransfer(index) {
     confirmWizardOutputSelection();
 }
 
+function createSwapEntry(hop, wizardData) {
+    const swapDetails = wizardData.swapDetails;
+
+    // Generate notation for the swap
+    let notation = '';
+    if (wizardData.selectedThreads.length === 1) {
+        // Keep the same notation, just document the currency change
+        notation = wizardData.selectedThreads[0];
+    } else if (wizardData.selectedThreads.length > 1) {
+        // For convergence
+        const baseNotations = wizardData.selectedThreads.map(id => id.replace(/-H\d+$/, '')).join('+');
+        notation = `${baseNotations}-H${hop.hopNumber}`;
+    }
+    notation += ` [SWAP: ${swapDetails.fromCurrency} → ${swapDetails.toCurrency}]`;
+
+    // Create the swap entry
+    const swapEntry = {
+        id: hop.entries.length + 1,
+        hopId: hop.id,
+        hopNumber: hop.hopNumber,
+        entryType: 'swap',
+        notation: notation,
+        fromWallet: wizardData.txData?.from || '',  // User wallet sending to DEX
+        fromWalletType: 'black',  // Usually the user's wallet
+        toWallet: swapDetails.dexAddress,  // DEX contract
+        toWalletType: 'brown',  // BROWN for DEX/asset conversion
+        amount: swapDetails.fromAmount.toString(),
+        outputAmount: swapDetails.toAmount.toString(),  // New field for swap output
+        currency: swapDetails.fromCurrency,  // Input currency
+        outputCurrency: swapDetails.toCurrency,  // Output currency
+        txHash: wizardData.txHash,
+        timestamp: wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '',
+        timezone: 'UTC',
+        notes: `Asset conversion via DEX: ${swapDetails.fromAmount} ${swapDetails.fromCurrency} swapped for ${swapDetails.toAmount} ${swapDetails.toCurrency}`,
+        sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
+        multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
+        individualSourceAssignments: wizardData.selectedThreads.length > 1 ? wizardData.allocations : {},
+        isSwap: true,
+        swapDetails: swapDetails
+    };
+
+    // Save undo state
+    saveUndoState(`Add swap entry to Hop ${hop.hopNumber}`);
+
+    // Add the swap entry
+    hop.entries.push(swapEntry);
+
+    // Sort entries by timestamp
+    sortHopEntriesChronologically(hop);
+
+    // Update available threads - convert the currency
+    updateThreadsAfterSwap(hop, swapEntry);
+
+    console.log(`✅ Created swap entry: ${swapDetails.fromAmount} ${swapDetails.fromCurrency} → ${swapDetails.toAmount} ${swapDetails.toCurrency}`);
+}
+
+function updateThreadsAfterSwap(hop, swapEntry) {
+    // This function updates the available threads to reflect the currency conversion
+    // The thread continues with the new currency but same notation base
+
+    if (!investigation.availableThreads) {
+        investigation.availableThreads = {};
+    }
+
+    const swapDetails = swapEntry.swapDetails;
+
+    // Remove the old currency thread
+    if (swapEntry.sourceThreadId) {
+        // Single source
+        if (investigation.availableThreads[swapDetails.fromCurrency]) {
+            delete investigation.availableThreads[swapDetails.fromCurrency][swapEntry.sourceThreadId];
+        }
+
+        // Add new currency thread with same ID but new currency
+        if (!investigation.availableThreads[swapDetails.toCurrency]) {
+            investigation.availableThreads[swapDetails.toCurrency] = {};
+        }
+
+        // Create the converted thread
+        const newThreadId = swapEntry.sourceThreadId.replace(swapDetails.fromCurrency, swapDetails.toCurrency);
+        investigation.availableThreads[swapDetails.toCurrency][newThreadId] = {
+            threadId: newThreadId,
+            totalAmount: swapDetails.toAmount,
+            currency: swapDetails.toCurrency,
+            sourceWallet: swapEntry.fromWallet,
+            hopNumber: hop.hopNumber,
+            swapConverted: true,
+            originalCurrency: swapDetails.fromCurrency
+        };
+    } else if (swapEntry.multipleSourceThreads && swapEntry.multipleSourceThreads.length > 1) {
+        // Handle multiple source threads
+        // This is more complex - would need to distribute the output amount proportionally
+        // For now, create a single combined thread in the new currency
+        const combinedId = swapEntry.multipleSourceThreads.map(t => t.split('-').slice(0, 2).join('-')).join('+') + `-H${hop.hopNumber}`;
+
+        if (!investigation.availableThreads[swapDetails.toCurrency]) {
+            investigation.availableThreads[swapDetails.toCurrency] = {};
+        }
+
+        investigation.availableThreads[swapDetails.toCurrency][combinedId] = {
+            threadId: combinedId,
+            totalAmount: swapDetails.toAmount,
+            currency: swapDetails.toCurrency,
+            sourceWallet: swapEntry.fromWallet,
+            hopNumber: hop.hopNumber,
+            swapConverted: true,
+            originalCurrency: swapDetails.fromCurrency
+        };
+    }
+}
+
 function createSingleHopEntry(hop, wizardData, output, outputIndex) {
     // Calculate how much of the source amount goes to this output
     const totalSelectedAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
@@ -15184,6 +15323,25 @@ function createHopEntryFromWizard() {
     const wizardData = window.hopWizardData;
     const hop = investigation.hops.find(h => h.id === wizardData.hopId);
     if (!hop) return;
+
+    // Check if this is a swap transaction
+    if (wizardData.isSwap && wizardData.swapDetails) {
+        // Create a swap entry
+        createSwapEntry(hop, wizardData);
+
+        closeHopWizard();
+        buildAvailableThreadsIndex();
+        renderHops();
+        saveToStorage();
+
+        // Show success message
+        showNotification(
+            `Swap entry created: ${wizardData.swapDetails.fromAmount} ${wizardData.swapDetails.fromCurrency} → ${wizardData.swapDetails.toAmount} ${wizardData.swapDetails.toCurrency}`,
+            'success'
+        );
+
+        return;
+    }
 
     // Check if we have multiple outputs to process
     if (wizardData.multipleOutputs && wizardData.multipleOutputs.length > 0) {

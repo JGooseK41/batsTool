@@ -3,50 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-21 06:31)
+## Latest Commit (Auto-updated: 2025-09-21 06:35)
 
-**Commit:** 45b3b16e47fe1bd5bb5358905d1cc05088e2dd8b
+**Commit:** 87758d910811796013278ccaa72abfe2fc153613
 **Author:** Your Name
-**Message:** Major improvements to wizard transaction handling and DEX swap support
+**Message:** Use BROWN wallet classification for DEX swaps
 
-Fixes:
-- Wizard now properly populates notation field with thread IDs (e.g., V1-T1-H1)
-- Auto-detects currency from transaction lookup data
-- Currency properly set when multiple source threads are selected
-- Fixed issue where source threads weren't being recognized after wizard selection
-
-New Features:
-- Added DEX swap detection and tracking
-- When source currency differs from transaction currency, marks as swap
-- Swap details shown in wizard with warning/notification
-- Swap notation added to entry (e.g., [SWAP: LINK → ETH])
-- Automatic notes added documenting the swap
-
-UI Improvements:
-- Better feedback when transaction is found and ready to create
-- Clear success indicators in wizard
-- Shows swap detection warnings when applicable
-- Improved summary display in step 3 of wizard
+- BROWN wallets now automatically assigned to DEX/swap transactions
+- When source currency differs from output currency, marks as BROWN
+- Updated swap detection warnings to mention BROWN classification
+- Works for both single and multiple output transactions
+- Clear visual indicator in UI that swap wallets are BROWN (Asset Conversion)
+- Maintains proper wallet color semantics per BATS methodology
 
 ### Changed Files:
 ```
- CLAUDE.md  |  44 +++++++++++-----------
- index.html | 124 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 133 insertions(+), 35 deletions(-)
+ CLAUDE.md  | 55 +++++++++++++++++++++++++++++++-------------------
+ index.html | 68 +++++++++++++++++++++++++++++++++++++++++++++++++++++---------
+ 2 files changed, 92 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 45b3b16 Major improvements to wizard transaction handling and DEX swap support (0 seconds ago)
+- 87758d9 Use BROWN wallet classification for DEX swaps (0 seconds ago)
+- 45b3b16 Major improvements to wizard transaction handling and DEX swap support (4 minutes ago)
 - d510574 Fix wizard transaction lookup and add close button (10 hours ago)
 - 3d7c67d Remove premature visualization prompts - only show when investigation is complete (12 hours ago)
 - e10954c Strengthen currency separation to ensure proper scaling (12 hours ago)
-- d3a73d8 Fix critical currency mixing bug in victim transaction totals (12 hours ago)
+- d3a73d8 Fix critical currency mixing bug in victim transaction totals (13 hours ago)
 - 62bc539 Fix CSP issues by removing CORS proxy usage (16 hours ago)
 - 1558665 Auto-update CLAUDE.md (16 hours ago)
 - 28311c6 Improve visual contrast for work area and input fields (16 hours ago)
 - 0ba9e4f Auto-update CLAUDE.md (16 hours ago)
-- 2c9a44e Enhance main work area visual differentiation (16 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
