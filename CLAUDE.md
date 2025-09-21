@@ -3,38 +3,28 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-21 09:33)
+## Latest Commit (Auto-updated: 2025-09-21 09:39)
 
-**Commit:** e8209a8506c12c715eb292893bcb627db6957ede
+**Commit:** 6154337969478a424463a75fee83f2ca6f037405
 **Author:** Your Name
-**Message:** Fix 'wizardData is not defined' error with robust error handling
+**Message:** Fix wizardData undefined error in transaction lookup
 
-Added Safety Checks:
-- Check for window.hopWizardData existence in showHopWizardStep
-- Check for wizardData in updateWizardTotal function
-- Better error messages when wizard session is lost
-- Added 'Close Wizard' button in error states
-
-Improved Error Handling:
-- Transaction lookup now shows specific session error if wizardData is lost
-- Clear instructions to close and restart wizard if session error occurs
-- Console logging for debugging when wizardData is missing
-
-User Experience:
-- Clearer error messages explaining what happened
-- One-click close button to exit broken wizard state
-- Prevents undefined reference errors from crashing the wizard
+- Fixed missing 'window.' prefix on line 14899
+- Changed wizardData.outputClassifications to window.hopWizardData.outputClassifications
+- This was causing ReferenceError when looking up transactions with multiple outputs
+- All wizardData references now properly use window.hopWizardData
 
 ### Changed Files:
 ```
- CLAUDE.md  | 67 +++++++++++++++++++-------------------------------------------
- index.html | 45 +++++++++++++++++++++++++++++++++++------
- 2 files changed, 59 insertions(+), 53 deletions(-)
+ CLAUDE.md  | 51 +++++++++++++++++++++++++++++++--------------------
+ index.html |  4 ++--
+ 2 files changed, 33 insertions(+), 22 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e8209a8 Fix 'wizardData is not defined' error with robust error handling (0 seconds ago)
+- 6154337 Fix wizardData undefined error in transaction lookup (0 seconds ago)
+- e8209a8 Fix 'wizardData is not defined' error with robust error handling (6 minutes ago)
 - bd628a6 Remove external crypto-js CDN to eliminate CSP warnings (2 hours ago)
 - 486affc Add comprehensive DEX swap documentation system (3 hours ago)
 - 87758d9 Use BROWN wallet classification for DEX swaps (3 hours ago)
@@ -42,8 +32,7 @@ User Experience:
 - d510574 Fix wizard transaction lookup and add close button (13 hours ago)
 - 3d7c67d Remove premature visualization prompts - only show when investigation is complete (15 hours ago)
 - e10954c Strengthen currency separation to ensure proper scaling (15 hours ago)
-- d3a73d8 Fix critical currency mixing bug in victim transaction totals (15 hours ago)
-- 62bc539 Fix CSP issues by removing CORS proxy usage (19 hours ago)
+- d3a73d8 Fix critical currency mixing bug in victim transaction totals (16 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

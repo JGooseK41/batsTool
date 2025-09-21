@@ -14786,6 +14786,22 @@ async function lookupWizardTransaction() {
                 throw new Error('Unsupported blockchain');
         }
         
+        // Determine the currency we're tracking from source threads
+        let trackingCurrency = null;
+        if (window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0) {
+            const threads = getAvailableSourcesForHop(window.hopWizardData.hopNumber, null);
+            const sourceCurrencies = new Set();
+            window.hopWizardData.selectedThreads.forEach(threadId => {
+                const thread = threads.find(t => t.threadId === threadId);
+                if (thread) sourceCurrencies.add(thread.currency);
+            });
+            // If all source threads are the same currency, that's what we're tracking
+            if (sourceCurrencies.size === 1) {
+                trackingCurrency = Array.from(sourceCurrencies)[0];
+                console.log(`Tracking currency: ${trackingCurrency}`);
+            }
+        }
+
         // Check if there are token transfers that need selection
         if (txData.transfers && txData.transfers.length > 0) {
             // Ensure wizard data still exists
@@ -14794,23 +14810,47 @@ async function lookupWizardTransaction() {
                 throw new Error('Wizard state lost. Please close and reopen the wizard.');
             }
 
-            // Store transfers for selection
-            window.hopWizardData.pendingTransfers = txData.transfers;
-            window.hopWizardData.txData = txData;
-            
-            // Initialize selection tracking
-            window.hopWizardData.selectedOutputs = window.hopWizardData.selectedOutputs || [];
-            window.hopWizardData.outputClassifications = window.hopWizardData.outputClassifications || {};
-            
-            // Auto-detect potential change outputs
-            const sourceWallet = window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0 ?
-                getAvailableSourcesForHop(window.hopWizardData.hopNumber, null).find(t => t.threadId === window.hopWizardData.selectedThreads[0])?.sourceWallet : null;
-            
-            resultDiv.innerHTML = `
+            // Filter transfers to only show those matching the tracking currency
+            let relevantTransfers = txData.transfers;
+            if (trackingCurrency) {
+                // Filter to only transfers of the currency we're tracking
+                relevantTransfers = txData.transfers.filter(t => t.currency === trackingCurrency);
+                console.log(`Filtered ${txData.transfers.length} transfers to ${relevantTransfers.length} ${trackingCurrency} transfers`);
+
+                // If no transfers match our currency, this might be an issue
+                if (relevantTransfers.length === 0) {
+                    throw new Error(`No ${trackingCurrency} transfers found in this transaction. Found: ${txData.transfers.map(t => t.currency).join(', ')}`);
+                }
+            }
+
+            // If after filtering we only have one transfer, treat it as a single transfer
+            if (relevantTransfers.length === 1) {
+                // Single transfer - no need for selection
+                window.hopWizardData.txData = {
+                    ...txData,
+                    ...relevantTransfers[0], // Use the single relevant transfer's data
+                    transfers: relevantTransfers
+                };
+                // Jump to single transfer handling below
+                txData = window.hopWizardData.txData;
+            } else if (relevantTransfers.length > 1) {
+                // Multiple transfers of the same currency - need selection
+                window.hopWizardData.pendingTransfers = relevantTransfers;
+                window.hopWizardData.txData = txData;
+
+                // Initialize selection tracking
+                window.hopWizardData.selectedOutputs = window.hopWizardData.selectedOutputs || [];
+                window.hopWizardData.outputClassifications = window.hopWizardData.outputClassifications || {};
+
+                // Auto-detect potential change outputs
+                const sourceWallet = window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0 ?
+                    getAvailableSourcesForHop(window.hopWizardData.hopNumber, null).find(t => t.threadId === window.hopWizardData.selectedThreads[0])?.sourceWallet : null;
+
+                resultDiv.innerHTML = `
                 <div style="background: #fff3e0; border: 2px solid #ff9800; border-radius: 8px; padding: 15px;">
                     <h4 style="margin-top: 0; color: #e65100;">Multiple Outputs Detected - Select All to Track</h4>
-                    <p style="margin-bottom: 10px;">This transaction has ${txData.transfers.length} outputs. Select each output you want to track and classify it:</p>
-                    
+                    <p style="margin-bottom: 10px;">This transaction has ${relevantTransfers.length} ${trackingCurrency ? trackingCurrency + ' ' : ''}outputs. Select each output you want to track and classify it:</p>
+
                     <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px;">
                         <strong>💡 Change Detection:</strong><br>
                         • Outputs returning to sender address are likely change<br>
@@ -14818,9 +14858,9 @@ async function lookupWizardTransaction() {
                         • Decimal amounts are often change<br>
                         • Change creates ORANGE threads (same custody)
                     </div>
-                    
+
                     <div style="max-height: 400px; overflow-y: auto;">
-                        ${txData.transfers.map((transfer, index) => {
+                        ${relevantTransfers.map((transfer, index) => {
                             const isRoundAmount = transfer.amount % 1 === 0 || transfer.amount % 10 === 0;
                             const isBackToSender = sourceWallet && transfer.to === sourceWallet;
                             const likelyChange = !isRoundAmount || isBackToSender;
@@ -14889,9 +14929,9 @@ async function lookupWizardTransaction() {
                     </button>
                 </div>
             `;
-            
+
             // Initialize classifications
-            txData.transfers.forEach((transfer, index) => {
+            relevantTransfers.forEach((transfer, index) => {
                 const isRoundAmount = transfer.amount % 1 === 0 || transfer.amount % 10 === 0;
                 const isBackToSender = sourceWallet && transfer.to === sourceWallet;
                 const likelyChange = !isRoundAmount || isBackToSender;
