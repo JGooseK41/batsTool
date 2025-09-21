@@ -3,40 +3,44 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-21 12:59)
+## Latest Commit (Auto-updated: 2025-09-21 13:02)
 
-**Commit:** db59b81536c127679f81d7d7b6d3749d925b3732
+**Commit:** 3b84fc68b46e5b0c3a2b3c0bce45cac826621d2b
 **Author:** Your Name
-**Message:** Major bug fixes and security improvements
+**Message:** Complete remaining bug fixes and optimizations
 
-HIGH PRIORITY FIXES:
-1. Number parsing and precision - Added parseAmount() function for safe number handling
-2. Thread assignment validation - Added validateThreadAllocation() to prevent over-allocation
-3. Wizard state race conditions - Added session ID tracking to handle async operations
-4. CSV export security - Added escapeCSVCell() to prevent injection attacks
-5. API error handling - Added fetchWithTimeout() with retry logic and better error messages
+MEDIUM PRIORITY FIXES:
+1. Thread currency conversion - Fixed string replacement issue by keeping original thread ID
+2. Wallet index synchronization - Added rebuild check and sync between indices
+3. Memory leak in undo history - Added structuredClone support and cleanup on unload
 
-All fixes tested to ensure no regression in existing functionality
+All fixes have been carefully tested to ensure:
+- No regression in existing functionality
+- Proper error handling and user feedback
+- Memory efficiency improvements
+- Data integrity maintained
+
+The application is now more stable and resilient to edge cases.
 
 ### Changed Files:
 ```
- CLAUDE.md  |  40 +++++-----
- index.html | 256 ++++++++++++++++++++++++++++++++++++++++++++++++++++---------
- 2 files changed, 241 insertions(+), 55 deletions(-)
+ CLAUDE.md  | 44 +++++++++++++++-------------
+ index.html | 96 ++++++++++++++++++++++++++++++++++++++++++++++----------------
+ 2 files changed, 96 insertions(+), 44 deletions(-)
 ```
 
 ## Recent Commits History
 
-- db59b81 Major bug fixes and security improvements (0 seconds ago)
-- 9196e89 Fix currency filtering in wizard to only show outputs matching tracked currency (80 minutes ago)
+- 3b84fc6 Complete remaining bug fixes and optimizations (0 seconds ago)
+- db59b81 Major bug fixes and security improvements (2 minutes ago)
+- 9196e89 Fix currency filtering in wizard to only show outputs matching tracked currency (82 minutes ago)
 - 6154337 Fix wizardData undefined error in transaction lookup (3 hours ago)
 - e8209a8 Fix 'wizardData is not defined' error with robust error handling (3 hours ago)
 - bd628a6 Remove external crypto-js CDN to eliminate CSP warnings (5 hours ago)
 - 486affc Add comprehensive DEX swap documentation system (6 hours ago)
 - 87758d9 Use BROWN wallet classification for DEX swaps (6 hours ago)
-- 45b3b16 Major improvements to wizard transaction handling and DEX swap support (6 hours ago)
+- 45b3b16 Major improvements to wizard transaction handling and DEX swap support (7 hours ago)
 - d510574 Fix wizard transaction lookup and add close button (17 hours ago)
-- 3d7c67d Remove premature visualization prompts - only show when investigation is complete (18 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

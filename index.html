@@ -15183,10 +15183,9 @@ async function lookupWizardTransaction() {
                     </div>
                 </div>
             `;
-        }
-        
+
         document.getElementById('wizardNextBtn').disabled = false;
-        
+
     } catch (error) {
         console.error('Transaction lookup error:', error);
 
@@ -20893,7 +20892,6 @@ async function lookupEthereumTransaction(txHash) {
                 
                 const tokenResponse = await fetchWithTimeout(tokenUrl);
                 tokenData = await tokenResponse.json();
-                }
             } catch (err) {
                 console.log('No token transfers found');
             }
