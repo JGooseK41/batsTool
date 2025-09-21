@@ -35,23 +35,8 @@
     <!-- Inline minimal crypto functions to avoid CSP issues -->
     <script>
     // Minimal crypto implementations for PK Converter and Address Finder
-    // Using Web Crypto API as fallback when crypto-js is blocked by CSP
-
-    // Try to load crypto-js if possible, otherwise use fallback
-    (function() {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js';
-        script.onerror = function() {
-            console.log('crypto-js blocked by CSP, using Web Crypto API fallback');
-            // Flag to indicate we need to use Web Crypto API
-            window.cryptoJSBlocked = true;
-        };
-        script.onload = function() {
-            console.log('crypto-js loaded successfully');
-            window.cryptoJSBlocked = false;
-        };
-        document.head.appendChild(script);
-    })();
+    // Using Web Crypto API for hashing (no external dependencies needed)
+    window.cryptoJSBlocked = true; // Always use Web Crypto API to avoid CSP issues
     </script>
 
     <!--

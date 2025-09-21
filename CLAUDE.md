@@ -3,38 +3,63 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-21 06:35)
+## Latest Commit (Auto-updated: 2025-09-21 06:46)
 
-**Commit:** 87758d910811796013278ccaa72abfe2fc153613
+**Commit:** 486affca175e1ad30daf2a4e4263f6a0aa17423b
 **Author:** Your Name
-**Message:** Use BROWN wallet classification for DEX swaps
+**Message:** Add comprehensive DEX swap documentation system
 
-- BROWN wallets now automatically assigned to DEX/swap transactions
-- When source currency differs from output currency, marks as BROWN
-- Updated swap detection warnings to mention BROWN classification
-- Works for both single and multiple output transactions
-- Clear visual indicator in UI that swap wallets are BROWN (Asset Conversion)
-- Maintains proper wallet color semantics per BATS methodology
+New Swap Entry Type:
+- Added 'swap' as a new entry type for DEX/asset conversions
+- Swap entries don't increment hop count (stays at same hop level)
+- Documents the conversion without breaking the investigation flow
+
+Swap Detection and Creation:
+- Wizard automatically detects when input currency differs from output
+- Creates dedicated swap entry with full details
+- Shows clear warning/info about what will be created
+- DEX contract properly marked as BROWN wallet
+
+Thread Currency Conversion:
+- Swap entries automatically convert thread currency
+- LINK threads become ETH threads after swap
+- Maintains same notation base (e.g., V1-T1-H2)
+- Available threads update to reflect new currency
+
+User Experience:
+- Clear visual indication when swap is detected
+- Detailed explanation of swap handling in wizard
+- Shows input/output amounts and currencies
+- Confirms DEX will be marked as BROWN wallet
+
+Thread Management:
+- updateThreadsAfterSwap() converts threads to new currency
+- Removes old currency threads from available pool
+- Adds new currency threads with swap metadata
+- Maintains investigation continuity through currency changes
+
+This allows proper documentation of DEX swaps without disrupting the hop flow,
+while maintaining accurate thread tracking across currency conversions.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 55 +++++++++++++++++++++++++++++++-------------------
- index.html | 68 +++++++++++++++++++++++++++++++++++++++++++++++++++++---------
- 2 files changed, 92 insertions(+), 31 deletions(-)
+ CLAUDE.md  |  42 ++++++----------
+ index.html | 166 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 177 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 87758d9 Use BROWN wallet classification for DEX swaps (0 seconds ago)
-- 45b3b16 Major improvements to wizard transaction handling and DEX swap support (4 minutes ago)
+- 486affc Add comprehensive DEX swap documentation system (0 seconds ago)
+- 87758d9 Use BROWN wallet classification for DEX swaps (11 minutes ago)
+- 45b3b16 Major improvements to wizard transaction handling and DEX swap support (15 minutes ago)
 - d510574 Fix wizard transaction lookup and add close button (10 hours ago)
 - 3d7c67d Remove premature visualization prompts - only show when investigation is complete (12 hours ago)
-- e10954c Strengthen currency separation to ensure proper scaling (12 hours ago)
+- e10954c Strengthen currency separation to ensure proper scaling (13 hours ago)
 - d3a73d8 Fix critical currency mixing bug in victim transaction totals (13 hours ago)
 - 62bc539 Fix CSP issues by removing CORS proxy usage (16 hours ago)
 - 1558665 Auto-update CLAUDE.md (16 hours ago)
 - 28311c6 Improve visual contrast for work area and input fields (16 hours ago)
-- 0ba9e4f Auto-update CLAUDE.md (16 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
