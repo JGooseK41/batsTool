@@ -14918,7 +14918,8 @@ async function lookupWizardTransaction() {
                         swapWarning = `
                             <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 10px; margin-top: 10px;">
                                 <strong>🔄 DEX Swap Detected:</strong> Source threads are ${sourceCurrency} but transaction is ${txData.currency}.<br>
-                                This will be documented as a swap transaction.
+                                This will be classified as a <span style="color: #8B4513; font-weight: bold;">🟤 BROWN wallet</span> (Asset Conversion).<br>
+                                <small>The swap will be documented in the entry notes.</small>
                             </div>
                         `;
                     }
@@ -15096,7 +15097,29 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
     const totalSelectedAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
     const outputProportion = output.amount / wizardData.multipleOutputs.reduce((sum, o) => sum + o.amount, 0);
     const allocatedAmount = totalSelectedAmount * outputProportion;
-    
+
+    // Check if this is a swap (source currency differs from output currency)
+    let isSwap = false;
+    let swapDetails = null;
+    const threads = getAvailableSourcesForHop(hop.hopNumber, null);
+    const sourceCurrencies = new Set();
+    wizardData.selectedThreads.forEach(threadId => {
+        const thread = threads.find(t => t.threadId === threadId);
+        if (thread) sourceCurrencies.add(thread.currency);
+    });
+
+    if (sourceCurrencies.size === 1) {
+        const sourceCurrency = Array.from(sourceCurrencies)[0];
+        if (output.currency && sourceCurrency !== output.currency) {
+            isSwap = true;
+            swapDetails = {
+                fromCurrency: sourceCurrency,
+                toCurrency: output.currency,
+                type: 'DEX'
+            };
+        }
+    }
+
     // Generate thread notation
     let notation = '';
     if (wizardData.selectedThreads.length === 1) {
@@ -15108,7 +15131,20 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
         notation = wizardData.selectedThreads.map(t => t.split('-').slice(0, 2).join('-')).join('+') + `-H${hop.hopNumber}`;
         if (output.isChange) notation += '-C';
     }
-    
+
+    // Add swap notation if applicable
+    if (isSwap && swapDetails) {
+        notation += ` [SWAP: ${swapDetails.fromCurrency} → ${swapDetails.toCurrency}]`;
+    }
+
+    // Determine wallet type
+    let toWalletType = 'black';
+    if (isSwap) {
+        toWalletType = 'brown'; // BROWN for asset conversion/swap
+    } else if (output.isChange) {
+        toWalletType = 'orange'; // ORANGE for change
+    }
+
     // Create the entry
     const entry = {
         id: Date.now() + outputIndex, // Ensure unique IDs for multiple outputs
@@ -15116,23 +15152,27 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
         entryType: 'trace',
         sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
         multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
-        individualSourceAssignments: wizardData.selectedThreads.length > 1 ? 
+        individualSourceAssignments: wizardData.selectedThreads.length > 1 ?
             Object.fromEntries(Object.entries(wizardData.allocations).map(([k, v]) => [k, v * outputProportion])) : {},
         amount: allocatedAmount.toString(),
         currency: output.currency,
         fromWallet: output.from,
         fromWalletType: 'black',
         toWallet: output.to,
-        toWalletType: output.isChange ? 'orange' : 'black', // ORANGE for change
+        toWalletType: toWalletType,
         txHash: wizardData.txHash,
         timestamp: wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '',
         timezone: 'UTC',
-        notes: output.isChange ? 
-            `Change output - funds remain in sender's custody (${output.amount} ${output.currency})` : 
+        notes: isSwap ?
+            `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${output.to}` :
+            output.isChange ?
+            `Change output - funds remain in sender's custody (${output.amount} ${output.currency})` :
             `Payment output ${outputIndex + 1} of ${wizardData.multipleOutputs.length}`,
         notation: notation,
         isConvergence: wizardData.selectedThreads.length > 1,
-        isChange: output.isChange
+        isChange: output.isChange,
+        isSwap: isSwap,
+        swapDetails: swapDetails
     };
     
     hop.entries.push(entry);
@@ -15339,6 +15379,14 @@ function createHopEntryFromWizard() {
         notation += ` [SWAP: ${swapDetails.fromCurrency} → ${swapDetails.toCurrency}]`;
     }
 
+    // Determine wallet type - BROWN for swaps/DEX, otherwise use manual selection or default
+    let toWalletType = 'black';
+    if (isSwap) {
+        toWalletType = 'brown'; // BROWN indicates asset conversion/DEX swap
+    } else if (wizardData.manualData?.walletType) {
+        toWalletType = wizardData.manualData.walletType;
+    }
+
     // Create new entry with wizard data
     const entry = {
         id: hop.entries.length + 1,
@@ -15350,7 +15398,7 @@ function createHopEntryFromWizard() {
         fromWalletType: hop.hopNumber === 1 ? 'red' : 'black',
         fromWalletId: '',
         toWallet: toWallet,
-        toWalletType: wizardData.manualData?.walletType || 'black',
+        toWalletType: toWalletType,
         toWalletId: '',
         amount: Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0).toString(),
         currency: entryCurrency,
@@ -15358,7 +15406,7 @@ function createHopEntryFromWizard() {
         txHash: wizardData.txHash,
         timestamp: timestamp,
         timezone: 'UTC',
-        notes: isSwap ? `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency}` : '',
+        notes: isSwap ? `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${toWallet}` : '',
         category: '',
         justification: '',
         // Swap tracking
