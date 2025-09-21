@@ -14111,6 +14111,15 @@ function showHopEntryWizard(hopId) {
         <div id="hopEntryWizard" class="modal" style="display: block; z-index: 9999;">
             <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
                 <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10; border-bottom: 2px solid #eee; padding-bottom: 15px;">
+                    <button class="close-btn" onclick="closeHopWizard()"
+                            style="position: absolute; right: 15px; top: 15px; width: 30px; height: 30px;
+                                   font-size: 24px; background: #e74c3c; color: white; border: none;
+                                   border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+                                   justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                                   transition: all 0.3s ease; font-weight: bold; line-height: 1;"
+                            onmouseover="this.style.background='#c0392b'; this.style.transform='scale(1.1)'"
+                            onmouseout="this.style.background='#e74c3c'; this.style.transform='scale(1)'"
+                            title="Close Wizard">×</button>
                     <h2>🧙‍♂️ Hop Entry Wizard - Step 1 of 3</h2>
                     <div style="margin-top: 10px;">
                         <div style="background: #f0f0f0; height: 8px; border-radius: 4px;">
@@ -14734,12 +14743,19 @@ function updateWizardTotal() {
 }
 
 async function lookupWizardTransaction() {
+    // Ensure wizard data is initialized
+    if (!window.hopWizardData) {
+        console.error('Wizard data not initialized when looking up transaction');
+        alert('Error: Wizard not properly initialized. Please close and reopen the wizard.');
+        return;
+    }
+
     const txHash = document.getElementById('wizardTxHash').value.trim();
     if (!txHash) return;
-    
+
     const resultDiv = document.getElementById('wizardTxResult');
     resultDiv.innerHTML = '<div style="text-align: center;">Looking up transaction...</div>';
-    
+
     try {
         const detectedChain = detectBlockchainFromHash(txHash);
         if (!detectedChain) {
@@ -14766,6 +14782,12 @@ async function lookupWizardTransaction() {
         
         // Check if there are token transfers that need selection
         if (txData.transfers && txData.transfers.length > 0) {
+            // Ensure wizard data still exists
+            if (!window.hopWizardData) {
+                console.error('Wizard data lost during transaction lookup');
+                throw new Error('Wizard state lost. Please close and reopen the wizard.');
+            }
+
             // Store transfers for selection
             window.hopWizardData.pendingTransfers = txData.transfers;
             window.hopWizardData.txData = txData;
@@ -14907,8 +14929,13 @@ async function lookupWizardTransaction() {
 
 function toggleWizardOutput(index) {
     const wizardData = window.hopWizardData;
+    if (!wizardData) {
+        console.error('Wizard data not available in toggleWizardOutput');
+        return;
+    }
+
     const checkbox = document.getElementById(`wizardOutputSelect_${index}`);
-    
+
     if (!wizardData.selectedOutputs) {
         wizardData.selectedOutputs = [];
     }
@@ -14925,6 +14952,10 @@ function toggleWizardOutput(index) {
 }
 
 function classifyWizardOutput(index, type) {
+    if (!window.hopWizardData) {
+        console.error('Wizard data not available in classifyWizardOutput');
+        return;
+    }
     window.hopWizardData.outputClassifications[index] = type;
     
     // Auto-check/uncheck based on classification

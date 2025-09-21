@@ -3,36 +3,32 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-20 18:15)
+## Latest Commit (Auto-updated: 2025-09-20 18:46)
 
-**Commit:** e10954cdf9cf67a120a306073d9341ad4e1b72c7
+**Commit:** 3d7c67dae6bb811d4717dc19e3763173b979dd30
 **Author:** Your Name
-**Message:** Strengthen currency separation to ensure proper scaling
+**Message:** Remove premature visualization prompts - only show when investigation is complete
 
-- Fixed calculateRootTotal() to return object with totals by currency
-- Fixed convergence handling to track each currency separately
-- Removed duplicate currency calculation in import function
-- Ensured all currency totals are kept separate throughout the system
-- Convergence now shows '100 ETH | 50 LINK' instead of mixing currencies
-
-This ensures the fix scales properly for any number of different currencies
-and maintains BATS requirement of never mixing different asset types.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+- Added visualizationPromptSection div that is hidden by default
+- Updated updateInvestigationCompletionStatus() to show visualization prompt only when:
+  - All threads have reached terminal wallets
+  - All hops are complete
+  - No validation errors exist
+- Visualization options now only appear when investigation is truly complete
+- Prevents user confusion from seeing options that aren't ready yet
 
 ### Changed Files:
 ```
- CLAUDE.md  | 42 +++++++++++++++++++++---------------------
- index.html | 52 +++++++++++++++++++++++++++++++++-------------------
- 2 files changed, 54 insertions(+), 40 deletions(-)
+ CLAUDE.md  | 35 +++++++++++++++++++----------------
+ index.html | 38 +++++++++++++++++++++-----------------
+ 2 files changed, 40 insertions(+), 33 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e10954c Strengthen currency separation to ensure proper scaling (0 seconds ago)
-- d3a73d8 Fix critical currency mixing bug in victim transaction totals (10 minutes ago)
+- 3d7c67d Remove premature visualization prompts - only show when investigation is complete (0 seconds ago)
+- e10954c Strengthen currency separation to ensure proper scaling (31 minutes ago)
+- d3a73d8 Fix critical currency mixing bug in victim transaction totals (41 minutes ago)
 - 62bc539 Fix CSP issues by removing CORS proxy usage (4 hours ago)
 - 1558665 Auto-update CLAUDE.md (4 hours ago)
 - 28311c6 Improve visual contrast for work area and input fields (4 hours ago)
@@ -40,7 +36,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 2c9a44e Enhance main work area visual differentiation (4 hours ago)
 - 7d2dff8 Remove rainbow colors from investigation progress cards (4 hours ago)
 - c535605 Auto-update CLAUDE.md with latest changes (4 hours ago)
-- 05061c1 Improve UI professionalism and focus (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
