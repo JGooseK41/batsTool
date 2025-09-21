@@ -14152,6 +14152,22 @@ function showHopEntryWizard(hopId) {
 function showHopWizardStep(step) {
     const content = document.getElementById('wizardContent');
     const wizardData = window.hopWizardData;
+
+    // Safety check - if wizard data is lost, show error
+    if (!wizardData) {
+        console.error('Wizard data not available in showHopWizardStep');
+        if (content) {
+            content.innerHTML = `
+                <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; text-align: center;">
+                    <strong>⚠️ Session Error</strong><br>
+                    The wizard session was lost. Please close and restart.<br>
+                    <button class="btn btn-secondary" onclick="closeHopWizard()" style="margin-top: 15px;">Close Wizard</button>
+                </div>
+            `;
+        }
+        return;
+    }
+
     const progress = document.getElementById('wizardProgress');
     const backBtn = document.getElementById('wizardBackBtn');
     const nextBtn = document.getElementById('wizardNextBtn');
@@ -14697,6 +14713,10 @@ function setWizardMaxAllocation(threadId, maxAmount) {
 
 function updateWizardTotal() {
     const wizardData = window.hopWizardData;
+    if (!wizardData) {
+        console.error('Wizard data not available in updateWizardTotal');
+        return;
+    }
     const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
     
     let totalText = [];
@@ -14961,12 +14981,25 @@ async function lookupWizardTransaction() {
         document.getElementById('wizardNextBtn').disabled = false;
         
     } catch (error) {
-        resultDiv.innerHTML = `
-            <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 15px;">
-                <strong>❌ Lookup Failed</strong><br>
-                ${error.message}
-            </div>
-        `;
+        console.error('Transaction lookup error:', error);
+
+        // Check if wizardData was lost
+        if (!window.hopWizardData) {
+            resultDiv.innerHTML = `
+                <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 15px;">
+                    <strong>❌ Session Error</strong><br>
+                    The wizard session was lost. Please close this wizard and start again.<br>
+                    <button class="btn btn-secondary" onclick="closeHopWizard()" style="margin-top: 10px;">Close Wizard</button>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 15px;">
+                    <strong>❌ Lookup Failed</strong><br>
+                    ${error.message || 'Unknown error occurred'}
+                </div>
+            `;
+        }
     }
 }
 
