@@ -14895,8 +14895,8 @@ async function lookupWizardTransaction() {
                 const isRoundAmount = transfer.amount % 1 === 0 || transfer.amount % 10 === 0;
                 const isBackToSender = sourceWallet && transfer.to === sourceWallet;
                 const likelyChange = !isRoundAmount || isBackToSender;
-                
-                wizardData.outputClassifications[index] = likelyChange ? 'change' : 'payment';
+
+                window.hopWizardData.outputClassifications[index] = likelyChange ? 'change' : 'payment';
                 if (!likelyChange) {
                     toggleWizardOutput(index);
                 }

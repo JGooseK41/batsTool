@@ -3,36 +3,47 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-21 08:00)
+## Latest Commit (Auto-updated: 2025-09-21 09:33)
 
-**Commit:** bd628a6a5827224ceba0f1d543000a2e86ecd7f4
+**Commit:** e8209a8506c12c715eb292893bcb627db6957ede
 **Author:** Your Name
-**Message:** Remove external crypto-js CDN to eliminate CSP warnings
+**Message:** Fix 'wizardData is not defined' error with robust error handling
 
-- Removed attempt to load crypto-js from CDN
-- Always use Web Crypto API fallback to avoid CSP violations
-- Eliminates console error about blocked script
-- Tool continues to work perfectly with Web Crypto API
+Added Safety Checks:
+- Check for window.hopWizardData existence in showHopWizardStep
+- Check for wizardData in updateWizardTotal function
+- Better error messages when wizard session is lost
+- Added 'Close Wizard' button in error states
+
+Improved Error Handling:
+- Transaction lookup now shows specific session error if wizardData is lost
+- Clear instructions to close and restart wizard if session error occurs
+- Console logging for debugging when wizardData is missing
+
+User Experience:
+- Clearer error messages explaining what happened
+- One-click close button to exit broken wizard state
+- Prevents undefined reference errors from crashing the wizard
 
 ### Changed Files:
 ```
- CLAUDE.md  | 57 +++++++++++++++++++++++++++++++++++++++++----------------
- index.html | 19 ++-----------------
- 2 files changed, 43 insertions(+), 33 deletions(-)
+ CLAUDE.md  | 67 +++++++++++++++++++-------------------------------------------
+ index.html | 45 +++++++++++++++++++++++++++++++++++------
+ 2 files changed, 59 insertions(+), 53 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bd628a6 Remove external crypto-js CDN to eliminate CSP warnings (0 seconds ago)
-- 486affc Add comprehensive DEX swap documentation system (74 minutes ago)
-- 87758d9 Use BROWN wallet classification for DEX swaps (85 minutes ago)
-- 45b3b16 Major improvements to wizard transaction handling and DEX swap support (89 minutes ago)
-- d510574 Fix wizard transaction lookup and add close button (12 hours ago)
-- 3d7c67d Remove premature visualization prompts - only show when investigation is complete (13 hours ago)
-- e10954c Strengthen currency separation to ensure proper scaling (14 hours ago)
-- d3a73d8 Fix critical currency mixing bug in victim transaction totals (14 hours ago)
-- 62bc539 Fix CSP issues by removing CORS proxy usage (17 hours ago)
-- 1558665 Auto-update CLAUDE.md (17 hours ago)
+- e8209a8 Fix 'wizardData is not defined' error with robust error handling (0 seconds ago)
+- bd628a6 Remove external crypto-js CDN to eliminate CSP warnings (2 hours ago)
+- 486affc Add comprehensive DEX swap documentation system (3 hours ago)
+- 87758d9 Use BROWN wallet classification for DEX swaps (3 hours ago)
+- 45b3b16 Major improvements to wizard transaction handling and DEX swap support (3 hours ago)
+- d510574 Fix wizard transaction lookup and add close button (13 hours ago)
+- 3d7c67d Remove premature visualization prompts - only show when investigation is complete (15 hours ago)
+- e10954c Strengthen currency separation to ensure proper scaling (15 hours ago)
+- d3a73d8 Fix critical currency mixing bug in victim transaction totals (15 hours ago)
+- 62bc539 Fix CSP issues by removing CORS proxy usage (19 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
