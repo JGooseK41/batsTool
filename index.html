@@ -3829,21 +3829,40 @@
         }
         
         function saveUndoState(description) {
-            // Deep clone the current investigation state
-            const state = {
-                timestamp: new Date().toISOString(),
-                description: description,
-                investigation: JSON.parse(JSON.stringify(investigation))
-            };
-            
-            undoHistory.push(state);
-            
-            // Keep history size manageable
-            if (undoHistory.length > MAX_UNDO_HISTORY) {
-                undoHistory.shift();
+            try {
+                // Deep clone the current investigation state
+                // Use structured clone if available (more efficient for large objects)
+                let clonedInvestigation;
+                if (typeof structuredClone === 'function') {
+                    // Modern browsers support structuredClone (faster and handles more types)
+                    clonedInvestigation = structuredClone(investigation);
+                } else {
+                    // Fallback to JSON method
+                    clonedInvestigation = JSON.parse(JSON.stringify(investigation));
+                }
+
+                const state = {
+                    timestamp: new Date().toISOString(),
+                    description: description,
+                    investigation: clonedInvestigation
+                };
+
+                undoHistory.push(state);
+
+                // Keep history size manageable and clean up old references
+                if (undoHistory.length > MAX_UNDO_HISTORY) {
+                    const removed = undoHistory.shift();
+                    // Clear the reference to help garbage collection
+                    if (removed) {
+                        removed.investigation = null;
+                    }
+                }
+
+                updateUndoButton();
+            } catch (error) {
+                console.error('Failed to save undo state:', error);
+                // If we can't save undo state, continue operation but log error
             }
-            
-            updateUndoButton();
         }
         
         function performUndo() {
@@ -6350,6 +6369,19 @@ function updateFullNotationDisplayMultiple(hopId, entryId) {
         window.openAddressFinder = openAddressFinder;
         window.closeAddressFinderModal = closeAddressFinderModal;
 
+        // Clean up memory on page unload
+        window.addEventListener('beforeunload', () => {
+            // Clear undo history to free memory
+            if (typeof undoHistory !== 'undefined' && undoHistory && undoHistory.length > 0) {
+                undoHistory.forEach(state => {
+                    if (state && state.investigation) {
+                        state.investigation = null;
+                    }
+                });
+                undoHistory.length = 0;
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing B.A.T.S. application...');
 
@@ -7320,32 +7352,47 @@ function updateFormFieldsFromInvestigation() {
 
         function buildRedWalletIndex() {
             investigation.redWalletIndex = [];
-            
+
+            // Ensure universal index is up to date first
+            if (!investigation.universalWalletIndex || investigation.universalWalletIndex.length === 0) {
+                buildUniversalWalletIndex();
+            }
+
             investigation.victims.forEach(victim => {
                 victim.transactions.forEach(transaction => {
-                    if (parseFloat(transaction.amount) > 0 && transaction.receivingWallet) {
+                    const amount = parseAmount(transaction.amount);
+                    if (amount > 0 && transaction.receivingWallet) {
                         const currency = transaction.currency === 'CUSTOM' ? transaction.customCurrency : transaction.currency;
-                        
+                        const walletAddress = transaction.receivingWallet.trim();
+
                         // Find corresponding wallet ID from universal index
                         let walletId = '';
-                        const universalEntry = investigation.universalWalletIndex.find(w => w.address === transaction.receivingWallet.trim());
+                        const universalEntry = investigation.universalWalletIndex.find(w => w.address === walletAddress);
                         if (universalEntry) {
                             walletId = universalEntry.permanentId;
+                        } else {
+                            // If not found, rebuild universal index and try again
+                            console.warn(`Wallet ${walletAddress} not found in universal index, rebuilding...`);
+                            buildUniversalWalletIndex();
+                            const retryEntry = investigation.universalWalletIndex.find(w => w.address === walletAddress);
+                            if (retryEntry) {
+                                walletId = retryEntry.permanentId;
+                            }
                         }
-                        
+
                         const redEntry = {
                             id: investigation.redWalletIndex.length + 1,
                             vtNotation: `V${victim.id}-T${transaction.id}`,
                             walletId: walletId,
-                            walletAddress: transaction.receivingWallet.trim(),
+                            walletAddress: walletAddress,
                             depositDate: transaction.datetime,
                             timezone: transaction.timezone,
-                            amount: parseFloat(transaction.amount),
+                            amount: amount,
                             currency: currency,
                             notes: transaction.notes || '',
                             investigativeNotes: '' // For additional investigative findings
                         };
-                        
+
                         investigation.redWalletIndex.push(redEntry);
                     }
                 });
@@ -15394,8 +15441,9 @@ function updateThreadsAfterSwap(hop, swapEntry) {
             investigation.availableThreads[swapDetails.toCurrency] = {};
         }
 
-        // Create the converted thread
-        const newThreadId = swapEntry.sourceThreadId.replace(swapDetails.fromCurrency, swapDetails.toCurrency);
+        // Create the converted thread - keep the same base notation but update currency tracking
+        // Don't modify the thread ID itself to avoid issues if currency appears in notation
+        const newThreadId = swapEntry.sourceThreadId; // Keep original ID structure
         investigation.availableThreads[swapDetails.toCurrency][newThreadId] = {
             threadId: newThreadId,
             totalAmount: swapDetails.toAmount,
