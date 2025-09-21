@@ -14998,8 +14998,9 @@ async function lookupWizardTransaction() {
                     ...relevantTransfers[0], // Use the single relevant transfer's data
                     transfers: relevantTransfers
                 };
-                // Jump to single transfer handling below
+                // Update txData to use the filtered single transfer
                 txData = window.hopWizardData.txData;
+                // Important: Don't process this transfer twice - skip the multi-transfer handling
             } else if (relevantTransfers.length > 1) {
                 // Multiple transfers of the same currency - need selection
                 window.hopWizardData.pendingTransfers = relevantTransfers;
@@ -15110,27 +15111,32 @@ async function lookupWizardTransaction() {
             });
             
             updateWizardOutputSummary();
-        } else {
-            // Single transfer or no token transfers
+            return; // Exit early - multi-output UI will handle the rest
+        }
+
+        // If we get here, we have a single transfer after filtering (or no token transfers)
+        // This code handles both cases
+        if (!window.hopWizardData.txData) {
             window.hopWizardData.txData = txData;
+        }
 
-            // Check if this might be a DEX swap
-            let swapWarning = '';
-            let isSwap = false;
-            let swapFromCurrency = null;
+        // Check if this might be a DEX swap
+        let swapWarning = '';
+        let isSwap = false;
+        let swapFromCurrency = null;
 
-            if (window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0) {
-                const threads = getAvailableSourcesForHop(window.hopWizardData.hopNumber, null);
-                const sourceCurrencies = new Set();
-                window.hopWizardData.selectedThreads.forEach(threadId => {
-                    const thread = threads.find(t => t.threadId === threadId);
-                    if (thread) sourceCurrencies.add(thread.currency);
-                });
+        if (window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0) {
+            const threads = getAvailableSourcesForHop(window.hopWizardData.hopNumber, null);
+            const sourceCurrencies = new Set();
+            window.hopWizardData.selectedThreads.forEach(threadId => {
+                const thread = threads.find(t => t.threadId === threadId);
+                if (thread) sourceCurrencies.add(thread.currency);
+            });
 
-                // If source currency differs from transaction currency, it's a swap
-                if (sourceCurrencies.size === 1) {
-                    const sourceCurrency = Array.from(sourceCurrencies)[0];
-                    if (txData.currency && sourceCurrency !== txData.currency) {
+            // If source currency differs from transaction currency, it's a swap
+            if (sourceCurrencies.size === 1) {
+                const sourceCurrency = Array.from(sourceCurrencies)[0];
+                if (txData.currency && sourceCurrency !== txData.currency) {
                         isSwap = true;
                         swapFromCurrency = sourceCurrency;
                         window.hopWizardData.isSwap = true;
@@ -15166,28 +15172,27 @@ async function lookupWizardTransaction() {
                 }
             }
 
-            resultDiv.innerHTML = `
-                <div style="background: #e8f4f8; border: 1px solid #3498db; border-radius: 8px; padding: 15px;">
-                    <h4 style="margin-top: 0;">Transaction Found ✓</h4>
-                    <div style="display: grid; gap: 8px; font-size: 14px;">
-                        <div><strong>Chain:</strong> ${txData.blockchain}</div>
-                        <div><strong>Amount:</strong> ${txData.amount} ${txData.currency}</div>
-                        <div><strong>From:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.from}</span></div>
-                        <div><strong>To:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span></div>
-                        <div><strong>Time:</strong> ${new Date(txData.time).toLocaleString()} UTC</div>
-                    </div>
-                    ${swapWarning}
-                    <div style="margin-top: 15px; padding: 10px; background: #d4edda; border-radius: 4px;">
-                        <strong>✅ Ready to create entry</strong><br>
-                        <small>Click "Create Entry" to add this transaction to Hop ${window.hopWizardData.hopNumber}</small>
-                    </div>
+        resultDiv.innerHTML = `
+            <div style="background: #e8f4f8; border: 1px solid #3498db; border-radius: 8px; padding: 15px;">
+                <h4 style="margin-top: 0;">Transaction Found ✓</h4>
+                <div style="display: grid; gap: 8px; font-size: 14px;">
+                    <div><strong>Chain:</strong> ${txData.blockchain}</div>
+                    <div><strong>Amount:</strong> ${txData.amount} ${txData.currency}</div>
+                    <div><strong>From:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.from}</span></div>
+                    <div><strong>To:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span></div>
+                    <div><strong>Time:</strong> ${new Date(txData.time).toLocaleString()} UTC</div>
                 </div>
-            `;
-        } // Close the else block that started on line 15113
+                ${swapWarning}
+                <div style="margin-top: 15px; padding: 10px; background: #d4edda; border-radius: 4px;">
+                    <strong>✅ Ready to create entry</strong><br>
+                    <small>Click "Create Entry" to add this transaction to Hop ${window.hopWizardData.hopNumber}</small>
+                </div>
+            </div>
+        `;
 
         document.getElementById('wizardNextBtn').disabled = false;
 
-        } // Close the outer if that checks for token transfers (line 14973)
+        } // Close the outer if that checks for token transfers (line 14973) - or continue for no-transfer transactions
 
     } catch (error) {
         console.error('Transaction lookup error:', error);
