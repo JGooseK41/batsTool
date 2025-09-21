@@ -15183,8 +15183,11 @@ async function lookupWizardTransaction() {
                     </div>
                 </div>
             `;
+        } // Close the else block that started on line 15113
 
         document.getElementById('wizardNextBtn').disabled = false;
+
+        } // Close the outer if that checks for token transfers (line 14973)
 
     } catch (error) {
         console.error('Transaction lookup error:', error);
