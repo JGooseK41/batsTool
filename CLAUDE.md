@@ -3,39 +3,37 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-20 18:46)
+## Latest Commit (Auto-updated: 2025-09-20 20:29)
 
-**Commit:** 3d7c67dae6bb811d4717dc19e3763173b979dd30
+**Commit:** d5105740f70d45df9b0f8474b7f23034a94aa033
 **Author:** Your Name
-**Message:** Remove premature visualization prompts - only show when investigation is complete
+**Message:** Fix wizard transaction lookup and add close button
 
-- Added visualizationPromptSection div that is hidden by default
-- Updated updateInvestigationCompletionStatus() to show visualization prompt only when:
-  - All threads have reached terminal wallets
-  - All hops are complete
-  - No validation errors exist
-- Visualization options now only appear when investigation is truly complete
-- Prevents user confusion from seeing options that aren't ready yet
+- Added X close button to wizard modal for better UX
+- Fixed 'wizardData is not defined' error by adding safety checks
+- Added validation to ensure window.hopWizardData exists before use
+- Added error handling for cases where wizard state is lost
+- Improved error messages to guide users when wizard needs to be reopened
 
 ### Changed Files:
 ```
- CLAUDE.md  | 35 +++++++++++++++++++----------------
- index.html | 38 +++++++++++++++++++++-----------------
- 2 files changed, 40 insertions(+), 33 deletions(-)
+ CLAUDE.md  | 37 ++++++++++++++++---------------------
+ index.html | 37 ++++++++++++++++++++++++++++++++++---
+ 2 files changed, 50 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3d7c67d Remove premature visualization prompts - only show when investigation is complete (0 seconds ago)
-- e10954c Strengthen currency separation to ensure proper scaling (31 minutes ago)
-- d3a73d8 Fix critical currency mixing bug in victim transaction totals (41 minutes ago)
-- 62bc539 Fix CSP issues by removing CORS proxy usage (4 hours ago)
-- 1558665 Auto-update CLAUDE.md (4 hours ago)
-- 28311c6 Improve visual contrast for work area and input fields (4 hours ago)
-- 0ba9e4f Auto-update CLAUDE.md (4 hours ago)
-- 2c9a44e Enhance main work area visual differentiation (4 hours ago)
-- 7d2dff8 Remove rainbow colors from investigation progress cards (4 hours ago)
-- c535605 Auto-update CLAUDE.md with latest changes (4 hours ago)
+- d510574 Fix wizard transaction lookup and add close button (0 seconds ago)
+- 3d7c67d Remove premature visualization prompts - only show when investigation is complete (2 hours ago)
+- e10954c Strengthen currency separation to ensure proper scaling (2 hours ago)
+- d3a73d8 Fix critical currency mixing bug in victim transaction totals (2 hours ago)
+- 62bc539 Fix CSP issues by removing CORS proxy usage (6 hours ago)
+- 1558665 Auto-update CLAUDE.md (6 hours ago)
+- 28311c6 Improve visual contrast for work area and input fields (6 hours ago)
+- 0ba9e4f Auto-update CLAUDE.md (6 hours ago)
+- 2c9a44e Enhance main work area visual differentiation (6 hours ago)
+- 7d2dff8 Remove rainbow colors from investigation progress cards (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
