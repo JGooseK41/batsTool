@@ -3,36 +3,36 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-21 09:39)
+## Latest Commit (Auto-updated: 2025-09-21 11:40)
 
-**Commit:** 6154337969478a424463a75fee83f2ca6f037405
+**Commit:** 9196e899a8ba751f5f559411384a59823b4ee91e
 **Author:** Your Name
-**Message:** Fix wizardData undefined error in transaction lookup
+**Message:** Fix currency filtering in wizard to only show outputs matching tracked currency
 
-- Fixed missing 'window.' prefix on line 14899
-- Changed wizardData.outputClassifications to window.hopWizardData.outputClassifications
-- This was causing ReferenceError when looking up transactions with multiple outputs
-- All wizardData references now properly use window.hopWizardData
+- Filter transaction outputs to only show transfers matching the source thread currency
+- When tracking USDC, ETH transfers are now properly ignored
+- Updated multiple output detection to use filtered transfers
+- Display currency name in output count message for clarity
 
 ### Changed Files:
 ```
- CLAUDE.md  | 51 +++++++++++++++++++++++++++++++--------------------
- index.html |  4 ++--
- 2 files changed, 33 insertions(+), 22 deletions(-)
+ CLAUDE.md  | 37 +++++++++++------------------
+ index.html | 78 +++++++++++++++++++++++++++++++++++++++++++++++---------------
+ 2 files changed, 72 insertions(+), 43 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6154337 Fix wizardData undefined error in transaction lookup (0 seconds ago)
-- e8209a8 Fix 'wizardData is not defined' error with robust error handling (6 minutes ago)
-- bd628a6 Remove external crypto-js CDN to eliminate CSP warnings (2 hours ago)
-- 486affc Add comprehensive DEX swap documentation system (3 hours ago)
-- 87758d9 Use BROWN wallet classification for DEX swaps (3 hours ago)
-- 45b3b16 Major improvements to wizard transaction handling and DEX swap support (3 hours ago)
-- d510574 Fix wizard transaction lookup and add close button (13 hours ago)
-- 3d7c67d Remove premature visualization prompts - only show when investigation is complete (15 hours ago)
-- e10954c Strengthen currency separation to ensure proper scaling (15 hours ago)
-- d3a73d8 Fix critical currency mixing bug in victim transaction totals (16 hours ago)
+- 9196e89 Fix currency filtering in wizard to only show outputs matching tracked currency (1 second ago)
+- 6154337 Fix wizardData undefined error in transaction lookup (2 hours ago)
+- e8209a8 Fix 'wizardData is not defined' error with robust error handling (2 hours ago)
+- bd628a6 Remove external crypto-js CDN to eliminate CSP warnings (4 hours ago)
+- 486affc Add comprehensive DEX swap documentation system (5 hours ago)
+- 87758d9 Use BROWN wallet classification for DEX swaps (5 hours ago)
+- 45b3b16 Major improvements to wizard transaction handling and DEX swap support (5 hours ago)
+- d510574 Fix wizard transaction lookup and add close button (15 hours ago)
+- 3d7c67d Remove premature visualization prompts - only show when investigation is complete (17 hours ago)
+- e10954c Strengthen currency separation to ensure proper scaling (17 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

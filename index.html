@@ -3071,6 +3071,85 @@
             const precision = getCurrencyPrecision(currency);
             return parseFloat(amount).toFixed(precision);
         }
+
+        // Safe amount parsing with validation
+        function parseAmount(value, currency = null) {
+            // Handle various input types
+            if (value === null || value === undefined || value === '') {
+                return 0;
+            }
+
+            // Convert to string and clean
+            const cleanValue = String(value).trim().replace(/,/g, '');
+
+            // Parse the number
+            const parsed = parseFloat(cleanValue);
+
+            // Check for invalid numbers
+            if (isNaN(parsed) || !isFinite(parsed)) {
+                return 0;
+            }
+
+            // Apply precision if currency specified
+            if (currency) {
+                const precision = getCurrencyPrecision(currency);
+                const factor = Math.pow(10, precision);
+                return Math.round(parsed * factor) / factor;
+            }
+
+            return parsed;
+        }
+
+        // Validate if amount is valid and positive
+        function isValidAmount(value) {
+            const parsed = parseAmount(value);
+            return parsed > 0 && isFinite(parsed);
+        }
+
+        // Enhanced fetch with timeout and retry logic
+        async function fetchWithTimeout(url, options = {}, timeoutMs = 15000, retries = 2) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+            const fetchOptions = {
+                ...options,
+                signal: controller.signal
+            };
+
+            let lastError = null;
+            for (let attempt = 0; attempt <= retries; attempt++) {
+                try {
+                    if (attempt > 0) {
+                        // Wait before retry (exponential backoff)
+                        await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+                    }
+
+                    const response = await fetch(url, fetchOptions);
+                    clearTimeout(timeout);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    return response;
+                } catch (error) {
+                    lastError = error;
+                    if (error.name === 'AbortError') {
+                        console.log(`Request timeout for ${url} (attempt ${attempt + 1}/${retries + 1})`);
+                    } else {
+                        console.log(`Request failed for ${url} (attempt ${attempt + 1}/${retries + 1}):`, error.message);
+                    }
+
+                    // Don't retry on certain errors
+                    if (error.message.includes('HTTP 404') || error.message.includes('HTTP 403')) {
+                        break;
+                    }
+                }
+            }
+
+            clearTimeout(timeout);
+            throw lastError || new Error('Failed to fetch after retries');
+        }
         
         // Add entry to validation history
         function addValidationHistoryEntry(type, details, status = 'info') {
@@ -3994,11 +4073,12 @@
                 // Check which threads from this hop are used downstream
                 const threadsFromThisHop = [];
                 hop.entries.forEach(entry => {
-                    if (entry.notation && parseFloat(entry.amount) > 0) {
+                    const amount = parseAmount(entry.amount);
+                    if (entry.notation && amount > 0) {
                         const threadId = `${entry.notation}-H${hop.hopNumber}`;
                         threadsFromThisHop.push({
                             threadId: threadId,
-                            amount: entry.amount,
+                            amount: amount,
                             currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency
                         });
                     }
@@ -4107,13 +4187,13 @@
                         if (!threadAvailable) {
                             entryIssues.push(`Source thread ${entry.sourceThreadId} no longer exists`);
                             hasIssues = true;
-                        } else if (threadAvailable.availableAmount < parseFloat(entry.amount)) {
+                        } else if (threadAvailable.availableAmount < parseAmount(entry.amount)) {
                             entryIssues.push(`Source thread ${entry.sourceThreadId} only has ${threadAvailable.availableAmount} available (needs ${entry.amount})`);
                             hasIssues = true;
                             fixableIssues.push({
                                 entryId: entry.id,
                                 issue: 'insufficient_amount',
-                                currentAmount: parseFloat(entry.amount),
+                                currentAmount: parseAmount(entry.amount),
                                 availableAmount: threadAvailable.availableAmount
                             });
                         }
@@ -7621,7 +7701,7 @@ function exportWalletIndex(indexType) {
     
     wallets.forEach(wallet => {
         if (indexType === 'universal') {
-            csvContent += `"${wallet.permanentId}","${wallet.permanentType}","${wallet.address}","${wallet.firstSeenHop || 'Unknown'}","${(wallet.notes || '').replace(/"/g, '""')}"\n`;
+            csvContent += `${escapeCSVCell(wallet.permanentId)},${escapeCSVCell(wallet.permanentType)},${escapeCSVCell(wallet.address)},${escapeCSVCell(wallet.firstSeenHop || 'Unknown')},${escapeCSVCell(wallet.notes || '')}\n`;
         } else if (indexType === 'purple') {
             // Calculate total received
             const receivedAmounts = {};
@@ -7640,7 +7720,7 @@ function exportWalletIndex(indexType) {
                 .map(([currency, amount]) => `${amount.toLocaleString()} ${currency}`)
                 .join('; ') || 'None';
             
-            csvContent += `"${wallet.permanentId}","${wallet.exchangeName || ''}","${wallet.address}","${wallet.firstSeenHop || 'Unknown'}","${totalDisplay}","${(wallet.notes || '').replace(/"/g, '""')}"\n`;
+            csvContent += `${escapeCSVCell(wallet.permanentId)},${escapeCSVCell(wallet.exchangeName || '')},${escapeCSVCell(wallet.address)},${escapeCSVCell(wallet.firstSeenHop || 'Unknown')},${escapeCSVCell(totalDisplay)},${escapeCSVCell(wallet.notes || '')}\n`;
         } else if (indexType === 'blue') {
             // Calculate cold storage amounts
             const coldStorageAmounts = {};
@@ -7659,7 +7739,7 @@ function exportWalletIndex(indexType) {
                 .map(([currency, amount]) => `${amount.toLocaleString()} ${currency}`)
                 .join('; ') || 'None';
             
-            csvContent += `"${wallet.permanentId}","${wallet.address}","${amountDisplay}","${wallet.status || 'monitoring'}","${(wallet.notes || '').replace(/"/g, '""')}"\n`;
+            csvContent += `${escapeCSVCell(wallet.permanentId)},${escapeCSVCell(wallet.address)},${escapeCSVCell(amountDisplay)},${escapeCSVCell(wallet.status || 'monitoring')},${escapeCSVCell(wallet.notes || '')}\n`;
         }
     });
     
@@ -8305,12 +8385,18 @@ function exportRedWalletIndexCSV() {
             const totalsByCurrency = {};
             investigation.victims.forEach(v => {
                 v.transactions.forEach(t => {
-                    if (parseFloat(t.amount) > 0) {
+                    const amount = parseAmount(t.amount);
+                    if (amount > 0) {
                         const currency = t.currency === 'CUSTOM' ? t.customCurrency : t.currency;
                         if (!totalsByCurrency[currency]) {
                             totalsByCurrency[currency] = 0;
                         }
-                        totalsByCurrency[currency] += parseFloat(t.amount);
+                        // Use safe addition for currency amounts
+                        totalsByCurrency[currency] = addCurrencyAmounts(
+                            totalsByCurrency[currency],
+                            amount,
+                            currency
+                        );
                     }
                 });
             });
@@ -9253,26 +9339,50 @@ function exportUniversalWalletIndex() {
         }
         
         // Export to CSV for specific data
+        // Safe CSV cell escaping to prevent injection attacks
+        function escapeCSVCell(value) {
+            if (value === null || value === undefined) {
+                return '';
+            }
+
+            const strValue = String(value);
+
+            // Check for CSV injection patterns
+            const injectionChars = ['=', '+', '-', '@', '\t', '\r'];
+            const needsEscape = injectionChars.some(char => strValue.startsWith(char));
+
+            // If starts with injection character, prefix with single quote
+            let escaped = needsEscape ? "'" + strValue : strValue;
+
+            // Handle quotes and commas
+            if (escaped.includes('"') || escaped.includes(',') || escaped.includes('\n')) {
+                // Escape quotes by doubling them
+                escaped = escaped.replace(/"/g, '""');
+                // Wrap in quotes
+                escaped = `"${escaped}"`;
+            }
+
+            return escaped;
+        }
+
         function exportToCSV(data, filename) {
             let csv = '';
-            
+
             // Add headers
             const headers = Object.keys(data[0]);
-            csv += headers.join(',') + '\n';
-            
+            csv += headers.map(h => escapeCSVCell(h)).join(',') + '\n';
+
             // Add data
             data.forEach(row => {
                 csv += headers.map(header => {
                     const value = row[header];
-                    return typeof value === 'string' && value.includes(',') 
-                        ? `"${value}"` 
-                        : value;
+                    return escapeCSVCell(value);
                 }).join(',') + '\n';
             });
-            
+
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
-            
+
             const a = document.createElement('a');
             a.href = url;
             a.download = filename;
@@ -14756,6 +14866,10 @@ async function lookupWizardTransaction() {
         return;
     }
 
+    // Store the wizard session ID to detect if wizard was closed during lookup
+    const sessionId = Date.now();
+    window.hopWizardData.lookupSessionId = sessionId;
+
     const txHash = document.getElementById('wizardTxHash').value.trim();
     if (!txHash) return;
 
@@ -14767,7 +14881,7 @@ async function lookupWizardTransaction() {
         if (!detectedChain) {
             throw new Error('Unable to detect blockchain from hash');
         }
-        
+
         let txData;
         switch(detectedChain) {
             case 'ethereum':
@@ -14785,7 +14899,13 @@ async function lookupWizardTransaction() {
             default:
                 throw new Error('Unsupported blockchain');
         }
-        
+
+        // Check if wizard was closed or session changed during the async operation
+        if (!window.hopWizardData || window.hopWizardData.lookupSessionId !== sessionId) {
+            console.log('Wizard closed or session changed during transaction lookup');
+            return; // Exit silently as wizard was closed
+        }
+
         // Determine the currency we're tracking from source threads
         let trackingCurrency = null;
         if (window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0) {
@@ -14804,10 +14924,10 @@ async function lookupWizardTransaction() {
 
         // Check if there are token transfers that need selection
         if (txData.transfers && txData.transfers.length > 0) {
-            // Ensure wizard data still exists
-            if (!window.hopWizardData) {
-                console.error('Wizard data lost during transaction lookup');
-                throw new Error('Wizard state lost. Please close and reopen the wizard.');
+            // Ensure wizard data still exists with proper session
+            if (!window.hopWizardData || window.hopWizardData.lookupSessionId !== sessionId) {
+                console.error('Wizard data lost or session changed during transaction processing');
+                return;
             }
 
             // Filter transfers to only show those matching the tracking currency
@@ -15033,10 +15153,28 @@ async function lookupWizardTransaction() {
                 </div>
             `;
         } else {
+            let errorMessage = error.message || 'Unknown error occurred';
+            let suggestions = '';
+
+            if (error.name === 'AbortError' || errorMessage.includes('timeout')) {
+                errorMessage = 'Transaction lookup timed out';
+                suggestions = '<br><small>• Check your internet connection<br>• The blockchain API may be slow<br>• Try again in a few moments</small>';
+            } else if (errorMessage.includes('HTTP 429')) {
+                errorMessage = 'API rate limit exceeded';
+                suggestions = '<br><small>• Wait a few seconds before retrying<br>• The API has temporary limits</small>';
+            } else if (errorMessage.includes('HTTP 404')) {
+                errorMessage = 'Transaction not found';
+                suggestions = '<br><small>• Verify the transaction hash is correct<br>• The transaction may not be confirmed yet</small>';
+            } else if (errorMessage.includes('Failed to fetch')) {
+                errorMessage = 'Network connection error';
+                suggestions = '<br><small>• Check your internet connection<br>• The blockchain API may be unavailable</small>';
+            }
+
             resultDiv.innerHTML = `
                 <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 15px;">
                     <strong>❌ Lookup Failed</strong><br>
-                    ${error.message || 'Unknown error occurred'}
+                    ${errorMessage}
+                    ${suggestions}
                 </div>
             `;
         }
@@ -15377,6 +15515,22 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
     console.log(`Created ${output.isChange ? 'CHANGE' : 'PAYMENT'} thread:`, notation, allocatedAmount, output.currency);
 }
 
+function validateThreadAllocation(threadId, requestedAmount, currency, excludeEntryId = null, excludeHopId = null) {
+    // Validate that a thread assignment won't exceed available amounts
+    const maxAvailable = getMaxAssignableAmount(threadId, currency, excludeEntryId, excludeHopId);
+    const requested = parseAmount(requestedAmount);
+
+    if (requested > maxAvailable) {
+        return {
+            valid: false,
+            message: `Thread ${threadId} only has ${maxAvailable} ${currency} available, but ${requested} was requested.`,
+            maxAvailable: maxAvailable
+        };
+    }
+
+    return { valid: true };
+}
+
 function createHopEntryFromWizard() {
     const wizardData = window.hopWizardData;
     const hop = investigation.hops.find(h => h.id === wizardData.hopId);
@@ -15442,20 +15596,42 @@ function createHopEntryFromWizard() {
         timestamp = wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '';
     }
     
+    // Validate thread allocations before proceeding
+    const totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+    for (const [threadId, allocation] of Object.entries(wizardData.allocations)) {
+        // Determine currency from the thread
+        const threads = getAvailableSourcesForHop(hop.hopNumber, null);
+        const thread = threads.find(t => t.threadId === threadId);
+        if (thread) {
+            const validation = validateThreadAllocation(
+                threadId,
+                allocation,
+                thread.currency,
+                wizardData.isEditMode ? wizardData.entryId : null,
+                wizardData.isEditMode ? wizardData.hopId : null
+            );
+
+            if (!validation.valid) {
+                alert(`⚠️ Allocation Error:\n\n${validation.message}\n\nPlease adjust the amount and try again.`);
+                return; // Don't create the entry
+            }
+        }
+    }
+
     // Check if we're in edit mode
     if (wizardData.isEditMode && wizardData.entryId) {
         // Update existing entry
         const existingEntry = hop.entries.find(e => e.id === wizardData.entryId);
         if (existingEntry) {
             saveUndoState(`Update trace entry in Hop ${hop.hopNumber}`);
-            
+
             // Update the existing entry
             existingEntry.txHash = wizardData.txHash;
             existingEntry.fromWallet = fromWallet;
             existingEntry.toWallet = toWallet;
             existingEntry.toWalletType = wizardData.manualData?.walletType || existingEntry.toWalletType || 'black';
             existingEntry.timestamp = timestamp;
-            existingEntry.amount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0).toString();
+            existingEntry.amount = totalAmount.toString();
             existingEntry.sourceThreadId = wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '';
             existingEntry.multipleSourceThreads = wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [];
             existingEntry.individualSourceAssignments = wizardData.selectedThreads.length > 1 ? wizardData.allocations : {};
@@ -17037,16 +17213,28 @@ function updateWriteoffAmount(hopId, entryId, amount) {
 
         function exportCSV() {
             let csv = 'Type,Notation,Amount,Currency,From,To,WalletType,Hop,DateTime,Timezone,Notes\n';
-            
+
             // Export hop entries (including writeoffs)
             investigation.hops.forEach(hop => {
                 hop.entries.forEach(entry => {
                     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
                     const utcTimestamp = entry.timestamp ? formatDateTimeForReport(entry.timestamp, entry.timezone || 'UTC') : 'Not specified';
-                    csv += `${entry.entryType},"${entry.notation}","${entry.amount}","${currency}","${entry.fromWallet}","${entry.toWallet}","${entry.toWalletType}","${entry.hopNumber}","${utcTimestamp}","UTC","${entry.notes || entry.justification || ''}"\n`;
+                    csv += [
+                        escapeCSVCell(entry.entryType),
+                        escapeCSVCell(entry.notation),
+                        escapeCSVCell(entry.amount),
+                        escapeCSVCell(currency),
+                        escapeCSVCell(entry.fromWallet),
+                        escapeCSVCell(entry.toWallet),
+                        escapeCSVCell(entry.toWalletType),
+                        escapeCSVCell(entry.hopNumber),
+                        escapeCSVCell(utcTimestamp),
+                        escapeCSVCell('UTC'),
+                        escapeCSVCell(entry.notes || entry.justification || '')
+                    ].join(',') + '\n';
                 });
             });
-            
+
             const filename = 'BATS_Data_' + (investigation.caseId || 'Investigation') + '.csv';
             downloadFile(csv, filename, 'text/csv');
         }
@@ -20643,9 +20831,8 @@ async function lookupEthereumTransaction(txHash) {
             // First get the basic transaction
             let url = `${apiUrl}${txHash}&apikey=${apiKey}`;
             if (corsEnabled) url = corsProxyUrl + url;
-            
-            const response = await fetch(url);
-            if (!response.ok) continue;
+
+            const response = await fetchWithTimeout(url);
             const data = await response.json();
             if (!data.result || data.result === null) continue;
             
@@ -20656,9 +20843,8 @@ async function lookupEthereumTransaction(txHash) {
                     corsProxyUrl + `${config.tokenApiUrl}${txHash}&apikey=${apiKey}` :
                     `${config.tokenApiUrl}${txHash}&apikey=${apiKey}`;
                 
-                const tokenResponse = await fetch(tokenUrl);
-                if (tokenResponse.ok) {
-                    tokenData = await tokenResponse.json();
+                const tokenResponse = await fetchWithTimeout(tokenUrl);
+                tokenData = await tokenResponse.json();
                 }
             } catch (err) {
                 console.log('No token transfers found');
