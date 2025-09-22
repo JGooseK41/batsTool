@@ -22758,7 +22758,7 @@ To (RED Wallet): ${transfer.to}`;
             }
             
             alert(alertMessage);
-            
+
             // Log for debugging
             console.log('Transfer applied successfully:', {
                 victimId,
@@ -22767,6 +22767,13 @@ To (RED Wallet): ${transfer.to}`;
                 currency: transfer.currency,
                 to: transfer.to
             });
+
+            // Update UI to reflect the changes
+            saveToStorage();
+            renderVictims();
+            updateValidationStatus();
+            updateWorkflowSteps();
+            updateGenerateRootSection();
         }
         
         // Entity Detection Functions
