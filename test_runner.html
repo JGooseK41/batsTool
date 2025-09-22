@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BATS Tool Test Runner</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        .section { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>BATS Tool Integration Test Runner</h1>
+    <div id="results"></div>
+
+    <script>
+        let testResults = [];
+        const resultsDiv = document.getElementById('results');
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+            testResults.push({ message, type, timestamp: new Date() });
+        }
+
+        function logSection(title) {
+            const div = document.createElement('div');
+            div.className = 'section';
+            div.innerHTML = `<h2>${title}</h2>`;
+            resultsDiv.appendChild(div);
+            return div;
+        }
+
+        // Test 1: Check if victim functions are accessible
+        async function testVictimFunctions() {
+            const section = logSection('Test 1: Victim Function Accessibility');
+
+            try {
+                // Check if functions exist
+                const functionsToCheck = [
+                    'addVictim',
+                    'completeVictim',
+                    'removeVictim',
+                    'addTransaction',
+                    'updateTransaction'
+                ];
+
+                let allFound = true;
+                for (const func of functionsToCheck) {
+                    if (typeof window[func] === 'function') {
+                        log(`✓ ${func} is accessible`, 'success');
+                    } else {
+                        log(`✗ ${func} is NOT accessible`, 'error');
+                        allFound = false;
+                    }
+                }
+
+                if (!allFound) {
+                    log('ERROR: Not all victim functions are globally accessible', 'error');
+
+                    // Try to find where they might be
+                    if (typeof addVictim === 'function') {
+                        log('addVictim exists in local scope but not on window', 'warning');
+                    }
+                    if (typeof completeVictim === 'function') {
+                        log('completeVictim exists in local scope but not on window', 'warning');
+                    }
+                }
+
+                return allFound;
+            } catch (e) {
+                log(`ERROR in victim function test: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Test 2: Try to simulate adding a victim
+        async function testAddVictim() {
+            const section = logSection('Test 2: Add Victim Simulation');
+
+            try {
+                // Check if we can call addVictim
+                if (typeof window.addVictim === 'function') {
+                    log('Attempting to add a victim...', 'info');
+
+                    // Try to add a victim
+                    // This would need the actual BATS page loaded
+                    log('Cannot fully test without BATS page loaded', 'warning');
+                } else {
+                    log('ERROR: addVictim function not found', 'error');
+                }
+            } catch (e) {
+                log(`ERROR: ${e.message}`, 'error');
+            }
+        }
+
+        // Test 3: Check wizard functions
+        async function testWizardFunctions() {
+            const section = logSection('Test 3: Wizard Function Accessibility');
+
+            const wizardFunctions = [
+                'showHopWizard',
+                'lookupWizardTransaction',
+                'selectWizardTransfer',
+                'showSwapWizard'
+            ];
+
+            for (const func of wizardFunctions) {
+                if (typeof window[func] === 'function') {
+                    log(`✓ ${func} is accessible`, 'success');
+                } else {
+                    log(`✗ ${func} is NOT accessible`, 'error');
+                }
+            }
+        }
+
+        // Test 4: Check if onclick handlers would work
+        async function testOnclickHandlers() {
+            const section = logSection('Test 4: Onclick Handler Test');
+
+            // Create a test button
+            const btn = document.createElement('button');
+            btn.onclick = function() { completeVictim(1); };
+
+            try {
+                // Check if the onclick can access the function
+                const onclickStr = btn.onclick.toString();
+                log(`Onclick handler created: ${onclickStr.substring(0, 50)}...`, 'info');
+
+                // Try to evaluate if completeVictim would be found
+                if (typeof completeVictim === 'undefined' && typeof window.completeVictim === 'undefined') {
+                    log('ERROR: completeVictim would not be found by onclick', 'error');
+                } else {
+                    log('✓ completeVictim should be accessible to onclick', 'success');
+                }
+            } catch (e) {
+                log(`ERROR testing onclick: ${e.message}`, 'error');
+            }
+        }
+
+        // Test 5: Check investigation object structure
+        async function testInvestigationStructure() {
+            const section = logSection('Test 5: Investigation Object Structure');
+
+            if (typeof investigation !== 'undefined') {
+                log('✓ Investigation object exists', 'success');
+
+                const expectedFields = [
+                    'victims', 'hops', 'caseId', 'investigator',
+                    'rootTotalConfirmed', 'confirmedRootTotal'
+                ];
+
+                for (const field of expectedFields) {
+                    if (investigation.hasOwnProperty(field)) {
+                        log(`✓ investigation.${field} exists`, 'success');
+                    } else {
+                        log(`✗ investigation.${field} missing`, 'warning');
+                    }
+                }
+            } else {
+                log('✗ Investigation object not found', 'error');
+                log('This test needs to run inside the BATS tool', 'warning');
+            }
+        }
+
+        // Run all tests
+        async function runAllTests() {
+            log('Starting BATS Tool Integration Tests...', 'info');
+            log('=' .repeat(50), 'info');
+
+            await testVictimFunctions();
+            await testAddVictim();
+            await testWizardFunctions();
+            await testOnclickHandlers();
+            await testInvestigationStructure();
+
+            log('=' .repeat(50), 'info');
+            log('Tests Complete!', 'info');
+
+            // Count errors
+            const errors = testResults.filter(r => r.type === 'error').length;
+            const warnings = testResults.filter(r => r.type === 'warning').length;
+            const successes = testResults.filter(r => r.type === 'success').length;
+
+            log(`Results: ${successes} passed, ${warnings} warnings, ${errors} errors`,
+                errors > 0 ? 'error' : 'success');
+
+            // Store results globally
+            window.testResults = testResults;
+            console.log('Full test results available in window.testResults');
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('load', runAllTests);
+    </script>
+
+    <hr>
+    <h3>Instructions:</h3>
+    <ol>
+        <li>Open the BATS tool (index.html?app=true)</li>
+        <li>Open browser console (F12)</li>
+        <li>Copy and paste the test script from test_simulation.js</li>
+        <li>Or inject this test runner into the BATS page</li>
+    </ol>
+
+    <h3>Manual Test Scenarios:</h3>
+    <pre>
+SCENARIO 1: Simple Linear Flow
+- Add 1 victim with 1000 USDT stolen
+- Complete victim and generate root total
+- Create Hop 1: Transfer to new wallet
+- Create Hop 2: Transfer again
+- Create Hop 3: Transfer to exchange
+
+SCENARIO 2: Commingling
+- Add 2 victims with different amounts
+- Complete both and generate root total
+- Hop 1: Move funds separately
+- Hop 2: Combine both into single wallet
+- Hop 3: Move combined funds
+
+SCENARIO 3: Split Threads
+- Add 1 victim with 1000 ETH
+- Hop 1: Single movement
+- Hop 2: Split into 3 outputs (including change)
+- Hop 3: Follow one of the splits
+
+SCENARIO 4: DEX Swap
+- Add victim with USDT
+- Hop 1: Move to prep wallet
+- Hop 2: Swap USDT for ETH via DEX
+- Hop 3: Move the ETH
+
+SCENARIO 5: Complex Mix
+- Multiple victims, different currencies
+- Commingling in Hop 1
+- Swap + Split in Hop 2
+- Convergence in Hop 3
+    </pre>
+</body>
+</html>
