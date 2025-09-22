@@ -106,3 +106,45 @@ The B.A.T.S. Tool provides:
 - Export capabilities for legal documentation
 - Visual flow diagrams
 - Wallet classification tracking
+
+### What is the difference between Transactions, Hops, and Entries?
+
+**Transaction**: A general term for any blockchain money movement, including:
+- The victim's original loss (recorded in the Victims tab as V1-T1, V1-T2, etc.)
+- Any subsequent blockchain transaction during the investigation
+
+**Hop**: A distance level from the victim's original transaction:
+- **Hop 0**: The victim transaction itself (funds arriving at the criminal's RED wallet)
+- **Hop 1**: The FIRST movement of stolen funds FROM the RED wallet
+- **Hop 2**: The next movement from Hop 1 wallets
+- Each hop represents one blockchain transaction distance from the victim
+
+**Entry**: An individual record within a hop that documents where funds went:
+- Multiple entries can exist in one hop (when funds split to different wallets)
+- Each entry consumes one or more source threads
+- Entry types include:
+  - **Trace entry**: Normal fund movement to another wallet
+  - **DEX/Swap entry**: Currency conversion (doesn't increment hop number)
+  - **Write-off entry**: Funds abandoned (dust, mixer, etc.)
+  - **Cold storage**: Funds parked in storage wallet
+
+**Source Thread**: A traceable amount from a previous hop or victim transaction:
+- Identified by V-T-H notation (e.g., V1-T1-H1)
+- Carries a specific amount and currency
+- Must be fully accounted for across all entries
+
+### Example Investigation Flow:
+```
+Victim loses $10,000 USDT → Creates V1-T1 (transaction)
+    ↓
+Arrives at criminal's RED wallet → This is Hop 0
+    ↓
+Criminal splits funds in Hop 1:
+- $6,000 to Wallet A → Hop 1, Entry 1 (consumes thread V1-T1)
+- $4,000 to Wallet B → Hop 1, Entry 2 (consumes thread V1-T1)
+    ↓
+From Wallet A in Hop 2:
+- $6,000 to Exchange → Hop 2, Entry 1 (consumes thread V1-T1-H1)
+```
+
+The hierarchy: **Investigation → Hops → Entries → Source Threads**

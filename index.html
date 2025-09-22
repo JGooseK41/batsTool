@@ -9735,7 +9735,7 @@ function exportUniversalWalletIndex() {
                                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                                         <button class="btn btn-primary" onclick="showAddEntryWizard(${hop.id})"
                                                 style="padding: 12px 24px; background: #3498db; color: white; font-size: 16px;">
-                                            + Add Transaction to This Hop
+                                            + Add Entry
                                         </button>
                                         <button class="btn btn-secondary" onclick="viewAvailableThreads(${hop.id})"
                                                 style="padding: 12px 24px; font-size: 16px;">
@@ -11153,13 +11153,16 @@ function closeHopAndProceed(hopId, notificationElement) {
 function proceedToNextHop(hopId) {
     const modal = document.getElementById('threadReviewModal');
     if (modal) modal.remove();
-    
+
     const hop = investigation.hops.find(h => h.id === hopId);
     if (!hop) return;
-    
+
     // Mark current hop as completed
     hop.completed = true;
-    
+
+    // Auto-collapse the completed hop
+    window.hopCollapseState[hop.id] = true;
+
     // Create the next hop
     const nextHopNumber = hop.hopNumber + 1;
     const nextHop = {
@@ -14079,8 +14082,8 @@ function showAddEntryWizard(hopId) {
         <div id="addEntryWizard" class="modal" style="display: block; z-index: 9998;">
             <div class="modal-content" style="max-width: 600px;">
                 <div class="modal-header">
-                    <h2>Add Transaction - Hop ${hop.hopNumber}</h2>
-                    <p>What type of transaction do you want to document?</p>
+                    <h2>Add Entry - Hop ${hop.hopNumber}</h2>
+                    <p>What type of entry do you want to document?</p>
                 </div>
                 
                 <div style="padding: 20px;">
@@ -14117,11 +14120,11 @@ function showAddEntryWizard(hopId) {
 function selectEntryType(hopId, entryType) {
     console.log('selectEntryType called with:', hopId, entryType);
     closeAddEntryWizard();
-    
+
     // Check if we should use wizards
     const wizardDisabled = localStorage.getItem('bats_hop_wizard_disabled') === 'true';
     console.log('Wizard disabled:', wizardDisabled);
-    
+
     // Add a small delay to prevent race condition with modal closing
     setTimeout(() => {
         console.log('Inside setTimeout - entryType:', entryType, 'wizardDisabled:', wizardDisabled);
@@ -14143,6 +14146,10 @@ function selectEntryType(hopId, entryType) {
                 console.error('Error showing hop entry wizard:', error);
                 alert('Error opening wizard: ' + error.message);
             }
+        } else if (entryType === 'swap' || entryType === 'dex') {
+            // For swaps, use a dedicated swap wizard
+            console.log('Creating swap entry - showing swap wizard');
+            showSwapWizard(hopId);
         } else {
             // For now, create other types directly
             // In the future, we could add specific wizards for each type
@@ -14513,7 +14520,17 @@ function showHopWizardStep(step) {
         
         content.innerHTML = `
             <h3>Step 3: Transaction Details</h3>
-            ${isHop1 ? `
+            ${window.expectingSwapEntry ? `
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="margin-top: 0; color: #e65100;">🔄 DEX/Swap Entry Mode</h4>
+                    <p style="margin: 5px 0;">Enter the transaction hash for the currency conversion (e.g., USDC → USDT at DEX).</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>This documents the asset conversion without incrementing the hop number</li>
+                        <li>The thread will continue with the new currency</li>
+                        <li>DEX wallet will be marked as BROWN (asset conversion)</li>
+                    </ul>
+                </div>
+            ` : isHop1 ? `
                 <div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin-bottom: 20px;">
                     <strong>🎯 For Hop 1:</strong> Enter the transaction where funds LEFT the RED wallet(s).
                     <br><br>
@@ -14714,6 +14731,336 @@ function closeHopWizard() {
     const wizard = document.getElementById('hopEntryWizard');
     if (wizard) wizard.remove();
     window.hopWizardData = null;
+    window.expectingSwapEntry = false;  // Clear swap flag
+}
+
+// Dedicated swap wizard for more flexibility
+function showSwapWizard(hopId) {
+    const hop = investigation.hops.find(h => h.id === hopId);
+    if (!hop) return;
+
+    // Initialize swap wizard data
+    window.swapWizardData = {
+        hopId: hopId,
+        hopNumber: hop.hopNumber,
+        selectedThreads: [],
+        inputAmount: 0,
+        inputCurrency: '',
+        outputAmount: 0,
+        outputCurrency: '',
+        swapService: '',
+        swapType: 'dex', // 'dex' or 'cex' (centralized exchange)
+        txHash: '',
+        notes: '',
+        step: 1
+    };
+
+    // Get available threads
+    const availableThreads = getAvailableSourcesForHop(hop.hopNumber, null);
+
+    const wizardHTML = `
+        <div id="swapWizard" class="modal" style="display: block; z-index: 10000;">
+            <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
+                    <h2 style="color: white;">🔄 Asset Swap/Conversion - Hop ${hop.hopNumber}</h2>
+                    <button onclick="closeSwapWizard()" class="close-btn" style="color: white;">×</button>
+                </div>
+
+                <div id="swapWizardContent" style="padding: 20px;">
+                    <!-- Content will be populated by showSwapWizardStep -->
+                </div>
+
+                <div style="padding: 20px; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-between;">
+                    <button class="btn btn-secondary" id="swapBackBtn" onclick="swapWizardBack()" style="display: none;">Back</button>
+                    <button class="btn btn-primary" id="swapNextBtn" onclick="swapWizardNext()">Next</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    createCenteredModal('swapWizard', wizardHTML);
+    showSwapWizardStep(1);
+}
+
+function showSwapWizardStep(step) {
+    const content = document.getElementById('swapWizardContent');
+    const backBtn = document.getElementById('swapBackBtn');
+    const nextBtn = document.getElementById('swapNextBtn');
+    const wizardData = window.swapWizardData;
+
+    backBtn.style.display = step > 1 ? 'inline-block' : 'none';
+
+    if (step === 1) {
+        // Step 1: Select source threads
+        const availableThreads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+
+        content.innerHTML = `
+            <h3>Step 1: Select Source Threads</h3>
+            <p>Select the thread(s) being sent to the swap service:</p>
+
+            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin: 20px 0;">
+                ${availableThreads.length > 0 ? availableThreads.map(thread => `
+                    <div style="padding: 10px; margin: 5px 0; background: white; border: 2px solid ${wizardData.selectedThreads.includes(thread.threadId) ? '#4caf50' : '#e0e0e0'}; border-radius: 8px; cursor: pointer;"
+                         onclick="toggleSwapThread('${thread.threadId}')">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${thread.displayText}</strong>
+                                <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                                    From: ${thread.sourceWallet ? thread.sourceWallet.substring(0, 10) + '...' : 'Unknown'}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <strong>${thread.availableAmount.toLocaleString()} ${thread.currency}</strong>
+                            </div>
+                        </div>
+                    </div>
+                `).join('') : '<p style="color: #666;">No available threads</p>'}
+            </div>
+
+            <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                <strong>ℹ️ Note:</strong> Select all threads that will be swapped in this transaction.
+                The swap will convert these to a different asset.
+            </div>
+        `;
+
+        nextBtn.disabled = wizardData.selectedThreads.length === 0;
+        nextBtn.textContent = 'Next';
+
+    } else if (step === 2) {
+        // Step 2: Define swap details
+        const selectedThreads = wizardData.selectedThreads.map(id =>
+            getAvailableSourcesForHop(wizardData.hopNumber, null).find(t => t.threadId === id)
+        );
+
+        // Auto-calculate input totals by currency
+        const inputByCurrency = {};
+        selectedThreads.forEach(thread => {
+            if (!inputByCurrency[thread.currency]) {
+                inputByCurrency[thread.currency] = 0;
+            }
+            inputByCurrency[thread.currency] += thread.availableAmount;
+        });
+
+        content.innerHTML = `
+            <h3>Step 2: Swap Details</h3>
+
+            <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="margin-top: 0;">Input Assets (Being Swapped)</h4>
+                ${Object.entries(inputByCurrency).map(([currency, amount]) => `
+                    <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 4px;">
+                        <strong>${amount.toLocaleString()} ${currency}</strong>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div style="margin: 20px 0;">
+                <label style="display: block; margin-bottom: 10px;">Swap Service Type:</label>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn ${wizardData.swapType === 'dex' ? 'btn-primary' : 'btn-secondary'}"
+                            onclick="setSwapType('dex')" style="flex: 1;">
+                        🔄 DEX (On-chain)
+                    </button>
+                    <button class="btn ${wizardData.swapType === 'cex' ? 'btn-primary' : 'btn-secondary'}"
+                            onclick="setSwapType('cex')" style="flex: 1;">
+                        🏦 CEX (Off-chain)
+                    </button>
+                </div>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <label>Swap Service Address/Name:</label>
+                <input type="text" id="swapService"
+                       placeholder="${wizardData.swapType === 'dex' ? 'DEX contract address' : 'Exchange name (e.g., Binance)'}"
+                       value="${wizardData.swapService}"
+                       onchange="window.swapWizardData.swapService = this.value"
+                       style="width: 100%; padding: 10px; margin-top: 5px;">
+            </div>
+
+            <div style="background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px; padding: 15px; margin-top: 20px;">
+                <h4 style="margin-top: 0;">Output Asset (Received Back)</h4>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label>Amount Received:</label>
+                        <input type="number" id="outputAmount"
+                               step="0.000001"
+                               placeholder="0.00"
+                               value="${wizardData.outputAmount || ''}"
+                               onchange="window.swapWizardData.outputAmount = parseFloat(this.value) || 0"
+                               style="width: 100%; padding: 10px; margin-top: 5px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Currency Received:</label>
+                        <input type="text" id="outputCurrency"
+                               placeholder="USDT, ETH, etc."
+                               value="${wizardData.outputCurrency}"
+                               onchange="window.swapWizardData.outputCurrency = this.value.toUpperCase()"
+                               style="width: 100%; padding: 10px; margin-top: 5px;">
+                    </div>
+                </div>
+
+                <small style="color: #666;">
+                    💡 Enter the exact amount and currency returned to the sender's control after the swap
+                </small>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <label>Transaction Hash (Optional):</label>
+                <input type="text" id="swapTxHash"
+                       placeholder="${wizardData.swapType === 'cex' ? 'Withdrawal TX or reference' : 'Transaction hash'}"
+                       value="${wizardData.txHash}"
+                       onchange="window.swapWizardData.txHash = this.value"
+                       style="width: 100%; padding: 10px; margin-top: 5px;">
+            </div>
+
+            <div style="margin-top: 20px;">
+                <label>Notes:</label>
+                <textarea id="swapNotes"
+                          rows="3"
+                          placeholder="Exchange records, swap rates, additional details..."
+                          onchange="window.swapWizardData.notes = this.value"
+                          style="width: 100%; padding: 10px; margin-top: 5px;">${wizardData.notes}</textarea>
+            </div>
+        `;
+
+        nextBtn.textContent = 'Create Swap Entry';
+        nextBtn.disabled = !wizardData.swapService || !wizardData.outputAmount || !wizardData.outputCurrency;
+
+    } else if (step === 3) {
+        // Step 3: Review and confirm
+        createSwapEntry();
+    }
+
+    wizardData.step = step;
+}
+
+function toggleSwapThread(threadId) {
+    const wizardData = window.swapWizardData;
+    const index = wizardData.selectedThreads.indexOf(threadId);
+
+    if (index > -1) {
+        wizardData.selectedThreads.splice(index, 1);
+    } else {
+        wizardData.selectedThreads.push(threadId);
+    }
+
+    showSwapWizardStep(wizardData.step); // Refresh display
+}
+
+function setSwapType(type) {
+    window.swapWizardData.swapType = type;
+    showSwapWizardStep(2); // Refresh to update placeholder text
+}
+
+function swapWizardNext() {
+    const wizardData = window.swapWizardData;
+
+    if (wizardData.step === 2) {
+        // Create the swap entry
+        createSwapEntry();
+    } else {
+        wizardData.step++;
+        showSwapWizardStep(wizardData.step);
+    }
+}
+
+function swapWizardBack() {
+    const wizardData = window.swapWizardData;
+    if (wizardData.step > 1) {
+        wizardData.step--;
+        showSwapWizardStep(wizardData.step);
+    }
+}
+
+function closeSwapWizard() {
+    const wizard = document.getElementById('swapWizard');
+    if (wizard) wizard.remove();
+    window.swapWizardData = null;
+}
+
+function createSwapEntry() {
+    const wizardData = window.swapWizardData;
+    const hop = investigation.hops.find(h => h.id === wizardData.hopId);
+    if (!hop) return;
+
+    // Get selected thread details
+    const threads = getAvailableSourcesForHop(hop.hopNumber, null);
+    const selectedThreadData = wizardData.selectedThreads.map(id => threads.find(t => t.threadId === id));
+
+    // Calculate total input amounts
+    const inputByCurrency = {};
+    selectedThreadData.forEach(thread => {
+        if (!inputByCurrency[thread.currency]) {
+            inputByCurrency[thread.currency] = { amount: 0, threads: [] };
+        }
+        inputByCurrency[thread.currency].amount += thread.availableAmount;
+        inputByCurrency[thread.currency].threads.push(thread.threadId);
+    });
+
+    // Get the input currency (assuming single currency for now)
+    const inputCurrency = Object.keys(inputByCurrency)[0];
+    const inputData = inputByCurrency[inputCurrency];
+
+    // Create notation
+    let notation = wizardData.selectedThreads.length === 1 ?
+        wizardData.selectedThreads[0] :
+        wizardData.selectedThreads.map(t => t.split('-').slice(0, 2).join('-')).join('+') + `-H${hop.hopNumber}`;
+
+    notation += ` [SWAP: ${inputCurrency} → ${wizardData.outputCurrency}]`;
+
+    // Create the swap entry
+    const swapEntry = {
+        id: Date.now(),
+        hopId: hop.id,
+        entryType: 'swap',
+        sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
+        multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
+        fromWallet: selectedThreadData[0]?.sourceWallet || '',
+        toWallet: wizardData.swapService,
+        toWalletType: 'brown', // BROWN for asset conversion
+        amount: inputData.amount.toString(),
+        outputAmount: wizardData.outputAmount.toString(),
+        currency: inputCurrency,
+        outputCurrency: wizardData.outputCurrency,
+        txHash: wizardData.txHash,
+        timestamp: new Date().toISOString().slice(0, 16),
+        timezone: 'UTC',
+        notes: wizardData.notes || `Asset conversion: ${inputData.amount} ${inputCurrency} swapped for ${wizardData.outputAmount} ${wizardData.outputCurrency} via ${wizardData.swapType === 'cex' ? 'CEX' : 'DEX'}`,
+        notation: notation,
+        isSwap: true,
+        swapDetails: {
+            fromCurrency: inputCurrency,
+            toCurrency: wizardData.outputCurrency,
+            fromAmount: inputData.amount,
+            toAmount: wizardData.outputAmount,
+            dexAddress: wizardData.swapService,
+            type: wizardData.swapType
+        }
+    };
+
+    // Save undo state
+    saveUndoState(`Add swap entry to Hop ${hop.hopNumber}`);
+
+    // Add entry to hop
+    hop.entries.push(swapEntry);
+
+    // Update available threads - convert currency
+    updateThreadsAfterSwap(hop, swapEntry);
+
+    // Close wizard and update UI
+    closeSwapWizard();
+    buildAvailableThreadsIndex();
+    renderHops();
+    saveToStorage();
+
+    // Show success message
+    showNotification(
+        `✅ Swap entry created: ${inputData.amount} ${inputCurrency} → ${wizardData.outputAmount} ${wizardData.outputCurrency}`,
+        'success'
+    );
+
+    // Show remaining threads summary
+    showRemainingThreadsSummary(hop);
 }
 
 function createAndFinalizeEntry() {

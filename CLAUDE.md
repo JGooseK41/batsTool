@@ -3,55 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 14:53)
+## Latest Commit (Auto-updated: 2025-09-22 15:54)
 
-**Commit:** 150f54c81f2b16a8b8b141c2bef9baeebc2f07f9
+**Commit:** a48616a2b28aab258b2cc93070cac670f5717e9c
 **Author:** Your Name
-**Message:** Improve post-wizard UI clarity and workflow guidance
+**Message:** Streamline wizard workflow - entries now create directly without manual form step
 
-Major improvements to address user confusion after completing wizard entries:
-
-1. Added showRemainingThreadsSummary() function
-   - Shows alert with remaining threads after wizard completion
-   - Lists each thread ID and available amount
-   - Provides clear guidance on next steps
-
-2. Enhanced hop UI with 'Threads Still to Trace' section
-   - Visual list showing all remaining threads with amounts
-   - Clear indication when all threads are fully traced
-   - Better separation between completed work and next actions
-
-3. Improved workflow transitions
-   - Success message after entry creation
-   - Auto-highlight 'Add Entry' button for next action
-   - Clear visual hierarchy: completed entries → remaining threads → action buttons
-
-This resolves the confusion where users didn't know:
-- What threads still needed tracing
-- Whether they had completed their current work
-- What to do next after creating an entry
-
-The UI now provides clear, contextual guidance throughout the tracing workflow.
+- Fixed wizard to create entries directly when clicking 'Log Entry'
+- Entries now appear collapsed immediately after creation
+- Removed redundant manual form confirmation step
+- Added notes field to both lookup and manual modes in wizard
+- Fixed undefined finalizeHopEntry function error
+- Improved user flow: wizard closes → entry appears collapsed → ready for next entry
 
 ### Changed Files:
 ```
- CLAUDE.md  | 42 ++++++++++++++++-------------
- index.html | 91 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 108 insertions(+), 25 deletions(-)
+ CLAUDE.md  |  63 +++++++++++++++++++--------------
+ index.html | 118 +++++++++++++++++++++++++++++++++++++------------------------
+ 2 files changed, 108 insertions(+), 73 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 150f54c Improve post-wizard UI clarity and workflow guidance (0 seconds ago)
-- 9fc5142 Fix wizard freeze when looking up transactions with single token transfer (26 hours ago)
-- 3992784 Fix missing closing braces in lookupWizardTransaction (26 hours ago)
-- 304c674 Fix syntax errors in lookupWizardTransaction (26 hours ago)
-- 3b84fc6 Complete remaining bug fixes and optimizations (26 hours ago)
-- db59b81 Major bug fixes and security improvements (26 hours ago)
-- 9196e89 Fix currency filtering in wizard to only show outputs matching tracked currency (27 hours ago)
-- 6154337 Fix wizardData undefined error in transaction lookup (29 hours ago)
-- e8209a8 Fix 'wizardData is not defined' error with robust error handling (29 hours ago)
-- bd628a6 Remove external crypto-js CDN to eliminate CSP warnings (31 hours ago)
+- a48616a Streamline wizard workflow - entries now create directly without manual form step (0 seconds ago)
+- 150f54c Improve post-wizard UI clarity and workflow guidance (61 minutes ago)
+- 9fc5142 Fix wizard freeze when looking up transactions with single token transfer (27 hours ago)
+- 3992784 Fix missing closing braces in lookupWizardTransaction (27 hours ago)
+- 304c674 Fix syntax errors in lookupWizardTransaction (27 hours ago)
+- 3b84fc6 Complete remaining bug fixes and optimizations (27 hours ago)
+- db59b81 Major bug fixes and security improvements (27 hours ago)
+- 9196e89 Fix currency filtering in wizard to only show outputs matching tracked currency (28 hours ago)
+- 6154337 Fix wizardData undefined error in transaction lookup (30 hours ago)
+- e8209a8 Fix 'wizardData is not defined' error with robust error handling (30 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
