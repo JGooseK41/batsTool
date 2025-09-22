@@ -3,40 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 16:51)
+## Latest Commit (Auto-updated: 2025-09-22 17:19)
 
-**Commit:** 7bdc0f83a83edc5664e76e993fede10d27009576
+**Commit:** c4b118d1325c3aeef615145e627ea026b2d55485
 **Author:** Your Name
-**Message:** Fix critical swap wizard bugs: Add missing showThreadReviewModal function and ensure swap wizard displays properly
+**Message:** Fix ERC-20 token filtering regression in wizard
 
-- Created showThreadReviewModal function to display thread review before proceeding to next hop
-- Added proper debugging and error handling to swap wizard initialization
-- Ensured swap wizard modal displays with correct styling
-- Fixed console error preventing hop completion
+- Fixed control flow issue where single token transfers were incorrectly showing multi-output selection
+- When tracking ERC-20 tokens, wizard now properly ignores ETH transfers and only follows the token
+- Corrected bracket structure to allow single transfers to continue to display logic
+- Cleaned up indentation after restructuring the control flow
 
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+This restores the previous working behavior where ERC-20 transactions don't confuse users by showing both ETH and token transfers when only tracking the token.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 50 +++++++++++++++++++++++++------------
- index.html | 83 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 116 insertions(+), 17 deletions(-)
+ CLAUDE.md  |  56 ++++++++++++--------------------
+ index.html | 106 ++++++++++++++++++++++++++++++-------------------------------
+ 2 files changed, 73 insertions(+), 89 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7bdc0f8 Fix critical swap wizard bugs: Add missing showThreadReviewModal function and ensure swap wizard displays properly (0 seconds ago)
-- f89a74e Major improvements to swap handling and UI/UX enhancements (26 minutes ago)
-- a48616a Streamline wizard workflow - entries now create directly without manual form step (57 minutes ago)
+- c4b118d Fix ERC-20 token filtering regression in wizard (0 seconds ago)
+- 7bdc0f8 Fix critical swap wizard bugs: Add missing showThreadReviewModal function and ensure swap wizard displays properly (28 minutes ago)
+- f89a74e Major improvements to swap handling and UI/UX enhancements (54 minutes ago)
+- a48616a Streamline wizard workflow - entries now create directly without manual form step (85 minutes ago)
 - 150f54c Improve post-wizard UI clarity and workflow guidance (2 hours ago)
 - 9fc5142 Fix wizard freeze when looking up transactions with single token transfer (28 hours ago)
 - 3992784 Fix missing closing braces in lookupWizardTransaction (28 hours ago)
 - 304c674 Fix syntax errors in lookupWizardTransaction (28 hours ago)
 - 3b84fc6 Complete remaining bug fixes and optimizations (28 hours ago)
 - db59b81 Major bug fixes and security improvements (28 hours ago)
-- 9196e89 Fix currency filtering in wizard to only show outputs matching tracked currency (29 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

@@ -7041,28 +7041,13 @@ function updateFormFieldsFromInvestigation() {
     // Update Add New Victim button visibility
     const addVictimSection = document.getElementById('addVictimSection');
     if (addVictimSection) {
-        // Check if there are any incomplete victims
-        const hasIncompleteVictim = investigation.victims.some(v => !v.isCompleted);
-        
-        if (investigation.victims.length === 0 || !hasIncompleteVictim) {
-            // Show the Add New Victim button
-            addVictimSection.innerHTML = `
-                <button class="btn" onclick="addVictim()" 
-                        style="font-size: 1rem; padding: 10px 25px; background: #3498db; color: white;">
-                    + Add ${investigation.victims.length > 0 ? 'Another' : 'New'} Victim
-                </button>
-            `;
-        } else {
-            // Show a message that current victim needs to be completed
-            addVictimSection.innerHTML = `
-                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; max-width: 600px; margin: 0 auto;">
-                    <p style="margin: 0; color: #856404;">
-                        <strong>Complete the current victim before adding another.</strong><br>
-                        <small>Click "Complete Victim" after adding all transactions for this victim.</small>
-                    </p>
-                </div>
-            `;
-        }
+        // Always show the Add New Victim button - no restrictions
+        addVictimSection.innerHTML = `
+            <button class="btn" onclick="addVictim()"
+                    style="font-size: 1rem; padding: 10px 25px; background: #3498db; color: white;">
+                + Add ${investigation.victims.length > 0 ? 'Another' : 'New'} Victim
+            </button>
+        `;
     }
     
     updateGenerateRootSection();
@@ -17415,15 +17400,29 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             
             if (confirm(`Complete Victim ${victimId}?\n\nThis will minimize the view to show only a summary. You can edit later if needed.`)) {
                 victim.isCompleted = true;
-                
+                console.log(`Victim ${victimId} marked as completed:`, victim.isCompleted);
+
                 // Build wallet indexes even before root total confirmation to allow early access
                 buildUniversalWalletIndex();
                 buildRedWalletIndex();
-                
+
                 renderVictims();
                 saveToStorage();
                 updateWorkflowSteps();
                 updateGenerateRootSection();
+
+                // Check if the state actually updated
+                console.log('Victim state after completion:', victim);
+                console.log('All victims:', investigation.victims);
+
+                // Force a re-check of the Add Victim button
+                setTimeout(() => {
+                    const addVictimSection = document.getElementById('addVictimSection');
+                    if (addVictimSection) {
+                        const hasIncompleteVictim = investigation.victims.some(v => !v.isCompleted);
+                        console.log('Has incomplete victims after completion:', hasIncompleteVictim);
+                    }
+                }, 100);
             }
         }
         
@@ -23971,6 +23970,18 @@ To (RED Wallet): ${transfer.to}`;
         window.showNextStepButton = showNextStepButton;
         window.lookupWizardTransaction = lookupWizardTransaction;
         window.selectWizardTransfer = selectWizardTransfer;
+
+        // Expose victim-related functions globally so onclick handlers work
+        window.addVictim = addVictim;
+        window.completeVictim = completeVictim;
+        window.reopenVictim = reopenVictim;
+        window.removeVictim = removeVictim;
+        window.addTransaction = addTransaction;
+        window.updateTransaction = updateTransaction;
+        window.removeTransaction = removeTransaction;
+        window.fixVictimTransactionOrder = fixVictimTransactionOrder;
+        window.openBulkTransactionModal = openBulkTransactionModal;
+        window.updateTransactionCurrency = updateTransactionCurrency;
 
         // Add event listeners to setup fields
         document.addEventListener('DOMContentLoaded', function() {
