@@ -11149,6 +11149,64 @@ function closeHopAndProceed(hopId, notificationElement) {
     showThreadReviewModal(hop);
 }
 
+// Show thread review modal before proceeding to next hop
+function showThreadReviewModal(hop) {
+    // Get all untraced threads from this hop
+    const untracedThreads = [];
+    hop.entries.forEach(entry => {
+        if (entry.type === 'trace' && !entry.writeOff) {
+            const threadId = `V${entry.sourceThreads[0].victimId}-T${entry.sourceThreads[0].transactionId}-H${hop.hopNumber}`;
+            untracedThreads.push({
+                id: threadId,
+                amount: entry.outputAmount,
+                currency: entry.outputCurrency || entry.sourceThreads[0].currency,
+                wallet: entry.toWallet
+            });
+        }
+    });
+
+    if (untracedThreads.length === 0) {
+        // No threads to trace, proceed directly
+        proceedToNextHop(hop.id);
+        return;
+    }
+
+    const modalHTML = `
+        <div id="threadReviewModal" class="modal" style="display: block; z-index: 10000;">
+            <div class="modal-content" style="max-width: 700px;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">
+                    <h2 style="color: white;">📊 Thread Review - Hop ${hop.hopNumber}</h2>
+                </div>
+                <div style="padding: 20px;">
+                    <div class="alert alert-info">
+                        <strong>✅ Hop ${hop.hopNumber} Complete!</strong><br>
+                        The following threads are ready to be traced in Hop ${hop.hopNumber + 1}:
+                    </div>
+
+                    <div style="background: #f5f5f5; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                        <h4>Threads to Trace:</h4>
+                        ${untracedThreads.map(thread => `
+                            <div style="background: white; padding: 10px; margin: 10px 0; border-radius: 4px; border-left: 4px solid #4CAF50;">
+                                <strong>${thread.id}</strong><br>
+                                Amount: ${formatAmount(thread.amount, thread.currency)}<br>
+                                Wallet: ${thread.wallet}
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="proceedToNextHop('${hop.id}')" class="btn btn-primary" style="padding: 10px 30px;">
+                            Continue to Hop ${hop.hopNumber + 1} →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    createCenteredModal('threadReviewModal', modalHTML);
+}
+
 // Proceed to next hop after thread review
 function proceedToNextHop(hopId) {
     const modal = document.getElementById('threadReviewModal');
@@ -14737,7 +14795,12 @@ function closeHopWizard() {
 // Dedicated swap wizard for more flexibility
 function showSwapWizard(hopId) {
     const hop = investigation.hops.find(h => h.id === hopId);
-    if (!hop) return;
+    if (!hop) {
+        console.error('Hop not found for swap wizard:', hopId);
+        return;
+    }
+
+    console.log('Initializing swap wizard for hop:', hop);
 
     // Initialize swap wizard data
     window.swapWizardData = {
@@ -14778,15 +14841,33 @@ function showSwapWizard(hopId) {
         </div>
     `;
 
+    console.log('Creating swap wizard modal');
     createCenteredModal('swapWizard', wizardHTML);
+
+    // Ensure modal is visible
+    const swapModal = document.getElementById('swapWizard');
+    if (swapModal) {
+        console.log('Swap wizard modal created successfully');
+        swapModal.style.display = 'block';
+        swapModal.classList.add('show');
+    } else {
+        console.error('Failed to create swap wizard modal');
+    }
+
     showSwapWizardStep(1);
 }
 
 function showSwapWizardStep(step) {
+    console.log('Showing swap wizard step:', step);
     const content = document.getElementById('swapWizardContent');
     const backBtn = document.getElementById('swapBackBtn');
     const nextBtn = document.getElementById('swapNextBtn');
     const wizardData = window.swapWizardData;
+
+    if (!content || !wizardData) {
+        console.error('Missing swap wizard elements or data');
+        return;
+    }
 
     backBtn.style.display = step > 1 ? 'inline-block' : 'none';
 
