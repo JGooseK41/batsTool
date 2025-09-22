@@ -15637,42 +15637,44 @@ async function lookupWizardTransaction() {
             updateWizardOutputSummary();
             return; // Exit early - multi-output UI will handle the rest
         }
+        // If we reach here with a single transfer, fall through to display it
+    }
 
-        // If we get here, we have a single transfer after filtering (or no token transfers)
-        // This code handles both cases
-        if (!window.hopWizardData.txData) {
-            window.hopWizardData.txData = txData;
-        }
+    // Single transfer or non-transfer transaction display
+    // This handles both single transfers after filtering and regular transactions
+    if (!window.hopWizardData.txData) {
+        window.hopWizardData.txData = txData;
+    }
 
-        // Check if this might be a DEX swap
-        let swapWarning = '';
-        let isSwap = false;
-        let swapFromCurrency = null;
+    // Check if this might be a DEX swap
+    let swapWarning = '';
+    let isSwap = false;
+    let swapFromCurrency = null;
 
-        if (window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0) {
-            const threads = getAvailableSourcesForHop(window.hopWizardData.hopNumber, null);
-            const sourceCurrencies = new Set();
-            window.hopWizardData.selectedThreads.forEach(threadId => {
-                const thread = threads.find(t => t.threadId === threadId);
-                if (thread) sourceCurrencies.add(thread.currency);
-            });
+    if (window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0) {
+        const threads = getAvailableSourcesForHop(window.hopWizardData.hopNumber, null);
+        const sourceCurrencies = new Set();
+        window.hopWizardData.selectedThreads.forEach(threadId => {
+            const thread = threads.find(t => t.threadId === threadId);
+            if (thread) sourceCurrencies.add(thread.currency);
+        });
 
-            // If source currency differs from transaction currency, it's a swap
-            if (sourceCurrencies.size === 1) {
-                const sourceCurrency = Array.from(sourceCurrencies)[0];
-                if (txData.currency && sourceCurrency !== txData.currency) {
-                        isSwap = true;
-                        swapFromCurrency = sourceCurrency;
-                        window.hopWizardData.isSwap = true;
-                        window.hopWizardData.swapDetails = {
-                            fromCurrency: sourceCurrency,
-                            toCurrency: txData.currency,
-                            fromAmount: Object.values(window.hopWizardData.allocations).reduce((sum, val) => sum + val, 0),
-                            toAmount: txData.amount,
-                            dexAddress: txData.to
-                        };
+        // If source currency differs from transaction currency, it's a swap
+        if (sourceCurrencies.size === 1) {
+            const sourceCurrency = Array.from(sourceCurrencies)[0];
+            if (txData.currency && sourceCurrency !== txData.currency) {
+                isSwap = true;
+                swapFromCurrency = sourceCurrency;
+                window.hopWizardData.isSwap = true;
+                window.hopWizardData.swapDetails = {
+                    fromCurrency: sourceCurrency,
+                    toCurrency: txData.currency,
+                    fromAmount: Object.values(window.hopWizardData.allocations).reduce((sum, val) => sum + val, 0),
+                    toAmount: txData.amount,
+                    dexAddress: txData.to
+                };
 
-                        swapWarning = `
+                swapWarning = `
                             <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 15px; margin-top: 10px;">
                                 <h4 style="margin-top: 0; color: #e65100;">🔄 DEX Swap Detected</h4>
                                 <div style="margin: 10px 0;">
@@ -15691,32 +15693,30 @@ async function lookupWizardTransaction() {
                                     ℹ️ The next hop will continue with ${txData.currency} threads
                                 </div>
                             </div>
-                        `;
-                    }
-                }
+                `;
             }
+        }
+    }
 
-        resultDiv.innerHTML = `
-            <div style="background: #e8f4f8; border: 1px solid #3498db; border-radius: 8px; padding: 15px;">
-                <h4 style="margin-top: 0;">Transaction Found ✓</h4>
-                <div style="display: grid; gap: 8px; font-size: 14px;">
-                    <div><strong>Chain:</strong> ${txData.blockchain}</div>
-                    <div><strong>Amount:</strong> ${txData.amount} ${txData.currency}</div>
-                    <div><strong>From:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.from}</span></div>
-                    <div><strong>To:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span></div>
-                    <div><strong>Time:</strong> ${new Date(txData.time).toLocaleString()} UTC</div>
-                </div>
-                ${swapWarning}
-                <div style="margin-top: 15px; padding: 10px; background: #d4edda; border-radius: 4px;">
-                    <strong>✅ Ready to create entry</strong><br>
-                    <small>Click "Log Entry" to add this transaction to Hop ${window.hopWizardData.hopNumber}</small>
-                </div>
+    resultDiv.innerHTML = `
+        <div style="background: #e8f4f8; border: 1px solid #3498db; border-radius: 8px; padding: 15px;">
+            <h4 style="margin-top: 0;">Transaction Found ✓</h4>
+            <div style="display: grid; gap: 8px; font-size: 14px;">
+                <div><strong>Chain:</strong> ${txData.blockchain}</div>
+                <div><strong>Amount:</strong> ${txData.amount} ${txData.currency}</div>
+                <div><strong>From:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.from}</span></div>
+                <div><strong>To:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span></div>
+                <div><strong>Time:</strong> ${new Date(txData.time).toLocaleString()} UTC</div>
             </div>
-        `;
+            ${swapWarning}
+            <div style="margin-top: 15px; padding: 10px; background: #d4edda; border-radius: 4px;">
+                <strong>✅ Ready to create entry</strong><br>
+                <small>Click "Log Entry" to add this transaction to Hop ${window.hopWizardData.hopNumber}</small>
+            </div>
+        </div>
+    `;
 
-        document.getElementById('wizardNextBtn').disabled = false;
-
-        } // Close the outer if that checks for token transfers (line 14973) - or continue for no-transfer transactions
+    document.getElementById('wizardNextBtn').disabled = false;
 
     } catch (error) {
         console.error('Transaction lookup error:', error);
