@@ -3,38 +3,40 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 19:12)
+## Latest Commit (Auto-updated: 2025-09-22 19:15)
 
-**Commit:** 1cd28c426579dc1c968b3226f9684f27345fef37
+**Commit:** 31185bb1001d59e1a26d840ef4ffbb48798d5838
 **Author:** Your Name
-**Message:** Update commingling notation to parentheses format
+**Message:** Implement partial tracing and optional thread review modal
 
-- Changed notation from V1+V2-T1-H2 to (V1-T1) (V2-T1) H2
-- Multiple transactions from same victim: (V1-T2,3) (V2-T1,2,4) H3
-- Applied format to all commingling scenarios (entries, swaps, multi-outputs)
-- Notation remains unchanged through swaps as requested
+- Allow partial tracing when transaction exceeds available source threads
+- Document partial traces in entry notes (e.g., 'Following 1000 of 1500 total')
+- PIFO now caps allocation at available amount for partial traces
+- Thread review modal only shows when there are unaccounted threads
+- Modal can be disabled via localStorage preference
+- Added proceedToNextHop function for direct hop transitions
 
-This provides clearer tracking of which victims and transactions are involved in commingled funds.
+This allows investigators to trace their portion of larger transactions without being blocked.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 45 ++++++++++++++++++++-------------------
- index.html | 71 +++++++++++++++++++++++++++++++++++++++++++++++++++++++-------
- 2 files changed, 87 insertions(+), 29 deletions(-)
+ CLAUDE.md  | 31 ++++++++++------------
+ index.html | 89 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 98 insertions(+), 22 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1cd28c4 Update commingling notation to parentheses format (0 seconds ago)
-- 82110d8 Implement PIFO allocation and expose wizard functions (4 minutes ago)
-- b55fac7 Fix broken Complete Victim button and other victim-related functions (89 minutes ago)
+- 31185bb Implement partial tracing and optional thread review modal (0 seconds ago)
+- 1cd28c4 Update commingling notation to parentheses format (3 minutes ago)
+- 82110d8 Implement PIFO allocation and expose wizard functions (7 minutes ago)
+- b55fac7 Fix broken Complete Victim button and other victim-related functions (2 hours ago)
 - c4b118d Fix ERC-20 token filtering regression in wizard (2 hours ago)
 - 7bdc0f8 Fix critical swap wizard bugs: Add missing showThreadReviewModal function and ensure swap wizard displays properly (2 hours ago)
 - f89a74e Major improvements to swap handling and UI/UX enhancements (3 hours ago)
 - a48616a Streamline wizard workflow - entries now create directly without manual form step (3 hours ago)
 - 150f54c Improve post-wizard UI clarity and workflow guidance (4 hours ago)
 - 9fc5142 Fix wizard freeze when looking up transactions with single token transfer (30 hours ago)
-- 3992784 Fix missing closing braces in lookupWizardTransaction (30 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

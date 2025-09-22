@@ -8298,13 +8298,19 @@ function exportRedWalletIndexCSV() {
                 // For each currency, calculate what remains for the next hop
                 Object.keys(artByCurrency).forEach(currency => {
                     let tracedAmount = 0;
-                    
+                    let writeoffAmount = 0;
+
                     lastHop.entries.forEach(entry => {
                         const entryCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
                         if (entryCurrency === currency && parseFloat(entry.amount) > 0) {
-                            // All entry types that account for funds reduce ART
-                            if (['trace', 'writeoff', 'cold_storage', 'vasp_arrival'].includes(entry.entryType)) {
+                            // Trace and cold storage entries reduce ART for next hop
+                            if (['trace', 'cold_storage', 'vasp_arrival'].includes(entry.entryType)) {
                                 tracedAmount += parseFloat(entry.amount);
+                            }
+                            // Write-offs permanently reduce the ART (as requested: "reduce the art at the close of the hop")
+                            else if (entry.entryType === 'writeoff') {
+                                writeoffAmount += parseFloat(entry.amount);
+                                tracedAmount += parseFloat(entry.amount); // Also count as traced
                             }
                         }
                     });
@@ -11183,6 +11189,10 @@ function proceedToNextHop(hop) {
 
 // Show thread review modal before proceeding to next hop
 function showThreadReviewModal(hop) {
+    // Calculate the ART for the next hop (accounting for write-offs)
+    const nextHopART = getCurrentART();
+    const hasWriteoffs = hop.entries.some(e => e.entryType === 'writeoff' && parseFloat(e.amount) > 0);
+
     // Get all untraced threads from this hop
     const untracedThreads = [];
     hop.entries.forEach(entry => {
@@ -11215,6 +11225,13 @@ function showThreadReviewModal(hop) {
                         The following threads are ready to be traced in Hop ${hop.hopNumber + 1}:
                     </div>
 
+                    ${hasWriteoffs ? `
+                        <div class="alert alert-warning" style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                            <strong>⚠️ Write-offs Applied</strong><br>
+                            The Adjusted Root Total (ART) has been reduced by write-offs in this hop.
+                        </div>
+                    ` : ''}
+
                     <div style="background: #f5f5f5; border-radius: 8px; padding: 15px; margin: 20px 0;">
                         <h4>Threads to Trace:</h4>
                         ${untracedThreads.map(thread => `
@@ -11224,6 +11241,14 @@ function showThreadReviewModal(hop) {
                                 Wallet: ${thread.wallet}
                             </div>
                         `).join('')}
+                    </div>
+
+                    <div style="background: #d4edda; border: 2px solid #27ae60; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                        <h4>Adjusted Root Total for Hop ${hop.hopNumber + 1}:</h4>
+                        ${Object.entries(nextHopART).filter(([currency, amount]) => amount > 0).map(([currency, amount]) =>
+                            `<div style="font-size: 16px; margin: 5px 0;">${currency}: ${amount.toLocaleString()}</div>`
+                        ).join('')}
+                        ${hasWriteoffs ? '<small style="color: #856404;">*ART reduced due to write-offs</small>' : ''}
                     </div>
 
                     <div style="text-align: center; margin-top: 20px;">
@@ -11253,15 +11278,20 @@ function proceedToNextHop(hopId) {
     // Auto-collapse the completed hop
     window.hopCollapseState[hop.id] = true;
 
-    // Create the next hop
+    // Calculate the ART for the next hop (after write-offs in current hop)
+    const nextHopART = getCurrentART();
+
+    // Create the next hop with proper ART tracking
     const nextHopNumber = hop.hopNumber + 1;
     const nextHop = {
         id: Date.now(),
         hopNumber: nextHopNumber,
         entries: [],
+        artAtStartByCurrency: nextHopART,
+        artAtStart: Object.values(nextHopART).reduce((sum, amount) => sum + amount, 0), // Legacy support
         completed: false
     };
-    
+
     investigation.hops.push(nextHop);
     
     // Save and render
@@ -11288,22 +11318,55 @@ function proceedToWalletClassification(hopId) {
 // Complete the hop and create the next one
 function completeHopAndCreateNext(hop) {
     hop.completed = true;
-    
+
     // Auto-collapse the completed hop
     window.hopCollapseState[hop.id] = true;
-    
-    // Create the next hop
-    createNextHopFromCurrent(hop);
-    
+
+    // Calculate ART for next hop (after accounting for write-offs in the current hop)
+    const nextHopART = getCurrentART();
+    const hasWriteoffs = hop.entries.some(e => e.entryType === 'writeoff' && parseFloat(e.amount) > 0);
+
+    // Create the next hop with proper ART accounting
+    const nextHopNumber = hop.hopNumber + 1;
+    const nextHop = {
+        id: Date.now(),
+        hopNumber: nextHopNumber,
+        entries: [],
+        artAtStartByCurrency: nextHopART,
+        artAtStart: Object.values(nextHopART).reduce((sum, amount) => sum + amount, 0), // Legacy support
+        completed: false
+    };
+
+    investigation.hops.push(nextHop);
+
+    // If there were write-offs, notify the user
+    if (hasWriteoffs) {
+        const writeoffTotal = {};
+        hop.entries.forEach(entry => {
+            if (entry.entryType === 'writeoff' && parseFloat(entry.amount) > 0) {
+                const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                writeoffTotal[currency] = (writeoffTotal[currency] || 0) + parseFloat(entry.amount);
+            }
+        });
+
+        let writeoffMessage = 'Write-offs applied:\n';
+        Object.entries(writeoffTotal).forEach(([currency, amount]) => {
+            writeoffMessage += `- ${amount.toLocaleString()} ${currency}\n`;
+        });
+        writeoffMessage += '\nThe ART has been reduced for Hop ' + nextHopNumber;
+
+        console.log(writeoffMessage); // Log for debugging
+    }
+
     saveToStorage();
     renderHops();
     updateInvestigationCompletionStatus();
-    
+
     // Trigger autosave after hop completion
     if (isFileSystemAvailable) {
         autosaveInvestigation();
     }
-    
+
     // Ensure we stay on the traces tab to see the new hop
     if (typeof switchTab === 'function') {
         switchTab('traces');
@@ -14558,25 +14621,32 @@ function showHopWizardStep(step) {
     } else if (step === 2) {
         // Step 2: Allocate amounts
 
-        // Apply PIFO if we have transaction data and no allocations yet
+        // Apply allocation based on mode (default to PIFO if not set)
         if (wizardData.txData && Object.keys(wizardData.allocations).length === 0) {
             const txAmount = wizardData.txData.amount || 0;
             if (txAmount > 0 && wizardData.selectedThreads.length > 0) {
-                // Apply PIFO allocation
+                // Default to PIFO mode if not specified
+                if (!wizardData.allocationMode) {
+                    wizardData.allocationMode = 'pifo';
+                }
+
+                // Apply allocation based on mode
                 wizardData.allocations = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
 
-                // Create PIFO notes
-                const pifoNotes = [];
+                // Create allocation notes
+                const allocationNotes = [];
                 const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
                 for (const [threadId, amount] of Object.entries(wizardData.allocations)) {
                     if (amount > 0) {
                         const thread = threads.find(t => t.threadId === threadId);
                         if (thread) {
-                            pifoNotes.push(`${threadId}: ${amount}/${thread.availableAmount} ${thread.currency}`);
+                            allocationNotes.push(`${threadId}: ${amount}/${thread.availableAmount} ${thread.currency}`);
                         }
                     }
                 }
-                wizardData.pifoNote = `PIFO allocation applied: ${pifoNotes.join(', ')}`;
+
+                const modeLabel = wizardData.allocationMode === 'matching' ? 'Transaction matching' : 'PIFO allocation';
+                wizardData.pifoNote = `${modeLabel} applied: ${allocationNotes.join(', ')}`;
             }
         }
 
@@ -14584,9 +14654,37 @@ function showHopWizardStep(step) {
             <h3>Step 2: Allocate Amounts</h3>
             <p>Specify how much from each selected thread will be traced in this transaction.</p>
 
+            <div style="background: #f0f8ff; border: 1px solid #87ceeb; border-radius: 8px; padding: 15px; margin: 15px 0;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="radio"
+                               name="allocationMode"
+                               value="pifo"
+                               ${wizardData.allocationMode !== 'matching' ? 'checked' : ''}
+                               onchange="setAllocationMode('pifo')"
+                               style="margin-right: 8px;">
+                        <strong>PIFO Allocation</strong> <small style="margin-left: 5px;">(Proceeds In First Out)</small>
+                    </label>
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="radio"
+                               name="allocationMode"
+                               value="matching"
+                               ${wizardData.allocationMode === 'matching' ? 'checked' : ''}
+                               onchange="setAllocationMode('matching')"
+                               style="margin-right: 8px;">
+                        <strong>Match Transaction</strong> <small style="margin-left: 5px;">(Exact amounts)</small>
+                    </label>
+                </div>
+                ${wizardData.allocationMode === 'matching' && wizardData.txData && wizardData.txData.amount ? `
+                    <div style="background: #fffbf0; border-left: 4px solid #ffa726; padding: 8px; margin-top: 10px;">
+                        <small>Will attempt to match transaction amount: ${wizardData.txData.amount.toLocaleString()} ${wizardData.txData.currency || ''}</small>
+                    </div>
+                ` : ''}
+            </div>
+
             ${wizardData.pifoNote ? `
                 <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin: 15px 0;">
-                    <strong>📊 PIFO Applied:</strong> ${wizardData.pifoNote}
+                    <strong>📊 ${wizardData.allocationMode === 'matching' ? 'Matching Mode' : 'PIFO Applied'}:</strong> ${wizardData.pifoNote}
                     <br><small>You can adjust these amounts manually if needed.</small>
                 </div>
             ` : ''}
@@ -15455,6 +15553,52 @@ function updateWizardAllocation(threadId, value) {
     updateWizardTotal();
 }
 
+// Set allocation mode (PIFO or Matching)
+function setAllocationMode(mode) {
+    if (!window.hopWizardData) return;
+
+    window.hopWizardData.allocationMode = mode;
+
+    // Re-apply allocation based on the selected mode
+    if (mode === 'pifo') {
+        applyPIFOToWizard();
+    } else if (mode === 'matching' && window.hopWizardData.txData) {
+        // Apply matching allocation (use full transaction amount)
+        applyMatchingAllocation();
+    }
+
+    // Re-render the step
+    hopWizardNextStep();
+    hopWizardPrevStep(); // Go back to step 2 to show updated allocations
+    hopWizardNextStep();
+}
+
+// Apply matching allocation (use exact transaction amounts)
+function applyMatchingAllocation() {
+    if (!window.hopWizardData || !window.hopWizardData.txData) return;
+
+    const wizardData = window.hopWizardData;
+    const txAmount = wizardData.txData.amount || 0;
+
+    if (txAmount > 0 && wizardData.selectedThreads.length > 0) {
+        // For matching mode, try to match the exact transaction amount
+        wizardData.allocations = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
+
+        // Add note indicating matching mode
+        const matchNotes = [];
+        const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+        for (const [threadId, amount] of Object.entries(wizardData.allocations)) {
+            if (amount > 0) {
+                const thread = threads.find(t => t.threadId === threadId);
+                if (thread) {
+                    matchNotes.push(`${threadId}: ${amount}/${thread.availableAmount} ${thread.currency}`);
+                }
+            }
+        }
+        wizardData.pifoNote = `Transaction matching (${txAmount.toLocaleString()}): ${matchNotes.join(', ')}`;
+    }
+}
+
 // Apply PIFO (Proceeds In First Out) allocation across multiple source threads
 function applyPIFOAllocation(totalAmount, selectedThreads) {
     const allocations = {};
@@ -16176,6 +16320,22 @@ function updateThreadsAfterSwap(hop, swapEntry) {
 }
 
 function createSingleHopEntry(hop, wizardData, output, outputIndex) {
+    // Skip creating entries for change outputs - funds remain in source thread
+    if (output.isChange) {
+        console.log(`Skipping change output: ${output.amount} ${output.currency} returns to sender, remains in source thread`);
+
+        // Document the change in notes but don't create an entry
+        const changeNote = `Change: ${output.amount} ${output.currency} returned to ${output.to} (remains in source thread)`;
+
+        // Store change note to add to next payment entry
+        if (!wizardData.changeNotes) {
+            wizardData.changeNotes = [];
+        }
+        wizardData.changeNotes.push(changeNote);
+
+        return; // Don't create an entry for change
+    }
+
     // Calculate how much of the source amount goes to this output
     const totalSelectedAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
     const outputProportion = output.amount / wizardData.multipleOutputs.reduce((sum, o) => sum + o.amount, 0);
@@ -16266,9 +16426,8 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
         timezone: 'UTC',
         notes: isSwap ?
             `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${output.to}` :
-            output.isChange ?
-            `Change output - funds remain in sender's custody (${output.amount} ${output.currency})` :
-            `Payment output ${outputIndex + 1} of ${wizardData.multipleOutputs.length}`,
+            `Payment output ${outputIndex + 1} of ${wizardData.multipleOutputs.length}` +
+            (wizardData.changeNotes && wizardData.changeNotes.length > 0 ? '\n' + wizardData.changeNotes.join('\n') : ''),
         notation: notation,
         isConvergence: wizardData.selectedThreads.length > 1,
         isChange: output.isChange,
@@ -16364,6 +16523,31 @@ function createHopEntryFromWizard() {
     
     // Validate thread allocations before proceeding
     const totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+
+    // Calculate total available across all selected threads
+    const threads = getAvailableSourcesForHop(hop.hopNumber, null);
+    let totalAvailable = 0;
+    let currencies = new Set();
+
+    wizardData.selectedThreads.forEach(threadId => {
+        const thread = threads.find(t => t.threadId === threadId);
+        if (thread) {
+            totalAvailable += thread.availableAmount;
+            currencies.add(thread.currency);
+        }
+    });
+
+    // Hard block if trying to allocate more than total available
+    if (totalAmount > totalAvailable) {
+        alert(`⚠️ Over-Allocation Blocked!\n\nYou're trying to allocate ${totalAmount} but only ${totalAvailable} is available across all selected threads.\n\nIf you believe there are additional funds:\n1. Add missing victims to create new source threads\n2. Check if you've selected all relevant source threads\n\nTotal available: ${totalAvailable}\nRequested: ${totalAmount}\nShortage: ${totalAmount - totalAvailable}`);
+        return; // Hard block - don't create the entry
+    }
+
+    // Check if mixing currencies (which shouldn't be allowed)
+    if (currencies.size > 1 && !wizardData.isSwap) {
+        alert(`⚠️ Currency Mismatch!\n\nYou cannot mix different currencies in a single entry unless it's a swap.\nCurrencies found: ${Array.from(currencies).join(', ')}\n\nPlease select threads with the same currency or use the swap wizard.`);
+        return; // Hard block
+    }
 
     // Check if this is partial tracing (transaction amount exceeds our allocation)
     let partialTraceNote = '';
@@ -24218,6 +24402,8 @@ To (RED Wallet): ${transfer.to}`;
         // Expose wizard and PIFO functions
         window.applyPIFOAllocation = applyPIFOAllocation;
         window.applyPIFOToWizard = applyPIFOToWizard;
+        window.setAllocationMode = setAllocationMode;
+        window.applyMatchingAllocation = applyMatchingAllocation;
         window.updateWizardAllocation = updateWizardAllocation;
         window.setWizardMaxAllocation = setWizardMaxAllocation;
 
