@@ -11126,12 +11126,59 @@ function closeHopAndProceed(hopId, notificationElement) {
     if (notificationElement) {
         notificationElement.remove();
     }
-    
+
     const hop = investigation.hops.find(h => h.id === hopId);
     if (!hop) return;
-    
-    // Show thread review modal
-    showThreadReviewModal(hop);
+
+    // Check if thread review modal should be shown (only if there are issues or user preference)
+    const hasUnaccountedThreads = checkForUnaccountedThreads(hop);
+    const showReviewModal = localStorage.getItem('showThreadReviewModal') !== 'false';
+
+    if (showReviewModal && hasUnaccountedThreads) {
+        // Show thread review modal only if there are unaccounted threads
+        showThreadReviewModal(hop);
+    } else {
+        // Proceed directly to next hop
+        proceedToNextHop(hop);
+    }
+}
+
+// Check if hop has unaccounted threads
+function checkForUnaccountedThreads(hop) {
+    // Check if there are threads that haven't been fully allocated
+    const threads = getAvailableSourcesForHop(hop.hopNumber, null);
+    for (const thread of threads) {
+        if (thread.availableAmount > 0.01) { // Small threshold to avoid rounding issues
+            return true;
+        }
+    }
+    return false;
+}
+
+// Proceed to next hop without modal
+function proceedToNextHop(hop) {
+    // Mark hop as completed
+    hop.isCollapsed = true;
+
+    // Create next hop if it doesn't exist
+    const nextHopNumber = hop.hopNumber + 1;
+    const existingNextHop = investigation.hops.find(h => h.hopNumber === nextHopNumber);
+
+    if (!existingNextHop) {
+        createNewHop();
+    }
+
+    // Save and update UI
+    saveToStorage();
+    renderHops();
+
+    // Scroll to next hop
+    setTimeout(() => {
+        const nextHopElement = document.getElementById(`hop_${nextHopNumber}`);
+        if (nextHopElement) {
+            nextHopElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 100);
 }
 
 // Show thread review modal before proceeding to next hop
@@ -15435,6 +15482,22 @@ function applyPIFOAllocation(totalAmount, selectedThreads) {
         return threadA.transaction - threadB.transaction;
     });
 
+    // Calculate total available across all selected threads
+    let totalAvailable = 0;
+    for (const threadId of sortedThreadIds) {
+        const thread = threads.find(t => t.threadId === threadId);
+        if (thread) {
+            totalAvailable += thread.availableAmount;
+        }
+    }
+
+    // If transaction amount exceeds total available, this is partial tracing
+    // Only allocate what we have available
+    if (totalAmount > totalAvailable) {
+        console.log(`Partial trace: Transaction amount ${totalAmount} exceeds available ${totalAvailable}`);
+        remainingAmount = totalAvailable; // Cap at what's available
+    }
+
     // Apply PIFO allocation
     for (const threadId of sortedThreadIds) {
         if (remainingAmount <= 0) break;
@@ -16301,6 +16364,16 @@ function createHopEntryFromWizard() {
     
     // Validate thread allocations before proceeding
     const totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+
+    // Check if this is partial tracing (transaction amount exceeds our allocation)
+    let partialTraceNote = '';
+    if (wizardData.txData && wizardData.txData.amount && wizardData.txData.amount > totalAmount) {
+        // This is partial tracing - we're only following our portion
+        partialTraceNote = `Partial trace: Following ${totalAmount} of ${wizardData.txData.amount} ${wizardData.txData.currency || ''} (transaction total)`;
+        console.log('Partial trace detected:', partialTraceNote);
+    }
+
+    // Validate individual thread allocations don't exceed available amounts
     for (const [threadId, allocation] of Object.entries(wizardData.allocations)) {
         // Determine currency from the thread
         const threads = getAvailableSourcesForHop(hop.hopNumber, null);
@@ -16521,7 +16594,7 @@ function createHopEntryFromWizard() {
         txHash: wizardData.txHash,
         timestamp: timestamp,
         timezone: 'UTC',
-        notes: wizardData.manualData?.notes || (isSwap ? `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${toWallet}` : ''),
+        notes: wizardData.manualData?.notes || (isSwap ? `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${toWallet}` : '') + (partialTraceNote ? `\n${partialTraceNote}` : '') + (wizardData.pifoNote ? `\n${wizardData.pifoNote}` : ''),
         category: '',
         justification: '',
         // Swap tracking
@@ -24147,6 +24220,12 @@ To (RED Wallet): ${transfer.to}`;
         window.applyPIFOToWizard = applyPIFOToWizard;
         window.updateWizardAllocation = updateWizardAllocation;
         window.setWizardMaxAllocation = setWizardMaxAllocation;
+
+        // Expose hop management functions
+        window.closeHopAndProceed = closeHopAndProceed;
+        window.checkForUnaccountedThreads = checkForUnaccountedThreads;
+        window.proceedToNextHop = proceedToNextHop;
+        window.showThreadReviewModal = showThreadReviewModal;
 
         // Add event listeners to setup fields
         document.addEventListener('DOMContentLoaded', function() {

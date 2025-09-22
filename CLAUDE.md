@@ -3,33 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 19:08)
+## Latest Commit (Auto-updated: 2025-09-22 19:12)
 
-**Commit:** 82110d8d90974848ca3543aaaadacaa00cb29970
+**Commit:** 1cd28c426579dc1c968b3226f9684f27345fef37
 **Author:** Your Name
-**Message:** Implement PIFO allocation and expose wizard functions
+**Message:** Update commingling notation to parentheses format
 
-- Added applyPIFOAllocation function for Proceeds In First Out logic
-- Auto-applies PIFO when transaction is looked up in wizard
-- Shows PIFO allocation details and allows manual override
-- Exposed wizard and PIFO functions to global scope for onclick handlers
-- Added re-apply PIFO button for manual adjustment
+- Changed notation from V1+V2-T1-H2 to (V1-T1) (V2-T1) H2
+- Multiple transactions from same victim: (V1-T2,3) (V2-T1,2,4) H3
+- Applied format to all commingling scenarios (entries, swaps, multi-outputs)
+- Notation remains unchanged through swaps as requested
 
-PIFO now automatically allocates from V1-T1 before V2-T1, etc., with allocation details saved in entry notes.
+This provides clearer tracking of which victims and transactions are involved in commingled funds.
 
 ### Changed Files:
 ```
- CLAUDE.md          |  98 ++++++--
- index.html         | 126 +++++++++-
- test_runner.html   | 245 +++++++++++++++++++
- test_simulation.js | 688 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 1129 insertions(+), 28 deletions(-)
+ CLAUDE.md  | 45 ++++++++++++++++++++-------------------
+ index.html | 71 +++++++++++++++++++++++++++++++++++++++++++++++++++++++-------
+ 2 files changed, 87 insertions(+), 29 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 82110d8 Implement PIFO allocation and expose wizard functions (0 seconds ago)
-- b55fac7 Fix broken Complete Victim button and other victim-related functions (85 minutes ago)
+- 1cd28c4 Update commingling notation to parentheses format (0 seconds ago)
+- 82110d8 Implement PIFO allocation and expose wizard functions (4 minutes ago)
+- b55fac7 Fix broken Complete Victim button and other victim-related functions (89 minutes ago)
 - c4b118d Fix ERC-20 token filtering regression in wizard (2 hours ago)
 - 7bdc0f8 Fix critical swap wizard bugs: Add missing showThreadReviewModal function and ensure swap wizard displays properly (2 hours ago)
 - f89a74e Major improvements to swap handling and UI/UX enhancements (3 hours ago)
@@ -37,7 +35,6 @@ PIFO now automatically allocates from V1-T1 before V2-T1, etc., with allocation 
 - 150f54c Improve post-wizard UI clarity and workflow guidance (4 hours ago)
 - 9fc5142 Fix wizard freeze when looking up transactions with single token transfer (30 hours ago)
 - 3992784 Fix missing closing braces in lookupWizardTransaction (30 hours ago)
-- 304c674 Fix syntax errors in lookupWizardTransaction (30 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
