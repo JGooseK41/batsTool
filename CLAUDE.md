@@ -3,38 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 17:43)
+## Latest Commit (Auto-updated: 2025-09-22 19:08)
 
-**Commit:** b55fac70815b535f475d5ac8bbab076a0154c5d0
+**Commit:** 82110d8d90974848ca3543aaaadacaa00cb29970
 **Author:** Your Name
-**Message:** Fix broken Complete Victim button and other victim-related functions
+**Message:** Implement PIFO allocation and expose wizard functions
 
-- Exposed victim functions to global scope so onclick handlers work properly
-- Added completeVictim, reopenVictim, removeVictim, addTransaction, etc. to window object
-- Fixed issue where buttons appeared broken but were actually inaccessible due to scope
-- Restored victim completion restriction (must complete before adding another)
+- Added applyPIFOAllocation function for Proceeds In First Out logic
+- Auto-applies PIFO when transaction is looked up in wizard
+- Shows PIFO allocation details and allows manual override
+- Exposed wizard and PIFO functions to global scope for onclick handlers
+- Added re-apply PIFO button for manual adjustment
 
-This fixes the regression where victim management buttons stopped working.
+PIFO now automatically allocates from V1-T1 before V2-T1, etc., with allocation details saved in entry notes.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 32 +++++++++++++++-----------------
- index.html | 59 +++++++++++++++++++++++++++++++++++------------------------
- 2 files changed, 50 insertions(+), 41 deletions(-)
+ CLAUDE.md          |  98 ++++++--
+ index.html         | 126 +++++++++-
+ test_runner.html   | 245 +++++++++++++++++++
+ test_simulation.js | 688 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 1129 insertions(+), 28 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b55fac7 Fix broken Complete Victim button and other victim-related functions (0 seconds ago)
-- c4b118d Fix ERC-20 token filtering regression in wizard (24 minutes ago)
-- 7bdc0f8 Fix critical swap wizard bugs: Add missing showThreadReviewModal function and ensure swap wizard displays properly (52 minutes ago)
-- f89a74e Major improvements to swap handling and UI/UX enhancements (78 minutes ago)
-- a48616a Streamline wizard workflow - entries now create directly without manual form step (2 hours ago)
-- 150f54c Improve post-wizard UI clarity and workflow guidance (3 hours ago)
-- 9fc5142 Fix wizard freeze when looking up transactions with single token transfer (28 hours ago)
-- 3992784 Fix missing closing braces in lookupWizardTransaction (29 hours ago)
-- 304c674 Fix syntax errors in lookupWizardTransaction (29 hours ago)
-- 3b84fc6 Complete remaining bug fixes and optimizations (29 hours ago)
+- 82110d8 Implement PIFO allocation and expose wizard functions (0 seconds ago)
+- b55fac7 Fix broken Complete Victim button and other victim-related functions (85 minutes ago)
+- c4b118d Fix ERC-20 token filtering regression in wizard (2 hours ago)
+- 7bdc0f8 Fix critical swap wizard bugs: Add missing showThreadReviewModal function and ensure swap wizard displays properly (2 hours ago)
+- f89a74e Major improvements to swap handling and UI/UX enhancements (3 hours ago)
+- a48616a Streamline wizard workflow - entries now create directly without manual form step (3 hours ago)
+- 150f54c Improve post-wizard UI clarity and workflow guidance (4 hours ago)
+- 9fc5142 Fix wizard freeze when looking up transactions with single token transfer (30 hours ago)
+- 3992784 Fix missing closing braces in lookupWizardTransaction (30 hours ago)
+- 304c674 Fix syntax errors in lookupWizardTransaction (30 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

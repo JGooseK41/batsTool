@@ -15992,9 +15992,26 @@ function createSwapEntry(hop, wizardData) {
         // Keep the same notation, just document the currency change
         notation = wizardData.selectedThreads[0];
     } else if (wizardData.selectedThreads.length > 1) {
-        // For convergence
-        const baseNotations = wizardData.selectedThreads.map(id => id.replace(/-H\d+$/, '')).join('+');
-        notation = `${baseNotations}-H${hop.hopNumber}`;
+        // For commingling, use parentheses format
+        const threadsByVictim = {};
+        wizardData.selectedThreads.forEach(threadId => {
+            const match = threadId.match(/V(\d+)-T([\d,]+)/);
+            if (match) {
+                const victimId = match[1];
+                const transactionIds = match[2];
+                if (!threadsByVictim[victimId]) {
+                    threadsByVictim[victimId] = [];
+                }
+                threadsByVictim[victimId].push(transactionIds);
+            }
+        });
+
+        const notationParts = [];
+        Object.keys(threadsByVictim).sort((a, b) => parseInt(a) - parseInt(b)).forEach(victimId => {
+            const transactions = threadsByVictim[victimId].sort().join(',');
+            notationParts.push(`(V${victimId}-T${transactions})`);
+        });
+        notation = `${notationParts.join(' ')} H${hop.hopNumber}`;
     }
     notation += ` [SWAP: ${swapDetails.fromCurrency} → ${swapDetails.toCurrency}]`;
 
@@ -16130,8 +16147,26 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
         // For change outputs, add -C suffix
         notation = output.isChange ? `${baseNotation}-C` : baseNotation;
     } else {
-        // Convergence notation for multiple sources
-        notation = wizardData.selectedThreads.map(t => t.split('-').slice(0, 2).join('-')).join('+') + `-H${hop.hopNumber}`;
+        // Commingling notation using parentheses format
+        const threadsByVictim = {};
+        wizardData.selectedThreads.forEach(threadId => {
+            const match = threadId.match(/V(\d+)-T([\d,]+)/);
+            if (match) {
+                const victimId = match[1];
+                const transactionIds = match[2];
+                if (!threadsByVictim[victimId]) {
+                    threadsByVictim[victimId] = [];
+                }
+                threadsByVictim[victimId].push(transactionIds);
+            }
+        });
+
+        const notationParts = [];
+        Object.keys(threadsByVictim).sort((a, b) => parseInt(a) - parseInt(b)).forEach(victimId => {
+            const transactions = threadsByVictim[victimId].sort().join(',');
+            notationParts.push(`(V${victimId}-T${transactions})`);
+        });
+        notation = `${notationParts.join(' ')} H${hop.hopNumber}`;
         if (output.isChange) notation += '-C';
     }
 
@@ -16429,9 +16464,29 @@ function createHopEntryFromWizard() {
     if (wizardData.selectedThreads.length === 1) {
         notation = `${wizardData.selectedThreads[0]}-H${effectiveHopNumber}`;
     } else if (wizardData.selectedThreads.length > 1) {
-        // For convergence, combine the thread IDs
-        const baseNotations = wizardData.selectedThreads.map(id => id.replace(/-H\d+$/, '')).join('+');
-        notation = `${baseNotations}-H${effectiveHopNumber}`;
+        // For commingling, use parentheses format: (V1-T1) (V2-T1) H2
+        // Group threads by victim
+        const threadsByVictim = {};
+        wizardData.selectedThreads.forEach(threadId => {
+            // Parse thread ID like "V1-T2-H1" or "V1-T2"
+            const match = threadId.match(/V(\d+)-T([\d,]+)/);
+            if (match) {
+                const victimId = match[1];
+                const transactionIds = match[2];
+                if (!threadsByVictim[victimId]) {
+                    threadsByVictim[victimId] = [];
+                }
+                threadsByVictim[victimId].push(transactionIds);
+            }
+        });
+
+        // Build notation with parentheses
+        const notationParts = [];
+        Object.keys(threadsByVictim).sort((a, b) => parseInt(a) - parseInt(b)).forEach(victimId => {
+            const transactions = threadsByVictim[victimId].sort().join(',');
+            notationParts.push(`(V${victimId}-T${transactions})`);
+        });
+        notation = `${notationParts.join(' ')} H${effectiveHopNumber}`;
     }
 
     // Add swap notation if applicable
