@@ -3,40 +3,53 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 19:15)
+## Latest Commit (Auto-updated: 2025-09-22 19:26)
 
-**Commit:** 31185bb1001d59e1a26d840ef4ffbb48798d5838
+**Commit:** 995000add80725502281213467d134b3601416d1
 **Author:** Your Name
-**Message:** Implement partial tracing and optional thread review modal
+**Message:** Implement core behavior fixes based on user requirements
 
-- Allow partial tracing when transaction exceeds available source threads
-- Document partial traces in entry notes (e.g., 'Following 1000 of 1500 total')
-- PIFO now caps allocation at available amount for partial traces
-- Thread review modal only shows when there are unaccounted threads
-- Modal can be disabled via localStorage preference
-- Added proceedToNextHop function for direct hop transitions
+Core improvements:
+- Write-offs now properly reduce ART when hop is closed
+- Added PIFO vs Transaction Matching allocation mode toggle
+- ART correctly accounts for write-offs in next hop calculations
+- Thread review modal displays reduced ART after write-offs
 
-This allows investigators to trace their portion of larger transactions without being blocked.
+Allocation modes:
+- PIFO (default): Proceeds In First Out allocation across threads
+- Matching: Match exact transaction amounts for specific cases
+- User can switch between modes in allocation step
+- Mode choice documented in entry notes
+
+Technical changes:
+- Updated getCurrentART() to properly handle write-offs
+- Modified completeHopAndCreateNext() to calculate post-writeoff ART
+- Enhanced proceedToNextHop() with ART tracking
+- Added setAllocationMode() and applyMatchingAllocation() functions
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 31 ++++++++++------------
- index.html | 89 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
- 2 files changed, 98 insertions(+), 22 deletions(-)
+ CLAUDE.md  |  32 +++++----
+ index.html | 230 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 225 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 31185bb Implement partial tracing and optional thread review modal (0 seconds ago)
-- 1cd28c4 Update commingling notation to parentheses format (3 minutes ago)
-- 82110d8 Implement PIFO allocation and expose wizard functions (7 minutes ago)
+- 995000a Implement core behavior fixes based on user requirements (0 seconds ago)
+- 31185bb Implement partial tracing and optional thread review modal (12 minutes ago)
+- 1cd28c4 Update commingling notation to parentheses format (15 minutes ago)
+- 82110d8 Implement PIFO allocation and expose wizard functions (19 minutes ago)
 - b55fac7 Fix broken Complete Victim button and other victim-related functions (2 hours ago)
 - c4b118d Fix ERC-20 token filtering regression in wizard (2 hours ago)
-- 7bdc0f8 Fix critical swap wizard bugs: Add missing showThreadReviewModal function and ensure swap wizard displays properly (2 hours ago)
+- 7bdc0f8 Fix critical swap wizard bugs: Add missing showThreadReviewModal function and ensure swap wizard displays properly (3 hours ago)
 - f89a74e Major improvements to swap handling and UI/UX enhancements (3 hours ago)
-- a48616a Streamline wizard workflow - entries now create directly without manual form step (3 hours ago)
-- 150f54c Improve post-wizard UI clarity and workflow guidance (4 hours ago)
-- 9fc5142 Fix wizard freeze when looking up transactions with single token transfer (30 hours ago)
+- a48616a Streamline wizard workflow - entries now create directly without manual form step (4 hours ago)
+- 150f54c Improve post-wizard UI clarity and workflow guidance (5 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

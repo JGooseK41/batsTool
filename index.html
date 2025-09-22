@@ -24387,6 +24387,21 @@ To (RED Wallet): ${transfer.to}`;
         window.lookupWizardTransaction = lookupWizardTransaction;
         window.selectWizardTransfer = selectWizardTransfer;
 
+        // Define removeTransaction function if it doesn't exist
+        function removeTransaction(victimId, transactionId) {
+            const victim = investigation.victims.find(v => v.id === victimId);
+            if (!victim) return;
+
+            // Filter out the transaction
+            victim.transactions = victim.transactions.filter(t => t.id !== transactionId);
+
+            // Save and re-render
+            saveToStorage();
+            renderVictims();
+            updateValidationStatus();
+            updateWorkflowSteps();
+        }
+
         // Expose victim-related functions globally so onclick handlers work
         window.addVictim = addVictim;
         window.completeVictim = completeVictim;
