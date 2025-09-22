@@ -9699,17 +9699,49 @@ function exportUniversalWalletIndex() {
                             
                             ${!isComplete ? `
                                 <div style="margin-top: 15px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                                    <h4 style="margin-bottom: 15px; color: #2c3e50;">Add New Entry to Hop ${hop.hopNumber}</h4>
+                                    ${(() => {
+                                        // Calculate what's left to trace
+                                        const availableThreads = getAvailableSourcesForHop(hop.hopNumber, null);
+                                        const remainingThreads = availableThreads.filter(t => t.availableAmount > 0);
+
+                                        if (remainingThreads.length > 0) {
+                                            return `
+                                                <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                                                    <h4 style="margin: 0 0 10px 0; color: #e65100;">📋 Threads Still to Trace:</h4>
+                                                    <div style="display: grid; gap: 8px;">
+                                                        ${remainingThreads.map(thread => `
+                                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: white; border-radius: 4px;">
+                                                                <span style="font-weight: bold; color: #2c3e50;">${thread.threadId}</span>
+                                                                <span style="color: #e67e22; font-weight: 600;">${thread.availableAmount.toLocaleString()} ${thread.currency}</span>
+                                                            </div>
+                                                        `).join('')}
+                                                    </div>
+                                                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffcc80;">
+                                                        <small style="color: #bf6000;">💡 Continue adding transactions to account for these remaining funds</small>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        } else {
+                                            return `
+                                                <div style="background: #d4edda; border-left: 4px solid #27ae60; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                                                    <h4 style="margin: 0; color: #1e7e34;">✅ All threads fully traced!</h4>
+                                                    <p style="margin: 10px 0 0 0; color: #155724;">All source funds have been accounted for. You can finalize this hop.</p>
+                                                </div>
+                                            `;
+                                        }
+                                    })()}
+
+                                    <h4 style="margin-bottom: 15px; color: #2c3e50;">Next Action:</h4>
                                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                        <button class="btn btn-primary" onclick="showAddEntryWizard(${hop.id})" 
+                                        <button class="btn btn-primary" onclick="showAddEntryWizard(${hop.id})"
                                                 style="padding: 12px 24px; background: #3498db; color: white; font-size: 16px;">
                                             + Add Transaction to This Hop
                                         </button>
-                                        <button class="btn btn-secondary" onclick="viewAvailableThreads(${hop.id})" 
+                                        <button class="btn btn-secondary" onclick="viewAvailableThreads(${hop.id})"
                                                 style="padding: 12px 24px; font-size: 16px;">
                                             📊 View Available Threads
                                         </button>
-                                        <button class="btn btn-confirm" onclick="finalizeHop(${hop.id})" 
+                                        <button class="btn btn-confirm" onclick="finalizeHop(${hop.id})"
                                                 style="margin-left: auto; background: #27ae60; padding: 10px 30px;">
                                             Finalize Hop ${hop.hopNumber}
                                         </button>
@@ -10972,6 +11004,48 @@ function createNextHop(previousHopId) {
 }
 
 // Check if a hop is fully accounted for and notify user
+function showRemainingThreadsSummary(hop) {
+    // Get available threads for this hop
+    const availableThreads = getAvailableSourcesForHop(hop.hopNumber, null);
+
+    // Filter for threads with remaining amounts
+    const remainingThreads = availableThreads.filter(t => t.availableAmount > 0);
+
+    if (remainingThreads.length > 0) {
+        // Build summary of what's left to trace
+        const totalsByCurrency = {};
+        remainingThreads.forEach(thread => {
+            if (!totalsByCurrency[thread.currency]) {
+                totalsByCurrency[thread.currency] = 0;
+            }
+            totalsByCurrency[thread.currency] += thread.availableAmount;
+        });
+
+        let summaryMessage = `✅ Entry created successfully!\n\n📊 Remaining to trace at Hop ${hop.hopNumber}:\n`;
+
+        remainingThreads.forEach(thread => {
+            summaryMessage += `• ${thread.threadId}: ${thread.availableAmount.toLocaleString()} ${thread.currency}\n`;
+        });
+
+        summaryMessage += `\n💡 Click "Add Entry" to continue tracing these funds.`;
+
+        // Show alert with remaining threads
+        showAlert(summaryMessage, 'success');
+
+        // Also highlight the add entry button
+        setTimeout(() => {
+            const addButton = document.querySelector(`button[onclick*="addHopEntry(${hop.id}"]`);
+            if (addButton) {
+                addButton.style.animation = 'pulse 2s ease-in-out 3';
+                addButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 500);
+    } else {
+        // All threads consumed - hop is complete
+        showAlert(`🎉 Hop ${hop.hopNumber} fully traced!\n\nAll source threads have been accounted for.\n\n${hop.hopNumber < investigation.hops.length ? 'You can now proceed to the next hop.' : 'Consider adding the next hop to continue tracing.'}`, 'success');
+    }
+}
+
 function checkHopCompletionStatus(hop) {
     if (!hop || hop.completed) return;
     
@@ -15893,15 +15967,18 @@ function createHopEntryFromWizard() {
     const sortedEntryId = sortedEntryIndex >= 0 ? hop.entries[sortedEntryIndex].id : entry.id;
     
     closeHopWizard();
-    
+
     // Rebuild thread index to ensure available amounts are updated
     buildAvailableThreadsIndex();
-    
+
     renderHops();
     saveToStorage();
-    
+
     // Check if hop is now fully accounted for
     checkHopCompletionStatus(hop);
+
+    // Show remaining threads summary after wizard completion
+    showRemainingThreadsSummary(hop);
     
     // Log the thread usage
     console.log(`✅ Created hop entry consuming threads:`, wizardData.selectedThreads);

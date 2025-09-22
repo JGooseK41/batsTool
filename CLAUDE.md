@@ -3,38 +3,44 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-21 13:08)
+## Latest Commit (Auto-updated: 2025-09-21 13:17)
 
-**Commit:** 3992784ea6cbe65fa45f1613c49025ae12af5181
+**Commit:** 9fc5142031627739750d0ca2eb17052c276ed861
 **Author:** Your Name
-**Message:** Fix missing closing braces in lookupWizardTransaction
+**Message:** Fix wizard freeze when looking up transactions with single token transfer
 
-- Added missing closing brace for else block (line 15113)
-- Added missing closing brace for outer if block (line 14973)
-- Fixed nested if-else structure for token transfer handling
-- Resolved 'Unexpected token catch' syntax error
+The wizard was getting stuck in a loop when a transaction had exactly one token transfer
+after currency filtering. The issue was caused by:
 
-The function now has properly balanced block structures
+1. When relevantTransfers.length === 1, the code would set txData but not exit
+2. Execution would fall through and process the same transfer again
+3. This caused duplicate processing and UI updates
+
+Fixed by:
+- Adding early return after handling multi-output selection UI
+- Properly structuring the if-else flow for single vs multiple transfers
+- Ensuring single transfers are processed only once
+- Fixed indentation and removed redundant else blocks
 
 ### Changed Files:
 ```
- CLAUDE.md  | 39 ++++++++++++++++-----------------------
- index.html |  3 +++
- 2 files changed, 19 insertions(+), 23 deletions(-)
+ CLAUDE.md  | 33 +++++++++++++-------------
+ index.html | 79 +++++++++++++++++++++++++++++++++-----------------------------
+ 2 files changed, 59 insertions(+), 53 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3992784 Fix missing closing braces in lookupWizardTransaction (0 seconds ago)
-- 304c674 Fix syntax errors in lookupWizardTransaction (2 minutes ago)
-- 3b84fc6 Complete remaining bug fixes and optimizations (7 minutes ago)
-- db59b81 Major bug fixes and security improvements (9 minutes ago)
-- 9196e89 Fix currency filtering in wizard to only show outputs matching tracked currency (89 minutes ago)
+- 9fc5142 Fix wizard freeze when looking up transactions with single token transfer (0 seconds ago)
+- 3992784 Fix missing closing braces in lookupWizardTransaction (8 minutes ago)
+- 304c674 Fix syntax errors in lookupWizardTransaction (11 minutes ago)
+- 3b84fc6 Complete remaining bug fixes and optimizations (15 minutes ago)
+- db59b81 Major bug fixes and security improvements (18 minutes ago)
+- 9196e89 Fix currency filtering in wizard to only show outputs matching tracked currency (2 hours ago)
 - 6154337 Fix wizardData undefined error in transaction lookup (4 hours ago)
 - e8209a8 Fix 'wizardData is not defined' error with robust error handling (4 hours ago)
 - bd628a6 Remove external crypto-js CDN to eliminate CSP warnings (5 hours ago)
-- 486affc Add comprehensive DEX swap documentation system (6 hours ago)
-- 87758d9 Use BROWN wallet classification for DEX swaps (7 hours ago)
+- 486affc Add comprehensive DEX swap documentation system (7 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
