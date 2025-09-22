@@ -4482,7 +4482,7 @@ function renderHopEntry(entry) {
                 </div>
                 <div style="display: flex; gap: 8px;">
                     ${isTrace && !isFinalized ? `<button class="btn btn-primary" onclick="reopenHopWizard(${entry.hopId}, ${entry.id})" style="padding: 8px 15px;">🔄 Wizard</button>` : ''}
-                    ${hasRequiredData && !isFinalized ? `<button class="btn btn-success" onclick="finalizeHopEntry(${entry.hopId}, ${entry.id})" style="padding: 8px 15px;">✓ Finalize</button>` : ''}
+                    ${hasRequiredData && !isFinalized ? `<button class="btn btn-success" onclick="toggleEntryCollapse('${entry.hopId}_${entry.id}')" style="padding: 8px 15px;">✓ Finalize</button>` : ''}
                     <button class="btn btn-danger" onclick="removeHopEntry(${entry.hopId}, ${entry.id})" style="padding: 8px 15px;">✕</button>
                 </div>
             </div>
@@ -14538,7 +14538,7 @@ function showHopWizardStep(step) {
                     <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; border: 2px solid #2196f3;">
                         <label style="font-weight: bold; color: #0d47a1;">Transaction Hash:</label>
                         <div style="display: flex; gap: 10px; margin-top: 10px;">
-                            <input type="text" 
+                            <input type="text"
                                    id="wizardTxHash"
                                    placeholder="Paste transaction hash here"
                                    value="${wizardData.txHash || ''}"
@@ -14547,6 +14547,18 @@ function showHopWizardStep(step) {
                             <button class="btn btn-primary" onclick="lookupWizardTransaction()">
                                 🔍 Lookup
                             </button>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label style="font-weight: bold; color: #0d47a1;">Notes (Optional):</label>
+                            <textarea id="wizardNotesLookup"
+                                      rows="3"
+                                      placeholder="PIFO application, convergence notes, special circumstances, etc."
+                                      onchange="updateWizardManualData('notes', this.value)"
+                                      style="width: 100%; padding: 8px; margin-top: 5px;">${wizardData.manualData?.notes || ''}</textarea>
+                            <small style="color: #555; display: block; margin-top: 5px;">
+                                💡 Document any special handling, PIFO applications, or investigative notes here
+                            </small>
                         </div>
                     </div>
                 ` : `
@@ -14602,7 +14614,7 @@ function showHopWizardStep(step) {
                         
                         <div class="form-group">
                             <label>Wallet Type (can be updated later):</label>
-                            <select id="wizardWalletType" 
+                            <select id="wizardWalletType"
                                     onchange="updateWizardManualData('walletType', this.value)"
                                     style="width: 100%;">
                                 <option value="black" ${wizardData.manualData?.walletType === 'black' ? 'selected' : ''}>⚫ BLACK - Default Intermediary</option>
@@ -14617,6 +14629,18 @@ function showHopWizardStep(step) {
                             </select>
                             <small style="color: #666; display: block; margin-top: 5px;">
                                 💡 Tip: BLACK is the default for intermediary wallets. Update classification as patterns emerge (e.g., YELLOW for convergence hubs, PURPLE for exchanges).
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Notes (Optional):</label>
+                            <textarea id="wizardNotes"
+                                      rows="3"
+                                      placeholder="PIFO application, convergence notes, special circumstances, etc."
+                                      onchange="updateWizardManualData('notes', this.value)"
+                                      style="width: 100%; padding: 8px;">${wizardData.manualData?.notes || ''}</textarea>
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                💡 Document any special handling, PIFO applications, or investigative notes here
                             </small>
                         </div>
                     </div>
@@ -14639,7 +14663,8 @@ function showHopWizardStep(step) {
             </div>
         `;
         
-        nextBtn.textContent = 'Create Entry';
+        // Change button text to indicate direct creation
+        nextBtn.textContent = 'Log Entry';
         // Enable next button if we have required data
         if (wizardData.entryMode === 'manual') {
             nextBtn.disabled = !wizardData.txHash || !wizardData.manualData?.toWallet;
@@ -14647,20 +14672,10 @@ function showHopWizardStep(step) {
             nextBtn.disabled = !wizardData.txHash || !wizardData.txData;
         }
         
-        // Add Create & Finalize button
+        // Remove the Create & Finalize button since we're streamlining
         const createFinalizeBtn = document.getElementById('wizardCreateFinalizeBtn');
-        if (!createFinalizeBtn) {
-            const btnContainer = nextBtn.parentElement;
-            const newBtn = document.createElement('button');
-            newBtn.id = 'wizardCreateFinalizeBtn';
-            newBtn.className = 'btn btn-success';
-            newBtn.textContent = 'Create & Finalize';
-            newBtn.style.marginLeft = '10px';
-            newBtn.onclick = () => createAndFinalizeEntry();
-            newBtn.disabled = nextBtn.disabled;
-            btnContainer.insertBefore(newBtn, nextBtn.nextSibling);
-        } else {
-            createFinalizeBtn.disabled = nextBtn.disabled;
+        if (createFinalizeBtn) {
+            createFinalizeBtn.remove();
         }
     }
     
@@ -14669,11 +14684,17 @@ function showHopWizardStep(step) {
 
 function hopWizardNext() {
     const wizardData = window.hopWizardData;
-    
+
     if (!wizardData) return;
-    
-    if (wizardData.step === 3) {
-        // Create the entry
+
+    // If we're on step 2 and have transaction data, create the entry directly
+    if (wizardData.step === 2 && (wizardData.txData || (wizardData.entryMode === 'manual' && wizardData.manualData?.toWallet))) {
+        // Create the entry directly from step 2
+        createHopEntryFromWizard();
+        // Note: createHopEntryFromWizard handles closing the wizard, rendering, and showing summary
+        return;
+    } else if (wizardData.step === 3) {
+        // Legacy path - keep for backwards compatibility
         createHopEntryFromWizard();
     } else {
         wizardData.step = wizardData.step + 1;
@@ -14696,7 +14717,8 @@ function closeHopWizard() {
 }
 
 function createAndFinalizeEntry() {
-    // Set a flag to indicate we want to finalize after creation
+    // This function is deprecated but kept for backwards compatibility
+    // The new workflow creates entries directly from step 2
     window.hopWizardData.shouldFinalize = true;
     createHopEntryFromWizard();
 }
@@ -15259,7 +15281,7 @@ async function lookupWizardTransaction() {
                 ${swapWarning}
                 <div style="margin-top: 15px; padding: 10px; background: #d4edda; border-radius: 4px;">
                     <strong>✅ Ready to create entry</strong><br>
-                    <small>Click "Create Entry" to add this transaction to Hop ${window.hopWizardData.hopNumber}</small>
+                    <small>Click "Log Entry" to add this transaction to Hop ${window.hopWizardData.hopNumber}</small>
                 </div>
             </div>
         `;
@@ -15927,7 +15949,7 @@ function createHopEntryFromWizard() {
         txHash: wizardData.txHash,
         timestamp: timestamp,
         timezone: 'UTC',
-        notes: isSwap ? `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${toWallet}` : '',
+        notes: wizardData.manualData?.notes || (isSwap ? `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${toWallet}` : ''),
         category: '',
         justification: '',
         // Swap tracking
@@ -15977,39 +15999,41 @@ function createHopEntryFromWizard() {
     // Check if hop is now fully accounted for
     checkHopCompletionStatus(hop);
 
-    // Show remaining threads summary after wizard completion
-    showRemainingThreadsSummary(hop);
-    
     // Log the thread usage
     console.log(`✅ Created hop entry consuming threads:`, wizardData.selectedThreads);
     console.log(`   Total amount used: ${Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0)}`);
     console.log(`   Thread allocations:`, wizardData.allocations);
-    
-    // Check if we should finalize the entry
-    const shouldFinalize = wizardData.shouldFinalize;
-    
-    // Scroll to the newly created entry after a short delay to allow DOM update
+
+    // Always collapse entries created from wizard for clean UI
     setTimeout(() => {
+        const entryKey = `${hop.id}_${sortedEntryId}`;
         const entryElement = document.getElementById(`entry_${hop.id}_${sortedEntryId}`);
+
         if (entryElement) {
-            if (shouldFinalize) {
-                // Finalize the entry (minimize it)
-                finalizeHopEntry(hop.id, sortedEntryId);
-                // Still scroll to it briefly to show where it was created
-                entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                // Normal behavior - scroll and highlight
-                entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
-                // Add a temporary highlight effect
-                entryElement.style.transition = 'background-color 0.5s ease';
-                entryElement.style.backgroundColor = '#e3f2fd';
-                setTimeout(() => {
-                    entryElement.style.backgroundColor = '';
-                }, 2000);
+            // Collapse the entry immediately
+            window.entryCollapseState[entryKey] = true;
+            const content = document.getElementById(`entryContent_${entryKey}`);
+            const summary = document.getElementById(`entrySummary_${entryKey}`);
+
+            if (content && summary) {
+                content.style.display = 'none';
+                summary.style.display = 'block';
             }
+
+            // Brief highlight to show where it was created
+            entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Add a temporary highlight effect
+            entryElement.style.transition = 'box-shadow 0.5s ease';
+            entryElement.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.5)';
+            setTimeout(() => {
+                entryElement.style.boxShadow = '';
+            }, 2000);
         }
     }, 300);
+
+    // Show remaining threads summary after wizard completion
+    showRemainingThreadsSummary(hop);
 }
 // Calculate remaining ART for write-offs
 function calculateRemainingARTForHop(hopId, currency) {
