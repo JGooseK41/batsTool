@@ -15928,12 +15928,6 @@ function checkWizardButtonState() {
             nextBtn.disabled = !wizardData.txHash;
         }
     }
-    
-    // Update next button state
-    const nextBtn = document.getElementById('wizardNextBtn');
-    if (window.hopWizardData.entryMode === 'manual') {
-        nextBtn.disabled = !window.hopWizardData.txHash || !window.hopWizardData.manualData.toWallet;
-    }
 }
 
 function toggleWizardPreference() {
