@@ -4915,7 +4915,19 @@ function buildAvailableThreadsIndex() {
             }
         });
 
-        // Process entries, skipping trace threads that have been swapped
+        // IMPORTANT: Process swaps FIRST, then traces
+        // This ensures swaps replace threads before traces try to use them
+
+        // First pass: Process all swaps to update thread currencies
+        hop.entries.forEach(entry => {
+            if (entry.entryType === 'swap' && entry.swapDetails) {
+                // For swap entries, we need to handle the currency conversion
+                // The output replaces the input thread with new currency
+                updateThreadAvailabilityFromSwap(entry);
+            }
+        });
+
+        // Second pass: Process traces (after swaps have updated threads)
         hop.entries.forEach(entry => {
             if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
                 // Don't create thread if this trace has been swapped
@@ -4924,10 +4936,6 @@ function buildAvailableThreadsIndex() {
                 } else {
                     console.log(`Skipping thread creation for swapped trace: ${entry.notation}`);
                 }
-            } else if (entry.entryType === 'swap' && entry.swapDetails) {
-                // For swap entries, we need to handle the currency conversion
-                // The output creates a new thread with the output currency
-                updateThreadAvailabilityFromSwap(entry);
             }
         });
     });
@@ -4970,50 +4978,68 @@ function updateThreadAvailabilityFromSwap(entry) {
     const inputAmount = parseFloat(entry.amount);
     const outputAmount = parseFloat(entry.outputAmount);
 
-    // Get the source thread ID
-    const sourceThreadId = entry.sourceThreadId ||
+    // Get the source thread ID (this is what we're replacing)
+    const threadId = entry.sourceThreadId ||
         (entry.multipleSourceThreads ? entry.multipleSourceThreads.join('+') + `-H${entry.hopNumber}` : null);
 
-    if (!sourceThreadId) return;
+    if (!threadId) return;
 
-    // Remove source thread from input currency
+    // Check if thread already exists in output currency (may have been used before swap)
+    const existingOutputThread = investigation.availableThreads[outputCurrency]?.[threadId];
+
+    // Remove thread from input currency (it's being replaced)
     if (investigation.availableThreads[inputCurrency]) {
-        delete investigation.availableThreads[inputCurrency][sourceThreadId];
+        delete investigation.availableThreads[inputCurrency][threadId];
     }
 
-    // Create output thread in new currency using the swap entry's notation
+    // Create/Update SAME thread ID in output currency (replacement)
     if (outputAmount > 0) {
         if (!investigation.availableThreads[outputCurrency]) {
             investigation.availableThreads[outputCurrency] = {};
         }
 
-        // Use the swap entry's notation as the output thread ID
-        // This ensures uniqueness and proper tracking
-        const newThreadId = entry.notation;
+        // Use SAME thread ID - we're replacing the thread with new currency
+        const newThreadId = threadId;
 
-        // Create the output thread with the new currency
-        investigation.availableThreads[outputCurrency][newThreadId] = {
-            totalAmount: outputAmount,
-            availableAmount: outputAmount,
-            assignments: [],
-            sourceWallet: entry.toWallet, // The swap service/DEX address
-            sourceType: 'swap_output',
-            hopLevel: entry.hopNumber,
-            createdAt: entry.timestamp,
-            isActive: true,
-            parentThreads: entry.multipleSourceThreads || [entry.sourceThreadId].filter(Boolean),
-            childThreads: [],
-            currency: outputCurrency,
-            swapDetails: {
+        // If thread already exists in output currency, DON'T overwrite it completely
+        // This can happen if entries are out of order (trace before swap)
+        if (existingOutputThread) {
+            console.log(`Warning: Thread ${threadId} already exists in ${outputCurrency}. Swap may be out of order.`);
+            // Update the total amount but preserve existing structure
+            investigation.availableThreads[outputCurrency][newThreadId].totalAmount = outputAmount;
+            investigation.availableThreads[outputCurrency][newThreadId].sourceType = 'swap_output';
+            investigation.availableThreads[outputCurrency][newThreadId].swapDetails = {
                 fromCurrency: inputCurrency,
                 fromAmount: inputAmount,
                 toCurrency: outputCurrency,
                 toAmount: outputAmount,
                 provider: entry.swapDetails?.providerName || 'Unknown'
-            }
-        };
+            };
+        } else {
+            // Create new thread
+            investigation.availableThreads[outputCurrency][newThreadId] = {
+                totalAmount: outputAmount,
+                availableAmount: outputAmount,
+                assignments: [],
+                sourceWallet: entry.toWallet, // The swap service/DEX address
+                sourceType: 'swap_output',
+                hopLevel: entry.hopNumber,
+                createdAt: entry.timestamp,
+                isActive: true,
+                parentThreads: entry.multipleSourceThreads || [entry.sourceThreadId].filter(Boolean),
+                childThreads: [],
+                currency: outputCurrency,
+                swapDetails: {
+                    fromCurrency: inputCurrency,
+                    fromAmount: inputAmount,
+                    toCurrency: outputCurrency,
+                    toAmount: outputAmount,
+                    provider: entry.swapDetails?.providerName || 'Unknown'
+                }
+            };
+        }
 
-        console.log(`Created swap output thread ${newThreadId} with ${outputAmount} ${outputCurrency}`);
+        console.log(`Created/Updated swap output thread ${newThreadId} with ${outputAmount} ${outputCurrency}`);
     }
 }
 
@@ -9797,18 +9823,12 @@ function addNewHop() {
                                                 <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
                                                     <h4 style="margin: 0 0 10px 0; color: #e65100;">${heading}</h4>
                                                     <div style="display: grid; gap: 8px;">
-                                                        ${remainingThreads.map(thread => {
-                                                            // Add indicator for swap outputs
-                                                            const isSwapOutput = thread.threadId && thread.threadId.includes('[SWAP]');
-                                                            const displayThreadId = isSwapOutput ?
-                                                                thread.threadId.replace('[SWAP]', ' (swap output)') :
-                                                                thread.threadId;
-                                                            return `
+                                                        ${remainingThreads.map(thread => `
                                                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: white; border-radius: 4px;">
-                                                                <span style="font-weight: bold; color: #2c3e50;">${displayThreadId}</span>
+                                                                <span style="font-weight: bold; color: #2c3e50;">${thread.threadId}</span>
                                                                 <span style="color: #e67e22; font-weight: 600;">${thread.availableAmount.toLocaleString()} ${thread.currency}</span>
                                                             </div>
-                                                        `;}).join('')}
+                                                        `).join('')}
                                                     </div>
                                                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffcc80;">
                                                         <small style="color: #bf6000;">💡 ${hasSwapOutputs ?
@@ -15732,14 +15752,10 @@ function createSwapEntry() {
     const inputCurrency = Object.keys(inputByCurrency)[0];
     const inputData = inputByCurrency[inputCurrency];
 
-    // For swaps, append [SWAP] to distinguish the output thread from the input thread
-    // This prevents thread ID collisions when currencies change
-    const baseNotation = wizardData.selectedThreads.length === 1 ?
+    // Keep same notation - swaps replace threads in place
+    const notation = wizardData.selectedThreads.length === 1 ?
         wizardData.selectedThreads[0] :
         wizardData.selectedThreads.map(t => t.split('-').slice(0, 2).join('-')).join('+') + `-H${hop.hopNumber}`;
-
-    // Add [SWAP] suffix to make the output thread unique
-    const notation = `${baseNotation}[SWAP]`;
 
     // Create the swap entry
     const swapEntry = {
