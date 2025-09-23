@@ -9880,7 +9880,7 @@ function addNewHop() {
 
                 // Calculate remaining based on available threads, not just starting ART
                 // This properly accounts for swaps that change currency
-                const availableThreads = getAvailableSourcesForHop(hop.hopNumber + 1, null);
+                // Use already fetched availableThreads from line 9836
                 const remainingByCurrency = {};
 
                 // Sum up remaining amounts by currency from available threads
