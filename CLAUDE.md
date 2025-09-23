@@ -3,42 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 10:30)
+## Latest Commit (Auto-updated: 2025-09-23 10:31)
 
-**Commit:** 7c01752308b220e2241096d57cb1078139b762ec
+**Commit:** 9bcc3364fe34f3e3fdb14b9639456961038e5857
 **Author:** Your Name
-**Message:** Simplify swap handling and fix over-allocation bug
-
-- Swaps now keep the same thread ID, just change currency (no [SWAP:] suffix)
-- Thread V1-T1-H1 in USDC becomes same V1-T1-H1 in USDT after swap
-- Fixed max allocation to not exceed transaction amount
-- When allocating max to a smaller transaction, only allocates what fits
-- Remaining amount stays available for next entries
-- Cleaner, simpler thread tracking after swaps
-
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest changes
 
 ### Changed Files:
 ```
- CLAUDE.md  | 44 ++++++++++++++++++++++----------------------
- index.html | 62 +++++++++++++++++++++++++++++++++++---------------------------
- 2 files changed, 57 insertions(+), 49 deletions(-)
+ CLAUDE.md | 40 ++++++++++++++++++++--------------------
+ 1 file changed, 20 insertions(+), 20 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7c01752 Simplify swap handling and fix over-allocation bug (0 seconds ago)
-- 8784749 Fix thread database consistency and availability calculations (11 minutes ago)
-- aaf556b Implement universal threads database as single source of truth (25 minutes ago)
-- ee8ce28 Enable same-hop swap tracing - swap outputs immediately available within same hop (27 minutes ago)
-- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (36 minutes ago)
-- b558cc0 Fix swap currency tracking - ensure threads use output currency after swap conversion (45 minutes ago)
-- 4e0d269 Fix swap wizard to properly handle currency conversion and auto-create entries (54 minutes ago)
+- 9bcc336 Update CLAUDE.md with latest changes (0 seconds ago)
+- 7c01752 Simplify swap handling and fix over-allocation bug (77 seconds ago)
+- 8784749 Fix thread database consistency and availability calculations (13 minutes ago)
+- aaf556b Implement universal threads database as single source of truth (26 minutes ago)
+- ee8ce28 Enable same-hop swap tracing - swap outputs immediately available within same hop (28 minutes ago)
+- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (38 minutes ago)
+- b558cc0 Fix swap currency tracking - ensure threads use output currency after swap conversion (46 minutes ago)
+- 4e0d269 Fix swap wizard to properly handle currency conversion and auto-create entries (56 minutes ago)
 - 4b64742 Fix renderHopEntry missing hop parameter causing undefined error (2 hours ago)
 - 0ed7ee6 Update CLAUDE.md with latest changes (2 hours ago)
-- a2465ca Remove duplicate functions and clean up redundant code (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

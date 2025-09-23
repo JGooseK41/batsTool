@@ -17227,14 +17227,24 @@ function createHopEntryFromWizard() {
     }
 
     // Calculate the amount to trace - limited by transaction amount if available
-    let traceAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+    let totalAllocated = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+    let traceAmount = totalAllocated;
 
-    // If we have transaction data, limit trace amount to what the transaction actually contains
+    // Adjust allocations if they exceed transaction amount
     if (wizardData.txData && wizardData.txData.amount) {
         const txAmount = wizardData.txData.amount;
-        if (traceAmount > txAmount) {
-            console.log(`Limiting trace amount from ${traceAmount} to transaction amount ${txAmount}`);
+        if (totalAllocated > txAmount) {
+            console.log(`Limiting trace amount from ${totalAllocated} to transaction amount ${txAmount}`);
             traceAmount = txAmount;
+
+            // Proportionally reduce allocations to match transaction amount
+            const ratio = txAmount / totalAllocated;
+            const adjustedAllocations = {};
+            for (const threadId in wizardData.allocations) {
+                adjustedAllocations[threadId] = wizardData.allocations[threadId] * ratio;
+            }
+            wizardData.allocations = adjustedAllocations;
+            console.log(`Adjusted allocations:`, wizardData.allocations);
         }
     }
 
