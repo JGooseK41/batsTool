@@ -3,19 +3,26 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 11:05)
+## Latest Commit (Auto-updated: 2025-09-23 11:11)
 
-**Commit:** 4243a3557a9aeaabf60981acefb9b9493e4a36a1
+**Commit:** 84cb00183d9a6ad6af97547f0f12037d9e6031dd
 **Author:** Your Name
-**Message:** Fix thread display clarity for swaps within same hop
+**Message:** Fix wizard completion and thread allocation tracking issues
 
-- Improved heading to clarify when threads include swap outputs from current hop
-- Shows "Available Threads (including swap outputs)" when swaps are present
-- Adds "(from swap)" indicator to threads created by swaps in current hop
-- Updates hint text to clarify swap outputs are available in the same hop
+Problems fixed:
+1. Wizard not auto-logging entries - added return statement to prevent step 4
+2. Duplicate blank entry creation after wizard completes
+3. Thread double-counting - source threads not showing reduced amounts
 
-This is a display-only fix for clarity - functionality was already correct.
-Swaps correctly make their output threads available within the same hop.
+Changes:
+- Added return statement after createHopEntryFromWizard() to prevent progression
+- Fixed single-source entries to store allocations in individualSourceAssignments
+- This ensures getMaxAssignableAmount properly tracks consumed amounts
+- Source threads now correctly show remaining amounts after partial allocation
+
+Example: When allocating 45,000 from a 79,929 thread:
+- Before: Both V1-T1-H1 (79,929) and V1-T1-H2 (45,000) showed as available
+- After: V1-T1-H1 shows 34,929 remaining, V1-T1-H2 shows 45,000 available
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -23,23 +30,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 45 +++++++++++++++++++++++----------------------
- index.html | 26 ++++++++++++++++++++------
- 2 files changed, 43 insertions(+), 28 deletions(-)
+ CLAUDE.md  | 43 ++++++++++++++++++++++---------------------
+ index.html |  6 +++++-
+ 2 files changed, 27 insertions(+), 22 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4243a35 Fix thread display clarity for swaps within same hop (0 seconds ago)
-- 722a78c Fix thread display and remaining threads summary (9 minutes ago)
-- 91afd28 Fix hop completion check to properly handle swaps and remaining threads (17 minutes ago)
-- ddb77b2 Fix over-allocation bug - properly limit thread consumption to transaction amount (28 minutes ago)
-- 9bcc336 Update CLAUDE.md with latest changes (34 minutes ago)
-- 7c01752 Simplify swap handling and fix over-allocation bug (35 minutes ago)
-- 8784749 Fix thread database consistency and availability calculations (47 minutes ago)
-- aaf556b Implement universal threads database as single source of truth (60 minutes ago)
-- ee8ce28 Enable same-hop swap tracing - swap outputs immediately available within same hop (62 minutes ago)
-- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (71 minutes ago)
+- 84cb001 Fix wizard completion and thread allocation tracking issues (0 seconds ago)
+- 4243a35 Fix thread display clarity for swaps within same hop (6 minutes ago)
+- 722a78c Fix thread display and remaining threads summary (15 minutes ago)
+- 91afd28 Fix hop completion check to properly handle swaps and remaining threads (24 minutes ago)
+- ddb77b2 Fix over-allocation bug - properly limit thread consumption to transaction amount (34 minutes ago)
+- 9bcc336 Update CLAUDE.md with latest changes (40 minutes ago)
+- 7c01752 Simplify swap handling and fix over-allocation bug (41 minutes ago)
+- 8784749 Fix thread database consistency and availability calculations (53 minutes ago)
+- aaf556b Implement universal threads database as single source of truth (66 minutes ago)
+- ee8ce28 Enable same-hop swap tracing - swap outputs immediately available within same hop (68 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
