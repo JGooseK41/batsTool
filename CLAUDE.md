@@ -3,18 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 10:56)
+## Latest Commit (Auto-updated: 2025-09-23 11:05)
 
-**Commit:** 722a78ca68a3f023580581345429da771269520a
+**Commit:** 4243a3557a9aeaabf60981acefb9b9493e4a36a1
 **Author:** Your Name
-**Message:** Fix thread display and remaining threads summary
+**Message:** Fix thread display clarity for swaps within same hop
 
-- Fixed showRemainingThreadsSummary to show threads for NEXT hop instead of current hop
-- Fixed hop display to show available threads for Hop N+1 when viewing Hop N
-- Updated heading from "Threads Still to Trace" to "Available Threads for Hop X"
-- This ensures users see the correct remaining threads after creating entries
+- Improved heading to clarify when threads include swap outputs from current hop
+- Shows "Available Threads (including swap outputs)" when swaps are present
+- Adds "(from swap)" indicator to threads created by swaps in current hop
+- Updates hint text to clarify swap outputs are available in the same hop
 
-The system now properly shows what's available for the next hop, making it clear what funds remain to be traced in subsequent hops.
+This is a display-only fix for clarity - functionality was already correct.
+Swaps correctly make their output threads available within the same hop.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,23 +23,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 42 +++++++++++++++++++++---------------------
- index.html | 19 ++++++++++++-------
- 2 files changed, 33 insertions(+), 28 deletions(-)
+ CLAUDE.md  | 45 +++++++++++++++++++++++----------------------
+ index.html | 26 ++++++++++++++++++++------
+ 2 files changed, 43 insertions(+), 28 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 722a78c Fix thread display and remaining threads summary (0 seconds ago)
-- 91afd28 Fix hop completion check to properly handle swaps and remaining threads (8 minutes ago)
-- ddb77b2 Fix over-allocation bug - properly limit thread consumption to transaction amount (18 minutes ago)
-- 9bcc336 Update CLAUDE.md with latest changes (25 minutes ago)
-- 7c01752 Simplify swap handling and fix over-allocation bug (26 minutes ago)
-- 8784749 Fix thread database consistency and availability calculations (38 minutes ago)
-- aaf556b Implement universal threads database as single source of truth (51 minutes ago)
-- ee8ce28 Enable same-hop swap tracing - swap outputs immediately available within same hop (53 minutes ago)
-- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (62 minutes ago)
-- b558cc0 Fix swap currency tracking - ensure threads use output currency after swap conversion (71 minutes ago)
+- 4243a35 Fix thread display clarity for swaps within same hop (0 seconds ago)
+- 722a78c Fix thread display and remaining threads summary (9 minutes ago)
+- 91afd28 Fix hop completion check to properly handle swaps and remaining threads (17 minutes ago)
+- ddb77b2 Fix over-allocation bug - properly limit thread consumption to transaction amount (28 minutes ago)
+- 9bcc336 Update CLAUDE.md with latest changes (34 minutes ago)
+- 7c01752 Simplify swap handling and fix over-allocation bug (35 minutes ago)
+- 8784749 Fix thread database consistency and availability calculations (47 minutes ago)
+- aaf556b Implement universal threads database as single source of truth (60 minutes ago)
+- ee8ce28 Enable same-hop swap tracing - swap outputs immediately available within same hop (62 minutes ago)
+- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (71 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

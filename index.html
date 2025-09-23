@@ -15104,6 +15104,8 @@ function hopWizardNext() {
                 wizardData.selectedTransfers = wizardData.txData.transfers.map((_, index) => index);
             }
             createHopEntryFromWizard();
+            // Don't proceed to step 4 or create any additional entries
+            return;
         } else {
             alert('Please enter a transaction hash before proceeding.');
         }
@@ -17303,7 +17305,9 @@ function createHopEntryFromWizard() {
         convergenceData: convergenceData,
         // New fields for multiple sources
         multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
-        individualSourceAssignments: wizardData.selectedThreads.length > 1 ? wizardData.allocations : {}
+        // IMPORTANT: For single source, also store allocation in individualSourceAssignments
+        individualSourceAssignments: wizardData.selectedThreads.length > 1 ? wizardData.allocations :
+            wizardData.selectedThreads.length === 1 ? {[wizardData.selectedThreads[0]]: traceAmount} : {}
     };
     
     // Save undo state
