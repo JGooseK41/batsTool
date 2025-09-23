@@ -3,16 +3,24 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 08:56)
+## Latest Commit (Auto-updated: 2025-09-23 09:36)
 
-**Commit:** 4b647428755221528ea4d5fb7498bfcf72f2583b
+**Commit:** 4e0d269068b6f5560c96229df4f176dc3cdfa180
 **Author:** Your Name
-**Message:** Fix renderHopEntry missing hop parameter causing undefined error
+**Message:** Fix swap wizard to properly handle currency conversion and auto-create entries
 
-- Fixed renderCollapsibleHopEntry calling renderHopEntry with only entry parameter
-- renderHopEntry expects (entry, hop) but was being called with just (entry)
-- This caused 'Cannot read properties of undefined (reading hopNumber)' error
-- Error was preventing hop completion after creating entries through wizard
+- Added updateThreadAvailabilityFromSwap function to create threads with output currency
+- Fixed buildAvailableThreadsIndex to process swap entries and create output threads
+- Fixed getAvailableSourcesForHop to recognize swap outputs with correct currency
+- Made swap wizard automatically collapse entry and prompt for next trace
+- Swap entries now properly create threads with output currency (USDT) not input (USDC)
+- Fixed 'No USDC transfers found' error when tracing after a swap to USDT
+
+The swap wizard now:
+1. Creates the swap entry with both input and output currencies
+2. Automatically collapses the swap entry
+3. Creates a new thread with the output currency for continued tracing
+4. Prompts for the next entry if threads remain
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -20,23 +28,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 31 +++++++++++--------------------
- index.html |  2 +-
- 2 files changed, 12 insertions(+), 21 deletions(-)
+ CLAUDE.md  |  30 +++++++++-------
+ index.html | 116 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 130 insertions(+), 16 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4b64742 Fix renderHopEntry missing hop parameter causing undefined error (0 seconds ago)
-- 0ed7ee6 Update CLAUDE.md with latest changes (8 minutes ago)
-- a2465ca Remove duplicate functions and clean up redundant code (9 minutes ago)
-- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (17 minutes ago)
-- abdd5b5 Fix duplicate hopNumber declaration in reopenHop function (19 minutes ago)
-- 0883ca5 Fix duplicate hopNumber declaration in showSwapWizard (29 minutes ago)
-- a86c083 Fix hop wizard progression and remove all hop ID references (58 minutes ago)
-- bf1e5df Fix hop wizard step 3 'Log Entry' button disabled issue (3 hours ago)
+- 4e0d269 Fix swap wizard to properly handle currency conversion and auto-create entries (0 seconds ago)
+- 4b64742 Fix renderHopEntry missing hop parameter causing undefined error (39 minutes ago)
+- 0ed7ee6 Update CLAUDE.md with latest changes (48 minutes ago)
+- a2465ca Remove duplicate functions and clean up redundant code (49 minutes ago)
+- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (56 minutes ago)
+- abdd5b5 Fix duplicate hopNumber declaration in reopenHop function (58 minutes ago)
+- 0883ca5 Fix duplicate hopNumber declaration in showSwapWizard (69 minutes ago)
+- a86c083 Fix hop wizard progression and remove all hop ID references (2 hours ago)
+- bf1e5df Fix hop wizard step 3 'Log Entry' button disabled issue (4 hours ago)
 - b1058ab Fix thread ID format to prevent hop number accumulation (11 hours ago)
-- 7954cb3 Fix unintended consequences of hop ID removal (11 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

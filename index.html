@@ -16186,18 +16186,26 @@ async function lookupWizardTransaction() {
         }
 
         // Determine the currency we're tracking from source threads
+        // IMPORTANT: For swap outputs, we need to track the OUTPUT currency, not the input
         let trackingCurrency = null;
         if (window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0) {
             const threads = getAvailableSourcesForHop(window.hopWizardData.hopNumber, null);
             const sourceCurrencies = new Set();
             window.hopWizardData.selectedThreads.forEach(threadId => {
                 const thread = threads.find(t => t.threadId === threadId);
-                if (thread) sourceCurrencies.add(thread.currency);
+                if (thread) {
+                    // The thread object from getAvailableSourcesForHop already has the correct currency
+                    // For swap outputs, it will be the output currency
+                    sourceCurrencies.add(thread.currency);
+                    console.log(`Thread ${threadId} has currency: ${thread.currency} (type: ${thread.sourceType})`);
+                }
             });
             // If all source threads are the same currency, that's what we're tracking
             if (sourceCurrencies.size === 1) {
                 trackingCurrency = Array.from(sourceCurrencies)[0];
-                console.log(`Tracking currency: ${trackingCurrency}`);
+                console.log(`Tracking currency determined: ${trackingCurrency}`);
+            } else if (sourceCurrencies.size > 1) {
+                console.log(`Multiple currencies in source threads: ${Array.from(sourceCurrencies).join(', ')}`);
             }
         }
 
@@ -16662,27 +16670,33 @@ function updateThreadsAfterSwap(hop, swapEntry) {
         investigation.availableThreads[swapDetails.toCurrency] = {};
     }
 
-    // Generate thread ID for the new currency thread
-    let newThreadId;
-    if (swapEntry.sourceThreadId) {
-        // Single source - keep the base notation
-        newThreadId = swapEntry.sourceThreadId;
-    } else if (swapEntry.multipleSourceThreads && swapEntry.multipleSourceThreads.length > 1) {
-        // Multiple sources - create combined ID
-        newThreadId = swapEntry.multipleSourceThreads.map(t => t.split('-').slice(0, 2).join('-')).join('+') + `-H${hop.hopNumber}`;
-    }
+    // Use the swap entry's notation as the thread ID (includes [SWAP: X → Y] suffix)
+    const newThreadId = swapEntry.notation;
 
     // Create the new thread in the output currency
     investigation.availableThreads[swapDetails.toCurrency][newThreadId] = {
         threadId: newThreadId,
         totalAmount: swapDetails.toAmount,
+        availableAmount: swapDetails.toAmount, // Important: include availableAmount
         currency: swapDetails.toCurrency,
         sourceWallet: swapEntry.toWallet, // DEX/CEX address becomes the source for the new thread
-        hopNumber: hop.hopNumber,
+        sourceType: 'swap_output',
+        hopLevel: hop.hopNumber,
         swapConverted: true,
         originalCurrency: swapDetails.fromCurrency,
-        partialSwap: swapEntry.partialSwaps && swapEntry.partialSwaps.length > 0
+        partialSwap: swapEntry.partialSwaps && swapEntry.partialSwaps.length > 0,
+        isActive: true,
+        assignments: [],
+        swapDetails: {
+            fromCurrency: swapDetails.fromCurrency,
+            fromAmount: swapDetails.fromAmount,
+            toCurrency: swapDetails.toCurrency,
+            toAmount: swapDetails.toAmount,
+            provider: swapDetails.providerName || 'Unknown'
+        }
     };
+
+    console.log(`Created swap output thread ${newThreadId} with ${swapDetails.toAmount} ${swapDetails.toCurrency}`);
 }
 
 function createSingleHopEntry(hop, wizardData, output, outputIndex) {
