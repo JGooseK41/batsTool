@@ -4948,7 +4948,7 @@ function updateThreadAvailabilityFromHop(entry) {
     const newThreadId = entry.notation;
     investigation.availableThreads[currency][newThreadId] = {
         totalAmount: amount,
-        availableAmount: amount,
+        availableAmount: amount,  // This thread's full amount is available
         assignments: [],
         sourceWallet: entry.toWallet,
         sourceType: 'hop_output',
@@ -4959,23 +4959,8 @@ function updateThreadAvailabilityFromHop(entry) {
         childThreads: [],
         currency: currency
     };
-    
-    // Reduce availability from source thread if specified
-    if (entry.sourceThreadId && investigation.availableThreads[currency][entry.sourceThreadId]) {
-        const sourceThread = investigation.availableThreads[currency][entry.sourceThreadId];
-        sourceThread.availableAmount -= amount;
-        sourceThread.assignments.push({
-            assignedTo: newThreadId,
-            amount: amount,
-            timestamp: new Date().toISOString(),
-            isActive: true
-        });
-        
-        // Add child reference
-        if (!sourceThread.childThreads.includes(newThreadId)) {
-            sourceThread.childThreads.push(newThreadId);
-        }
-    }
+
+    // Don't modify availableAmount - getMaxAssignableAmount calculates it dynamically based on assignments
 }
 
 // Handle swap entries to create threads with the output currency
@@ -4985,28 +4970,17 @@ function updateThreadAvailabilityFromSwap(entry) {
     const inputAmount = parseFloat(entry.amount);
     const outputAmount = parseFloat(entry.outputAmount);
 
-    // Consume source threads (input currency)
+    // Remove source threads entirely (swaps replace threads, not consume them)
     if (entry.sourceThreadId) {
-        // Single source thread
-        if (investigation.availableThreads[inputCurrency] &&
-            investigation.availableThreads[inputCurrency][entry.sourceThreadId]) {
-            const thread = investigation.availableThreads[inputCurrency][entry.sourceThreadId];
-            thread.availableAmount -= inputAmount;
-            if (thread.availableAmount <= 0) {
-                thread.isActive = false;
-            }
+        // Single source thread - remove it completely
+        if (investigation.availableThreads[inputCurrency]) {
+            delete investigation.availableThreads[inputCurrency][entry.sourceThreadId];
         }
     } else if (entry.multipleSourceThreads) {
-        // Multiple source threads
+        // Multiple source threads - remove all
         entry.multipleSourceThreads.forEach(threadId => {
-            if (investigation.availableThreads[inputCurrency] &&
-                investigation.availableThreads[inputCurrency][threadId]) {
-                const thread = investigation.availableThreads[inputCurrency][threadId];
-                const threadAmount = entry.threadAmounts?.[threadId] || inputAmount / entry.multipleSourceThreads.length;
-                thread.availableAmount -= threadAmount;
-                if (thread.availableAmount <= 0) {
-                    thread.isActive = false;
-                }
+            if (investigation.availableThreads[inputCurrency]) {
+                delete investigation.availableThreads[inputCurrency][threadId];
             }
         });
     }
@@ -13928,8 +13902,9 @@ function getMaxAssignableAmount(sourceThreadId, currency, excludeEntryId = null,
         });
     });
     
+    // Calculate available as total minus what's been assigned
     const availableAmount = thread.totalAmount - totalAssignedInCurrentSession;
-    console.log(`Thread ${sourceThreadId}: Original ${thread.totalAmount}, Assigned across all entries ${totalAssignedInCurrentSession}, Available ${availableAmount}`);
+    console.log(`Thread ${sourceThreadId}: Total ${thread.totalAmount}, Assigned ${totalAssignedInCurrentSession}, Available ${availableAmount}`);
     
     // Log more details about assignments
     if (totalAssignedInCurrentSession > 0) {
