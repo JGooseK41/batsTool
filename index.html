@@ -3993,21 +3993,21 @@
             updateBreadcrumbs();
         }
         
-        function navigateToHop(hopId) {
+        function navigateToHop(hopNumber) {
             // Switch to traces tab
             navigateTo('traces');
-            
+
             // Scroll to and highlight the hop
             setTimeout(() => {
-                const hopElement = document.querySelector(`#hopContent_${hopId}`);
+                const hopElement = document.querySelector(`#hopContent_${hopNumber}`);
                 if (hopElement) {
                     // Expand the hop if collapsed
-                    window.hopCollapseState[hopId] = false;
+                    window.hopCollapseState[hopNumber] = false;
                     hopElement.style.display = 'block';
-                    
+
                     // Scroll into view
                     hopElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    
+
                     // Highlight briefly
                     const hopContainer = hopElement.closest('.hop-container');
                     if (hopContainer) {
@@ -4021,13 +4021,13 @@
             }, 100);
         }
         
-        function navigateToEntry(hopId, entryId) {
+        function navigateToEntry(hopNumber, entryId) {
             // First navigate to the hop
-            navigateToHop(hopId);
+            navigateToHop(hopNumber);
             
             // Then expand and highlight the entry
             setTimeout(() => {
-                const entryKey = `${hopId}_${entryId}`;
+                const entryKey = `${hopNumber}_${entryId}`;
                 
                 // Expand the entry
                 window.entryCollapseState[entryKey] = false;
@@ -4162,10 +4162,13 @@
             saveToStorage();
             
             // Expand the hop
-            window.hopCollapseState[hopId] = false;
-            const hopContent = document.getElementById(`hopContent_${hopId}`);
-            if (hopContent) {
-                hopContent.style.display = 'block';
+            const hopNumber = investigation.hops.find(h => h.entries.some(e => e.id === entry.id))?.hopNumber;
+            if (hopNumber) {
+                window.hopCollapseState[hopNumber] = false;
+                const hopContent = document.getElementById(`hopContent_${hopNumber}`);
+                if (hopContent) {
+                    hopContent.style.display = 'block';
+                }
             }
             
             // Scroll to the hop
@@ -4388,7 +4391,7 @@ function handleLoadFile() {
     return errors;
 }
 
-function renderHopEntry(entry) {
+function renderHopEntry(entry, hop) {
     const isWriteoff = entry.entryType === 'writeoff';
     const isColdStorage = entry.entryType === 'cold_storage';
     const isTrace = entry.entryType === 'trace';
@@ -4481,9 +4484,9 @@ function renderHopEntry(entry) {
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    ${isTrace && !isFinalized ? `<button class="btn btn-primary" onclick="reopenHopWizard(${entry.hopId}, ${entry.id})" style="padding: 8px 15px;">🔄 Wizard</button>` : ''}
-                    ${hasRequiredData && !isFinalized ? `<button class="btn btn-success" onclick="toggleEntryCollapse('${entry.hopId}_${entry.id}')" style="padding: 8px 15px;">✓ Finalize</button>` : ''}
-                    <button class="btn btn-danger" onclick="removeHopEntry(${entry.hopId}, ${entry.id})" style="padding: 8px 15px;">✕</button>
+                    ${isTrace && !isFinalized ? `<button class="btn btn-primary" onclick="reopenHopWizard(${hop.hopNumber}, ${entry.id})" style="padding: 8px 15px;">🔄 Wizard</button>` : ''}
+                    ${hasRequiredData && !isFinalized ? `<button class="btn btn-success" onclick="toggleEntryCollapse('${hop.hopNumber}_${entry.id}')" style="padding: 8px 15px;">✓ Finalize</button>` : ''}
+                    <button class="btn btn-danger" onclick="removeHopEntry(${hop.hopNumber}, ${entry.id})" style="padding: 8px 15px;">✕</button>
                 </div>
             </div>
             
@@ -4491,15 +4494,15 @@ function renderHopEntry(entry) {
                 <div class="form-group" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; border: 2px solid #2196f3; margin-bottom: 15px;">
                     <label style="font-weight: bold; color: #0d47a1; font-size: 16px;">Transaction Hash (Start Here)</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="text" 
-                               id="txHash_${entry.hopId}_${entry.id}"
-                               value="${entry.txHash || ''}" 
+                        <input type="text"
+                               id="txHash_${hop.hopNumber}_${entry.id}"
+                               value="${entry.txHash || ''}"
                                placeholder="Paste transaction hash to auto-fill details"
-                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'txHash', this.value)"
+                               onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'txHash', this.value)"
                                style="flex: 1; font-size: 16px; padding: 14px; border: 2px solid #2196f3;">
-                        <button type="button" 
-                                class="btn btn-primary" 
-                                onclick="lookupHopTransaction(${entry.hopId}, ${entry.id})"
+                        <button type="button"
+                                class="btn btn-primary"
+                                onclick="lookupHopTransaction(${hop.hopNumber}, ${entry.id})"
                                 style="background: #2196f3; color: white; padding: 14px 20px; font-size: 16px; font-weight: bold;">
                             🔍 Auto-fill
                         </button>
@@ -4512,7 +4515,7 @@ function renderHopEntry(entry) {
             
             <div class="form-group">
                 <label>Entry Type</label>
-                <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'entryType', this.value)">
+                <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'entryType', this.value)">
                     ${Object.entries(entryTypes).map(([key, value]) => 
                         `<option value="${key}" ${entry.entryType === key ? 'selected' : ''}>${value}</option>`
                     ).join('')}
@@ -4543,7 +4546,7 @@ function renderHopEntry(entry) {
                                             <input type="checkbox" 
                                                 value="${source.threadId}" 
                                                 ${isSelected ? 'checked' : ''}
-                                                onchange="updateMultipleSourceSelection(${entry.hopId}, ${entry.id})"
+                                                onchange="updateMultipleSourceSelection(${hop.hopNumber}, ${entry.id})"
                                                 style="margin-right: 10px; vertical-align: middle;"> 
                                             <span style="font-weight: bold; color: #2c3e50;">${source.displayText} - ${source.availableAmount.toLocaleString()} ${source.currency} available</span>
                                         </div>
@@ -4558,10 +4561,10 @@ function renderHopEntry(entry) {
                                                     max="${source.availableAmount}"
                                                     value="${proposedAmount}"
                                                     style="width: 120px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px;"
-                                                    onchange="updateIndividualSourceAssignment(${entry.hopId}, ${entry.id}, '${source.threadId}', this.value)"
+                                                    onchange="updateIndividualSourceAssignment(${hop.hopNumber}, ${entry.id}, '${source.threadId}', this.value)"
                                                     placeholder="0.00">
                                                 <button type="button" 
-                                                        onclick="assignMaxToIndividualSource(${entry.hopId}, ${entry.id}, '${source.threadId}')"
+                                                        onclick="assignMaxToIndividualSource(${hop.hopNumber}, ${entry.id}, '${source.threadId}')"
                                                         style="padding: 4px 8px; font-size: 11px; background: #3498db; color: white; border: none; border-radius: 3px; cursor: pointer;">
                                                     Max
                                                 </button>
@@ -4575,12 +4578,12 @@ function renderHopEntry(entry) {
                             }).join('')}
                             
                             <!-- Preview for multiple sources -->
-                            <div id="multipleSourcePreview_${entry.hopId}_${entry.id}"></div>
+                            <div id="multipleSourcePreview_${hop.hopNumber}_${entry.id}"></div>
                         </div>
                     ` : `
                         <!-- Single Source Thread Selection -->
-                        <select id="sourceSelect_${entry.hopId}_${entry.id}" 
-                                onchange="handleSourceSelection(${entry.hopId}, ${entry.id}, this.value)">
+                        <select id="sourceSelect_${hop.hopNumber}_${entry.id}" 
+                                onchange="handleSourceSelection(${hop.hopNumber}, ${entry.id}, this.value)">
                             <option value="">Select source thread...</option>
                             ${sourceOptions}
                         </select>
@@ -4599,7 +4602,7 @@ function renderHopEntry(entry) {
             <div class="form-group" style="text-align: center; margin: 20px 0;">
                 <button type="button" 
                         class="btn btn-confirm"
-                        onclick="openSmartAllocationModal(${entry.hopId}, ${entry.id})"
+                        onclick="openSmartAllocationModal(${hop.hopNumber}, ${entry.id})"
                         style="background: linear-gradient(135deg, #27ae60 0%, #219a52 100%); padding: 12px 30px;">
                     🎯 Smart Amount Allocation - Auto-Calculate Source Usage
                 </button>
@@ -4620,12 +4623,12 @@ function renderHopEntry(entry) {
                 <label>${isWriteoff ? 'Write-off Amount' : isColdStorage ? 'Cold Storage Amount' : 'Trace Amount'}</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="number" step="${getCurrencyStep(entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency)}" 
-                           id="assignAmount_${entry.hopId}_${entry.id}"
+                           id="assignAmount_${hop.hopNumber}_${entry.id}"
                            value="${entry.amount || ''}"
                            max="${maxAmount}"
-                           onchange="updateAssignmentAmount(${entry.hopId}, ${entry.id}, this.value)">
+                           onchange="updateAssignmentAmount(${hop.hopNumber}, ${entry.id}, this.value)">
                     <button type="button" class="btn btn-secondary" 
-                            onclick="${isWriteoff ? 'assignMaxWriteoffAmount' : 'assignMaxAmount'}(${entry.hopId}, ${entry.id})"
+                            onclick="${isWriteoff ? 'assignMaxWriteoffAmount' : 'assignMaxAmount'}(${hop.hopNumber}, ${entry.id})"
                             ${!isWriteoff && !entry.sourceThreadId ? 'disabled' : ''}>
                         ${isWriteoff ? 'Balance ART' : 'Max'}
                     </button>
@@ -4642,7 +4645,7 @@ function renderHopEntry(entry) {
                         </span>` : ''
                     }
                 </div>
-                <div id="assignmentPreview_${entry.hopId}_${entry.id}" 
+                <div id="assignmentPreview_${hop.hopNumber}_${entry.id}" 
                      style="font-size: 12px; margin-top: 5px;"></div>
             </div>
 
@@ -4653,16 +4656,16 @@ function renderHopEntry(entry) {
                     <input type="text" style="width: 60px; text-align: center;" 
                            placeholder="1" 
                            value="${entry.victimNumbers || ''}"
-                           onchange="updateNotationField(${entry.hopId}, ${entry.id}, 'victims', this.value)">
+                           onchange="updateNotationField(${hop.hopNumber}, ${entry.id}, 'victims', this.value)">
                     <span>-T</span>
                     <input type="text" style="width: 80px; text-align: center;" 
                            placeholder="1,2,3" 
                            value="${entry.transactionNumbers || ''}"
-                           onchange="updateNotationField(${entry.hopId}, ${entry.id}, 'transactions', this.value)">
+                           onchange="updateNotationField(${hop.hopNumber}, ${entry.id}, 'transactions', this.value)">
                     <span>-H${entry.hopNumber}${isWriteoff ? '-WO' : isColdStorage ? '-CS' : ''}</span>
                 </div>
                 <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                    Preview: <span id="notation_preview_${entry.hopId}_${entry.id}" style="font-family: monospace; font-weight: bold;">${entry.notation || 'Enter V and T numbers'}</span>
+                    Preview: <span id="notation_preview_${hop.hopNumber}_${entry.id}" style="font-family: monospace; font-weight: bold;">${entry.notation || 'Enter V and T numbers'}</span>
                 </div>
             </div>
             
@@ -4694,18 +4697,18 @@ function renderHopEntry(entry) {
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <div class="wallet-autocomplete-container" style="flex: 1;">
                             <input type="text" 
-                                   id="toWallet_${entry.hopId}_${entry.id}"
+                                   id="toWallet_${hop.hopNumber}_${entry.id}"
                                    value="${entry.toWallet || ''}" 
                                    placeholder="Select existing or enter new wallet address"
-                                   onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
+                                   onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'toWallet', this.value)"
                                    oninput="handleWalletAutocomplete(this, ${entry.hopId}, ${entry.id})"
                                    onblur="checkWalletEntity(this.value, ${entry.hopId}, ${entry.id})"
                                    autocomplete="off"
-                                   list="walletList_${entry.hopId}_${entry.id}"
+                                   list="walletList_${hop.hopNumber}_${entry.id}"
                                    style="width: 100%;">
-                            <div id="autocomplete_${entry.hopId}_${entry.id}" class="wallet-autocomplete-dropdown"></div>
+                            <div id="autocomplete_${hop.hopNumber}_${entry.id}" class="wallet-autocomplete-dropdown"></div>
                         </div>
-                        <datalist id="walletList_${entry.hopId}_${entry.id}">
+                        <datalist id="walletList_${hop.hopNumber}_${entry.id}">
                             ${(investigation.universalWalletIndex || []).map(wallet => `
                                 <option value="${wallet.address}">
                                     ${wallet.permanentId} - ${wallet.address.substring(0, 20)}...
@@ -4713,20 +4716,20 @@ function renderHopEntry(entry) {
                             `).join('')}
                         </datalist>
                         <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;"
-                                onclick="showWalletSelector(${entry.hopId}, ${entry.id})">
+                                onclick="showWalletSelector(${hop.hopNumber}, ${entry.id})">
                             📋 Browse
                         </button>
                     </div>
                     <div style="font-size: 11px; color: #666; margin-top: 5px;">
                         Type to search existing wallets or enter a new address
                     </div>
-                    <div id="entityInfo_${entry.hopId}_${entry.id}" style="display: none; margin-top: 10px; padding: 10px; background: #f3e6ff; border: 2px solid #9b59b6; border-radius: 4px;">
+                    <div id="entityInfo_${hop.hopNumber}_${entry.id}" style="display: none; margin-top: 10px; padding: 10px; background: #f3e6ff; border: 2px solid #9b59b6; border-radius: 4px;">
                         <!-- Entity information will be displayed here -->
                     </div>
                 </div>
                 <div class="form-group">
                     <label>To Wallet Classification</label>
-                    <select onchange="updateHopEntryWalletType(${entry.hopId}, ${entry.id}, this.value)">
+                    <select onchange="updateHopEntryWalletType(${hop.hopNumber}, ${entry.id}, this.value)">
                         <option value="">Select classification...</option>
                         ${Object.entries(walletTypes).filter(([key]) => key !== 'red').map(([key, value]) => 
                             `<option value="${key}" ${entry.toWalletType === key ? 'selected' : ''}>${value}</option>`
@@ -4738,10 +4741,10 @@ function renderHopEntry(entry) {
                     <label>Timestamp with Timezone</label>
                     <div class="datetime-timezone">
                         <input type="datetime-local" 
-                               id="timestamp_${entry.hopId}_${entry.id}"
+                               id="timestamp_${hop.hopNumber}_${entry.id}"
                                value="${entry.timestamp || ''}" 
-                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timestamp', this.value)">
-                        <select onchange="onTimezoneChange('timestamp_${entry.hopId}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
+                               onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'timestamp', this.value)">
+                        <select onchange="onTimezoneChange('timestamp_${hop.hopNumber}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
                             ${Object.entries(timezones).map(([key, value]) => 
                                 `<option value="${key}" ${entry.timezone === key ? 'selected' : ''}>${value}</option>`
                             ).join('')}
@@ -4755,14 +4758,14 @@ function renderHopEntry(entry) {
                     <label>Current Wallet Address</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <input type="text" 
-                               id="toWallet_${entry.hopId}_${entry.id}"
-                               list="walletList_${entry.hopId}_${entry.id}"
+                               id="toWallet_${hop.hopNumber}_${entry.id}"
+                               list="walletList_${hop.hopNumber}_${entry.id}"
                                value="${entry.toWallet || entry.fromWallet || ''}" 
                                placeholder="Select existing or enter new wallet address"
-                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
+                               onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'toWallet', this.value)"
                                style="flex: 1;">
                         <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;"
-                                onclick="showWalletSelector(${entry.hopId}, ${entry.id})">
+                                onclick="showWalletSelector(${hop.hopNumber}, ${entry.id})">
                             📋 Browse
                         </button>
                     </div>
@@ -4772,7 +4775,7 @@ function renderHopEntry(entry) {
                 </div>
                 <div class="form-group">
                     <label>Cold Storage Classification</label>
-                    <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWalletType', this.value)">
+                    <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'toWalletType', this.value)">
                         <option value="blue" ${entry.toWalletType === 'blue' ? 'selected' : ''}>BLUE - Cold Storage</option>
                     </select>
                     <div style="font-size: 11px; color: #666; margin-top: 5px;">
@@ -4784,7 +4787,7 @@ function renderHopEntry(entry) {
             ${isWriteoff ? `
                 <div class="form-group">
                     <label>Write-off Category</label>
-                    <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'category', this.value)">
+                    <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'category', this.value)">
                         <option value="">Select category...</option>
                         ${Object.entries(writeoffCategories).map(([key, value]) => 
                             `<option value="${key}" ${entry.category === key ? 'selected' : ''}>${value}</option>`
@@ -4794,25 +4797,25 @@ function renderHopEntry(entry) {
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Justification</label>
                     <textarea rows="3" placeholder="Detailed explanation for abandoning this trace path..." 
-                              onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'justification', this.value)">${entry.justification || ''}</textarea>
+                              onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'justification', this.value)">${entry.justification || ''}</textarea>
                 </div>
             ` : isColdStorage ? `
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Cold Storage Notes</label>
                     <textarea rows="2" placeholder="Details about why funds remain in cold storage..." 
-                              onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'notes', this.value)">${entry.notes || ''}</textarea>
+                              onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'notes', this.value)">${entry.notes || ''}</textarea>
                 </div>
             ` : `
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Notes</label>
                     <textarea rows="2" placeholder="PIFO application, convergence notes, etc." 
-                              onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'notes', this.value)">${entry.notes || ''}</textarea>
+                              onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'notes', this.value)">${entry.notes || ''}</textarea>
                 </div>
             `}
             
             <!-- Log Entry Button -->
             <div style="margin-top: 20px; text-align: center; border-top: 2px solid #e8f0fe; padding-top: 20px;">
-                <button class="btn btn-confirm" onclick="logAndCollapseEntry(${entry.hopId}, ${entry.id})" 
+                <button class="btn btn-confirm" onclick="logAndCollapseEntry(${hop.hopNumber}, ${entry.id})" 
                         style="padding: 12px 30px; font-size: 16px; background: #27ae60;">
                     ✅ Log Entry
                 </button>
@@ -5330,7 +5333,7 @@ function refreshAllSourceAvailability(currentHopId) {
     console.log(`Refreshing source availability for all entries in hop ${currentHopId}`);
     
     // Find the current hop
-    const currentHop = investigation.hops.find(h => h.id === currentHopId);
+    const currentHop = investigation.hops.find(h => h.hopNumber === currentHopId);
     if (!currentHop) return;
     
     // Update each entry's source dropdown with real-time availability
@@ -5631,12 +5634,12 @@ function renderEnhancedHopEntry(entry) {
                     <span class="trace-notation">Entry ${entry.id} - ${entryTypes[entry.entryType]}</span>
                     ${entry.notation ? `<br><small style="color: #666;">${entry.notation}</small>` : ''}
                 </div>
-                <button class="btn btn-danger" onclick="removeHopEntry(${entry.hopId}, ${entry.id})">Remove</button>
+                <button class="btn btn-danger" onclick="removeHopEntry(${hop.hopNumber}, ${entry.id})">Remove</button>
             </div>
             
             <div class="form-group">
                 <label>Entry Type</label>
-                <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'entryType', this.value)">
+                <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'entryType', this.value)">
                     ${Object.entries(entryTypes).map(([key, value]) => 
                         `<option value="${key}" ${entry.entryType === key ? 'selected' : ''}>${value}</option>`
                     ).join('')}
@@ -5646,8 +5649,8 @@ function renderEnhancedHopEntry(entry) {
             ${!isWriteoff ? `
                 <div class="form-group">
                     <label>Source Thread Selection</label>
-                    <select id="sourceSelect_${entry.hopId}_${entry.id}" 
-                            onchange="handleSourceSelection(${entry.hopId}, ${entry.id}, this.value)">
+                    <select id="sourceSelect_${hop.hopNumber}_${entry.id}" 
+                            onchange="handleSourceSelection(${hop.hopNumber}, ${entry.id}, this.value)">
                         <option value="">Select source thread...</option>
                         ${sourceOptions}
                     </select>
@@ -5662,15 +5665,15 @@ function renderEnhancedHopEntry(entry) {
                     <label>New Thread Total</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <input type="number" step="0.01" 
-                               id="assignAmount_${entry.hopId}_${entry.id}"
+                               id="assignAmount_${hop.hopNumber}_${entry.id}"
                                value="${entry.amount || ''}"
                                max="${entry.sourceThreadId ? getMaxAssignableAmount(entry.sourceThreadId, entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency) : 0}"
-                               onchange="updateAssignmentAmount(${entry.hopId}, ${entry.id}, this.value)">
+                               onchange="updateAssignmentAmount(${hop.hopNumber}, ${entry.id}, this.value)">
                         <button type="button" class="btn btn-secondary" 
-                                onclick="assignMaxAmount(${entry.hopId}, ${entry.id})"
+                                onclick="assignMaxAmount(${hop.hopNumber}, ${entry.id})"
                                 ${!entry.sourceThreadId ? 'disabled' : ''}>Max</button>
                     </div>
-                    <div id="assignmentPreview_${entry.hopId}_${entry.id}" 
+                    <div id="assignmentPreview_${hop.hopNumber}_${entry.id}" 
                          style="font-size: 12px; margin-top: 5px;"></div>
                 </div>
             ` : ''}
@@ -5682,23 +5685,23 @@ function renderEnhancedHopEntry(entry) {
                     <input type="text" style="width: 60px; text-align: center;" 
                            placeholder="1" 
                            value="${entry.victimNumbers || ''}"
-                           onchange="updateNotationField(${entry.hopId}, ${entry.id}, 'victims', this.value)">
+                           onchange="updateNotationField(${hop.hopNumber}, ${entry.id}, 'victims', this.value)">
                     <span>-T</span>
                     <input type="text" style="width: 80px; text-align: center;" 
                            placeholder="1,2,3" 
                            value="${entry.transactionNumbers || ''}"
-                           onchange="updateNotationField(${entry.hopId}, ${entry.id}, 'transactions', this.value)">
+                           onchange="updateNotationField(${hop.hopNumber}, ${entry.id}, 'transactions', this.value)">
                     <span>-H${entry.hopNumber}</span>
                 </div>
                 <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                    Preview: <span id="notation_preview_${entry.hopId}_${entry.id}" style="font-family: monospace; font-weight: bold;">${entry.notation || 'Enter V and T numbers'}</span>
+                    Preview: <span id="notation_preview_${hop.hopNumber}_${entry.id}" style="font-family: monospace; font-weight: bold;">${entry.notation || 'Enter V and T numbers'}</span>
                 </div>
             </div>
             
             ${!isWriteoff ? `
                 <div class="form-group">
                     <label>Full Notation Display</label>
-                    <div id="notationPreview_${entry.hopId}_${entry.id}" 
+                    <div id="notationPreview_${hop.hopNumber}_${entry.id}" 
                          style="font-family: monospace; padding: 10px; background: #f8f9fa; border-radius: 4px; min-height: 60px;">
                         ${entry.displayNotation || 'Complete source selection and notation to generate full display'}
                     </div>
@@ -5707,7 +5710,7 @@ function renderEnhancedHopEntry(entry) {
 
             <div class="form-group">
                 <label>Currency</label>
-                <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'currency', this.value)">
+                <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'currency', this.value)">
                     ${Object.entries(currencies).map(([key, currency]) => 
                         `<option value="${key}" ${entry.currency === key ? 'selected' : ''}>${currency.name}</option>`
                     ).join('')}
@@ -5715,11 +5718,11 @@ function renderEnhancedHopEntry(entry) {
             </div>
             
             <div class="form-group ${entry.currency === 'CUSTOM' ? '' : 'custom-currency-input'}" 
-                 id="customEntryCurrency_${entry.hopId}_${entry.id}">
+                 id="customEntryCurrency_${hop.hopNumber}_${entry.id}">
                 <label>Custom Currency Symbol</label>
                 <input type="text" value="${entry.customCurrency || ''}" 
                        placeholder="e.g., DOGE, SHIB"
-                       onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'customCurrency', this.value)">
+                       onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'customCurrency', this.value)">
             </div>
             
             ${!isWriteoff && !isColdStorage ? `
@@ -5728,17 +5731,17 @@ function renderEnhancedHopEntry(entry) {
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <div class="wallet-autocomplete-container" style="flex: 1;">
                             <input type="text" 
-                                   id="toWallet_${entry.hopId}_${entry.id}"
+                                   id="toWallet_${hop.hopNumber}_${entry.id}"
                                    value="${entry.toWallet || ''}" 
                                    placeholder="Select existing or enter new wallet address"
-                                   onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
+                                   onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'toWallet', this.value)"
                                    oninput="handleWalletAutocomplete(this, ${entry.hopId}, ${entry.id})"
                                    autocomplete="off"
-                                   list="walletList_${entry.hopId}_${entry.id}"
+                                   list="walletList_${hop.hopNumber}_${entry.id}"
                                    style="width: 100%;">
-                            <div id="autocomplete_${entry.hopId}_${entry.id}" class="wallet-autocomplete-dropdown"></div>
+                            <div id="autocomplete_${hop.hopNumber}_${entry.id}" class="wallet-autocomplete-dropdown"></div>
                         </div>
-                        <datalist id="walletList_${entry.hopId}_${entry.id}">
+                        <datalist id="walletList_${hop.hopNumber}_${entry.id}">
                             ${(investigation.universalWalletIndex || []).map(wallet => `
                                 <option value="${wallet.address}">
                                     ${wallet.permanentId} - ${wallet.address.substring(0, 20)}...
@@ -5746,7 +5749,7 @@ function renderEnhancedHopEntry(entry) {
                             `).join('')}
                         </datalist>
                         <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;"
-                                onclick="showWalletSelector(${entry.hopId}, ${entry.id})">
+                                onclick="showWalletSelector(${hop.hopNumber}, ${entry.id})">
                             📋 Browse
                         </button>
                     </div>
@@ -5756,7 +5759,7 @@ function renderEnhancedHopEntry(entry) {
                 </div>
                 <div class="form-group">
                     <label>To Wallet Classification</label>
-                    <select onchange="updateHopEntryWalletType(${entry.hopId}, ${entry.id}, this.value)">
+                    <select onchange="updateHopEntryWalletType(${hop.hopNumber}, ${entry.id}, this.value)">
                         <option value="">Select classification...</option>
                         ${Object.entries(walletTypes).filter(([key]) => key !== 'red').map(([key, value]) => 
                             `<option value="${key}" ${entry.toWalletType === key ? 'selected' : ''}>${value}</option>`
@@ -5767,14 +5770,14 @@ function renderEnhancedHopEntry(entry) {
                     <label>Transaction Hash</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <input type="text" 
-                               id="txHash_${entry.hopId}_${entry.id}"
+                               id="txHash_${hop.hopNumber}_${entry.id}"
                                value="${entry.txHash || ''}" 
                                placeholder="Blockchain transaction hash"
-                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'txHash', this.value)"
+                               onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'txHash', this.value)"
                                style="flex: 1;">
                         <button type="button" 
                                 class="btn btn-secondary" 
-                                onclick="openBlockchainLookup(${entry.hopId}, ${entry.id})"
+                                onclick="openBlockchainLookup(${hop.hopNumber}, ${entry.id})"
                                 style="background: #3498db; color: white; padding: 8px 15px; font-size: 14px;">
                             Lookup
                         </button>
@@ -5784,10 +5787,10 @@ function renderEnhancedHopEntry(entry) {
                     <label>Timestamp with Timezone</label>
                     <div class="datetime-timezone">
                         <input type="datetime-local" 
-                               id="timestamp_${entry.hopId}_${entry.id}"
+                               id="timestamp_${hop.hopNumber}_${entry.id}"
                                value="${entry.timestamp || ''}" 
-                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timestamp', this.value)">
-                        <select onchange="onTimezoneChange('timestamp_${entry.hopId}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
+                               onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'timestamp', this.value)">
+                        <select onchange="onTimezoneChange('timestamp_${hop.hopNumber}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
                             ${Object.entries(timezones).map(([key, value]) => 
                                 `<option value="${key}" ${entry.timezone === key ? 'selected' : ''}>${value}</option>`
                             ).join('')}
@@ -5799,7 +5802,7 @@ function renderEnhancedHopEntry(entry) {
             ${isWriteoff ? `
                 <div class="form-group">
                     <label>Write-off Category</label>
-                    <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'category', this.value)">
+                    <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'category', this.value)">
                         <option value="">Select category...</option>
                         ${Object.entries(writeoffCategories).map(([key, value]) => 
                             `<option value="${key}" ${entry.category === key ? 'selected' : ''}>${value}</option>`
@@ -5809,13 +5812,13 @@ function renderEnhancedHopEntry(entry) {
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Justification</label>
                     <textarea rows="2" placeholder="Detailed explanation for abandoning this trace path..." 
-                              onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'justification', this.value)">${entry.justification || ''}</textarea>
+                              onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'justification', this.value)">${entry.justification || ''}</textarea>
                 </div>
             ` : `
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Notes</label>
                     <textarea rows="2" placeholder="PIFO application, convergence notes, etc." 
-                              onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'notes', this.value)">${entry.notes || ''}</textarea>
+                              onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'notes', this.value)">${entry.notes || ''}</textarea>
                 </div>
             `}
         </div>
@@ -5924,8 +5927,8 @@ function renderEnhancedSourceSelection(entry) {
         return `
             <div class="form-group">
                 <label>Source Thread Selection</label>
-                <select id="sourceSelect_${entry.hopId}_${entry.id}" 
-                        onchange="handleSourceSelection(${entry.hopId}, ${entry.id}, this.value)">
+                <select id="sourceSelect_${hop.hopNumber}_${entry.id}" 
+                        onchange="handleSourceSelection(${hop.hopNumber}, ${entry.id}, this.value)">
                     <option value="">Select source thread...</option>
                     ${sourceOptions}
                 </select>
@@ -5944,12 +5947,12 @@ function renderEnhancedSourceSelection(entry) {
                         <input type="checkbox" 
                                value="${source.threadId}" 
                                ${entry.multipleSourceThreads && entry.multipleSourceThreads.includes(source.threadId) ? 'checked' : ''}
-                               onchange="updateMultipleSourceSelection(${entry.hopId}, ${entry.id})"> 
+                               onchange="updateMultipleSourceSelection(${hop.hopNumber}, ${entry.id})"> 
                         ${source.displayText} - ${source.availableAmount.toLocaleString()} ${source.currency} available
                     </label>
                 `).join('')}
             </div>
-            <div id="multipleSourcePreview_${entry.hopId}_${entry.id}"></div>
+            <div id="multipleSourcePreview_${hop.hopNumber}_${entry.id}"></div>
         </div>
     `;
 }
@@ -8593,12 +8596,12 @@ function exportUniversalWalletIndex() {
         window.entryCollapseState = window.entryCollapseState || {};
         
         // Toggle hop collapse state
-        function toggleHopCollapse(hopId) {
-            window.hopCollapseState[hopId] = !window.hopCollapseState[hopId];
-            const content = document.getElementById(`hopContent_${hopId}`);
+        function toggleHopCollapse(hopNumber) {
+            window.hopCollapseState[hopNumber] = !window.hopCollapseState[hopNumber];
+            const content = document.getElementById(`hopContent_${hopNumber}`);
             const arrow = event.currentTarget.querySelector('span');
-            
-            if (window.hopCollapseState[hopId]) {
+
+            if (window.hopCollapseState[hopNumber]) {
                 content.style.display = 'none';
                 arrow.style.transform = 'rotate(0deg)';
             } else {
@@ -8690,22 +8693,21 @@ function exportUniversalWalletIndex() {
         }
         
         // Render collapsible hop entry
-        function renderCollapsibleHopEntry(entry, entryIndex) {
+        function renderCollapsibleHopEntry(entry, entryIndex, hop) {
             // Initialize collapse state - start expanded for new entries
-            const entryKey = `${entry.hopId}_${entry.id}`;
+            const entryKey = `${hop.hopNumber}_${entry.id}`;
             if (window.entryCollapseState[entryKey] === undefined) {
                 window.entryCollapseState[entryKey] = false; // Start expanded
             }
             const isCollapsed = window.entryCollapseState[entryKey];
-            
+
             // Get entry type info
             const entryTypeLabel = entryTypes[entry.entryType] || entry.entryType;
             const amount = parseFloat(entry.amount) || 0;
             const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-            
+
             // Get hop number and ART amount
-            const hop = investigation.hops.find(h => h.id === entry.hopId);
-            const hopNumber = hop ? hop.hopNumber : '?';
+            const hopNumber = hop.hopNumber;
             
             // Get the ART amount for this currency at this hop
             let artAmount = 0;
@@ -8757,7 +8759,7 @@ function exportUniversalWalletIndex() {
             }
             
             return `
-                <div id="entry_${entry.hopId}_${entry.id}" style="background: ${entryBgColor}; border: 2px solid ${entryBorderColor}; border-radius: 8px; margin-bottom: 10px; overflow: hidden;">
+                <div id="entry_${hop.hopNumber}_${entry.id}" style="background: ${entryBgColor}; border: 2px solid ${entryBorderColor}; border-radius: 8px; margin-bottom: 10px; overflow: hidden;">
                     <div style="padding: ${isCollapsed ? '8px' : '15px'};">
                         <!-- Collapsed state header -->
                         <div id="entrySummary_${entryKey}" style="display: ${isCollapsed ? 'block' : 'none'}; cursor: pointer; background: rgba(255,255,255,0.7); padding: 6px 10px; border-radius: 6px;" onclick="toggleEntryCollapse('${entryKey}')">
@@ -8793,7 +8795,7 @@ function exportUniversalWalletIndex() {
                                 </div>
                             </div>
                             <!-- Add delete button in collapsed view -->
-                            ${!isCollapsed ? `<button class="btn btn-sm btn-danger" style="margin-left: 10px;" onclick="event.stopPropagation(); removeHopEntry(${entry.hopId}, ${entry.id})">Delete</button>` : ''}
+                            ${!isCollapsed ? `<button class="btn btn-sm btn-danger" style="margin-left: 10px;" onclick="event.stopPropagation(); removeHopEntry(${hop.hopNumber}, ${entry.id})">Delete</button>` : ''}
                         </div>
                         
                         <!-- Expanded state -->
@@ -9684,7 +9686,7 @@ function exportUniversalWalletIndex() {
                             ` : ''}
                             
                             <div id="hopEntries_${hop.hopNumber}">
-                                ${(hop.entries || []).map((entry, entryIndex) => renderCollapsibleHopEntry(entry, entryIndex)).join('')}
+                                ${(hop.entries || []).map((entry, entryIndex) => renderCollapsibleHopEntry(entry, entryIndex, hop)).join('')}
                             </div>
                             
                             ${!isComplete ? `
@@ -9760,7 +9762,7 @@ function getStartingARTForHop(hopId) {
 // Render visual ART progress bars
 function renderARTProgressBars(hop) {
     // Get ART data for this hop
-    const hopIndex = investigation.hops.findIndex(h => h.id === hop.hopNumber);
+    const hopIndex = investigation.hops.findIndex(h => h.hopNumber === hop.hopNumber);
     const startingART = getStartingARTForHop(hop.hopNumber);
     
     // Calculate amounts by category for each currency
@@ -10269,7 +10271,7 @@ function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemaini
                 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0; text-align: center;">
                     ${isBalanced ? `
-                        <button class="btn btn-success btn-large" onclick="proceedWithHopFinalization(investigation.hops.find(h => h.id === ${hop.hopNumber}))">
+                        <button class="btn btn-success btn-large" onclick="proceedWithHopFinalization(investigation.hops.find(h => h.hopNumber === ${hop.hopNumber}))">
                             ✅ Complete Hop ${hop.hopNumber}
                         </button>
                     ` : `
@@ -10291,8 +10293,8 @@ function closeFinalizationModal() {
     if (modal) modal.remove();
 }
 
-function viewAvailableThreads(hopId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function viewAvailableThreads(hopNumber) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
     
     console.log('Viewing available threads for hop:', hop.hopNumber);
@@ -10671,7 +10673,7 @@ function updateProgressIndicator() {
         statusText.textContent = '✅ Investigation complete - Ready for analysis';
         bar.style.background = '#27ae60';
     } else if (status.currentHopId) {
-        const currentHop = status.hops.find(h => h.id === status.currentHopId);
+        const currentHop = status.hops.find(h => h.hopNumber === status.currentHopId);
         if (currentHop) {
             statusText.innerHTML = `🔄 Currently on <strong>Hop ${currentHop.number}</strong> - ${currentHop.entryCount} entries${currentHop.remainingART ? ` • Remaining: ${currentHop.remainingART}` : ''}`;
         }
@@ -11027,10 +11029,10 @@ function focusOnVictims() {
     }, 100);
 }
 
-function focusOnHop(hopId) {
+function focusOnHop(hopNumber) {
     document.getElementById('hopsTab').click();
     setTimeout(() => {
-        const hopElement = document.querySelector(`#hop_${hopId}`);
+        const hopElement = document.querySelector(`#hop_${hopNumber}`);
         if (hopElement) {
             hopElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             // Highlight the hop
@@ -11062,7 +11064,7 @@ function startHop1() {
 }
 
 function createNextHop(previousHopId) {
-    const prevHop = investigation.hops.find(h => h.id === previousHopId);
+    const prevHop = investigation.hops.find(h => h.hopNumber === previousHopId);
     if (prevHop) {
         proceedToNextHop(previousHopId);
     }
@@ -13915,7 +13917,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                                     <input type="checkbox" 
                                         value="${source.threadId}" 
                                         ${isSelected ? 'checked' : ''}
-                                        onchange="toggleSourceSelection(${entry.hopId}, ${entry.id}, '${source.threadId}')"
+                                        onchange="toggleSourceSelection(${hop.hopNumber}, ${entry.id}, '${source.threadId}')"
                                         style="margin-right: 10px; vertical-align: middle;"> 
                                     <span style="font-weight: bold; color: #2c3e50;">${source.displayText} - ${source.availableAmount.toLocaleString()} ${source.currency} available</span>
                                 </div>
@@ -13930,10 +13932,10 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                                             max="${source.availableAmount}"
                                             value="${proposedAmount}"
                                             style="width: 120px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px;"
-                                            onchange="updateProposedAmount(${entry.hopId}, ${entry.id}, '${source.threadId}', this.value)"
+                                            onchange="updateProposedAmount(${hop.hopNumber}, ${entry.id}, '${source.threadId}', this.value)"
                                             placeholder="0.00">
                                     <button type="button" 
-                                            onclick="proposeMaxAmount(${entry.hopId}, ${entry.id}, '${source.threadId}')"
+                                            onclick="proposeMaxAmount(${hop.hopNumber}, ${entry.id}, '${source.threadId}')"
                                             style="padding: 4px 8px; font-size: 11px; background: #3498db; color: white; border: none; border-radius: 3px; cursor: pointer;">
                                         All
                                 </button>
@@ -13950,10 +13952,10 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                     ${entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0 ? `
                         <div style="margin-top: 15px; padding: 15px; background: ${isWriteoff ? '#fff3cd' : '#e8f4f8'}; border: 1px solid ${isWriteoff ? '#ffc107' : '#3498db'}; border-radius: 6px;">
                             <div style="font-weight: bold; color: #2c3e50; margin-bottom: 10px;">${isWriteoff ? 'Proposed Write-off Summary:' : 'Proposed Assignment Summary:'}</div>
-                            <div id="proposedSummary_${entry.hopId}_${entry.id}" style="margin-bottom: 15px;"></div>
+                            <div id="proposedSummary_${hop.hopNumber}_${entry.id}" style="margin-bottom: 15px;"></div>
                             <div style="text-align: center;">
                                 <button type="button" 
-                                        onclick="commitAssignmentToEntry(${entry.hopId}, ${entry.id})"
+                                        onclick="commitAssignmentToEntry(${hop.hopNumber}, ${entry.id})"
                                         style="padding: 10px 20px; font-size: 14px; background: ${isWriteoff ? '#e67e22' : '#27ae60'}; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
                                     ${isWriteoff ? '📝 Confirm Write-off' : '🎯 Assign to Hop Entry'} ${entry.id}
                                 </button>
@@ -13968,8 +13970,8 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
         sourceSelectionHTML = `
             <div class="form-group">
                 <label>Source Thread Selection ${isWriteoff ? '(Required for balanced accounting)' : ''}</label>
-                <select id="sourceSelect_${entry.hopId}_${entry.id}" 
-                        onchange="handleSourceSelection(${entry.hopId}, ${entry.id}, this.value)">
+                <select id="sourceSelect_${hop.hopNumber}_${entry.id}" 
+                        onchange="handleSourceSelection(${hop.hopNumber}, ${entry.id}, this.value)">
                     <option value="">Select source thread...</option>
                     ${sourceOptions}
                 </select>
@@ -13989,12 +13991,12 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                     <span class="trace-notation">Entry ${entry.id} - ${entryTypes[entry.entryType]}</span>
                     ${entry.notation ? `<br><small style="color: #666;">${entry.notation}</small>` : ''}
                 </div>
-                <button class="btn btn-danger" onclick="removeHopEntry(${entry.hopId}, ${entry.id})">Remove</button>
+                <button class="btn btn-danger" onclick="removeHopEntry(${hop.hopNumber}, ${entry.id})">Remove</button>
             </div>
             
             <div class="form-group">
                 <label>Entry Type</label>
-                <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'entryType', this.value)">
+                <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'entryType', this.value)">
                     ${Object.entries(entryTypes).map(([key, value]) => 
                         `<option value="${key}" ${entry.entryType === key ? 'selected' : ''}>${value}</option>`
                     ).join('')}
@@ -14008,7 +14010,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
             <div class="form-group" style="text-align: center; margin: 20px 0;">
                 <button type="button" 
                         class="btn btn-confirm"
-                        onclick="openSmartAllocationModal(${entry.hopId}, ${entry.id})"
+                        onclick="openSmartAllocationModal(${hop.hopNumber}, ${entry.id})"
                         style="background: linear-gradient(135deg, #27ae60 0%, #219a52 100%); padding: 12px 30px;">
                     🎯 Smart Amount Allocation - Auto-Calculate Source Usage
                 </button>
@@ -14029,12 +14031,12 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                 <label>${isWriteoff ? 'Write-off Amount' : isColdStorage ? 'Cold Storage Amount' : 'New Thread Total'}</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="number" step="0.01" 
-                           id="assignAmount_${entry.hopId}_${entry.id}"
+                           id="assignAmount_${hop.hopNumber}_${entry.id}"
                            value="${entry.amount || ''}"
                            max="${maxAmount}"
-                           onchange="updateAssignmentAmount(${entry.hopId}, ${entry.id}, this.value)">
+                           onchange="updateAssignmentAmount(${hop.hopNumber}, ${entry.id}, this.value)">
                     <button type="button" class="btn btn-secondary" 
-                onclick="${isWriteoff ? 'assignMaxWriteoffAmount' : 'assignMaxAmount'}(${entry.hopId}, ${entry.id})"
+                onclick="${isWriteoff ? 'assignMaxWriteoffAmount' : 'assignMaxAmount'}(${hop.hopNumber}, ${entry.id})"
                 ${!isWriteoff && (!entry.sourceThreadId && (!entry.multipleSourceThreads || entry.multipleSourceThreads.length === 0)) ? 'disabled' : ''}>
                 ${isWriteoff ? 'Balance ART' : 'Max'}
         </button>
@@ -14042,7 +14044,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                 <div style="font-size: 11px; color: #666; margin-top: 5px;">
                     Max assignable: ${maxAmount.toLocaleString()} ${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency}
                 </div>
-                <div id="assignmentPreview_${entry.hopId}_${entry.id}" 
+                <div id="assignmentPreview_${hop.hopNumber}_${entry.id}" 
                      style="font-size: 12px; margin-top: 5px;"></div>
             </div>
 
@@ -14053,23 +14055,23 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                     <input type="text" style="width: 60px; text-align: center;" 
                            placeholder="1" 
                            value="${entry.victimNumbers || ''}"
-                           onchange="updateNotationField(${entry.hopId}, ${entry.id}, 'victims', this.value)">
+                           onchange="updateNotationField(${hop.hopNumber}, ${entry.id}, 'victims', this.value)">
                     <span>-T</span>
                     <input type="text" style="width: 80px; text-align: center;" 
                            placeholder="1,2,3" 
                            value="${entry.transactionNumbers || ''}"
-                           onchange="updateNotationField(${entry.hopId}, ${entry.id}, 'transactions', this.value)">
+                           onchange="updateNotationField(${hop.hopNumber}, ${entry.id}, 'transactions', this.value)">
                     <span>-H${entry.hopNumber}${isWriteoff ? '-WO' : isColdStorage ? '-CS' : ''}</span>
                 </div>
                 <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                    Preview: <span id="notation_preview_${entry.hopId}_${entry.id}" style="font-family: monospace; font-weight: bold;">${entry.notation || 'Enter V and T numbers'}</span>
+                    Preview: <span id="notation_preview_${hop.hopNumber}_${entry.id}" style="font-family: monospace; font-weight: bold;">${entry.notation || 'Enter V and T numbers'}</span>
                 </div>
             </div>
             
             ${!isWriteoff ? `
                 <div class="form-group">
                     <label>Full Notation Display</label>
-                    <div id="notationPreview_${entry.hopId}_${entry.id}" 
+                    <div id="notationPreview_${hop.hopNumber}_${entry.id}" 
                          style="font-family: monospace; padding: 10px; background: #f8f9fa; border-radius: 4px; min-height: 60px;">
                         ${entry.displayNotation || 'Complete source selection and notation to generate full display'}
                     </div>
@@ -14077,7 +14079,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
             ` : `
                 <div class="form-group">
                     <label>Write-off Justification Display</label>
-                    <div id="writeoffPreview_${entry.hopId}_${entry.id}" 
+                    <div id="writeoffPreview_${hop.hopNumber}_${entry.id}" 
                          style="font-family: monospace; padding: 10px; background: #fff3cd; border-radius: 4px; min-height: 60px;">
                         ${entry.sourceThreadId ? `Writing off from: ${entry.sourceThreadId}` : 'Select source thread to track write-off'}
                     </div>
@@ -14086,7 +14088,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
 
             <div class="form-group">
                 <label>Currency</label>
-                <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'currency', this.value)">
+                <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'currency', this.value)">
                     ${Object.entries(currencies).map(([key, currency]) => 
                         `<option value="${key}" ${entry.currency === key ? 'selected' : ''}>${currency.name}</option>`
                     ).join('')}
@@ -14094,11 +14096,11 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
             </div>
             
             <div class="form-group ${entry.currency === 'CUSTOM' ? '' : 'custom-currency-input'}" 
-                 id="customEntryCurrency_${entry.hopId}_${entry.id}">
+                 id="customEntryCurrency_${hop.hopNumber}_${entry.id}">
                 <label>Custom Currency Symbol</label>
                 <input type="text" value="${entry.customCurrency || ''}" 
                        placeholder="e.g., DOGE, SHIB"
-                       onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'customCurrency', this.value)">
+                       onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'customCurrency', this.value)">
             </div>
             
             ${!isWriteoff && !isColdStorage ? `
@@ -14107,17 +14109,17 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <div class="wallet-autocomplete-container" style="flex: 1;">
                             <input type="text" 
-                                   id="toWallet_${entry.hopId}_${entry.id}"
+                                   id="toWallet_${hop.hopNumber}_${entry.id}"
                                    value="${entry.toWallet || ''}" 
                                    placeholder="Select existing or enter new wallet address"
-                                   onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'toWallet', this.value)"
+                                   onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'toWallet', this.value)"
                                    oninput="handleWalletAutocomplete(this, ${entry.hopId}, ${entry.id})"
                                    autocomplete="off"
-                                   list="walletList_${entry.hopId}_${entry.id}"
+                                   list="walletList_${hop.hopNumber}_${entry.id}"
                                    style="width: 100%;">
-                            <div id="autocomplete_${entry.hopId}_${entry.id}" class="wallet-autocomplete-dropdown"></div>
+                            <div id="autocomplete_${hop.hopNumber}_${entry.id}" class="wallet-autocomplete-dropdown"></div>
                         </div>
-                        <datalist id="walletList_${entry.hopId}_${entry.id}">
+                        <datalist id="walletList_${hop.hopNumber}_${entry.id}">
                             ${(investigation.universalWalletIndex || []).map(wallet => `
                                 <option value="${wallet.address}">
                                     ${wallet.permanentId} - ${wallet.address.substring(0, 20)}...
@@ -14125,7 +14127,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                             `).join('')}
                         </datalist>
                         <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;"
-                                onclick="showWalletSelector(${entry.hopId}, ${entry.id})">
+                                onclick="showWalletSelector(${hop.hopNumber}, ${entry.id})">
                             📋 Browse
                         </button>
                     </div>
@@ -14135,7 +14137,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                 </div>
                 <div class="form-group">
                     <label>To Wallet Classification</label>
-                    <select onchange="updateHopEntryWalletType(${entry.hopId}, ${entry.id}, this.value)">
+                    <select onchange="updateHopEntryWalletType(${hop.hopNumber}, ${entry.id}, this.value)">
                         <option value="">Select classification...</option>
                         ${Object.entries(walletTypes).filter(([key]) => key !== 'red').map(([key, value]) => 
                             `<option value="${key}" ${entry.toWalletType === key ? 'selected' : ''}>${value}</option>`
@@ -14146,14 +14148,14 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                     <label>Transaction Hash</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <input type="text" 
-                               id="txHash_${entry.hopId}_${entry.id}"
+                               id="txHash_${hop.hopNumber}_${entry.id}"
                                value="${entry.txHash || ''}" 
                                placeholder="Blockchain transaction hash"
-                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'txHash', this.value)"
+                               onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'txHash', this.value)"
                                style="flex: 1;">
                         <button type="button" 
                                 class="btn btn-secondary" 
-                                onclick="openBlockchainLookup(${entry.hopId}, ${entry.id})"
+                                onclick="openBlockchainLookup(${hop.hopNumber}, ${entry.id})"
                                 style="background: #3498db; color: white; padding: 8px 15px; font-size: 14px;">
                             Lookup
                         </button>
@@ -14163,10 +14165,10 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                     <label>Timestamp with Timezone</label>
                     <div class="datetime-timezone">
                         <input type="datetime-local" 
-                               id="timestamp_${entry.hopId}_${entry.id}"
+                               id="timestamp_${hop.hopNumber}_${entry.id}"
                                value="${entry.timestamp || ''}" 
-                               onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'timestamp', this.value)">
-                        <select onchange="onTimezoneChange('timestamp_${entry.hopId}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
+                               onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'timestamp', this.value)">
+                        <select onchange="onTimezoneChange('timestamp_${hop.hopNumber}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
                             ${Object.entries(timezones).map(([key, value]) => 
                                 `<option value="${key}" ${entry.timezone === key ? 'selected' : ''}>${value}</option>`
                             ).join('')}
@@ -14178,7 +14180,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
             ${isWriteoff ? `
                 <div class="form-group">
                     <label>Write-off Category</label>
-                    <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'category', this.value)">
+                    <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'category', this.value)">
                         <option value="">Select category...</option>
                         ${Object.entries(writeoffCategories).map(([key, value]) => 
                             `<option value="${key}" ${entry.category === key ? 'selected' : ''}>${value}</option>`
@@ -14188,13 +14190,13 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Justification</label>
                     <textarea rows="2" placeholder="Detailed explanation for abandoning this trace path..." 
-                              onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'justification', this.value)">${entry.justification || ''}</textarea>
+                              onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'justification', this.value)">${entry.justification || ''}</textarea>
                 </div>
             ` : `
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Notes</label>
                     <textarea rows="2" placeholder="PIFO application, convergence notes, etc." 
-                              onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'notes', this.value)">${entry.notes || ''}</textarea>
+                              onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'notes', this.value)">${entry.notes || ''}</textarea>
                 </div>
             `}
         </div>
@@ -14405,7 +14407,7 @@ function addHopEntry(hopId, entryType = 'trace') {
 function createHopEntryDirectly(hopId, entryType = 'trace') {
     // Convert hopId to number to ensure type matching
     const numericHopId = typeof hopId === 'string' ? parseInt(hopId) : hopId;
-    const hop = investigation.hops.find(h => h.id === numericHopId);
+    const hop = investigation.hops.find(h => h.hopNumber === numericHopId);
     if (!hop) {
         console.error('Hop not found in createHopEntryDirectly:', hopId, 'numericHopId:', numericHopId);
         return;
@@ -14525,7 +14527,7 @@ function showHopEntryWizard(hopId) {
     
     // Convert hopId to number to ensure type matching
     const numericHopId = typeof hopId === 'string' ? parseInt(hopId) : hopId;
-    const hop = investigation.hops.find(h => h.id === numericHopId);
+    const hop = investigation.hops.find(h => h.hopNumber === numericHopId);
     
     if (!hop) {
         console.error('Hop not found in showHopEntryWizard:', hopId);
@@ -17316,21 +17318,21 @@ function renderWriteoffSection(entry) {
             <label>Write-off Amount</label>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <input type="number" step="0.01" 
-                       id="writeoffAmount_${entry.hopId}_${entry.id}"
+                       id="writeoffAmount_${hop.hopNumber}_${entry.id}"
                        value="${entry.amount || ''}"
-                       onchange="updateWriteoffAmount(${entry.hopId}, ${entry.id}, this.value)">
+                       onchange="updateWriteoffAmount(${hop.hopNumber}, ${entry.id}, this.value)">
                 <button type="button" class="btn btn-secondary" 
-                        onclick="assignMaxWriteoffAmount(${entry.hopId}, ${entry.id})">
+                        onclick="assignMaxWriteoffAmount(${hop.hopNumber}, ${entry.id})">
                     Max (Balance ART)
                 </button>
             </div>
-            <div id="writeoffPreview_${entry.hopId}_${entry.id}" 
+            <div id="writeoffPreview_${hop.hopNumber}_${entry.id}" 
                  style="font-size: 12px; margin-top: 5px;"></div>
         </div>
         
         <div class="form-group">
             <label>Write-off Category</label>
-            <select onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'category', this.value)">
+            <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'category', this.value)">
                 <option value="">Select category...</option>
                 ${Object.entries(writeoffCategories).map(([key, value]) => 
                     `<option value="${key}" ${entry.category === key ? 'selected' : ''}>${value}</option>`
@@ -17348,7 +17350,7 @@ function renderWriteoffSection(entry) {
             <label>Justification</label>
             <textarea rows="3" 
                       placeholder="Detailed explanation for abandoning this trace path. Example: Amount too small to justify continued investigation resources..." 
-                      onchange="updateHopEntry(${entry.hopId}, ${entry.id}, 'justification', this.value)">${entry.justification || ''}</textarea>
+                      onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'justification', this.value)">${entry.justification || ''}</textarea>
             ${suggestion && !entry.justification ? `
                 <div style="margin-top: 5px; font-size: 11px; color: #666;">
                     <strong>Suggested justification:</strong> ${suggestion.description}
@@ -17800,8 +17802,8 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             }
         }
 
-        function removeHopEntry(hopId, entryId) {
-            const hop = investigation.hops.find(h => h.hopNumber === hopId);
+        function removeHopEntry(hopNumber, entryId) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             const entry = hop.entries.find(e => e.id === entryId);
             
             saveUndoState(`Remove entry ${entry.notation || `Entry ${entry.id}`} from Hop ${hop.hopNumber}`);

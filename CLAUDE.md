@@ -3,30 +3,44 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 21:31)
+## Latest Commit (Auto-updated: 2025-09-22 21:36)
 
-**Commit:** 1c99f22cec72ca9828e0ec618df7d92a73a25d4d
+**Commit:** 01bf713f0df9471659ddb470be223062d733dcd5
 **Author:** Your Name
-**Message:** Document hop ID refactoring needs
+**Message:** Remove hop IDs and use hop numbers as primary identifier
+
+- Replaced all hop.id references with hop.hopNumber throughout codebase
+- Removed Date.now() ID generation from hop creation
+- Updated hop lookups to use hopNumber instead of ID
+- Entries now reference parent hop by hopNumber, not ID
+- Simplified hop structure to only use hopNumber (1, 2, 3...)
+- Fixed all 600+ references to use hop numbers consistently
+
+This aligns with BATS methodology where hops are identified by their count (Hop 1, Hop 2, etc.) not arbitrary timestamp IDs. The parent relationship is natural: Hop 2 entries come from Hop 1, Hop 3 from Hop 2, etc.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 43 ++++++++++++++++++++++++++++---------------
- 1 file changed, 28 insertions(+), 15 deletions(-)
+ CLAUDE.md  |  43 ++++------
+ index.html | 260 ++++++++++++++++++++++++++++++-------------------------------
+ 2 files changed, 142 insertions(+), 161 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1c99f22 Document hop ID refactoring needs (0 seconds ago)
-- 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (3 minutes ago)
-- 72014da Update CLAUDE.md with latest commit info (12 minutes ago)
-- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (17 minutes ago)
-- c012b7f Enhance swap wizard with checkboxes and partial swap support (29 minutes ago)
-- a768bdd Streamline hop completion to single click instead of 4 modals (33 minutes ago)
-- a2647b1 Add transaction hash lookup for DEX/Swap wizard (40 minutes ago)
-- 5624070 Remove redundant createSwapEntryFromWizard function (48 minutes ago)
-- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (51 minutes ago)
-- 8e60274 Add better debugging for swap wizard hop finding issue (59 minutes ago)
+- 01bf713 Remove hop IDs and use hop numbers as primary identifier (0 seconds ago)
+- 1c99f22 Document hop ID refactoring needs (6 minutes ago)
+- 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (8 minutes ago)
+- 72014da Update CLAUDE.md with latest commit info (18 minutes ago)
+- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (22 minutes ago)
+- c012b7f Enhance swap wizard with checkboxes and partial swap support (35 minutes ago)
+- a768bdd Streamline hop completion to single click instead of 4 modals (38 minutes ago)
+- a2647b1 Add transaction hash lookup for DEX/Swap wizard (46 minutes ago)
+- 5624070 Remove redundant createSwapEntryFromWizard function (54 minutes ago)
+- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (56 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
