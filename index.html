@@ -4906,6 +4906,10 @@ function buildAvailableThreadsIndex() {
         hop.entries.forEach(entry => {
             if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
                 updateThreadAvailabilityFromHop(entry);
+            } else if (entry.entryType === 'swap' && entry.swapDetails) {
+                // For swap entries, we need to handle the currency conversion
+                // The output creates a new thread with the output currency
+                updateThreadAvailabilityFromSwap(entry);
             }
         });
     });
@@ -4953,6 +4957,74 @@ function updateThreadAvailabilityFromHop(entry) {
         if (!sourceThread.childThreads.includes(newThreadId)) {
             sourceThread.childThreads.push(newThreadId);
         }
+    }
+}
+
+// Handle swap entries to create threads with the output currency
+function updateThreadAvailabilityFromSwap(entry) {
+    const inputCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+    const outputCurrency = entry.outputCurrency;
+    const inputAmount = parseFloat(entry.amount);
+    const outputAmount = parseFloat(entry.outputAmount);
+
+    // Consume source threads (input currency)
+    if (entry.sourceThreadId) {
+        // Single source thread
+        if (investigation.availableThreads[inputCurrency] &&
+            investigation.availableThreads[inputCurrency][entry.sourceThreadId]) {
+            const thread = investigation.availableThreads[inputCurrency][entry.sourceThreadId];
+            thread.availableAmount -= inputAmount;
+            if (thread.availableAmount <= 0) {
+                thread.isActive = false;
+            }
+        }
+    } else if (entry.multipleSourceThreads) {
+        // Multiple source threads
+        entry.multipleSourceThreads.forEach(threadId => {
+            if (investigation.availableThreads[inputCurrency] &&
+                investigation.availableThreads[inputCurrency][threadId]) {
+                const thread = investigation.availableThreads[inputCurrency][threadId];
+                const threadAmount = entry.threadAmounts?.[threadId] || inputAmount / entry.multipleSourceThreads.length;
+                thread.availableAmount -= threadAmount;
+                if (thread.availableAmount <= 0) {
+                    thread.isActive = false;
+                }
+            }
+        });
+    }
+
+    // Create new thread with output currency
+    if (outputAmount > 0 && entry.notation) {
+        if (!investigation.availableThreads[outputCurrency]) {
+            investigation.availableThreads[outputCurrency] = {};
+        }
+
+        // The new thread ID is the swap entry's notation
+        const newThreadId = entry.notation;
+
+        // Create the output thread with the new currency
+        investigation.availableThreads[outputCurrency][newThreadId] = {
+            totalAmount: outputAmount,
+            availableAmount: outputAmount,
+            assignments: [],
+            sourceWallet: entry.toWallet, // The swap service/DEX address
+            sourceType: 'swap_output',
+            hopLevel: entry.hopNumber,
+            createdAt: entry.timestamp,
+            isActive: true,
+            parentThreads: entry.multipleSourceThreads || [entry.sourceThreadId].filter(Boolean),
+            childThreads: [],
+            currency: outputCurrency,
+            swapDetails: {
+                fromCurrency: inputCurrency,
+                fromAmount: inputAmount,
+                toCurrency: outputCurrency,
+                toAmount: outputAmount,
+                provider: entry.swapDetails?.providerName || 'Unknown'
+            }
+        };
+
+        console.log(`Created swap output thread ${newThreadId} with ${outputAmount} ${outputCurrency}`);
     }
 }
 
@@ -5021,12 +5093,12 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
                 hop.entries.forEach(entry => {
                     if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
                         const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-                        
+
                         if (!targetCurrency || currency === targetCurrency) {
                             // Thread ID is the notation itself (already contains hop number)
                             const threadId = entry.notation;
                             const currentAvailable = getMaxAssignableAmount(threadId, currency);
-                            
+
                             if (currentAvailable > 0) {
                                 availableSources.push({
                                     threadId: threadId,
@@ -5035,6 +5107,28 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
                                     currency: currency, // ENSURE CURRENCY IS INCLUDED
                                     sourceWallet: entry.toWallet,
                                     sourceType: 'hop_output',
+                                    hopLevel: previousHopNumber,
+                                    datetime: entry.timestamp || null,
+                                    timezone: entry.timezone || 'UTC'
+                                });
+                            }
+                        }
+                    } else if (entry.entryType === 'swap' && entry.outputAmount && parseFloat(entry.outputAmount) > 0 && entry.notation) {
+                        // Handle swap entries - use OUTPUT currency
+                        const currency = entry.outputCurrency;
+
+                        if (!targetCurrency || currency === targetCurrency) {
+                            const threadId = entry.notation;
+                            const currentAvailable = getMaxAssignableAmount(threadId, currency);
+
+                            if (currentAvailable > 0) {
+                                availableSources.push({
+                                    threadId: threadId,
+                                    displayText: `${threadId} (swapped to ${currency})`,
+                                    availableAmount: currentAvailable,
+                                    currency: currency, // OUTPUT currency from swap
+                                    sourceWallet: entry.toWallet,
+                                    sourceType: 'swap_output',
                                     hopLevel: previousHopNumber,
                                     datetime: entry.timestamp || null,
                                     timezone: entry.timezone || 'UTC'
@@ -15579,6 +15673,11 @@ function createSwapEntry() {
 
     // Close wizard and update UI
     closeSwapWizard();
+
+    // Mark the swap entry as logged/collapsed immediately
+    const entryKey = `${hop.hopNumber}_${swapEntry.id}`;
+    window.entryCollapseState[entryKey] = true;
+
     buildAvailableThreadsIndex();
     renderHops();
     saveToStorage();
@@ -15593,8 +15692,17 @@ function createSwapEntry() {
 
     console.log('Swap entry created successfully:', swapEntry);
 
-    // Show remaining threads summary
-    showRemainingThreadsSummary(hop);
+    // Check if all source threads are consumed - if not, show add entry dialog for remaining threads
+    const remainingSources = getAvailableSourcesForHop(hop.hopNumber + 1, null);
+    if (remainingSources && remainingSources.length > 0) {
+        // Show the next entry wizard for continuing the trace with the new currency
+        setTimeout(() => {
+            showAddEntryWizard(hop.hopNumber + 1);
+        }, 500);
+    } else {
+        // Show remaining threads summary
+        showRemainingThreadsSummary(hop);
+    }
 }
 
 function createAndFinalizeEntry() {
