@@ -4866,23 +4866,93 @@ function migrateToEnhancedStructure() {
 // PHASE 2: CORE THREAD TRACKING FUNCTIONS
 // =================================
 
+// Generate unique internal ID for threads
+function generateInternalThreadId(notation, currency) {
+    // Format: notation_currency_timestamp_random
+    // This ensures uniqueness even for same notation in same currency
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    return `${notation}_${currency}_${timestamp}_${random}`;
+}
+
+// Check if we're using the legacy system (threads indexed by notation)
+function isLegacyThreadSystem() {
+    if (!investigation.availableThreads) return false;
+
+    // Check if any thread lacks internalId - indicates legacy system
+    for (const currency in investigation.availableThreads) {
+        for (const key in investigation.availableThreads[currency]) {
+            const thread = investigation.availableThreads[currency][key];
+            if (!thread.internalId) return true;
+        }
+    }
+    return false;
+}
+
+// Migrate from legacy notation-based system to dual-layer system
+function migrateThreadsToDualLayer() {
+    if (!isLegacyThreadSystem()) {
+        console.log('Already using dual-layer system');
+        return;
+    }
+
+    console.log('Migrating to dual-layer thread system...');
+    const newThreads = {};
+
+    // Migrate existing threads
+    for (const currency in investigation.availableThreads) {
+        newThreads[currency] = {};
+
+        for (const notation in investigation.availableThreads[currency]) {
+            const thread = investigation.availableThreads[currency][notation];
+
+            // Generate internal ID if missing
+            if (!thread.internalId) {
+                thread.internalId = generateInternalThreadId(notation, currency);
+                thread.notation = notation;
+            }
+
+            // Re-index by internal ID
+            newThreads[currency][thread.internalId] = thread;
+        }
+    }
+
+    investigation.availableThreads = newThreads;
+    console.log('Thread migration complete');
+}
+
 // 2.1 Build Available Threads Index
 function buildAvailableThreadsIndex() {
+    // Check if we need to migrate existing data
+    if (investigation.availableThreads && isLegacyThreadSystem()) {
+        migrateThreadsToDualLayer();
+        // After migration, the existing threads are preserved, so return
+        // The rest of the function only needs to run if we're rebuilding from scratch
+        return;
+    }
+
     investigation.availableThreads = {};
-    
+
     // Start with ALL victim transactions (RED wallets) from ALL victims
     investigation.victims.forEach(victim => {
         victim.transactions.forEach(transaction => {
             if (parseFloat(transaction.amount) > 0 && transaction.receivingWallet) {
-                const currency = transaction.currency === 'CUSTOM' ? 
+                const currency = transaction.currency === 'CUSTOM' ?
                     transaction.customCurrency : transaction.currency;
-                const threadId = `V${victim.id}-T${transaction.id}`;
-                
+                const notation = `V${victim.id}-T${transaction.id}`;
+                const internalId = generateInternalThreadId(notation, currency);
+
                 if (!investigation.availableThreads[currency]) {
                     investigation.availableThreads[currency] = {};
                 }
-                
-                investigation.availableThreads[currency][threadId] = {
+
+                // Index by internal ID, but store notation for display
+                investigation.availableThreads[currency][internalId] = {
+                    // Dual-layer tracking
+                    notation: notation,              // Human-readable (V-T-H)
+                    internalId: internalId,          // Unique identifier
+
+                    // Standard fields
                     totalAmount: parseFloat(transaction.amount),
                     availableAmount: parseFloat(transaction.amount),
                     assignments: [],
@@ -4947,14 +5017,21 @@ function buildAvailableThreadsIndex() {
 function updateThreadAvailabilityFromHop(entry) {
     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
     const amount = parseFloat(entry.amount);
-    
+
     if (!investigation.availableThreads[currency]) {
         investigation.availableThreads[currency] = {};
     }
-    
-    // Thread ID is just the notation (already contains hop number)
-    const newThreadId = entry.notation;
-    investigation.availableThreads[currency][newThreadId] = {
+
+    // Create internal ID for this new thread
+    const notation = entry.notation;
+    const internalId = generateInternalThreadId(notation, currency);
+
+    investigation.availableThreads[currency][internalId] = {
+        // Dual-layer tracking
+        notation: notation,                 // Human-readable
+        internalId: internalId,            // Unique identifier
+
+        // Standard fields
         totalAmount: amount,
         availableAmount: amount,  // This thread's full amount is available
         assignments: [],
@@ -4963,7 +5040,8 @@ function updateThreadAvailabilityFromHop(entry) {
         hopLevel: entry.hopNumber,
         createdAt: entry.timestamp || new Date().toISOString(),
         isActive: true,
-        parentThreads: entry.sourceThreadId ? [entry.sourceThreadId] : [],
+        parentInternalIds: entry.sourceThreadInternalId ? [entry.sourceThreadInternalId] :
+                          (entry.multipleSourceInternalIds || []),
         childThreads: [],
         currency: currency
     };

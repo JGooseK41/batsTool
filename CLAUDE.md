@@ -3,53 +3,48 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 11:32)
+## Latest Commit (Auto-updated: 2025-09-23 11:37)
 
-**Commit:** cd2d729b3e0430feb99a5b0afb73119633b6fcde
+**Commit:** 24068279d30cccb04bf74a38230d3063e99061c5
 **Author:** Your Name
-**Message:** Fix swap thread ID collision causing double-counting
+**Message:** Fix swap thread replacement in universal database
 
-Problem: Swaps were reusing the same thread ID for output as the input,
-causing collisions when currencies differ. This led to incorrect available
-amount calculations.
+Reverted the [SWAP] suffix approach and fixed the core issue:
+- Swaps now properly replace threads in the universal database
+- Processing order fixed: swaps are processed before traces
+- Handles out-of-order entries (trace before swap) gracefully
 
-Example scenario:
-- V1-T1-H1 (USDC) gets swapped to USDT
-- Swap created V1-T1-H1 (USDT) - same ID, different currency
-- When tracing 45,000 from V1-T1-H1 (USDT), it showed full 79,929 available
-  instead of the remaining 34,929
+The universal threads database remains the single source of truth:
+- Swaps replace the source thread entirely (delete from old currency, create in new)
+- Thread ID remains the same to maintain continuity
+- Allocation tracking is preserved when possible
 
-Solution:
-- Swap outputs now use notation with [SWAP] suffix (e.g., V1-T1-H1[SWAP])
-- This ensures unique thread IDs prevent collisions
-- Display shows "(swap output)" for clarity
-
-This fixes the double-counting issue where both the original and swapped
-amounts appeared as separate available threads.
+This ensures swaps work as intended - replacing the thread in place
+rather than creating duplicate threads with different IDs.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com)
 
 ### Changed Files:
 ```
- CLAUDE.md  | 51 +++++++++++++++++++++++++++++----------------------
- index.html | 35 +++++++++++++++++++++--------------
- 2 files changed, 50 insertions(+), 36 deletions(-)
+ CLAUDE.md  |  59 +++++++++++++++++----------------
+ index.html | 110 +++++++++++++++++++++++++++++++++++--------------------------
+ 2 files changed, 94 insertions(+), 75 deletions(-)
 ```
 
 ## Recent Commits History
 
-- cd2d729 Fix swap thread ID collision causing double-counting (0 seconds ago)
-- 84cb001 Fix wizard completion and thread allocation tracking issues (21 minutes ago)
-- 4243a35 Fix thread display clarity for swaps within same hop (28 minutes ago)
-- 722a78c Fix thread display and remaining threads summary (37 minutes ago)
-- 91afd28 Fix hop completion check to properly handle swaps and remaining threads (45 minutes ago)
-- ddb77b2 Fix over-allocation bug - properly limit thread consumption to transaction amount (55 minutes ago)
-- 9bcc336 Update CLAUDE.md with latest changes (61 minutes ago)
-- 7c01752 Simplify swap handling and fix over-allocation bug (63 minutes ago)
-- 8784749 Fix thread database consistency and availability calculations (74 minutes ago)
-- aaf556b Implement universal threads database as single source of truth (87 minutes ago)
+- 2406827 Fix swap thread replacement in universal database (0 seconds ago)
+- cd2d729 Fix swap thread ID collision causing double-counting (5 minutes ago)
+- 84cb001 Fix wizard completion and thread allocation tracking issues (26 minutes ago)
+- 4243a35 Fix thread display clarity for swaps within same hop (32 minutes ago)
+- 722a78c Fix thread display and remaining threads summary (41 minutes ago)
+- 91afd28 Fix hop completion check to properly handle swaps and remaining threads (50 minutes ago)
+- ddb77b2 Fix over-allocation bug - properly limit thread consumption to transaction amount (60 minutes ago)
+- 9bcc336 Update CLAUDE.md with latest changes (66 minutes ago)
+- 7c01752 Simplify swap handling and fix over-allocation bug (67 minutes ago)
+- 8784749 Fix thread database consistency and availability calculations (79 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
