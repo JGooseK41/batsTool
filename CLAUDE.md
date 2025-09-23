@@ -3,23 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 06:03)
+## Latest Commit (Auto-updated: 2025-09-23 07:58)
 
-**Commit:** bf1e5df8b850c89cff0dd33b330b4d1456894f70
+**Commit:** a86c083a11330883747e94c14a3383e63f9a5bf6
 **Author:** Your Name
-**Message:** Fix hop wizard step 3 'Log Entry' button disabled issue
+**Message:** Fix hop wizard progression and remove all hop ID references
 
-The Log Entry button in step 3 was incorrectly disabled even when transaction
-hash was entered. Step 3 is essential for entering transaction details and notes.
+- Fix 'Log Entry' button not working in hop wizard step 3
+- Auto-select all transfers for multi-transfer transactions if none selected
+- Remove 'Don't show wizard for future entries' checkbox from wizard
+- Convert ALL references from hopId to hopNumber throughout entire codebase
+- Fix createHopEntryFromWizard to use hopNumber instead of non-existent hopId
+- Update all function signatures and calls to use hopNumber consistently
+- Ensure hop wizard can properly create entries after transaction lookup
 
-Changes:
-- Restored proper step 3 flow (not skipping it)
-- Fixed button enablement logic to check just for txHash in lookup mode
-- Added checkWizardButtonState() function to update button when data changes
-- Button now enables when txHash is entered, even without clicking Lookup
-- Manual mode still requires both txHash and toWallet as expected
-
-This ensures users can properly enter transaction details and notes in step 3.
+This comprehensive fix ensures the hop wizard works correctly and removes the legacy hop ID system entirely in favor of hop numbers.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -27,24 +25,27 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md         |  55 ++++++++-------
- index.html        |  61 +++++++++++++----
- verify_hop_fix.js | 200 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 279 insertions(+), 37 deletions(-)
+ CLAUDE.md                 |   54 +-
+ diagnose_entry_wizard.js  |  223 +++
+ diagnose_wizard_button.js |  222 +++
+ index.html                |  815 +++++-----
+ index.html.backup         | 3942 ++++++++++++++++++++++++++++++++++-----------
+ test_wizard_button.js     |  166 ++
+ 6 files changed, 4035 insertions(+), 1387 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bf1e5df Fix hop wizard step 3 'Log Entry' button disabled issue (0 seconds ago)
-- b1058ab Fix thread ID format to prevent hop number accumulation (8 hours ago)
-- 7954cb3 Fix unintended consequences of hop ID removal (8 hours ago)
-- 01bf713 Remove hop IDs and use hop numbers as primary identifier (8 hours ago)
-- 1c99f22 Document hop ID refactoring needs (9 hours ago)
-- 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (9 hours ago)
-- 72014da Update CLAUDE.md with latest commit info (9 hours ago)
-- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (9 hours ago)
-- c012b7f Enhance swap wizard with checkboxes and partial swap support (9 hours ago)
-- a768bdd Streamline hop completion to single click instead of 4 modals (9 hours ago)
+- a86c083 Fix hop wizard progression and remove all hop ID references (0 seconds ago)
+- bf1e5df Fix hop wizard step 3 'Log Entry' button disabled issue (2 hours ago)
+- b1058ab Fix thread ID format to prevent hop number accumulation (10 hours ago)
+- 7954cb3 Fix unintended consequences of hop ID removal (10 hours ago)
+- 01bf713 Remove hop IDs and use hop numbers as primary identifier (10 hours ago)
+- 1c99f22 Document hop ID refactoring needs (10 hours ago)
+- 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (11 hours ago)
+- 72014da Update CLAUDE.md with latest commit info (11 hours ago)
+- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (11 hours ago)
+- c012b7f Enhance swap wizard with checkboxes and partial swap support (11 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

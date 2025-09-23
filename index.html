@@ -15034,28 +15034,29 @@ function showSwapWizard(hopNumber) {
     console.log('showSwapWizard called with hopNumber:', hopNumber, 'type:', typeof hopNumber);
 
     // Convert to number if it's a string
+    let numericHopNumber = hopNumber;
     if (typeof hopNumber === 'string') {
-        hopNumber = parseInt(hopNumber);
-        console.log('Converted hopId to number:', hopNumber);
+        numericHopNumber = parseInt(hopNumber);
+        console.log('Converted to number:', numericHopNumber);
     }
 
     console.log('Available hops:', investigation.hops.map(h => ({ id: h.id, hopNumber: h.hopNumber, type: typeof h.id })));
 
     // Try to find the hop
-    let hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+    let hop = investigation.hops.find(h => h.hopNumber === numericHopNumber);
 
     // If not found by ID, try to find by hop number (fallback)
-    if (!hop && typeof hopNumber === 'number' && hopNumber <= 10) {
-        // If hopId looks like a hop number (small value), try to find by hopNumber
-        hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+    if (!hop && typeof numericHopNumber === 'number' && numericHopNumber <= 10) {
+        // If hop number looks like a small value, try to find by hopNumber
+        hop = investigation.hops.find(h => h.hopNumber === numericHopNumber);
         if (hop) {
             console.log('Found hop by hopNumber instead of ID');
         }
     }
 
     if (!hop) {
-        console.error('Hop not found for swap wizard:', hopNumber);
-        console.error('Looking for hop with ID:', hopNumber);
+        console.error('Hop not found for swap wizard:', numericHopNumber);
+        console.error('Looking for hop with number:', numericHopNumber);
         console.error('Available hop IDs:', investigation.hops.map(h => h.id));
         alert('Error: Could not find the hop. Please close this wizard and try again.');
         return;
