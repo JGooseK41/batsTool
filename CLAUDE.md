@@ -3,15 +3,14 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 08:37)
+## Latest Commit (Auto-updated: 2025-09-23 08:39)
 
-**Commit:** abdd5b5fda88216d4aed5e3dca08f0fd82c72017
+**Commit:** b66d53d0ef73e069a07e7a5136e93dfe500164b7
 **Author:** Your Name
-**Message:** Fix duplicate hopNumber declaration in reopenHop function
+**Message:** Remove duplicate nextBtn declaration in checkWizardButtonState
 
-- Removed duplicate const hopNumber declaration on line 4165
-- hopNumber is already available as the function parameter
-- Fixed hopContent scope issue by moving scroll logic inside the if block
+- Removed duplicate const nextBtn declaration and redundant code
+- Lines 15932-15936 were duplicating the logic already present above
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -19,23 +18,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 49 +++++++++++++++++++++++++------------------------
- index.html | 28 +++++++++++++---------------
- 2 files changed, 38 insertions(+), 39 deletions(-)
+ CLAUDE.md  | 37 +++++++++++++------------------------
+ index.html |  6 ------
+ 2 files changed, 13 insertions(+), 30 deletions(-)
 ```
 
 ## Recent Commits History
 
-- abdd5b5 Fix duplicate hopNumber declaration in reopenHop function (0 seconds ago)
-- 0883ca5 Fix duplicate hopNumber declaration in showSwapWizard (11 minutes ago)
-- a86c083 Fix hop wizard progression and remove all hop ID references (40 minutes ago)
+- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (1 second ago)
+- abdd5b5 Fix duplicate hopNumber declaration in reopenHop function (2 minutes ago)
+- 0883ca5 Fix duplicate hopNumber declaration in showSwapWizard (12 minutes ago)
+- a86c083 Fix hop wizard progression and remove all hop ID references (42 minutes ago)
 - bf1e5df Fix hop wizard step 3 'Log Entry' button disabled issue (3 hours ago)
 - b1058ab Fix thread ID format to prevent hop number accumulation (10 hours ago)
 - 7954cb3 Fix unintended consequences of hop ID removal (11 hours ago)
 - 01bf713 Remove hop IDs and use hop numbers as primary identifier (11 hours ago)
 - 1c99f22 Document hop ID refactoring needs (11 hours ago)
 - 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (11 hours ago)
-- 72014da Update CLAUDE.md with latest commit info (11 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

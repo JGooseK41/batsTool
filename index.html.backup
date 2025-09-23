@@ -5864,6 +5864,53 @@ function handleMultipleSourceSelection(hopNumber, entryId, selectedSources) {
 }
 
 // Update Multiple Source Preview
+function updateMultipleSourcePreview(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+    const entry = hop.entries.find(e => e.id === entryId);
+    const previewElement = document.getElementById(`multipleSourcePreview_${hopNumber}_${entryId}`);
+    
+    if (!previewElement || !entry.multipleSourceThreads || entry.multipleSourceThreads.length === 0) {
+        if (previewElement) previewElement.innerHTML = '';
+        return;
+    }
+    
+    const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+    let totalAvailable = 0;
+    let sourceBreakdown = [];
+    
+    entry.multipleSourceThreads.forEach(sourceId => {
+        const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, hop.hopNumber); // Real-time calculation
+        totalAvailable += maxAmount;
+        sourceBreakdown.push(`${sourceId}: ${maxAmount.toLocaleString()} ${currency}`);
+    });
+    
+    const amount = parseFloat(entry.amount) || 0;
+    const remaining = totalAvailable - amount;
+    const validation = validateMultipleSourceAssignment(entry);
+    
+    let previewHTML = `
+        <div style="background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-top: 10px;">
+            <div style="font-weight: bold; margin-bottom: 8px; color: #2c3e50;">
+                ${entry.multipleSourceThreads.length > 1 ? 'Multiple Source Convergence:' : 'Source Selection:'}
+            </div>
+            ${sourceBreakdown.map(source => `<div style="font-size: 11px; color: #666; margin-bottom: 2px;">• ${source}</div>`).join('')}
+            <div style="margin-top: 8px; font-weight: bold; padding-top: 8px; border-top: 1px solid #ddd;">
+                Total Available: ${totalAvailable.toLocaleString()} ${currency}
+            </div>
+            ${amount > 0 ? `
+                <div style="color: ${validation.valid ? '#27ae60' : '#e74c3c'}; margin-top: 5px;">
+                    ${validation.valid ? '✓' : '⚠'} Assigning: ${amount.toLocaleString()} ${currency}
+                    ${validation.valid && remaining > 0 ? ` (${remaining.toLocaleString()} remaining)` : ''}
+                    ${!validation.valid ? `<br><small>${validation.error}</small>` : ''}
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    previewElement.innerHTML = previewHTML;
+}
+
+// Enhanced Source Selection UI for Commingling
 function renderEnhancedSourceSelection(entry) {
     const availableSourceThreads = getAvailableSourcesForHop(entry.hopNumber, null);
     
@@ -6050,6 +6097,7 @@ function validateMultipleSourceAssignment(entry) {
     return { valid: true, totalAvailable: totalAvailable };
 }
 
+// UPDATE YOUR updateMultipleSourcePreview FUNCTION WITH THIS IMPROVED VERSION
 
 function updateMultipleSourcePreview(hopNumber, entryId) {
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
@@ -8491,6 +8539,56 @@ function addNewHop() {
 
 // ADD this export function to your JavaScript section:
 
+function exportUniversalWalletIndex() {
+    if (!investigation.universalWalletIndex || investigation.universalWalletIndex.length === 0) {
+        alert('No universal wallet data to export');
+        return;
+    }
+    
+    // Create CSV content with comprehensive wallet data
+    let csvContent = 'Wallet ID,Permanent Classification,Current Status,Wallet Address,First Seen,Total Amount,Currencies,Status History,Exposure Chain Summary,Notes\n';
+    
+    // Sort wallets by type then by ID (same as display)
+    const sortedWallets = [...investigation.universalWalletIndex].sort((a, b) => {
+        if (a.permanentType !== b.permanentType) {
+            const typeOrder = ['red', 'pink', 'yellow', 'orange', 'brown', 'black', 'blue', 'purple', 'gray', 'green'];
+            return typeOrder.indexOf(a.permanentType) - typeOrder.indexOf(b.permanentType);
+        }
+        return a.permanentId.localeCompare(b.permanentId);
+    });
+    
+    sortedWallets.forEach(wallet => {
+        // Format currencies as "BTC: 1.5, USD: 5000"
+        const currenciesText = Object.entries(wallet.currencies || {})
+            .map(([currency, amount]) => `${currency}: ${amount.toLocaleString()}`)
+            .join('; ');
+        
+        // Format status history
+        const statusHistory = (wallet.statusHistory || []).join(' ');
+        
+        // Format exposure chain summary
+        const exposureChainSummary = (wallet.exposureChain || [])
+            .map(exp => `${exp.notation}(${exp.amount.toLocaleString()} ${exp.currency})`)
+            .join('; ');
+        
+        // Clean and escape text fields
+        const walletId = wallet.permanentId || wallet.id || '';
+        const permanentClassification = walletTypes[wallet.permanentType] || wallet.permanentType || '';
+        const currentStatus = wallet.currentStatus !== wallet.permanentType ? 
+            `${walletTypes[wallet.currentStatus] || wallet.currentStatus} (Currently)` : 
+            permanentClassification;
+        const address = wallet.address || '';
+        const firstSeen = wallet.firstSeen ? 
+            (wallet.firstSeenTimezone ? formatDateTimeForReport(wallet.firstSeen, wallet.firstSeenTimezone) : wallet.firstSeen + ' UTC') : '';
+        const totalAmount = wallet.totalAmount ? wallet.totalAmount.toLocaleString() : '0';
+        const notes = (wallet.notes || '').replace(/"/g, '""').replace(/\n/g, ' ');
+        
+        csvContent += `"${walletId}","${permanentClassification}","${currentStatus}","${address}","${firstSeen}","${totalAmount}","${currenciesText}","${statusHistory}","${exposureChainSummary}","${notes}"\n`;
+    });
+    
+    const filename = `Universal_Wallet_Index_${investigation.caseId || 'Case'}_${new Date().toISOString().slice(0,10)}.csv`;
+    downloadFile(csvContent, filename, 'text/csv');
+}
         // Track collapse state
         window.hopCollapseState = window.hopCollapseState || {};
         window.entryCollapseState = window.entryCollapseState || {};
@@ -11129,7 +11227,7 @@ function checkForUnaccountedThreads(hop) {
 }
 
 // Proceed to next hop without modal
-function proceedToNextHopFromObject(hop) {
+function proceedToNextHop(hop) {
     // Mark hop as completed
     hop.isCollapsed = true;
 
