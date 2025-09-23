@@ -5056,6 +5056,8 @@ function updateThreadAvailabilityFromSwap(entry) {
     const inputAmount = parseFloat(entry.amount);
     const outputAmount = parseFloat(entry.outputAmount);
 
+    console.log(`Processing swap: ${inputAmount} ${inputCurrency} → ${outputAmount} ${outputCurrency}`);
+
     // For dual-layer: Get internal IDs of source threads
     const sourceInternalIds = entry.sourceThreadInternalId ? [entry.sourceThreadInternalId] :
                              (entry.multipleSourceInternalIds || []);
@@ -5064,63 +5066,88 @@ function updateThreadAvailabilityFromSwap(entry) {
     const sourceNotations = entry.sourceThreadId ? [entry.sourceThreadId] :
                            (entry.multipleSourceThreads || []);
 
-    if (sourceInternalIds.length === 0 && sourceNotations.length === 0) return;
+    if (sourceInternalIds.length === 0 && sourceNotations.length === 0) {
+        console.error('No source threads found for swap');
+        return;
+    }
 
-    // Determine if this is a partial swap
-    let totalAvailableInput = 0;
+    // Find ALL threads that match our source notations/IDs in the input currency
     let threadsToProcess = [];
+    let totalAvailableInput = 0;
 
-    // Check each source thread
-    for (let i = 0; i < Math.max(sourceInternalIds.length, sourceNotations.length); i++) {
-        const internalId = sourceInternalIds[i];
-        const notation = sourceNotations[i];
-        const identifier = internalId || notation;
+    // Search by both internal ID and notation
+    if (investigation.availableThreads[inputCurrency]) {
+        for (const key in investigation.availableThreads[inputCurrency]) {
+            const thread = investigation.availableThreads[inputCurrency][key];
 
-        if (!identifier) continue;
+            // Check if this thread matches any of our source threads
+            let isMatch = false;
+            let matchedNotation = null;
 
-        // Find the thread in input currency
-        const inputThread = investigation.availableThreads[inputCurrency]?.[identifier];
-        if (inputThread) {
-            const available = getMaxAssignableAmount(identifier, inputCurrency, entry.id, entry.hopNumber);
-            totalAvailableInput += available;
-            threadsToProcess.push({
-                identifier: identifier,
-                internalId: internalId || identifier,
-                notation: notation || inputThread.notation || identifier,
-                thread: inputThread,
-                available: available
-            });
+            // Check by internal ID
+            if (sourceInternalIds.includes(key) || sourceInternalIds.includes(thread.internalId)) {
+                isMatch = true;
+                matchedNotation = thread.notation || sourceNotations[0];
+            }
+            // Check by notation
+            else if (sourceNotations.includes(thread.notation) || sourceNotations.includes(key)) {
+                isMatch = true;
+                matchedNotation = thread.notation || sourceNotations[0];
+            }
+            // Legacy check - key might be the notation itself
+            else if (sourceNotations.some(n => key.includes(n))) {
+                isMatch = true;
+                matchedNotation = sourceNotations.find(n => key.includes(n));
+            }
+
+            if (isMatch) {
+                const available = thread.totalAmount; // Use total amount for swaps
+                console.log(`Found matching thread: ${key} with ${available} ${inputCurrency}`);
+
+                threadsToProcess.push({
+                    key: key,
+                    internalId: thread.internalId || key,
+                    notation: matchedNotation || thread.notation || key,
+                    thread: thread,
+                    available: available
+                });
+                totalAvailableInput += available;
+            }
         }
     }
 
-    // Check if this is a partial swap (not all input consumed)
+    if (threadsToProcess.length === 0) {
+        console.error(`No threads found in ${inputCurrency} for swap. Looking for:`, sourceNotations);
+        return;
+    }
+
+    // Determine if this is a partial swap
     const isPartialSwap = totalAvailableInput > inputAmount;
 
     if (isPartialSwap) {
-        console.log(`Partial swap detected: Using ${inputAmount} of ${totalAvailableInput} available ${inputCurrency}`);
+        console.log(`Partial swap: Using ${inputAmount} of ${totalAvailableInput} ${inputCurrency}`);
 
-        // For partial swaps, we need to:
-        // 1. Keep the remaining input amount in original currency
-        // 2. Create new thread in output currency with SAME notation but different internal ID
-
+        // For partial swaps, keep remainder in original currency
         threadsToProcess.forEach(item => {
             const consumedRatio = inputAmount / totalAvailableInput;
-            const consumedFromThis = item.available * consumedRatio;
-            const remainingFromThis = item.available - consumedFromThis;
+            const consumedAmount = item.available * consumedRatio;
+            const remainingAmount = item.available - consumedAmount;
 
-            if (remainingFromThis > 0) {
-                // Update the original thread to reflect remaining amount
-                // Don't delete it, just track the consumption
-                console.log(`Thread ${item.notation} keeps ${remainingFromThis} ${inputCurrency}`);
+            if (remainingAmount > 0.01) { // Keep if more than dust
+                item.thread.totalAmount = remainingAmount;
+                item.thread.availableAmount = remainingAmount;
+                console.log(`Thread ${item.notation} keeps ${remainingAmount} ${inputCurrency}`);
+            } else {
+                // Remove if dust amount
+                delete investigation.availableThreads[inputCurrency][item.key];
+                console.log(`Removed thread ${item.key} from ${inputCurrency} (dust)`);
             }
         });
     } else {
-        // Full swap - remove threads from input currency
+        // Full swap - remove ALL matching threads from input currency
         threadsToProcess.forEach(item => {
-            if (investigation.availableThreads[inputCurrency]) {
-                delete investigation.availableThreads[inputCurrency][item.identifier];
-                console.log(`Removed thread ${item.identifier} from ${inputCurrency}`);
-            }
+            delete investigation.availableThreads[inputCurrency][item.key];
+            console.log(`Removed thread ${item.key} from ${inputCurrency}`);
         });
     }
 
@@ -5130,50 +5157,52 @@ function updateThreadAvailabilityFromSwap(entry) {
             investigation.availableThreads[outputCurrency] = {};
         }
 
-        // For dual-layer: Create new thread with same notation but new internal ID
+        // Create output threads with same notation
         threadsToProcess.forEach(item => {
             const notation = item.notation;
             const newInternalId = generateInternalThreadId(notation, outputCurrency);
 
-            // Check if thread with this internal ID already exists
-            if (!investigation.availableThreads[outputCurrency][newInternalId]) {
-                investigation.availableThreads[outputCurrency][newInternalId] = {
-                    // Dual-layer identifiers
-                    notation: notation,
-                    internalId: newInternalId,
+            // Calculate proportional output for this thread
+            const outputPortion = outputAmount * (item.available / totalAvailableInput);
 
-                    // Amounts (proportional for multiple sources)
-                    totalAmount: outputAmount * (item.available / totalAvailableInput),
-                    availableAmount: outputAmount * (item.available / totalAvailableInput),
+            investigation.availableThreads[outputCurrency][newInternalId] = {
+                // Dual-layer identifiers
+                notation: notation,
+                internalId: newInternalId,
 
-                    // Tracking
-                    assignments: [],
-                    sourceWallet: entry.toWallet,
-                    sourceType: 'swap_output',
-                    hopLevel: entry.hopNumber,
-                    createdAt: entry.timestamp,
-                    isActive: true,
+                // Amounts
+                totalAmount: outputPortion,
+                availableAmount: outputPortion,
 
-                    // Parent tracking
-                    parentInternalIds: [item.internalId],
-                    parentNotations: [item.notation],
+                // Tracking
+                assignments: [],
+                sourceWallet: entry.toWallet,
+                sourceType: 'swap_output',
+                hopLevel: entry.hopNumber,
+                createdAt: entry.timestamp || new Date().toISOString(),
+                isActive: true,
 
-                    // Currency and swap details
-                    currency: outputCurrency,
-                    swapDetails: {
-                        fromCurrency: inputCurrency,
-                        fromAmount: inputAmount,
-                        toCurrency: outputCurrency,
-                        toAmount: outputAmount,
-                        provider: entry.swapDetails?.providerName || 'Unknown',
-                        isPartial: isPartialSwap
-                    }
-                };
+                // Parent tracking
+                parentInternalIds: [item.internalId],
+                parentNotations: [item.notation],
 
-                console.log(`Created swap output: ${notation} (${newInternalId}) with ${outputAmount} ${outputCurrency}`);
-            }
+                // Currency and swap details
+                currency: outputCurrency,
+                swapDetails: {
+                    fromCurrency: inputCurrency,
+                    fromAmount: item.available,
+                    toCurrency: outputCurrency,
+                    toAmount: outputPortion,
+                    provider: entry.swapDetails?.providerName || 'Unknown',
+                    isPartial: isPartialSwap
+                }
+            };
+
+            console.log(`Created ${notation} in ${outputCurrency}: ${outputPortion} (ID: ${newInternalId})`);
         });
     }
+
+    console.log('Swap thread conversion complete');
 }
 
 // Universal threads database is the single source of truth

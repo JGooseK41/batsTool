@@ -3,36 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 12:04)
+## Latest Commit (Auto-updated: 2025-09-23 12:13)
 
-**Commit:** 094ed34979a3c2972d5781f0e6bb82dab0b758f0
+**Commit:** e3e9a2fea310d9c6b88821a56422850f07d705c7
 **Author:** Your Name
-**Message:** Implement dual-layer thread tracking system for complex swap handling
+**Message:** Fix swap currency lookup issue in hop wizard
 
-Major architectural change to handle partial swaps and commingled funds:
+Issue: After USDC→USDT swap, wizard was looking for USDC transfers
+instead of the new USDT transfers.
 
-Core Changes:
-- Added generateInternalThreadId() function for unique thread identifiers
-- Updated buildAvailableThreadsIndex() to support dual-layer system
-- Modified getMaxAssignableAmount() to work with both internal IDs and notation
-- Enhanced getAvailableSourcesForHop() to return both notation and internal IDs
+Fixes:
+- Rebuild threads database when opening hop wizard to ensure fresh state
+- Use dual-layer updateThreadAvailabilityFromSwap instead of old function
+- Add internal ID tracking to swap entry creation
+- Initialize dual-layer fields in wizard data
 
-Swap Handling:
-- Implemented partial swap detection and handling
-- Threads can now exist with same notation in different currencies
-- Partial swaps keep remainder in original currency
-- Full swaps still replace threads entirely
-
-Wizard Updates:
-- updateWizardThreadSelection() now stores both internal IDs and notations
-- createSingleHopEntry() stores dual-layer identifiers in entries
-- Allocations now use internal IDs for precise tracking
-
-This dual-layer approach allows:
-1. Simple notation (V1-T1-H1) for investigator display
-2. Unique internal IDs for precise database tracking
-3. Proper handling of partial swaps (100K USDT → 50K USDT + 50K USDC)
-4. Support for commingled funds with PIFO allocation
+This ensures the wizard correctly tracks the output currency after swaps.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -40,23 +26,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  63 ++++++-----
- index.html | 347 +++++++++++++++++++++++++++++++++++++++++--------------------
- 2 files changed, 270 insertions(+), 140 deletions(-)
+ CLAUDE.md  | 69 ++++++++++++++++++++++++++++++++------------------------------
+ index.html | 24 ++++++++++++++++++----
+ 2 files changed, 56 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 094ed34 Implement dual-layer thread tracking system for complex swap handling (0 seconds ago)
-- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (8 minutes ago)
-- 2406827 Fix swap thread replacement in universal database (27 minutes ago)
-- cd2d729 Fix swap thread ID collision causing double-counting (32 minutes ago)
-- 84cb001 Fix wizard completion and thread allocation tracking issues (53 minutes ago)
-- 4243a35 Fix thread display clarity for swaps within same hop (59 minutes ago)
-- 722a78c Fix thread display and remaining threads summary (68 minutes ago)
-- 91afd28 Fix hop completion check to properly handle swaps and remaining threads (77 minutes ago)
-- ddb77b2 Fix over-allocation bug - properly limit thread consumption to transaction amount (87 minutes ago)
-- 9bcc336 Update CLAUDE.md with latest changes (2 hours ago)
+- e3e9a2f Fix swap currency lookup issue in hop wizard (0 seconds ago)
+- 094ed34 Implement dual-layer thread tracking system for complex swap handling (9 minutes ago)
+- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (17 minutes ago)
+- 2406827 Fix swap thread replacement in universal database (36 minutes ago)
+- cd2d729 Fix swap thread ID collision causing double-counting (41 minutes ago)
+- 84cb001 Fix wizard completion and thread allocation tracking issues (62 minutes ago)
+- 4243a35 Fix thread display clarity for swaps within same hop (68 minutes ago)
+- 722a78c Fix thread display and remaining threads summary (77 minutes ago)
+- 91afd28 Fix hop completion check to properly handle swaps and remaining threads (86 minutes ago)
+- ddb77b2 Fix over-allocation bug - properly limit thread consumption to transaction amount (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
