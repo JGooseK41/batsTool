@@ -16202,7 +16202,7 @@ function selectWizardTransfer(index) {
     confirmWizardOutputSelection();
 }
 
-function createSwapEntry(hop, wizardData) {
+function createSwapEntryFromWizard(hop, wizardData) {
     const swapDetails = wizardData.swapDetails;
 
     // Generate notation for the swap
@@ -16476,7 +16476,7 @@ function createHopEntryFromWizard() {
     // Check if this is a swap transaction
     if (wizardData.isSwap && wizardData.swapDetails) {
         // Create a swap entry
-        createSwapEntry(hop, wizardData);
+        createSwapEntryFromWizard(hop, wizardData);
 
         closeHopWizard();
         buildAvailableThreadsIndex();
