@@ -14266,9 +14266,11 @@ function validateHopCompletion(hopNumber) {
                     if (['trace', 'writeoff', 'cold_storage', 'vasp_arrival'].includes(entry.entryType)) {
                         entryTotalsByCurrency[currency] += parseFloat(entry.amount);
                     }
-                    // Also count swap entries as accounting for the source currency
+                    // Swap entries account for the SOURCE currency only
+                    // The OUTPUT must still be traced!
                     if (entry.entryType === 'swap') {
                         entryTotalsByCurrency[currency] += parseFloat(entry.amount);
+                        // Note: The output currency will be available as a thread for the next hop
                     }
                 }
             });
@@ -14332,7 +14334,9 @@ function validateHopCompletion(hopNumber) {
             });
             
             // CRITICAL FIX: Use available threads for next hop to determine what's remaining
-            // This properly accounts for remainder threads that were created but not yet allocated
+            // This properly accounts for:
+            // 1. Remainder threads that were created but not yet allocated
+            // 2. Swap outputs that haven't been traced yet
             const remainingByCurrency = {};
 
             // Get available threads for the NEXT hop - these are what's actually unallocated
@@ -14340,16 +14344,22 @@ function validateHopCompletion(hopNumber) {
             const availableThreadsForNext = getAvailableSourcesForHop(nextHopNumber, null);
 
             // Sum up available amounts by currency - these are the TRUE remaining amounts
+            // This includes swap outputs (new currency) and remainder threads
             availableThreadsForNext.forEach(thread => {
                 if (thread.availableAmount > 0.01) {
                     if (!remainingByCurrency[thread.currency]) {
                         remainingByCurrency[thread.currency] = 0;
                     }
                     remainingByCurrency[thread.currency] += thread.availableAmount;
+
+                    // Log swap-created threads specifically for debugging
+                    if (thread.sourceType === 'swap_output') {
+                        console.log(`Found unallocated swap output: ${thread.threadId} - ${thread.availableAmount} ${thread.currency}`);
+                    }
                 }
             });
 
-            console.log(`Hop ${hopNumber} validation - Remaining amounts from available threads:`, remainingByCurrency);
+            console.log(`Hop ${hopNumber} validation - Remaining amounts (including swap outputs):`, remainingByCurrency);
 
             // Add swapped-in currencies to the available threads for next hop
             Object.entries(swappedInAmounts).forEach(([currency, amount]) => {
