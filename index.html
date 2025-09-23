@@ -9845,18 +9845,13 @@ function addNewHop() {
                 });
 
                 // For "Total Accounted", show what's been traced in each entry
+                // DO NOT count swaps - they are currency conversions, not traces
                 const entryTotalsByCurrency = {};
                 hop.entries.forEach(entry => {
                     if (parseFloat(entry.amount) > 0) {
-                        // For swaps, show the OUTPUT amount and currency
-                        if (entry.entryType === 'swap' && entry.outputCurrency && entry.outputAmount) {
-                            if (!entryTotalsByCurrency[entry.outputCurrency]) {
-                                entryTotalsByCurrency[entry.outputCurrency] = 0;
-                            }
-                            entryTotalsByCurrency[entry.outputCurrency] += parseFloat(entry.outputAmount);
-                        }
-                        // For regular entries, show the traced amount
-                        else if (['trace', 'writeoff', 'cold_storage', 'vasp_arrival'].includes(entry.entryType)) {
+                        // Skip swaps - they don't "account" for funds, they convert them
+                        // Only count actual traces, writeoffs, cold storage
+                        if (['trace', 'writeoff', 'cold_storage', 'vasp_arrival'].includes(entry.entryType)) {
                             const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
                             if (!entryTotalsByCurrency[currency]) {
                                 entryTotalsByCurrency[currency] = 0;

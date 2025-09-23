@@ -3,26 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 12:34)
+## Latest Commit (Auto-updated: 2025-09-23 12:36)
 
-**Commit:** de7d528c26edfc40fa2d224e9802c9f84dae84bd
+**Commit:** 1a425c5a67a78fa0301df5d28d817f78d7b28208
 **Author:** Your Name
-**Message:** Fix wizard-created entries not auto-collapsing and manual form appearing
+**Message:** Fix duplicate availableThreads declaration causing syntax error
 
-Issues fixed:
-1. Wizard-created entries now auto-collapse immediately
-2. Manual entry form no longer appears after wizard completion
-3. Entries marked for collapse BEFORE rendering to prevent flashing
-
-Changes:
-- Set entryCollapseState before rendering for wizard entries
-- Close wizard before re-rendering to prevent form conflicts
-- Added explicit returns to prevent further processing
-- Force collapse after render as double-check
-- Improved timing to ensure smooth UX
-
-The wizard now properly closes entries and doesn't show the confusing
-manual form after completion.
+Removed duplicate const declaration on line 9883 that was preventing
+page from loading. Now reuses the availableThreads variable already
+declared on line 9836.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -30,23 +19,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 51 ++++++++++++++++++++++----------------------
- index.html | 72 ++++++++++++++++++++++++++++++++++++++++++++++++++------------
- 2 files changed, 83 insertions(+), 40 deletions(-)
+ CLAUDE.md  | 51 +++++++++++++++++++++++++++------------------------
+ index.html |  2 +-
+ 2 files changed, 28 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- de7d528 Fix wizard-created entries not auto-collapsing and manual form appearing (0 seconds ago)
-- b8336a8 Fix ART and remaining calculations to properly handle currency swaps (4 minutes ago)
-- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (13 minutes ago)
-- e3e9a2f Fix swap currency lookup issue in hop wizard (21 minutes ago)
-- 094ed34 Implement dual-layer thread tracking system for complex swap handling (30 minutes ago)
-- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (38 minutes ago)
-- 2406827 Fix swap thread replacement in universal database (57 minutes ago)
-- cd2d729 Fix swap thread ID collision causing double-counting (62 minutes ago)
-- 84cb001 Fix wizard completion and thread allocation tracking issues (83 minutes ago)
-- 4243a35 Fix thread display clarity for swaps within same hop (89 minutes ago)
+- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (0 seconds ago)
+- de7d528 Fix wizard-created entries not auto-collapsing and manual form appearing (2 minutes ago)
+- b8336a8 Fix ART and remaining calculations to properly handle currency swaps (6 minutes ago)
+- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (15 minutes ago)
+- e3e9a2f Fix swap currency lookup issue in hop wizard (23 minutes ago)
+- 094ed34 Implement dual-layer thread tracking system for complex swap handling (32 minutes ago)
+- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (40 minutes ago)
+- 2406827 Fix swap thread replacement in universal database (59 minutes ago)
+- cd2d729 Fix swap thread ID collision causing double-counting (64 minutes ago)
+- 84cb001 Fix wizard completion and thread allocation tracking issues (85 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
