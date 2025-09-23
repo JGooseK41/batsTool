@@ -11201,34 +11201,30 @@ function showRemainingThreadsSummary(hop) {
 
 function checkHopCompletionStatus(hop) {
     if (!hop || hop.completed) return;
-    
+
     const validation = validateHopCompletion(hop.hopNumber);
-    
-    // Check if all source threads are accounted for
-    const startingART = hop.artAtStartByCurrency || {};
-    const entryTotalsByCurrency = {};
-    
-    // Calculate totals from entries
-    hop.entries.forEach(entry => {
-        if (parseFloat(entry.amount) > 0) {
-            const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-            if (!entryTotalsByCurrency[currency]) {
-                entryTotalsByCurrency[currency] = 0;
+
+    // NEW APPROACH: Check if there are any available threads remaining
+    // This properly handles swaps where the currency changes
+    const availableThreads = getAvailableSourcesForHop(hop.hopNumber + 1, null);
+
+    // Calculate total available across all currencies
+    let totalAvailable = 0;
+    const availableByCurrency = {};
+    availableThreads.forEach(thread => {
+        if (thread.availableAmount > 0) {
+            totalAvailable += thread.availableAmount;
+            if (!availableByCurrency[thread.currency]) {
+                availableByCurrency[thread.currency] = 0;
             }
-            entryTotalsByCurrency[currency] += parseFloat(entry.amount);
+            availableByCurrency[thread.currency] += thread.availableAmount;
         }
     });
-    
-    // Check if fully accounted
-    let fullyAccounted = true;
-    for (const currency in startingART) {
-        const starting = startingART[currency] || 0;
-        const accounted = entryTotalsByCurrency[currency] || 0;
-        if (Math.abs(starting - accounted) > 0.01) { // Allow small rounding differences
-            fullyAccounted = false;
-            break;
-        }
-    }
+
+    // Hop is fully accounted if no threads remain available
+    const fullyAccounted = totalAvailable < 0.01; // Allow small rounding differences
+
+    console.log(`Hop ${hop.hopNumber} completion check: ${totalAvailable} remaining across all currencies`, availableByCurrency);
     
     // Show notification if fully accounted
     if (fullyAccounted && hop.entries.length > 0) {
