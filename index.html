@@ -3932,7 +3932,7 @@
                                     <div style="background: #f8f9fa; padding: 10px; margin-bottom: 10px; border-radius: 6px;">
                                         <div style="display: flex; justify-content: space-between; align-items: center;">
                                             <strong>Hop ${hop.hopNumber}</strong>
-                                            <button class="btn btn-sm" onclick="navigateToHop(${hop.id}); closeNavigationMenu();">
+                                            <button class="btn btn-sm" onclick="navigateToHop(${hop.hopNumber}); closeNavigationMenu();">
                                                 Go to Hop
                                             </button>
                                         </div>
@@ -3945,7 +3945,7 @@
                                                             ${parseFloat(entry.amount) > 0 ? `(${entry.amount} ${entry.currency})` : ''}
                                                         </span>
                                                         <button class="btn btn-sm" style="padding: 2px 8px; font-size: 12px;" 
-                                                                onclick="navigateToEntry(${hop.id}, ${entry.id}); closeNavigationMenu();">
+                                                                onclick="navigateToEntry(${hop.hopNumber}, ${entry.id}); closeNavigationMenu();">
                                                             Edit
                                                         </button>
                                                     </div>
@@ -4078,7 +4078,7 @@
         
         // Reopen a completed hop for editing
         function reopenHop(hopId) {
-            const hop = investigation.hops.find(h => h.id === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopId);
             if (!hop) return;
             
             // Check for dependent hops
@@ -4184,7 +4184,7 @@
         }
         // Validate and update a hop after upstream changes
         function validateAndUpdateHop(hopId) {
-            const hop = investigation.hops.find(h => h.id === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopId);
             if (!hop) return;
             
             // Find the previous hop to check available threads
@@ -5164,7 +5164,7 @@ function getCurrentARTWithThreads() {
 
 // 3.1 Enhanced Notation Field Functions
 function updateNotationField(hopId, entryId, field, value) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (field === 'victims') {
@@ -5179,7 +5179,7 @@ function updateNotationField(hopId, entryId, field, value) {
 }
 
 function generateNotationPreview(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.victimNumbers || !entry.transactionNumbers) {
@@ -5220,7 +5220,7 @@ function generateNotationPreview(hopId, entryId) {
 function handleSourceSelection(hopId, entryId, sourceThreadId) {
     console.log(` Handling source selection: ${sourceThreadId} for hop ${hopId} entry ${entryId}`);
     
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!hop || !entry) {
@@ -5375,7 +5375,7 @@ function refreshAllSourceAvailability(currentHopId) {
 
 // 3.3 Assignment Amount Handler
 function updateAssignmentAmount(hopId, entryId, amount) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) {
         console.error('Hop not found:', hopId);
         return;
@@ -5416,7 +5416,7 @@ function updateAssignmentAmount(hopId, entryId, amount) {
 
 // 3.4 Assignment Preview Updater
 function updateAssignmentPreview(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     const previewElement = document.getElementById(`assignmentPreview_${hopId}_${entryId}`);
     
@@ -5471,7 +5471,7 @@ function updateAssignmentPreview(hopId, entryId) {
 function assignMaxAmount(hopId, entryId) {
     console.log(` assignMaxAmount called for hop ${hopId}, entry ${entryId}`);
     
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) {
         console.error('Hop not found:', hopId);
         return;
@@ -5572,7 +5572,7 @@ function assignMaxAmount(hopId, entryId) {
 
 // 3.6 Full Notation Display Updater
 function updateFullNotationDisplay(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     const previewElement = document.getElementById(`notationPreview_${hopId}_${entryId}`);
     
@@ -5827,7 +5827,7 @@ function renderEnhancedHopEntry(entry) {
 
 // Enhanced Source Selection Handler for Multiple Sources
 function handleMultipleSourceSelection(hopId, entryId, selectedSources) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     // Store multiple source threads
@@ -5864,7 +5864,7 @@ function handleMultipleSourceSelection(hopId, entryId, selectedSources) {
 
 // Update Multiple Source Preview
 function updateMultipleSourcePreview(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     const previewElement = document.getElementById(`multipleSourcePreview_${hopId}_${entryId}`);
     
@@ -5963,7 +5963,7 @@ function updateMultipleSourceSelection(hopId, entryId) {
         .filter(cb => cb.checked)
         .map(cb => cb.value);
     
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     // Check if we were already in multiple source mode
@@ -6099,7 +6099,7 @@ function validateMultipleSourceAssignment(entry) {
 // UPDATE YOUR updateMultipleSourcePreview FUNCTION WITH THIS IMPROVED VERSION
 
 function updateMultipleSourcePreview(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     const previewElement = document.getElementById(`multipleSourcePreview_${hopId}_${entryId}`);
     
@@ -6213,7 +6213,7 @@ function updateMultipleSourcePreview(hopId, entryId) {
 }
 // Enhanced Full Notation Display for Multiple Sources
 function updateFullNotationDisplayMultiple(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     const previewElement = document.getElementById(`notationPreview_${hopId}_${entryId}`);
     
@@ -8497,8 +8497,8 @@ function addNewHop() {
     // Validate previous hops are complete (with option to proceed)
     for (let hop of investigation.hops) {
         const validation = typeof validateHopCompletionByCurrency === 'function' ? 
-            validateHopCompletionByCurrency(hop.id) : 
-            validateHopCompletion(hop.id);
+            validateHopCompletionByCurrency(hop.hopNumber) : 
+            validateHopCompletion(hop.hopNumber);
             
         if (!validation.valid && validation.errors && validation.errors.length > 0) {
             const shouldProceed = confirm(
@@ -8515,7 +8515,6 @@ function addNewHop() {
     
     // Create new hop with proper structure
     const hop = {
-        id: investigation.hops.length + 1,
         hopNumber: hopNumber,
         entries: [],
         artAtStartByCurrency: currentART,
@@ -8626,7 +8625,7 @@ function exportUniversalWalletIndex() {
         // Log entry and collapse
         function logAndCollapseEntry(hopId, entryId) {
             // Find the entry
-            const hop = investigation.hops.find(h => h.id === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopId);
             const entry = hop.entries.find(e => e.id === entryId);
             
             console.log('Log entry debug:', {
@@ -9033,7 +9032,7 @@ function exportUniversalWalletIndex() {
             
             investigation.hops.forEach(hop => {
                 const option = document.createElement('option');
-                option.value = hop.id;
+                option.value = hop.hopNumber;
                 option.textContent = `Hop ${hop.hopNumber}${hop.completed ? ' ✓' : ''}`;
                 menu.appendChild(option);
             });
@@ -9098,7 +9097,7 @@ function exportUniversalWalletIndex() {
                     if (searchableText.includes(query)) {
                         found = true;
                         // Highlight the entry
-                        const entryElement = document.querySelector(`[data-entry-id="${hop.id}-${entry.id}"]`);
+                        const entryElement = document.querySelector(`[data-entry-id="${hop.hopNumber}-${entry.id}"]`);
                         if (entryElement) {
                             entryElement.classList.add('search-highlight');
                             if (!found) {
@@ -9542,7 +9541,7 @@ function exportUniversalWalletIndex() {
                 const realHopIndex = investigation.hops.indexOf(hop);
                 const hopDiv = document.createElement('div');
                 hopDiv.className = 'hop-container';
-                hopDiv.setAttribute('data-hop-id', hop.id);
+                hopDiv.setAttribute('data-hop-id', hop.hopNumber);
                 
                 // Calculate totals by currency for this hop
                 const entryTotalsByCurrency = {};
@@ -9592,16 +9591,16 @@ function exportUniversalWalletIndex() {
                 
                 // Initialize collapse state - completed hops start collapsed
                 // Auto-collapse old hops for performance and clarity
-                if (window.hopCollapseState[hop.id] === undefined) {
+                if (window.hopCollapseState[hop.hopNumber] === undefined) {
                     // When loading a saved investigation, collapse completed hops
                     // to reduce clutter and help users focus on current work
                     const isCurrentHop = !hop.completed && hop.entries && hop.entries.length > 0;
                     const isLastHop = hopIndex === investigation.hops.length - 1;
                     
                     // Collapse if: completed, or old hop (not in last 3), unless it's the current working hop
-                    window.hopCollapseState[hop.id] = isComplete && !isCurrentHop && !isLastHop;
+                    window.hopCollapseState[hop.hopNumber] = isComplete && !isCurrentHop && !isLastHop;
                 }
-                const isCollapsed = window.hopCollapseState[hop.id];
+                const isCollapsed = window.hopCollapseState[hop.hopNumber];
                 
                 // Different background colors for alternating hops
                 const hopBgColor = realHopIndex % 2 === 0 ? '#f0f4f8' : '#e8ecf0';
@@ -9614,9 +9613,9 @@ function exportUniversalWalletIndex() {
                     .join(' | ');
                 
                 hopDiv.innerHTML = `
-                    <div class="hop-container" data-hop-id="${hop.id}" style="background: ${hopBgColor}; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
+                    <div class="hop-container" data-hop-id="${hop.hopNumber}" style="background: ${hopBgColor}; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
                         <div class="hop-header" style="background: ${isComplete ? '#27ae60' : '#e67e22'}; color: white; padding: ${isCollapsed ? '12px 20px' : '20px'}; cursor: pointer;" 
-                             onclick="toggleHopCollapse(${hop.id})">
+                             onclick="toggleHopCollapse(${hop.hopNumber})">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
                                     <span style="font-size: 24px; transform: rotate(${isCollapsed ? '0' : '90'}deg); transition: transform 0.3s;">
@@ -9642,13 +9641,13 @@ function exportUniversalWalletIndex() {
                                         `<div style="font-size: 12px; opacity: 0.9; margin-top: 5px;">Remaining: ${remainingDisplay.join(' | ')}</div>` : ''
                                     }
                                     ${isComplete ? `
-                                        <button class="btn btn-sm" onclick="reopenHop(${hop.id})" 
+                                        <button class="btn btn-sm" onclick="reopenHop(${hop.hopNumber})" 
                                                 style="margin-top: 8px; background: #3498db; padding: 6px 12px; font-size: 12px;">
                                             ✏️ Edit Hop
                                         </button>
                                     ` : ''}
                                     ${hop.needsValidation ? `
-                                        <button class="btn btn-sm" onclick="validateAndUpdateHop(${hop.id})" 
+                                        <button class="btn btn-sm" onclick="validateAndUpdateHop(${hop.hopNumber})" 
                                                 style="margin-top: 8px; background: #e74c3c; padding: 6px 12px; font-size: 12px;">
                                             Validate & Update
                                         </button>
@@ -9657,7 +9656,7 @@ function exportUniversalWalletIndex() {
                             </div>
                         </div>
                         
-                        <div id="hopContent_${hop.id}" style="display: ${isCollapsed ? 'none' : 'block'}; padding: 20px;">
+                        <div id="hopContent_${hop.hopNumber}" style="display: ${isCollapsed ? 'none' : 'block'}; padding: 20px;">
                             ${!isCollapsed ? `
                                 <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -9684,7 +9683,7 @@ function exportUniversalWalletIndex() {
                                 </div>
                             ` : ''}
                             
-                            <div id="hopEntries_${hop.id}">
+                            <div id="hopEntries_${hop.hopNumber}">
                                 ${(hop.entries || []).map((entry, entryIndex) => renderCollapsibleHopEntry(entry, entryIndex)).join('')}
                             </div>
                             
@@ -9724,15 +9723,15 @@ function exportUniversalWalletIndex() {
 
                                     <h4 style="margin-bottom: 15px; color: #2c3e50;">Next Action:</h4>
                                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                        <button class="btn btn-primary" onclick="showAddEntryWizard(${hop.id})"
+                                        <button class="btn btn-primary" onclick="showAddEntryWizard(${hop.hopNumber})"
                                                 style="padding: 12px 24px; background: #3498db; color: white; font-size: 16px;">
                                             + Add Entry
                                         </button>
-                                        <button class="btn btn-secondary" onclick="viewAvailableThreads(${hop.id})"
+                                        <button class="btn btn-secondary" onclick="viewAvailableThreads(${hop.hopNumber})"
                                                 style="padding: 12px 24px; font-size: 16px;">
                                             📊 View Available Threads
                                         </button>
-                                        <button class="btn btn-confirm" onclick="finalizeHop(${hop.id})"
+                                        <button class="btn btn-confirm" onclick="finalizeHop(${hop.hopNumber})"
                                                 style="margin-left: auto; background: #27ae60; padding: 10px 30px;">
                                             Finalize Hop ${hop.hopNumber}
                                         </button>
@@ -9751,7 +9750,7 @@ function exportUniversalWalletIndex() {
 
 // Get starting ART for a specific hop
 function getStartingARTForHop(hopId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return {};
     
     // Use the stored ART at start for this hop
@@ -9761,8 +9760,8 @@ function getStartingARTForHop(hopId) {
 // Render visual ART progress bars
 function renderARTProgressBars(hop) {
     // Get ART data for this hop
-    const hopIndex = investigation.hops.findIndex(h => h.id === hop.id);
-    const startingART = getStartingARTForHop(hop.id);
+    const hopIndex = investigation.hops.findIndex(h => h.id === hop.hopNumber);
+    const startingART = getStartingARTForHop(hop.hopNumber);
     
     // Calculate amounts by category for each currency
     const breakdown = {};
@@ -9951,10 +9950,10 @@ function showARTCompletionModal(hop, validation) {
                                     <strong>${currency}: ${amount.toLocaleString()} remaining</strong>
                                 </div>
                                 <div style="display: flex; gap: 10px;">
-                                    <button class="btn btn-danger" onclick="createMaxWriteoff(${hop.id}, '${currency}', ${amount})">
+                                    <button class="btn btn-danger" onclick="createMaxWriteoff(${hop.hopNumber}, '${currency}', ${amount})">
                                         📝 Write Off All ${amount.toLocaleString()} ${currency}
                                     </button>
-                                    <button class="btn" style="background: #3498db;" onclick="createColdStorage(${hop.id}, '${currency}', ${amount})">
+                                    <button class="btn" style="background: #3498db;" onclick="createColdStorage(${hop.hopNumber}, '${currency}', ${amount})">
                                         Mark as Cold Storage
                                     </button>
                                 </div>
@@ -9981,7 +9980,7 @@ function showARTCompletionModal(hop, validation) {
 
 // Create maximum write-off entry to balance ART
 function createMaxWriteoff(hopId, currency, amount) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
     
     const writeoffEntry = {
@@ -10034,7 +10033,7 @@ function createMaxWriteoff(hopId, currency, amount) {
 
 // Create cold storage entry to account for funds
 function createColdStorage(hopId, currency, amount) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
     
     // Find the most recent trace entry with the same currency to get wallet info
@@ -10250,16 +10249,16 @@ function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemaini
                             <div style="background: white; border: 2px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 15px;">
                                 <h4 style="margin-top: 0;">${amount.toLocaleString()} ${currency} Remaining</h4>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                                    <button class="btn btn-warning" onclick="writeOffAmount(${hop.id}, '${currency}', ${amount})">
+                                    <button class="btn btn-warning" onclick="writeOffAmount(${hop.hopNumber}, '${currency}', ${amount})">
                                         ❌ Write Off
                                     </button>
-                                    <button class="btn btn-primary" onclick="markAsColdStorage(${hop.id}, '${currency}', ${amount})">
+                                    <button class="btn btn-primary" onclick="markAsColdStorage(${hop.hopNumber}, '${currency}', ${amount})">
                                         ❄️ Cold Storage
                                     </button>
-                                    <button class="btn btn-success" onclick="markAsVASPArrival(${hop.id}, '${currency}', ${amount})">
+                                    <button class="btn btn-success" onclick="markAsVASPArrival(${hop.hopNumber}, '${currency}', ${amount})">
                                         VASP Arrival
                                     </button>
-                                    <button class="btn btn-secondary" onclick="assignPartialAmount(${hop.id}, '${currency}', ${amount})">
+                                    <button class="btn btn-secondary" onclick="assignPartialAmount(${hop.hopNumber}, '${currency}', ${amount})">
                                         ✂️ Split Amount
                                     </button>
                                 </div>
@@ -10270,7 +10269,7 @@ function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemaini
                 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0; text-align: center;">
                     ${isBalanced ? `
-                        <button class="btn btn-success btn-large" onclick="proceedWithHopFinalization(investigation.hops.find(h => h.id === ${hop.id}))">
+                        <button class="btn btn-success btn-large" onclick="proceedWithHopFinalization(investigation.hops.find(h => h.id === ${hop.hopNumber}))">
                             ✅ Complete Hop ${hop.hopNumber}
                         </button>
                     ` : `
@@ -10293,7 +10292,7 @@ function closeFinalizationModal() {
 }
 
 function viewAvailableThreads(hopId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
     
     console.log('Viewing available threads for hop:', hop.hopNumber);
@@ -10386,7 +10385,7 @@ function viewAvailableThreads(hopId) {
 }
 
 function finalizeHop(hopId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) {
         alert('Hop not found');
         return;
@@ -10444,7 +10443,7 @@ function completeHopAndProceed(hop) {
     // Mark hop as completed
     hop.completed = true;
     hop.isCollapsed = true;
-    window.hopCollapseState[hop.id] = true;
+    window.hopCollapseState[hop.hopNumber] = true;
 
     // Calculate threads and ART for next hop
     const threadsCreated = [];
@@ -10472,7 +10471,6 @@ function completeHopAndProceed(hop) {
 
         if (!existingNextHop) {
             const nextHop = {
-                id: Date.now(),
                 hopNumber: nextHopNumber,
                 entries: [],
                 artAtStartByCurrency: nextHopART,
@@ -10786,7 +10784,7 @@ function showCaseStatusDashboard() {
                         </div>
                     </div>
                     ${hopStatus === 'current' || hopStatus === 'in-progress' ? 
-                        `<button class="btn btn-primary btn-small" onclick="closeCaseStatusDashboard(); focusOnHop(${hop.id})">
+                        `<button class="btn btn-primary btn-small" onclick="closeCaseStatusDashboard(); focusOnHop(${hop.hopNumber})">
                             ${hopStatus === 'current' ? 'Continue Here' : 'Go to Hop'}
                         </button>` : 
                         hopStatus === 'complete' ? 
@@ -10908,7 +10906,7 @@ function analyzeCaseStatus() {
     if (investigation.hops && investigation.hops.length > 0) {
         investigation.hops.forEach(hop => {
             const hopInfo = {
-                id: hop.id,
+                id: hop.hopNumber,
                 number: hop.hopNumber,
                 entryCount: hop.entries?.length || 0,
                 status: 'not-started',
@@ -10941,10 +10939,10 @@ function analyzeCaseStatus() {
                 if (!firstIncompleteHop) {
                     firstIncompleteHop = hop;
                     hopInfo.status = 'current';
-                    status.currentHopId = hop.id;
+                    status.currentHopId = hop.hopNumber;
                     
                     // Calculate remaining ART
-                    const validation = validateHopCompletion(hop.id);
+                    const validation = validateHopCompletion(hop.hopNumber);
                     if (validation.remainingByCurrency) {
                         const remaining = Object.entries(validation.remainingByCurrency)
                             .filter(([_, amt]) => amt > 0)
@@ -11053,7 +11051,6 @@ function focusOnAnalysis() {
 function startHop1() {
     if (!investigation.hops || investigation.hops.length === 0) {
         investigation.hops = [{
-            id: Date.now(),
             hopNumber: 1,
             entries: [],
             completed: false
@@ -11102,7 +11099,7 @@ function showRemainingThreadsSummary(hop) {
 
         // Also highlight the add entry button
         setTimeout(() => {
-            const addButton = document.querySelector(`button[onclick*="addHopEntry(${hop.id}"]`);
+            const addButton = document.querySelector(`button[onclick*="addHopEntry(${hop.hopNumber}"]`);
             if (addButton) {
                 addButton.style.animation = 'pulse 2s ease-in-out 3';
                 addButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -11117,7 +11114,7 @@ function showRemainingThreadsSummary(hop) {
 function checkHopCompletionStatus(hop) {
     if (!hop || hop.completed) return;
     
-    const validation = validateHopCompletion(hop.id);
+    const validation = validateHopCompletion(hop.hopNumber);
     
     // Check if all source threads are accounted for
     const startingART = hop.artAtStartByCurrency || {};
@@ -11176,7 +11173,7 @@ function checkHopCompletionStatus(hop) {
                     All source threads have been accounted for in this hop.
                 </p>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <button class="btn btn-success" onclick="closeHopAndProceed(${hop.id}, this.parentElement.parentElement)">
+                    <button class="btn btn-success" onclick="closeHopAndProceed(${hop.hopNumber}, this.parentElement.parentElement)">
                         Close Hop ${hop.hopNumber} & Continue
                     </button>
                     <button class="btn btn-primary" onclick="saveInvestigationFile(); this.parentElement.parentElement.remove()">
@@ -11210,7 +11207,7 @@ function closeHopAndProceed(hopId, notificationElement) {
         notificationElement.remove();
     }
 
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
 
     // Streamlined: Use the consolidated completion function
@@ -11277,7 +11274,7 @@ function showThreadReviewModal(hop) {
 
     if (untracedThreads.length === 0) {
         // No threads to trace, proceed directly
-        proceedToNextHop(hop.id);
+        proceedToNextHop(hop.hopNumber);
         return;
     }
 
@@ -11320,7 +11317,7 @@ function showThreadReviewModal(hop) {
                     </div>
 
                     <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="proceedToNextHop('${hop.id}')" class="btn btn-primary" style="padding: 10px 30px;">
+                        <button onclick="proceedToNextHop('${hop.hopNumber}')" class="btn btn-primary" style="padding: 10px 30px;">
                             Continue to Hop ${hop.hopNumber + 1} →
                         </button>
                     </div>
@@ -11337,14 +11334,14 @@ function proceedToNextHop(hopId) {
     const modal = document.getElementById('threadReviewModal');
     if (modal) modal.remove();
 
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
 
     // Mark current hop as completed
     hop.completed = true;
 
     // Auto-collapse the completed hop
-    window.hopCollapseState[hop.id] = true;
+    window.hopCollapseState[hop.hopNumber] = true;
 
     // Calculate the ART for the next hop (after write-offs in current hop)
     const nextHopART = getCurrentART();
@@ -11352,7 +11349,6 @@ function proceedToNextHop(hopId) {
     // Create the next hop with proper ART tracking
     const nextHopNumber = hop.hopNumber + 1;
     const nextHop = {
-        id: Date.now(),
         hopNumber: nextHopNumber,
         entries: [],
         artAtStartByCurrency: nextHopART,
@@ -11368,7 +11364,7 @@ function proceedToNextHop(hopId) {
     
     // Scroll to the new hop
     setTimeout(() => {
-        const newHopElement = document.querySelector(`#hop_${nextHop.id}`);
+        const newHopElement = document.querySelector(`#hop_${nextHop.hopNumber}`);
         if (newHopElement) {
             newHopElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -11388,7 +11384,7 @@ function completeHopAndCreateNext(hop) {
     hop.completed = true;
 
     // Auto-collapse the completed hop
-    window.hopCollapseState[hop.id] = true;
+    window.hopCollapseState[hop.hopNumber] = true;
 
     // Calculate ART for next hop (after accounting for write-offs in the current hop)
     const nextHopART = getCurrentART();
@@ -11397,7 +11393,6 @@ function completeHopAndCreateNext(hop) {
     // Create the next hop with proper ART accounting
     const nextHopNumber = hop.hopNumber + 1;
     const nextHop = {
-        id: Date.now(),
         hopNumber: nextHopNumber,
         entries: [],
         artAtStartByCurrency: nextHopART,
@@ -11446,11 +11441,11 @@ function completeInvestigation(hopId) {
     const modal = document.getElementById('threadReviewModal');
     if (modal) modal.remove();
     
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
     
     hop.completed = true;
-    window.hopCollapseState[hop.id] = true;
+    window.hopCollapseState[hop.hopNumber] = true;
     
     saveToStorage();
     renderHops();
@@ -11489,7 +11484,7 @@ function analyzeWalletBehaviors(hop) {
     
     // Check previous hops for outgoing transactions
     investigation.hops.forEach(h => {
-        if (h.id !== hop.id) {
+        if (h.id !== hop.hopNumber) {
             h.entries.forEach(entry => {
                 if (entry.entryType === 'trace' && entry.fromWallet && walletAnalysis[entry.fromWallet]) {
                     walletAnalysis[entry.fromWallet].outgoingCount++;
@@ -11561,7 +11556,7 @@ function showWalletClassificationSuggestions(hop, suggestions) {
                 </div>
                 
                 <div style="text-align: center;">
-                    <button class="btn btn-confirm" onclick="completeWalletSuggestions(${hop.id})">
+                    <button class="btn btn-confirm" onclick="completeWalletSuggestions(${hop.hopNumber})">
                         Continue to Complete Hop ${hop.hopNumber}
                     </button>
                 </div>
@@ -11597,7 +11592,7 @@ function completeWalletSuggestions(hopId) {
     const modal = document.getElementById('walletSuggestionsModal');
     if (modal) modal.remove();
     
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (hop) {
         completeHopAndCreateNext(hop);
     }
@@ -11605,7 +11600,7 @@ function completeWalletSuggestions(hopId) {
 
 // Open Smart Allocation Modal
 function openSmartAllocationModal(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!hop || !entry) {
@@ -11862,7 +11857,7 @@ function smartAllocateAmount(hopId, entryId) {
 
 // Clear all allocations
 function clearAllAllocations(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     entry.multipleSourceThreads = [];
@@ -12120,19 +12115,19 @@ function showHopFinalizationModal(hop, remainingByCurrency, walletsWithRemaining
                                 ${currency}: ${amount.toLocaleString()} remaining
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                <button class="btn btn-danger" onclick="createAutoWriteoff(${hop.id}, '${currency}', ${amount})" style="padding: 15px;">
+                                <button class="btn btn-danger" onclick="createAutoWriteoff(${hop.hopNumber}, '${currency}', ${amount})" style="padding: 15px;">
                                     📝 Automatic Write-off
                                     <div style="font-size: 12px; margin-top: 5px; font-weight: normal;">Mark as unrecoverable</div>
                                 </button>
-                                <button class="btn" style="background: #3498db; padding: 15px;" onclick="markAsColdStorage(${hop.id}, '${currency}', ${amount})">
+                                <button class="btn" style="background: #3498db; padding: 15px;" onclick="markAsColdStorage(${hop.hopNumber}, '${currency}', ${amount})">
                                     Cold Storage
                                     <div style="font-size: 12px; margin-top: 5px; font-weight: normal;">Funds remain in current wallet</div>
                                 </button>
-                                <button class="btn" style="background: #9b59b6; padding: 15px;" onclick="markAsVASPArrival(${hop.id}, '${currency}', ${amount})">
+                                <button class="btn" style="background: #9b59b6; padding: 15px;" onclick="markAsVASPArrival(${hop.hopNumber}, '${currency}', ${amount})">
                                     VASP Arrival
                                     <div style="font-size: 12px; margin-top: 5px; font-weight: normal;">Funds arrived at exchange/service</div>
                                 </button>
-                                <button class="btn btn-secondary" style="padding: 15px;" onclick="assignPartialAmount(${hop.id}, '${currency}', ${amount})">
+                                <button class="btn btn-secondary" style="padding: 15px;" onclick="assignPartialAmount(${hop.hopNumber}, '${currency}', ${amount})">
                                     ✂️ Partial Assignment
                                     <div style="font-size: 12px; margin-top: 5px; font-weight: normal;">Split amount across options</div>
                                 </button>
@@ -12170,7 +12165,7 @@ function closeHopFinalizationModal() {
 
 // Create automatic writeoff for remaining amount
 function createAutoWriteoff(hopId, currency, amount) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
     
     const writeoffEntry = {
@@ -12229,7 +12224,7 @@ function createAutoWriteoff(hopId, currency, amount) {
 
 // Mark funds as cold storage
 function markAsColdStorage(hopId, currency, amount) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
     
     // Find the most recent wallet that handled this currency
@@ -12321,7 +12316,7 @@ function markAsColdStorage(hopId, currency, amount) {
 
 // Mark funds as arriving at VASP
 function markAsVASPArrival(hopId, currency, amount) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
     
     // Prompt for VASP details
@@ -12596,7 +12591,7 @@ function confirmHopAndProceed(completedHop) {
 
 // Confirm hop completion
 function confirmHopCompletion(hopId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
     
     closeHopConfirmModal();
@@ -12614,7 +12609,7 @@ function closeHopConfirmModal() {
 }
 
 function validateHopCompletion(hopId) {
-            const hop = investigation.hops.find(h => h.id === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopId);
             if (!hop) return { valid: false, errors: ['Hop not found'] };
             
             const errors = [];
@@ -12734,7 +12729,7 @@ function updateInvestigationCompletionStatus() {
     // Check all hops for completion and validation
     investigation.hops.forEach((hop, index) => {
         const isLastHop = index === investigation.hops.length - 1;
-        const validation = validateHopCompletion(hop.id);
+        const validation = validateHopCompletion(hop.hopNumber);
         
         if (validation.errors && validation.errors.length > 0) {
             totalValidationErrors += validation.errors.length;
@@ -13121,7 +13116,7 @@ function updateInvestigationCompletionStatus() {
         // Select wallet from modal
         function selectWallet(hopId, entryId, address, walletType) {
             // Update the entry
-            const hop = investigation.hops.find(h => h.id === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopId);
             const entry = hop.entries.find(e => e.id === entryId);
             
             if (entry) {
@@ -13287,7 +13282,6 @@ function updateInvestigationCompletionStatus() {
             
             if (totalActiveAmount > 0) {
                 const nextHop = {
-                    id: investigation.hops.length + 1,
                     hopNumber: completedHop.hopNumber + 1,
                     entries: [],
                     artAtStartByCurrency: nextHopART,
@@ -13790,7 +13784,7 @@ function getMaxAssignableAmount(sourceThreadId, currency, excludeEntryId = null,
     investigation.hops.forEach(hop => {
         hop.entries.forEach(entry => {
             // Skip the entry being edited to avoid double-counting
-            if (excludeEntryId && excludeHopId && entry.id === excludeEntryId && hop.id === excludeHopId) {
+            if (excludeEntryId && excludeHopId && entry.id === excludeEntryId && hop.hopNumber === excludeHopId) {
                 return; // Skip this entry
             }
             
@@ -14209,7 +14203,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
 
 // Enhanced Amount Assignment for Multiple Sources
 function updateAssignmentAmountMultiple(hopId, entryId, amount) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     entry.amount = amount;
@@ -14227,7 +14221,7 @@ function updateAssignmentAmountMultiple(hopId, entryId, amount) {
 
 // Enhanced Max Amount Assignment for Multiple Sources
 function assignMaxAmountMultiple(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     let maxAmount = 0;
@@ -14275,7 +14269,7 @@ function assignMaxAmountMultiple(hopId, entryId) {
 
 function showAddEntryWizard(hopId) {
     console.log('showAddEntryWizard called for hopId:', hopId);
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) {
         console.error('Hop not found:', hopId);
         return;
@@ -14393,7 +14387,7 @@ function closeAddEntryWizard() {
 function addHopEntry(hopId, entryType = 'trace') {
     // This function is now primarily used when wizards are disabled
     // or called from other parts of the code
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
     
     // Check if wizard is disabled
@@ -14490,7 +14484,7 @@ function createHopEntryDirectly(hopId, entryType = 'trace') {
     
     // Scroll to the newly created entry after a short delay to allow DOM update
     setTimeout(() => {
-        const entryElement = document.getElementById(`entry_${hop.id}_${sortedEntryId}`);
+        const entryElement = document.getElementById(`entry_${hop.hopNumber}_${sortedEntryId}`);
         if (entryElement) {
             // Scroll the entry into view, centered on screen
             entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -15044,7 +15038,7 @@ function showSwapWizard(hopId) {
     console.log('Available hops:', investigation.hops.map(h => ({ id: h.id, hopNumber: h.hopNumber, type: typeof h.id })));
 
     // Try to find the hop
-    let hop = investigation.hops.find(h => h.id === hopId);
+    let hop = investigation.hops.find(h => h.hopNumber === hopId);
 
     // If not found by ID, try to find by hop number (fallback)
     if (!hop && typeof hopId === 'number' && hopId <= 10) {
@@ -15639,7 +15633,7 @@ function createSwapEntry() {
     // Create the swap entry
     const swapEntry = {
         id: Date.now(),
-        hopId: hop.id,  // Use the hop's actual ID from the stored hop object
+        hopNumber: hop.hopNumber,  // Use hop number as the identifier
         entryType: 'swap',
         sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
         multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
@@ -15706,7 +15700,7 @@ function createAndFinalizeEntry() {
 }
 
 function reopenHopWizard(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop?.entries.find(e => e.id === entryId);
     if (!hop || !entry) return;
     
@@ -15738,7 +15732,7 @@ function reopenHopWizard(hopId, entryId) {
 
 function openHopEntryWizard(hopId) {
     // Get hop data
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return;
     
     // Initialize wizard data if not already editing
@@ -15821,7 +15815,7 @@ function cancelWizardToManual() {
     // Wait for DOM update then fill in the data
     setTimeout(() => {
         // Find the last added entry form
-        const hop = investigation.hops.find(h => h.id === hopId);
+        const hop = investigation.hops.find(h => h.hopNumber === hopId);
         if (!hop) return;
         
         const lastEntry = hop.entries[hop.entries.length - 1];
@@ -16743,7 +16737,7 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
     // Create the entry
     const entry = {
         id: Date.now() + outputIndex, // Ensure unique IDs for multiple outputs
-        hopId: hop.id,
+        hopNumber: hop.hopNumber,
         entryType: 'trace',
         sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
         multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
@@ -16943,7 +16937,7 @@ function createHopEntryFromWizard() {
             
             // Scroll to the updated entry
             setTimeout(() => {
-                const entryElement = document.getElementById(`entry_${hop.id}_${existingEntry.id}`);
+                const entryElement = document.getElementById(`entry_${hop.hopNumber}_${existingEntry.id}`);
                 if (entryElement) {
                     entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     entryElement.style.border = '3px solid #27ae60';
@@ -17159,8 +17153,8 @@ function createHopEntryFromWizard() {
 
     // Always collapse entries created from wizard for clean UI
     setTimeout(() => {
-        const entryKey = `${hop.id}_${sortedEntryId}`;
-        const entryElement = document.getElementById(`entry_${hop.id}_${sortedEntryId}`);
+        const entryKey = `${hop.hopNumber}_${sortedEntryId}`;
+        const entryElement = document.getElementById(`entry_${hop.hopNumber}_${sortedEntryId}`);
 
         if (entryElement) {
             // Collapse the entry immediately
@@ -17190,7 +17184,7 @@ function createHopEntryFromWizard() {
 }
 // Calculate remaining ART for write-offs
 function calculateRemainingARTForHop(hopId, currency) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return 0;
     
     // Get the starting ART for this hop
@@ -17214,7 +17208,7 @@ function calculateRemainingARTForHop(hopId, currency) {
 
 // Auto-fill max write-off amount
 function assignMaxWriteoffAmount(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (entry.entryType !== 'writeoff') {
@@ -17246,7 +17240,7 @@ function assignMaxWriteoffAmount(hopId, entryId) {
 
 // Update write-off preview with balance information
 function updateWriteoffPreview(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     const previewElement = document.getElementById(`writeoffPreview_${hopId}_${entryId}`);
     
@@ -17366,7 +17360,7 @@ function renderWriteoffSection(entry) {
 
 // Update write-off amount with validation
 function updateWriteoffAmount(hopId, entryId, amount) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     entry.amount = amount;
@@ -17375,7 +17369,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
 }
 
         function updateHopEntry(hopId, entryId, field, value) {
-            const hop = investigation.hops.find(h => h.id === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopId);
             const entry = hop.entries.find(e => e.id === entryId);
             entry[field] = value;
             
@@ -17482,7 +17476,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             window.currentConversionEntryId = entryId;
             
             // Pre-populate with entry data if available
-            const hop = investigation.hops.find(h => h.id === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopId);
             const entry = hop.entries.find(e => e.id === entryId);
             if (entry) {
                 // Set from currency based on the entry's current currency
@@ -17514,7 +17508,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             const toCustom = document.getElementById('conversionToCurrencyCustom').value;
             
             // Update entry with conversion data
-            const hop = investigation.hops.find(h => h.id === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopId);
             const entry = hop.entries.find(e => e.id === entryId);
             if (entry) {
                 // Store original currency info for the conversion record
@@ -17652,7 +17646,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                     if (entry.entryType === 'trace') {
                         content += `
                             <label style="display: block; margin: 8px 0; cursor: pointer;">
-                                <input type="checkbox" value="${hop.id}_${entry.id}" onchange="updateConvergenceSelection()"> 
+                                <input type="checkbox" value="${hop.hopNumber}_${entry.id}" onchange="updateConvergenceSelection()"> 
                                 ${entry.notation || 'Entry ' + entry.id} - ${entry.amount} ${entry.currency} (H${entry.hopNumber})
                             </label>
                         `;
@@ -17731,7 +17725,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             // Add convergence entry
             const entry = {
                 id: 1,
-                hopId: hop.id,
+                hopNumber: hop.hopNumber,
                 hopNumber: hop.hopNumber,
                 entryType: 'trace',
                 notation: notation,
@@ -17795,7 +17789,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
 
         function removeHop(hopId) {
             if (confirm('Are you sure you want to remove this entire hop?')) {
-                const hop = investigation.hops.find(h => h.id === hopId);
+                const hop = investigation.hops.find(h => h.hopNumber === hopId);
                 saveUndoState(`Remove Hop ${hop.hopNumber}`);
                 
                 investigation.hops = investigation.hops.filter(h => h.id !== hopId);
@@ -17807,7 +17801,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
         }
 
         function removeHopEntry(hopId, entryId) {
-            const hop = investigation.hops.find(h => h.id === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopId);
             const entry = hop.entries.find(e => e.id === entryId);
             
             saveUndoState(`Remove entry ${entry.notation || `Entry ${entry.id}`} from Hop ${hop.hopNumber}`);
@@ -17963,7 +17957,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                 currentTimezone = transaction?.timezone || 'UTC';
             } else if (entryType === 'hop') {
                 const [hopId, entryId] = ids;
-                const hop = investigation.hops.find(h => h.id === hopId);
+                const hop = investigation.hops.find(h => h.hopNumber === hopId);
                 const entry = hop?.entries.find(e => e.id === entryId);
                 currentTimezone = entry?.timezone || 'UTC';
             }
@@ -19380,7 +19374,7 @@ function downloadFile(content, filename, mimeType) {
 
         // ADD THE NEW HELPER FUNCTIONS HERE:
         function updateIndividualSourceAssignment(hopId, entryId, sourceId, amount) {
-            const hop = investigation.hops.find(h => h.id === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.individualSourceAssignments) {
@@ -19411,7 +19405,7 @@ function downloadFile(content, filename, mimeType) {
 
 // DUPLICATE FUNCTION REMOVED - Using the more complete version at line 10336
 /*function validateHopCompletion(hopId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (!hop) return { valid: false, errors: ['Hop not found'] };
     
     const errors = [];
@@ -19493,7 +19487,7 @@ function downloadFile(content, filename, mimeType) {
 }*/
 
 function autoGenerateNotationFromSource(hopId, entryId, sourceThreadId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     console.log(` Auto-generating notation from source: ${sourceThreadId}`);
@@ -19531,7 +19525,7 @@ function autoGenerateNotationFromSource(hopId, entryId, sourceThreadId) {
 }
 
 function autoGenerateNotationFromMultipleSources(hopId, entryId, selectedSources) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     console.log(` Auto-generating notation from multiple sources:`, selectedSources);
@@ -19569,7 +19563,7 @@ function autoGenerateNotationFromMultipleSources(hopId, entryId, selectedSources
 }
 
 function clearNotationFields(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     entry.victimNumbers = '';
@@ -19581,7 +19575,7 @@ function clearNotationFields(hopId, entryId) {
 }
 
 function updateNotationFieldsInUI(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     console.log(`Updating notation UI for hop ${hopId} entry ${entryId}:`, {
@@ -19638,7 +19632,7 @@ function updateNotationFieldsInUI(hopId, entryId) {
     }
 }
 function assignMaxToIndividualSource(hopId, entryId, sourceId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
     
@@ -19655,7 +19649,7 @@ function assignMaxToIndividualSource(hopId, entryId, sourceId) {
     }
 }
 function toggleSourceSelection(hopId, entryId, sourceId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.multipleSourceThreads) {
@@ -19740,7 +19734,7 @@ function toggleSourceSelection(hopId, entryId, sourceId) {
 }
 
 function updateProposedAmount(hopId, entryId, sourceId, amount) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.individualSourceAssignments) {
@@ -19782,7 +19776,7 @@ function updateProposedAmount(hopId, entryId, sourceId, amount) {
 }
 
 function proposeMaxAmount(hopId, entryId, sourceId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
     const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopId);
@@ -19797,7 +19791,7 @@ function proposeMaxAmount(hopId, entryId, sourceId) {
 }
 
 function updateProposedSummary(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     const summaryElement = document.getElementById(`proposedSummary_${hopId}_${entryId}`);
     
@@ -19821,7 +19815,7 @@ function updateProposedSummary(hopId, entryId) {
 }
 
 function commitAssignmentToEntry(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.individualSourceAssignments) {
@@ -19944,7 +19938,7 @@ function validateTracesEnhanced() {
 }
 
 function distributeProportionally(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.multipleSourceThreads || entry.multipleSourceThreads.length === 0) return;
@@ -19978,7 +19972,7 @@ function distributeProportionally(hopId, entryId) {
 }
 
 function depleteInOrder(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.multipleSourceThreads || entry.multipleSourceThreads.length === 0) return;
@@ -20007,7 +20001,7 @@ function depleteInOrder(hopId, entryId) {
 }
 
 function clearAllAssignments(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (entry.individualSourceAssignments) {
@@ -20300,7 +20294,7 @@ function applyTransactionData() {
     if (!currentTxData || !targetEntryContext) return;
     
     const { hopId, entryId } = targetEntryContext;
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop.entries.find(e => e.id === entryId);
     
     // Apply the data to the entry
@@ -21634,7 +21628,7 @@ function applyAttribution() {
     const attributionNote = attributionNotes.join('\n');
     
     // Find the entry and add notes about the attribution
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     if (hop) {
         const entry = hop.entries.find(e => e.id === entryId);
         if (entry) {
@@ -22319,7 +22313,7 @@ async function lookupSolanaTransaction(txHash) {
 
 // Victim Transaction Lookup Function
 async function lookupHopTransaction(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopId);
     const entry = hop?.entries.find(e => e.id === entryId);
     if (!hop || !entry) return;
     
@@ -23603,7 +23597,7 @@ To (RED Wallet): ${transfer.to}`;
             closeTerminalNotification();
             
             // Optionally add a note about terminal status
-            const hop = investigation.hops.find(h => h.id === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopId);
             if (hop) {
                 const entry = hop.entries.find(e => e.id === entryId);
                 if (entry) {
