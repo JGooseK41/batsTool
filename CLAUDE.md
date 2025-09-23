@@ -3,21 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 21:50)
+## Latest Commit (Auto-updated: 2025-09-22 22:13)
 
-**Commit:** 7954cb3cf8d6a560facc0e87e57ce4d6c1cae7c6
+**Commit:** b1058ab13dbc9154d7491247cd462faa855dd099
 **Author:** Your Name
-**Message:** Fix unintended consequences of hop ID removal
+**Message:** Fix thread ID format to prevent hop number accumulation
 
-- Updated all functions to use hopNumber instead of hopId as parameter name
-- Fixed DOM selectors to consistently use hopNumber for element IDs
-- Updated hopCollapseState to use hopNumber as key instead of hopId
-- Modified renderHopEntry and renderCollapsibleHopEntry to accept hop parameter
-- Fixed all function calls to pass hopNumber instead of entry.hopId
-- Updated hop lookups to find by hopNumber instead of id
-- Ensured entry-hop relationships work correctly with hop numbers
+Thread IDs should not accumulate hop numbers as they progress through hops.
+The notation already contains the current hop number (e.g., V1-T1-H2),
+so appending another hop number created duplicates like V1-T1-H1-H2.
 
-This completes the migration from timestamp-based hop IDs to sequential hop numbers.
+Changes:
+- Thread ID is now just the notation itself (no additional -H suffix)
+- This prevents patterns like V1-T1-H1-H2-H3 from accumulating
+- Ensures consistent thread tracking across all hop levels
+
+This fixes navigation issues from hop 2 to hop 3 and beyond.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,23 +26,29 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  44 +++++---
- index.html | 334 +++++++++++++++++++++++++++++++------------------------------
- 2 files changed, 197 insertions(+), 181 deletions(-)
+ CLAUDE.md                   |   47 +-
+ TEST_RESULTS.md             |  152 ++++++
+ browser_test_suite.js       |  573 ++++++++++++++++++++++
+ comprehensive_test_suite.js | 1127 +++++++++++++++++++++++++++++++++++++++++++
+ index.html                  |   18 +-
+ realistic_simulations.js    |  795 ++++++++++++++++++++++++++++++
+ test_hop_navigation.js      |  255 ++++++++++
+ test_writeoffs_art.js       |  463 ++++++++++++++++++
+ 8 files changed, 3398 insertions(+), 32 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7954cb3 Fix unintended consequences of hop ID removal (0 seconds ago)
-- 01bf713 Remove hop IDs and use hop numbers as primary identifier (13 minutes ago)
-- 1c99f22 Document hop ID refactoring needs (19 minutes ago)
-- 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (22 minutes ago)
-- 72014da Update CLAUDE.md with latest commit info (31 minutes ago)
-- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (36 minutes ago)
-- c012b7f Enhance swap wizard with checkboxes and partial swap support (48 minutes ago)
-- a768bdd Streamline hop completion to single click instead of 4 modals (52 minutes ago)
-- a2647b1 Add transaction hash lookup for DEX/Swap wizard (59 minutes ago)
-- 5624070 Remove redundant createSwapEntryFromWizard function (67 minutes ago)
+- b1058ab Fix thread ID format to prevent hop number accumulation (0 seconds ago)
+- 7954cb3 Fix unintended consequences of hop ID removal (24 minutes ago)
+- 01bf713 Remove hop IDs and use hop numbers as primary identifier (37 minutes ago)
+- 1c99f22 Document hop ID refactoring needs (43 minutes ago)
+- 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (45 minutes ago)
+- 72014da Update CLAUDE.md with latest commit info (55 minutes ago)
+- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (59 minutes ago)
+- c012b7f Enhance swap wizard with checkboxes and partial swap support (72 minutes ago)
+- a768bdd Streamline hop completion to single click instead of 4 modals (75 minutes ago)
+- a2647b1 Add transaction hash lookup for DEX/Swap wizard (83 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

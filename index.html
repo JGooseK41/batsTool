@@ -14852,7 +14852,7 @@ function showHopWizardStep(step) {
                                    id="wizardTxHash"
                                    placeholder="Paste transaction hash here"
                                    value="${wizardData.txHash || ''}"
-                                   onchange="window.hopWizardData.txHash = this.value"
+                                   onchange="window.hopWizardData.txHash = this.value; if(typeof checkWizardButtonState === 'function') checkWizardButtonState();"
                                    style="flex: 1; padding: 12px; font-size: 16px;">
                             <button class="btn btn-primary" onclick="lookupWizardTransaction()">
                                 🔍 Lookup
@@ -14881,7 +14881,7 @@ function showHopWizardStep(step) {
                                    id="wizardTxHashManual"
                                    placeholder="Enter transaction hash"
                                    value="${wizardData.txHash || ''}"
-                                   onchange="window.hopWizardData.txHash = this.value"
+                                   onchange="window.hopWizardData.txHash = this.value; if(typeof checkWizardButtonState === 'function') checkWizardButtonState();"
                                    style="width: 100%;">
                         </div>
                         
@@ -14977,9 +14977,12 @@ function showHopWizardStep(step) {
         nextBtn.textContent = 'Log Entry';
         // Enable next button if we have required data
         if (wizardData.entryMode === 'manual') {
+            // In manual mode, just need txHash and toWallet
             nextBtn.disabled = !wizardData.txHash || !wizardData.manualData?.toWallet;
         } else {
-            nextBtn.disabled = !wizardData.txHash || !wizardData.txData;
+            // In lookup mode, enable if we have txHash (txData will be fetched)
+            // If txData exists, great. If not but we have txHash, still allow proceeding
+            nextBtn.disabled = !wizardData.txHash;
         }
         
         // Remove the Create & Finalize button since we're streamlining
@@ -14997,15 +15000,14 @@ function hopWizardNext() {
 
     if (!wizardData) return;
 
-    // If we're on step 2 and have transaction data, create the entry directly
-    if (wizardData.step === 2 && (wizardData.txData || (wizardData.entryMode === 'manual' && wizardData.manualData?.toWallet))) {
-        // Create the entry directly from step 2
-        createHopEntryFromWizard();
-        // Note: createHopEntryFromWizard handles closing the wizard, rendering, and showing summary
-        return;
-    } else if (wizardData.step === 3) {
-        // Legacy path - keep for backwards compatibility
-        createHopEntryFromWizard();
+    // Normal progression through steps
+    if (wizardData.step === 3) {
+        // From step 3, create the entry
+        if (wizardData.txHash) {
+            createHopEntryFromWizard();
+        } else {
+            alert('Please enter a transaction hash before proceeding.');
+        }
     } else {
         wizardData.step = wizardData.step + 1;
         showHopWizardStep(wizardData.step);
@@ -15895,6 +15897,10 @@ function cancelWizardToManual() {
 // Set wizard entry mode (lookup vs manual)
 function setWizardEntryMode(mode) {
     window.hopWizardData.entryMode = mode;
+    // When switching modes, preserve existing data
+    if (mode === 'manual' && !window.hopWizardData.manualData) {
+        window.hopWizardData.manualData = {};
+    }
     showHopWizardStep(3); // Refresh step 3
 }
 
@@ -15904,6 +15910,27 @@ function updateWizardManualData(field, value) {
         window.hopWizardData.manualData = {};
     }
     window.hopWizardData.manualData[field] = value;
+    // Check if we can enable the button now
+    checkWizardButtonState();
+}
+
+function checkWizardButtonState() {
+    if (!window.hopWizardData) return;
+
+    const nextBtn = document.getElementById('wizardNextBtn');
+    if (!nextBtn) return;
+
+    const wizardData = window.hopWizardData;
+
+    if (wizardData.step === 3) {
+        // On step 3, check if we have minimum requirements
+        if (wizardData.entryMode === 'manual') {
+            nextBtn.disabled = !wizardData.txHash || !wizardData.manualData?.toWallet;
+        } else {
+            // In lookup mode, just need the hash
+            nextBtn.disabled = !wizardData.txHash;
+        }
+    }
     
     // Update next button state
     const nextBtn = document.getElementById('wizardNextBtn');
@@ -16396,7 +16423,15 @@ async function lookupWizardTransaction() {
         </div>
     `;
 
-    document.getElementById('wizardNextBtn').disabled = false;
+    // Enable the Log Entry button
+    const nextBtn = document.getElementById('wizardNextBtn');
+    if (nextBtn) {
+        nextBtn.disabled = false;
+        // Make sure the wizard data has the txData
+        if (!window.hopWizardData.txData) {
+            window.hopWizardData.txData = txData;
+        }
+    }
 
     } catch (error) {
         console.error('Transaction lookup error:', error);
