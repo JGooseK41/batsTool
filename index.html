@@ -11558,38 +11558,13 @@ function finalizeHop(hopNumber) {
         alert('Hop not found');
         return;
     }
-    
-    // Validate all source threads are accounted for
+
+    // USE the validateHopCompletion function which properly handles swaps!
     const validation = validateHopCompletion(hopNumber);
-    
-    // Calculate remaining ART by currency
-    const remainingByCurrency = {};
-    const startingART = hop.artAtStartByCurrency || {};
-    const entryTotalsByCurrency = {};
-    
-    // Calculate totals from entries (including all entry types that account for funds)
-    hop.entries.forEach(entry => {
-        if (parseFloat(entry.amount) > 0) {
-            const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-            if (!entryTotalsByCurrency[currency]) {
-                entryTotalsByCurrency[currency] = 0;
-            }
-            // Include all entry types that account for funds
-            if (['trace', 'writeoff', 'cold_storage', 'vasp_arrival'].includes(entry.entryType)) {
-                entryTotalsByCurrency[currency] += parseFloat(entry.amount);
-            }
-        }
-    });
-    
-    // Calculate remaining amounts
-    Object.entries(startingART).forEach(([currency, startAmount]) => {
-        const tracedAmount = entryTotalsByCurrency[currency] || 0;
-        const remaining = startAmount - tracedAmount;
-        if (Math.abs(remaining) >= 0.01) {
-            remainingByCurrency[currency] = remaining;
-        }
-    });
-    
+
+    // Use the remaining amounts from validation (which already accounts for swaps)
+    const remainingByCurrency = validation.remainingByCurrency || {};
+
     // Analyze wallets with untraced balances
     const walletsWithRemainingFunds = analyzeUntracedBalances(hop);
     
