@@ -3,29 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 19:26)
+## Latest Commit (Auto-updated: 2025-09-22 20:43)
 
-**Commit:** 995000add80725502281213467d134b3601416d1
+**Commit:** 5624070461c30163d0d767378b3d9a230a211ed9
 **Author:** Your Name
-**Message:** Implement core behavior fixes based on user requirements
+**Message:** Remove redundant createSwapEntryFromWizard function
 
-Core improvements:
-- Write-offs now properly reduce ART when hop is closed
-- Added PIFO vs Transaction Matching allocation mode toggle
-- ART correctly accounts for write-offs in next hop calculations
-- Thread review modal displays reduced ART after write-offs
+Cleaned up duplicate swap entry creation logic:
+- Removed createSwapEntryFromWizard() which was redundant
+- Kept createSwapEntry() used by the dedicated swap wizard
+- Updated regular wizard to redirect to swap wizard if swap is detected
+- This eliminates confusion between two similar functions
 
-Allocation modes:
-- PIFO (default): Proceeds In First Out allocation across threads
-- Matching: Match exact transaction amounts for specific cases
-- User can switch between modes in allocation step
-- Mode choice documented in entry notes
-
-Technical changes:
-- Updated getCurrentART() to properly handle write-offs
-- Modified completeHopAndCreateNext() to calculate post-writeoff ART
-- Enhanced proceedToNextHop() with ART tracking
-- Added setAllocationMode() and applyMatchingAllocation() functions
+The dedicated swap wizard (DEX/Asset Conversion option) is now the single path for creating swap entries.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -33,23 +23,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  32 +++++----
- index.html | 230 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 225 insertions(+), 37 deletions(-)
+ index.html | 90 ++++----------------------------------------------------------
+ 1 file changed, 5 insertions(+), 85 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 995000a Implement core behavior fixes based on user requirements (0 seconds ago)
-- 31185bb Implement partial tracing and optional thread review modal (12 minutes ago)
-- 1cd28c4 Update commingling notation to parentheses format (15 minutes ago)
-- 82110d8 Implement PIFO allocation and expose wizard functions (19 minutes ago)
-- b55fac7 Fix broken Complete Victim button and other victim-related functions (2 hours ago)
-- c4b118d Fix ERC-20 token filtering regression in wizard (2 hours ago)
-- 7bdc0f8 Fix critical swap wizard bugs: Add missing showThreadReviewModal function and ensure swap wizard displays properly (3 hours ago)
-- f89a74e Major improvements to swap handling and UI/UX enhancements (3 hours ago)
-- a48616a Streamline wizard workflow - entries now create directly without manual form step (4 hours ago)
-- 150f54c Improve post-wizard UI clarity and workflow guidance (5 hours ago)
+- 5624070 Remove redundant createSwapEntryFromWizard function (0 seconds ago)
+- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (2 minutes ago)
+- 8e60274 Add better debugging for swap wizard hop finding issue (10 minutes ago)
+- 90726bb Fix DEX/Swap entry not showing in Add Entry wizard (40 minutes ago)
+- e3d9d02 Fix UI not updating after applying transfer to victim (47 minutes ago)
+- a7a9dd6 Fix removeTransaction function definition (54 minutes ago)
+- 995000a Implement core behavior fixes based on user requirements (76 minutes ago)
+- 31185bb Implement partial tracing and optional thread review modal (88 minutes ago)
+- 1cd28c4 Update commingling notation to parentheses format (2 hours ago)
+- 82110d8 Implement PIFO allocation and expose wizard functions (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

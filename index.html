@@ -15135,6 +15135,21 @@ function showSwapWizardStep(step) {
                        style="width: 100%; padding: 10px; margin-top: 5px;">
             </div>
 
+            <div style="margin: 20px 0;">
+                <label>Transaction Hash (for lookup):</label>
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <input type="text" id="swapTxHash"
+                           placeholder="Transaction hash"
+                           value="${wizardData.txHash}"
+                           onchange="window.swapWizardData.txHash = this.value"
+                           style="flex: 1; padding: 10px;">
+                    <button class="btn btn-primary" onclick="lookupSwapTransaction()">
+                        🔍 Lookup & Auto-fill
+                    </button>
+                </div>
+                <div id="inputInfo" style="margin-top: 10px; color: #666;"></div>
+            </div>
+
             <div style="background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px; padding: 15px; margin-top: 20px;">
                 <h4 style="margin-top: 0;">Output Asset (Received Back)</h4>
 
@@ -15165,11 +15180,24 @@ function showSwapWizardStep(step) {
 
             <div style="margin-top: 20px;">
                 <label>Transaction Hash (Optional):</label>
-                <input type="text" id="swapTxHash"
-                       placeholder="${wizardData.swapType === 'cex' ? 'Withdrawal TX or reference' : 'Transaction hash'}"
-                       value="${wizardData.txHash}"
-                       onchange="window.swapWizardData.txHash = this.value"
-                       style="width: 100%; padding: 10px; margin-top: 5px;">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="swapTxHash"
+                           placeholder="${wizardData.swapType === 'cex' ? 'Withdrawal TX or reference' : 'Transaction hash'}"
+                           value="${wizardData.txHash}"
+                           onchange="window.swapWizardData.txHash = this.value"
+                           style="flex: 1; padding: 10px;">
+                    <button class="btn btn-primary"
+                            onclick="lookupSwapTransaction()"
+                            style="padding: 10px 20px;"
+                            ${wizardData.swapType === 'cex' ? 'disabled' : ''}>
+                        🔍 Lookup & Auto-fill
+                    </button>
+                </div>
+                <small style="color: #666;">
+                    ${wizardData.swapType === 'dex' ?
+                        '💡 Paste transaction hash to automatically extract swap amounts' :
+                        '💡 Manual entry required for centralized exchange swaps'}
+                </small>
             </div>
 
             <div style="margin-top: 20px;">
@@ -15235,6 +15263,175 @@ function closeSwapWizard() {
     const wizard = document.getElementById('swapWizard');
     if (wizard) wizard.remove();
     window.swapWizardData = null;
+}
+
+async function lookupSwapTransaction() {
+    const wizardData = window.swapWizardData;
+    const txHash = document.getElementById('swapTxHash').value.trim();
+
+    if (!txHash) {
+        alert('Please enter a transaction hash first');
+        return;
+    }
+
+    const lookupBtn = event.target;
+    const originalText = lookupBtn.textContent;
+    lookupBtn.textContent = 'Looking up...';
+    lookupBtn.disabled = true;
+
+    try {
+        // Try to detect blockchain from hash format
+        const blockchain = detectBlockchainFromHash(txHash);
+        if (!blockchain) {
+            alert('Could not detect blockchain from hash format');
+            lookupBtn.textContent = originalText;
+            lookupBtn.disabled = false;
+            return;
+        }
+
+        // Get transaction data using existing lookup functions
+        let txData;
+        switch(blockchain) {
+            case 'ethereum':
+                txData = await lookupEthereumTransaction(txHash);
+                break;
+            case 'bitcoin':
+                txData = await lookupBitcoinTransaction(txHash);
+                break;
+            case 'tron':
+                txData = await lookupTronTransaction(txHash);
+                break;
+            case 'solana':
+                txData = await lookupSolanaTransaction(txHash);
+                break;
+            default:
+                alert('Unsupported blockchain: ' + blockchain);
+                lookupBtn.textContent = originalText;
+                lookupBtn.disabled = false;
+                return;
+        }
+
+        if (!txData) {
+            alert('Failed to retrieve transaction data');
+            lookupBtn.textContent = originalText;
+            lookupBtn.disabled = false;
+            return;
+        }
+
+        // For swap transactions, we need to find:
+        // 1. What left the user's wallet (outgoing)
+        // 2. What came back to the user's wallet (incoming)
+
+        // Get the user's wallet address from the source thread
+        let userWallet = null;
+
+        // First try to get it from the selected thread's last receiving wallet
+        if (wizardData.selectedThreads && wizardData.selectedThreads.length > 0) {
+            const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+            const sourceThread = threads.find(t => t.threadId === wizardData.selectedThreads[0]);
+            if (sourceThread && sourceThread.lastReceivingWallet) {
+                userWallet = sourceThread.lastReceivingWallet;
+                console.log('Using wallet from source thread:', userWallet);
+            }
+        }
+
+        // Fallback to transaction sender
+        if (!userWallet) {
+            userWallet = txData.transaction?.from || txData.from;
+            console.log('Using wallet from transaction sender:', userWallet);
+        }
+
+        if (!userWallet) {
+            alert('Could not determine user wallet address. Please ensure you have selected a source thread.');
+            lookupBtn.textContent = originalText;
+            lookupBtn.disabled = false;
+            return;
+        }
+
+        // Filter transfers to find what left and what came back to the user
+        const outgoingTransfers = [];
+        const incomingTransfers = [];
+
+        if (txData.transfers && Array.isArray(txData.transfers)) {
+            txData.transfers.forEach(transfer => {
+                // Normalize the from/to addresses
+                const from = (transfer.from || '').toLowerCase();
+                const to = (transfer.to || '').toLowerCase();
+                const userAddr = userWallet.toLowerCase();
+
+                if (from === userAddr) {
+                    // User sent this
+                    outgoingTransfers.push(transfer);
+                } else if (to === userAddr) {
+                    // User received this
+                    incomingTransfers.push(transfer);
+                }
+            });
+        }
+
+        console.log('Swap analysis:', {
+            userWallet,
+            outgoing: outgoingTransfers,
+            incoming: incomingTransfers
+        });
+
+        // Auto-fill based on what we found
+        if (outgoingTransfers.length > 0 && incomingTransfers.length > 0) {
+            // We found both sides of the swap
+
+            // Input (what was sent from user's wallet)
+            const sentAmount = outgoingTransfers.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+            const sentCurrency = outgoingTransfers[0].currency || outgoingTransfers[0].symbol || 'UNKNOWN';
+
+            // Output (what was received back to user's wallet)
+            const receivedAmount = incomingTransfers.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+            const receivedCurrency = incomingTransfers[0].currency || incomingTransfers[0].symbol || 'UNKNOWN';
+
+            // The input amount/currency should match what we're tracing from source threads
+            // The output is what we received back
+            document.getElementById('outputAmount').value = receivedAmount;
+            document.getElementById('outputCurrency').value = receivedCurrency.toUpperCase();
+
+            // Update wizard data
+            wizardData.outputAmount = receivedAmount;
+            wizardData.outputCurrency = receivedCurrency.toUpperCase();
+
+            // Display the detected input for reference
+            const inputInfo = document.getElementById('inputInfo');
+            if (inputInfo) {
+                inputInfo.innerHTML = `<small>Detected swap: ${sentAmount} ${sentCurrency} → ${receivedAmount} ${receivedCurrency}</small>`;
+            }
+
+            // Get DEX contract address (usually the first contract interacted with)
+            if (outgoingTransfers[0].to && outgoingTransfers[0].to !== userWallet) {
+                document.getElementById('swapService').value = outgoingTransfers[0].to;
+                wizardData.swapService = outgoingTransfers[0].to;
+            }
+
+            // Update notes with details
+            const notes = `DEX Swap: ${sentAmount} ${sentCurrency} → ${receivedAmount} ${receivedCurrency}`;
+            document.getElementById('swapNotes').value = notes;
+            wizardData.notes = notes;
+
+            // Refresh the UI
+            showSwapWizardStep(2);
+
+            alert(`✅ Swap detected!\n\nSent: ${sentAmount} ${sentCurrency}\nReceived: ${receivedAmount} ${receivedCurrency}\n\nPlease verify and adjust if needed.`);
+        } else if (outgoingTransfers.length > 0) {
+            alert('⚠️ Only found outgoing transfers. Please manually enter what was received.');
+        } else if (incomingTransfers.length > 0) {
+            alert('⚠️ Only found incoming transfers. Please verify this is the correct transaction.');
+        } else {
+            alert('⚠️ No transfers found for the user wallet. Please enter details manually.');
+        }
+
+    } catch (error) {
+        console.error('Swap lookup error:', error);
+        alert('Error analyzing swap transaction: ' + error.message);
+    } finally {
+        lookupBtn.textContent = originalText;
+        lookupBtn.disabled = false;
+    }
 }
 
 function createSwapEntry() {
@@ -24356,6 +24553,14 @@ To (RED Wallet): ${transfer.to}`;
         // Expose wizard and PIFO functions
         window.applyPIFOAllocation = applyPIFOAllocation;
         window.applyPIFOToWizard = applyPIFOToWizard;
+        window.lookupSwapTransaction = lookupSwapTransaction;
+        window.toggleSwapThread = toggleSwapThread;
+        window.setSwapType = setSwapType;
+        window.swapWizardNext = swapWizardNext;
+        window.swapWizardBack = swapWizardBack;
+        window.closeSwapWizard = closeSwapWizard;
+        window.showSwapWizardStep = showSwapWizardStep;
+        window.createSwapEntry = createSwapEntry;
         window.setAllocationMode = setAllocationMode;
         window.applyMatchingAllocation = applyMatchingAllocation;
         window.updateWizardAllocation = updateWizardAllocation;

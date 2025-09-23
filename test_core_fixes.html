@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BATS Tool - Core Fixes Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .pass { color: green; font-weight: bold; }
+        .fail { color: red; font-weight: bold; }
+        .info { color: blue; }
+        .warning { color: orange; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>BATS Tool Core Fixes Test Suite</h1>
+    <div id="results"></div>
+
+    <div class="test-section">
+        <h2>Manual Test Instructions</h2>
+        <ol>
+            <li><strong>Test 1: Complete Victim Button</strong>
+                <ul>
+                    <li>Add a victim with name and one transaction</li>
+                    <li>Click "Complete Victim" button</li>
+                    <li>✅ PASS if: Button works and victim is marked as completed</li>
+                    <li>❌ FAIL if: Button does nothing or shows error</li>
+                </ul>
+            </li>
+
+            <li><strong>Test 2: PIFO Allocation</strong>
+                <ul>
+                    <li>Create 2 victims with different amounts (e.g., V1: 1000 USDT, V2: 500 USDT)</li>
+                    <li>Complete both and generate root total</li>
+                    <li>In Hop 1, use wizard to trace combined amount</li>
+                    <li>✅ PASS if: PIFO allocates V1 first (1000), then V2 (500)</li>
+                    <li>❌ FAIL if: Allocation is not in PIFO order</li>
+                </ul>
+            </li>
+
+            <li><strong>Test 3: Allocation Mode Toggle</strong>
+                <ul>
+                    <li>In wizard Step 2 (Allocate Amounts)</li>
+                    <li>✅ PASS if: Radio buttons for "PIFO Allocation" and "Match Transaction" are visible</li>
+                    <li>✅ PASS if: Switching modes updates allocation amounts</li>
+                    <li>❌ FAIL if: No allocation mode options visible</li>
+                </ul>
+            </li>
+
+            <li><strong>Test 4: Partial Tracing</strong>
+                <ul>
+                    <li>Create victim with 1000 USDT</li>
+                    <li>Try to trace 1500 USDT transaction (larger than source)</li>
+                    <li>✅ PASS if: Allows tracing your 1000 USDT portion</li>
+                    <li>❌ FAIL if: Blocks the transaction entirely</li>
+                </ul>
+            </li>
+
+            <li><strong>Test 5: Write-off Reduces ART</strong>
+                <ul>
+                    <li>Create victim with 1000 USDT</li>
+                    <li>In Hop 1, create write-off for 200 USDT</li>
+                    <li>Complete the hop</li>
+                    <li>✅ PASS if: Hop 2 shows ART of 800 USDT (reduced by write-off)</li>
+                    <li>❌ FAIL if: Hop 2 still shows 1000 USDT</li>
+                </ul>
+            </li>
+
+            <li><strong>Test 6: Over-allocation Block</strong>
+                <ul>
+                    <li>Create victim with 500 USDT</li>
+                    <li>Try to allocate 600 USDT in wizard</li>
+                    <li>✅ PASS if: Shows "Over-Allocation Blocked!" alert</li>
+                    <li>❌ FAIL if: Allows creating entry with more than available</li>
+                </ul>
+            </li>
+
+            <li><strong>Test 7: Commingling Notation</strong>
+                <ul>
+                    <li>Create 2 victims, trace to same wallet in Hop 1</li>
+                    <li>In Hop 2, check thread notation</li>
+                    <li>✅ PASS if: Shows format like "(V1-T1) (V2-T1) H2"</li>
+                    <li>❌ FAIL if: Shows old format like "V1-T1-H1, V2-T1-H1"</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Test Script</h2>
+        <p>Copy and paste this into the browser console on the BATS tool page:</p>
+        <pre id="testScript">
+// Quick functionality test
+console.log('=== BATS Core Fixes Test ===');
+
+// Test 1: Check if victim functions are globally accessible
+const functions = ['addVictim', 'completeVictim', 'removeVictim', 'addTransaction'];
+let allFunctionsFound = true;
+functions.forEach(func => {
+    if (typeof window[func] === 'function') {
+        console.log(`✅ ${func} is accessible`);
+    } else {
+        console.log(`❌ ${func} is NOT accessible`);
+        allFunctionsFound = false;
+    }
+});
+
+// Test 2: Check PIFO function
+if (typeof window.applyPIFOAllocation === 'function') {
+    console.log('✅ PIFO allocation function available');
+
+    // Test PIFO logic
+    const testAllocation = window.applyPIFOAllocation(1500, ['V1-T1', 'V2-T1']);
+    console.log('PIFO test allocation:', testAllocation);
+} else {
+    console.log('❌ PIFO allocation function NOT found');
+}
+
+// Test 3: Check allocation mode functions
+if (typeof window.setAllocationMode === 'function') {
+    console.log('✅ Allocation mode toggle available');
+} else {
+    console.log('❌ Allocation mode toggle NOT found');
+}
+
+// Test 4: Check ART calculation
+if (typeof window.getCurrentART === 'function') {
+    console.log('✅ ART calculation function available');
+    const art = window.getCurrentART();
+    console.log('Current ART:', art);
+} else {
+    console.log('❌ ART calculation NOT found');
+}
+
+// Test 5: Create test victim
+try {
+    // Clear any existing data first
+    if (confirm('This will reset the investigation. Continue?')) {
+        investigation = {
+            victims: [],
+            hops: [],
+            caseId: 'TEST-' + Date.now(),
+            investigator: 'Test User',
+            rootTotalConfirmed: false,
+            confirmedRootTotal: 0,
+            confirmedRootTotalsByCurrency: {}
+        };
+
+        // Add test victim
+        const victimId = Date.now();
+        investigation.victims.push({
+            id: victimId,
+            name: 'Test Victim 1',
+            transactions: [{
+                id: Date.now() + 1,
+                amount: '1000',
+                currency: 'USDT',
+                datetime: new Date().toISOString(),
+                receivingWallet: '0xtest123',
+                txHash: 'test_tx_' + Date.now(),
+                notes: 'Test transaction'
+            }],
+            isCompleted: false
+        });
+
+        saveToStorage();
+        renderVictims();
+
+        console.log('✅ Test victim created successfully');
+        console.log('Try clicking the Complete Victim button now');
+    }
+} catch (e) {
+    console.log('❌ Failed to create test victim:', e.message);
+}
+
+console.log('=== Test Complete ===');
+console.log('Now perform manual tests as described above');
+        </pre>
+        <button onclick="copyTestScript()">Copy Test Script</button>
+    </div>
+
+    <script>
+        function copyTestScript() {
+            const script = document.getElementById('testScript').textContent;
+            navigator.clipboard.writeText(script).then(() => {
+                alert('Test script copied to clipboard!');
+            });
+        }
+
+        // Display test start message
+        document.getElementById('results').innerHTML = `
+            <div class="test-section">
+                <h3>Test Status</h3>
+                <p class="info">Open the BATS tool at <a href="http://localhost:8000/index.html?app=true" target="_blank">http://localhost:8000/index.html?app=true</a></p>
+                <p>Then follow the manual test instructions above or use the quick test script.</p>
+            </div>
+        `;
+    </script>
+</body>
+</html>
