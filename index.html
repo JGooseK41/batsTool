@@ -4077,8 +4077,8 @@
         }
         
         // Reopen a completed hop for editing
-        function reopenHop(hopId) {
-            const hop = investigation.hops.find(h => h.hopNumber === hopId);
+        function reopenHop(hopNumber) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             if (!hop) return;
             
             // Check for dependent hops
@@ -4186,8 +4186,8 @@
             }
         }
         // Validate and update a hop after upstream changes
-        function validateAndUpdateHop(hopId) {
-            const hop = investigation.hops.find(h => h.hopNumber === hopId);
+        function validateAndUpdateHop(hopNumber) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             if (!hop) return;
             
             // Find the previous hop to check available threads
@@ -4287,7 +4287,7 @@
                 alert(`Hop ${hop.hopNumber} has been auto-adjusted.\n\nAmounts have been reduced to match available thread values.`);
             } else if (choice === '1') {
                 // Open hop for manual editing
-                reopenHop(hopId);
+                reopenHop(hopNumber);
             }
         }
         
@@ -4701,8 +4701,8 @@ function renderHopEntry(entry, hop) {
                                    value="${entry.toWallet || ''}" 
                                    placeholder="Select existing or enter new wallet address"
                                    onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'toWallet', this.value)"
-                                   oninput="handleWalletAutocomplete(this, ${entry.hopId}, ${entry.id})"
-                                   onblur="checkWalletEntity(this.value, ${entry.hopId}, ${entry.id})"
+                                   oninput="handleWalletAutocomplete(this, ${hop.hopNumber}, ${entry.id})"
+                                   onblur="checkWalletEntity(this.value, ${hop.hopNumber}, ${entry.id})"
                                    autocomplete="off"
                                    list="walletList_${hop.hopNumber}_${entry.id}"
                                    style="width: 100%;">
@@ -4744,7 +4744,7 @@ function renderHopEntry(entry, hop) {
                                id="timestamp_${hop.hopNumber}_${entry.id}"
                                value="${entry.timestamp || ''}" 
                                onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'timestamp', this.value)">
-                        <select onchange="onTimezoneChange('timestamp_${hop.hopNumber}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
+                        <select onchange="onTimezoneChange('timestamp_${hop.hopNumber}_${entry.id}', 'hop', ${hop.hopNumber}, ${entry.id})">
                             ${Object.entries(timezones).map(([key, value]) => 
                                 `<option value="${key}" ${entry.timezone === key ? 'selected' : ''}>${value}</option>`
                             ).join('')}
@@ -5166,8 +5166,8 @@ function getCurrentARTWithThreads() {
 // =================================
 
 // 3.1 Enhanced Notation Field Functions
-function updateNotationField(hopId, entryId, field, value) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateNotationField(hopNumber, entryId, field, value) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (field === 'victims') {
@@ -5177,17 +5177,17 @@ function updateNotationField(hopId, entryId, field, value) {
     }
     
     // Generate the notation preview
-    generateNotationPreview(hopId, entryId);
+    generateNotationPreview(hopNumber, entryId);
     saveToStorage();
 }
 
-function generateNotationPreview(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function generateNotationPreview(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.victimNumbers || !entry.transactionNumbers) {
         entry.notation = '';
-        const previewElement = document.getElementById(`notation_preview_${hopId}_${entryId}`);
+        const previewElement = document.getElementById(`notation_preview_${hopNumber}_${entryId}`);
         if (previewElement) {
             previewElement.textContent = 'Enter victim and transaction numbers';
         }
@@ -5208,26 +5208,26 @@ function generateNotationPreview(hopId, entryId) {
     entry.generatedNotation = notation;
     
     // Update preview element
-    const previewElement = document.getElementById(`notation_preview_${hopId}_${entryId}`);
+    const previewElement = document.getElementById(`notation_preview_${hopNumber}_${entryId}`);
     if (previewElement) {
         previewElement.textContent = notation;
     }
     
     // If we have source and amount, update the full display notation
     if ((entry.sourceThreadId || (entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0)) && entry.amount) {
-        updateFullNotationDisplay(hopId, entryId);
+        updateFullNotationDisplay(hopNumber, entryId);
     }
 }
 
 // 3.2 Source Selection Handler
-function handleSourceSelection(hopId, entryId, sourceThreadId) {
-    console.log(` Handling source selection: ${sourceThreadId} for hop ${hopId} entry ${entryId}`);
+function handleSourceSelection(hopNumber, entryId, sourceThreadId) {
+    console.log(` Handling source selection: ${sourceThreadId} for hop ${hopNumber} entry ${entryId}`);
     
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!hop || !entry) {
-        console.error('❌ Could not find hop or entry:', { hopId, entryId });
+        console.error('❌ Could not find hop or entry:', { hopNumber, entryId });
         return;
     }
     
@@ -5258,13 +5258,13 @@ function handleSourceSelection(hopId, entryId, sourceThreadId) {
             }
             
             // Update the currency dropdown in the UI
-            const currencySelect = document.querySelector(`select[onchange="updateHopEntry(${hopId}, ${entryId}, 'currency', this.value)"]`);
+            const currencySelect = document.querySelector(`select[onchange="updateHopEntry(${hopNumber}, ${entryId}, 'currency', this.value)"]`);
             if (currencySelect) {
                 currencySelect.value = entry.currency;
             }
             
             // Show/hide custom currency input if needed
-            const customCurrencyDiv = document.getElementById(`customEntryCurrency_${hopId}_${entryId}`);
+            const customCurrencyDiv = document.getElementById(`customEntryCurrency_${hopNumber}_${entryId}`);
             if (customCurrencyDiv) {
                 if (isCustomCurrency) {
                     customCurrencyDiv.classList.remove('custom-currency-input');
@@ -5282,12 +5282,12 @@ function handleSourceSelection(hopId, entryId, sourceThreadId) {
         
         // Now use the updated currency from the source thread
         const currency = selectedSource.currency;
-        const maxAmount = getMaxAssignableAmount(sourceThreadId, currency, entryId, hopId);
+        const maxAmount = getMaxAssignableAmount(sourceThreadId, currency, entryId, hopNumber);
         
         console.log(`💡 Max available for ${sourceThreadId}: ${maxAmount} ${currency}`);
         
         // Update max amount for input
-        const amountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
+        const amountInput = document.getElementById(`assignAmount_${hopNumber}_${entryId}`);
         if (amountInput) {
             amountInput.max = maxAmount;
             
@@ -5306,13 +5306,13 @@ function handleSourceSelection(hopId, entryId, sourceThreadId) {
         }
         
         // Auto-generate notation from source thread
-        autoGenerateNotationFromSource(hopId, entryId, sourceThreadId);
+        autoGenerateNotationFromSource(hopNumber, entryId, sourceThreadId);
         
-        updateAssignmentPreview(hopId, entryId);
-        updateFullNotationDisplay(hopId, entryId);
+        updateAssignmentPreview(hopNumber, entryId);
+        updateFullNotationDisplay(hopNumber, entryId);
     } else {
         // Clear selection
-        const amountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
+        const amountInput = document.getElementById(`assignAmount_${hopNumber}_${entryId}`);
         if (amountInput) {
             amountInput.max = 0;
             amountInput.value = '';
@@ -5321,13 +5321,13 @@ function handleSourceSelection(hopId, entryId, sourceThreadId) {
         entry.sourceThreadData = null;
         entry.availableSourceAmount = 0;
         
-        clearNotationFields(hopId, entryId);
+        clearNotationFields(hopNumber, entryId);
     }
     
     saveToStorage();
     
     // CRITICAL: Force refresh of ALL entries to show updated availability
-    refreshAllSourceAvailability(hopId);
+    refreshAllSourceAvailability(hopNumber);
 }
 function refreshAllSourceAvailability(currentHopId) {
     console.log(`Refreshing source availability for all entries in hop ${currentHopId}`);
@@ -5377,10 +5377,10 @@ function refreshAllSourceAvailability(currentHopId) {
 }
 
 // 3.3 Assignment Amount Handler
-function updateAssignmentAmount(hopId, entryId, amount) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateAssignmentAmount(hopNumber, entryId, amount) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) {
-        console.error('Hop not found:', hopId);
+        console.error('Hop not found:', hopNumber);
         return;
     }
     
@@ -5396,17 +5396,17 @@ function updateAssignmentAmount(hopId, entryId, amount) {
         entry.assignmentPercentage = (parseFloat(amount) / entry.sourceThreadData.totalAmount) * 100;
     }
     
-    updateAssignmentPreview(hopId, entryId);
-    updateFullNotationDisplay(hopId, entryId);
+    updateAssignmentPreview(hopNumber, entryId);
+    updateFullNotationDisplay(hopNumber, entryId);
     saveToStorage();
     
     // CRITICAL: Refresh availability after amount changes
-    refreshAllSourceAvailability(hopId);
+    refreshAllSourceAvailability(hopNumber);
     buildAvailableThreadsIndex(); // Rebuild thread index when amounts change
     
     // Auto-collapse entry if amount is set and valid
     if (parseFloat(amount) > 0) {
-        const entryKey = `${hopId}_${entryId}`;
+        const entryKey = `${hopNumber}_${entryId}`;
         window.entryCollapseState[entryKey] = true;
         const content = document.getElementById(`entryContent_${entryKey}`);
         const summary = document.getElementById(`entrySummary_${entryKey}`);
@@ -5418,10 +5418,10 @@ function updateAssignmentAmount(hopId, entryId, amount) {
 }
 
 // 3.4 Assignment Preview Updater
-function updateAssignmentPreview(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateAssignmentPreview(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
-    const previewElement = document.getElementById(`assignmentPreview_${hopId}_${entryId}`);
+    const previewElement = document.getElementById(`assignmentPreview_${hopNumber}_${entryId}`);
     
     if (!previewElement || !entry.sourceThreadId || !entry.amount) {
         if (previewElement) previewElement.innerHTML = '';
@@ -5429,7 +5429,7 @@ function updateAssignmentPreview(hopId, entryId) {
     }
     
     const amount = parseFloat(entry.amount);
-    const maxAmount = getMaxAssignableAmount(entry.sourceThreadId, null, entryId, hopId); // Real-time calculation, let it find the currency
+    const maxAmount = getMaxAssignableAmount(entry.sourceThreadId, null, entryId, hopNumber); // Real-time calculation, let it find the currency
     
     // Get the actual currency from the source thread
     let currency = '';
@@ -5442,7 +5442,7 @@ function updateAssignmentPreview(hopId, entryId) {
     const afterAssignment = remaining - amount;
     
     // Validate assignment with real-time data
-    const validation = validateThreadAssignment(entry.sourceThreadId, amount, null, entryId, hopId);
+    const validation = validateThreadAssignment(entry.sourceThreadId, amount, null, entryId, hopNumber);
     
     let previewHTML = '';
     if (validation.valid) {
@@ -5471,12 +5471,12 @@ function updateAssignmentPreview(hopId, entryId) {
 }
 
 // 3.5 Assign Maximum Amount
-function assignMaxAmount(hopId, entryId) {
-    console.log(` assignMaxAmount called for hop ${hopId}, entry ${entryId}`);
+function assignMaxAmount(hopNumber, entryId) {
+    console.log(` assignMaxAmount called for hop ${hopNumber}, entry ${entryId}`);
     
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) {
-        console.error('Hop not found:', hopId);
+        console.error('Hop not found:', hopNumber);
         return;
     }
     
@@ -5529,7 +5529,7 @@ function assignMaxAmount(hopId, entryId) {
         console.log(`Total from ${entry.multipleSourceThreads.length} sources: ${maxAmount}`);
     } else if (entry.sourceThreadId) {
         // Single source selected
-        maxAmount = getMaxAssignableAmount(entry.sourceThreadId, null, entry.id, entry.hopId);
+        maxAmount = getMaxAssignableAmount(entry.sourceThreadId, null, entry.id, hop.hopNumber);
         
         // Get currency from source thread
         const availableSources = getAvailableSourcesForHop(hop.hopNumber, null);
@@ -5548,36 +5548,36 @@ function assignMaxAmount(hopId, entryId) {
     entry.amount = maxAmount.toString();
     
     // Update the input field - force update even if element seems unresponsive
-    const amountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
+    const amountInput = document.getElementById(`assignAmount_${hopNumber}_${entryId}`);
     if (amountInput) {
         console.log(`Updating amount input to ${maxAmount}`);
         amountInput.value = maxAmount;
         // Force a change event to ensure updates propagate
         amountInput.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
-        console.error(`Could not find amount input: assignAmount_${hopId}_${entryId}`);
+        console.error(`Could not find amount input: assignAmount_${hopNumber}_${entryId}`);
     }
     
     // Trigger the amount update handler to ensure all related updates occur
-    updateAssignmentAmount(hopId, entryId, maxAmount.toString());
+    updateAssignmentAmount(hopNumber, entryId, maxAmount.toString());
     
     // Update appropriate preview based on source type
     if (entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0) {
-        updateMultipleSourcePreview(hopId, entryId);
-        updateFullNotationDisplayMultiple(hopId, entryId);
+        updateMultipleSourcePreview(hopNumber, entryId);
+        updateFullNotationDisplayMultiple(hopNumber, entryId);
     } else {
-        updateAssignmentPreview(hopId, entryId);
-        updateFullNotationDisplay(hopId, entryId);
+        updateAssignmentPreview(hopNumber, entryId);
+        updateFullNotationDisplay(hopNumber, entryId);
     }
     
     saveToStorage();
 }
 
 // 3.6 Full Notation Display Updater
-function updateFullNotationDisplay(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateFullNotationDisplay(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
-    const previewElement = document.getElementById(`notationPreview_${hopId}_${entryId}`);
+    const previewElement = document.getElementById(`notationPreview_${hopNumber}_${entryId}`);
     
     if (!previewElement) return;
     
@@ -5735,7 +5735,7 @@ function renderEnhancedHopEntry(entry) {
                                    value="${entry.toWallet || ''}" 
                                    placeholder="Select existing or enter new wallet address"
                                    onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'toWallet', this.value)"
-                                   oninput="handleWalletAutocomplete(this, ${entry.hopId}, ${entry.id})"
+                                   oninput="handleWalletAutocomplete(this, ${entry.hopNumber}, ${entry.id})"
                                    autocomplete="off"
                                    list="walletList_${hop.hopNumber}_${entry.id}"
                                    style="width: 100%;">
@@ -5790,7 +5790,7 @@ function renderEnhancedHopEntry(entry) {
                                id="timestamp_${hop.hopNumber}_${entry.id}"
                                value="${entry.timestamp || ''}" 
                                onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'timestamp', this.value)">
-                        <select onchange="onTimezoneChange('timestamp_${hop.hopNumber}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
+                        <select onchange="onTimezoneChange('timestamp_${hop.hopNumber}_${entry.id}', 'hop', ${hop.hopNumber}, ${entry.id})">
                             ${Object.entries(timezones).map(([key, value]) => 
                                 `<option value="${key}" ${entry.timezone === key ? 'selected' : ''}>${value}</option>`
                             ).join('')}
@@ -5829,8 +5829,8 @@ function renderEnhancedHopEntry(entry) {
 // ADD THESE FUNCTIONS TO HANDLE COMMINGLING/MULTIPLE SOURCES
 
 // Enhanced Source Selection Handler for Multiple Sources
-function handleMultipleSourceSelection(hopId, entryId, selectedSources) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function handleMultipleSourceSelection(hopNumber, entryId, selectedSources) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     // Store multiple source threads
@@ -5842,12 +5842,12 @@ function handleMultipleSourceSelection(hopId, entryId, selectedSources) {
         let totalAvailable = 0;
         selectedSources.forEach(sourceId => {
             const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-            const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopId);
+            const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, hop.hopNumber);
             totalAvailable += maxAmount;
         });
         
         // Update max amount for input
-        const amountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
+        const amountInput = document.getElementById(`assignAmount_${hopNumber}_${entryId}`);
         if (amountInput) {
             amountInput.max = totalAvailable;
             
@@ -5858,18 +5858,18 @@ function handleMultipleSourceSelection(hopId, entryId, selectedSources) {
             }
         }
         
-        updateMultipleSourcePreview(hopId, entryId);
-        updateFullNotationDisplay(hopId, entryId);
+        updateMultipleSourcePreview(hopNumber, entryId);
+        updateFullNotationDisplay(hopNumber, entryId);
     }
     
     saveToStorage();
 }
 
 // Update Multiple Source Preview
-function updateMultipleSourcePreview(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateMultipleSourcePreview(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
-    const previewElement = document.getElementById(`multipleSourcePreview_${hopId}_${entryId}`);
+    const previewElement = document.getElementById(`multipleSourcePreview_${hopNumber}_${entryId}`);
     
     if (!previewElement || !entry.multipleSourceThreads || entry.multipleSourceThreads.length === 0) {
         if (previewElement) previewElement.innerHTML = '';
@@ -5881,7 +5881,7 @@ function updateMultipleSourcePreview(hopId, entryId) {
     let sourceBreakdown = [];
     
     entry.multipleSourceThreads.forEach(sourceId => {
-        const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopId); // Real-time calculation
+        const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, hop.hopNumber); // Real-time calculation
         totalAvailable += maxAmount;
         sourceBreakdown.push(`${sourceId}: ${maxAmount.toLocaleString()} ${currency}`);
     });
@@ -5960,13 +5960,13 @@ function renderEnhancedSourceSelection(entry) {
 // Update Multiple Source Selection
 // REPLACE YOUR updateMultipleSourceSelection FUNCTION WITH THIS FIXED VERSION
 
-function updateMultipleSourceSelection(hopId, entryId) {
-    const checkboxes = document.querySelectorAll(`input[type="checkbox"][onchange*="${hopId}, ${entryId}"]`);
+function updateMultipleSourceSelection(hopNumber, entryId) {
+    const checkboxes = document.querySelectorAll(`input[type="checkbox"][onchange*="${hopNumber}, ${entryId}"]`);
     const selectedSources = Array.from(checkboxes)
         .filter(cb => cb.checked)
         .map(cb => cb.value);
     
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     // Check if we were already in multiple source mode
@@ -6017,7 +6017,7 @@ function updateMultipleSourceSelection(hopId, entryId) {
         let totalAssigned = 0;
         
         selectedSources.forEach(sourceId => {
-            const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopId);
+            const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, hop.hopNumber);
             totalAvailable += maxAmount;
             totalAssigned += entry.individualSourceAssignments[sourceId] || 0;
         });
@@ -6029,21 +6029,21 @@ function updateMultipleSourceSelection(hopId, entryId) {
         entry.amount = totalAssigned.toString();
         
         // Update max amount for input
-        const amountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
+        const amountInput = document.getElementById(`assignAmount_${hopNumber}_${entryId}`);
         if (amountInput) {
             amountInput.max = totalAvailable;
             amountInput.value = totalAssigned;
         }
         
         // AUTO-GENERATE NOTATION FROM MULTIPLE SOURCE THREADS
-        autoGenerateNotationFromMultipleSources(hopId, entryId, selectedSources);
+        autoGenerateNotationFromMultipleSources(hopNumber, entryId, selectedSources);
         
         // Show the granular control interface immediately
-        updateMultipleSourcePreview(hopId, entryId);
-        updateFullNotationDisplayMultiple(hopId, entryId);
+        updateMultipleSourcePreview(hopNumber, entryId);
+        updateFullNotationDisplayMultiple(hopNumber, entryId);
     } else {
         // No sources selected - clear everything
-        const amountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
+        const amountInput = document.getElementById(`assignAmount_${hopNumber}_${entryId}`);
         if (amountInput) {
             amountInput.max = 0;
             amountInput.value = '';
@@ -6055,10 +6055,10 @@ function updateMultipleSourceSelection(hopId, entryId) {
         entry.individualSourceAssignments = {};
         
         // Clear notation fields
-        clearNotationFields(hopId, entryId);
+        clearNotationFields(hopNumber, entryId);
         
         // Clear the preview
-        const previewElement = document.getElementById(`multipleSourcePreview_${hopId}_${entryId}`);
+        const previewElement = document.getElementById(`multipleSourcePreview_${hopNumber}_${entryId}`);
         if (previewElement) {
             previewElement.innerHTML = '';
         }
@@ -6101,10 +6101,10 @@ function validateMultipleSourceAssignment(entry) {
 
 // UPDATE YOUR updateMultipleSourcePreview FUNCTION WITH THIS IMPROVED VERSION
 
-function updateMultipleSourcePreview(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateMultipleSourcePreview(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
-    const previewElement = document.getElementById(`multipleSourcePreview_${hopId}_${entryId}`);
+    const previewElement = document.getElementById(`multipleSourcePreview_${hopNumber}_${entryId}`);
     
     if (!previewElement || !entry.multipleSourceThreads || entry.multipleSourceThreads.length === 0) {
         if (previewElement) previewElement.innerHTML = '';
@@ -6126,7 +6126,7 @@ function updateMultipleSourcePreview(hopId, entryId) {
     let sourceInputsHTML = '';
     
     entry.multipleSourceThreads.forEach(sourceId => {
-        const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopId);
+        const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopNumber);
         const assignedAmount = entry.individualSourceAssignments[sourceId] || 0;
         const remaining = maxAmount - assignedAmount;
         
@@ -6145,11 +6145,11 @@ function updateMultipleSourcePreview(hopId, entryId) {
                            max="${maxAmount}"
                            value="${assignedAmount}"
                            style="width: 100px; padding: 4px;"
-                           onchange="updateIndividualSourceAssignment(${hopId}, ${entryId}, '${sourceId}', this.value)"
+                           onchange="updateIndividualSourceAssignment(${hopNumber}, ${entryId}, '${sourceId}', this.value)"
                            placeholder="0">
                     <span style="font-size: 11px; color: #666;">/ ${maxAmount.toLocaleString()}</span>
                     <button type="button" 
-                            onclick="assignMaxToIndividualSource(${hopId}, ${entryId}, '${sourceId}')"
+                            onclick="assignMaxToIndividualSource(${hopNumber}, ${entryId}, '${sourceId}')"
                             style="padding: 2px 6px; font-size: 11px; background: #95a5a6; color: white; border: none; border-radius: 3px; cursor: pointer;">
                         Max
                     </button>
@@ -6163,7 +6163,7 @@ function updateMultipleSourcePreview(hopId, entryId) {
     
     // Update main amount field with total assigned
     entry.amount = totalAssigned.toString();
-    const mainAmountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
+    const mainAmountInput = document.getElementById(`assignAmount_${hopNumber}_${entryId}`);
     if (mainAmountInput) {
         mainAmountInput.value = totalAssigned;
     }
@@ -6178,17 +6178,17 @@ function updateMultipleSourcePreview(hopId, entryId) {
                 </div>
                 <div style="display: flex; gap: 5px;">
                     <button type="button" 
-                            onclick="distributeProportionally(${hopId}, ${entryId})"
+                            onclick="distributeProportionally(${hopNumber}, ${entryId})"
                             style="padding: 4px 8px; font-size: 11px; background: #3498db; color: white; border: none; border-radius: 3px; cursor: pointer;">
                         Distribute Proportionally
                     </button>
                     <button type="button" 
-                            onclick="depleteInOrder(${hopId}, ${entryId})"
+                            onclick="depleteInOrder(${hopNumber}, ${entryId})"
                             style="padding: 4px 8px; font-size: 11px; background: #e67e22; color: white; border: none; border-radius: 3px; cursor: pointer;">
                         Deplete In Order
                     </button>
                     <button type="button" 
-                            onclick="clearAllAssignments(${hopId}, ${entryId})"
+                            onclick="clearAllAssignments(${hopNumber}, ${entryId})"
                             style="padding: 4px 8px; font-size: 11px; background: #95a5a6; color: white; border: none; border-radius: 3px; cursor: pointer;">
                         Clear All
                     </button>
@@ -6215,10 +6215,10 @@ function updateMultipleSourcePreview(hopId, entryId) {
     previewElement.innerHTML = previewHTML;
 }
 // Enhanced Full Notation Display for Multiple Sources
-function updateFullNotationDisplayMultiple(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateFullNotationDisplayMultiple(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
-    const previewElement = document.getElementById(`notationPreview_${hopId}_${entryId}`);
+    const previewElement = document.getElementById(`notationPreview_${hopNumber}_${entryId}`);
     
     if (!previewElement) return;
     
@@ -6252,7 +6252,7 @@ function updateFullNotationDisplayMultiple(hopId, entryId) {
         `;
     } else if (entry.sourceThreadId) {
         // Single source - use existing logic
-        updateFullNotationDisplay(hopId, entryId);
+        updateFullNotationDisplay(hopNumber, entryId);
     } else {
         previewElement.innerHTML = 'Select source(s) and complete notation to generate full display';
     }
@@ -8626,13 +8626,13 @@ function exportUniversalWalletIndex() {
         }
         
         // Log entry and collapse
-        function logAndCollapseEntry(hopId, entryId) {
+        function logAndCollapseEntry(hopNumber, entryId) {
             // Find the entry
-            const hop = investigation.hops.find(h => h.hopNumber === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             const entry = hop.entries.find(e => e.id === entryId);
             
             console.log('Log entry debug:', {
-                hopId, entryId,
+                hopNumber, entryId,
                 sourceThreadId: entry.sourceThreadId,
                 multipleSourceThreads: entry.multipleSourceThreads,
                 notation: entry.notation,
@@ -8652,10 +8652,10 @@ function exportUniversalWalletIndex() {
             if (!entry.notation || entry.notation.trim() === '') {
                 if (entry.sourceThreadId) {
                     console.log('🔧 Attempting to auto-generate notation from single source:', entry.sourceThreadId);
-                    autoGenerateNotationFromSource(hopId, entryId, entry.sourceThreadId);
+                    autoGenerateNotationFromSource(hopNumber, entryId, entry.sourceThreadId);
                 } else if (entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0) {
                     console.log('🔧 Attempting to auto-generate notation from multiple sources:', entry.multipleSourceThreads);
-                    autoGenerateNotationFromMultipleSources(hopId, entryId, entry.multipleSourceThreads);
+                    autoGenerateNotationFromMultipleSources(hopNumber, entryId, entry.multipleSourceThreads);
                 }
             }
             
@@ -8671,7 +8671,7 @@ function exportUniversalWalletIndex() {
             saveToStorage();
             
             // Set entry as collapsed
-            const entryKey = `${hopId}_${entryId}`;
+            const entryKey = `${hopNumber}_${entryId}`;
             window.entryCollapseState[entryKey] = true;
             
             // Update UI to show collapsed state
@@ -9053,10 +9053,10 @@ function exportUniversalWalletIndex() {
             }
         }
         
-        function jumpToHop(hopId) {
-            if (!hopId) return;
+        function jumpToHop(hopNumber) {
+            if (!hopNumber) return;
             
-            const hopElement = document.querySelector(`[data-hop-id="${hopId}"]`);
+            const hopElement = document.querySelector(`[data-hop-id="${hopNumber}"]`);
             if (hopElement) {
                 hopElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 // Flash the hop for visibility
@@ -9751,8 +9751,8 @@ function exportUniversalWalletIndex() {
         }
 
 // Get starting ART for a specific hop
-function getStartingARTForHop(hopId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function getStartingARTForHop(hopNumber) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return {};
     
     // Use the stored ART at start for this hop
@@ -9981,13 +9981,13 @@ function showARTCompletionModal(hop, validation) {
 }
 
 // Create maximum write-off entry to balance ART
-function createMaxWriteoff(hopId, currency, amount) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function createMaxWriteoff(hopNumber, currency, amount) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
     
     const writeoffEntry = {
         id: hop.entries.length + 1,
-        hopId: hopId,
+        hopNumber: hopNumber,
         hopNumber: hop.hopNumber,
         entryType: 'writeoff',
         notation: '',
@@ -10034,8 +10034,8 @@ function createMaxWriteoff(hopId, currency, amount) {
 }
 
 // Create cold storage entry to account for funds
-function createColdStorage(hopId, currency, amount) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function createColdStorage(hopNumber, currency, amount) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
     
     // Find the most recent trace entry with the same currency to get wallet info
@@ -10054,7 +10054,7 @@ function createColdStorage(hopId, currency, amount) {
     
     const coldStorageEntry = {
         id: hop.entries.length + 1,
-        hopId: hopId,
+        hopNumber: hopNumber,
         hopNumber: hop.hopNumber,
         entryType: 'cold_storage',
         notation: '',
@@ -10386,15 +10386,15 @@ function viewAvailableThreads(hopNumber) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-function finalizeHop(hopId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function finalizeHop(hopNumber) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) {
         alert('Hop not found');
         return;
     }
     
     // Validate all source threads are accounted for
-    const validation = validateHopCompletion(hopId);
+    const validation = validateHopCompletion(hopNumber);
     
     // Calculate remaining ART by currency
     const remainingByCurrency = {};
@@ -11204,12 +11204,12 @@ function checkHopCompletionStatus(hop) {
 }
 
 // Close hop and proceed to next
-function closeHopAndProceed(hopId, notificationElement) {
+function closeHopAndProceed(hopNumber, notificationElement) {
     if (notificationElement) {
         notificationElement.remove();
     }
 
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
 
     // Streamlined: Use the consolidated completion function
@@ -11332,11 +11332,11 @@ function showThreadReviewModal(hop) {
 }
 
 // Proceed to next hop after thread review
-function proceedToNextHop(hopId) {
+function proceedToNextHop(hopNumber) {
     const modal = document.getElementById('threadReviewModal');
     if (modal) modal.remove();
 
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
 
     // Mark current hop as completed
@@ -11377,8 +11377,8 @@ function proceedToNextHop(hopId) {
 }
 
 // Keep the old function for backward compatibility but redirect to simpler flow
-function proceedToWalletClassification(hopId) {
-    proceedToNextHop(hopId);
+function proceedToWalletClassification(hopNumber) {
+    proceedToNextHop(hopNumber);
 }
 
 // Complete the hop and create the next one
@@ -11439,11 +11439,11 @@ function completeHopAndCreateNext(hop) {
 }
 
 // Complete investigation when no threads remain
-function completeInvestigation(hopId) {
+function completeInvestigation(hopNumber) {
     const modal = document.getElementById('threadReviewModal');
     if (modal) modal.remove();
     
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
     
     hop.completed = true;
@@ -11590,19 +11590,19 @@ function declineWalletSuggestion(suggestionIndex) {
 }
 
 // Complete wallet suggestions and finalize hop
-function completeWalletSuggestions(hopId) {
+function completeWalletSuggestions(hopNumber) {
     const modal = document.getElementById('walletSuggestionsModal');
     if (modal) modal.remove();
     
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (hop) {
         completeHopAndCreateNext(hop);
     }
 }
 
 // Open Smart Allocation Modal
-function openSmartAllocationModal(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function openSmartAllocationModal(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!hop || !entry) {
@@ -11612,7 +11612,7 @@ function openSmartAllocationModal(hopId, entryId) {
     
     // Store current context
     window.smartAllocationContext = {
-        hopId: hopId,
+        hopNumber: hopNumber,
         entryId: entryId,
         hop: hop,
         entry: entry
@@ -11852,14 +11852,14 @@ function confirmSmartAllocation() {
 }
 
 // Original smart allocation function (keep for compatibility)
-function smartAllocateAmount(hopId, entryId) {
+function smartAllocateAmount(hopNumber, entryId) {
     // Redirect to the new modal-based approach
-    openSmartAllocationModal(hopId, entryId);
+    openSmartAllocationModal(hopNumber, entryId);
 }
 
 // Clear all allocations
-function clearAllAllocations(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function clearAllAllocations(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     entry.multipleSourceThreads = [];
@@ -11867,12 +11867,12 @@ function clearAllAllocations(hopId, entryId) {
     entry.sourceThreadId = '';
     entry.amount = '';
     
-    const previewDiv = document.getElementById(`smartAllocationPreview_${hopId}_${entryId}`);
+    const previewDiv = document.getElementById(`smartAllocationPreview_${hopNumber}_${entryId}`);
     if (previewDiv) {
         previewDiv.innerHTML = '';
     }
     
-    const targetAmountInput = document.getElementById(`targetAmount_${hopId}_${entryId}`);
+    const targetAmountInput = document.getElementById(`targetAmount_${hopNumber}_${entryId}`);
     if (targetAmountInput) {
         targetAmountInput.value = '';
     }
@@ -12166,13 +12166,13 @@ function closeHopFinalizationModal() {
 }
 
 // Create automatic writeoff for remaining amount
-function createAutoWriteoff(hopId, currency, amount) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function createAutoWriteoff(hopNumber, currency, amount) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
     
     const writeoffEntry = {
         id: hop.entries.length + 1,
-        hopId: hopId,
+        hopNumber: hopNumber,
         hopNumber: hop.hopNumber,
         entryType: 'writeoff',
         notation: `H${hop.hopNumber}-WO`,
@@ -12220,13 +12220,13 @@ function createAutoWriteoff(hopId, currency, amount) {
     
     // Re-run finalization to show updated state
     setTimeout(() => {
-        finalizeHop(hopId);
+        finalizeHop(hopNumber);
     }, 100);
 }
 
 // Mark funds as cold storage
-function markAsColdStorage(hopId, currency, amount) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function markAsColdStorage(hopNumber, currency, amount) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
     
     // Find the most recent wallet that handled this currency
@@ -12245,7 +12245,7 @@ function markAsColdStorage(hopId, currency, amount) {
     
     const coldStorageEntry = {
         id: hop.entries.length + 1,
-        hopId: hopId,
+        hopNumber: hopNumber,
         hopNumber: hop.hopNumber,
         entryType: 'trace',
         notation: `H${hop.hopNumber}-CS`,
@@ -12311,14 +12311,14 @@ function markAsColdStorage(hopId, currency, amount) {
     
     // Re-run finalization to show updated state
     setTimeout(() => {
-        finalizeHop(hopId);
+        finalizeHop(hopNumber);
     }, 100);
 }
 
 
 // Mark funds as arriving at VASP
-function markAsVASPArrival(hopId, currency, amount) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function markAsVASPArrival(hopNumber, currency, amount) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
     
     // Prompt for VASP details
@@ -12327,7 +12327,7 @@ function markAsVASPArrival(hopId, currency, amount) {
     
     const vaspEntry = {
         id: hop.entries.length + 1,
-        hopId: hopId,
+        hopNumber: hopNumber,
         hopNumber: hop.hopNumber,
         entryType: 'trace',
         notation: `H${hop.hopNumber}-VASP`,
@@ -12385,7 +12385,7 @@ function markAsVASPArrival(hopId, currency, amount) {
     // Create the terminal exchange entry in the next hop
     const terminalEntry = {
         id: nextHop.entries.length + 1,
-        hopId: nextHop.id,
+        hopNumber: nextHop.hopNumber,
         hopNumber: nextHop.hopNumber,
         entryType: 'trace',
         notation: `H${nextHop.hopNumber}-TERMINAL`,
@@ -12421,12 +12421,12 @@ function markAsVASPArrival(hopId, currency, amount) {
     
     // Re-run finalization to show updated state
     setTimeout(() => {
-        finalizeHop(hopId);
+        finalizeHop(hopNumber);
     }, 100);
 }
 
 // Handle partial amount assignment
-function assignPartialAmount(hopId, currency, totalAmount) {
+function assignPartialAmount(hopNumber, currency, totalAmount) {
     const modalHTML = `
         <div id="partialAssignmentModal" class="modal" style="display: block;">
             <div class="modal-content" style="max-width: 600px;">
@@ -12458,7 +12458,7 @@ function assignPartialAmount(hopId, currency, totalAmount) {
                 </div>
                 
                 <div style="text-align: center;">
-                    <button class="btn btn-confirm" onclick="applyPartialAssignments(${hopId}, '${currency}', ${totalAmount})">
+                    <button class="btn btn-confirm" onclick="applyPartialAssignments(${hopNumber}, '${currency}', ${totalAmount})">
                         Apply Assignments
                     </button>
                     <button class="btn btn-secondary" onclick="closePartialAssignmentModal()">
@@ -12495,7 +12495,7 @@ function updatePartialTotal(totalAmount) {
 }
 
 // Apply partial assignments
-function applyPartialAssignments(hopId, currency, totalAmount) {
+function applyPartialAssignments(hopNumber, currency, totalAmount) {
     const writeoff = parseFloat(document.getElementById('partialWriteoff').value) || 0;
     const coldStorage = parseFloat(document.getElementById('partialColdStorage').value) || 0;
     const vasp = parseFloat(document.getElementById('partialVASP').value) || 0;
@@ -12511,13 +12511,13 @@ function applyPartialAssignments(hopId, currency, totalAmount) {
     
     // Apply each assignment
     if (writeoff > 0) {
-        createAutoWriteoff(hopId, currency, writeoff);
+        createAutoWriteoff(hopNumber, currency, writeoff);
     }
     if (coldStorage > 0) {
-        markAsColdStorage(hopId, currency, coldStorage);
+        markAsColdStorage(hopNumber, currency, coldStorage);
     }
     if (vasp > 0) {
-        markAsVASPArrival(hopId, currency, vasp);
+        markAsVASPArrival(hopNumber, currency, vasp);
     }
 }
 
@@ -12592,8 +12592,8 @@ function confirmHopAndProceed(completedHop) {
 }
 
 // Confirm hop completion
-function confirmHopCompletion(hopId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function confirmHopCompletion(hopNumber) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
     
     closeHopConfirmModal();
@@ -12610,8 +12610,8 @@ function closeHopConfirmModal() {
     }
 }
 
-function validateHopCompletion(hopId) {
-            const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function validateHopCompletion(hopNumber) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             if (!hop) return { valid: false, errors: ['Hop not found'] };
             
             const errors = [];
@@ -13017,7 +13017,7 @@ function updateInvestigationCompletionStatus() {
         }
         
         // Show wallet selector modal
-        function showWalletSelector(hopId, entryId) {
+        function showWalletSelector(hopNumber, entryId) {
             const sortedWallets = [...(investigation.universalWalletIndex || [])].sort((a, b) => {
                 if (a.permanentType !== b.permanentType) {
                     const typeOrder = ['red', 'pink', 'yellow', 'orange', 'brown', 'black', 'blue', 'purple', 'gray', 'green'];
@@ -13068,7 +13068,7 @@ function updateInvestigationCompletionStatus() {
                                             </td>
                                             <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
                                                 <button class="btn btn-confirm" style="padding: 6px 12px;"
-                                                        onclick="selectWallet(${hopId}, ${entryId}, '${wallet.address}', '${wallet.permanentType}')">
+                                                        onclick="selectWallet(${hopNumber}, ${entryId}, '${wallet.address}', '${wallet.permanentType}')">
                                                     Select
                                                 </button>
                                             </td>
@@ -13116,9 +13116,9 @@ function updateInvestigationCompletionStatus() {
         }
         
         // Select wallet from modal
-        function selectWallet(hopId, entryId, address, walletType) {
+        function selectWallet(hopNumber, entryId, address, walletType) {
             // Update the entry
-            const hop = investigation.hops.find(h => h.hopNumber === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             const entry = hop.entries.find(e => e.id === entryId);
             
             if (entry) {
@@ -13127,13 +13127,13 @@ function updateInvestigationCompletionStatus() {
             }
             
             // Update the input field
-            const input = document.getElementById(`toWallet_${hopId}_${entryId}`);
+            const input = document.getElementById(`toWallet_${hopNumber}_${entryId}`);
             if (input) {
                 input.value = address;
             }
             
             // Update the wallet type dropdown
-            const typeSelect = document.querySelector(`select[onchange="updateHopEntryWalletType(${hopId}, ${entryId}, this.value)"]`);
+            const typeSelect = document.querySelector(`select[onchange="updateHopEntryWalletType(${hopNumber}, ${entryId}, this.value)"]`);
             if (typeSelect) {
                 typeSelect.value = walletType;
             }
@@ -13891,11 +13891,11 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
     if (entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0) {
         // Multiple sources selected - sum them up without specifying currency
         entry.multipleSourceThreads.forEach(sourceId => {
-            maxAmount += getMaxAssignableAmount(sourceId, null, entry.id, entry.hopId);
+            maxAmount += getMaxAssignableAmount(sourceId, null, entry.id, entry.hopNumber);
         });
     } else if (entry.sourceThreadId) {
         // Single source selected - don't pass currency, let the function find it
-        maxAmount = getMaxAssignableAmount(entry.sourceThreadId, null, entry.id, entry.hopId);
+        maxAmount = getMaxAssignableAmount(entry.sourceThreadId, null, entry.id, hop.hopNumber);
     }
     
     // SOURCE SELECTION HTML - NOW AVAILABLE FOR ALL ENTRY TYPES
@@ -14113,7 +14113,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                                    value="${entry.toWallet || ''}" 
                                    placeholder="Select existing or enter new wallet address"
                                    onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'toWallet', this.value)"
-                                   oninput="handleWalletAutocomplete(this, ${entry.hopId}, ${entry.id})"
+                                   oninput="handleWalletAutocomplete(this, ${entry.hopNumber}, ${entry.id})"
                                    autocomplete="off"
                                    list="walletList_${hop.hopNumber}_${entry.id}"
                                    style="width: 100%;">
@@ -14168,7 +14168,7 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
                                id="timestamp_${hop.hopNumber}_${entry.id}"
                                value="${entry.timestamp || ''}" 
                                onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'timestamp', this.value)">
-                        <select onchange="onTimezoneChange('timestamp_${hop.hopNumber}_${entry.id}', 'hop', ${entry.hopId}, ${entry.id})">
+                        <select onchange="onTimezoneChange('timestamp_${hop.hopNumber}_${entry.id}', 'hop', ${hop.hopNumber}, ${entry.id})">
                             ${Object.entries(timezones).map(([key, value]) => 
                                 `<option value="${key}" ${entry.timezone === key ? 'selected' : ''}>${value}</option>`
                             ).join('')}
@@ -14204,26 +14204,26 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
 }*/
 
 // Enhanced Amount Assignment for Multiple Sources
-function updateAssignmentAmountMultiple(hopId, entryId, amount) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateAssignmentAmountMultiple(hopNumber, entryId, amount) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     entry.amount = amount;
     
     if (entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0) {
-        updateMultipleSourcePreview(hopId, entryId);
-        updateFullNotationDisplayMultiple(hopId, entryId);
+        updateMultipleSourcePreview(hopNumber, entryId);
+        updateFullNotationDisplayMultiple(hopNumber, entryId);
     } else {
-        updateAssignmentPreview(hopId, entryId);
-        updateFullNotationDisplay(hopId, entryId);
+        updateAssignmentPreview(hopNumber, entryId);
+        updateFullNotationDisplay(hopNumber, entryId);
     }
     
     saveToStorage();
 }
 
 // Enhanced Max Amount Assignment for Multiple Sources
-function assignMaxAmountMultiple(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function assignMaxAmountMultiple(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     let maxAmount = 0;
@@ -14260,20 +14260,20 @@ function assignMaxAmountMultiple(hopId, entryId) {
     
     entry.amount = maxAmount.toString();
     
-    const amountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
+    const amountInput = document.getElementById(`assignAmount_${hopNumber}_${entryId}`);
     if (amountInput) {
         amountInput.value = maxAmount;
     }
     
-    updateAssignmentAmountMultiple(hopId, entryId, maxAmount);
+    updateAssignmentAmountMultiple(hopNumber, entryId, maxAmount);
 }
 
 
-function showAddEntryWizard(hopId) {
-    console.log('showAddEntryWizard called for hopId:', hopId);
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function showAddEntryWizard(hopNumber) {
+    console.log('showAddEntryWizard called for hopNumber:', hopNumber);
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) {
-        console.error('Hop not found:', hopId);
+        console.error('Hop not found:', hopNumber);
         return;
     }
     
@@ -14312,7 +14312,7 @@ function showAddEntryWizard(hopId) {
                     ${Object.entries(entryTypes).map(([key, value]) => {
                         const info = entryTypeDescriptions[key] || { icon: '📄', description: '', color: '#95a5a6' };
                         return `
-                            <div onclick="selectEntryType('${hopId}', '${key}')"
+                            <div onclick="selectEntryType('${hopNumber}', '${key}')"
                                  style="background: white; border: 2px solid #e8f0fe; border-radius: 8px; padding: 20px; margin-bottom: 15px; cursor: pointer; transition: all 0.2s;"
                                  onmouseover="this.style.borderColor='${info.color}'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'"
                                  onmouseout="this.style.borderColor='#e8f0fe'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
@@ -14339,8 +14339,8 @@ function showAddEntryWizard(hopId) {
     createCenteredModal('addEntryWizard', wizardHTML);
 }
 
-function selectEntryType(hopId, entryType) {
-    console.log('selectEntryType called with:', hopId, entryType);
+function selectEntryType(hopNumber, entryType) {
+    console.log('selectEntryType called with:', hopNumber, entryType);
     closeAddEntryWizard();
 
     // Check if we should use wizards
@@ -14352,9 +14352,9 @@ function selectEntryType(hopId, entryType) {
         console.log('Inside setTimeout - entryType:', entryType, 'wizardDisabled:', wizardDisabled);
         if (entryType === 'trace' && !wizardDisabled) {
             // Use the existing trace wizard
-            console.log('About to call showHopEntryWizard for hopId:', hopId);
+            console.log('About to call showHopEntryWizard for hopNumber:', hopNumber);
             try {
-                showHopEntryWizard(hopId);
+                showHopEntryWizard(hopNumber);
                 console.log('showHopEntryWizard called successfully');
                 // Check if wizard was created
                 setTimeout(() => {
@@ -14371,12 +14371,12 @@ function selectEntryType(hopId, entryType) {
         } else if (entryType === 'swap' || entryType === 'dex') {
             // For swaps, use a dedicated swap wizard
             console.log('Creating swap entry - showing swap wizard');
-            showSwapWizard(hopId);
+            showSwapWizard(hopNumber);
         } else {
             // For now, create other types directly
             // In the future, we could add specific wizards for each type
             console.log('Creating entry directly for type:', entryType);
-            createHopEntryDirectly(hopId, entryType);
+            createHopEntryDirectly(hopNumber, entryType);
         }
     }, 250);
 }
@@ -14386,10 +14386,10 @@ function closeAddEntryWizard() {
     if (wizard) wizard.remove();
 }
 
-function addHopEntry(hopId, entryType = 'trace') {
+function addHopEntry(hopNumber, entryType = 'trace') {
     // This function is now primarily used when wizards are disabled
     // or called from other parts of the code
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
     
     // Check if wizard is disabled
@@ -14397,19 +14397,19 @@ function addHopEntry(hopId, entryType = 'trace') {
     
     if (entryType === 'trace' && !wizardDisabled) {
         // Show wizard for trace entries
-        showHopEntryWizard(hopId);
+        showHopEntryWizard(hopNumber);
     } else {
         // Direct creation for non-trace entries or when wizard is disabled
-        createHopEntryDirectly(hopId, entryType);
+        createHopEntryDirectly(hopNumber, entryType);
     }
 }
 
-function createHopEntryDirectly(hopId, entryType = 'trace') {
+function createHopEntryDirectly(hopNumber, entryType = 'trace') {
     // Convert hopId to number to ensure type matching
-    const numericHopId = typeof hopId === 'string' ? parseInt(hopId) : hopId;
-    const hop = investigation.hops.find(h => h.hopNumber === numericHopId);
+    const numericHopNumber = typeof hopNumber === 'string' ? parseInt(hopNumber) : hopNumber;
+    const hop = investigation.hops.find(h => h.hopNumber === numericHopNumber);
     if (!hop) {
-        console.error('Hop not found in createHopEntryDirectly:', hopId, 'numericHopId:', numericHopId);
+        console.error('Hop not found in createHopEntryDirectly:', hopNumber, 'numericHopNumber:', numericHopNumber);
         return;
     }
     
@@ -14426,7 +14426,7 @@ function createHopEntryDirectly(hopId, entryType = 'trace') {
     
     const entry = {
         id: hop.entries.length + 1,
-        hopId: hopId,
+        hopNumber: hopNumber,
         hopNumber: effectiveHopNumber,
         entryType: entryType,
         notation: '',
@@ -14521,24 +14521,23 @@ function sortHopEntriesChronologically(hop) {
     });
 }
 
-function showHopEntryWizard(hopId) {
-    console.log('showHopEntryWizard called for hopId:', hopId, 'type:', typeof hopId);
+function showHopEntryWizard(hopNumber) {
+    console.log('showHopEntryWizard called for hopNumber:', hopNumber, 'type:', typeof hopNumber);
     console.log('Available hops:', investigation.hops.map(h => ({ id: h.id, type: typeof h.id, hopNumber: h.hopNumber })));
     
     // Convert hopId to number to ensure type matching
-    const numericHopId = typeof hopId === 'string' ? parseInt(hopId) : hopId;
-    const hop = investigation.hops.find(h => h.hopNumber === numericHopId);
+    const numericHopNumber = typeof hopNumber === 'string' ? parseInt(hopNumber) : hopNumber;
+    const hop = investigation.hops.find(h => h.hopNumber === numericHopNumber);
     
     if (!hop) {
-        console.error('Hop not found in showHopEntryWizard:', hopId);
-        console.error('Looking for id:', numericHopId, 'in hops:', investigation.hops);
+        console.error('Hop not found in showHopEntryWizard:', hopNumber);
+        console.error('Looking for id:', numericHopNumber, 'in hops:', investigation.hops);
         return;
     }
     console.log('Found hop:', hop);
     
     // Initialize wizard data
     window.hopWizardData = {
-        hopId: numericHopId,
         hopNumber: hop.hopNumber,
         step: 1,
         selectedThreads: [],
@@ -14578,11 +14577,7 @@ function showHopEntryWizard(hopId) {
                     <!-- Content will be dynamically updated -->
                 </div>
                 
-                <div class="modal-footer" style="position: sticky; bottom: 0; background: white; border-top: 2px solid #eee; padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <input type="checkbox" id="disableWizardCheckbox" onchange="toggleWizardPreference()">
-                        <label for="disableWizardCheckbox" style="margin-left: 5px;">Don't show wizard for future entries</label>
-                    </div>
+                <div class="modal-footer" style="position: sticky; bottom: 0; background: white; border-top: 2px solid #eee; padding-top: 15px; display: flex; justify-content: flex-end; align-items: center;">
                     <div>
                         <button class="btn btn-secondary" onclick="cancelWizardToManual()" title="Transfer data to manual entry">Cancel to Manual</button>
                         <button class="btn btn-secondary" id="wizardBackBtn" onclick="hopWizardBack()" style="display: none;">Back</button>
@@ -15004,6 +14999,11 @@ function hopWizardNext() {
     if (wizardData.step === 3) {
         // From step 3, create the entry
         if (wizardData.txHash) {
+            // If we have multipleTransfers but no selectedTransfers, select all by default
+            if (wizardData.txData?.multipleTransfers && !wizardData.selectedTransfers) {
+                console.log('Auto-selecting all transfers for multi-transfer transaction');
+                wizardData.selectedTransfers = wizardData.txData.transfers.map((_, index) => index);
+            }
             createHopEntryFromWizard();
         } else {
             alert('Please enter a transaction hash before proceeding.');
@@ -15030,32 +15030,32 @@ function closeHopWizard() {
 }
 
 // Dedicated swap wizard for more flexibility
-function showSwapWizard(hopId) {
-    console.log('showSwapWizard called with hopId:', hopId, 'type:', typeof hopId);
+function showSwapWizard(hopNumber) {
+    console.log('showSwapWizard called with hopNumber:', hopNumber, 'type:', typeof hopNumber);
 
     // Convert to number if it's a string
-    if (typeof hopId === 'string') {
-        hopId = parseInt(hopId);
-        console.log('Converted hopId to number:', hopId);
+    if (typeof hopNumber === 'string') {
+        hopNumber = parseInt(hopNumber);
+        console.log('Converted hopId to number:', hopNumber);
     }
 
     console.log('Available hops:', investigation.hops.map(h => ({ id: h.id, hopNumber: h.hopNumber, type: typeof h.id })));
 
     // Try to find the hop
-    let hop = investigation.hops.find(h => h.hopNumber === hopId);
+    let hop = investigation.hops.find(h => h.hopNumber === hopNumber);
 
     // If not found by ID, try to find by hop number (fallback)
-    if (!hop && typeof hopId === 'number' && hopId <= 10) {
+    if (!hop && typeof hopNumber === 'number' && hopNumber <= 10) {
         // If hopId looks like a hop number (small value), try to find by hopNumber
-        hop = investigation.hops.find(h => h.hopNumber === hopId);
+        hop = investigation.hops.find(h => h.hopNumber === hopNumber);
         if (hop) {
             console.log('Found hop by hopNumber instead of ID');
         }
     }
 
     if (!hop) {
-        console.error('Hop not found for swap wizard:', hopId);
-        console.error('Looking for hop with ID:', hopId);
+        console.error('Hop not found for swap wizard:', hopNumber);
+        console.error('Looking for hop with ID:', hopNumber);
         console.error('Available hop IDs:', investigation.hops.map(h => h.id));
         alert('Error: Could not find the hop. Please close this wizard and try again.');
         return;
@@ -15703,14 +15703,13 @@ function createAndFinalizeEntry() {
     createHopEntryFromWizard();
 }
 
-function reopenHopWizard(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function reopenHopWizard(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop?.entries.find(e => e.id === entryId);
     if (!hop || !entry) return;
     
     // Initialize wizard data with existing entry data
     window.hopWizardData = {
-        hopId: hopId,
         entryId: entryId,  // Store the entry ID for updating
         hopNumber: hop.hopNumber,
         selectedThreads: entry.multipleSourceThreads || (entry.sourceThreadId ? [entry.sourceThreadId] : []),
@@ -15731,18 +15730,17 @@ function reopenHopWizard(hopId, entryId) {
         window.hopWizardData.allocations[entry.sourceThreadId] = parseFloat(entry.amount) || 0;
     }
     
-    openHopEntryWizard(hopId);
+    openHopEntryWizard(hopNumber);
 }
 
-function openHopEntryWizard(hopId) {
+function openHopEntryWizard(hopNumber) {
     // Get hop data
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
     
     // Initialize wizard data if not already editing
     if (!window.hopWizardData || !window.hopWizardData.isEditMode) {
         window.hopWizardData = {
-            hopId: hopId,
             hopNumber: hop.hopNumber,
             selectedThreads: [],
             allocations: {},
@@ -15793,14 +15791,14 @@ function openHopEntryWizard(hopId) {
 
 function skipHopWizard() {
     closeHopWizard();
-    createHopEntryDirectly(window.hopWizardData.hopId, 'trace');
+    createHopEntryDirectly(window.hopWizardData.hopNumber, 'trace');
 }
 
 // Skip wizard just for this entry without disabling it permanently
 function skipWizardThisTime() {
-    const hopId = window.hopWizardData.hopId;
+    const hopNumber = window.hopWizardData.hopNumber;
     closeHopWizard();
-    createHopEntryDirectly(hopId, 'trace');
+    createHopEntryDirectly(hopNumber, 'trace');
 }
 
 // Cancel wizard and transfer data to manual entry form
@@ -15808,18 +15806,18 @@ function cancelWizardToManual() {
     const wizardData = window.hopWizardData;
     if (!wizardData) return;
     
-    const hopId = wizardData.hopId;
+    const hopNumber = wizardData.hopNumber;
     
     // Close wizard
     closeHopWizard();
     
     // Create manual entry with pre-filled data
-    createHopEntryDirectly(hopId, 'trace');
+    createHopEntryDirectly(hopNumber, 'trace');
     
     // Wait for DOM update then fill in the data
     setTimeout(() => {
         // Find the last added entry form
-        const hop = investigation.hops.find(h => h.hopNumber === hopId);
+        const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
         if (!hop) return;
         
         const lastEntry = hop.entries[hop.entries.length - 1];
@@ -15828,45 +15826,45 @@ function cancelWizardToManual() {
         // Pre-fill amount if allocations exist
         const totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
         if (totalAmount > 0) {
-            const amountInput = document.querySelector(`[onchange*="updateEntryAmount(${hopId}, ${lastEntry.id}"]`);
+            const amountInput = document.querySelector(`[onchange*="updateEntryAmount(${hopNumber}, ${lastEntry.id}"]`);
             if (amountInput) {
                 amountInput.value = totalAmount;
-                updateEntryAmount(hopId, lastEntry.id, totalAmount.toString());
+                updateEntryAmount(hopNumber, lastEntry.id, totalAmount.toString());
             }
         }
         
         // Pre-fill transaction hash
         if (wizardData.txHash) {
-            const txHashInput = document.querySelector(`[onchange*="updateEntryField(${hopId}, ${lastEntry.id}, 'txHash'"]`);
+            const txHashInput = document.querySelector(`[onchange*="updateEntryField(${hopNumber}, ${lastEntry.id}, 'txHash'"]`);
             if (txHashInput) {
                 txHashInput.value = wizardData.txHash;
-                updateEntryField(hopId, lastEntry.id, 'txHash', wizardData.txHash);
+                updateEntryField(hopNumber, lastEntry.id, 'txHash', wizardData.txHash);
             }
         }
         
         // Pre-fill manual data if available
         if (wizardData.manualData) {
             if (wizardData.manualData.fromWallet) {
-                const fromInput = document.querySelector(`[onchange*="updateEntryField(${hopId}, ${lastEntry.id}, 'fromWallet'"]`);
+                const fromInput = document.querySelector(`[onchange*="updateEntryField(${hopNumber}, ${lastEntry.id}, 'fromWallet'"]`);
                 if (fromInput) {
                     fromInput.value = wizardData.manualData.fromWallet;
-                    updateEntryField(hopId, lastEntry.id, 'fromWallet', wizardData.manualData.fromWallet);
+                    updateEntryField(hopNumber, lastEntry.id, 'fromWallet', wizardData.manualData.fromWallet);
                 }
             }
             
             if (wizardData.manualData.toWallet) {
-                const toInput = document.querySelector(`[onchange*="updateEntryField(${hopId}, ${lastEntry.id}, 'toWallet'"]`);
+                const toInput = document.querySelector(`[onchange*="updateEntryField(${hopNumber}, ${lastEntry.id}, 'toWallet'"]`);
                 if (toInput) {
                     toInput.value = wizardData.manualData.toWallet;
-                    updateEntryField(hopId, lastEntry.id, 'toWallet', wizardData.manualData.toWallet);
+                    updateEntryField(hopNumber, lastEntry.id, 'toWallet', wizardData.manualData.toWallet);
                 }
             }
             
             if (wizardData.manualData.timestamp) {
-                const timestampInput = document.querySelector(`[onchange*="updateEntryField(${hopId}, ${lastEntry.id}, 'timestamp'"]`);
+                const timestampInput = document.querySelector(`[onchange*="updateEntryField(${hopNumber}, ${lastEntry.id}, 'timestamp'"]`);
                 if (timestampInput) {
                     timestampInput.value = wizardData.manualData.timestamp;
-                    updateEntryField(hopId, lastEntry.id, 'timestamp', wizardData.manualData.timestamp);
+                    updateEntryField(hopNumber, lastEntry.id, 'timestamp', wizardData.manualData.timestamp);
                 }
             }
         }
@@ -15874,15 +15872,15 @@ function cancelWizardToManual() {
         // Pre-fill source threads if single thread
         if (wizardData.selectedThreads.length === 1) {
             const threadId = wizardData.selectedThreads[0];
-            const sourceSelect = document.querySelector(`[onchange*="updateSourceThread(${hopId}, ${lastEntry.id}"]`);
+            const sourceSelect = document.querySelector(`[onchange*="updateSourceThread(${hopNumber}, ${lastEntry.id}"]`);
             if (sourceSelect) {
                 sourceSelect.value = threadId;
-                updateSourceThread(hopId, lastEntry.id, threadId);
+                updateSourceThread(hopNumber, lastEntry.id, threadId);
             }
         }
         
         // Scroll to the new entry
-        const entryElement = document.getElementById(`entry_${hopId}_${lastEntry.id}`);
+        const entryElement = document.getElementById(`entry_${hopNumber}_${lastEntry.id}`);
         if (entryElement) {
             entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             // Highlight it briefly
@@ -16823,8 +16821,11 @@ function validateThreadAllocation(threadId, requestedAmount, currency, excludeEn
 
 function createHopEntryFromWizard() {
     const wizardData = window.hopWizardData;
-    const hop = investigation.hops.find(h => h.id === wizardData.hopId);
-    if (!hop) return;
+    const hop = investigation.hops.find(h => h.hopNumber === wizardData.hopNumber);
+    if (!hop) {
+        console.error('Hop not found for hopNumber:', wizardData.hopNumber);
+        return;
+    }
 
     // Check if this is a swap transaction
     if (wizardData.isSwap && wizardData.swapDetails) {
@@ -16923,7 +16924,7 @@ function createHopEntryFromWizard() {
                 allocation,
                 thread.currency,
                 wizardData.isEditMode ? wizardData.entryId : null,
-                wizardData.isEditMode ? wizardData.hopId : null
+                wizardData.isEditMode ? wizardData.hopNumber : null
             );
 
             if (!validation.valid) {
@@ -17117,7 +17118,7 @@ function createHopEntryFromWizard() {
     // Create new entry with wizard data
     const entry = {
         id: hop.entries.length + 1,
-        hopId: wizardData.hopId,
+        hopNumber: wizardData.hopNumber,
         hopNumber: effectiveHopNumber,
         entryType: 'trace',
         notation: notation,
@@ -17220,8 +17221,8 @@ function createHopEntryFromWizard() {
     showRemainingThreadsSummary(hop);
 }
 // Calculate remaining ART for write-offs
-function calculateRemainingARTForHop(hopId, currency) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function calculateRemainingARTForHop(hopNumber, currency) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return 0;
     
     // Get the starting ART for this hop
@@ -17244,8 +17245,8 @@ function calculateRemainingARTForHop(hopId, currency) {
 }
 
 // Auto-fill max write-off amount
-function assignMaxWriteoffAmount(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function assignMaxWriteoffAmount(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (entry.entryType !== 'writeoff') {
@@ -17254,7 +17255,7 @@ function assignMaxWriteoffAmount(hopId, entryId) {
     }
     
     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-    const remainingART = calculateRemainingARTForHop(hopId, currency);
+    const remainingART = calculateRemainingARTForHop(hopNumber, currency);
     
     if (remainingART <= 0) {
         alert(`No remaining ${currency} to write off in this hop.`);
@@ -17263,12 +17264,12 @@ function assignMaxWriteoffAmount(hopId, entryId) {
     
     entry.amount = remainingART.toString();
     
-    const amountInput = document.getElementById(`writeoffAmount_${hopId}_${entryId}`);
+    const amountInput = document.getElementById(`writeoffAmount_${hopNumber}_${entryId}`);
     if (amountInput) {
         amountInput.value = remainingART;
     }
     
-    updateWriteoffPreview(hopId, entryId);
+    updateWriteoffPreview(hopNumber, entryId);
     saveToStorage();
     
     // Re-render hops to update validation
@@ -17276,10 +17277,10 @@ function assignMaxWriteoffAmount(hopId, entryId) {
 }
 
 // Update write-off preview with balance information
-function updateWriteoffPreview(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateWriteoffPreview(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
-    const previewElement = document.getElementById(`writeoffPreview_${hopId}_${entryId}`);
+    const previewElement = document.getElementById(`writeoffPreview_${hopNumber}_${entryId}`);
     
     if (!previewElement || entry.entryType !== 'writeoff') {
         return;
@@ -17287,7 +17288,7 @@ function updateWriteoffPreview(hopId, entryId) {
     
     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
     const amount = parseFloat(entry.amount) || 0;
-    const remainingART = calculateRemainingARTForHop(hopId, currency);
+    const remainingART = calculateRemainingARTForHop(hopNumber, currency);
     const afterWriteoff = remainingART - amount;
     
     let previewHTML = '';
@@ -17396,17 +17397,17 @@ function renderWriteoffSection(entry) {
 }
 
 // Update write-off amount with validation
-function updateWriteoffAmount(hopId, entryId, amount) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateWriteoffAmount(hopNumber, entryId, amount) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     entry.amount = amount;
-    updateWriteoffPreview(hopId, entryId);
-    updateHopEntry(hopId, entryId, 'amount', amount);
+    updateWriteoffPreview(hopNumber, entryId);
+    updateHopEntry(hopNumber, entryId, 'amount', amount);
 }
 
-        function updateHopEntry(hopId, entryId, field, value) {
-            const hop = investigation.hops.find(h => h.hopNumber === hopId);
+        function updateHopEntry(hopNumber, entryId, field, value) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             const entry = hop.entries.find(e => e.id === entryId);
             entry[field] = value;
             
@@ -17418,7 +17419,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             if (field === 'entryType') {
                 // Regenerate notation if victim and transaction numbers exist
                 if (entry.victimNumbers && entry.transactionNumbers) {
-                    generateNotationPreview(hopId, entryId);
+                    generateNotationPreview(hopNumber, entryId);
                 }
                 renderHops();
                 saveToStorage();
@@ -17426,7 +17427,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             }
             
             if (field === 'currency') {
-                const customInput = document.getElementById(`customEntryCurrency_${hopId}_${entryId}`);
+                const customInput = document.getElementById(`customEntryCurrency_${hopNumber}_${entryId}`);
                 if (customInput) {
                     if (value === 'CUSTOM') {
                         customInput.style.display = 'block';
@@ -17448,7 +17449,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                         entry.toWalletType = knownWallet.permanentType;
                         
                         // Update the wallet type dropdown if it exists
-                        const typeSelect = document.querySelector(`select[onchange="updateHopEntryWalletType(${hopId}, ${entryId}, this.value)"]`);
+                        const typeSelect = document.querySelector(`select[onchange="updateHopEntryWalletType(${hopNumber}, ${entryId}, this.value)"]`);
                         if (typeSelect) {
                             typeSelect.value = knownWallet.permanentType;
                         }
@@ -17457,7 +17458,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                     // Check all attribution sources for the address
                     checkAllAttributions(value.trim()).then(attributions => {
                         if (attributions && attributions.length > 0) {
-                            showAttributionModal(attributions, hopId, entryId);
+                            showAttributionModal(attributions, hopNumber, entryId);
                         }
                     });
                 }
@@ -17496,24 +17497,24 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             });
         }
 
-        function updateHopEntryWalletType(hopId, entryId, walletType) {
-            updateHopEntry(hopId, entryId, 'toWalletType', walletType);
+        function updateHopEntryWalletType(hopNumber, entryId, walletType) {
+            updateHopEntry(hopNumber, entryId, 'toWalletType', walletType);
             
             // If BROWN wallet is selected, open asset conversion modal
             if (walletType === 'brown') {
-                openAssetConversionModal(hopId, entryId);
+                openAssetConversionModal(hopNumber, entryId);
             }
         }
 
-        function openAssetConversionModal(hopId, entryId) {
+        function openAssetConversionModal(hopNumber, entryId) {
             showModal('assetConversionModal');
             
             // Store the hop and entry ID for later use
-            window.currentConversionHopId = hopId;
+            window.currentConversionHopId = hopNumber;
             window.currentConversionEntryId = entryId;
             
             // Pre-populate with entry data if available
-            const hop = investigation.hops.find(h => h.hopNumber === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             const entry = hop.entries.find(e => e.id === entryId);
             if (entry) {
                 // Set from currency based on the entry's current currency
@@ -17529,9 +17530,9 @@ function updateWriteoffAmount(hopId, entryId, amount) {
         }
 
         function confirmAssetConversion() {
-            const hopId = window.currentConversionHopId;
+            const hopNumber = window.currentConversionHopId;
             const entryId = window.currentConversionEntryId;
-            if (!hopId || !entryId) return;
+            if (!hopNumber || !entryId) return;
             
             const fromCurrency = document.getElementById('conversionFromCurrency').value;
             const toCurrency = document.getElementById('conversionToCurrency').value;
@@ -17545,7 +17546,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             const toCustom = document.getElementById('conversionToCurrencyCustom').value;
             
             // Update entry with conversion data
-            const hop = investigation.hops.find(h => h.hopNumber === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             const entry = hop.entries.find(e => e.id === entryId);
             if (entry) {
                 // Store original currency info for the conversion record
@@ -17576,7 +17577,7 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             // Store conversion details
             const conversion = {
                 id: (investigation.conversions || []).length + 1,
-                hopId: hopId,
+                hopNumber: hopNumber,
                 entryId: entryId,
                 fromCurrency: fromCurrency === 'CUSTOM' ? fromCustom : fromCurrency,
                 toCurrency: toCurrency === 'CUSTOM' ? toCustom : toCurrency,
@@ -17700,8 +17701,8 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             if (selected.length < 2) return;
             
             const selectedEntries = selected.map(input => {
-                const [hopId, entryId] = input.value.split('_');
-                const hop = investigation.hops.find(h => h.id == hopId);
+                const [hopNumber, entryId] = input.value.split('_');
+                const hop = investigation.hops.find(h => h.id == hopNumber);
                 return hop.entries.find(e => e.id == entryId);
             });
             
@@ -17824,12 +17825,12 @@ function updateWriteoffAmount(hopId, entryId, amount) {
             }
         }
 
-        function removeHop(hopId) {
+        function removeHop(hopNumber) {
             if (confirm('Are you sure you want to remove this entire hop?')) {
-                const hop = investigation.hops.find(h => h.hopNumber === hopId);
+                const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
                 saveUndoState(`Remove Hop ${hop.hopNumber}`);
                 
-                investigation.hops = investigation.hops.filter(h => h.id !== hopId);
+                investigation.hops = investigation.hops.filter(h => h.id !== hopNumber);
                 renderHops();
                 saveToStorage();
                 updateValidationStatus();
@@ -17993,8 +17994,8 @@ function updateWriteoffAmount(hopId, entryId, amount) {
                 const transaction = victim?.transactions.find(t => t.id === transactionId);
                 currentTimezone = transaction?.timezone || 'UTC';
             } else if (entryType === 'hop') {
-                const [hopId, entryId] = ids;
-                const hop = investigation.hops.find(h => h.hopNumber === hopId);
+                const [hopNumber, entryId] = ids;
+                const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
                 const entry = hop?.entries.find(e => e.id === entryId);
                 currentTimezone = entry?.timezone || 'UTC';
             }
@@ -19344,7 +19345,7 @@ function downloadFile(content, filename, mimeType) {
                         
                         hop.entries.push({
                             id: hop.entries.length + 1,
-                            hopId: hopNumber,
+                            hopNumber: hopNumber,
                             hopNumber: hopNumber,
                             entryType: 'trace',
                             notation: entry.hopNotation,
@@ -19410,8 +19411,8 @@ function downloadFile(content, filename, mimeType) {
         }
 
         // ADD THE NEW HELPER FUNCTIONS HERE:
-        function updateIndividualSourceAssignment(hopId, entryId, sourceId, amount) {
-            const hop = investigation.hops.find(h => h.hopNumber === hopId);
+        function updateIndividualSourceAssignment(hopNumber, entryId, sourceId, amount) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.individualSourceAssignments) {
@@ -19419,7 +19420,7 @@ function downloadFile(content, filename, mimeType) {
     }
     
     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-    const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopId);
+    const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopNumber);
     const assignedAmount = Math.min(parseFloat(amount) || 0, maxAmount);
     
     entry.individualSourceAssignments[sourceId] = assignedAmount;
@@ -19434,15 +19435,15 @@ function downloadFile(content, filename, mimeType) {
     entry.amount = totalAssigned.toString();
     
     // Update the main amount input field in the UI
-    const mainAmountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
+    const mainAmountInput = document.getElementById(`assignAmount_${hopNumber}_${entryId}`);
     if (mainAmountInput) {
         mainAmountInput.value = totalAssigned;
     }
 }
 
 // DUPLICATE FUNCTION REMOVED - Using the more complete version at line 10336
-/*function validateHopCompletion(hopId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+/*function validateHopCompletion(hopNumber) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return { valid: false, errors: ['Hop not found'] };
     
     const errors = [];
@@ -19523,8 +19524,8 @@ function downloadFile(content, filename, mimeType) {
     };
 }*/
 
-function autoGenerateNotationFromSource(hopId, entryId, sourceThreadId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function autoGenerateNotationFromSource(hopNumber, entryId, sourceThreadId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     console.log(` Auto-generating notation from source: ${sourceThreadId}`);
@@ -19550,10 +19551,10 @@ function autoGenerateNotationFromSource(hopId, entryId, sourceThreadId) {
         entry.transactionNumbers = transactionPart;
         
         // Generate the notation
-        generateNotationPreview(hopId, entryId);
+        generateNotationPreview(hopNumber, entryId);
         
         // Update the UI fields
-        updateNotationFieldsInUI(hopId, entryId);
+        updateNotationFieldsInUI(hopNumber, entryId);
         
         console.log(` Notation auto-generated: ${entry.notation}`);
     } else {
@@ -19561,8 +19562,8 @@ function autoGenerateNotationFromSource(hopId, entryId, sourceThreadId) {
     }
 }
 
-function autoGenerateNotationFromMultipleSources(hopId, entryId, selectedSources) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function autoGenerateNotationFromMultipleSources(hopNumber, entryId, selectedSources) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     console.log(` Auto-generating notation from multiple sources:`, selectedSources);
@@ -19591,16 +19592,16 @@ function autoGenerateNotationFromMultipleSources(hopId, entryId, selectedSources
     console.log(` Generated victim numbers: ${entry.victimNumbers}, transaction numbers: ${entry.transactionNumbers}`);
     
     // Generate the notation
-    generateNotationPreview(hopId, entryId);
+    generateNotationPreview(hopNumber, entryId);
     
     console.log(` Final notation: ${entry.notation}`);
     
     // Update the UI fields
-    updateNotationFieldsInUI(hopId, entryId);
+    updateNotationFieldsInUI(hopNumber, entryId);
 }
 
-function clearNotationFields(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function clearNotationFields(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     entry.victimNumbers = '';
@@ -19608,26 +19609,26 @@ function clearNotationFields(hopId, entryId) {
     entry.notation = '';
     entry.generatedNotation = '';
     
-    updateNotationFieldsInUI(hopId, entryId);
+    updateNotationFieldsInUI(hopNumber, entryId);
 }
 
-function updateNotationFieldsInUI(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateNotationFieldsInUI(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
-    console.log(`Updating notation UI for hop ${hopId} entry ${entryId}:`, {
+    console.log(`Updating notation UI for hop ${hopNumber} entry ${entryId}:`, {
         victimNumbers: entry.victimNumbers,
         transactionNumbers: entry.transactionNumbers,
         notation: entry.notation
     });
     
     // Find and update the victim numbers input - try multiple selectors
-    let victimInput = document.querySelector(`input[onchange*="updateNotationField(${hopId}, ${entryId}, 'victims'"]`);
+    let victimInput = document.querySelector(`input[onchange*="updateNotationField(${hopNumber}, ${entryId}, 'victims'"]`);
     if (!victimInput) {
         // Try finding by ID pattern
         const inputs = document.querySelectorAll('input');
         inputs.forEach(input => {
-            if (input.getAttribute('onchange') && input.getAttribute('onchange').includes(`updateNotationField(${hopId}, ${entryId}, 'victims'`)) {
+            if (input.getAttribute('onchange') && input.getAttribute('onchange').includes(`updateNotationField(${hopNumber}, ${entryId}, 'victims'`)) {
                 victimInput = input;
             }
         });
@@ -19637,16 +19638,16 @@ function updateNotationFieldsInUI(hopId, entryId) {
         victimInput.value = entry.victimNumbers || '';
         console.log(` Updated victim input to: ${entry.victimNumbers}`);
     } else {
-        console.log(` Could not find victim input for hop ${hopId} entry ${entryId}`);
+        console.log(` Could not find victim input for hop ${hopNumber} entry ${entryId}`);
     }
     
     // Find and update the transaction numbers input
-    let transactionInput = document.querySelector(`input[onchange*="updateNotationField(${hopId}, ${entryId}, 'transactions'"]`);
+    let transactionInput = document.querySelector(`input[onchange*="updateNotationField(${hopNumber}, ${entryId}, 'transactions'"]`);
     if (!transactionInput) {
         // Try finding by ID pattern
         const inputs = document.querySelectorAll('input');
         inputs.forEach(input => {
-            if (input.getAttribute('onchange') && input.getAttribute('onchange').includes(`updateNotationField(${hopId}, ${entryId}, 'transactions'`)) {
+            if (input.getAttribute('onchange') && input.getAttribute('onchange').includes(`updateNotationField(${hopNumber}, ${entryId}, 'transactions'`)) {
                 transactionInput = input;
             }
         });
@@ -19656,11 +19657,11 @@ function updateNotationFieldsInUI(hopId, entryId) {
         transactionInput.value = entry.transactionNumbers || '';
         console.log(` Updated transaction input to: ${entry.transactionNumbers}`);
     } else {
-        console.log(` Could not find transaction input for hop ${hopId} entry ${entryId}`);
+        console.log(` Could not find transaction input for hop ${hopNumber} entry ${entryId}`);
     }
     
     // Update the preview
-    const previewElement = document.getElementById(`notation_preview_${hopId}_${entryId}`);
+    const previewElement = document.getElementById(`notation_preview_${hopNumber}_${entryId}`);
     if (previewElement) {
         previewElement.textContent = entry.notation || 'Enter V and T numbers';
         console.log(` Updated preview to: ${entry.notation}`);
@@ -19668,25 +19669,25 @@ function updateNotationFieldsInUI(hopId, entryId) {
         console.log(` Could not find preview element`);
     }
 }
-function assignMaxToIndividualSource(hopId, entryId, sourceId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function assignMaxToIndividualSource(hopNumber, entryId, sourceId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
     
     // Get REAL-TIME maximum amount available
-    const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopId);
+    const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopNumber);
     
-    updateIndividualSourceAssignment(hopId, entryId, sourceId, maxAmount);
+    updateIndividualSourceAssignment(hopNumber, entryId, sourceId, maxAmount);
     
     // Also update the input field in the UI immediately
-    const inputField = document.querySelector(`input[onchange*="updateIndividualSourceAssignment(${hopId}, ${entryId}, '${sourceId}'"]`);
+    const inputField = document.querySelector(`input[onchange*="updateIndividualSourceAssignment(${hopNumber}, ${entryId}, '${sourceId}'"]`);
     if (inputField) {
         inputField.value = maxAmount;
         inputField.max = maxAmount; // Update the max attribute too
     }
 }
-function toggleSourceSelection(hopId, entryId, sourceId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function toggleSourceSelection(hopNumber, entryId, sourceId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.multipleSourceThreads) {
@@ -19760,7 +19761,7 @@ function toggleSourceSelection(hopId, entryId, sourceId) {
     
     // Clear the committed amounts since we're changing the selection
     entry.amount = '';
-    const mainAmountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
+    const mainAmountInput = document.getElementById(`assignAmount_${hopNumber}_${entryId}`);
     if (mainAmountInput) {
         mainAmountInput.value = '';
     }
@@ -19770,8 +19771,8 @@ function toggleSourceSelection(hopId, entryId, sourceId) {
     saveToStorage();
 }
 
-function updateProposedAmount(hopId, entryId, sourceId, amount) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateProposedAmount(hopNumber, entryId, sourceId, amount) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.individualSourceAssignments) {
@@ -19802,35 +19803,35 @@ function updateProposedAmount(hopId, entryId, sourceId, amount) {
         }
     }
     
-    const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopId);
+    const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopNumber);
     const proposedAmount = Math.min(parseFloat(amount) || 0, maxAmount);
     
     entry.individualSourceAssignments[sourceId] = proposedAmount;
     
     // Update the proposed summary
-    updateProposedSummary(hopId, entryId);
+    updateProposedSummary(hopNumber, entryId);
     saveToStorage();
 }
 
-function proposeMaxAmount(hopId, entryId, sourceId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function proposeMaxAmount(hopNumber, entryId, sourceId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-    const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopId);
+    const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopNumber);
     
-    updateProposedAmount(hopId, entryId, sourceId, maxAmount);
+    updateProposedAmount(hopNumber, entryId, sourceId, maxAmount);
     
     // Update the input field
-    const inputField = document.querySelector(`input[onchange*="updateProposedAmount(${hopId}, ${entryId}, '${sourceId}'"]`);
+    const inputField = document.querySelector(`input[onchange*="updateProposedAmount(${hopNumber}, ${entryId}, '${sourceId}'"]`);
     if (inputField) {
         inputField.value = maxAmount;
     }
 }
 
-function updateProposedSummary(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function updateProposedSummary(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
-    const summaryElement = document.getElementById(`proposedSummary_${hopId}_${entryId}`);
+    const summaryElement = document.getElementById(`proposedSummary_${hopNumber}_${entryId}`);
     
     if (!summaryElement || !entry.individualSourceAssignments) return;
     
@@ -19851,8 +19852,8 @@ function updateProposedSummary(hopId, entryId) {
     summaryElement.innerHTML = summaryHTML;
 }
 
-function commitAssignmentToEntry(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function commitAssignmentToEntry(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.individualSourceAssignments) {
@@ -19875,18 +19876,18 @@ function commitAssignmentToEntry(hopId, entryId) {
     entry.amount = totalAmount.toString();
     
     // Update the main amount input field
-    const mainAmountInput = document.getElementById(`assignAmount_${hopId}_${entryId}`);
+    const mainAmountInput = document.getElementById(`assignAmount_${hopNumber}_${entryId}`);
     if (mainAmountInput) {
         mainAmountInput.value = totalAmount;
     }
     
     // Generate notation if needed
     if (entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0) {
-        autoGenerateNotationFromMultipleSources(hopId, entryId, entry.multipleSourceThreads);
+        autoGenerateNotationFromMultipleSources(hopNumber, entryId, entry.multipleSourceThreads);
     }
     
     // Update full notation display
-    updateFullNotationDisplayMultiple(hopId, entryId);
+    updateFullNotationDisplayMultiple(hopNumber, entryId);
     
     alert(` Assignment committed! New thread total: ${totalAmount.toLocaleString()} ${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency}`);
     
@@ -19974,8 +19975,8 @@ function validateTracesEnhanced() {
     };
 }
 
-function distributeProportionally(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function distributeProportionally(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.multipleSourceThreads || entry.multipleSourceThreads.length === 0) return;
@@ -20004,12 +20005,12 @@ function distributeProportionally(hopId, entryId) {
     
     // Update total
     entry.amount = totalAvailable.toString();
-    updateMultipleSourcePreview(hopId, entryId);
+    updateMultipleSourcePreview(hopNumber, entryId);
     saveToStorage();
 }
 
-function depleteInOrder(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function depleteInOrder(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (!entry.multipleSourceThreads || entry.multipleSourceThreads.length === 0) return;
@@ -20022,7 +20023,7 @@ function depleteInOrder(hopId, entryId) {
     
     // Deplete each source in order
     entry.multipleSourceThreads.forEach(sourceId => {
-        const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopId);
+        const maxAmount = getMaxAssignableAmount(sourceId, currency, entry.id, entry.hopNumber);
         entry.individualSourceAssignments[sourceId] = maxAmount;
     });
     
@@ -20033,12 +20034,12 @@ function depleteInOrder(hopId, entryId) {
     });
     
     entry.amount = total.toString();
-    updateMultipleSourcePreview(hopId, entryId);
+    updateMultipleSourcePreview(hopNumber, entryId);
     saveToStorage();
 }
 
-function clearAllAssignments(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+function clearAllAssignments(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     if (entry.individualSourceAssignments) {
@@ -20048,7 +20049,7 @@ function clearAllAssignments(hopId, entryId) {
     }
     
     entry.amount = '0';
-    updateMultipleSourcePreview(hopId, entryId);
+    updateMultipleSourcePreview(hopNumber, entryId);
     saveToStorage();
 }
 
@@ -20101,9 +20102,9 @@ function updateChainDisplay() {
     }
 }
 
-function openBlockchainLookup(hopId, entryId) {
+function openBlockchainLookup(hopNumber, entryId) {
     // Store context for applying data later
-    targetEntryContext = { hopId, entryId };
+    targetEntryContext = { hopNumber, entryId };
     
     // Clear previous data
     currentTxData = null;
@@ -20330,8 +20331,8 @@ function displayTransactionData(txData) {
 function applyTransactionData() {
     if (!currentTxData || !targetEntryContext) return;
     
-    const { hopId, entryId } = targetEntryContext;
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+    const { hopNumber, entryId } = targetEntryContext;
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
     
     // Apply the data to the entry
@@ -20344,16 +20345,16 @@ function applyTransactionData() {
     entry.toWallet = currentTxData.to;
     
     // Update the form fields
-    document.getElementById(`txHash_${hopId}_${entryId}`).value = entry.txHash;
-    document.getElementById(`timestamp_${hopId}_${entryId}`).value = entry.timestamp;
-    document.getElementById(`assignAmount_${hopId}_${entryId}`).value = entry.amount;
-    document.getElementById(`toWallet_${hopId}_${entryId}`).value = entry.toWallet;
+    document.getElementById(`txHash_${hopNumber}_${entryId}`).value = entry.txHash;
+    document.getElementById(`timestamp_${hopNumber}_${entryId}`).value = entry.timestamp;
+    document.getElementById(`assignAmount_${hopNumber}_${entryId}`).value = entry.amount;
+    document.getElementById(`toWallet_${hopNumber}_${entryId}`).value = entry.toWallet;
     
     // Note: fromWallet is stored but not displayed in the form
     // It's used internally for transaction tracking
     
     // Update currency dropdown
-    const currencySelect = document.querySelector(`select[onchange*="updateEntry(${hopId}, ${entryId}, 'currency'"]`);
+    const currencySelect = document.querySelector(`select[onchange*="updateEntry(${hopNumber}, ${entryId}, 'currency'"]`);
     if (currencySelect) {
         currencySelect.value = entry.currency;
     }
@@ -21595,12 +21596,12 @@ async function checkArkhamAttribution(address) {
     }
 }
 
-function showAttributionModal(attributions, hopId, entryId) {
+function showAttributionModal(attributions, hopNumber, entryId) {
     if (!attributions || attributions.length === 0) return;
     
     // Store for later use
     currentAttributionData = attributions;
-    pendingAttributionForEntry = { hopId, entryId };
+    pendingAttributionForEntry = { hopNumber, entryId };
     
     // Build the content
     let content = '<div style="background: #e6f3ff; border: 2px solid #0066cc; border-radius: 8px; padding: 15px; margin-bottom: 20px;">';
@@ -21652,7 +21653,7 @@ function showAttributionModal(attributions, hopId, entryId) {
 function applyAttribution() {
     if (!currentAttributionData || !pendingAttributionForEntry) return;
     
-    const { hopId, entryId } = pendingAttributionForEntry;
+    const { hopNumber, entryId } = pendingAttributionForEntry;
     
     // Combine all attribution sources into notes
     let attributionNotes = [];
@@ -21665,7 +21666,7 @@ function applyAttribution() {
     const attributionNote = attributionNotes.join('\n');
     
     // Find the entry and add notes about the attribution
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (hop) {
         const entry = hop.entries.find(e => e.id === entryId);
         if (entry) {
@@ -21676,7 +21677,7 @@ function applyAttribution() {
             }
             
             // Update the notes field if it exists
-            const notesField = document.querySelector(`textarea[onchange*="updateHopEntry(${hopId}, ${entryId}, 'notes'"]`);
+            const notesField = document.querySelector(`textarea[onchange*="updateHopEntry(${hopNumber}, ${entryId}, 'notes'"]`);
             if (notesField) {
                 notesField.value = entry.notes;
             }
@@ -21713,9 +21714,9 @@ function detectBlockchainFromAddress(address) {
     return null;
 }
 
-async function handleWalletAutocomplete(input, hopId, entryId) {
+async function handleWalletAutocomplete(input, hopNumber, entryId) {
     const value = input.value.trim();
-    const dropdown = document.getElementById(`autocomplete_${hopId}_${entryId}`);
+    const dropdown = document.getElementById(`autocomplete_${hopNumber}_${entryId}`);
     
     // Clear any pending timeout
     if (autocompleteTimeout) {
@@ -21739,7 +21740,7 @@ async function handleWalletAutocomplete(input, hopId, entryId) {
             address: wallet.address,
             type: 'existing',
             walletInfo: wallet
-        })), hopId, entryId);
+        })), hopNumber, entryId);
         return;
     }
     
@@ -21759,7 +21760,7 @@ async function handleWalletAutocomplete(input, hopId, entryId) {
         try {
             const suggestions = await fetchAddressSuggestions(value, detectedChain);
             if (suggestions && suggestions.length > 0) {
-                showAutocompleteResults(dropdown, suggestions, hopId, entryId);
+                showAutocompleteResults(dropdown, suggestions, hopNumber, entryId);
             } else {
                 dropdown.innerHTML = `<div class="wallet-autocomplete-loading">No addresses found starting with "${value}"</div>`;
                 setTimeout(() => { dropdown.style.display = 'none'; }, 2000);
@@ -21880,7 +21881,7 @@ async function fetchAddressSuggestions(partialAddress, blockchain) {
     }
 }
 
-function showAutocompleteResults(dropdown, results, hopId, entryId) {
+function showAutocompleteResults(dropdown, results, hopNumber, entryId) {
     dropdown.innerHTML = '';
     dropdown.style.display = 'block';
     
@@ -21896,7 +21897,7 @@ function showAutocompleteResults(dropdown, results, hopId, entryId) {
                     ${result.walletInfo.permanentId} - ${walletTypes[result.walletInfo.permanentType] || result.walletInfo.permanentType}
                 </div>
             `;
-            item.onclick = () => selectAutocompleteAddress(result.address, hopId, entryId);
+            item.onclick = () => selectAutocompleteAddress(result.address, hopNumber, entryId);
         } else {
             // Blockchain validation result
             const statusColor = result.type === 'valid' ? '#27ae60' : '#e67e22';
@@ -21905,7 +21906,7 @@ function showAutocompleteResults(dropdown, results, hopId, entryId) {
                 <div class="wallet-autocomplete-blockchain">${result.blockchain} - ${result.note}</div>
             `;
             if (result.type === 'valid') {
-                item.onclick = () => selectAutocompleteAddress(result.address, hopId, entryId);
+                item.onclick = () => selectAutocompleteAddress(result.address, hopNumber, entryId);
             }
         }
         
@@ -21913,15 +21914,15 @@ function showAutocompleteResults(dropdown, results, hopId, entryId) {
     });
 }
 
-function selectAutocompleteAddress(address, hopId, entryId) {
-    const input = document.getElementById(`toWallet_${hopId}_${entryId}`);
-    const dropdown = document.getElementById(`autocomplete_${hopId}_${entryId}`);
+function selectAutocompleteAddress(address, hopNumber, entryId) {
+    const input = document.getElementById(`toWallet_${hopNumber}_${entryId}`);
+    const dropdown = document.getElementById(`autocomplete_${hopNumber}_${entryId}`);
     
     input.value = address;
     dropdown.style.display = 'none';
     
     // Trigger the change event
-    updateHopEntry(hopId, entryId, 'toWallet', address);
+    updateHopEntry(hopNumber, entryId, 'toWallet', address);
 }
 
 // Close autocomplete when clicking outside
@@ -22349,12 +22350,12 @@ async function lookupSolanaTransaction(txHash) {
 }
 
 // Victim Transaction Lookup Function
-async function lookupHopTransaction(hopId, entryId) {
-    const hop = investigation.hops.find(h => h.hopNumber === hopId);
+async function lookupHopTransaction(hopNumber, entryId) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop?.entries.find(e => e.id === entryId);
     if (!hop || !entry) return;
     
-    const txHash = document.getElementById(`txHash_${hopId}_${entryId}`)?.value?.trim();
+    const txHash = document.getElementById(`txHash_${hopNumber}_${entryId}`)?.value?.trim();
     if (!txHash) {
         alert('Please enter a transaction hash');
         return;
@@ -22396,36 +22397,36 @@ async function lookupHopTransaction(hopId, entryId) {
             // Handle multiple transfers case (batch transactions)
             if (txData.multipleTransfers) {
                 // Show transfer selection modal
-                showTransferSelectionForHop(hopId, entryId, txData.transfers);
+                showTransferSelectionForHop(hopNumber, entryId, txData.transfers);
                 return;
             }
             
             // Auto-populate hop entry fields
-            updateHopEntry(hopId, entryId, 'fromWallet', txData.from);
-            updateHopEntry(hopId, entryId, 'toWallet', txData.to);
-            updateHopEntry(hopId, entryId, 'amount', txData.amount); // Use 'amount' not 'value'
-            updateHopEntry(hopId, entryId, 'currency', txData.currency);
-            updateHopEntry(hopId, entryId, 'timestamp', formatDatetimeLocal(txData.time));
+            updateHopEntry(hopNumber, entryId, 'fromWallet', txData.from);
+            updateHopEntry(hopNumber, entryId, 'toWallet', txData.to);
+            updateHopEntry(hopNumber, entryId, 'amount', txData.amount); // Use 'amount' not 'value'
+            updateHopEntry(hopNumber, entryId, 'currency', txData.currency);
+            updateHopEntry(hopNumber, entryId, 'timestamp', formatDatetimeLocal(txData.time));
             
             // Update UI fields directly
-            const amountField = document.getElementById(`amount_${hopId}_${entryId}`);
+            const amountField = document.getElementById(`amount_${hopNumber}_${entryId}`);
             if (amountField) amountField.value = txData.amount; // Use 'amount' not 'value'
             
-            const currencySelect = document.querySelector(`[onchange*="updateHopEntry(${hopId}, ${entryId}, 'currency'"]`);
+            const currencySelect = document.querySelector(`[onchange*="updateHopEntry(${hopNumber}, ${entryId}, 'currency'"]`);
             if (currencySelect) {
                 currencySelect.value = txData.currency;
                 // Trigger currency change to update step
-                updateHopEntry(hopId, entryId, 'currency', txData.currency);
+                updateHopEntry(hopNumber, entryId, 'currency', txData.currency);
             }
             
-            const timestampField = document.getElementById(`timestamp_${hopId}_${entryId}`);
+            const timestampField = document.getElementById(`timestamp_${hopNumber}_${entryId}`);
             if (timestampField) timestampField.value = formatDatetimeLocal(txData.time);
             
-            const toWalletField = document.getElementById(`toWallet_${hopId}_${entryId}`);
+            const toWalletField = document.getElementById(`toWallet_${hopNumber}_${entryId}`);
             if (toWalletField) toWalletField.value = txData.to;
             
             // Update from wallet field if it exists
-            const fromWalletField = document.querySelector(`input[onchange*="updateHopEntry(${hopId}, ${entryId}, 'fromWallet'"]`);
+            const fromWalletField = document.querySelector(`input[onchange*="updateHopEntry(${hopNumber}, ${entryId}, 'fromWallet'"]`);
             if (fromWalletField) fromWalletField.value = txData.from;
             
             let alertMessage = ` Transaction data loaded:\n\nFrom: ${txData.from}\nTo: ${txData.to}\nAmount: ${txData.amount} ${txData.currency}\nTime: ${new Date(txData.time).toLocaleString()}`;
@@ -22446,7 +22447,7 @@ async function lookupHopTransaction(hopId, entryId) {
     }
 }
 
-function showTransferSelectionForHop(hopId, entryId, transfers) {
+function showTransferSelectionForHop(hopNumber, entryId, transfers) {
     const modalHTML = `
         <div id="hopTransferModal" class="modal" style="display: block;">
             <div class="modal-content" style="max-width: 700px;">
@@ -22460,7 +22461,7 @@ function showTransferSelectionForHop(hopId, entryId, transfers) {
                         <div style="background: white; border: 2px solid #e8f0fe; border-radius: 8px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;"
                              onmouseover="this.style.borderColor='#3498db'; this.style.transform='translateY(-2px)'"
                              onmouseout="this.style.borderColor='#e8f0fe'; this.style.transform='translateY(0)'"
-                             onclick="selectHopTransfer(${hopId}, ${entryId}, ${index})">
+                             onclick="selectHopTransfer(${hopNumber}, ${entryId}, ${index})">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <div>
                                     <strong>From:</strong><br>
@@ -22494,21 +22495,21 @@ function showTransferSelectionForHop(hopId, entryId, transfers) {
     createCenteredModal('hopTransferModal', modalHTML);
 }
 
-function selectHopTransfer(hopId, entryId, transferIndex) {
+function selectHopTransfer(hopNumber, entryId, transferIndex) {
     const transfer = window.hopTransferData[transferIndex];
     if (!transfer) return;
     
     // Populate the hop entry with selected transfer
-    updateHopEntry(hopId, entryId, 'fromWallet', transfer.from);
-    updateHopEntry(hopId, entryId, 'toWallet', transfer.to);
-    updateHopEntry(hopId, entryId, 'amount', transfer.amount);
-    updateHopEntry(hopId, entryId, 'currency', transfer.currency);
+    updateHopEntry(hopNumber, entryId, 'fromWallet', transfer.from);
+    updateHopEntry(hopNumber, entryId, 'toWallet', transfer.to);
+    updateHopEntry(hopNumber, entryId, 'amount', transfer.amount);
+    updateHopEntry(hopNumber, entryId, 'currency', transfer.currency);
     
     // Update UI fields
-    const amountField = document.getElementById(`amount_${hopId}_${entryId}`);
+    const amountField = document.getElementById(`amount_${hopNumber}_${entryId}`);
     if (amountField) amountField.value = transfer.amount;
     
-    const toWalletField = document.getElementById(`toWallet_${hopId}_${entryId}`);
+    const toWalletField = document.getElementById(`toWallet_${hopNumber}_${entryId}`);
     if (toWalletField) toWalletField.value = transfer.to;
     
     alert(` Transfer selected:\n\nFrom: ${transfer.from}\nTo: ${transfer.to}\nAmount: ${transfer.amount} ${transfer.currency}`);
@@ -23314,7 +23315,7 @@ To (RED Wallet): ${transfer.to}`;
         }
         
         // Check wallet entity when address is entered
-        async function checkWalletEntity(address, hopId, entryId) {
+        async function checkWalletEntity(address, hopNumber, entryId) {
             if (!address || address.trim() === '') return;
             
             // Detect blockchain from address
@@ -23329,7 +23330,7 @@ To (RED Wallet): ${transfer.to}`;
             if (!detectedBlockchain) return;
             
             // Show loading state
-            const entityInfoDiv = document.getElementById(`entityInfo_${hopId}_${entryId}`);
+            const entityInfoDiv = document.getElementById(`entityInfo_${hopNumber}_${entryId}`);
             if (entityInfoDiv) {
                 entityInfoDiv.style.display = 'block';
                 entityInfoDiv.innerHTML = '<div style="text-align: center;">🔍 Checking wallet entity...</div>';
@@ -23357,10 +23358,10 @@ To (RED Wallet): ${transfer.to}`;
                         
                         // Auto-update wallet type if it's an exchange
                         if (entityData.category === 'Exchange' || entityData.category === 'Exchange/Service') {
-                            const walletTypeSelect = document.querySelector(`select[onchange*="updateHopEntryWalletType(${hopId}, ${entryId}"]`);
+                            const walletTypeSelect = document.querySelector(`select[onchange*="updateHopEntryWalletType(${hopNumber}, ${entryId}"]`);
                             if (walletTypeSelect && walletTypeSelect.value !== 'purple') {
                                 walletTypeSelect.value = 'purple';
-                                updateHopEntryWalletType(hopId, entryId, 'purple');
+                                updateHopEntryWalletType(hopNumber, entryId, 'purple');
                                 
                                 // Add note about auto-classification
                                 entityInfoDiv.innerHTML += `
@@ -23370,7 +23371,7 @@ To (RED Wallet): ${transfer.to}`;
                                 `;
                                 
                                 // Show terminal wallet notification
-                                showTerminalWalletNotification(entityData, address, hopId, entryId);
+                                showTerminalWalletNotification(entityData, address, hopNumber, entryId);
                             }
                         }
                     }
@@ -23566,7 +23567,7 @@ To (RED Wallet): ${transfer.to}`;
         }
         
         // Show terminal wallet notification
-        function showTerminalWalletNotification(entityData, address, hopId, entryId) {
+        function showTerminalWalletNotification(entityData, address, hopNumber, entryId) {
             // Create overlay
             const overlay = document.createElement('div');
             overlay.className = 'terminal-notification-overlay';
@@ -23603,7 +23604,7 @@ To (RED Wallet): ${transfer.to}`;
                     </div>
                     
                     <div style="display: flex; gap: 15px; justify-content: center;">
-                        <button class="btn btn-confirm" onclick="markAsTerminal(${hopId}, ${entryId})" style="background: #9b59b6; padding: 12px 30px; font-size: 16px;">
+                        <button class="btn btn-confirm" onclick="markAsTerminal(${hopNumber}, ${entryId})" style="background: #9b59b6; padding: 12px 30px; font-size: 16px;">
                             ✓ Mark as Terminal & Continue
                         </button>
                         <button class="btn btn-secondary" onclick="closeTerminalNotification()" style="padding: 12px 30px; font-size: 16px;">
@@ -23629,12 +23630,12 @@ To (RED Wallet): ${transfer.to}`;
             if (notification) notification.remove();
         }
         
-        function markAsTerminal(hopId, entryId) {
+        function markAsTerminal(hopNumber, entryId) {
             // The wallet is already marked as purple, just close the notification
             closeTerminalNotification();
             
             // Optionally add a note about terminal status
-            const hop = investigation.hops.find(h => h.hopNumber === hopId);
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             if (hop) {
                 const entry = hop.entries.find(e => e.id === entryId);
                 if (entry) {

@@ -3,22 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 22:13)
+## Latest Commit (Auto-updated: 2025-09-23 06:03)
 
-**Commit:** b1058ab13dbc9154d7491247cd462faa855dd099
+**Commit:** bf1e5df8b850c89cff0dd33b330b4d1456894f70
 **Author:** Your Name
-**Message:** Fix thread ID format to prevent hop number accumulation
+**Message:** Fix hop wizard step 3 'Log Entry' button disabled issue
 
-Thread IDs should not accumulate hop numbers as they progress through hops.
-The notation already contains the current hop number (e.g., V1-T1-H2),
-so appending another hop number created duplicates like V1-T1-H1-H2.
+The Log Entry button in step 3 was incorrectly disabled even when transaction
+hash was entered. Step 3 is essential for entering transaction details and notes.
 
 Changes:
-- Thread ID is now just the notation itself (no additional -H suffix)
-- This prevents patterns like V1-T1-H1-H2-H3 from accumulating
-- Ensures consistent thread tracking across all hop levels
+- Restored proper step 3 flow (not skipping it)
+- Fixed button enablement logic to check just for txHash in lookup mode
+- Added checkWizardButtonState() function to update button when data changes
+- Button now enables when txHash is entered, even without clicking Lookup
+- Manual mode still requires both txHash and toWallet as expected
 
-This fixes navigation issues from hop 2 to hop 3 and beyond.
+This ensures users can properly enter transaction details and notes in step 3.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -26,29 +27,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                   |   47 +-
- TEST_RESULTS.md             |  152 ++++++
- browser_test_suite.js       |  573 ++++++++++++++++++++++
- comprehensive_test_suite.js | 1127 +++++++++++++++++++++++++++++++++++++++++++
- index.html                  |   18 +-
- realistic_simulations.js    |  795 ++++++++++++++++++++++++++++++
- test_hop_navigation.js      |  255 ++++++++++
- test_writeoffs_art.js       |  463 ++++++++++++++++++
- 8 files changed, 3398 insertions(+), 32 deletions(-)
+ CLAUDE.md         |  55 ++++++++-------
+ index.html        |  61 +++++++++++++----
+ verify_hop_fix.js | 200 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 279 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b1058ab Fix thread ID format to prevent hop number accumulation (0 seconds ago)
-- 7954cb3 Fix unintended consequences of hop ID removal (24 minutes ago)
-- 01bf713 Remove hop IDs and use hop numbers as primary identifier (37 minutes ago)
-- 1c99f22 Document hop ID refactoring needs (43 minutes ago)
-- 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (45 minutes ago)
-- 72014da Update CLAUDE.md with latest commit info (55 minutes ago)
-- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (59 minutes ago)
-- c012b7f Enhance swap wizard with checkboxes and partial swap support (72 minutes ago)
-- a768bdd Streamline hop completion to single click instead of 4 modals (75 minutes ago)
-- a2647b1 Add transaction hash lookup for DEX/Swap wizard (83 minutes ago)
+- bf1e5df Fix hop wizard step 3 'Log Entry' button disabled issue (0 seconds ago)
+- b1058ab Fix thread ID format to prevent hop number accumulation (8 hours ago)
+- 7954cb3 Fix unintended consequences of hop ID removal (8 hours ago)
+- 01bf713 Remove hop IDs and use hop numbers as primary identifier (8 hours ago)
+- 1c99f22 Document hop ID refactoring needs (9 hours ago)
+- 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (9 hours ago)
+- 72014da Update CLAUDE.md with latest commit info (9 hours ago)
+- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (9 hours ago)
+- c012b7f Enhance swap wizard with checkboxes and partial swap support (9 hours ago)
+- a768bdd Streamline hop completion to single click instead of 4 modals (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
