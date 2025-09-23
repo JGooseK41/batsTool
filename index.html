@@ -16202,78 +16202,8 @@ function selectWizardTransfer(index) {
     confirmWizardOutputSelection();
 }
 
-function createSwapEntryFromWizard(hop, wizardData) {
-    const swapDetails = wizardData.swapDetails;
-
-    // Generate notation for the swap
-    let notation = '';
-    if (wizardData.selectedThreads.length === 1) {
-        // Keep the same notation, just document the currency change
-        notation = wizardData.selectedThreads[0];
-    } else if (wizardData.selectedThreads.length > 1) {
-        // For commingling, use parentheses format
-        const threadsByVictim = {};
-        wizardData.selectedThreads.forEach(threadId => {
-            const match = threadId.match(/V(\d+)-T([\d,]+)/);
-            if (match) {
-                const victimId = match[1];
-                const transactionIds = match[2];
-                if (!threadsByVictim[victimId]) {
-                    threadsByVictim[victimId] = [];
-                }
-                threadsByVictim[victimId].push(transactionIds);
-            }
-        });
-
-        const notationParts = [];
-        Object.keys(threadsByVictim).sort((a, b) => parseInt(a) - parseInt(b)).forEach(victimId => {
-            const transactions = threadsByVictim[victimId].sort().join(',');
-            notationParts.push(`(V${victimId}-T${transactions})`);
-        });
-        notation = `${notationParts.join(' ')} H${hop.hopNumber}`;
-    }
-    notation += ` [SWAP: ${swapDetails.fromCurrency} → ${swapDetails.toCurrency}]`;
-
-    // Create the swap entry
-    const swapEntry = {
-        id: hop.entries.length + 1,
-        hopId: hop.id,
-        hopNumber: hop.hopNumber,
-        entryType: 'swap',
-        notation: notation,
-        fromWallet: wizardData.txData?.from || '',  // User wallet sending to DEX
-        fromWalletType: 'black',  // Usually the user's wallet
-        toWallet: swapDetails.dexAddress,  // DEX contract
-        toWalletType: 'brown',  // BROWN for DEX/asset conversion
-        amount: swapDetails.fromAmount.toString(),
-        outputAmount: swapDetails.toAmount.toString(),  // New field for swap output
-        currency: swapDetails.fromCurrency,  // Input currency
-        outputCurrency: swapDetails.toCurrency,  // Output currency
-        txHash: wizardData.txHash,
-        timestamp: wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '',
-        timezone: 'UTC',
-        notes: `Asset conversion via DEX: ${swapDetails.fromAmount} ${swapDetails.fromCurrency} swapped for ${swapDetails.toAmount} ${swapDetails.toCurrency}`,
-        sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
-        multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
-        individualSourceAssignments: wizardData.selectedThreads.length > 1 ? wizardData.allocations : {},
-        isSwap: true,
-        swapDetails: swapDetails
-    };
-
-    // Save undo state
-    saveUndoState(`Add swap entry to Hop ${hop.hopNumber}`);
-
-    // Add the swap entry
-    hop.entries.push(swapEntry);
-
-    // Sort entries by timestamp
-    sortHopEntriesChronologically(hop);
-
-    // Update available threads - convert the currency
-    updateThreadsAfterSwap(hop, swapEntry);
-
-    console.log(`✅ Created swap entry: ${swapDetails.fromAmount} ${swapDetails.fromCurrency} → ${swapDetails.toAmount} ${swapDetails.toCurrency}`);
-}
+// [REMOVED: createSwapEntryFromWizard function - redundant with createSwapEntry()]
+// The dedicated swap wizard's createSwapEntry function is used instead
 
 function updateThreadsAfterSwap(hop, swapEntry) {
     // This function updates the available threads to reflect the currency conversion
@@ -16475,20 +16405,10 @@ function createHopEntryFromWizard() {
 
     // Check if this is a swap transaction
     if (wizardData.isSwap && wizardData.swapDetails) {
-        // Create a swap entry
-        createSwapEntryFromWizard(hop, wizardData);
-
+        // Redirect to the dedicated swap wizard instead of using the old function
+        console.log('Swap detected - redirecting to dedicated swap wizard');
         closeHopWizard();
-        buildAvailableThreadsIndex();
-        renderHops();
-        saveToStorage();
-
-        // Show success message
-        showNotification(
-            `Swap entry created: ${wizardData.swapDetails.fromAmount} ${wizardData.swapDetails.fromCurrency} → ${wizardData.swapDetails.toAmount} ${wizardData.swapDetails.toCurrency}`,
-            'success'
-        );
-
+        alert('Swap transaction detected! Please use "Add Entry" → "DEX/Asset Conversion" for proper swap tracking.');
         return;
     }
 
