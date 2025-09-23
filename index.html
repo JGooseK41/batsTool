@@ -3244,13 +3244,14 @@
             conversions: [],
             redWalletIndex: [],
             universalWalletIndex: [],
+            terminalWalletIndex: [],  // New: Track all terminal wallet arrivals
             rootTotalConfirmed: false,
             confirmedRootTotal: 0,
             confirmedRootTotalsByCurrency: {},
             currentART: {},
             created: new Date().toISOString(),
-            availableThreads: {},           
-            threadAssignments: {},          
+            availableThreads: {},
+            threadAssignments: {},
             sourceChainData: {},
             enhancedNotationEnabled: true,
             validationHistory: [],
@@ -3333,6 +3334,33 @@
 
         // Cache for wallet attributions to reduce API calls
         const walletAttributionCache = {};
+
+        // Add entry to terminal wallet index
+        function addToTerminalWalletIndex(entry) {
+            if (!investigation.terminalWalletIndex) {
+                investigation.terminalWalletIndex = [];
+            }
+
+            const terminalRecord = {
+                id: Date.now(),
+                timestamp: entry.timestamp || new Date().toISOString(),
+                hopNumber: entry.hopNumber,
+                txHash: entry.txHash,
+                fromWallet: entry.fromWallet,
+                toWallet: entry.toWallet,
+                exchangeName: entry.exchangeAttribution?.name || entry.exchangeAttribution?.label || 'Unknown Exchange',
+                exchangeType: entry.exchangeAttribution?.type || 'Terminal',
+                amount: parseFloat(entry.amount),
+                currency: entry.currency,
+                notation: entry.notation,
+                detectionSource: entry.exchangeAttribution?.source || 'manual',
+                notes: entry.notes || ''
+            };
+
+            investigation.terminalWalletIndex.push(terminalRecord);
+            console.log('Added to terminal wallet index:', terminalRecord);
+            saveToStorage();
+        }
 
         // Get wallet attribution from Etherscan API with enhanced label detection
         async function getWalletAttribution(address) {
@@ -3599,6 +3627,183 @@
             }
 
             return null;
+        }
+
+        // Get Bitcoin wallet attribution from Arkham Intelligence or other sources
+        async function getBitcoinWalletAttribution(address) {
+            if (!address) return null;
+
+            // Check cache first
+            if (walletAttributionCache[address]) {
+                console.log(`Using cached Bitcoin attribution for ${address}`);
+                return walletAttributionCache[address];
+            }
+
+            try {
+                let attribution = null;
+
+                // Try Arkham Intelligence API first
+                // Note: Arkham requires API key - this is a placeholder implementation
+                // In production, you'd need to register at https://intel.arkham.io/
+                const arkhamApiKey = 'YOUR_ARKHAM_API_KEY'; // User should replace this
+
+                if (arkhamApiKey && arkhamApiKey !== 'YOUR_ARKHAM_API_KEY') {
+                    try {
+                        const arkhamUrl = `https://api.arkhamintelligence.com/intelligence/address/${address}`;
+                        const arkhamResponse = await fetch(arkhamUrl, {
+                            headers: {
+                                'API-Key': arkhamApiKey,
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (arkhamResponse.ok) {
+                            const arkhamData = await arkhamResponse.json();
+                            if (arkhamData && arkhamData.arkhamEntity) {
+                                attribution = {
+                                    name: arkhamData.arkhamEntity.name,
+                                    label: arkhamData.arkhamEntity.type || 'Exchange',
+                                    type: arkhamData.arkhamEntity.category || 'CEX',
+                                    source: 'arkham_intelligence',
+                                    metadata: arkhamData.arkhamEntity
+                                };
+                                console.log('Arkham Intelligence attribution found:', attribution);
+                            }
+                        }
+                    } catch (err) {
+                        console.log('Arkham API lookup failed:', err);
+                    }
+                }
+
+                // Fallback to Blockchain.info labels
+                if (!attribution) {
+                    try {
+                        // Check if address has known tags from blockchain.info
+                        const blockchainInfoUrl = `https://blockchain.info/rawaddr/${address}?limit=1`;
+                        const blockchainResponse = await fetch(blockchainInfoUrl);
+
+                        if (blockchainResponse.ok) {
+                            const blockchainData = await blockchainResponse.json();
+
+                            // Check for high transaction count (indicator of exchange)
+                            if (blockchainData.n_tx > 10000) {
+                                attribution = {
+                                    name: 'High-Activity Wallet',
+                                    label: 'Possible Exchange',
+                                    type: 'Possible CEX',
+                                    source: 'transaction_analysis',
+                                    transactionCount: blockchainData.n_tx
+                                };
+                            }
+                        }
+                    } catch (err) {
+                        console.log('Blockchain.info check failed:', err);
+                    }
+                }
+
+                // Fallback to known Bitcoin exchange addresses
+                if (!attribution) {
+                    const knownBitcoinExchanges = {
+                        // Binance
+                        '34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo': { name: 'Binance', label: 'Binance Cold Wallet' },
+                        '3LYJfcfHPXYJreMsASk2jkn69LWEYKzexb': { name: 'Binance', label: 'Binance Hot Wallet' },
+                        // Coinbase
+                        '3PX76NNVuJUetXJRUrzLCqVssHGVPhBz5A': { name: 'Coinbase', label: 'Coinbase Cold Storage' },
+                        // Bitfinex
+                        '3D2oetdNuZUqQHPJmcMDDHYoqkyNVsFk9r': { name: 'Bitfinex', label: 'Bitfinex Cold Wallet' },
+                        '1Kr6QSydW9bFQG1mXiPNNu6WpJGmUa9i1g': { name: 'Bitfinex', label: 'Bitfinex Old Cold Wallet' },
+                        // Kraken
+                        '3KBjvJZMRrjAqN5fCkPJBUXuLwR8Lq2Rpr': { name: 'Kraken', label: 'Kraken Cold Wallet' },
+                        // Huobi
+                        '3Kzh7ZV5NszLMLJrW5dgvgWb7PbYtLxm5W': { name: 'Huobi', label: 'Huobi Cold Wallet' },
+                        // Bitstamp
+                        '3CgUiDF7M76BkXaKvixMSrKhq1cVqAFetH': { name: 'Bitstamp', label: 'Bitstamp Cold Wallet' },
+                        // Add more as needed
+                    };
+
+                    if (knownBitcoinExchanges[address]) {
+                        attribution = {
+                            ...knownBitcoinExchanges[address],
+                            type: 'CEX',
+                            source: 'known_btc_addresses'
+                        };
+                    }
+                }
+
+                // Cache the result
+                walletAttributionCache[address] = attribution;
+
+                if (attribution) {
+                    console.log(`🟣 Bitcoin terminal wallet detected: ${attribution.name}`);
+                    console.log(`   Address: ${address}`);
+                    console.log(`   Source: ${attribution.source}`);
+                }
+
+                return attribution;
+
+            } catch (error) {
+                console.error('Error fetching Bitcoin wallet attribution:', error);
+                return null;
+            }
+        }
+
+        // Terminal wallet confirmation functions
+        function confirmTerminalWallet() {
+            if (!window.hopWizardData || !window.hopWizardData.detectedAttribution) {
+                alert('No terminal wallet attribution detected.');
+                return;
+            }
+
+            const attribution = window.hopWizardData.detectedAttribution;
+            const confirmMsg = `🛑 Terminal Wallet Detected\n\n` +
+                `Exchange: ${attribution.name || attribution.label}\n` +
+                `Type: ${attribution.type}\n` +
+                `Detection Source: ${attribution.source}\n\n` +
+                `Do you want to end the trace at this terminal wallet?\n\n` +
+                `This will:\n` +
+                `• Create a PURPLE (terminal) wallet entry\n` +
+                `• Mark funds as arrived at exchange\n` +
+                `• Add to terminal wallet index for reporting\n` +
+                `• Stop tracing this thread`;
+
+            if (confirm(confirmMsg)) {
+                // Mark wizard data to create terminal entry
+                window.hopWizardData.isTerminalWallet = true;
+                window.hopWizardData.terminalWalletType = 'purple';
+
+                // Update the UI to show terminal wallet will be created
+                const resultDiv = document.getElementById('wizardTxResult');
+                const terminalNote = document.createElement('div');
+                terminalNote.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; padding: 10px; margin-top: 10px; border-radius: 4px;';
+                terminalNote.innerHTML = `
+                    <strong>🟣 Terminal Wallet Entry Will Be Created</strong><br>
+                    This entry will be marked as a terminal wallet (PURPLE) and added to the terminal wallet index.
+                `;
+
+                const existingNote = resultDiv.querySelector('div[style*="#e1bee7"]');
+                if (!existingNote) {
+                    resultDiv.appendChild(terminalNote);
+                }
+
+                showNotification('Terminal wallet confirmed. Entry will be marked as PURPLE.', 'success');
+            }
+        }
+
+        function continueTraceFromTerminal() {
+            if (!window.hopWizardData) return;
+
+            const confirmMsg = `⚠️ Continue Trace from Terminal Wallet\n\n` +
+                `Are you sure you want to continue tracing from this terminal wallet?\n\n` +
+                `Note: Funds at exchanges are typically pooled and further tracing may not be meaningful without exchange cooperation.\n\n` +
+                `This will create a regular entry but note the terminal wallet detection.`;
+
+            if (confirm(confirmMsg)) {
+                // Don't mark as terminal, but add note about detection
+                window.hopWizardData.isTerminalWallet = false;
+                window.hopWizardData.addTerminalNote = true;
+
+                showNotification('Continuing trace. Terminal wallet detection will be noted.', 'info');
+            }
         }
 
         // Shared EVM chain response parser
@@ -9781,24 +9986,255 @@ function addNewHop() {
             
             document.getElementById('patternDetectionContent').innerHTML = patternHTML;
             
-            // Terminal Summary
+            // Enhanced Terminal Summary with exchange details
             const terminalWallets = getTerminalWallets();
             let terminalHTML = '<div style="margin-top: 20px;">';
+
+            // Add export button for terminal wallet report
+            terminalHTML += `
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="exportTerminalWalletReport()" style="margin-right: 10px;">
+                        📊 Export Terminal Wallet Report
+                    </button>
+                    <button class="btn btn-secondary" onclick="copyTerminalWalletReport()">
+                        📋 Copy Report to Clipboard
+                    </button>
+                </div>
+            `;
+
             Object.entries(terminalWallets).forEach(([type, wallets]) => {
+                if (wallets.length === 0) return;
+
                 terminalHTML += `<h4>${type} Wallets (${wallets.length})</h4>`;
-                terminalHTML += '<ul>';
-                wallets.forEach(w => {
-                    terminalHTML += `<li style="margin-bottom: 5px;">
-                        <strong>${w.wallet}</strong>: ${w.amount.toLocaleString()} ${w.currency}
-                    </li>`;
-                });
-                terminalHTML += '</ul>';
+
+                if (type === 'Purple (Exchange)' && wallets.length > 0) {
+                    // Enhanced display for exchange wallets
+                    terminalHTML += '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+                    terminalHTML += '<table style="width: 100%; border-collapse: collapse;">';
+                    terminalHTML += `
+                        <thead>
+                            <tr style="border-bottom: 2px solid #dee2e6;">
+                                <th style="padding: 10px; text-align: left;">Exchange</th>
+                                <th style="padding: 10px; text-align: left;">Amount</th>
+                                <th style="padding: 10px; text-align: left;">Wallet</th>
+                                <th style="padding: 10px; text-align: left;">Timestamp</th>
+                                <th style="padding: 10px; text-align: left;">Hop</th>
+                                <th style="padding: 10px; text-align: left;">Source</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                    `;
+
+                    wallets.forEach(w => {
+                        terminalHTML += `
+                            <tr style="border-bottom: 1px solid #dee2e6;">
+                                <td style="padding: 10px;">
+                                    <strong style="color: #9b59b6;">${w.exchangeName || 'Unknown'}</strong>
+                                </td>
+                                <td style="padding: 10px;">
+                                    ${w.amount.toLocaleString()} ${w.currency}
+                                </td>
+                                <td style="padding: 10px; font-family: monospace; font-size: 11px;">
+                                    ${w.wallet.substring(0, 15)}...${w.wallet.substring(w.wallet.length - 10)}
+                                </td>
+                                <td style="padding: 10px; font-size: 12px;">
+                                    ${w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A'}
+                                </td>
+                                <td style="padding: 10px;">
+                                    ${w.hopNumber ? `Hop ${w.hopNumber}` : 'N/A'}
+                                </td>
+                                <td style="padding: 10px; font-size: 11px;">
+                                    ${w.detectionSource || 'Manual'}
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    terminalHTML += '</tbody></table></div>';
+
+                    // Summary statistics
+                    const totalByExchange = {};
+                    wallets.forEach(w => {
+                        const key = `${w.exchangeName || 'Unknown'}_${w.currency}`;
+                        if (!totalByExchange[key]) {
+                            totalByExchange[key] = {
+                                exchange: w.exchangeName || 'Unknown',
+                                currency: w.currency,
+                                total: 0,
+                                count: 0
+                            };
+                        }
+                        totalByExchange[key].total += w.amount;
+                        totalByExchange[key].count++;
+                    });
+
+                    terminalHTML += '<div style="background: #e1bee7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+                    terminalHTML += '<h5>📊 Exchange Summary:</h5>';
+                    Object.values(totalByExchange).forEach(summary => {
+                        terminalHTML += `
+                            <div style="margin: 10px 0;">
+                                <strong>${summary.exchange}:</strong>
+                                ${summary.total.toLocaleString()} ${summary.currency}
+                                (${summary.count} transaction${summary.count > 1 ? 's' : ''})
+                            </div>
+                        `;
+                    });
+                    terminalHTML += '</div>';
+
+                } else {
+                    // Standard display for other terminal types
+                    terminalHTML += '<ul>';
+                    wallets.forEach(w => {
+                        terminalHTML += `<li style="margin-bottom: 5px;">
+                            <strong>${w.wallet}</strong>: ${w.amount.toLocaleString()} ${w.currency}
+                        </li>`;
+                    });
+                    terminalHTML += '</ul>';
+                }
             });
             terminalHTML += '</div>';
-            
+
             document.getElementById('terminalSummaryContent').innerHTML = terminalHTML;
         }
         
+        // Export terminal wallet report
+        function exportTerminalWalletReport() {
+            const terminals = getTerminalWallets();
+            const exchangeWallets = terminals['Purple (Exchange)'] || [];
+
+            if (exchangeWallets.length === 0) {
+                alert('No terminal wallet arrivals to export.');
+                return;
+            }
+
+            // Prepare CSV data
+            const csvData = [];
+            csvData.push({
+                'Date/Time (UTC)': 'Date/Time (UTC)',
+                'Exchange': 'Exchange',
+                'Amount': 'Amount',
+                'Currency': 'Currency',
+                'Receiving Wallet': 'Receiving Wallet',
+                'Sending Wallet': 'Sending Wallet',
+                'Transaction Hash': 'Transaction Hash',
+                'Hop Number': 'Hop Number',
+                'Detection Source': 'Detection Source',
+                'Case ID': 'Case ID',
+                'Investigator': 'Investigator'
+            });
+
+            exchangeWallets.forEach(wallet => {
+                csvData.push({
+                    'Date/Time (UTC)': wallet.timestamp ? formatDateTimeForReport(wallet.timestamp, 'UTC') : 'N/A',
+                    'Exchange': wallet.exchangeName || 'Unknown Exchange',
+                    'Amount': wallet.amount.toLocaleString(),
+                    'Currency': wallet.currency,
+                    'Receiving Wallet': wallet.wallet,
+                    'Sending Wallet': wallet.fromWallet || 'N/A',
+                    'Transaction Hash': wallet.txHash || 'N/A',
+                    'Hop Number': wallet.hopNumber ? `Hop ${wallet.hopNumber}` : 'N/A',
+                    'Detection Source': wallet.detectionSource || 'Manual',
+                    'Case ID': investigation.caseId,
+                    'Investigator': investigation.investigator
+                });
+            });
+
+            // Generate filename with timestamp
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const filename = `Terminal_Wallet_Report_${investigation.caseId}_${timestamp}.csv`;
+
+            exportToCSV(csvData, filename);
+            showNotification(`Terminal wallet report exported as ${filename}`, 'success');
+        }
+
+        // Copy terminal wallet report to clipboard
+        function copyTerminalWalletReport() {
+            const terminals = getTerminalWallets();
+            const exchangeWallets = terminals['Purple (Exchange)'] || [];
+
+            if (exchangeWallets.length === 0) {
+                alert('No terminal wallet arrivals to copy.');
+                return;
+            }
+
+            let report = '=== TERMINAL WALLET ARRIVAL REPORT ===\n\n';
+            report += `Case ID: ${investigation.caseId}\n`;
+            report += `Investigator: ${investigation.investigator}\n`;
+            report += `Report Generated: ${new Date().toISOString()}\n\n`;
+
+            // Group by exchange
+            const byExchange = {};
+            exchangeWallets.forEach(wallet => {
+                const exchange = wallet.exchangeName || 'Unknown Exchange';
+                if (!byExchange[exchange]) {
+                    byExchange[exchange] = [];
+                }
+                byExchange[exchange].push(wallet);
+            });
+
+            // Generate report for each exchange
+            Object.entries(byExchange).forEach(([exchange, wallets]) => {
+                report += `\n=== ${exchange.toUpperCase()} ===\n`;
+                report += `Total Arrivals: ${wallets.length}\n\n`;
+
+                wallets.forEach((wallet, index) => {
+                    report += `${index + 1}. ${wallet.amount.toLocaleString()} ${wallet.currency}\n`;
+                    report += `   Date/Time: ${wallet.timestamp ? new Date(wallet.timestamp).toLocaleString() : 'N/A'}\n`;
+                    report += `   Receiving Wallet: ${wallet.wallet}\n`;
+                    if (wallet.fromWallet) {
+                        report += `   Sending Wallet: ${wallet.fromWallet}\n`;
+                    }
+                    if (wallet.txHash) {
+                        report += `   Transaction Hash: ${wallet.txHash}\n`;
+                    }
+                    report += `   Hop: ${wallet.hopNumber ? wallet.hopNumber : 'N/A'}\n`;
+                    report += `   Detection: ${wallet.detectionSource || 'Manual'}\n\n`;
+                });
+            });
+
+            // Summary
+            report += '\n=== SUMMARY ===\n';
+            const totals = {};
+            exchangeWallets.forEach(wallet => {
+                const key = `${wallet.currency}_${wallet.exchangeName || 'Unknown'}`;
+                if (!totals[key]) {
+                    totals[key] = {
+                        currency: wallet.currency,
+                        exchange: wallet.exchangeName || 'Unknown',
+                        amount: 0,
+                        count: 0
+                    };
+                }
+                totals[key].amount += wallet.amount;
+                totals[key].count++;
+            });
+
+            Object.values(totals).forEach(total => {
+                report += `${total.exchange}: ${total.amount.toLocaleString()} ${total.currency} (${total.count} transaction${total.count > 1 ? 's' : ''})\n`;
+            });
+
+            report += '\n=== LEGAL PROCESS REQUIREMENTS ===\n';
+            report += 'The following exchanges have been identified as receiving stolen funds:\n\n';
+
+            const uniqueExchanges = [...new Set(exchangeWallets.map(w => w.exchangeName || 'Unknown'))];
+            uniqueExchanges.forEach(exchange => {
+                report += `• ${exchange}\n`;
+            });
+
+            report += '\nLegal process (subpoenas, court orders, or international cooperation) may be required to:\n';
+            report += '• Identify account holders at these exchanges\n';
+            report += '• Freeze or recover funds\n';
+            report += '• Obtain transaction records and KYC information\n';
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(report).then(() => {
+                showNotification('Terminal wallet report copied to clipboard', 'success');
+            }).catch(err => {
+                console.error('Failed to copy report:', err);
+                alert('Failed to copy to clipboard. Please try exporting instead.');
+            });
+        }
+
         function detectPatterns() {
             const patterns = [];
             
@@ -9848,14 +10284,35 @@ function addNewHop() {
                 'Gray (Obfuscated)': [],
                 'Blue (Cold Storage)': []
             };
-            
+
+            // First check terminal wallet index for detailed exchange info
+            if (investigation.terminalWalletIndex && investigation.terminalWalletIndex.length > 0) {
+                investigation.terminalWalletIndex.forEach(record => {
+                    terminals['Purple (Exchange)'].push({
+                        wallet: record.toWallet,
+                        amount: record.amount,
+                        currency: record.currency,
+                        exchangeName: record.exchangeName,
+                        timestamp: record.timestamp,
+                        txHash: record.txHash,
+                        fromWallet: record.fromWallet,
+                        hopNumber: record.hopNumber,
+                        detectionSource: record.detectionSource
+                    });
+                });
+            }
+
+            // Also check thread status for other terminal types
             const threadStatus = checkAllThreadsTerminated();
             threadStatus.activeThreads.forEach(thread => {
-                if (thread.toWalletType === 'purple') {
+                if (thread.toWalletType === 'purple' &&
+                    !terminals['Purple (Exchange)'].some(t => t.wallet === thread.toWallet && t.amount === thread.amount)) {
+                    // Only add if not already in index
                     terminals['Purple (Exchange)'].push({
                         wallet: thread.toWallet,
                         amount: thread.amount,
-                        currency: thread.currency
+                        currency: thread.currency,
+                        exchangeName: 'Unknown Exchange'
                     });
                 } else if (thread.toWalletType === 'gray') {
                     terminals['Gray (Obfuscated)'].push({
@@ -17105,11 +17562,15 @@ async function lookupWizardTransaction() {
         }
     }
 
-    // Check for wallet attributions
+    // Check for wallet attributions based on blockchain type
     let attributionAlert = '';
+    const isBitcoin = txData.blockchain === 'Bitcoin' || txData.currency === 'BTC';
+
+    // Use appropriate attribution function based on blockchain
+    const attributionFunction = isBitcoin ? getBitcoinWalletAttribution : getWalletAttribution;
 
     // Check the TO address for attribution
-    getWalletAttribution(txData.to).then(attribution => {
+    attributionFunction(txData.to).then(attribution => {
         if (attribution) {
             console.log('🟣 Terminal wallet detected in transaction lookup:', attribution);
 
@@ -17128,6 +17589,15 @@ async function lookupWizardTransaction() {
                         • Funds may be pooled with other users' funds<br>
                         • Further tracing may require legal process or exchange cooperation<br>
                         • Mark as PURPLE (Terminal/VASP) when creating the entry
+                    </div>
+                    <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
+                        <strong>⚠️ Terminal Wallet Action Required:</strong><br>
+                        <button class="btn btn-warning" onclick="confirmTerminalWallet()" style="margin-top: 10px;">
+                            🛑 End Trace at Terminal Wallet
+                        </button>
+                        <button class="btn btn-secondary" onclick="continueTraceFromTerminal()" style="margin-top: 10px; margin-left: 10px;">
+                            ➡️ Continue Trace (Manual)
+                        </button>
                     </div>
                 </div>
             `;
@@ -17591,7 +18061,18 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
         swapDetails: swapDetails
     };
     
+    // Add exchange attribution to entry if detected
+    if (exchangeAttribution) {
+        entry.exchangeAttribution = exchangeAttribution;
+    }
+
     hop.entries.push(entry);
+
+    // If this is a terminal wallet, add to the terminal wallet index
+    if (toWalletType === 'purple' && exchangeAttribution) {
+        addToTerminalWalletIndex(entry);
+        console.log('🟣 Added terminal wallet arrival to index');
+    }
 
     // Mark entry as wizard-created for auto-collapse
     const entryKey = `${hop.hopNumber}_${entry.id}`;

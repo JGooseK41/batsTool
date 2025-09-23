@@ -3,26 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 13:00)
+## Latest Commit (Auto-updated: 2025-09-23 13:17)
 
-**Commit:** 3a6026fb2a351aa80b4387bc80d3b147d01d80ba
+**Commit:** 8f66faae7ee247c2b5751cd300894a64832403e3
 **Author:** Your Name
-**Message:** Add automatic exchange detection with Bybit and other major exchanges
+**Message:** Implement dynamic wallet attribution via Etherscan API
 
-Features added:
-- Automatic detection of known exchange addresses
-- Bybit wallet (0x07624a16...) now auto-detected as terminal wallet
-- Added Binance, Coinbase, and other major exchange addresses
-- Wallets classified as PURPLE (terminal/VASP) when detected
-- Exchange attribution added to entry notes automatically
+- Enhanced getWalletAttribution() to fetch wallet labels from multiple Etherscan endpoints
+- Added comprehensive exchange detection using API labels, token transfers, and contract data
+- Integrated attribution alerts into transaction lookup workflow
+- Automatically detect and alert on terminal wallets (exchanges/VASPs) during lookups
+- Set wallet type to PURPLE for detected exchanges/VASPs
+- Cache attribution results to minimize API calls
+- Display attribution details in wizard UI with visual alerts
+- Include attribution source (API label, contract, known addresses) in entry notes
+- Support both synchronous (checkExchangeAttribution) and async (getWalletAttribution) flows
 
-When a transaction goes to a known exchange address:
-- Wallet type automatically set to PURPLE (terminal)
-- Exchange name added to notes (e.g., 'Terminal wallet: Bybit (CEX)')
-- No manual intervention needed
-
-This should have caught the Bybit wallet automatically and marked it
-as a terminal destination.
+This ensures every transaction lookup includes wallet attribution checks and brings terminal wallet detection to the investigator's attention immediately.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -30,23 +27,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 46 +++++++++++++++++++++++++++-------------------
- index.html | 62 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 83 insertions(+), 25 deletions(-)
+ CLAUDE.md  |  53 +++++----
+ index.html | 380 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 379 insertions(+), 54 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3a6026f Add automatic exchange detection with Bybit and other major exchanges (0 seconds ago)
-- abe51e1 Fix Total Accounted display to not double-count swap amounts (11 minutes ago)
-- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (24 minutes ago)
-- de7d528 Fix wizard-created entries not auto-collapsing and manual form appearing (26 minutes ago)
-- b8336a8 Fix ART and remaining calculations to properly handle currency swaps (30 minutes ago)
-- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (39 minutes ago)
-- e3e9a2f Fix swap currency lookup issue in hop wizard (47 minutes ago)
-- 094ed34 Implement dual-layer thread tracking system for complex swap handling (56 minutes ago)
-- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (64 minutes ago)
-- 2406827 Fix swap thread replacement in universal database (83 minutes ago)
+- 8f66faa Implement dynamic wallet attribution via Etherscan API (0 seconds ago)
+- 3a6026f Add automatic exchange detection with Bybit and other major exchanges (17 minutes ago)
+- abe51e1 Fix Total Accounted display to not double-count swap amounts (28 minutes ago)
+- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (41 minutes ago)
+- de7d528 Fix wizard-created entries not auto-collapsing and manual form appearing (43 minutes ago)
+- b8336a8 Fix ART and remaining calculations to properly handle currency swaps (47 minutes ago)
+- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (56 minutes ago)
+- e3e9a2f Fix swap currency lookup issue in hop wizard (64 minutes ago)
+- 094ed34 Implement dual-layer thread tracking system for complex swap handling (73 minutes ago)
+- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (81 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
