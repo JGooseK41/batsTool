@@ -17236,7 +17236,12 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
     };
     
     hop.entries.push(entry);
-    
+
+    // Mark entry as wizard-created for auto-collapse
+    const entryKey = `${hop.hopNumber}_${entry.id}`;
+    window.entryCollapseState = window.entryCollapseState || {};
+    window.entryCollapseState[entryKey] = true; // Auto-collapse wizard entries
+
     console.log(`Created ${output.isChange ? 'CHANGE' : 'PAYMENT'} thread:`, notation, allocatedAmount, output.currency);
 }
 
@@ -17280,12 +17285,36 @@ function createHopEntryFromWizard() {
             createSingleHopEntry(hop, wizardData, output, index);
         });
 
+        // Close wizard FIRST before re-rendering
         closeHopWizard();
+
+        // Rebuild and render
         buildAvailableThreadsIndex();
         renderHops();
         saveToStorage();
         checkHopCompletionStatus(hop);
-        return;
+
+        // Ensure entries are collapsed (double-check after render)
+        setTimeout(() => {
+            wizardData.multipleOutputs.forEach((output, index) => {
+                if (!output.isChange) { // Only for actual entries, not change
+                    const entryId = Date.now() + index;
+                    const entryKey = `${hop.hopNumber}_${entryId}`;
+                    window.entryCollapseState[entryKey] = true;
+
+                    // Force collapse if element exists
+                    const entryElement = document.querySelector(`[id*="${entryKey}"]`);
+                    if (entryElement) {
+                        const content = entryElement.querySelector('.entry-content');
+                        const summary = entryElement.querySelector('.entry-summary');
+                        if (content) content.style.display = 'none';
+                        if (summary) summary.style.display = 'block';
+                    }
+                }
+            });
+        }, 100);
+
+        return; // Exit to prevent manual form from appearing
     }
 
     // Original single entry logic continues below...
@@ -17626,22 +17655,35 @@ function createHopEntryFromWizard() {
     saveUndoState(`Add trace entry to Hop ${hop.hopNumber}`);
     
     hop.entries.push(entry);
-    
+
+    // Mark entry for auto-collapse BEFORE sorting
+    const entryKey = `${hop.hopNumber}_${entry.id}`;
+    window.entryCollapseState = window.entryCollapseState || {};
+    window.entryCollapseState[entryKey] = true;
+
     // Store the original entry reference before sorting
     const newEntry = entry;
-    
+
     // Sort entries by timestamp to maintain chronological order
     sortHopEntriesChronologically(hop);
-    
+
     // Find the entry's new ID after sorting
     const sortedEntryIndex = hop.entries.indexOf(newEntry);
     const sortedEntryId = sortedEntryIndex >= 0 ? hop.entries[sortedEntryIndex].id : entry.id;
-    
+
+    // Update collapse state with sorted ID if different
+    if (sortedEntryId !== entry.id) {
+        const sortedEntryKey = `${hop.hopNumber}_${sortedEntryId}`;
+        window.entryCollapseState[sortedEntryKey] = true;
+    }
+
+    // Close wizard BEFORE re-rendering
     closeHopWizard();
 
     // Rebuild thread index to ensure available amounts are updated
     buildAvailableThreadsIndex();
 
+    // Render with collapsed state already set
     renderHops();
     saveToStorage();
 
@@ -17653,23 +17695,22 @@ function createHopEntryFromWizard() {
     console.log(`   Total amount used: ${Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0)}`);
     console.log(`   Thread allocations:`, wizardData.allocations);
 
-    // Always collapse entries created from wizard for clean UI
+    // Brief highlight animation to show where entry was created
     setTimeout(() => {
-        const entryKey = `${hop.hopNumber}_${sortedEntryId}`;
+        const finalEntryKey = `${hop.hopNumber}_${sortedEntryId}`;
         const entryElement = document.getElementById(`entry_${hop.hopNumber}_${sortedEntryId}`);
 
         if (entryElement) {
-            // Collapse the entry immediately
-            window.entryCollapseState[entryKey] = true;
-            const content = document.getElementById(`entryContent_${entryKey}`);
-            const summary = document.getElementById(`entrySummary_${entryKey}`);
+            // Ensure it's collapsed (double-check)
+            const content = document.getElementById(`entryContent_${finalEntryKey}`);
+            const summary = document.getElementById(`entrySummary_${finalEntryKey}`);
 
             if (content && summary) {
                 content.style.display = 'none';
                 summary.style.display = 'block';
             }
 
-            // Brief highlight to show where it was created
+            // Scroll to the new entry
             entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             // Add a temporary highlight effect
@@ -17679,10 +17720,13 @@ function createHopEntryFromWizard() {
                 entryElement.style.boxShadow = '';
             }, 2000);
         }
-    }, 300);
+    }, 100);
 
     // Show remaining threads summary after wizard completion
     showRemainingThreadsSummary(hop);
+
+    // Return to prevent any further processing that might open forms
+    return;
 }
 // Calculate remaining ART for write-offs
 function calculateRemainingARTForHop(hopNumber, currency) {

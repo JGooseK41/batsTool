@@ -3,24 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 12:21)
+## Latest Commit (Auto-updated: 2025-09-23 12:30)
 
-**Commit:** e62e16c41331e8af77c33ed6b23ea59b4ed68b76
+**Commit:** b8336a8e5ce87d8ee99cdc310711aa5723f6b9e7
 **Author:** Your Name
-**Message:** Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies
+**Message:** Fix ART and remaining calculations to properly handle currency swaps
 
-Root cause: Function wasn't finding threads to convert because it was only
-looking by internal ID, not considering notation or legacy key formats.
+The Remaining counter was showing wrong currency after swaps because it
+wasn't using the thread database which tracks actual post-swap amounts.
 
-Fix details:
-- Enhanced thread lookup to search by internal ID, notation, and legacy keys
-- Properly removes threads from input currency after swap
-- Creates threads in output currency with correct amounts
-- Better logging for debugging swap operations
-- Handles both full and partial swaps correctly
+Changes:
+- Remaining calculation now uses available threads from database (source of truth)
+- Properly shows remaining in OUTPUT currency after swaps
+- Total Accounted shows swap output amounts in correct currency
+- Handles swap fees/amount changes automatically via thread database
 
-This ensures swaps properly move threads from input to output currency,
-fixing the 'No USDC transfers found' error after USDC→USDT swaps.
+This fixes the display showing '79,999.36 USDC remaining' when it should
+show '34,929.75 USDT remaining' after a USDC→USDT swap with partial trace.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -28,23 +27,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  62 ++++++++-------------
- index.html | 181 +++++++++++++++++++++++++++++++++++--------------------------
- 2 files changed, 129 insertions(+), 114 deletions(-)
+ CLAUDE.md  | 50 ++++++++++++++++++++--------------------
+ index.html | 77 +++++++++++++++++++++++++++++++++++++++++++++++++-------------
+ 2 files changed, 87 insertions(+), 40 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (0 seconds ago)
-- e3e9a2f Fix swap currency lookup issue in hop wizard (8 minutes ago)
-- 094ed34 Implement dual-layer thread tracking system for complex swap handling (17 minutes ago)
-- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (25 minutes ago)
-- 2406827 Fix swap thread replacement in universal database (44 minutes ago)
-- cd2d729 Fix swap thread ID collision causing double-counting (49 minutes ago)
-- 84cb001 Fix wizard completion and thread allocation tracking issues (70 minutes ago)
-- 4243a35 Fix thread display clarity for swaps within same hop (76 minutes ago)
-- 722a78c Fix thread display and remaining threads summary (85 minutes ago)
-- 91afd28 Fix hop completion check to properly handle swaps and remaining threads (2 hours ago)
+- b8336a8 Fix ART and remaining calculations to properly handle currency swaps (0 seconds ago)
+- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (9 minutes ago)
+- e3e9a2f Fix swap currency lookup issue in hop wizard (17 minutes ago)
+- 094ed34 Implement dual-layer thread tracking system for complex swap handling (26 minutes ago)
+- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (34 minutes ago)
+- 2406827 Fix swap thread replacement in universal database (53 minutes ago)
+- cd2d729 Fix swap thread ID collision causing double-counting (57 minutes ago)
+- 84cb001 Fix wizard completion and thread allocation tracking issues (79 minutes ago)
+- 4243a35 Fix thread display clarity for swaps within same hop (85 minutes ago)
+- 722a78c Fix thread display and remaining threads summary (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
