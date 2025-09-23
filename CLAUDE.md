@@ -3,18 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 10:18)
+## Latest Commit (Auto-updated: 2025-09-23 10:30)
 
-**Commit:** 8784749f94d89e5103b2f8938b10511bdf8726d4
+**Commit:** 7c01752308b220e2241096d57cb1078139b762ec
 **Author:** Your Name
-**Message:** Fix thread database consistency and availability calculations
+**Message:** Simplify swap handling and fix over-allocation bug
 
-- Fixed thread availability to use dynamic calculation instead of modifying availableAmount
-- Swaps now completely remove source threads from database (true replacement)
-- Removed conflicting availableAmount modifications in updateThreadAvailabilityFromHop
-- getMaxAssignableAmount now properly calculates from totalAmount minus assignments
-- Created comprehensive test script to verify database integrity
-- Ensured all components use the universal threads database consistently
+- Swaps now keep the same thread ID, just change currency (no [SWAP:] suffix)
+- Thread V1-T1-H1 in USDC becomes same V1-T1-H1 in USDT after swap
+- Fixed max allocation to not exceed transaction amount
+- When allocating max to a smaller transaction, only allocates what fits
+- Remaining amount stays available for next entries
+- Cleaner, simpler thread tracking after swaps
 
 🤖 Generated with Claude Code
 
@@ -22,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 43 ++++++++++++++++++++++---------------------
- index.html | 49 ++++++++++++-------------------------------------
- 2 files changed, 34 insertions(+), 58 deletions(-)
+ CLAUDE.md  | 44 ++++++++++++++++++++++----------------------
+ index.html | 62 +++++++++++++++++++++++++++++++++++---------------------------
+ 2 files changed, 57 insertions(+), 49 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8784749 Fix thread database consistency and availability calculations (0 seconds ago)
-- aaf556b Implement universal threads database as single source of truth (13 minutes ago)
-- ee8ce28 Enable same-hop swap tracing - swap outputs immediately available within same hop (15 minutes ago)
-- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (25 minutes ago)
-- b558cc0 Fix swap currency tracking - ensure threads use output currency after swap conversion (33 minutes ago)
-- 4e0d269 Fix swap wizard to properly handle currency conversion and auto-create entries (43 minutes ago)
-- 4b64742 Fix renderHopEntry missing hop parameter causing undefined error (82 minutes ago)
+- 7c01752 Simplify swap handling and fix over-allocation bug (0 seconds ago)
+- 8784749 Fix thread database consistency and availability calculations (11 minutes ago)
+- aaf556b Implement universal threads database as single source of truth (25 minutes ago)
+- ee8ce28 Enable same-hop swap tracing - swap outputs immediately available within same hop (27 minutes ago)
+- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (36 minutes ago)
+- b558cc0 Fix swap currency tracking - ensure threads use output currency after swap conversion (45 minutes ago)
+- 4e0d269 Fix swap wizard to properly handle currency conversion and auto-create entries (54 minutes ago)
+- 4b64742 Fix renderHopEntry missing hop parameter causing undefined error (2 hours ago)
 - 0ed7ee6 Update CLAUDE.md with latest changes (2 hours ago)
 - a2465ca Remove duplicate functions and clean up redundant code (2 hours ago)
-- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
