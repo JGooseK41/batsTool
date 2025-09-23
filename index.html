@@ -9778,25 +9778,39 @@ function addNewHop() {
                             ${!isComplete ? `
                                 <div style="margin-top: 15px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                                     ${(() => {
-                                        // Calculate what's left to trace for the NEXT hop
+                                        // Get available threads - these include both existing threads and any swap outputs from this hop
                                         const nextHopNumber = hop.hopNumber + 1;
                                         const availableThreads = getAvailableSourcesForHop(nextHopNumber, null);
                                         const remainingThreads = availableThreads.filter(t => t.availableAmount > 0);
 
+                                        // Check if any threads are from swaps in the current hop
+                                        const hasSwapOutputs = remainingThreads.some(t => t.sourceType === 'swap_output' && t.hopLevel === hop.hopNumber);
+
                                         if (remainingThreads.length > 0) {
+                                            // Determine the appropriate heading based on whether swaps are present
+                                            const heading = hasSwapOutputs ?
+                                                `📋 Available Threads (including swap outputs):` :
+                                                `📋 Available Threads for Hop ${nextHopNumber}:`;
+
                                             return `
                                                 <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-                                                    <h4 style="margin: 0 0 10px 0; color: #e65100;">📋 Available Threads for Hop ${nextHopNumber}:</h4>
+                                                    <h4 style="margin: 0 0 10px 0; color: #e65100;">${heading}</h4>
                                                     <div style="display: grid; gap: 8px;">
-                                                        ${remainingThreads.map(thread => `
+                                                        ${remainingThreads.map(thread => {
+                                                            // Add indicator for swap outputs from current hop
+                                                            const swapIndicator = (thread.sourceType === 'swap_output' && thread.hopLevel === hop.hopNumber) ?
+                                                                ' (from swap)' : '';
+                                                            return `
                                                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: white; border-radius: 4px;">
-                                                                <span style="font-weight: bold; color: #2c3e50;">${thread.threadId}</span>
+                                                                <span style="font-weight: bold; color: #2c3e50;">${thread.threadId}${swapIndicator}</span>
                                                                 <span style="color: #e67e22; font-weight: 600;">${thread.availableAmount.toLocaleString()} ${thread.currency}</span>
                                                             </div>
-                                                        `).join('')}
+                                                        `;}).join('')}
                                                     </div>
                                                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffcc80;">
-                                                        <small style="color: #bf6000;">💡 Continue adding transactions to account for these remaining funds</small>
+                                                        <small style="color: #bf6000;">💡 ${hasSwapOutputs ?
+                                                            'Swap outputs are available to use in this hop' :
+                                                            'Continue adding transactions to account for these remaining funds'}</small>
                                                     </div>
                                                 </div>
                                             `;
