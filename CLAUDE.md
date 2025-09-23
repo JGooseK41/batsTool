@@ -3,21 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 07:58)
+## Latest Commit (Auto-updated: 2025-09-23 08:27)
 
-**Commit:** a86c083a11330883747e94c14a3383e63f9a5bf6
+**Commit:** 0883ca55ee9ba18024d01412c364aa64c28c6587
 **Author:** Your Name
-**Message:** Fix hop wizard progression and remove all hop ID references
+**Message:** Fix duplicate hopNumber declaration in showSwapWizard
 
-- Fix 'Log Entry' button not working in hop wizard step 3
-- Auto-select all transfers for multi-transfer transactions if none selected
-- Remove 'Don't show wizard for future entries' checkbox from wizard
-- Convert ALL references from hopId to hopNumber throughout entire codebase
-- Fix createHopEntryFromWizard to use hopNumber instead of non-existent hopId
-- Update all function signatures and calls to use hopNumber consistently
-- Ensure hop wizard can properly create entries after transaction lookup
-
-This comprehensive fix ensures the hop wizard works correctly and removes the legacy hop ID system entirely in favor of hop numbers.
+- Fixed syntax error 'Identifier hopNumber has already been declared'
+- Changed parameter reassignment to use separate variable numericHopNumber
+- Updated error messages to use correct variable name
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,27 +19,34 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                 |   54 +-
- diagnose_entry_wizard.js  |  223 +++
- diagnose_wizard_button.js |  222 +++
- index.html                |  815 +++++-----
- index.html.backup         | 3942 ++++++++++++++++++++++++++++++++++-----------
- test_wizard_button.js     |  166 ++
- 6 files changed, 4035 insertions(+), 1387 deletions(-)
+ CLAUDE.md                   |    55 +-
+ browser_test_suite.js       |   573 -
+ comprehensive_test_suite.js |  1127 --
+ diagnose_entry_wizard.js    |   223 -
+ diagnose_wizard_button.js   |   222 -
+ index.html                  |    17 +-
+ index.html.backup           | 24833 ------------------------------------------
+ realistic_simulations.js    |   795 --
+ test_hop_navigation.js      |   255 -
+ test_simulation.js          |   688 --
+ test_wizard_button.js       |   166 -
+ test_writeoffs_art.js       |   463 -
+ verify_hop_fix.js           |   200 -
+ 13 files changed, 37 insertions(+), 29580 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a86c083 Fix hop wizard progression and remove all hop ID references (0 seconds ago)
+- 0883ca5 Fix duplicate hopNumber declaration in showSwapWizard (0 seconds ago)
+- a86c083 Fix hop wizard progression and remove all hop ID references (29 minutes ago)
 - bf1e5df Fix hop wizard step 3 'Log Entry' button disabled issue (2 hours ago)
 - b1058ab Fix thread ID format to prevent hop number accumulation (10 hours ago)
-- 7954cb3 Fix unintended consequences of hop ID removal (10 hours ago)
-- 01bf713 Remove hop IDs and use hop numbers as primary identifier (10 hours ago)
-- 1c99f22 Document hop ID refactoring needs (10 hours ago)
+- 7954cb3 Fix unintended consequences of hop ID removal (11 hours ago)
+- 01bf713 Remove hop IDs and use hop numbers as primary identifier (11 hours ago)
+- 1c99f22 Document hop ID refactoring needs (11 hours ago)
 - 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (11 hours ago)
 - 72014da Update CLAUDE.md with latest commit info (11 hours ago)
 - 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (11 hours ago)
-- c012b7f Enhance swap wizard with checkboxes and partial swap support (11 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

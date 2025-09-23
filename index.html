@@ -4162,22 +4162,20 @@
             saveToStorage();
             
             // Expand the hop
-            const hopNumber = investigation.hops.find(h => h.entries.some(e => e.id === entry.id))?.hopNumber;
-            if (hopNumber) {
-                window.hopCollapseState[hopNumber] = false;
-                const hopContent = document.getElementById(`hopContent_${hopNumber}`);
-                if (hopContent) {
-                    hopContent.style.display = 'block';
-                }
+            // hopNumber is already available as the function parameter
+            window.hopCollapseState[hopNumber] = false;
+            const hopContent = document.getElementById(`hopContent_${hopNumber}`);
+            if (hopContent) {
+                hopContent.style.display = 'block';
+
+                // Scroll to the hop
+                setTimeout(() => {
+                    const hopContainer = hopContent.closest('.hop-container');
+                    if (hopContainer) {
+                        hopContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
             }
-            
-            // Scroll to the hop
-            setTimeout(() => {
-                const hopContainer = hopContent?.closest('.hop-container');
-                if (hopContainer) {
-                    hopContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }, 100);
             
             if (dependentHops.length > 0) {
                 alert(`Hop ${hop.hopNumber} is now open for editing.\n\nWARNING: Changes here will affect Hops ${dependentHops.map(h => h.hopNumber).join(', ')}.\n\nAfter making changes, you'll need to validate and update the downstream hops.`);
