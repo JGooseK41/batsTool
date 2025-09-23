@@ -10870,10 +10870,10 @@ function renderARTProgressBars(hop) {
     // Get ART data for this hop
     const hopIndex = investigation.hops.findIndex(h => h.hopNumber === hop.hopNumber);
     const startingART = getStartingARTForHop(hop.hopNumber);
-    
+
     // Calculate amounts by category for each currency
     const breakdown = {};
-    
+
     // Initialize with starting ART
     Object.entries(startingART).forEach(([currency, amount]) => {
         if (amount > 0) {
@@ -10883,72 +10883,107 @@ function renderARTProgressBars(hop) {
                 writeoff: 0,
                 coldStorage: 0,
                 vasp: 0,
+                swapped: 0,
                 remaining: amount
             };
         }
     });
-    
+
     // Process entries
     if (hop.entries) {
         hop.entries.forEach(entry => {
-        const amount = parseFloat(entry.amount) || 0;
-        if (amount > 0 && entry.currency) {
-            const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-            
-            if (!breakdown[currency]) {
-                breakdown[currency] = {
-                    total: 0,
-                    traced: 0,
-                    writeoff: 0,
-                    coldStorage: 0,
-                    vasp: 0,
-                    remaining: 0
-                };
+            const amount = parseFloat(entry.amount) || 0;
+
+            if (entry.entryType === 'swap' && entry.swapDetails) {
+                // Handle swap entries
+                const inputCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                const outputCurrency = entry.outputCurrency;
+                const outputAmount = parseFloat(entry.outputAmount) || 0;
+
+                // Mark input currency as swapped
+                if (breakdown[inputCurrency]) {
+                    breakdown[inputCurrency].swapped += amount;
+                    breakdown[inputCurrency].remaining -= amount;
+                }
+
+                // Add output currency if it doesn't exist
+                if (!breakdown[outputCurrency]) {
+                    breakdown[outputCurrency] = {
+                        total: 0,
+                        traced: 0,
+                        writeoff: 0,
+                        coldStorage: 0,
+                        vasp: 0,
+                        swapped: 0,
+                        remaining: 0,
+                        isSwapOutput: true
+                    };
+                }
+
+                // Add the swapped amount to the new currency
+                breakdown[outputCurrency].total += outputAmount;
+                breakdown[outputCurrency].remaining += outputAmount;
+
+            } else if (amount > 0 && entry.currency) {
+                const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+
+                if (!breakdown[currency]) {
+                    breakdown[currency] = {
+                        total: 0,
+                        traced: 0,
+                        writeoff: 0,
+                        coldStorage: 0,
+                        vasp: 0,
+                        swapped: 0,
+                        remaining: 0
+                    };
+                }
+
+                switch (entry.entryType) {
+                    case 'trace':
+                        // Check if this trace goes to a VASP/exchange (purple wallet)
+                        if (entry.toWalletType === 'purple' || entry.isTerminalWallet) {
+                            breakdown[currency].vasp += amount;
+                        } else {
+                            breakdown[currency].traced += amount;
+                        }
+                        breakdown[currency].remaining -= amount;
+                        break;
+                    case 'writeoff':
+                        breakdown[currency].writeoff += amount;
+                        breakdown[currency].remaining -= amount;
+                        break;
+                    case 'cold_storage':
+                        breakdown[currency].coldStorage += amount;
+                        breakdown[currency].remaining -= amount;
+                        break;
+                }
             }
-            
-            switch (entry.entryType) {
-                case 'trace':
-                    // Check if this trace goes to a VASP/exchange (purple wallet)
-                    if (entry.toWalletType === 'purple') {
-                        breakdown[currency].vasp += amount;
-                    } else {
-                        breakdown[currency].traced += amount;
-                    }
-                    breakdown[currency].remaining -= amount;
-                    break;
-                case 'writeoff':
-                    breakdown[currency].writeoff += amount;
-                    breakdown[currency].remaining -= amount;
-                    break;
-                case 'cold_storage':
-                    breakdown[currency].coldStorage += amount;
-                    breakdown[currency].remaining -= amount;
-                    break;
-            }
-        }
-    });
+        });
     }
     
     // Generate progress bars
     let html = '';
-    
+
     Object.entries(breakdown).forEach(([currency, data]) => {
         const total = data.total;
         if (total <= 0) return;
-        
+
         // Calculate percentages
         const tracedPct = (data.traced / total) * 100;
         const writeoffPct = (data.writeoff / total) * 100;
         const coldStoragePct = (data.coldStorage / total) * 100;
         const vaspPct = (data.vasp / total) * 100;
-        const remainingPct = (data.remaining / total) * 100;
+        const swappedPct = (data.swapped / total) * 100;
+        const remainingPct = Math.max(0, (data.remaining / total) * 100);
         
         html += `
             <div style="margin-bottom: 15px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <strong>${currency}</strong>
+                    <strong>${currency} ${data.isSwapOutput ? '(from swap)' : ''}</strong>
                     <span style="font-size: 12px; color: #666;">
                         ${data.total.toLocaleString()} total
+                        ${data.swapped > 0 ? ` (${data.swapped.toLocaleString()} swapped to other currency)` : ''}
                     </span>
                 </div>
                 
@@ -10967,24 +11002,31 @@ function renderARTProgressBars(hop) {
                              title="Sent to Exchange/VASP: ${data.vasp.toLocaleString()} ${currency} (${vaspPct.toFixed(1)}%)">
                         </div>
                     ` : ''}
+
+                    <!-- Swapped (Brown) -->
+                    ${swappedPct > 0 ? `
+                        <div style="position: absolute; left: ${tracedPct + vaspPct}%; top: 0; height: 100%; width: ${swappedPct}%; background: #8B4513; transition: all 0.3s ease;"
+                             title="Swapped to another currency: ${data.swapped.toLocaleString()} ${currency} (${swappedPct.toFixed(1)}%)">
+                        </div>
+                    ` : ''}
                     
                     <!-- Write-off (Gray) -->
                     ${writeoffPct > 0 ? `
-                        <div style="position: absolute; left: ${tracedPct + vaspPct}%; top: 0; height: 100%; width: ${writeoffPct}%; background: #95a5a6; transition: all 0.3s ease;"
+                        <div style="position: absolute; left: ${tracedPct + vaspPct + swappedPct}%; top: 0; height: 100%; width: ${writeoffPct}%; background: #95a5a6; transition: all 0.3s ease;"
                              title="Written off: ${data.writeoff.toLocaleString()} ${currency} (${writeoffPct.toFixed(1)}%)">
                         </div>
                     ` : ''}
-                    
+
                     <!-- Cold Storage (Blue) -->
                     ${coldStoragePct > 0 ? `
-                        <div style="position: absolute; left: ${tracedPct + vaspPct + writeoffPct}%; top: 0; height: 100%; width: ${coldStoragePct}%; background: #3498db; transition: all 0.3s ease;"
+                        <div style="position: absolute; left: ${tracedPct + vaspPct + swappedPct + writeoffPct}%; top: 0; height: 100%; width: ${coldStoragePct}%; background: #3498db; transition: all 0.3s ease;"
                              title="Cold Storage: ${data.coldStorage.toLocaleString()} ${currency} (${coldStoragePct.toFixed(1)}%)">
                         </div>
                     ` : ''}
-                    
+
                     <!-- Remaining (Red) -->
                     ${remainingPct > 0.1 ? `
-                        <div style="position: absolute; left: ${tracedPct + vaspPct + writeoffPct + coldStoragePct}%; top: 0; height: 100%; width: ${remainingPct}%; background: #e74c3c; transition: all 0.3s ease;"
+                        <div style="position: absolute; left: ${tracedPct + vaspPct + swappedPct + writeoffPct + coldStoragePct}%; top: 0; height: 100%; width: ${remainingPct}%; background: #e74c3c; transition: all 0.3s ease;"
                              title="Remaining to account: ${data.remaining.toLocaleString()} ${currency} (${remainingPct.toFixed(1)}%)">
                         </div>
                     ` : ''}
@@ -11011,6 +11053,12 @@ function renderARTProgressBars(hop) {
                         <span style="display: flex; align-items: center; gap: 5px;">
                             <span style="width: 12px; height: 12px; background: #9b59b6; border-radius: 2px;"></span>
                             Exchange/VASP: ${data.vasp.toLocaleString()}
+                        </span>
+                    ` : ''}
+                    ${data.swapped > 0 ? `
+                        <span style="display: flex; align-items: center; gap: 5px;">
+                            <span style="width: 12px; height: 12px; background: #8B4513; border-radius: 2px;"></span>
+                            Swapped: ${data.swapped.toLocaleString()}
                         </span>
                     ` : ''}
                     ${data.writeoff > 0 ? `
