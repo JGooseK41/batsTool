@@ -3,21 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 20:51)
+## Latest Commit (Auto-updated: 2025-09-22 20:58)
 
-**Commit:** a2647b19f1d0f5689bcd7038edcfc012b4bf5c9c
+**Commit:** a768bddd3ba37f91c67f5ad0da3f3f254e161696
 **Author:** Your Name
-**Message:** Add transaction hash lookup for DEX/Swap wizard
+**Message:** Streamline hop completion to single click instead of 4 modals
 
-- Added lookupSwapTransaction function to analyze swap transactions
-- Automatically detects what left and came back to user's wallet
-- Filters transfers to show only user wallet interactions
-- Auto-fills output amounts and currencies from transaction data
-- Gets user wallet from source thread's last receiving wallet
-- Added UI for transaction hash input with lookup button
-- Exposed all swap wizard functions globally for onclick handlers
+- Consolidated multiple confirmation modals into single streamlined process
+- Created completeHopAndProceed() function that handles everything in one go
+- Replaced 4 modal clicks with single notification and automatic progression
+- Hop now completes with: mark completed, create next hop, show notification, auto-scroll
+- Thread review information shown in brief notification instead of modal
+- Updated showNotification to support HTML content and custom duration
+- Removed redundant confirmation steps while preserving all functionality
 
-The lookup feature allows users to enter a transaction hash and have the swap details automatically populated based on the blockchain analysis, focusing only on what left and returned to their wallet address.
+The hop completion now happens with a single click, showing a brief success notification with thread summary, then automatically scrolling to the next hop.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,28 +25,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md            |  57 ++++-----
- automated_test.js    | 235 ++++++++++++++++++++++++++++++++++
- check_victim.js      |  69 ++++++++++
- diagnostic.js        |  58 +++++++++
- index.html           | 215 ++++++++++++++++++++++++++++++-
- run_tests.js         | 348 +++++++++++++++++++++++++++++++++++++++++++++++++++
- test_core_fixes.html | 201 +++++++++++++++++++++++++++++
- 7 files changed, 1144 insertions(+), 39 deletions(-)
+ CLAUDE.md  |  48 ++++++++++++++----------
+ index.html | 123 +++++++++++++++++++++++++++++++++++++++++++++++++------------
+ 2 files changed, 128 insertions(+), 43 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a2647b1 Add transaction hash lookup for DEX/Swap wizard (0 seconds ago)
-- 5624070 Remove redundant createSwapEntryFromWizard function (8 minutes ago)
-- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (10 minutes ago)
-- 8e60274 Add better debugging for swap wizard hop finding issue (18 minutes ago)
-- 90726bb Fix DEX/Swap entry not showing in Add Entry wizard (48 minutes ago)
-- e3d9d02 Fix UI not updating after applying transfer to victim (55 minutes ago)
-- a7a9dd6 Fix removeTransaction function definition (62 minutes ago)
-- 995000a Implement core behavior fixes based on user requirements (84 minutes ago)
+- a768bdd Streamline hop completion to single click instead of 4 modals (0 seconds ago)
+- a2647b1 Add transaction hash lookup for DEX/Swap wizard (8 minutes ago)
+- 5624070 Remove redundant createSwapEntryFromWizard function (15 minutes ago)
+- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (18 minutes ago)
+- 8e60274 Add better debugging for swap wizard hop finding issue (26 minutes ago)
+- 90726bb Fix DEX/Swap entry not showing in Add Entry wizard (55 minutes ago)
+- e3d9d02 Fix UI not updating after applying transfer to victim (62 minutes ago)
+- a7a9dd6 Fix removeTransaction function definition (69 minutes ago)
+- 995000a Implement core behavior fixes based on user requirements (2 hours ago)
 - 31185bb Implement partial tracing and optional thread review modal (2 hours ago)
-- 1cd28c4 Update commingling notation to parentheses format (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

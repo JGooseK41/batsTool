@@ -15053,6 +15053,7 @@ function showSwapWizard(hopId) {
         hopId: hopId,
         hopNumber: hop.hopNumber,
         selectedThreads: [],
+        threadAmounts: {}, // Track partial amounts for each thread
         inputAmount: 0,
         inputCurrency: '',
         outputAmount: 0,
@@ -15123,30 +15124,58 @@ function showSwapWizardStep(step) {
 
         content.innerHTML = `
             <h3>Step 1: Select Source Threads</h3>
-            <p>Select the thread(s) being sent to the swap service:</p>
+            <p>Select the thread(s) and amounts to swap:</p>
 
-            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin: 20px 0;">
-                ${availableThreads.length > 0 ? availableThreads.map(thread => `
-                    <div style="padding: 10px; margin: 5px 0; background: white; border: 2px solid ${wizardData.selectedThreads.includes(thread.threadId) ? '#4caf50' : '#e0e0e0'}; border-radius: 8px; cursor: pointer;"
-                         onclick="toggleSwapThread('${thread.threadId}')">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <strong>${thread.displayText}</strong>
-                                <div style="font-size: 12px; color: #666; margin-top: 4px;">
-                                    From: ${thread.sourceWallet ? thread.sourceWallet.substring(0, 10) + '...' : 'Unknown'}
-                                </div>
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin: 20px 0;">
+                ${availableThreads.length > 0 ? availableThreads.map(thread => {
+                    const isSelected = wizardData.selectedThreads.includes(thread.threadId);
+                    const threadAmount = wizardData.threadAmounts[thread.threadId] || thread.availableAmount;
+                    return `
+                    <div style="padding: 12px; margin: 8px 0; background: white; border: 2px solid ${isSelected ? '#4caf50' : '#e0e0e0'}; border-radius: 8px; transition: all 0.3s;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <input type="checkbox"
+                                   id="swap_thread_${thread.threadId}"
+                                   ${isSelected ? 'checked' : ''}
+                                   onchange="toggleSwapThread('${thread.threadId}')"
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+
+                            <div style="flex: 1;">
+                                <label for="swap_thread_${thread.threadId}" style="cursor: pointer; display: block;">
+                                    <strong>${thread.displayText}</strong>
+                                    <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                                        From: ${thread.sourceWallet ? thread.sourceWallet.substring(0, 10) + '...' : 'Unknown'}
+                                    </div>
+                                </label>
                             </div>
-                            <div style="text-align: right;">
-                                <strong>${thread.availableAmount.toLocaleString()} ${thread.currency}</strong>
+
+                            <div style="text-align: right; min-width: 200px;">
+                                <div style="margin-bottom: 5px;">
+                                    <strong>Available: ${thread.availableAmount.toLocaleString()} ${thread.currency}</strong>
+                                </div>
+                                ${isSelected ? `
+                                    <div style="display: flex; align-items: center; gap: 5px;">
+                                        <label style="font-size: 12px;">Amount:</label>
+                                        <input type="number"
+                                               id="swap_amount_${thread.threadId}"
+                                               value="${threadAmount}"
+                                               min="0"
+                                               max="${thread.availableAmount}"
+                                               step="0.000001"
+                                               onchange="updateSwapThreadAmount('${thread.threadId}', this.value, ${thread.availableAmount})"
+                                               style="width: 120px; padding: 4px; font-size: 12px;">
+                                        <button onclick="setMaxSwapAmount('${thread.threadId}', ${thread.availableAmount})"
+                                                class="btn btn-sm" style="padding: 2px 8px; font-size: 11px;">Max</button>
+                                    </div>
+                                ` : ''}
                             </div>
                         </div>
                     </div>
-                `).join('') : '<p style="color: #666;">No available threads</p>'}
+                `;}).join('') : '<p style="color: #666;">No available threads</p>'}
             </div>
 
             <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-top: 20px;">
-                <strong>ℹ️ Note:</strong> Select all threads that will be swapped in this transaction.
-                The swap will convert these to a different asset.
+                <strong>ℹ️ Partial Swaps:</strong> You can swap partial amounts from each thread.
+                The remaining balance will stay in the original thread.
             </div>
         `;
 
@@ -15159,13 +15188,14 @@ function showSwapWizardStep(step) {
             getAvailableSourcesForHop(wizardData.hopNumber, null).find(t => t.threadId === id)
         );
 
-        // Auto-calculate input totals by currency
+        // Auto-calculate input totals by currency using partial amounts
         const inputByCurrency = {};
         selectedThreads.forEach(thread => {
+            const swapAmount = wizardData.threadAmounts[thread.threadId] || thread.availableAmount;
             if (!inputByCurrency[thread.currency]) {
                 inputByCurrency[thread.currency] = 0;
             }
-            inputByCurrency[thread.currency] += thread.availableAmount;
+            inputByCurrency[thread.currency] += swapAmount;
         });
 
         content.innerHTML = `
@@ -15292,14 +15322,48 @@ function showSwapWizardStep(step) {
 function toggleSwapThread(threadId) {
     const wizardData = window.swapWizardData;
     const index = wizardData.selectedThreads.indexOf(threadId);
+    const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+    const thread = threads.find(t => t.threadId === threadId);
 
     if (index > -1) {
+        // Remove thread and clear amount
         wizardData.selectedThreads.splice(index, 1);
+        delete wizardData.threadAmounts[threadId];
     } else {
+        // Add thread and set default amount to full amount
         wizardData.selectedThreads.push(threadId);
+        wizardData.threadAmounts[threadId] = thread.availableAmount;
     }
 
     showSwapWizardStep(wizardData.step); // Refresh display
+}
+
+// Update partial swap amount for a thread
+function updateSwapThreadAmount(threadId, value, maxAmount) {
+    const wizardData = window.swapWizardData;
+    const amount = parseFloat(value) || 0;
+
+    // Clamp to valid range
+    wizardData.threadAmounts[threadId] = Math.min(Math.max(0, amount), maxAmount);
+
+    // If amount is 0, remove the thread from selection
+    if (wizardData.threadAmounts[threadId] === 0) {
+        const index = wizardData.selectedThreads.indexOf(threadId);
+        if (index !== -1) {
+            wizardData.selectedThreads.splice(index, 1);
+            delete wizardData.threadAmounts[threadId];
+            showSwapWizardStep(wizardData.step);
+        }
+    }
+}
+
+// Set max amount for a swap thread
+function setMaxSwapAmount(threadId, maxAmount) {
+    const amountInput = document.getElementById(`swap_amount_${threadId}`);
+    if (amountInput) {
+        amountInput.value = maxAmount;
+        updateSwapThreadAmount(threadId, maxAmount, maxAmount);
+    }
 }
 
 function setSwapType(type) {
@@ -15511,13 +15575,26 @@ function createSwapEntry() {
     const threads = getAvailableSourcesForHop(hop.hopNumber, null);
     const selectedThreadData = wizardData.selectedThreads.map(id => threads.find(t => t.threadId === id));
 
-    // Calculate total input amounts
+    // Calculate total input amounts using partial amounts
     const inputByCurrency = {};
+    const partialSwaps = [];  // Track which threads have partial amounts
+
     selectedThreadData.forEach(thread => {
+        const swapAmount = wizardData.threadAmounts[thread.threadId] || thread.availableAmount;
+        const isPartial = swapAmount < thread.availableAmount;
+
+        if (isPartial) {
+            partialSwaps.push({
+                threadId: thread.threadId,
+                swapAmount: swapAmount,
+                remainingAmount: thread.availableAmount - swapAmount
+            });
+        }
+
         if (!inputByCurrency[thread.currency]) {
             inputByCurrency[thread.currency] = { amount: 0, threads: [] };
         }
-        inputByCurrency[thread.currency].amount += thread.availableAmount;
+        inputByCurrency[thread.currency].amount += swapAmount;
         inputByCurrency[thread.currency].threads.push(thread.threadId);
     });
 
@@ -15539,6 +15616,7 @@ function createSwapEntry() {
         entryType: 'swap',
         sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
         multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
+        threadAmounts: wizardData.threadAmounts, // Store partial amounts for each thread
         fromWallet: selectedThreadData[0]?.sourceWallet || '',
         toWallet: wizardData.swapService,
         toWalletType: 'brown', // BROWN for asset conversion
@@ -15552,6 +15630,7 @@ function createSwapEntry() {
         notes: wizardData.notes || `Asset conversion: ${inputData.amount} ${inputCurrency} swapped for ${wizardData.outputAmount} ${wizardData.outputCurrency} via ${wizardData.swapType === 'cex' ? 'CEX' : 'DEX'}`,
         notation: notation,
         isSwap: true,
+        partialSwaps: partialSwaps, // Track which threads had partial amounts
         swapDetails: {
             fromCurrency: inputCurrency,
             toCurrency: wizardData.outputCurrency,
@@ -16472,7 +16551,7 @@ function selectWizardTransfer(index) {
 
 function updateThreadsAfterSwap(hop, swapEntry) {
     // This function updates the available threads to reflect the currency conversion
-    // The thread continues with the new currency but same notation base
+    // Now handles partial swaps - leaving remainder in original thread
 
     if (!investigation.availableThreads) {
         investigation.availableThreads = {};
@@ -16480,50 +16559,66 @@ function updateThreadsAfterSwap(hop, swapEntry) {
 
     const swapDetails = swapEntry.swapDetails;
 
-    // Remove the old currency thread
-    if (swapEntry.sourceThreadId) {
-        // Single source
-        if (investigation.availableThreads[swapDetails.fromCurrency]) {
-            delete investigation.availableThreads[swapDetails.fromCurrency][swapEntry.sourceThreadId];
+    // Handle partial swaps - update or remove source threads based on amounts used
+    if (swapEntry.partialSwaps && swapEntry.partialSwaps.length > 0) {
+        // Process each partial swap
+        swapEntry.partialSwaps.forEach(partial => {
+            if (investigation.availableThreads[swapDetails.fromCurrency] &&
+                investigation.availableThreads[swapDetails.fromCurrency][partial.threadId]) {
+
+                // Update the original thread to only have the remaining amount
+                const thread = investigation.availableThreads[swapDetails.fromCurrency][partial.threadId];
+                thread.totalAmount = partial.remainingAmount;
+
+                // If remaining amount is very small (dust), remove the thread
+                if (partial.remainingAmount < 0.0001) {
+                    delete investigation.availableThreads[swapDetails.fromCurrency][partial.threadId];
+                }
+            }
+        });
+    } else {
+        // Full swap - remove the old currency threads completely
+        if (swapEntry.sourceThreadId) {
+            // Single source
+            if (investigation.availableThreads[swapDetails.fromCurrency]) {
+                delete investigation.availableThreads[swapDetails.fromCurrency][swapEntry.sourceThreadId];
+            }
+        } else if (swapEntry.multipleSourceThreads) {
+            // Multiple sources - remove all
+            swapEntry.multipleSourceThreads.forEach(threadId => {
+                if (investigation.availableThreads[swapDetails.fromCurrency]) {
+                    delete investigation.availableThreads[swapDetails.fromCurrency][threadId];
+                }
+            });
         }
-
-        // Add new currency thread with same ID but new currency
-        if (!investigation.availableThreads[swapDetails.toCurrency]) {
-            investigation.availableThreads[swapDetails.toCurrency] = {};
-        }
-
-        // Create the converted thread - keep the same base notation but update currency tracking
-        // Don't modify the thread ID itself to avoid issues if currency appears in notation
-        const newThreadId = swapEntry.sourceThreadId; // Keep original ID structure
-        investigation.availableThreads[swapDetails.toCurrency][newThreadId] = {
-            threadId: newThreadId,
-            totalAmount: swapDetails.toAmount,
-            currency: swapDetails.toCurrency,
-            sourceWallet: swapEntry.fromWallet,
-            hopNumber: hop.hopNumber,
-            swapConverted: true,
-            originalCurrency: swapDetails.fromCurrency
-        };
-    } else if (swapEntry.multipleSourceThreads && swapEntry.multipleSourceThreads.length > 1) {
-        // Handle multiple source threads
-        // This is more complex - would need to distribute the output amount proportionally
-        // For now, create a single combined thread in the new currency
-        const combinedId = swapEntry.multipleSourceThreads.map(t => t.split('-').slice(0, 2).join('-')).join('+') + `-H${hop.hopNumber}`;
-
-        if (!investigation.availableThreads[swapDetails.toCurrency]) {
-            investigation.availableThreads[swapDetails.toCurrency] = {};
-        }
-
-        investigation.availableThreads[swapDetails.toCurrency][combinedId] = {
-            threadId: combinedId,
-            totalAmount: swapDetails.toAmount,
-            currency: swapDetails.toCurrency,
-            sourceWallet: swapEntry.fromWallet,
-            hopNumber: hop.hopNumber,
-            swapConverted: true,
-            originalCurrency: swapDetails.fromCurrency
-        };
     }
+
+    // Create new thread(s) in the output currency
+    if (!investigation.availableThreads[swapDetails.toCurrency]) {
+        investigation.availableThreads[swapDetails.toCurrency] = {};
+    }
+
+    // Generate thread ID for the new currency thread
+    let newThreadId;
+    if (swapEntry.sourceThreadId) {
+        // Single source - keep the base notation
+        newThreadId = swapEntry.sourceThreadId;
+    } else if (swapEntry.multipleSourceThreads && swapEntry.multipleSourceThreads.length > 1) {
+        // Multiple sources - create combined ID
+        newThreadId = swapEntry.multipleSourceThreads.map(t => t.split('-').slice(0, 2).join('-')).join('+') + `-H${hop.hopNumber}`;
+    }
+
+    // Create the new thread in the output currency
+    investigation.availableThreads[swapDetails.toCurrency][newThreadId] = {
+        threadId: newThreadId,
+        totalAmount: swapDetails.toAmount,
+        currency: swapDetails.toCurrency,
+        sourceWallet: swapEntry.toWallet, // DEX/CEX address becomes the source for the new thread
+        hopNumber: hop.hopNumber,
+        swapConverted: true,
+        originalCurrency: swapDetails.fromCurrency,
+        partialSwap: swapEntry.partialSwaps && swapEntry.partialSwaps.length > 0
+    };
 }
 
 function createSingleHopEntry(hop, wizardData, output, outputIndex) {
@@ -24630,6 +24725,8 @@ To (RED Wallet): ${transfer.to}`;
         window.applyPIFOToWizard = applyPIFOToWizard;
         window.lookupSwapTransaction = lookupSwapTransaction;
         window.toggleSwapThread = toggleSwapThread;
+        window.updateSwapThreadAmount = updateSwapThreadAmount;
+        window.setMaxSwapAmount = setMaxSwapAmount;
         window.setSwapType = setSwapType;
         window.swapWizardNext = swapWizardNext;
         window.swapWizardBack = swapWizardBack;
