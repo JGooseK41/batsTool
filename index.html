@@ -13879,13 +13879,32 @@ function closeHopConfirmModal() {
 function validateHopCompletion(hopNumber) {
             const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             if (!hop) return { valid: false, errors: ['Hop not found'] };
-            
+
             const errors = [];
             const warnings = [];
-            
+
             // Get starting ART by currency for this hop
             const startingART = hop.artAtStartByCurrency || {};
-            
+
+            // Track which currencies have been swapped out
+            const swappedOutCurrencies = new Set();
+            const swappedInAmounts = {};
+
+            // First pass: identify swaps
+            hop.entries.forEach(entry => {
+                if (entry.entryType === 'swap' && entry.swapDetails) {
+                    // Mark the source currency as swapped out
+                    swappedOutCurrencies.add(entry.currency);
+
+                    // Track the swapped-in amount
+                    const toCurrency = entry.swapDetails.toCurrency;
+                    if (!swappedInAmounts[toCurrency]) {
+                        swappedInAmounts[toCurrency] = 0;
+                    }
+                    swappedInAmounts[toCurrency] += parseFloat(entry.swapDetails.toAmount || 0);
+                }
+            });
+
             // Calculate totals by currency from all entries in this hop
             const entryTotalsByCurrency = {};
             hop.entries.forEach(entry => {
@@ -13898,6 +13917,10 @@ function validateHopCompletion(hopNumber) {
                     if (['trace', 'writeoff', 'cold_storage', 'vasp_arrival'].includes(entry.entryType)) {
                         entryTotalsByCurrency[currency] += parseFloat(entry.amount);
                     }
+                    // Also count swap entries as accounting for the source currency
+                    if (entry.entryType === 'swap') {
+                        entryTotalsByCurrency[currency] += parseFloat(entry.amount);
+                    }
                 }
             });
             
@@ -13905,8 +13928,14 @@ function validateHopCompletion(hopNumber) {
             Object.entries(startingART).forEach(([currency, startAmount]) => {
                 const tracedAmount = entryTotalsByCurrency[currency] || 0;
                 const difference = Math.abs(startAmount - tracedAmount);
-                
-                if (difference >= 0.01) {
+
+                // Skip validation for currencies that were fully swapped
+                if (swappedOutCurrencies.has(currency)) {
+                    // For swapped currencies, the entire amount should be accounted for
+                    if (difference >= 0.01 && tracedAmount < startAmount) {
+                        warnings.push(`${currency}: ${(startAmount - tracedAmount).toLocaleString()} was not swapped (only ${tracedAmount.toLocaleString()} of ${startAmount.toLocaleString()} converted)`);
+                    }
+                } else if (difference >= 0.01) {
                     if (tracedAmount > startAmount) {
                         errors.push(`${currency}: Traced ${tracedAmount.toLocaleString()} exceeds ART ${startAmount.toLocaleString()}`);
                     } else {
@@ -13956,11 +13985,29 @@ function validateHopCompletion(hopNumber) {
             // Calculate remaining by currency for the return object
             const remainingByCurrency = {};
             Object.entries(startingART).forEach(([currency, startAmount]) => {
-                const tracedAmount = entryTotalsByCurrency[currency] || 0;
-                const remaining = startAmount - tracedAmount;
-                if (Math.abs(remaining) >= 0.01) {
-                    remainingByCurrency[currency] = remaining;
+                // Don't show swapped currencies as "remaining"
+                if (swappedOutCurrencies.has(currency)) {
+                    // Currency was swapped, so it shouldn't show as remaining
+                    // unless part of it wasn't actually swapped
+                    const tracedAmount = entryTotalsByCurrency[currency] || 0;
+                    const remaining = startAmount - tracedAmount;
+                    if (remaining > 0.01) {
+                        // Only show the unswapped portion as remaining
+                        remainingByCurrency[currency] = remaining;
+                    }
+                } else {
+                    const tracedAmount = entryTotalsByCurrency[currency] || 0;
+                    const remaining = startAmount - tracedAmount;
+                    if (Math.abs(remaining) >= 0.01) {
+                        remainingByCurrency[currency] = remaining;
+                    }
                 }
+            });
+
+            // Add swapped-in currencies to the available threads for next hop
+            Object.entries(swappedInAmounts).forEach(([currency, amount]) => {
+                // The swapped-in currency becomes available for the next hop
+                // This is handled by buildAvailableThreadsIndex after the swap
             });
             
             return {

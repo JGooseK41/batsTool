@@ -3,38 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 17:18)
+## Latest Commit (Auto-updated: 2025-09-23 17:31)
 
-**Commit:** eed83c304cbdac3bde6fcf8c77189b0fd60f6046
+**Commit:** 1db32cfdb9cf916db3075e481b0d02c623e8f1cc
 **Author:** Your Name
-**Message:** Fix saved file loading and thread availability issues
+**Message:** Enhanced investigation summary dashboard on file load
 
-Fixed multiple issues when loading saved .bats files:
+Implemented comprehensive investigation summary that appears when loading a saved .bats file:
 
-## Thread Availability
-- Rebuild availableThreads index after loading to restore thread tracking
-- Ensure threads are properly saved with investigation data
-- Call buildAvailableThreadsIndex() before saving to include complete state
-- Added logging to track thread availability after load
+## Dashboard Features
+- **Clear Position Indicator**: Shows exactly where user left off (e.g., "Working on Hop 2")
+- **Detailed Summary**: Displays investigation progress with victim count, transaction totals, and completion status
+- **Available Threads Display**: Shows remaining funds to trace with amounts and currencies
+- **Terminal Wallet Summary**: Groups terminal arrivals by exchange for quick overview
 
-## UI Updates
-- Call updateInvestigationCompletionStatus() after loading files
-- Properly show "Start Hop 2" button when Hop 1 is complete
-- Fixed investigation complete cards showing prematurely
+## Status Information
+- Enhanced analyzeCaseStatus() with descriptive messages
+- Added "whereYouAre" field showing current investigation phase
+- Added "whatToDoNext" field with clear action instructions
+- Calculates and displays remaining amounts per currency
+- Shows thread availability for next hop
 
-## Bug Fixes
-- Fixed formatCurrency undefined error by adding wrapper function
-- Use formatCurrencyAmount for proper currency display
-- Added formatCurrency wrapper for backward compatibility
+## Action Buttons
+- **Smart Continue Button**: Takes user directly to where they left off
+- Dynamic button text based on current state (e.g., "Continue Working on Hop 2")
+- "What to do next" section with clear instructions
+- Quick access to Analysis tab when investigation is complete
+- View Full Investigation option for overall review
 
-## Data Persistence
-The investigation now saves and restores:
-- availableThreads index for thread tracking
-- All hop entries and allocations
-- Terminal wallet indices
-- Complete state for resuming work
+## User Experience
+- Modal overlay with professional styling
+- Gradient backgrounds for visual hierarchy
+- Clear visual indicators for complete vs in-progress items
+- Automatic focus on relevant section when continuing
+- Click-outside to close for quick dismissal
 
-Users can now properly save their work and resume exactly where they left off, with all thread allocations and progress preserved.
+Users now get a complete picture of their investigation status immediately upon loading, with one-click access to continue exactly where they left off.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -42,23 +46,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 72 ++++++++++++++++++++++++++------------------------------------
- index.html | 30 +++++++++++++++++++++-----
- 2 files changed, 55 insertions(+), 47 deletions(-)
+ CLAUDE.md  |  59 +++++++++++----------
+ index.html | 171 ++++++++++++++++++++++++++++++++++++++++++++++++-------------
+ 2 files changed, 166 insertions(+), 64 deletions(-)
 ```
 
 ## Recent Commits History
 
-- eed83c3 Fix saved file loading and thread availability issues (0 seconds ago)
-- cb65a32 Fix investigation completion detection to prevent premature display (8 minutes ago)
-- deb6362 Implement hop-centric DAG visualization for investigation traces (18 minutes ago)
+- 1db32cf Enhanced investigation summary dashboard on file load (0 seconds ago)
+- eed83c3 Fix saved file loading and thread availability issues (13 minutes ago)
+- cb65a32 Fix investigation completion detection to prevent premature display (22 minutes ago)
+- deb6362 Implement hop-centric DAG visualization for investigation traces (31 minutes ago)
 - 313d765 Show investigation complete view when all threads reach terminal wallets (2 hours ago)
-- 4c78dca Fix missing closing brace in template expression (2 hours ago)
-- fcc2596 Add multi-currency progress bars for swapped assets (2 hours ago)
+- 4c78dca Fix missing closing brace in template expression (3 hours ago)
+- fcc2596 Add multi-currency progress bars for swapped assets (3 hours ago)
 - 97cb71d Fix terminal wallet thread creation and display issues (3 hours ago)
-- 9f06495 Fix terminal wallet allocation and thread tracking issues (3 hours ago)
+- 9f06495 Fix terminal wallet allocation and thread tracking issues (4 hours ago)
 - 0479806 Add comprehensive terminal wallet tracking and reporting system (4 hours ago)
-- 8f66faa Implement dynamic wallet attribution via Etherscan API (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
