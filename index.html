@@ -11349,15 +11349,22 @@ function analyzeUntracedBalances(hop) {
 function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemainingFunds) {
     // Calculate threads created in this hop
     const threadsCreated = [];
+    let allThreadsTerminal = true;
     hop.entries.forEach(entry => {
         if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
             const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+            // Check if terminal - wallet type is stored as lowercase
+            const isTerminal = entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE' || entry.isTerminal === true;
+            if (!isTerminal) {
+                allThreadsTerminal = false;
+            }
             threadsCreated.push({
                 notation: entry.notation,
                 amount: parseFloat(entry.amount),
                 currency: currency,
                 toWallet: entry.toWallet,
-                toWalletType: entry.toWalletType
+                toWalletType: entry.toWalletType,
+                isTerminal: isTerminal
             });
         }
     });
@@ -11385,12 +11392,12 @@ function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemaini
     const threadSummaryHTML = threadsCreated.length > 0 ? `
         <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
             <h3 style="color: #0d47a1; margin-top: 0;">Threads Created in Hop ${hop.hopNumber}</h3>
-            <p style="color: #0d47a1; margin-bottom: 15px;">These threads will be available for tracing in Hop ${hop.hopNumber + 1}:</p>
+            <p style="color: #0d47a1; margin-bottom: 15px;">${allThreadsTerminal ? 'All threads have reached terminal wallets:' : `These threads will be available for tracing in Hop ${hop.hopNumber + 1}:`}</p>
             <div style="max-height: 200px; overflow-y: auto;">
                 ${threadsCreated.map(thread => `
                     <div style="background: white; padding: 10px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #2196f3;">
                         <strong>${thread.notation}</strong> - ${thread.amount.toLocaleString()} ${thread.currency}
-                        <br><span style="font-size: 12px; color: #666;">To: ${thread.toWallet.substring(0, 16)}... (${walletTypes[thread.toWalletType] || thread.toWalletType})</span>
+                        <br><span style="font-size: 12px; color: #666;">To: ${thread.toWallet.substring(0, 16)}... (${thread.isTerminal ? '🟪 TERMINAL - ' : ''}${walletTypes[thread.toWalletType] || thread.toWalletType})</span>
                     </div>
                 `).join('')}
             </div>
@@ -11438,7 +11445,7 @@ function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemaini
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0; text-align: center;">
                     ${isBalanced ? `
                         <button class="btn btn-success btn-large" onclick="proceedWithHopFinalization(investigation.hops.find(h => h.hopNumber === ${hop.hopNumber}))">
-                            ✅ Complete Hop ${hop.hopNumber}
+                            ${allThreadsTerminal ? '🎯 Complete Trace' : `✅ Complete Hop ${hop.hopNumber}`}
                         </button>
                     ` : `
                         <p style="color: #666; margin-bottom: 10px;">Balance all remaining amounts to proceed</p>
@@ -11595,8 +11602,8 @@ function completeHopAndProceed(hop) {
         if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
             const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
 
-            // Check if this is a terminal wallet
-            const isTerminal = entry.toWalletType === 'PURPLE' || entry.isTerminal;
+            // Check if this is a terminal wallet - note that wallet type is stored as lowercase
+            const isTerminal = entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE' || entry.isTerminal === true;
 
             threadsCreated.push({
                 notation: entry.notation,
@@ -11615,7 +11622,19 @@ function completeHopAndProceed(hop) {
     });
 
     // Calculate ART for next hop (accounting for write-offs and terminal wallets)
-    const nextHopART = getCurrentART();
+    // Only count non-terminal threads for next hop ART
+    const nextHopART = {};
+
+    // Build ART from non-terminal threads only
+    threadsCreated.forEach(thread => {
+        if (!thread.isTerminal) {
+            if (!nextHopART[thread.currency]) {
+                nextHopART[thread.currency] = 0;
+            }
+            nextHopART[thread.currency] += thread.amount;
+        }
+    });
+
     const hasActiveThreads = Object.values(nextHopART).some(amount => amount > 0);
 
     // Don't create next hop if all threads reached terminal wallets
@@ -11651,9 +11670,10 @@ function completeHopAndProceed(hop) {
     updateInvestigationCompletionStatus();
 
     // Show single confirmation message
-    const threadSummary = threadsCreated.map(t =>
-        `${t.notation}: ${formatAmount(t.amount, t.currency)} → ${t.toWallet.substring(0, 8)}...${t.isTerminal ? ' (Terminal)' : ''}`
-    ).join('<br>');
+    const threadSummary = threadsCreated.map(t => {
+        const amountStr = `${t.amount.toLocaleString()} ${t.currency}`;
+        return `${t.notation}: ${amountStr} → ${t.toWallet.substring(0, 8)}...${t.isTerminal ? ' (Terminal)' : ''}`;
+    }).join('<br>');
 
     // Determine the appropriate message
     let message;
@@ -12690,21 +12710,27 @@ function checkHopCompletionStatus(hop) {
             
             // Check if all threads reached terminal wallets
             let allThreadsTerminal = true;
+            let hasAnyTraceEntries = false;
             hop.entries.forEach(entry => {
                 if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0) {
-                    const isTerminal = entry.toWalletType === 'PURPLE' || entry.isTerminal;
+                    hasAnyTraceEntries = true;
+                    // Check if terminal - wallet type is stored as lowercase
+                    const isTerminal = entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE' || entry.isTerminal === true;
                     if (!isTerminal) {
                         allThreadsTerminal = false;
                     }
                 }
             });
 
-            const buttonText = allThreadsTerminal ?
-                'Complete Investigation' :
+            // Only consider all terminal if we actually have trace entries
+            const traceComplete = hasAnyTraceEntries && allThreadsTerminal;
+
+            const buttonText = traceComplete ?
+                '🎯 Complete Trace' :
                 `Close Hop ${hop.hopNumber} & Continue`;
 
-            const subText = allThreadsTerminal ?
-                'All funds have reached terminal wallets. Your investigation is complete!' :
+            const subText = traceComplete ?
+                'All funds have reached terminal wallets. Your trace is complete!' :
                 'All source threads have been accounted for in this hop.';
 
             notification.innerHTML = `
@@ -12716,7 +12742,7 @@ function checkHopCompletionStatus(hop) {
                     <button class="btn btn-success" onclick="closeHopAndProceed(${hop.hopNumber}, this.parentElement.parentElement)">
                         ${buttonText}
                     </button>
-                    ${!allThreadsTerminal ? `
+                    ${!traceComplete ? `
                         <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">
                             Add More Entries
                         </button>
