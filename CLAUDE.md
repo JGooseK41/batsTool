@@ -3,42 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 17:31)
+## Latest Commit (Auto-updated: 2025-09-23 17:43)
 
-**Commit:** 1db32cfdb9cf916db3075e481b0d02c623e8f1cc
+**Commit:** 05e95d33b94e87c09d14715273a3c4c17613af8e
 **Author:** Your Name
-**Message:** Enhanced investigation summary dashboard on file load
+**Message:** Fix swap currency tracking in hop validation
 
-Implemented comprehensive investigation summary that appears when loading a saved .bats file:
+Fixed issue where swapped currencies incorrectly showed as "remaining" during hop finalization:
 
-## Dashboard Features
-- **Clear Position Indicator**: Shows exactly where user left off (e.g., "Working on Hop 2")
-- **Detailed Summary**: Displays investigation progress with victim count, transaction totals, and completion status
-- **Available Threads Display**: Shows remaining funds to trace with amounts and currencies
-- **Terminal Wallet Summary**: Groups terminal arrivals by exchange for quick overview
+## Problem
+- After swapping USDC to USDT, the original USDC amount showed as "remaining to trace"
+- System didn't recognize that swapped currencies are fully accounted for
+- Validation incorrectly warned about untraced amounts for converted currencies
 
-## Status Information
-- Enhanced analyzeCaseStatus() with descriptive messages
-- Added "whereYouAre" field showing current investigation phase
-- Added "whatToDoNext" field with clear action instructions
-- Calculates and displays remaining amounts per currency
-- Shows thread availability for next hop
+## Solution
+- Track which currencies have been swapped out in validateHopCompletion()
+- Mark swapped currencies as fully accounted when entire amount is converted
+- Only show remaining amounts for currencies that weren't swapped
+- Count swap entries as accounting for their source currency
 
-## Action Buttons
-- **Smart Continue Button**: Takes user directly to where they left off
-- Dynamic button text based on current state (e.g., "Continue Working on Hop 2")
-- "What to do next" section with clear instructions
-- Quick access to Analysis tab when investigation is complete
-- View Full Investigation option for overall review
+## Validation Logic
+1. Identify all swap entries and their source/target currencies
+2. Track swapped-out currencies in a Set
+3. For swapped currencies:
+   - Don't show as "remaining" if fully converted
+   - Only warn if partial amount wasn't swapped
+4. For non-swapped currencies:
+   - Normal validation applies
+   - Show remaining amounts that need tracing
 
 ## User Experience
-- Modal overlay with professional styling
-- Gradient backgrounds for visual hierarchy
-- Clear visual indicators for complete vs in-progress items
-- Automatic focus on relevant section when continuing
-- Click-outside to close for quick dismissal
+- Hop finalization now correctly handles currency conversions
+- No false warnings about "unaccounted" swapped funds
+- Clear distinction between swapped and untraced amounts
+- Proper thread creation for converted currencies
 
-Users now get a complete picture of their investigation status immediately upon loading, with one-click access to continue exactly where they left off.
+This ensures investigators can complete hops with swaps without confusion about phantom "remaining" amounts.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -46,23 +46,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  59 +++++++++++----------
- index.html | 171 ++++++++++++++++++++++++++++++++++++++++++++++++-------------
- 2 files changed, 166 insertions(+), 64 deletions(-)
+ CLAUDE.md  | 84 ++++++++++++++++++++++++++++++++------------------------------
+ index.html | 65 +++++++++++++++++++++++++++++++++++++++++-------
+ 2 files changed, 100 insertions(+), 49 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1db32cf Enhanced investigation summary dashboard on file load (0 seconds ago)
-- eed83c3 Fix saved file loading and thread availability issues (13 minutes ago)
-- cb65a32 Fix investigation completion detection to prevent premature display (22 minutes ago)
-- deb6362 Implement hop-centric DAG visualization for investigation traces (31 minutes ago)
-- 313d765 Show investigation complete view when all threads reach terminal wallets (2 hours ago)
+- 05e95d3 Fix swap currency tracking in hop validation (0 seconds ago)
+- 1db32cf Enhanced investigation summary dashboard on file load (12 minutes ago)
+- eed83c3 Fix saved file loading and thread availability issues (25 minutes ago)
+- cb65a32 Fix investigation completion detection to prevent premature display (34 minutes ago)
+- deb6362 Implement hop-centric DAG visualization for investigation traces (43 minutes ago)
+- 313d765 Show investigation complete view when all threads reach terminal wallets (3 hours ago)
 - 4c78dca Fix missing closing brace in template expression (3 hours ago)
 - fcc2596 Add multi-currency progress bars for swapped assets (3 hours ago)
 - 97cb71d Fix terminal wallet thread creation and display issues (3 hours ago)
 - 9f06495 Fix terminal wallet allocation and thread tracking issues (4 hours ago)
-- 0479806 Add comprehensive terminal wallet tracking and reporting system (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

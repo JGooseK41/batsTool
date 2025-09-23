@@ -11615,25 +11615,39 @@ function completeHopAndProceed(hop) {
 
     // Calculate threads and ART for next hop
     const threadsCreated = [];
+    let allThreadsTerminal = true;
     hop.entries.forEach(entry => {
         if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
             const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+
+            // Check if this is a terminal wallet
+            const isTerminal = entry.toWalletType === 'PURPLE' || entry.isTerminal;
+
             threadsCreated.push({
                 notation: entry.notation,
                 amount: parseFloat(entry.amount),
                 currency: currency,
                 toWallet: entry.toWallet,
-                toWalletType: entry.toWalletType
+                toWalletType: entry.toWalletType,
+                isTerminal: isTerminal
             });
+
+            // Track if any non-terminal threads exist
+            if (!isTerminal) {
+                allThreadsTerminal = false;
+            }
         }
     });
 
-    // Calculate ART for next hop (accounting for write-offs)
+    // Calculate ART for next hop (accounting for write-offs and terminal wallets)
     const nextHopART = getCurrentART();
     const hasActiveThreads = Object.values(nextHopART).some(amount => amount > 0);
 
-    // Create next hop if there are active threads
-    if (hasActiveThreads) {
+    // Don't create next hop if all threads reached terminal wallets
+    const shouldCreateNextHop = hasActiveThreads && !allThreadsTerminal;
+
+    // Create next hop only if there are non-terminal active threads
+    if (shouldCreateNextHop) {
         const nextHopNumber = hop.hopNumber + 1;
         const existingNextHop = investigation.hops.find(h => h.hopNumber === nextHopNumber);
 
@@ -11660,22 +11674,31 @@ function completeHopAndProceed(hop) {
 
     // Show single confirmation message
     const threadSummary = threadsCreated.map(t =>
-        `${t.notation}: ${formatAmount(t.amount, t.currency)} → ${t.toWallet.substring(0, 8)}...`
+        `${t.notation}: ${formatAmount(t.amount, t.currency)} → ${t.toWallet.substring(0, 8)}...${t.isTerminal ? ' (Terminal)' : ''}`
     ).join('<br>');
 
-    const message = hasActiveThreads ?
-        `✅ Hop ${hop.hopNumber} completed!<br><br>
+    // Determine the appropriate message
+    let message;
+    if (allThreadsTerminal && hasActiveThreads) {
+        message = `🎉 Investigation Complete!<br><br>
+        All funds have reached terminal wallets:<br>
+        ${threadSummary}<br><br>
+        Your investigation has been successfully completed. Generate reports in the Analysis tab.`;
+    } else if (shouldCreateNextHop) {
+        message = `✅ Hop ${hop.hopNumber} completed!<br><br>
         <strong>Threads created:</strong><br>
-        ${threadSummary || 'No threads (all funds written off or sent to VASP)'}<br><br>
-        Hop ${hop.hopNumber + 1} is ready for tracing.` :
-        `✅ Hop ${hop.hopNumber} completed!<br><br>
+        ${threadSummary || 'No threads created'}<br><br>
+        Hop ${hop.hopNumber + 1} is ready for tracing.`;
+    } else {
+        message = `✅ Hop ${hop.hopNumber} completed!<br><br>
         All funds have been accounted for. Investigation can be finalized.`;
+    }
 
     // Show brief notification instead of modal
-    showNotification(message, 'success', 5000);
+    showNotification(message, 'success', allThreadsTerminal ? 8000 : 5000);
 
-    // Scroll to next hop if created
-    if (hasActiveThreads) {
+    // Scroll to next hop if created, or to analysis if complete
+    if (shouldCreateNextHop) {
         setTimeout(() => {
             const nextHopElement = document.getElementById(`hop_${hop.hopNumber + 1}`);
             if (nextHopElement) {
@@ -12435,21 +12458,42 @@ function checkHopCompletionStatus(hop) {
                 text-align: center;
             `;
             
+            // Check if all threads reached terminal wallets
+            let allThreadsTerminal = true;
+            hop.entries.forEach(entry => {
+                if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0) {
+                    const isTerminal = entry.toWalletType === 'PURPLE' || entry.isTerminal;
+                    if (!isTerminal) {
+                        allThreadsTerminal = false;
+                    }
+                }
+            });
+
+            const buttonText = allThreadsTerminal ?
+                'Complete Investigation' :
+                `Close Hop ${hop.hopNumber} & Continue`;
+
+            const subText = allThreadsTerminal ?
+                'All funds have reached terminal wallets. Your investigation is complete!' :
+                'All source threads have been accounted for in this hop.';
+
             notification.innerHTML = `
                 <h2 style="color: #155724; margin: 0 0 15px 0;">✅ Hop ${hop.hopNumber} Fully Accounted!</h2>
                 <p style="color: #155724; margin: 0 0 20px 0;">
-                    All source threads have been accounted for in this hop.
+                    ${subText}
                 </p>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <button class="btn btn-success" onclick="closeHopAndProceed(${hop.hopNumber}, this.parentElement.parentElement)">
-                        Close Hop ${hop.hopNumber} & Continue
+                        ${buttonText}
                     </button>
                     <button class="btn btn-primary" onclick="saveInvestigationFile(); this.parentElement.parentElement.remove()">
                         💾 Save Progress
                     </button>
-                    <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">
-                        Add More Entries
-                    </button>
+                    ${!allThreadsTerminal ? `
+                        <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">
+                            Add More Entries
+                        </button>
+                    ` : ''}
                 </div>
             `;
             
