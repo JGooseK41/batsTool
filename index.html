@@ -5046,17 +5046,66 @@ function updateThreadAvailabilityFromSwap(entry) {
     }
 }
 
-// REPLACE YOUR EXISTING getAvailableSourcesForHop FUNCTION WITH THIS FIXED VERSION
+// Universal threads database is the single source of truth
 
 function getAvailableSourcesForHop(hopNumber, targetCurrency) {
     console.log(` Getting available sources for Hop ${hopNumber}, Currency filter: ${targetCurrency || 'ALL'}`);
-    
-    buildAvailableThreadsIndex(); // Refresh the index
-    
-    console.log('Available threads after build:', investigation.availableThreads);
-    
+
+    // Ensure the threads database is up to date
+    buildAvailableThreadsIndex();
+
+    console.log('Available threads database:', investigation.availableThreads);
+
     const availableSources = [];
-    
+
+    // Simply consult the universal threads database
+    for (const currency in investigation.availableThreads) {
+        // Skip if filtering by currency and this doesn't match
+        if (targetCurrency && currency !== targetCurrency) continue;
+
+        for (const threadId in investigation.availableThreads[currency]) {
+            const thread = investigation.availableThreads[currency][threadId];
+
+            // For hop 1, only show victim threads; for other hops, show appropriate threads
+            if (hopNumber === 1 && thread.sourceType !== 'victim_transaction') continue;
+            if (hopNumber > 1 && thread.sourceType === 'victim_transaction') continue;
+
+            // Only include threads with available amount
+            if (thread.availableAmount && thread.availableAmount > 0) {
+                // Determine display text based on source type
+                let displayText = threadId;
+                if (thread.sourceType === 'victim_transaction') {
+                    displayText = `${threadId} (RED Wallet)`;
+                } else if (thread.sourceType === 'swap_output') {
+                    displayText = `${threadId} (swapped to ${currency})`;
+                }
+
+                availableSources.push({
+                    threadId: threadId,
+                    displayText: displayText,
+                    availableAmount: thread.availableAmount,
+                    currency: currency,
+                    sourceWallet: thread.sourceWallet,
+                    sourceType: thread.sourceType || 'hop_output',
+                    hopLevel: thread.hopLevel || 0,
+                    datetime: thread.createdAt || null,
+                    timezone: 'UTC'
+                });
+            }
+        }
+    }
+
+    console.log(` Final available sources from database (${availableSources.length}):`, availableSources);
+
+    return availableSources.sort((a, b) => a.threadId.localeCompare(b.threadId));
+}
+
+// DEPRECATED - Complex hop traversal logic - replaced by database approach
+function getAvailableSourcesForHop_OLD(hopNumber, targetCurrency) {
+    console.log('DEPRECATED FUNCTION CALLED');
+
+    const availableSources = [];
+
     if (hopNumber === 1) {
         // First hop: ALL victim transactions (RED wallets) from ALL victims, ALL currencies
         console.log(`📋 Checking ${investigation.victims.length} victims for available transactions`);

@@ -3,18 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 09:54)
+## Latest Commit (Auto-updated: 2025-09-23 10:03)
 
-**Commit:** a365dc3437a36d7982be59cc81404fd8aa0c2c4b
+**Commit:** ee8ce28993c2bbdf91896bdc0ede8dddc7337021
 **Author:** Your Name
-**Message:** Fix swap thread replacement - original threads now completely replaced by swap outputs
+**Message:** Enable same-hop swap tracing - swap outputs immediately available within same hop
 
-- When a thread is swapped, the original currency thread ceases to exist
-- Only the swap output thread (with new currency) remains available
-- Prevents confusion by ensuring no dual existence of threads
-- Skip trace threads that have been swapped in both buildAvailableThreadsIndex and getAvailableSourcesForHop
-- After USDC->USDT swap, only USDT thread exists (USDC thread is gone)
-- Audit trail preserved in swap entry documentation
+- Swap outputs are now available for tracing immediately within the same hop
+- After swapping USDC to USDT in hop 2, you can trace USDT in hop 2 without advancing
+- getAvailableSourcesForHop now checks both previous hop AND current hop for swaps
+- Properly hides original threads that have been swapped at any level
+- Supports complex flows: trace → swap → trace all within same hop
 
 🤖 Generated with Claude Code
 
@@ -22,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 48 +++++++++++++++++++++---------------------------
- index.html | 40 +++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 60 insertions(+), 28 deletions(-)
+ CLAUDE.md  | 42 +++++++++++++++++++--------------------
+ index.html | 66 ++++++++++++++++++++++++++++++++++++++++++++++++--------------
+ 2 files changed, 72 insertions(+), 36 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (0 seconds ago)
-- b558cc0 Fix swap currency tracking - ensure threads use output currency after swap conversion (8 minutes ago)
-- 4e0d269 Fix swap wizard to properly handle currency conversion and auto-create entries (18 minutes ago)
-- 4b64742 Fix renderHopEntry missing hop parameter causing undefined error (58 minutes ago)
-- 0ed7ee6 Update CLAUDE.md with latest changes (66 minutes ago)
-- a2465ca Remove duplicate functions and clean up redundant code (67 minutes ago)
-- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (74 minutes ago)
-- abdd5b5 Fix duplicate hopNumber declaration in reopenHop function (76 minutes ago)
-- 0883ca5 Fix duplicate hopNumber declaration in showSwapWizard (87 minutes ago)
-- a86c083 Fix hop wizard progression and remove all hop ID references (2 hours ago)
+- ee8ce28 Enable same-hop swap tracing - swap outputs immediately available within same hop (0 seconds ago)
+- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (10 minutes ago)
+- b558cc0 Fix swap currency tracking - ensure threads use output currency after swap conversion (18 minutes ago)
+- 4e0d269 Fix swap wizard to properly handle currency conversion and auto-create entries (28 minutes ago)
+- 4b64742 Fix renderHopEntry missing hop parameter causing undefined error (67 minutes ago)
+- 0ed7ee6 Update CLAUDE.md with latest changes (75 minutes ago)
+- a2465ca Remove duplicate functions and clean up redundant code (76 minutes ago)
+- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (84 minutes ago)
+- abdd5b5 Fix duplicate hopNumber declaration in reopenHop function (86 minutes ago)
+- 0883ca5 Fix duplicate hopNumber declaration in showSwapWizard (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
