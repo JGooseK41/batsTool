@@ -3,21 +3,24 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 20:58)
+## Latest Commit (Auto-updated: 2025-09-22 21:02)
 
-**Commit:** a768bddd3ba37f91c67f5ad0da3f3f254e161696
+**Commit:** c012b7f022b31dca2f51248d166072ed1e8497eb
 **Author:** Your Name
-**Message:** Streamline hop completion to single click instead of 4 modals
+**Message:** Enhance swap wizard with checkboxes and partial swap support
 
-- Consolidated multiple confirmation modals into single streamlined process
-- Created completeHopAndProceed() function that handles everything in one go
-- Replaced 4 modal clicks with single notification and automatic progression
-- Hop now completes with: mark completed, create next hop, show notification, auto-scroll
-- Thread review information shown in brief notification instead of modal
-- Updated showNotification to support HTML content and custom duration
-- Removed redundant confirmation steps while preserving all functionality
+- Added checkboxes to thread selection for clearer visual feedback
+- Implemented partial swap amounts - can now swap less than full thread amount
+- Added amount input fields for each selected thread with Max button
+- Remaining balance stays in original thread when doing partial swaps
+- Updated toggleSwapThread to initialize default amounts
+- Added updateSwapThreadAmount and setMaxSwapAmount helper functions
+- Modified createSwapEntry to track partial amounts per thread
+- Rewrote updateThreadsAfterSwap to handle thread splitting properly
+- Thread amounts are now stored in threadAmounts object in wizard data
+- Partial swaps create new thread for converted amount, keep remainder in original
 
-The hop completion now happens with a single click, showing a brief success notification with thread summary, then automatically scrolling to the next hop.
+This allows users to swap only a portion of a thread's funds, with the remainder staying in the original thread and currency for later use.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,23 +28,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  48 ++++++++++++++----------
- index.html | 123 +++++++++++++++++++++++++++++++++++++++++++++++++------------
- 2 files changed, 128 insertions(+), 43 deletions(-)
+ CLAUDE.md  |  51 +++++++--------
+ index.html | 217 ++++++++++++++++++++++++++++++++++++++++++++-----------------
+ 2 files changed, 180 insertions(+), 88 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a768bdd Streamline hop completion to single click instead of 4 modals (0 seconds ago)
-- a2647b1 Add transaction hash lookup for DEX/Swap wizard (8 minutes ago)
-- 5624070 Remove redundant createSwapEntryFromWizard function (15 minutes ago)
-- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (18 minutes ago)
-- 8e60274 Add better debugging for swap wizard hop finding issue (26 minutes ago)
-- 90726bb Fix DEX/Swap entry not showing in Add Entry wizard (55 minutes ago)
-- e3d9d02 Fix UI not updating after applying transfer to victim (62 minutes ago)
-- a7a9dd6 Fix removeTransaction function definition (69 minutes ago)
+- c012b7f Enhance swap wizard with checkboxes and partial swap support (0 seconds ago)
+- a768bdd Streamline hop completion to single click instead of 4 modals (4 minutes ago)
+- a2647b1 Add transaction hash lookup for DEX/Swap wizard (11 minutes ago)
+- 5624070 Remove redundant createSwapEntryFromWizard function (19 minutes ago)
+- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (22 minutes ago)
+- 8e60274 Add better debugging for swap wizard hop finding issue (29 minutes ago)
+- 90726bb Fix DEX/Swap entry not showing in Add Entry wizard (59 minutes ago)
+- e3d9d02 Fix UI not updating after applying transfer to victim (66 minutes ago)
+- a7a9dd6 Fix removeTransaction function definition (73 minutes ago)
 - 995000a Implement core behavior fixes based on user requirements (2 hours ago)
-- 31185bb Implement partial tracing and optional thread review modal (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
