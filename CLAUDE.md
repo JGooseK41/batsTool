@@ -3,18 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 10:05)
+## Latest Commit (Auto-updated: 2025-09-23 10:18)
 
-**Commit:** aaf556b0a0291f583510d765980885bc05bfd674
+**Commit:** 8784749f94d89e5103b2f8938b10511bdf8726d4
 **Author:** Your Name
-**Message:** Implement universal threads database as single source of truth
+**Message:** Fix thread database consistency and availability calculations
 
-- investigation.availableThreads is now THE authoritative thread database
-- Swaps immediately update database: delete old currency, add new currency
-- getAvailableSourcesForHop simplified to just query the database
-- No more complex hop traversal logic - just consult the database
-- When USDC is swapped to USDT, USDC thread is immediately replaced by USDT thread
-- Cleaner architecture with single source of truth for thread availability
+- Fixed thread availability to use dynamic calculation instead of modifying availableAmount
+- Swaps now completely remove source threads from database (true replacement)
+- Removed conflicting availableAmount modifications in updateThreadAvailabilityFromHop
+- getMaxAssignableAmount now properly calculates from totalAmount minus assignments
+- Created comprehensive test script to verify database integrity
+- Ensured all components use the universal threads database consistently
 
 🤖 Generated with Claude Code
 
@@ -22,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 43 +++++++++++++++++++++---------------------
- index.html | 63 +++++++++++++++++++++++++++++++++++++++++++++++++++++++-------
- 2 files changed, 77 insertions(+), 29 deletions(-)
+ CLAUDE.md  | 43 ++++++++++++++++++++++---------------------
+ index.html | 49 ++++++++++++-------------------------------------
+ 2 files changed, 34 insertions(+), 58 deletions(-)
 ```
 
 ## Recent Commits History
 
-- aaf556b Implement universal threads database as single source of truth (0 seconds ago)
-- ee8ce28 Enable same-hop swap tracing - swap outputs immediately available within same hop (2 minutes ago)
-- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (12 minutes ago)
-- b558cc0 Fix swap currency tracking - ensure threads use output currency after swap conversion (20 minutes ago)
-- 4e0d269 Fix swap wizard to properly handle currency conversion and auto-create entries (30 minutes ago)
-- 4b64742 Fix renderHopEntry missing hop parameter causing undefined error (69 minutes ago)
-- 0ed7ee6 Update CLAUDE.md with latest changes (77 minutes ago)
-- a2465ca Remove duplicate functions and clean up redundant code (79 minutes ago)
-- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (86 minutes ago)
-- abdd5b5 Fix duplicate hopNumber declaration in reopenHop function (88 minutes ago)
+- 8784749 Fix thread database consistency and availability calculations (0 seconds ago)
+- aaf556b Implement universal threads database as single source of truth (13 minutes ago)
+- ee8ce28 Enable same-hop swap tracing - swap outputs immediately available within same hop (15 minutes ago)
+- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (25 minutes ago)
+- b558cc0 Fix swap currency tracking - ensure threads use output currency after swap conversion (33 minutes ago)
+- 4e0d269 Fix swap wizard to properly handle currency conversion and auto-create entries (43 minutes ago)
+- 4b64742 Fix renderHopEntry missing hop parameter causing undefined error (82 minutes ago)
+- 0ed7ee6 Update CLAUDE.md with latest changes (2 hours ago)
+- a2465ca Remove duplicate functions and clean up redundant code (2 hours ago)
+- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

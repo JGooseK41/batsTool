@@ -4970,29 +4970,25 @@ function updateThreadAvailabilityFromSwap(entry) {
     const inputAmount = parseFloat(entry.amount);
     const outputAmount = parseFloat(entry.outputAmount);
 
-    // Remove source threads entirely (swaps replace threads, not consume them)
-    if (entry.sourceThreadId) {
-        // Single source thread - remove it completely
-        if (investigation.availableThreads[inputCurrency]) {
-            delete investigation.availableThreads[inputCurrency][entry.sourceThreadId];
-        }
-    } else if (entry.multipleSourceThreads) {
-        // Multiple source threads - remove all
-        entry.multipleSourceThreads.forEach(threadId => {
-            if (investigation.availableThreads[inputCurrency]) {
-                delete investigation.availableThreads[inputCurrency][threadId];
-            }
-        });
+    // Get the source thread ID (same one we'll use for output)
+    const threadId = entry.sourceThreadId ||
+        (entry.multipleSourceThreads ? entry.multipleSourceThreads.join('+') + `-H${entry.hopNumber}` : null);
+
+    if (!threadId) return;
+
+    // Remove thread from input currency
+    if (investigation.availableThreads[inputCurrency]) {
+        delete investigation.availableThreads[inputCurrency][threadId];
     }
 
-    // Create new thread with output currency
-    if (outputAmount > 0 && entry.notation) {
+    // Create same thread in output currency with same ID
+    if (outputAmount > 0) {
         if (!investigation.availableThreads[outputCurrency]) {
             investigation.availableThreads[outputCurrency] = {};
         }
 
-        // The new thread ID is the swap entry's notation
-        const newThreadId = entry.notation;
+        // Use SAME thread ID, just different currency
+        const newThreadId = threadId;
 
         // Create the output thread with the new currency
         investigation.availableThreads[outputCurrency][newThreadId] = {
@@ -5050,9 +5046,8 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
                 let displayText = threadId;
                 if (thread.sourceType === 'victim_transaction') {
                     displayText = `${threadId} (RED Wallet)`;
-                } else if (thread.sourceType === 'swap_output') {
-                    displayText = `${threadId} (swapped to ${currency})`;
                 }
+                // No special display for swap outputs - they're just regular threads now
 
                 availableSources.push({
                     threadId: threadId,
@@ -15720,12 +15715,10 @@ function createSwapEntry() {
     const inputCurrency = Object.keys(inputByCurrency)[0];
     const inputData = inputByCurrency[inputCurrency];
 
-    // Create notation
-    let notation = wizardData.selectedThreads.length === 1 ?
+    // Keep same notation - just the thread ID without swap suffix
+    const notation = wizardData.selectedThreads.length === 1 ?
         wizardData.selectedThreads[0] :
         wizardData.selectedThreads.map(t => t.split('-').slice(0, 2).join('-')).join('+') + `-H${hop.hopNumber}`;
-
-    notation += ` [SWAP: ${inputCurrency} → ${wizardData.outputCurrency}]`;
 
     // Create the swap entry
     const swapEntry = {
@@ -16768,10 +16761,13 @@ function updateThreadsAfterSwap(hop, swapEntry) {
         investigation.availableThreads[swapDetails.toCurrency] = {};
     }
 
-    // Use the swap entry's notation as the thread ID (includes [SWAP: X → Y] suffix)
-    const newThreadId = swapEntry.notation;
+    // Use the SAME thread ID as the source (no swap suffix)
+    const newThreadId = swapEntry.sourceThreadId ||
+        (swapEntry.multipleSourceThreads ? swapEntry.multipleSourceThreads.join('+') : null);
 
-    // Create the new thread in the output currency
+    if (!newThreadId) return;
+
+    // Create the thread with SAME ID in the output currency
     investigation.availableThreads[swapDetails.toCurrency][newThreadId] = {
         threadId: newThreadId,
         totalAmount: swapDetails.toAmount,
@@ -17230,6 +17226,18 @@ function createHopEntryFromWizard() {
         toWalletType = wizardData.manualData.walletType;
     }
 
+    // Calculate the amount to trace - limited by transaction amount if available
+    let traceAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+
+    // If we have transaction data, limit trace amount to what the transaction actually contains
+    if (wizardData.txData && wizardData.txData.amount) {
+        const txAmount = wizardData.txData.amount;
+        if (traceAmount > txAmount) {
+            console.log(`Limiting trace amount from ${traceAmount} to transaction amount ${txAmount}`);
+            traceAmount = txAmount;
+        }
+    }
+
     // Create new entry with wizard data
     const entry = {
         id: hop.entries.length + 1,
@@ -17243,7 +17251,7 @@ function createHopEntryFromWizard() {
         toWallet: toWallet,
         toWalletType: toWalletType,
         toWalletId: '',
-        amount: Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0).toString(),
+        amount: traceAmount.toString(),
         currency: entryCurrency,
         customCurrency: '',
         txHash: wizardData.txHash,
