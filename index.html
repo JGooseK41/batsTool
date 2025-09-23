@@ -15910,13 +15910,22 @@ function createSwapEntry() {
         wizardData.selectedThreads[0] :
         wizardData.selectedThreads.map(t => t.split('-').slice(0, 2).join('-')).join('+') + `-H${hop.hopNumber}`;
 
-    // Create the swap entry
+    // Create the swap entry with dual-layer support
     const swapEntry = {
         id: Date.now(),
         hopNumber: hop.hopNumber,  // Use hop number as the identifier
         entryType: 'swap',
+
+        // Dual-layer thread tracking for input threads
+        sourceThreadInternalId: selectedThreadData.length === 1 && selectedThreadData[0] ?
+            (selectedThreadData[0].internalId || selectedThreadData[0].threadId) : '',
+        multipleSourceInternalIds: selectedThreadData.length > 1 ?
+            selectedThreadData.map(t => t.internalId || t.threadId) : [],
+
+        // Keep notation for backward compatibility
         sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
         multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
+
         threadAmounts: wizardData.threadAmounts, // Store partial amounts for each thread
         fromWallet: selectedThreadData[0]?.sourceWallet || '',
         toWallet: wizardData.swapService,
@@ -15949,8 +15958,9 @@ function createSwapEntry() {
     // Add entry to hop
     hop.entries.push(swapEntry);
 
-    // Update available threads - convert currency
-    updateThreadsAfterSwap(hop, swapEntry);
+    // Update available threads - use the dual-layer version
+    // updateThreadsAfterSwap(hop, swapEntry); // OLD function
+    updateThreadAvailabilityFromSwap(swapEntry); // NEW dual-layer function
 
     // Close wizard and update UI
     closeSwapWizard();
@@ -16027,12 +16037,18 @@ function openHopEntryWizard(hopNumber) {
     // Get hop data
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
-    
+
+    // IMPORTANT: Rebuild threads database to ensure we have latest state after any swaps
+    buildAvailableThreadsIndex();
+    console.log('Rebuilt threads database before opening wizard');
+
     // Initialize wizard data if not already editing
     if (!window.hopWizardData || !window.hopWizardData.isEditMode) {
         window.hopWizardData = {
             hopNumber: hop.hopNumber,
             selectedThreads: [],
+            selectedInternalIds: [],  // Add for dual-layer support
+            selectedNotations: [],    // Add for dual-layer support
             allocations: {},
             step: 1,
             txHash: '',
