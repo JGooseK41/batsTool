@@ -3,20 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 21:36)
+## Latest Commit (Auto-updated: 2025-09-22 21:50)
 
-**Commit:** 01bf713f0df9471659ddb470be223062d733dcd5
+**Commit:** 7954cb3cf8d6a560facc0e87e57ce4d6c1cae7c6
 **Author:** Your Name
-**Message:** Remove hop IDs and use hop numbers as primary identifier
+**Message:** Fix unintended consequences of hop ID removal
 
-- Replaced all hop.id references with hop.hopNumber throughout codebase
-- Removed Date.now() ID generation from hop creation
-- Updated hop lookups to use hopNumber instead of ID
-- Entries now reference parent hop by hopNumber, not ID
-- Simplified hop structure to only use hopNumber (1, 2, 3...)
-- Fixed all 600+ references to use hop numbers consistently
+- Updated all functions to use hopNumber instead of hopId as parameter name
+- Fixed DOM selectors to consistently use hopNumber for element IDs
+- Updated hopCollapseState to use hopNumber as key instead of hopId
+- Modified renderHopEntry and renderCollapsibleHopEntry to accept hop parameter
+- Fixed all function calls to pass hopNumber instead of entry.hopId
+- Updated hop lookups to find by hopNumber instead of id
+- Ensured entry-hop relationships work correctly with hop numbers
 
-This aligns with BATS methodology where hops are identified by their count (Hop 1, Hop 2, etc.) not arbitrary timestamp IDs. The parent relationship is natural: Hop 2 entries come from Hop 1, Hop 3 from Hop 2, etc.
+This completes the migration from timestamp-based hop IDs to sequential hop numbers.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -24,23 +25,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  43 ++++------
- index.html | 260 ++++++++++++++++++++++++++++++-------------------------------
- 2 files changed, 142 insertions(+), 161 deletions(-)
+ CLAUDE.md  |  44 +++++---
+ index.html | 334 +++++++++++++++++++++++++++++++------------------------------
+ 2 files changed, 197 insertions(+), 181 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 01bf713 Remove hop IDs and use hop numbers as primary identifier (0 seconds ago)
-- 1c99f22 Document hop ID refactoring needs (6 minutes ago)
-- 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (8 minutes ago)
-- 72014da Update CLAUDE.md with latest commit info (18 minutes ago)
-- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (22 minutes ago)
-- c012b7f Enhance swap wizard with checkboxes and partial swap support (35 minutes ago)
-- a768bdd Streamline hop completion to single click instead of 4 modals (38 minutes ago)
-- a2647b1 Add transaction hash lookup for DEX/Swap wizard (46 minutes ago)
-- 5624070 Remove redundant createSwapEntryFromWizard function (54 minutes ago)
-- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (56 minutes ago)
+- 7954cb3 Fix unintended consequences of hop ID removal (0 seconds ago)
+- 01bf713 Remove hop IDs and use hop numbers as primary identifier (13 minutes ago)
+- 1c99f22 Document hop ID refactoring needs (19 minutes ago)
+- 9fb980d Fix swap wizard hop ID lookup issue by storing hop object (22 minutes ago)
+- 72014da Update CLAUDE.md with latest commit info (31 minutes ago)
+- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (36 minutes ago)
+- c012b7f Enhance swap wizard with checkboxes and partial swap support (48 minutes ago)
+- a768bdd Streamline hop completion to single click instead of 4 modals (52 minutes ago)
+- a2647b1 Add transaction hash lookup for DEX/Swap wizard (59 minutes ago)
+- 5624070 Remove redundant createSwapEntryFromWizard function (67 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

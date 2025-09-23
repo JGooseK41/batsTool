@@ -4094,7 +4094,7 @@
                 hop.entries.forEach(entry => {
                     const amount = parseAmount(entry.amount);
                     if (entry.notation && amount > 0) {
-                        const threadId = `${entry.notation}-H${hop.hopNumber}`;
+                        const threadId = entry.notation;
                         threadsFromThisHop.push({
                             threadId: threadId,
                             amount: amount,
@@ -4924,8 +4924,8 @@ function updateThreadAvailabilityFromHop(entry) {
         investigation.availableThreads[currency] = {};
     }
     
-    // Create new thread entry for this hop output with hop suffix
-    const newThreadId = `${entry.notation}-H${entry.hopNumber}`;
+    // Thread ID is just the notation (already contains hop number)
+    const newThreadId = entry.notation;
     investigation.availableThreads[currency][newThreadId] = {
         totalAmount: amount,
         availableAmount: amount,
@@ -5025,8 +5025,8 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
                         const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
                         
                         if (!targetCurrency || currency === targetCurrency) {
-                            // Use the correct thread ID format with hop suffix
-                            const threadId = `${entry.notation}-H${hop.hopNumber}`;
+                            // Thread ID is the notation itself (already contains hop number)
+                            const threadId = entry.notation;
                             const currentAvailable = getMaxAssignableAmount(threadId, currency);
                             
                             if (currentAvailable > 0) {
@@ -13593,8 +13593,8 @@ function checkAllThreadsTerminated() {
         hop.entries.forEach(entry => {
             if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
                 const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-                // Include hop suffix in thread ID to ensure uniqueness
-                const threadId = `${entry.notation}-H${hop.hopNumber}`;
+                // Thread ID is the notation itself (already contains hop number)
+                const threadId = entry.notation;
                 
                 if (!investigation.availableThreads[currency]) {
                     investigation.availableThreads[currency] = {};
@@ -13727,8 +13727,8 @@ function checkAllThreadsTerminated() {
                         const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
                         
                         if (!targetCurrency || currency === targetCurrency) {
-                            // Use the correct thread ID format with hop suffix
-                            const threadId = `${entry.notation}-H${hop.hopNumber}`;
+                            // Thread ID is the notation itself (already contains hop number)
+                            const threadId = entry.notation;
                             const currentAvailable = getMaxAssignableAmount(threadId, currency);
                             
                             if (currentAvailable > 0) {
