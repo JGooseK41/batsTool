@@ -3,18 +3,11 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 08:47)
+## Latest Commit (Auto-updated: 2025-09-23 08:48)
 
-**Commit:** a2465cab187cc64b2b065b1d02aa3b1d119fbf53
+**Commit:** 0ed7ee67107f6636660c8277756a25825ffa4be9
 **Author:** Your Name
-**Message:** Remove duplicate functions and clean up redundant code
-
-- Removed duplicate updateMultipleSourcePreview function (was defined twice)
-- Renamed first proceedToNextHop(hop) to proceedToNextHopFromObject(hop) to avoid conflict
-- Removed duplicate exportUniversalWalletIndex function (identical copy)
-- Cleaned up code duplication that was causing syntax errors
-
-This cleanup reduces file size and eliminates redundant code that was causing confusion and potential bugs.
+**Message:** Update CLAUDE.md with latest changes
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,24 +15,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md         |    25 +-
- index.html        |   100 +-
- index.html.backup | 24826 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 24839 insertions(+), 112 deletions(-)
+ CLAUDE.md | 33 +++++++++++++++++++--------------
+ 1 file changed, 19 insertions(+), 14 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a2465ca Remove duplicate functions and clean up redundant code (0 seconds ago)
-- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (8 minutes ago)
-- abdd5b5 Fix duplicate hopNumber declaration in reopenHop function (9 minutes ago)
-- 0883ca5 Fix duplicate hopNumber declaration in showSwapWizard (20 minutes ago)
-- a86c083 Fix hop wizard progression and remove all hop ID references (49 minutes ago)
+- 0ed7ee6 Update CLAUDE.md with latest changes (0 seconds ago)
+- a2465ca Remove duplicate functions and clean up redundant code (65 seconds ago)
+- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (9 minutes ago)
+- abdd5b5 Fix duplicate hopNumber declaration in reopenHop function (11 minutes ago)
+- 0883ca5 Fix duplicate hopNumber declaration in showSwapWizard (21 minutes ago)
+- a86c083 Fix hop wizard progression and remove all hop ID references (50 minutes ago)
 - bf1e5df Fix hop wizard step 3 'Log Entry' button disabled issue (3 hours ago)
 - b1058ab Fix thread ID format to prevent hop number accumulation (11 hours ago)
 - 7954cb3 Fix unintended consequences of hop ID removal (11 hours ago)
 - 01bf713 Remove hop IDs and use hop numbers as primary identifier (11 hours ago)
-- 1c99f22 Document hop ID refactoring needs (11 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
