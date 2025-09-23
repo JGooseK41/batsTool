@@ -9831,46 +9831,91 @@ function addNewHop() {
                 hopDiv.className = 'hop-container';
                 hopDiv.setAttribute('data-hop-id', hop.hopNumber);
                 
-                // Calculate totals by currency for this hop
+                // Calculate what's been accounted for in this hop
+                // Use the thread database as the source of truth for amounts
+                const availableThreads = getAvailableSourcesForHop(hop.hopNumber + 1, null);
+
+                // Group available threads by currency for display
+                const availableByCurrency = {};
+                availableThreads.forEach(thread => {
+                    if (!availableByCurrency[thread.currency]) {
+                        availableByCurrency[thread.currency] = 0;
+                    }
+                    availableByCurrency[thread.currency] += thread.availableAmount;
+                });
+
+                // For "Total Accounted", show what's been traced in each entry
                 const entryTotalsByCurrency = {};
                 hop.entries.forEach(entry => {
                     if (parseFloat(entry.amount) > 0) {
-                        const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-                        if (!entryTotalsByCurrency[currency]) {
-                            entryTotalsByCurrency[currency] = 0;
+                        // For swaps, show the OUTPUT amount and currency
+                        if (entry.entryType === 'swap' && entry.outputCurrency && entry.outputAmount) {
+                            if (!entryTotalsByCurrency[entry.outputCurrency]) {
+                                entryTotalsByCurrency[entry.outputCurrency] = 0;
+                            }
+                            entryTotalsByCurrency[entry.outputCurrency] += parseFloat(entry.outputAmount);
                         }
-                        // Include all entry types that account for funds
-                        if (['trace', 'writeoff', 'cold_storage', 'vasp_arrival'].includes(entry.entryType)) {
+                        // For regular entries, show the traced amount
+                        else if (['trace', 'writeoff', 'cold_storage', 'vasp_arrival'].includes(entry.entryType)) {
+                            const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                            if (!entryTotalsByCurrency[currency]) {
+                                entryTotalsByCurrency[currency] = 0;
+                            }
                             entryTotalsByCurrency[currency] += parseFloat(entry.amount);
-                            console.log(`Hop ${hop.hopNumber} Entry ${entry.id}: ${entry.entryType} ${entry.amount} ${currency} (Total so far: ${entryTotalsByCurrency[currency]})`);
                         }
                     }
                 });
                 
                 // Check if hop is complete (all currencies balance)
                 const artAtStart = hop.artAtStartByCurrency || {};
-                
+
                 // If artAtStartByCurrency is empty but we have a legacy artAtStart number, calculate it
                 if (Object.keys(artAtStart).length === 0 && hop.artAtStart) {
                     // For legacy support - assume USD if only a number is stored
                     artAtStart['USD'] = hop.artAtStart;
                 }
-                
+
                 let isComplete = hop.completed || false;
                 let remainingDisplay = [];
-                
-                // Only check completion if we have starting ART values
-                if (Object.keys(artAtStart).length > 0) {
+
+                // Calculate remaining based on available threads, not just starting ART
+                // This properly accounts for swaps that change currency
+                const availableThreads = getAvailableSourcesForHop(hop.hopNumber + 1, null);
+                const remainingByCurrency = {};
+
+                // Sum up remaining amounts by currency from available threads
+                availableThreads.forEach(thread => {
+                    if (thread.availableAmount > 0) {
+                        if (!remainingByCurrency[thread.currency]) {
+                            remainingByCurrency[thread.currency] = 0;
+                        }
+                        remainingByCurrency[thread.currency] += thread.availableAmount;
+                    }
+                });
+
+                // Build display of remaining amounts
+                Object.entries(remainingByCurrency).forEach(([currency, amount]) => {
+                    if (amount >= 0.01) {
+                        remainingDisplay.push(`${amount.toLocaleString()} ${currency}`);
+                    }
+                });
+
+                // If no remaining threads, check if we had starting ART that wasn't traced
+                if (remainingDisplay.length === 0 && Object.keys(artAtStart).length > 0) {
+                    // Check for untraced amounts in original currencies
                     Object.entries(artAtStart).forEach(([currency, startAmount]) => {
                         const tracedAmount = entryTotalsByCurrency[currency] || 0;
                         const remaining = startAmount - tracedAmount;
                         if (Math.abs(remaining) >= 0.01) {
-                            remainingDisplay.push(`${remaining.toLocaleString()} ${currency}`);
+                            // Only show if not converted by swap
+                            const hasSwapToOtherCurrency = hop.entries.some(e =>
+                                e.entryType === 'swap' && e.currency === currency
+                            );
+                            if (!hasSwapToOtherCurrency) {
+                                remainingDisplay.push(`${remaining.toLocaleString()} ${currency}`);
+                            }
                         }
                     });
-                } else {
-                    // If no starting ART is set, the hop cannot be complete
-                    remainingDisplay.push('Starting ART not set');
                 }
                 
                 const artStartDisplay = typeof artAtStart === 'object' ? 
