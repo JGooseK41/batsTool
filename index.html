@@ -3330,7 +3330,40 @@
         let currentBulkVictimId = null;
         let pendingTransfers = null;
         let pendingTransferCallback = null;
-        
+
+        // Known exchange addresses and attributions
+        const knownExchanges = {
+            // Bybit addresses
+            '0x07624a16592ab3ca24cccaee13d9ee21eea86fe8': { name: 'Bybit', type: 'CEX' },
+            '0xf89d7b9c864f589bbf53a82105107622b35eaa40': { name: 'Bybit', type: 'CEX' },
+            // Binance addresses
+            '0x28c6c06298d514db089934071355e5743bf21d60': { name: 'Binance', type: 'CEX' },
+            '0x21a31ee1afc51d94c2efccaa2092ad1028285549': { name: 'Binance', type: 'CEX' },
+            // Coinbase addresses
+            '0x503828976d22510aad0201ac7ec88293211d23da': { name: 'Coinbase', type: 'CEX' },
+            '0xb01c0f24b4a3492c8eb180ecc952f7d18cbe9141': { name: 'Coinbase', type: 'CEX' },
+            // Add more exchanges as needed
+        };
+
+        // Check if address is a known exchange
+        async function checkExchangeAttribution(address) {
+            if (!address) return null;
+
+            const lowerAddress = address.toLowerCase();
+
+            // First check our known list
+            if (knownExchanges[lowerAddress]) {
+                console.log(`🟣 Exchange detected: ${knownExchanges[lowerAddress].name} (${address})`);
+                return knownExchanges[lowerAddress];
+            }
+
+            // Try to get attribution from Etherscan labels API if available
+            // Note: This requires additional API endpoint which may not be public
+            // For now, we'll rely on our known list
+
+            return null;
+        }
+
         // Shared EVM chain response parser
         const parseEVMResponse = (data, receiptData, blockTimestamp) => {
             // This is the same parser used for all EVM chains
@@ -17183,10 +17216,25 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
 
     // Determine wallet type
     let toWalletType = 'black';
-    if (isSwap) {
-        toWalletType = 'brown'; // BROWN for asset conversion/swap
-    } else if (output.isChange) {
-        toWalletType = 'orange'; // ORANGE for change
+    let exchangeAttribution = null;
+
+    // Check if destination is a known exchange (synchronous check)
+    if (output.to) {
+        const lowerAddress = output.to.toLowerCase();
+        if (knownExchanges[lowerAddress]) {
+            exchangeAttribution = knownExchanges[lowerAddress];
+            toWalletType = 'purple'; // PURPLE for exchanges/VASPs
+            console.log(`🟣 Terminal wallet detected: ${exchangeAttribution.name}`);
+        }
+    }
+
+    // Override with specific types if needed
+    if (!exchangeAttribution) {
+        if (isSwap) {
+            toWalletType = 'brown'; // BROWN for asset conversion/swap
+        } else if (output.isChange) {
+            toWalletType = 'orange'; // ORANGE for change
+        }
     }
 
     // Create the entry with dual-layer support
@@ -17219,7 +17267,9 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
         txHash: wizardData.txHash,
         timestamp: wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '',
         timezone: 'UTC',
-        notes: isSwap ?
+        notes: exchangeAttribution ?
+            `Terminal wallet: ${exchangeAttribution.name} (${exchangeAttribution.type})\nAddress: ${output.to}` :
+            isSwap ?
             `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${output.to}` :
             `Payment output ${outputIndex + 1} of ${wizardData.multipleOutputs.length}` +
             (wizardData.changeNotes && wizardData.changeNotes.length > 0 ? '\n' + wizardData.changeNotes.join('\n') : ''),

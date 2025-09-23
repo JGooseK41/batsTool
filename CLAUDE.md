@@ -3,15 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 12:36)
+## Latest Commit (Auto-updated: 2025-09-23 12:49)
 
-**Commit:** 1a425c5a67a78fa0301df5d28d817f78d7b28208
+**Commit:** abe51e12284056d6fdf34a937c5ac959c26314f6
 **Author:** Your Name
-**Message:** Fix duplicate availableThreads declaration causing syntax error
+**Message:** Fix Total Accounted display to not double-count swap amounts
 
-Removed duplicate const declaration on line 9883 that was preventing
-page from loading. Now reuses the availableThreads variable already
-declared on line 9836.
+Issue: After a swap, the Total Accounted was showing both the swap output
+(79,929 USDT) AND the trace (45,000 USDT), making it appear as 124,929 USDT
+when only 45,000 was actually traced.
+
+Fix: Swaps are now excluded from Total Accounted calculation since they
+are currency conversions, not actual traces. Only trace, writeoff,
+cold_storage, and vasp_arrival entries count toward Total Accounted.
+
+Now correctly shows:
+- Total Accounted: 45,000 USDT (actual traced amount)
+- Remaining: 34,929.75 USDT (correctly calculated)
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -19,23 +27,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 51 +++++++++++++++++++++++++++------------------------
- index.html |  2 +-
- 2 files changed, 28 insertions(+), 25 deletions(-)
+ CLAUDE.md  | 49 +++++++++++++++++++------------------------------
+ index.html | 13 ++++---------
+ 2 files changed, 23 insertions(+), 39 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (0 seconds ago)
-- de7d528 Fix wizard-created entries not auto-collapsing and manual form appearing (2 minutes ago)
-- b8336a8 Fix ART and remaining calculations to properly handle currency swaps (6 minutes ago)
-- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (15 minutes ago)
-- e3e9a2f Fix swap currency lookup issue in hop wizard (23 minutes ago)
-- 094ed34 Implement dual-layer thread tracking system for complex swap handling (32 minutes ago)
-- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (40 minutes ago)
-- 2406827 Fix swap thread replacement in universal database (59 minutes ago)
-- cd2d729 Fix swap thread ID collision causing double-counting (64 minutes ago)
-- 84cb001 Fix wizard completion and thread allocation tracking issues (85 minutes ago)
+- abe51e1 Fix Total Accounted display to not double-count swap amounts (0 seconds ago)
+- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (13 minutes ago)
+- de7d528 Fix wizard-created entries not auto-collapsing and manual form appearing (15 minutes ago)
+- b8336a8 Fix ART and remaining calculations to properly handle currency swaps (19 minutes ago)
+- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (28 minutes ago)
+- e3e9a2f Fix swap currency lookup issue in hop wizard (36 minutes ago)
+- 094ed34 Implement dual-layer thread tracking system for complex swap handling (45 minutes ago)
+- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (53 minutes ago)
+- 2406827 Fix swap thread replacement in universal database (72 minutes ago)
+- cd2d729 Fix swap thread ID collision causing double-counting (77 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
