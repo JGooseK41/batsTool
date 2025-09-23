@@ -9778,14 +9778,15 @@ function addNewHop() {
                             ${!isComplete ? `
                                 <div style="margin-top: 15px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                                     ${(() => {
-                                        // Calculate what's left to trace
-                                        const availableThreads = getAvailableSourcesForHop(hop.hopNumber, null);
+                                        // Calculate what's left to trace for the NEXT hop
+                                        const nextHopNumber = hop.hopNumber + 1;
+                                        const availableThreads = getAvailableSourcesForHop(nextHopNumber, null);
                                         const remainingThreads = availableThreads.filter(t => t.availableAmount > 0);
 
                                         if (remainingThreads.length > 0) {
                                             return `
                                                 <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-                                                    <h4 style="margin: 0 0 10px 0; color: #e65100;">📋 Threads Still to Trace:</h4>
+                                                    <h4 style="margin: 0 0 10px 0; color: #e65100;">📋 Available Threads for Hop ${nextHopNumber}:</h4>
                                                     <div style="display: grid; gap: 8px;">
                                                         ${remainingThreads.map(thread => `
                                                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: white; border-radius: 4px;">
@@ -11158,8 +11159,9 @@ function createNextHop(previousHopId) {
 
 // Check if a hop is fully accounted for and notify user
 function showRemainingThreadsSummary(hop) {
-    // Get available threads for this hop
-    const availableThreads = getAvailableSourcesForHop(hop.hopNumber, null);
+    // Get available threads for the NEXT hop (what's available after this hop's entries)
+    const nextHopNumber = hop.hopNumber + 1;
+    const availableThreads = getAvailableSourcesForHop(nextHopNumber, null);
 
     // Filter for threads with remaining amounts
     const remainingThreads = availableThreads.filter(t => t.availableAmount > 0);
@@ -11174,7 +11176,7 @@ function showRemainingThreadsSummary(hop) {
             totalsByCurrency[thread.currency] += thread.availableAmount;
         });
 
-        let summaryMessage = `✅ Entry created successfully!\n\n📊 Remaining to trace at Hop ${hop.hopNumber}:\n`;
+        let summaryMessage = `✅ Entry created successfully!\n\n📊 Remaining to trace for Hop ${nextHopNumber}:\n`;
 
         remainingThreads.forEach(thread => {
             summaryMessage += `• ${thread.threadId}: ${thread.availableAmount.toLocaleString()} ${thread.currency}\n`;
@@ -17182,7 +17184,10 @@ function createHopEntryFromWizard() {
     // Generate notation based on selected threads
     let notation = '';
     if (wizardData.selectedThreads.length === 1) {
-        notation = `${wizardData.selectedThreads[0]}-H${effectiveHopNumber}`;
+        // Extract base thread ID without hop suffix
+        const threadId = wizardData.selectedThreads[0];
+        const baseThread = threadId.match(/^(V\d+-T[\d,]+)/)?.[1] || threadId;
+        notation = `${baseThread}-H${effectiveHopNumber}`;
     } else if (wizardData.selectedThreads.length > 1) {
         // For commingling, use parentheses format: (V1-T1) (V2-T1) H2
         // Group threads by victim
