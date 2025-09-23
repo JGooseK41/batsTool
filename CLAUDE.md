@@ -3,46 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 21:14)
+## Latest Commit (Auto-updated: 2025-09-22 21:18)
 
-**Commit:** 2d6ff79361841956e6af8de08394dc114a9a63c7
+**Commit:** 72014da0dcc13fb8b4765dbfaabe24b6770f0632
 **Author:** Your Name
-**Message:** Fix swap wizard issues: duplicate hash fields and button functionality
-
-- Removed duplicate transaction hash input field (was appearing twice)
-- Added optional Service Provider Name field for documentation (Uniswap, Binance, etc.)
-- Fixed Create Swap Entry button not working by relaxing validation
-- Button now only requires output amount and currency (service address/name optional)
-- Added providerName to wizard data and swap details
-- Improved error handling and debugging logs in createSwapEntry
-- Enhanced success notification to show provider name if specified
-- Transaction hash lookup button now disabled for CEX swaps with explanation
-
-The swap wizard now has cleaner UI with single hash field, optional provider name for better documentation, and properly functioning Create Swap Entry button.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md  | 49 ++++++++++++++++++----------------
- index.html | 89 +++++++++++++++++++++++++++++++++++---------------------------
- 2 files changed, 77 insertions(+), 61 deletions(-)
+ CLAUDE.md | 52 +++++++++++++++++++++++++---------------------------
+ 1 file changed, 25 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (0 seconds ago)
-- c012b7f Enhance swap wizard with checkboxes and partial swap support (12 minutes ago)
-- a768bdd Streamline hop completion to single click instead of 4 modals (16 minutes ago)
-- a2647b1 Add transaction hash lookup for DEX/Swap wizard (23 minutes ago)
-- 5624070 Remove redundant createSwapEntryFromWizard function (31 minutes ago)
-- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (34 minutes ago)
-- 8e60274 Add better debugging for swap wizard hop finding issue (42 minutes ago)
-- 90726bb Fix DEX/Swap entry not showing in Add Entry wizard (71 minutes ago)
-- e3d9d02 Fix UI not updating after applying transfer to victim (78 minutes ago)
-- a7a9dd6 Fix removeTransaction function definition (85 minutes ago)
+- 72014da Update CLAUDE.md with latest commit info (0 seconds ago)
+- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (4 minutes ago)
+- c012b7f Enhance swap wizard with checkboxes and partial swap support (17 minutes ago)
+- a768bdd Streamline hop completion to single click instead of 4 modals (20 minutes ago)
+- a2647b1 Add transaction hash lookup for DEX/Swap wizard (28 minutes ago)
+- 5624070 Remove redundant createSwapEntryFromWizard function (36 minutes ago)
+- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (38 minutes ago)
+- 8e60274 Add better debugging for swap wizard hop finding issue (46 minutes ago)
+- 90726bb Fix DEX/Swap entry not showing in Add Entry wizard (76 minutes ago)
+- e3d9d02 Fix UI not updating after applying transfer to victim (83 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

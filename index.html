@@ -15034,23 +15034,41 @@ function closeHopWizard() {
 // Dedicated swap wizard for more flexibility
 function showSwapWizard(hopId) {
     console.log('showSwapWizard called with hopId:', hopId, 'type:', typeof hopId);
+
+    // Convert to number if it's a string
+    if (typeof hopId === 'string') {
+        hopId = parseInt(hopId);
+        console.log('Converted hopId to number:', hopId);
+    }
+
     console.log('Available hops:', investigation.hops.map(h => ({ id: h.id, hopNumber: h.hopNumber, type: typeof h.id })));
 
-    // Try both strict and loose comparison to handle type mismatches
-    let hop = investigation.hops.find(h => h.id === hopId || h.id == hopId);
+    // Try to find the hop
+    let hop = investigation.hops.find(h => h.id === hopId);
+
+    // If not found by ID, try to find by hop number (fallback)
+    if (!hop && typeof hopId === 'number' && hopId <= 10) {
+        // If hopId looks like a hop number (small value), try to find by hopNumber
+        hop = investigation.hops.find(h => h.hopNumber === hopId);
+        if (hop) {
+            console.log('Found hop by hopNumber instead of ID');
+        }
+    }
 
     if (!hop) {
         console.error('Hop not found for swap wizard:', hopId);
         console.error('Looking for hop with ID:', hopId);
         console.error('Available hop IDs:', investigation.hops.map(h => h.id));
+        alert('Error: Could not find the hop. Please close this wizard and try again.');
         return;
     }
 
     console.log('Initializing swap wizard for hop:', hop);
 
     // Initialize swap wizard data
+    // Store the hop for reference, but swap wizard primarily works with source threads
     window.swapWizardData = {
-        hopId: hopId,
+        hop: hop,  // Store the whole hop object instead of just ID
         hopNumber: hop.hopNumber,
         selectedThreads: [],
         threadAmounts: {}, // Track partial amounts for each thread
@@ -15572,10 +15590,11 @@ function createSwapEntry() {
         return;
     }
 
-    const hop = investigation.hops.find(h => h.id === wizardData.hopId);
+    // Get the hop from wizard data (we stored the whole hop object)
+    const hop = wizardData.hop;
     if (!hop) {
-        console.error('Hop not found for swap entry:', wizardData.hopId);
-        alert('Error: Could not find the hop for this swap. Please try again.');
+        console.error('No hop stored in swap wizard data');
+        alert('Error: Swap wizard data is incomplete. Please try again.');
         return;
     }
 
@@ -15620,7 +15639,7 @@ function createSwapEntry() {
     // Create the swap entry
     const swapEntry = {
         id: Date.now(),
-        hopId: hop.id,
+        hopId: hop.id,  // Use the hop's actual ID from the stored hop object
         entryType: 'swap',
         sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
         multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
