@@ -3,14 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 14:54)
+## Latest Commit (Auto-updated: 2025-09-23 15:06)
 
-**Commit:** 4c78dca7894a1ef7e50fc7a56da729b76b4113ed
+**Commit:** 313d7658afaad196305fd3579b6b735c795f1c85
 **Author:** Your Name
-**Message:** Fix missing closing brace in template expression
+**Message:** Show investigation complete view when all threads reach terminal wallets
 
-Fixed syntax error at line 9624 where a closing curly brace was missing
-in the template literal expression for displaying entry amounts.
+Fixed the flow to properly detect when an investigation is complete:
+- Check available threads for next hop instead of just trace entries
+- Hide "Start Next Hop" button when no active threads remain
+- Show investigation complete section with export options
+- Update completion status after hop completion and entry creation
+- Prevent prompting for new hops when all funds reach terminals
+
+The system now correctly recognizes when all threads have reached terminal
+wallets (exchanges) and shows the completion summary with visualization
+prompt instead of asking to create another hop.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -18,23 +26,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 53 ++++++++++++++++++++++++++++++-----------------------
- index.html |  2 +-
- 2 files changed, 31 insertions(+), 24 deletions(-)
+ CLAUDE.md  | 44 ++++++++++++++------------------------------
+ index.html | 49 +++++++++++++++++++++++++++++++------------------
+ 2 files changed, 45 insertions(+), 48 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4c78dca Fix missing closing brace in template expression (0 seconds ago)
-- fcc2596 Add multi-currency progress bars for swapped assets (3 minutes ago)
-- 97cb71d Fix terminal wallet thread creation and display issues (11 minutes ago)
-- 9f06495 Fix terminal wallet allocation and thread tracking issues (55 minutes ago)
-- 0479806 Add comprehensive terminal wallet tracking and reporting system (89 minutes ago)
+- 313d765 Show investigation complete view when all threads reach terminal wallets (0 seconds ago)
+- 4c78dca Fix missing closing brace in template expression (11 minutes ago)
+- fcc2596 Add multi-currency progress bars for swapped assets (14 minutes ago)
+- 97cb71d Fix terminal wallet thread creation and display issues (22 minutes ago)
+- 9f06495 Fix terminal wallet allocation and thread tracking issues (66 minutes ago)
+- 0479806 Add comprehensive terminal wallet tracking and reporting system (2 hours ago)
 - 8f66faa Implement dynamic wallet attribution via Etherscan API (2 hours ago)
 - 3a6026f Add automatic exchange detection with Bybit and other major exchanges (2 hours ago)
 - abe51e1 Fix Total Accounted display to not double-count swap amounts (2 hours ago)
-- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (2 hours ago)
-- de7d528 Fix wizard-created entries not auto-collapsing and manual form appearing (2 hours ago)
+- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

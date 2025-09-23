@@ -39,6 +39,9 @@
     window.cryptoJSBlocked = true; // Always use Web Crypto API to avoid CSP issues
     </script>
 
+    <!-- Include the enhanced flow diagram visualization -->
+    <script src="flow-diagram-enhanced.js"></script>
+
     <!--
     DEPLOYMENT INSTRUCTIONS:
     For full functionality (custom save locations, autosave), serve this file over HTTPS:
@@ -25267,14 +25270,22 @@ To (RED Wallet): ${transfer.to}`;
         
         // Flow Diagram Functions
         function generateFlowDiagram() {
+            // Check if the enhanced flow diagram function exists
+            if (typeof generateHopCentricDAG === 'function') {
+                // Use the new enhanced DAG visualization
+                generateHopCentricDAG(investigation);
+                return;
+            }
+
+            // Fallback to simple visualization if enhanced version not loaded
             const svg = document.getElementById('flowDiagramSVG');
             svg.innerHTML = ''; // Clear existing content
-            
+
             if (!investigation.hops || investigation.hops.length === 0) {
                 svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#999">No trace data available</text>';
                 return;
             }
-            
+
             // Configuration
             const walletColumnWidth = 200;
             const hopLaneWidth = 250;
@@ -25283,25 +25294,25 @@ To (RED Wallet): ${transfer.to}`;
             const topMargin = 60;
             const bottomMargin = 100;
             const leftMargin = 20;
-            
+
             // Calculate dimensions
             const numHops = investigation.hops.length;
             const totalWidth = leftMargin + walletColumnWidth + (numHops * hopLaneWidth) + 50;
-            
+
             // Calculate total height needed
             let yPosition = topMargin + 40; // Start position after titles
             const walletPositions = new Map();
-            
+
             // Map all wallet positions
             investigation.victims.forEach((victim, idx) => {
                 const walletId = `V${victim.id}`;
                 walletPositions.set(walletId, yPosition);
                 yPosition += verticalSpacing;
             });
-            
+
             // Add spacing between victims and other wallets
             yPosition += 30;
-            
+
             // Map all unique wallets from hops
             const processedWallets = new Set();
             investigation.hops.forEach(hop => {
@@ -25314,7 +25325,7 @@ To (RED Wallet): ${transfer.to}`;
                     }
                 });
             });
-            
+
             const totalHeight = yPosition + bottomMargin;
             
             // Set SVG dimensions
