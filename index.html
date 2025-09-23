@@ -13873,14 +13873,33 @@ function updateInvestigationCompletionStatus() {
 
     if (!addHopBtn || !completeSection) return;
 
-    // Hide visualization by default
+    // Hide both sections by default
     if (visualizationSection) {
         visualizationSection.style.display = 'none';
     }
+    completeSection.style.display = 'none';
+
+    // Check if we have victims entered
+    if (!investigation.victims || investigation.victims.length === 0) {
+        // No victims yet - hide everything
+        addHopBtn.style.display = 'none';
+        return;
+    }
+
+    // Check if all victims have root totals (are completed)
+    const allVictimsComplete = investigation.victims.every(victim =>
+        victim.rootTotals && Object.keys(victim.rootTotals).length > 0
+    );
+
+    if (!allVictimsComplete) {
+        // Victims not complete - hide everything
+        addHopBtn.style.display = 'none';
+        return;
+    }
 
     if (investigation.hops.length === 0) {
+        // Victims complete, no hops yet - show add hop button
         addHopBtn.style.display = 'inline-block';
-        completeSection.style.display = 'none';
         return;
     }
     
@@ -13931,15 +13950,20 @@ function updateInvestigationCompletionStatus() {
     }
     
     // Show different buttons based on state
-    if (!hasActiveThreads && investigation.hops.length > 0) {
-        // No active threads - investigation is complete
+    // Only show complete if we have traced funds AND all threads are terminated
+    const hasTracedFunds = investigation.hops.some(hop =>
+        hop.entries && hop.entries.some(e => e.entryType === 'trace' && e.amount > 0)
+    );
+
+    if (!hasActiveThreads && investigation.hops.length > 0 && hasTracedFunds && threadStatus.allTerminated) {
+        // All threads reached terminal wallets - investigation is truly complete
         addHopBtn.style.display = 'none';
         completeSection.style.display = 'block';
         if (visualizationSection) {
             visualizationSection.style.display = 'block';
         }
         updateFinalThreadSummary();
-    } else if (threadStatus.allTerminated && allHopsComplete && totalValidationErrors === 0) {
+    } else if (threadStatus.allTerminated && allHopsComplete && totalValidationErrors === 0 && hasTracedFunds) {
         // All threads at terminal wallets
         addHopBtn.style.display = 'none';
         completeSection.style.display = 'block';
@@ -13959,8 +13983,8 @@ function updateInvestigationCompletionStatus() {
             addNewHop();
         };
         completeSection.style.display = 'none';
-    } else if (lastHopComplete && !hasActiveThreads) {
-        // No active threads found - investigation is complete
+    } else if (lastHopComplete && !hasActiveThreads && hasTracedFunds && threadStatus.allTerminated) {
+        // No active threads AND all threads terminated - investigation is complete
         addHopBtn.style.display = 'none';
 
         // Show completion section

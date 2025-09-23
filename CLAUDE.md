@@ -3,22 +3,44 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 15:06)
+## Latest Commit (Auto-updated: 2025-09-23 17:00)
 
-**Commit:** 313d7658afaad196305fd3579b6b735c795f1c85
+**Commit:** deb63629bcb307542ddf54a28dbaf314d4bef2d1
 **Author:** Your Name
-**Message:** Show investigation complete view when all threads reach terminal wallets
+**Message:** Implement hop-centric DAG visualization for investigation traces
 
-Fixed the flow to properly detect when an investigation is complete:
-- Check available threads for next hop instead of just trace entries
-- Hide "Start Next Hop" button when no active threads remain
-- Show investigation complete section with export options
-- Update completion status after hop completion and entry creation
-- Prevent prompting for new hops when all funds reach terminals
+Created comprehensive Directed Acyclic Graph visualization that combines forensic tracing with T-account accounting principles:
 
-The system now correctly recognizes when all threads have reached terminal
-wallets (exchanges) and shows the completion summary with visualization
-prompt instead of asking to create another hop.
+## DAG Structure
+- Hop-centric layout with vertical columns for each hop
+- Wallet nodes positioned by first appearance in trace
+- Thread edges showing amount flows between nodes
+- T-account style ART (Available Running Total) boxes between hops
+
+## Wallet Classification
+- Color-coded nodes based on wallet behavior:
+  - Red: Victim wallets
+  - Purple: Terminal wallets (exchanges)
+  - Orange: DEX/Bridge wallets
+  - Yellow: Tumbler wallets
+  - Blue: Smart contracts
+  - Green: Normal wallets
+  - Gray: Unknown wallets
+
+## Visual Features
+- Node size reflects transaction count
+- Edge thickness represents relative amount
+- ART validation boxes show starting/ending balances
+- Multi-currency support with separate tracking
+- Legend and summary statistics
+
+## Integration
+- Added flow-diagram-enhanced.js with complete DAG implementation
+- Updated generateFlowDiagram() to use new visualization
+- Maintains fallback to simple visualization if needed
+- SVG-based for scalability and export capability
+
+This visualization provides investigators with an intuitive view of fund flows, making it easy to identify patterns, validate amounts at each hop, and understand the complete trace path from victims to terminal wallets.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -26,23 +48,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 44 ++++++++++++++------------------------------
- index.html | 49 +++++++++++++++++++++++++++++++------------------
- 2 files changed, 45 insertions(+), 48 deletions(-)
+ CLAUDE.md                |  38 ++-
+ flow-diagram-enhanced.js | 737 +++++++++++++++++++++++++++++++++++++++++++++++
+ index.html               |  27 +-
+ 3 files changed, 779 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 313d765 Show investigation complete view when all threads reach terminal wallets (0 seconds ago)
-- 4c78dca Fix missing closing brace in template expression (11 minutes ago)
-- fcc2596 Add multi-currency progress bars for swapped assets (14 minutes ago)
-- 97cb71d Fix terminal wallet thread creation and display issues (22 minutes ago)
-- 9f06495 Fix terminal wallet allocation and thread tracking issues (66 minutes ago)
-- 0479806 Add comprehensive terminal wallet tracking and reporting system (2 hours ago)
-- 8f66faa Implement dynamic wallet attribution via Etherscan API (2 hours ago)
-- 3a6026f Add automatic exchange detection with Bybit and other major exchanges (2 hours ago)
-- abe51e1 Fix Total Accounted display to not double-count swap amounts (2 hours ago)
-- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (3 hours ago)
+- deb6362 Implement hop-centric DAG visualization for investigation traces (0 seconds ago)
+- 313d765 Show investigation complete view when all threads reach terminal wallets (2 hours ago)
+- 4c78dca Fix missing closing brace in template expression (2 hours ago)
+- fcc2596 Add multi-currency progress bars for swapped assets (2 hours ago)
+- 97cb71d Fix terminal wallet thread creation and display issues (2 hours ago)
+- 9f06495 Fix terminal wallet allocation and thread tracking issues (3 hours ago)
+- 0479806 Add comprehensive terminal wallet tracking and reporting system (4 hours ago)
+- 8f66faa Implement dynamic wallet attribution via Etherscan API (4 hours ago)
+- 3a6026f Add automatic exchange detection with Bybit and other major exchanges (4 hours ago)
+- abe51e1 Fix Total Accounted display to not double-count swap amounts (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
