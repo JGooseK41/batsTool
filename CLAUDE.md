@@ -3,51 +3,27 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 19:10)
+## Latest Commit (Auto-updated: 2025-09-23 19:24)
 
-**Commit:** a771d15ce03f46ddb25de9857cd238806e52644f
+**Commit:** 5804b6180e5d9182e7440a15bde1c8a270bd7aa6
 **Author:** Your Name
-**Message:** Implement auto-save after hop completion
+**Message:** Fix terminal wallet detection and trace completion logic
 
-Added automatic saving functionality when hops are completed to prevent data loss:
+Critical fixes for proper terminal wallet detection and trace completion:
 
-## Auto-Save Features
-- Automatically saves investigation after each hop completion
-- Uses existing file handle if available (seamless save)
-- Falls back to download for first save
-- Shows save notification after successful auto-save
+1. Fixed terminal wallet type detection - now checks both 'purple' and 'PURPLE'
+2. Fixed thread creation logic to not create threads for terminal wallets
+3. Updated hop completion modal to show 'Complete Trace' when all threads are terminal
+4. Fixed ART calculation to exclude terminal threads from next hop
+5. Added visual indicators (🟪 TERMINAL) to terminal wallet threads
+6. Fixed formatAmount missing function error
+7. Improved finalization modal to properly detect trace completion
 
-## Metadata Tracking
-- Records hop completion timestamps in investigation.hopCompletions
-- Adds lastModified timestamp
-- Tracks lastCompletedHop number
-- Includes all thread indices in save
-
-## Save Behavior
-1. **With File Handle**: Seamlessly saves to existing file
-   - Shows "✅ Auto-saved after Hop X completion"
-   - No user interaction needed
-
-2. **First Save**: Triggers download with descriptive filename
-   - Format: "CaseID_hopX_YYYY-MM-DD.bats"
-   - Shows "📥 Investigation saved as filename"
-
-3. **Subsequent Saves**: Reminder notification
-   - Shows "💾 Hop X complete - Remember to save your progress"
-
-## User Experience
-- Notification in hop completion modal: "Investigation will auto-save after hop completion"
-- Removed redundant "Save Progress" button (since it auto-saves)
-- Non-intrusive 3-second notifications
-- Clear save status feedback
-
-## Data Preservation
-- Prevents loss of work between hops
-- Maintains complete audit trail
-- Preserves thread availability indices
-- Captures completion timestamps
-
-This ensures investigators never lose progress and maintains a complete record of the investigation timeline.
+This ensures:
+- No Hop 3 is created when all threads reach terminal wallets
+- Proper trace completion ceremony is shown
+- Clear visual indicators when funds reach exchanges
+- Correct handling of swapped currency tracking
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -55,23 +31,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 86 +++++++++++++++++++++++++++++++++++---------------------------
- index.html | 62 +++++++++++++++++++++++++++++++++++++++++---
- 2 files changed, 107 insertions(+), 41 deletions(-)
+ CLAUDE.md  | 99 ++++++++++++++++++++++++++++++++------------------------------
+ index.html | 58 ++++++++++++++++++++++++++----------
+ 2 files changed, 93 insertions(+), 64 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a771d15 Implement auto-save after hop completion (0 seconds ago)
-- 10cf459 Add comprehensive trace completion ceremony (8 minutes ago)
-- c9f7c5b CRITICAL FIX: Use validated swap handling in hop finalization (13 minutes ago)
-- 39e5b12 Fix terminal wallet detection in hop completion (49 minutes ago)
-- 05e95d3 Fix swap currency tracking in hop validation (87 minutes ago)
+- 5804b61 Fix terminal wallet detection and trace completion logic (1 second ago)
+- a771d15 Implement auto-save after hop completion (14 minutes ago)
+- 10cf459 Add comprehensive trace completion ceremony (22 minutes ago)
+- c9f7c5b CRITICAL FIX: Use validated swap handling in hop finalization (26 minutes ago)
+- 39e5b12 Fix terminal wallet detection in hop completion (62 minutes ago)
+- 05e95d3 Fix swap currency tracking in hop validation (2 hours ago)
 - 1db32cf Enhanced investigation summary dashboard on file load (2 hours ago)
 - eed83c3 Fix saved file loading and thread availability issues (2 hours ago)
 - cb65a32 Fix investigation completion detection to prevent premature display (2 hours ago)
 - deb6362 Implement hop-centric DAG visualization for investigation traces (2 hours ago)
-- 313d765 Show investigation complete view when all threads reach terminal wallets (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
