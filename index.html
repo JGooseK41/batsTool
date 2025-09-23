@@ -3331,35 +3331,272 @@
         let pendingTransfers = null;
         let pendingTransferCallback = null;
 
-        // Known exchange addresses and attributions
-        const knownExchanges = {
-            // Bybit addresses
-            '0x07624a16592ab3ca24cccaee13d9ee21eea86fe8': { name: 'Bybit', type: 'CEX' },
-            '0xf89d7b9c864f589bbf53a82105107622b35eaa40': { name: 'Bybit', type: 'CEX' },
-            // Binance addresses
-            '0x28c6c06298d514db089934071355e5743bf21d60': { name: 'Binance', type: 'CEX' },
-            '0x21a31ee1afc51d94c2efccaa2092ad1028285549': { name: 'Binance', type: 'CEX' },
-            // Coinbase addresses
-            '0x503828976d22510aad0201ac7ec88293211d23da': { name: 'Coinbase', type: 'CEX' },
-            '0xb01c0f24b4a3492c8eb180ecc952f7d18cbe9141': { name: 'Coinbase', type: 'CEX' },
-            // Add more exchanges as needed
-        };
+        // Cache for wallet attributions to reduce API calls
+        const walletAttributionCache = {};
 
-        // Check if address is a known exchange
-        async function checkExchangeAttribution(address) {
+        // Get wallet attribution from Etherscan API with enhanced label detection
+        async function getWalletAttribution(address) {
             if (!address) return null;
 
             const lowerAddress = address.toLowerCase();
 
-            // First check our known list
-            if (knownExchanges[lowerAddress]) {
-                console.log(`🟣 Exchange detected: ${knownExchanges[lowerAddress].name} (${address})`);
-                return knownExchanges[lowerAddress];
+            // Check cache first
+            if (walletAttributionCache[lowerAddress]) {
+                console.log(`Using cached attribution for ${address}`);
+                return walletAttributionCache[lowerAddress];
             }
 
-            // Try to get attribution from Etherscan labels API if available
-            // Note: This requires additional API endpoint which may not be public
-            // For now, we'll rely on our known list
+            try {
+                // Etherscan API for address info including labels
+                const apiKey = '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                let attribution = null;
+
+                // First try: Get address info with label data
+                // Using account balance endpoint which includes address tags
+                const balanceUrl = `https://api.etherscan.io/api?module=account&action=balance&address=${address}&tag=latest&apikey=${apiKey}`;
+
+                // Also fetch transactions to check for labeled addresses
+                const txUrl = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`;
+
+                // Fetch both in parallel
+                const [balanceResponse, txResponse] = await Promise.all([
+                    fetch(balanceUrl),
+                    fetch(txUrl)
+                ]);
+
+                if (txResponse.ok) {
+                    const txData = await txResponse.json();
+
+                    if (txData.result && Array.isArray(txData.result) && txData.result.length > 0) {
+                        // Check transactions for exchange indicators
+                        for (const tx of txData.result) {
+                            // Etherscan provides labels in transaction responses
+                            // Check both to and from labels
+                            const labels = [];
+
+                            // Collect all possible label fields
+                            if (tx.to && tx.to.toLowerCase() === lowerAddress) {
+                                if (tx.to_label) labels.push(tx.to_label);
+                                if (tx.toLabel) labels.push(tx.toLabel);
+                            }
+                            if (tx.from && tx.from.toLowerCase() === lowerAddress) {
+                                if (tx.from_label) labels.push(tx.from_label);
+                                if (tx.fromLabel) labels.push(tx.fromLabel);
+                            }
+
+                            // Check for exchange indicators in labels
+                            for (const label of labels) {
+                                if (label && typeof label === 'string' && label.length > 0) {
+                                    // Direct exchange match
+                                    const exchangeNames = [
+                                        'Bybit', 'Binance', 'Coinbase', 'Kraken', 'Huobi',
+                                        'OKEx', 'OKX', 'KuCoin', 'Gate.io', 'Bitfinex',
+                                        'Bitstamp', 'Gemini', 'FTX', 'Crypto.com', 'Bittrex',
+                                        'Poloniex', 'BitMEX', 'Deribit', 'Bitget', 'MEXC'
+                                    ];
+
+                                    for (const exchange of exchangeNames) {
+                                        if (label.toLowerCase().includes(exchange.toLowerCase())) {
+                                            attribution = {
+                                                name: exchange,
+                                                label: label,
+                                                type: 'CEX',
+                                                source: 'etherscan_label'
+                                            };
+                                            break;
+                                        }
+                                    }
+
+                                    // Check for other terminal wallet indicators
+                                    if (!attribution) {
+                                        const terminalIndicators = [
+                                            'exchange', 'cex', 'hot wallet', 'cold wallet',
+                                            'custody', 'vault', 'treasury', 'reserve'
+                                        ];
+
+                                        for (const indicator of terminalIndicators) {
+                                            if (label.toLowerCase().includes(indicator)) {
+                                                attribution = {
+                                                    name: label,
+                                                    label: label,
+                                                    type: 'Terminal',
+                                                    source: 'etherscan_label'
+                                                };
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (attribution) break;
+                            }
+                            if (attribution) break;
+                        }
+                    }
+                }
+
+                // Second try: Get token transfers which may have richer label data
+                if (!attribution) {
+                    const tokenUrl = `https://api.etherscan.io/api?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`;
+
+                    try {
+                        const tokenResponse = await fetch(tokenUrl);
+                        if (tokenResponse.ok) {
+                            const tokenData = await tokenResponse.json();
+
+                            if (tokenData.result && Array.isArray(tokenData.result)) {
+                                for (const tx of tokenData.result) {
+                                    // Check for labels in token transfers
+                                    const checkFields = ['to_label', 'from_label', 'toLabel', 'fromLabel'];
+
+                                    for (const field of checkFields) {
+                                        if (tx[field]) {
+                                            const label = tx[field];
+                                            // Use same exchange detection logic
+                                            const exchangeKeywords = [
+                                                'bybit', 'binance', 'coinbase', 'kraken', 'exchange',
+                                                'okx', 'kucoin', 'gate', 'bitfinex', 'gemini'
+                                            ];
+
+                                            for (const keyword of exchangeKeywords) {
+                                                if (label.toLowerCase().includes(keyword)) {
+                                                    attribution = {
+                                                        name: label,
+                                                        label: label,
+                                                        type: 'CEX',
+                                                        source: 'etherscan_token_label'
+                                                    };
+                                                    break;
+                                                }
+                                            }
+                                            if (attribution) break;
+                                        }
+                                    }
+                                    if (attribution) break;
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.log('Token label check failed:', err);
+                    }
+                }
+
+                // Third try: Check if it's a smart contract with exchange-like properties
+                if (!attribution) {
+                    const codeUrl = `https://api.etherscan.io/api?module=proxy&action=eth_getCode&address=${address}&apikey=${apiKey}`;
+
+                    try {
+                        const codeResponse = await fetch(codeUrl);
+                        if (codeResponse.ok) {
+                            const codeData = await codeResponse.json();
+
+                            // If it has contract code and high activity, likely an exchange
+                            if (codeData.result && codeData.result !== '0x') {
+                                // It's a contract - check contract verification status
+                                const contractUrl = `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${apiKey}`;
+
+                                const contractResponse = await fetch(contractUrl);
+                                if (contractResponse.ok) {
+                                    const contractData = await contractResponse.json();
+
+                                    if (contractData.result && contractData.result[0]) {
+                                        const contractName = contractData.result[0].ContractName;
+
+                                        if (contractName && contractName !== '') {
+                                            // Check if contract name indicates exchange
+                                            const exchangePatterns = [
+                                                /bybit/i, /binance/i, /coinbase/i, /kraken/i,
+                                                /exchange/i, /vault/i, /custody/i, /treasury/i
+                                            ];
+
+                                            for (const pattern of exchangePatterns) {
+                                                if (pattern.test(contractName)) {
+                                                    attribution = {
+                                                        name: contractName,
+                                                        label: contractName,
+                                                        type: 'CEX/Contract',
+                                                        source: 'etherscan_contract'
+                                                    };
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.log('Contract check failed:', err);
+                    }
+                }
+
+                // Final fallback: Known exchange addresses
+                if (!attribution) {
+                    const knownExchanges = {
+                        // Bybit addresses
+                        '0x07624a16592ab3ca24cccaee13d9ee21eea86fe8': { name: 'Bybit', label: 'Bybit Hot Wallet' },
+                        '0xf89d7b9c864f589bbf53a82105107622b35eaa40': { name: 'Bybit', label: 'Bybit Exchange' },
+                        // Binance addresses
+                        '0x28c6c06298d514db089934071355e5743bf21d60': { name: 'Binance', label: 'Binance Hot Wallet' },
+                        '0x21a31ee1afc51d94c2efccaa2092ad1028285549': { name: 'Binance', label: 'Binance 15' },
+                        '0xdfd5293d8e347dfe59e90efd55b2956a1343963d': { name: 'Binance', label: 'Binance 16' },
+                        // Coinbase
+                        '0x71660c4005ba85c37ccec55d0c4493e66fe775d3': { name: 'Coinbase', label: 'Coinbase 1' },
+                        '0x503828976d22510aad0201ac7ec88293211d23da': { name: 'Coinbase', label: 'Coinbase 2' },
+                        // Kraken
+                        '0x267be94bfcdf32565f3c99ec94af879a8829f7e5': { name: 'Kraken', label: 'Kraken Hot Wallet' },
+                        '0x53d284357ec70ce289d6d64134dfac8e511c8a3d': { name: 'Kraken', label: 'Kraken Exchange' },
+                        // Add more as needed
+                    };
+
+                    if (knownExchanges[lowerAddress]) {
+                        attribution = {
+                            ...knownExchanges[lowerAddress],
+                            type: 'CEX',
+                            source: 'known_addresses'
+                        };
+                    }
+                }
+
+                // Cache the result (even if null to avoid repeated lookups)
+                walletAttributionCache[lowerAddress] = attribution;
+
+                if (attribution) {
+                    console.log(`🟣 Terminal wallet detected: ${attribution.name} (${address})`);
+                    console.log(`   Label: ${attribution.label || 'N/A'}`);
+                    console.log(`   Source: ${attribution.source}`);
+                }
+
+                return attribution;
+
+            } catch (error) {
+                console.error('Error fetching wallet attribution:', error);
+                return null;
+            }
+        }
+
+        // Synchronous check for known exchanges (for non-async contexts)
+        function checkExchangeAttribution(address) {
+            if (!address) return null;
+
+            const lowerAddress = address.toLowerCase();
+
+            // Check cache first
+            if (walletAttributionCache[lowerAddress]) {
+                return walletAttributionCache[lowerAddress];
+            }
+
+            // Basic known exchanges for synchronous checks
+            const knownExchanges = {
+                '0x07624a16592ab3ca24cccaee13d9ee21eea86fe8': { name: 'Bybit', type: 'CEX' },
+                '0xf89d7b9c864f589bbf53a82105107622b35eaa40': { name: 'Bybit', type: 'CEX' },
+                '0x28c6c06298d514db089934071355e5743bf21d60': { name: 'Binance', type: 'CEX' },
+                '0x21a31ee1afc51d94c2efccaa2092ad1028285549': { name: 'Binance', type: 'CEX' }
+            };
+
+            if (knownExchanges[lowerAddress]) {
+                walletAttributionCache[lowerAddress] = knownExchanges[lowerAddress];
+                return knownExchanges[lowerAddress];
+            }
 
             return null;
         }
@@ -16705,7 +16942,28 @@ async function lookupWizardTransaction() {
                             const isRoundAmount = transfer.amount % 1 === 0 || transfer.amount % 10 === 0;
                             const isBackToSender = sourceWallet && transfer.to === sourceWallet;
                             const likelyChange = !isRoundAmount || isBackToSender;
-                            
+
+                            // Check attribution for this output asynchronously
+                            getWalletAttribution(transfer.to).then(attribution => {
+                                if (attribution) {
+                                    const outputDiv = document.getElementById(`wizardOutput_${index}`);
+                                    if (outputDiv) {
+                                        // Add attribution badge
+                                        const badgeHtml = `
+                                            <div style="background: #e1bee7; border: 1px solid #9c27b0; border-radius: 4px; padding: 8px; margin-bottom: 10px;">
+                                                <strong style="color: #6a1b9a;">🟣 Terminal Wallet: ${attribution.name || attribution.label}</strong><br>
+                                                <small>Type: ${attribution.type} | This is likely an exchange or service</small>
+                                            </div>
+                                        `;
+                                        // Insert after the amount div
+                                        const amountDiv = outputDiv.querySelector('div[style*="margin-bottom: 10px"]');
+                                        if (amountDiv && !outputDiv.querySelector('div[style*="#e1bee7"]')) {
+                                            amountDiv.insertAdjacentHTML('afterend', badgeHtml);
+                                        }
+                                    }
+                                }
+                            }).catch(err => console.log('Attribution check failed for output:', err));
+
                             return `
                             <div style="background: white; border: 2px solid #ddd; border-radius: 6px; padding: 15px; margin: 10px 0;" id="wizardOutput_${index}">
                                 <div style="display: flex; justify-content: space-between; align-items: start;">
@@ -16846,6 +17104,52 @@ async function lookupWizardTransaction() {
             }
         }
     }
+
+    // Check for wallet attributions
+    let attributionAlert = '';
+
+    // Check the TO address for attribution
+    getWalletAttribution(txData.to).then(attribution => {
+        if (attribution) {
+            console.log('🟣 Terminal wallet detected in transaction lookup:', attribution);
+
+            // Update the result div with attribution alert
+            const alertDiv = document.createElement('div');
+            alertDiv.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; border-radius: 8px; padding: 15px; margin-top: 15px;';
+            alertDiv.innerHTML = `
+                <h4 style="margin: 0 0 10px 0; color: #6a1b9a;">🟣 Terminal Wallet Detected!</h4>
+                <div style="font-size: 14px;">
+                    <strong>Exchange/Service:</strong> ${attribution.name || attribution.label}<br>
+                    <strong>Type:</strong> ${attribution.type}<br>
+                    <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span><br>
+                    <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+                        <strong>ℹ️ What this means:</strong><br>
+                        • This is likely a centralized exchange or service wallet<br>
+                        • Funds may be pooled with other users' funds<br>
+                        • Further tracing may require legal process or exchange cooperation<br>
+                        • Mark as PURPLE (Terminal/VASP) when creating the entry
+                    </div>
+                </div>
+            `;
+
+            // Insert the alert after the transaction details
+            const resultDiv = document.getElementById('wizardTxResult');
+            const existingAlert = resultDiv.querySelector('div[style*="#e1bee7"]');
+            if (!existingAlert) {
+                const transactionBox = resultDiv.querySelector('div[style*="#e8f4f8"]');
+                if (transactionBox) {
+                    transactionBox.insertAdjacentElement('afterend', alertDiv);
+                }
+            }
+
+            // Store attribution in wizard data for later use
+            if (window.hopWizardData) {
+                window.hopWizardData.detectedAttribution = attribution;
+            }
+        }
+    }).catch(err => {
+        console.log('Attribution check failed:', err);
+    });
 
     resultDiv.innerHTML = `
         <div style="background: #e8f4f8; border: 1px solid #3498db; border-radius: 8px; padding: 15px;">
@@ -17218,17 +17522,24 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
     let toWalletType = 'black';
     let exchangeAttribution = null;
 
-    // Check if destination is a known exchange (synchronous check)
-    if (output.to) {
-        const lowerAddress = output.to.toLowerCase();
-        if (knownExchanges[lowerAddress]) {
-            exchangeAttribution = knownExchanges[lowerAddress];
+    // First check if we have detected attribution for this address
+    if (wizardData.detectedAttribution && output.to &&
+        output.to.toLowerCase() === wizardData.txData.to.toLowerCase()) {
+        exchangeAttribution = wizardData.detectedAttribution;
+        toWalletType = 'purple'; // PURPLE for exchanges/VASPs
+        console.log(`🟣 Using detected terminal wallet: ${exchangeAttribution.name || exchangeAttribution.label}`);
+    }
+    // Fallback: Check if destination is a known exchange (synchronous check)
+    else if (output.to) {
+        const attribution = checkExchangeAttribution(output.to);
+        if (attribution) {
+            exchangeAttribution = attribution;
             toWalletType = 'purple'; // PURPLE for exchanges/VASPs
             console.log(`🟣 Terminal wallet detected: ${exchangeAttribution.name}`);
         }
     }
 
-    // Override with specific types if needed
+    // Override with specific types if needed (only if not an exchange)
     if (!exchangeAttribution) {
         if (isSwap) {
             toWalletType = 'brown'; // BROWN for asset conversion/swap
@@ -17268,7 +17579,7 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
         timestamp: wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '',
         timezone: 'UTC',
         notes: exchangeAttribution ?
-            `Terminal wallet: ${exchangeAttribution.name} (${exchangeAttribution.type})\nAddress: ${output.to}` :
+            `Terminal wallet: ${exchangeAttribution.name || exchangeAttribution.label}\nType: ${exchangeAttribution.type}\nAddress: ${output.to}${exchangeAttribution.source ? '\nDetection source: ' + exchangeAttribution.source : ''}` :
             isSwap ?
             `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${output.to}` :
             `Payment output ${outputIndex + 1} of ${wizardData.multipleOutputs.length}` +
@@ -22783,6 +23094,17 @@ async function lookupEthereumTransaction(txHash) {
             if (txData) {
                 txData.blockchain = config.name;
                 txData.rawHash = txHash;
+
+                // Check if destination is an exchange/VASP
+                if (txData.to) {
+                    const attribution = await getWalletAttribution(txData.to);
+                    if (attribution) {
+                        txData.toWalletAttribution = attribution;
+                        txData.isTerminalWallet = true;
+                        console.log(`🟣 Terminal wallet detected: ${attribution.name}`);
+                    }
+                }
+
                 return txData;
             }
         } catch (error) {

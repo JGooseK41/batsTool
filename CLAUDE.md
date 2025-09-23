@@ -3,23 +3,26 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 12:49)
+## Latest Commit (Auto-updated: 2025-09-23 13:00)
 
-**Commit:** abe51e12284056d6fdf34a937c5ac959c26314f6
+**Commit:** 3a6026fb2a351aa80b4387bc80d3b147d01d80ba
 **Author:** Your Name
-**Message:** Fix Total Accounted display to not double-count swap amounts
+**Message:** Add automatic exchange detection with Bybit and other major exchanges
 
-Issue: After a swap, the Total Accounted was showing both the swap output
-(79,929 USDT) AND the trace (45,000 USDT), making it appear as 124,929 USDT
-when only 45,000 was actually traced.
+Features added:
+- Automatic detection of known exchange addresses
+- Bybit wallet (0x07624a16...) now auto-detected as terminal wallet
+- Added Binance, Coinbase, and other major exchange addresses
+- Wallets classified as PURPLE (terminal/VASP) when detected
+- Exchange attribution added to entry notes automatically
 
-Fix: Swaps are now excluded from Total Accounted calculation since they
-are currency conversions, not actual traces. Only trace, writeoff,
-cold_storage, and vasp_arrival entries count toward Total Accounted.
+When a transaction goes to a known exchange address:
+- Wallet type automatically set to PURPLE (terminal)
+- Exchange name added to notes (e.g., 'Terminal wallet: Bybit (CEX)')
+- No manual intervention needed
 
-Now correctly shows:
-- Total Accounted: 45,000 USDT (actual traced amount)
-- Remaining: 34,929.75 USDT (correctly calculated)
+This should have caught the Bybit wallet automatically and marked it
+as a terminal destination.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -27,23 +30,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 49 +++++++++++++++++++------------------------------
- index.html | 13 ++++---------
- 2 files changed, 23 insertions(+), 39 deletions(-)
+ CLAUDE.md  | 46 +++++++++++++++++++++++++++-------------------
+ index.html | 62 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 83 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- abe51e1 Fix Total Accounted display to not double-count swap amounts (0 seconds ago)
-- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (13 minutes ago)
-- de7d528 Fix wizard-created entries not auto-collapsing and manual form appearing (15 minutes ago)
-- b8336a8 Fix ART and remaining calculations to properly handle currency swaps (19 minutes ago)
-- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (28 minutes ago)
-- e3e9a2f Fix swap currency lookup issue in hop wizard (36 minutes ago)
-- 094ed34 Implement dual-layer thread tracking system for complex swap handling (45 minutes ago)
-- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (53 minutes ago)
-- 2406827 Fix swap thread replacement in universal database (72 minutes ago)
-- cd2d729 Fix swap thread ID collision causing double-counting (77 minutes ago)
+- 3a6026f Add automatic exchange detection with Bybit and other major exchanges (0 seconds ago)
+- abe51e1 Fix Total Accounted display to not double-count swap amounts (11 minutes ago)
+- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (24 minutes ago)
+- de7d528 Fix wizard-created entries not auto-collapsing and manual form appearing (26 minutes ago)
+- b8336a8 Fix ART and remaining calculations to properly handle currency swaps (30 minutes ago)
+- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (39 minutes ago)
+- e3e9a2f Fix swap currency lookup issue in hop wizard (47 minutes ago)
+- 094ed34 Implement dual-layer thread tracking system for complex swap handling (56 minutes ago)
+- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (64 minutes ago)
+- 2406827 Fix swap thread replacement in universal database (83 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
