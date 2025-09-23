@@ -11863,10 +11863,10 @@ function updateProgressIndicator() {
 function showCaseStatusDashboard() {
     // Analyze the investigation status
     const status = analyzeCaseStatus();
-    
+
     // Update the progress indicator
     updateProgressIndicator();
-    
+
     // Create dashboard modal
     const dashboard = document.createElement('div');
     dashboard.id = 'caseStatusDashboard';
@@ -11883,31 +11883,76 @@ function showCaseStatusDashboard() {
         justify-content: center;
         animation: fadeIn 0.3s ease;
     `;
-    
+
     const content = document.createElement('div');
     content.style.cssText = `
         background: white;
         border-radius: 12px;
         padding: 30px;
-        max-width: 700px;
+        max-width: 800px;
         width: 90%;
-        max-height: 80vh;
+        max-height: 85vh;
         overflow-y: auto;
         box-shadow: 0 10px 40px rgba(0,0,0,0.3);
     `;
-    
+
+    // Get detailed status info
+    const availableThreads = getAvailableSourcesForHop(
+        status.currentHopId || (investigation.hops.length + 1),
+        null
+    );
+    const hasAvailableThreads = availableThreads && availableThreads.length > 0;
+
+    // Calculate terminal wallet summary
+    let terminalSummary = '';
+    if (investigation.terminalWalletIndex && investigation.terminalWalletIndex.length > 0) {
+        const terminalsByExchange = {};
+        investigation.terminalWalletIndex.forEach(terminal => {
+            const exchange = terminal.exchangeName || 'Unknown Exchange';
+            if (!terminalsByExchange[exchange]) {
+                terminalsByExchange[exchange] = [];
+            }
+            terminalsByExchange[exchange].push(terminal);
+        });
+
+        terminalSummary = `
+            <div style="margin-top: 15px; padding: 10px; background: #f3e5ff; border-radius: 6px;">
+                <strong>🏦 Terminal Wallets Reached:</strong>
+                ${Object.entries(terminalsByExchange).map(([exchange, terminals]) =>
+                    `<div style="margin-top: 5px;">• ${exchange}: ${terminals.length} arrival(s)</div>`
+                ).join('')}
+            </div>
+        `;
+    }
+
     // Build status HTML
     let statusHTML = `
         <h2 style="margin: 0 0 20px 0; color: #2c3e50; border-bottom: 2px solid #e8f0fe; padding-bottom: 15px;">
-            📊 Case Status: ${investigation.caseId || 'Investigation'}
+            📊 Investigation Loaded: ${investigation.caseId || 'Untitled'}
         </h2>
-        
-        <div style="background: ${status.currentPhase === 'complete' ? '#d4edda' : '#e3f2fd'}; 
-                    border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+
+        <div style="background: ${status.currentPhase === 'complete' ?
+                'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)' :
+                'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)'};
+                    border-radius: 8px; padding: 20px; margin-bottom: 20px;">
             <h3 style="margin: 0 0 10px 0; color: ${status.currentPhase === 'complete' ? '#155724' : '#0d47a1'};">
-                ${status.currentPhase === 'complete' ? '✅ Investigation Complete' : '🔄 Investigation In Progress'}
+                ${status.currentPhase === 'complete' ?
+                    '✅ Investigation Complete - All Funds Traced to Terminal Wallets' :
+                    `📍 Current Position: ${status.whereYouAre}`}
             </h3>
-            ${status.summary}
+            <div style="color: #2c3e50; line-height: 1.6;">
+                ${status.summary}
+                ${terminalSummary}
+            </div>
+            ${hasAvailableThreads && !status.currentPhase === 'complete' ? `
+                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 6px;">
+                    <strong>💰 Available to Trace:</strong>
+                    ${availableThreads.map(thread =>
+                        `<div style="margin-top: 5px;">• ${thread.displayText}: ${thread.availableAmount.toLocaleString()} ${thread.currency}</div>`
+                    ).slice(0, 3).join('')}
+                    ${availableThreads.length > 3 ? `<div style="margin-top: 5px;">... and ${availableThreads.length - 3} more threads</div>` : ''}
+                </div>
+            ` : ''}
         </div>
     `;
     
@@ -11991,20 +12036,41 @@ function showCaseStatusDashboard() {
     
     // Action buttons
     statusHTML += `
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e8f0fe; text-align: center;">
-            ${status.currentHopId ? 
-                `<button class="btn btn-success btn-large" onclick="closeCaseStatusDashboard(); focusOnHop(${status.currentHopId})">
-                    🎯 Continue Investigation
-                </button>` :
-                status.nextAction ? 
-                    `<button class="btn btn-success btn-large" onclick="closeCaseStatusDashboard(); ${status.nextAction}">
-                        Continue
-                    </button>` :
-                    ''
-            }
-            <button class="btn btn-secondary" onclick="closeCaseStatusDashboard()" style="margin-left: 10px;">
-                View Full Investigation
-            </button>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e8f0fe;">
+            <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+                        border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 10px 0; color: #856404;">
+                    📝 What to do next:
+                </h4>
+                <p style="margin: 0 0 15px 0; color: #856404; font-size: 16px; line-height: 1.5;">
+                    ${status.whatToDoNext}
+                </p>
+                <div style="text-align: center;">
+                    ${status.currentHopId ?
+                        `<button class="btn btn-success btn-large" onclick="closeCaseStatusDashboard(); focusOnHop(${status.currentHopId})"
+                                 style="padding: 12px 30px; font-size: 18px;">
+                            🎯 Continue Working on Hop ${status.currentHopId}
+                        </button>` :
+                        status.nextAction ?
+                            `<button class="btn btn-success btn-large" onclick="closeCaseStatusDashboard(); ${status.nextAction}"
+                                     style="padding: 12px 30px; font-size: 18px;">
+                                🚀 ${status.whatToDoNext}
+                            </button>` :
+                            ''
+                    }
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <button class="btn btn-secondary" onclick="closeCaseStatusDashboard()" style="padding: 10px 20px;">
+                    👁️ View Full Investigation
+                </button>
+                ${status.currentPhase === 'complete' ? `
+                    <button class="btn btn-primary" onclick="closeCaseStatusDashboard(); switchTab('analysis')"
+                            style="margin-left: 10px; padding: 10px 20px;">
+                        📊 Go to Analysis
+                    </button>
+                ` : ''}
+            </div>
         </div>
     `;
     
@@ -12024,6 +12090,7 @@ function showCaseStatusDashboard() {
 function analyzeCaseStatus() {
     const status = {
         currentPhase: 'setup',
+        whereYouAre: '',
         victimsComplete: false,
         rootTotalConfirmed: false,
         victimCount: 0,
@@ -12034,7 +12101,8 @@ function analyzeCaseStatus() {
         showAnalysis: false,
         analysisReady: false,
         nextAction: null,
-        summary: ''
+        summary: '',
+        whatToDoNext: ''
     };
     
     // Check victims
@@ -12130,35 +12198,64 @@ function analyzeCaseStatus() {
         });
     }
     
-    // Determine current phase and next action
+    // Determine current phase and next action with detailed summary
     if (!status.victimsComplete) {
         status.currentPhase = 'victims';
+        status.whereYouAre = 'Setup Phase - No Victims Added';
         status.nextAction = 'focusOnVictims()';
-        status.summary = 'Add victim transactions to begin your investigation.';
+        status.summary = 'Your investigation needs victim transactions to begin. Add victims and their blockchain transactions to start tracing.';
+        status.whatToDoNext = 'Add victim wallet addresses and transaction hashes';
     } else if (!status.rootTotalConfirmed) {
         status.currentPhase = 'root-total';
+        status.whereYouAre = `Victims Added (${status.victimCount} victims, ${status.transactionCount} transactions)`;
         status.nextAction = 'confirmRootTotal()';
-        status.summary = 'Confirm your root total to proceed with tracing.';
+        status.summary = `You have entered ${status.transactionCount} transaction(s) totaling ${status.rootTotal}. Confirm the root total to begin tracing these funds.`;
+        status.whatToDoNext = 'Confirm root total and generate initial threads';
     } else if (firstIncompleteHop) {
         status.currentPhase = 'hops';
-        status.summary = `Currently tracing funds through Hop ${firstIncompleteHop.hopNumber}.`;
+        status.whereYouAre = `Working on Hop ${firstIncompleteHop.hopNumber}`;
+        const validation = validateHopCompletion(firstIncompleteHop.hopNumber);
+        if (validation.remainingByCurrency && Object.keys(validation.remainingByCurrency).length > 0) {
+            const remainingAmounts = Object.entries(validation.remainingByCurrency)
+                .filter(([_, amt]) => amt > 0)
+                .map(([curr, amt]) => `${amt.toLocaleString()} ${curr}`)
+                .join(', ');
+            status.summary = `Hop ${firstIncompleteHop.hopNumber} is in progress with ${firstIncompleteHop.entryCount} entries recorded. You have ${remainingAmounts} remaining to trace.`;
+            status.whatToDoNext = `Continue adding transactions to Hop ${firstIncompleteHop.hopNumber}`;
+        } else {
+            status.summary = `Hop ${firstIncompleteHop.hopNumber} has ${firstIncompleteHop.entryCount} entries. Complete this hop to proceed.`;
+            status.whatToDoNext = `Complete Hop ${firstIncompleteHop.hopNumber}`;
+        }
     } else if (lastCompleteHop) {
         // Check if there are any active threads
-        const hasActiveThreads = checkForActiveThreads(lastCompleteHop);
+        const nextHopNumber = lastCompleteHop.hopNumber + 1;
+        const availableThreads = getAvailableSourcesForHop(nextHopNumber, null);
+        const hasActiveThreads = availableThreads && availableThreads.length > 0;
+
         if (hasActiveThreads) {
             status.currentPhase = 'hops';
-            status.nextAction = `createNextHop(${lastCompleteHop.id})`;
-            status.summary = 'Continue tracing remaining funds in the next hop.';
+            status.whereYouAre = `Completed Hop ${lastCompleteHop.hopNumber}`;
+            status.nextAction = `addNewHop()`;
+            const threadSummary = availableThreads.slice(0, 3)
+                .map(t => `${t.availableAmount.toLocaleString()} ${t.currency}`)
+                .join(', ');
+            status.summary = `You've completed ${investigation.hops.length} hop(s). There are ${availableThreads.length} active thread(s) with ${threadSummary}${availableThreads.length > 3 ? '...' : ''} ready to trace in Hop ${nextHopNumber}.`;
+            status.whatToDoNext = `Start Hop ${nextHopNumber} to continue tracing`;
         } else {
             status.currentPhase = 'complete';
+            status.whereYouAre = 'Investigation Complete';
             status.showAnalysis = true;
             status.analysisReady = true;
-            status.summary = 'All funds have been traced. Generate reports in the Analysis section.';
+            const terminalCount = investigation.terminalWalletIndex ? investigation.terminalWalletIndex.length : 0;
+            status.summary = `All funds have been successfully traced through ${investigation.hops.length} hops. ${terminalCount} terminal wallet arrival(s) documented. Your investigation is complete and ready for reporting.`;
+            status.whatToDoNext = 'Generate reports and visualizations';
         }
     } else {
         status.currentPhase = 'hops';
+        status.whereYouAre = 'Ready to Start Tracing';
         status.nextAction = 'startHop1()';
-        status.summary = 'Begin tracing funds from victim wallets.';
+        status.summary = `Root total confirmed: ${status.rootTotal}. Begin tracing these funds from the ${status.victimCount} victim wallet(s).`;
+        status.whatToDoNext = 'Start Hop 1 to begin tracing victim funds';
     }
     
     return status;
@@ -12191,7 +12288,7 @@ function closeCaseStatusDashboard() {
 
 // Focus functions for different sections
 function focusOnVictims() {
-    document.getElementById('victimsTab').click();
+    switchTab('victims');
     setTimeout(() => {
         const firstInput = document.querySelector('#victimsContent input');
         if (firstInput) firstInput.focus();

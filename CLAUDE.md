@@ -3,33 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 17:10)
+## Latest Commit (Auto-updated: 2025-09-23 17:18)
 
-**Commit:** cb65a32465885c1310c226c50632238315b223d2
+**Commit:** eed83c304cbdac3bde6fcf8c77189b0fd60f6046
 **Author:** Your Name
-**Message:** Fix investigation completion detection to prevent premature display
+**Message:** Fix saved file loading and thread availability issues
 
-Fixed issues where investigation complete card and flow diagram prompt were showing on new traces:
+Fixed multiple issues when loading saved .bats files:
 
-## Completion Detection
-- Added check for victims being entered before showing any completion UI
-- Verify all victims have root totals (are completed) before proceeding
-- Check that funds have actually been traced (not just empty hops)
-- Require all threads to reach terminal wallets before showing complete
+## Thread Availability
+- Rebuild availableThreads index after loading to restore thread tracking
+- Ensure threads are properly saved with investigation data
+- Call buildAvailableThreadsIndex() before saving to include complete state
+- Added logging to track thread availability after load
 
-## Display Logic
-- Hide both complete section and visualization prompt by default
-- Only show add hop button after victims are completed
-- Prevent showing completion UI on new/empty investigations
-- Ensure hasTracedFunds check validates actual traced amounts
+## UI Updates
+- Call updateInvestigationCompletionStatus() after loading files
+- Properly show "Start Hop 2" button when Hop 1 is complete
+- Fixed investigation complete cards showing prematurely
 
-## Validation Flow
-1. Check victims exist and are completed
-2. Verify hops contain actual traced funds
-3. Confirm all threads reached terminal wallets
-4. Only then show investigation complete and visualization options
+## Bug Fixes
+- Fixed formatCurrency undefined error by adding wrapper function
+- Use formatCurrencyAmount for proper currency display
+- Added formatCurrency wrapper for backward compatibility
 
-This prevents confusing UI states where users see completion messages before even starting their investigation.
+## Data Persistence
+The investigation now saves and restores:
+- availableThreads index for thread tracking
+- All hop entries and allocations
+- Terminal wallet indices
+- Complete state for resuming work
+
+Users can now properly save their work and resume exactly where they left off, with all thread allocations and progress preserved.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -37,23 +42,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 77 ++++++++++++++++++++++++++++++++++++++++----------------------
- index.html | 38 +++++++++++++++++++++++++------
- 2 files changed, 81 insertions(+), 34 deletions(-)
+ CLAUDE.md  | 72 ++++++++++++++++++++++++++------------------------------------
+ index.html | 30 +++++++++++++++++++++-----
+ 2 files changed, 55 insertions(+), 47 deletions(-)
 ```
 
 ## Recent Commits History
 
-- cb65a32 Fix investigation completion detection to prevent premature display (0 seconds ago)
-- deb6362 Implement hop-centric DAG visualization for investigation traces (9 minutes ago)
+- eed83c3 Fix saved file loading and thread availability issues (0 seconds ago)
+- cb65a32 Fix investigation completion detection to prevent premature display (8 minutes ago)
+- deb6362 Implement hop-centric DAG visualization for investigation traces (18 minutes ago)
 - 313d765 Show investigation complete view when all threads reach terminal wallets (2 hours ago)
 - 4c78dca Fix missing closing brace in template expression (2 hours ago)
 - fcc2596 Add multi-currency progress bars for swapped assets (2 hours ago)
-- 97cb71d Fix terminal wallet thread creation and display issues (2 hours ago)
+- 97cb71d Fix terminal wallet thread creation and display issues (3 hours ago)
 - 9f06495 Fix terminal wallet allocation and thread tracking issues (3 hours ago)
 - 0479806 Add comprehensive terminal wallet tracking and reporting system (4 hours ago)
 - 8f66faa Implement dynamic wallet attribution via Etherscan API (4 hours ago)
-- 3a6026f Add automatic exchange detection with Bybit and other major exchanges (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
