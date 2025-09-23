@@ -5056,68 +5056,123 @@ function updateThreadAvailabilityFromSwap(entry) {
     const inputAmount = parseFloat(entry.amount);
     const outputAmount = parseFloat(entry.outputAmount);
 
-    // Get the source thread ID (this is what we're replacing)
-    const threadId = entry.sourceThreadId ||
-        (entry.multipleSourceThreads ? entry.multipleSourceThreads.join('+') + `-H${entry.hopNumber}` : null);
+    // For dual-layer: Get internal IDs of source threads
+    const sourceInternalIds = entry.sourceThreadInternalId ? [entry.sourceThreadInternalId] :
+                             (entry.multipleSourceInternalIds || []);
 
-    if (!threadId) return;
+    // Also get notation for backward compatibility
+    const sourceNotations = entry.sourceThreadId ? [entry.sourceThreadId] :
+                           (entry.multipleSourceThreads || []);
 
-    // Check if thread already exists in output currency (may have been used before swap)
-    const existingOutputThread = investigation.availableThreads[outputCurrency]?.[threadId];
+    if (sourceInternalIds.length === 0 && sourceNotations.length === 0) return;
 
-    // Remove thread from input currency (it's being replaced)
-    if (investigation.availableThreads[inputCurrency]) {
-        delete investigation.availableThreads[inputCurrency][threadId];
+    // Determine if this is a partial swap
+    let totalAvailableInput = 0;
+    let threadsToProcess = [];
+
+    // Check each source thread
+    for (let i = 0; i < Math.max(sourceInternalIds.length, sourceNotations.length); i++) {
+        const internalId = sourceInternalIds[i];
+        const notation = sourceNotations[i];
+        const identifier = internalId || notation;
+
+        if (!identifier) continue;
+
+        // Find the thread in input currency
+        const inputThread = investigation.availableThreads[inputCurrency]?.[identifier];
+        if (inputThread) {
+            const available = getMaxAssignableAmount(identifier, inputCurrency, entry.id, entry.hopNumber);
+            totalAvailableInput += available;
+            threadsToProcess.push({
+                identifier: identifier,
+                internalId: internalId || identifier,
+                notation: notation || inputThread.notation || identifier,
+                thread: inputThread,
+                available: available
+            });
+        }
     }
 
-    // Create/Update SAME thread ID in output currency (replacement)
+    // Check if this is a partial swap (not all input consumed)
+    const isPartialSwap = totalAvailableInput > inputAmount;
+
+    if (isPartialSwap) {
+        console.log(`Partial swap detected: Using ${inputAmount} of ${totalAvailableInput} available ${inputCurrency}`);
+
+        // For partial swaps, we need to:
+        // 1. Keep the remaining input amount in original currency
+        // 2. Create new thread in output currency with SAME notation but different internal ID
+
+        threadsToProcess.forEach(item => {
+            const consumedRatio = inputAmount / totalAvailableInput;
+            const consumedFromThis = item.available * consumedRatio;
+            const remainingFromThis = item.available - consumedFromThis;
+
+            if (remainingFromThis > 0) {
+                // Update the original thread to reflect remaining amount
+                // Don't delete it, just track the consumption
+                console.log(`Thread ${item.notation} keeps ${remainingFromThis} ${inputCurrency}`);
+            }
+        });
+    } else {
+        // Full swap - remove threads from input currency
+        threadsToProcess.forEach(item => {
+            if (investigation.availableThreads[inputCurrency]) {
+                delete investigation.availableThreads[inputCurrency][item.identifier];
+                console.log(`Removed thread ${item.identifier} from ${inputCurrency}`);
+            }
+        });
+    }
+
+    // Create thread(s) in output currency
     if (outputAmount > 0) {
         if (!investigation.availableThreads[outputCurrency]) {
             investigation.availableThreads[outputCurrency] = {};
         }
 
-        // Use SAME thread ID - we're replacing the thread with new currency
-        const newThreadId = threadId;
+        // For dual-layer: Create new thread with same notation but new internal ID
+        threadsToProcess.forEach(item => {
+            const notation = item.notation;
+            const newInternalId = generateInternalThreadId(notation, outputCurrency);
 
-        // If thread already exists in output currency, DON'T overwrite it completely
-        // This can happen if entries are out of order (trace before swap)
-        if (existingOutputThread) {
-            console.log(`Warning: Thread ${threadId} already exists in ${outputCurrency}. Swap may be out of order.`);
-            // Update the total amount but preserve existing structure
-            investigation.availableThreads[outputCurrency][newThreadId].totalAmount = outputAmount;
-            investigation.availableThreads[outputCurrency][newThreadId].sourceType = 'swap_output';
-            investigation.availableThreads[outputCurrency][newThreadId].swapDetails = {
-                fromCurrency: inputCurrency,
-                fromAmount: inputAmount,
-                toCurrency: outputCurrency,
-                toAmount: outputAmount,
-                provider: entry.swapDetails?.providerName || 'Unknown'
-            };
-        } else {
-            // Create new thread
-            investigation.availableThreads[outputCurrency][newThreadId] = {
-                totalAmount: outputAmount,
-                availableAmount: outputAmount,
-                assignments: [],
-                sourceWallet: entry.toWallet, // The swap service/DEX address
-                sourceType: 'swap_output',
-                hopLevel: entry.hopNumber,
-                createdAt: entry.timestamp,
-                isActive: true,
-                parentThreads: entry.multipleSourceThreads || [entry.sourceThreadId].filter(Boolean),
-                childThreads: [],
-                currency: outputCurrency,
-                swapDetails: {
-                    fromCurrency: inputCurrency,
-                    fromAmount: inputAmount,
-                    toCurrency: outputCurrency,
-                    toAmount: outputAmount,
-                    provider: entry.swapDetails?.providerName || 'Unknown'
-                }
-            };
-        }
+            // Check if thread with this internal ID already exists
+            if (!investigation.availableThreads[outputCurrency][newInternalId]) {
+                investigation.availableThreads[outputCurrency][newInternalId] = {
+                    // Dual-layer identifiers
+                    notation: notation,
+                    internalId: newInternalId,
 
-        console.log(`Created/Updated swap output thread ${newThreadId} with ${outputAmount} ${outputCurrency}`);
+                    // Amounts (proportional for multiple sources)
+                    totalAmount: outputAmount * (item.available / totalAvailableInput),
+                    availableAmount: outputAmount * (item.available / totalAvailableInput),
+
+                    // Tracking
+                    assignments: [],
+                    sourceWallet: entry.toWallet,
+                    sourceType: 'swap_output',
+                    hopLevel: entry.hopNumber,
+                    createdAt: entry.timestamp,
+                    isActive: true,
+
+                    // Parent tracking
+                    parentInternalIds: [item.internalId],
+                    parentNotations: [item.notation],
+
+                    // Currency and swap details
+                    currency: outputCurrency,
+                    swapDetails: {
+                        fromCurrency: inputCurrency,
+                        fromAmount: inputAmount,
+                        toCurrency: outputCurrency,
+                        toAmount: outputAmount,
+                        provider: entry.swapDetails?.providerName || 'Unknown',
+                        isPartial: isPartialSwap
+                    }
+                };
+
+                console.log(`Created swap output: ${notation} (${newInternalId}) with ${outputAmount} ${outputCurrency}`);
+            }
+        });
     }
 }
 
@@ -5138,26 +5193,36 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
         // Skip if filtering by currency and this doesn't match
         if (targetCurrency && currency !== targetCurrency) continue;
 
-        for (const threadId in investigation.availableThreads[currency]) {
-            const thread = investigation.availableThreads[currency][threadId];
+        for (const threadKey in investigation.availableThreads[currency]) {
+            const thread = investigation.availableThreads[currency][threadKey];
 
             // For hop 1, only show victim threads; for other hops, show appropriate threads
             if (hopNumber === 1 && thread.sourceType !== 'victim_transaction') continue;
             if (hopNumber > 1 && thread.sourceType === 'victim_transaction') continue;
 
+            // Calculate available amount using internal ID or notation
+            const availableAmount = getMaxAssignableAmount(
+                thread.internalId || threadKey,
+                currency
+            );
+
             // Only include threads with available amount
-            if (thread.availableAmount && thread.availableAmount > 0) {
-                // Determine display text based on source type
-                let displayText = threadId;
+            if (availableAmount > 0) {
+                // Use notation for display, internal ID for tracking
+                const notation = thread.notation || threadKey;
+                let displayText = notation;
                 if (thread.sourceType === 'victim_transaction') {
-                    displayText = `${threadId} (RED Wallet)`;
+                    displayText = `${notation} (RED Wallet)`;
                 }
-                // No special display for swap outputs - they're just regular threads now
 
                 availableSources.push({
-                    threadId: threadId,
+                    // Dual-layer support
+                    threadId: notation,  // For backward compatibility and display
+                    internalId: thread.internalId || threadKey,  // For precise tracking
+
+                    // Display and metadata
                     displayText: displayText,
-                    availableAmount: thread.availableAmount,
+                    availableAmount: availableAmount,
                     currency: currency,
                     sourceWallet: thread.sourceWallet,
                     sourceType: thread.sourceType || 'hop_output',
@@ -5171,6 +5236,7 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
 
     console.log(` Final available sources from database (${availableSources.length}):`, availableSources);
 
+    // Sort by notation for consistent display
     return availableSources.sort((a, b) => a.threadId.localeCompare(b.threadId));
 }
 
@@ -13953,34 +14019,46 @@ function checkAllThreadsTerminated() {
     return availableSources.sort((a, b) => a.threadId.localeCompare(b.threadId));
 }*/
 
-function getMaxAssignableAmount(sourceThreadId, currency, excludeEntryId = null, excludeHopId = null) {
-    // First, find which currency this source thread actually has
+function getMaxAssignableAmount(sourceThreadIdentifier, currency, excludeEntryId = null, excludeHopId = null) {
+    // Support both internal IDs and legacy notation-based IDs
     let threadCurrency = null;
     let threadData = null;
-    
+    let internalId = null;
+
     // Search through all currencies to find this thread
     Object.entries(investigation.availableThreads || {}).forEach(([curr, threads]) => {
-        if (threads[sourceThreadId]) {
+        // First try direct lookup (for internal IDs)
+        if (threads[sourceThreadIdentifier]) {
             threadCurrency = curr;
-            threadData = threads[sourceThreadId];
+            threadData = threads[sourceThreadIdentifier];
+            internalId = sourceThreadIdentifier;
+        } else {
+            // If not found, search by notation (for backward compatibility)
+            Object.entries(threads).forEach(([id, thread]) => {
+                if (thread.notation === sourceThreadIdentifier) {
+                    threadCurrency = curr;
+                    threadData = thread;
+                    internalId = id;
+                }
+            });
         }
     });
-    
+
     if (!threadData) {
         return 0;
     }
-    
+
     // If a specific currency was requested and it doesn't match the thread's currency, return 0
     if (currency && currency !== threadCurrency) {
-        console.warn(`Currency mismatch: Thread ${sourceThreadId} has ${threadCurrency} but ${currency} was requested`);
+        console.warn(`Currency mismatch: Thread ${threadData.notation || sourceThreadIdentifier} has ${threadCurrency} but ${currency} was requested`);
         return 0;
     }
-    
+
     // Use the thread data we found
     const thread = threadData;
     const actualCurrency = threadCurrency;
     let totalAssignedInCurrentSession = 0;
-    
+
     // Calculate what's already been assigned across ALL hop entries in the current session
     investigation.hops.forEach(hop => {
         hop.entries.forEach(entry => {
@@ -13988,49 +14066,46 @@ function getMaxAssignableAmount(sourceThreadId, currency, excludeEntryId = null,
             if (excludeEntryId && excludeHopId && entry.id === excludeEntryId && hop.hopNumber === excludeHopId) {
                 return; // Skip this entry
             }
-            
+
             if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0) {
                 const entryCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-                
+
                 if (entryCurrency === actualCurrency) {
-                    // For entries with multiple sources, ONLY use individualSourceAssignments
-                    if (entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0) {
-                        // Multiple source entry - only check individual assignments
-                        if (entry.individualSourceAssignments && entry.individualSourceAssignments[sourceThreadId]) {
-                            totalAssignedInCurrentSession += parseFloat(entry.individualSourceAssignments[sourceThreadId]);
-                        }
+                    // Check both internal ID fields and legacy fields
+                    const usesThisThread =
+                        // New internal ID system
+                        entry.sourceThreadInternalId === internalId ||
+                        // Legacy notation system
+                        entry.sourceThreadId === sourceThreadIdentifier ||
+                        entry.sourceThreadId === thread.notation;
+
+                    if (usesThisThread) {
+                        // Single source entry
+                        totalAssignedInCurrentSession += parseFloat(entry.amount);
                     } else {
-                        // Single source entry - check sourceThreadId
-                        if (entry.sourceThreadId === sourceThreadId) {
-                            totalAssignedInCurrentSession += parseFloat(entry.amount);
+                        // Check multiple source assignments
+                        const multipleIds = entry.multipleSourceInternalIds || entry.multipleSourceThreads || [];
+                        const assignments = entry.individualSourceAssignments || {};
+
+                        // Check if this thread is in multiple sources
+                        if (multipleIds.includes(internalId) || multipleIds.includes(sourceThreadIdentifier) || multipleIds.includes(thread.notation)) {
+                            // Look for assignment by internal ID, notation, or identifier
+                            const assignedAmount = assignments[internalId] ||
+                                                 assignments[sourceThreadIdentifier] ||
+                                                 assignments[thread.notation] || 0;
+                            totalAssignedInCurrentSession += parseFloat(assignedAmount);
                         }
                     }
                 }
             }
         });
     });
-    
+
     // Calculate available as total minus what's been assigned
     const availableAmount = thread.totalAmount - totalAssignedInCurrentSession;
-    console.log(`Thread ${sourceThreadId}: Total ${thread.totalAmount}, Assigned ${totalAssignedInCurrentSession}, Available ${availableAmount}`);
-    
-    // Log more details about assignments
-    if (totalAssignedInCurrentSession > 0) {
-        console.log(`  Assignments breakdown for ${sourceThreadId}:`);
-        investigation.hops.forEach(hop => {
-            hop.entries.forEach(entry => {
-                if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0) {
-                    if (entry.sourceThreadId === sourceThreadId) {
-                        console.log(`    - Hop ${hop.hopNumber} Entry ${entry.id}: ${entry.amount} (single source)`);
-                    }
-                    if (entry.individualSourceAssignments && entry.individualSourceAssignments[sourceThreadId]) {
-                        console.log(`    - Hop ${hop.hopNumber} Entry ${entry.id}: ${entry.individualSourceAssignments[sourceThreadId]} (multiple sources)`);
-                    }
-                }
-            });
-        });
-    }
-    
+    const displayName = thread.notation || sourceThreadIdentifier;
+    console.log(`Thread ${displayName}: Total ${thread.totalAmount}, Assigned ${totalAssignedInCurrentSession}, Available ${availableAmount}`);
+
     return Math.max(0, availableAmount);
 }
 
@@ -16151,23 +16226,57 @@ function toggleWizardPreference() {
     localStorage.setItem('bats_hop_wizard_disabled', checkbox.checked ? 'true' : 'false');
 }
 
-function updateWizardThreadSelection(threadId) {
+function updateWizardThreadSelection(threadInfo) {
     const wizardData = window.hopWizardData;
-    const index = wizardData.selectedThreads.indexOf(threadId);
-    
-    if (index > -1) {
-        wizardData.selectedThreads.splice(index, 1);
-        delete wizardData.allocations[threadId];
+
+    // Support both string (legacy) and object (dual-layer) inputs
+    let notation, internalId;
+    if (typeof threadInfo === 'string') {
+        // Legacy mode - just notation
+        notation = threadInfo;
+        internalId = threadInfo;  // Use notation as internal ID for backward compatibility
     } else {
-        wizardData.selectedThreads.push(threadId);
+        // Dual-layer mode - object with both notation and internalId
+        notation = threadInfo.notation || threadInfo.threadId;
+        internalId = threadInfo.internalId || threadInfo.notation || threadInfo.threadId;
     }
-    
+
+    // Store selections using internal IDs
+    const index = wizardData.selectedInternalIds?.indexOf(internalId) ?? -1;
+
+    if (!wizardData.selectedInternalIds) {
+        wizardData.selectedInternalIds = [];
+    }
+    if (!wizardData.selectedNotations) {
+        wizardData.selectedNotations = [];
+    }
+
+    if (index > -1) {
+        wizardData.selectedInternalIds.splice(index, 1);
+        const notationIndex = wizardData.selectedNotations.indexOf(notation);
+        if (notationIndex > -1) {
+            wizardData.selectedNotations.splice(notationIndex, 1);
+        }
+        delete wizardData.allocations[internalId];
+    } else {
+        wizardData.selectedInternalIds.push(internalId);
+        wizardData.selectedNotations.push(notation);
+    }
+
+    // Keep backward compatibility
+    wizardData.selectedThreads = wizardData.selectedNotations;
+
     const nextBtn = document.getElementById('wizardNextBtn');
-    nextBtn.disabled = wizardData.selectedThreads.length === 0;
+    nextBtn.disabled = wizardData.selectedInternalIds.length === 0;
 }
 
-function updateWizardAllocation(threadId, value) {
-    window.hopWizardData.allocations[threadId] = parseFloat(value) || 0;
+function updateWizardAllocation(threadInfo, value) {
+    // Support both string and object inputs
+    const internalId = typeof threadInfo === 'string' ?
+                      threadInfo :
+                      (threadInfo.internalId || threadInfo.threadId);
+
+    window.hopWizardData.allocations[internalId] = parseFloat(value) || 0;
     updateWizardTotal();
 }
 
@@ -16995,15 +17104,27 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
         toWalletType = 'orange'; // ORANGE for change
     }
 
-    // Create the entry
+    // Create the entry with dual-layer support
     const entry = {
         id: Date.now() + outputIndex, // Ensure unique IDs for multiple outputs
         hopNumber: hop.hopNumber,
         entryType: 'trace',
+
+        // Dual-layer thread tracking
+        // Store internal IDs for precise tracking
+        sourceThreadInternalId: wizardData.selectedInternalIds && wizardData.selectedInternalIds.length === 1 ?
+            wizardData.selectedInternalIds[0] : '',
+        multipleSourceInternalIds: wizardData.selectedInternalIds && wizardData.selectedInternalIds.length > 1 ?
+            wizardData.selectedInternalIds : [],
+
+        // Keep notations for backward compatibility and display
         sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
         multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
-        individualSourceAssignments: wizardData.selectedThreads.length > 1 ?
+
+        // Update allocations to use internal IDs
+        individualSourceAssignments: wizardData.selectedInternalIds && wizardData.selectedInternalIds.length > 1 ?
             Object.fromEntries(Object.entries(wizardData.allocations).map(([k, v]) => [k, v * outputProportion])) : {},
+
         amount: allocatedAmount.toString(),
         currency: output.currency,
         fromWallet: output.from,
