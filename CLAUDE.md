@@ -3,45 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 18:21)
+## Latest Commit (Auto-updated: 2025-09-23 18:58)
 
-**Commit:** 39e5b1203b1e92d9b908f2c9246f840f256f2a23
+**Commit:** c9f7c5b7167764efdbc43f716f44307c00da841e
 **Author:** Your Name
-**Message:** Fix terminal wallet detection in hop completion
+**Message:** CRITICAL FIX: Use validated swap handling in hop finalization
 
-Fixed issue where investigations continued after all funds reached terminal wallets:
+Fixed the recurring issue where swapped currencies show as "remaining" during hop finalization:
 
-## Problem
-- When all threads traced to terminal wallets (exchanges), system still offered "Continue to Hop 3"
-- Terminal wallet arrivals weren't recognized as investigation endpoints
-- Users had to manually realize investigation was complete
+## Root Cause
+The `finalizeHop()` function was:
+1. Calling `validateHopCompletion()` which properly handles swaps
+2. BUT THEN recalculating remaining amounts independently
+3. This duplicate calculation didn't account for swaps, overriding the correct validation
 
 ## Solution
-- Track whether all threads in a hop reached terminal wallets
-- Check for PURPLE wallet type or isTerminal flag
-- Don't create next hop if all threads are terminal
-- Show "Complete Investigation" button instead of "Continue"
+- Removed duplicate remaining amount calculation in finalizeHop()
+- Now properly uses remainingByCurrency from validateHopCompletion()
+- This ensures swap-aware validation is actually used
 
-## UI Changes
-### Hop Completion Modal
-- Detects when all funds reach terminal wallets
-- Changes button from "Close Hop & Continue" to "Complete Investigation"
-- Updates message to indicate investigation is complete
-- Removes "Add More Entries" option when complete
+## Why This Kept Breaking
+The code had two parallel calculation paths:
+1. validateHopCompletion() - CORRECT, handles swaps
+2. finalizeHop() inline calculation - WRONG, ignores swaps
 
-### Completion Messages
-- Shows "🎉 Investigation Complete!" when all funds reach terminals
-- Lists terminal wallet arrivals with "(Terminal)" indicator
-- Directs user to Analysis tab for report generation
-- Longer notification duration (8s) for completion message
+The wrong calculation was overwriting the correct one.
 
-## Logic Flow
-1. Check each trace entry for terminal wallet status
-2. Set allThreadsTerminal flag if all traces are to exchanges
-3. Only create next hop if non-terminal threads exist
-4. Show appropriate completion UI based on terminal status
+## Impact
+- USDC swapped to USDT no longer shows as "remaining"
+- Hop finalization properly recognizes currency conversions
+- No more false "unaccounted amounts" after swaps
 
-This ensures investigations properly conclude when all funds reach exchanges, preventing unnecessary continuation prompts.
+This should finally resolve the persistent swap validation issue once and for all.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -49,23 +42,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 80 +++++++++++++++++++++++++++++++-------------------------------
- index.html | 80 ++++++++++++++++++++++++++++++++++++++++++++++++--------------
- 2 files changed, 102 insertions(+), 58 deletions(-)
+ CLAUDE.md  | 83 ++++++++++++++++++++++++++++++++------------------------------
+ index.html | 37 +++++-----------------------
+ 2 files changed, 49 insertions(+), 71 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 39e5b12 Fix terminal wallet detection in hop completion (0 seconds ago)
-- 05e95d3 Fix swap currency tracking in hop validation (38 minutes ago)
-- 1db32cf Enhanced investigation summary dashboard on file load (50 minutes ago)
-- eed83c3 Fix saved file loading and thread availability issues (64 minutes ago)
-- cb65a32 Fix investigation completion detection to prevent premature display (72 minutes ago)
-- deb6362 Implement hop-centric DAG visualization for investigation traces (81 minutes ago)
-- 313d765 Show investigation complete view when all threads reach terminal wallets (3 hours ago)
-- 4c78dca Fix missing closing brace in template expression (3 hours ago)
+- c9f7c5b CRITICAL FIX: Use validated swap handling in hop finalization (0 seconds ago)
+- 39e5b12 Fix terminal wallet detection in hop completion (36 minutes ago)
+- 05e95d3 Fix swap currency tracking in hop validation (75 minutes ago)
+- 1db32cf Enhanced investigation summary dashboard on file load (87 minutes ago)
+- eed83c3 Fix saved file loading and thread availability issues (2 hours ago)
+- cb65a32 Fix investigation completion detection to prevent premature display (2 hours ago)
+- deb6362 Implement hop-centric DAG visualization for investigation traces (2 hours ago)
+- 313d765 Show investigation complete view when all threads reach terminal wallets (4 hours ago)
+- 4c78dca Fix missing closing brace in template expression (4 hours ago)
 - fcc2596 Add multi-currency progress bars for swapped assets (4 hours ago)
-- 97cb71d Fix terminal wallet thread creation and display issues (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
