@@ -11575,9 +11575,11 @@ function finalizeHop(hopNumber) {
     // Use the remaining amounts from validation (which already accounts for swaps)
     const remainingByCurrency = validation.remainingByCurrency || {};
 
-    // Check if hop is already balanced
-    const isBalanced = Object.keys(remainingByCurrency).length === 0 ||
-                      Object.values(remainingByCurrency).every(amt => Math.abs(amt) < 0.01);
+    // Check if hop is truly balanced (no remaining unallocated threads)
+    const totalRemaining = Object.values(remainingByCurrency).reduce((sum, amt) => sum + Math.abs(amt), 0);
+    const isBalanced = totalRemaining < 0.01;
+
+    console.log(`Finalizing Hop ${hopNumber}: Total remaining = ${totalRemaining}, Is balanced = ${isBalanced}`);
 
     if (isBalanced) {
         // Skip finalization modal if already balanced - go straight to completion
@@ -14329,27 +14331,25 @@ function validateHopCompletion(hopNumber) {
                 });
             });
             
-            // Calculate remaining by currency for the return object
+            // CRITICAL FIX: Use available threads for next hop to determine what's remaining
+            // This properly accounts for remainder threads that were created but not yet allocated
             const remainingByCurrency = {};
-            Object.entries(startingART).forEach(([currency, startAmount]) => {
-                // Don't show swapped currencies as "remaining"
-                if (swappedOutCurrencies.has(currency)) {
-                    // Currency was swapped, so it shouldn't show as remaining
-                    // unless part of it wasn't actually swapped
-                    const tracedAmount = entryTotalsByCurrency[currency] || 0;
-                    const remaining = startAmount - tracedAmount;
-                    if (remaining > 0.01) {
-                        // Only show the unswapped portion as remaining
-                        remainingByCurrency[currency] = remaining;
+
+            // Get available threads for the NEXT hop - these are what's actually unallocated
+            const nextHopNumber = hopNumber + 1;
+            const availableThreadsForNext = getAvailableSourcesForHop(nextHopNumber, null);
+
+            // Sum up available amounts by currency - these are the TRUE remaining amounts
+            availableThreadsForNext.forEach(thread => {
+                if (thread.availableAmount > 0.01) {
+                    if (!remainingByCurrency[thread.currency]) {
+                        remainingByCurrency[thread.currency] = 0;
                     }
-                } else {
-                    const tracedAmount = entryTotalsByCurrency[currency] || 0;
-                    const remaining = startAmount - tracedAmount;
-                    if (Math.abs(remaining) >= 0.01) {
-                        remainingByCurrency[currency] = remaining;
-                    }
+                    remainingByCurrency[thread.currency] += thread.availableAmount;
                 }
             });
+
+            console.log(`Hop ${hopNumber} validation - Remaining amounts from available threads:`, remainingByCurrency);
 
             // Add swapped-in currencies to the available threads for next hop
             Object.entries(swappedInAmounts).forEach(([currency, amount]) => {

@@ -3,39 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 19:32)
+## Latest Commit (Auto-updated: 2025-09-23 19:41)
 
-**Commit:** d402adc6d8f27aa54831d5c3aeea9324689dce62
+**Commit:** c0571a1f05fddfbeaaa4816cb628db383d46e84f
 **Author:** Your Name
-**Message:** Streamline hop workflow and reduce redundant clicks
+**Message:** Improve network resilience and error handling for blockchain lookups
 
-Major UX improvements to reduce clicks and improve workflow clarity:
+Enhanced API reliability with better fallback handling:
 
-## Removed Redundancies
-- Eliminated 3-second delay before hop completion modal
-- Removed auto-dismissing notifications that disappear after 10 seconds
-- Consolidated multiple success modals into single notifications
-- Skip finalization modal when hop is already balanced
+## Network Improvements
+- Increased timeout from 15s to 30s for initial requests
+- Added more fallback URLs for Bitcoin and Ethereum
+- Better error messages explaining likely causes
+- Shorter timeout (8s) for individual API attempts
 
-## Enhanced Visual Feedback
-- Added real-time progress bar to hop headers
-- Visual checkmark (✓) when hop is fully accounted
-- Concise corner notifications instead of blocking modals
-- Immediate feedback without unnecessary delays
+## Enhanced Error Handling
+- User-friendly error messages with troubleshooting tips
+- Retry button in error modal for quick re-attempts
+- Clear explanation of rate limiting and solutions
+- Suggestions for manual entry as fallback
 
-## Improved Workflow Flow
-- Auto-scroll to next hop after completion (100ms vs 500ms)
-- Single-click hop completion when balanced
-- 'Review Details' option for users wanting more info
-- Streamlined thread summary in notifications
+## API Fallbacks Added
+- Ethereum: BlockScout, BlockCypher, Alchemy
+- Bitcoin: Blockchair, Blockbook APIs
+- Graceful degradation when token lookups fail
 
-## User Control
-- Notifications don't auto-dismiss - user controls when to proceed
-- 'Continue Adding Entries' option remains available
-- Clear distinction between hop completion and trace completion
-- Progress indicators provide continuous feedback
+## User Experience
+- Shows specific failure reasons (rate limit, network, etc)
+- Provides actionable solutions (wait 30s, use VPN, manual entry)
+- Auto-removes error modal after 30 seconds
+- Preserves transaction lookup flow on retry
 
-Result: Fewer clicks, clearer feedback, smoother progression through investigation workflow.
+These changes should significantly reduce lookup failures, especially during API rate limiting or temporary network issues.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -43,23 +42,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  74 +++++++++-----------------
- index.html | 171 +++++++++++++++++++++++++++++++++++++++----------------------
- 2 files changed, 134 insertions(+), 111 deletions(-)
+ CLAUDE.md  |  62 +++++++++++++++++++++---------------
+ index.html | 104 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 132 insertions(+), 34 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d402adc Streamline hop workflow and reduce redundant clicks (0 seconds ago)
-- 5804b61 Fix terminal wallet detection and trace completion logic (8 minutes ago)
-- a771d15 Implement auto-save after hop completion (21 minutes ago)
-- 10cf459 Add comprehensive trace completion ceremony (30 minutes ago)
-- c9f7c5b CRITICAL FIX: Use validated swap handling in hop finalization (34 minutes ago)
-- 39e5b12 Fix terminal wallet detection in hop completion (70 minutes ago)
+- c0571a1 Improve network resilience and error handling for blockchain lookups (0 seconds ago)
+- d402adc Streamline hop workflow and reduce redundant clicks (9 minutes ago)
+- 5804b61 Fix terminal wallet detection and trace completion logic (17 minutes ago)
+- a771d15 Implement auto-save after hop completion (30 minutes ago)
+- 10cf459 Add comprehensive trace completion ceremony (39 minutes ago)
+- c9f7c5b CRITICAL FIX: Use validated swap handling in hop finalization (43 minutes ago)
+- 39e5b12 Fix terminal wallet detection in hop completion (79 minutes ago)
 - 05e95d3 Fix swap currency tracking in hop validation (2 hours ago)
 - 1db32cf Enhanced investigation summary dashboard on file load (2 hours ago)
 - eed83c3 Fix saved file loading and thread availability issues (2 hours ago)
-- cb65a32 Fix investigation completion detection to prevent premature display (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
