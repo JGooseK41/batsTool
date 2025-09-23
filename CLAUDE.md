@@ -3,24 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-22 21:02)
+## Latest Commit (Auto-updated: 2025-09-22 21:14)
 
-**Commit:** c012b7f022b31dca2f51248d166072ed1e8497eb
+**Commit:** 2d6ff79361841956e6af8de08394dc114a9a63c7
 **Author:** Your Name
-**Message:** Enhance swap wizard with checkboxes and partial swap support
+**Message:** Fix swap wizard issues: duplicate hash fields and button functionality
 
-- Added checkboxes to thread selection for clearer visual feedback
-- Implemented partial swap amounts - can now swap less than full thread amount
-- Added amount input fields for each selected thread with Max button
-- Remaining balance stays in original thread when doing partial swaps
-- Updated toggleSwapThread to initialize default amounts
-- Added updateSwapThreadAmount and setMaxSwapAmount helper functions
-- Modified createSwapEntry to track partial amounts per thread
-- Rewrote updateThreadsAfterSwap to handle thread splitting properly
-- Thread amounts are now stored in threadAmounts object in wizard data
-- Partial swaps create new thread for converted amount, keep remainder in original
+- Removed duplicate transaction hash input field (was appearing twice)
+- Added optional Service Provider Name field for documentation (Uniswap, Binance, etc.)
+- Fixed Create Swap Entry button not working by relaxing validation
+- Button now only requires output amount and currency (service address/name optional)
+- Added providerName to wizard data and swap details
+- Improved error handling and debugging logs in createSwapEntry
+- Enhanced success notification to show provider name if specified
+- Transaction hash lookup button now disabled for CEX swaps with explanation
 
-This allows users to swap only a portion of a thread's funds, with the remainder staying in the original thread and currency for later use.
+The swap wizard now has cleaner UI with single hash field, optional provider name for better documentation, and properly functioning Create Swap Entry button.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -28,23 +26,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  51 +++++++--------
- index.html | 217 ++++++++++++++++++++++++++++++++++++++++++++-----------------
- 2 files changed, 180 insertions(+), 88 deletions(-)
+ CLAUDE.md  | 49 ++++++++++++++++++----------------
+ index.html | 89 +++++++++++++++++++++++++++++++++++---------------------------
+ 2 files changed, 77 insertions(+), 61 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c012b7f Enhance swap wizard with checkboxes and partial swap support (0 seconds ago)
-- a768bdd Streamline hop completion to single click instead of 4 modals (4 minutes ago)
-- a2647b1 Add transaction hash lookup for DEX/Swap wizard (11 minutes ago)
-- 5624070 Remove redundant createSwapEntryFromWizard function (19 minutes ago)
-- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (22 minutes ago)
-- 8e60274 Add better debugging for swap wizard hop finding issue (29 minutes ago)
-- 90726bb Fix DEX/Swap entry not showing in Add Entry wizard (59 minutes ago)
-- e3d9d02 Fix UI not updating after applying transfer to victim (66 minutes ago)
-- a7a9dd6 Fix removeTransaction function definition (73 minutes ago)
-- 995000a Implement core behavior fixes based on user requirements (2 hours ago)
+- 2d6ff79 Fix swap wizard issues: duplicate hash fields and button functionality (0 seconds ago)
+- c012b7f Enhance swap wizard with checkboxes and partial swap support (12 minutes ago)
+- a768bdd Streamline hop completion to single click instead of 4 modals (16 minutes ago)
+- a2647b1 Add transaction hash lookup for DEX/Swap wizard (23 minutes ago)
+- 5624070 Remove redundant createSwapEntryFromWizard function (31 minutes ago)
+- 0e6eda8 Fix duplicate createSwapEntry function causing swap wizard to fail (34 minutes ago)
+- 8e60274 Add better debugging for swap wizard hop finding issue (42 minutes ago)
+- 90726bb Fix DEX/Swap entry not showing in Add Entry wizard (71 minutes ago)
+- e3d9d02 Fix UI not updating after applying transfer to victim (78 minutes ago)
+- a7a9dd6 Fix removeTransaction function definition (85 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
