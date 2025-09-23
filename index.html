@@ -11644,6 +11644,9 @@ function completeHopAndProceed(hop) {
     updateWorkflowSteps();
     updateValidationStatus();
 
+    // Auto-save the investigation after hop completion
+    autoSaveAfterHopCompletion(hop.hopNumber);
+
     // Check if investigation is complete
     updateInvestigationCompletionStatus();
 
@@ -11679,6 +11682,59 @@ function completeHopAndProceed(hop) {
                 nextHopElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }, 500);
+    }
+}
+
+// Auto-save investigation after hop completion
+async function autoSaveAfterHopCompletion(hopNumber) {
+    try {
+        // Add hop completion metadata
+        if (!investigation.hopCompletions) {
+            investigation.hopCompletions = {};
+        }
+        investigation.hopCompletions[`hop${hopNumber}`] = new Date().toISOString();
+        investigation.lastModified = new Date().toISOString();
+        investigation.lastCompletedHop = hopNumber;
+
+        // Build thread index before saving
+        buildAvailableThreadsIndex();
+
+        // Prepare the data
+        const dataStr = JSON.stringify(investigation, null, 2);
+
+        // Try to save to existing file handle if available
+        if (fileHandle && isFileSystemAvailable) {
+            try {
+                const writable = await fileHandle.createWritable();
+                await writable.write(dataStr);
+                await writable.close();
+
+                // Show subtle notification
+                showNotification(`✅ Auto-saved after Hop ${hopNumber} completion`, 'success', 3000);
+                console.log(`Auto-save successful after Hop ${hopNumber} completion`);
+                return;
+            } catch (error) {
+                console.error('Auto-save to file handle failed:', error);
+                // Fall through to download method
+            }
+        }
+
+        // If no file handle or not saved yet, use standard save
+        if (!investigation.hasBeenSaved && investigation.caseId) {
+            // For first save after hop completion, trigger download
+            const filename = `${investigation.caseId}_hop${hopNumber}_${new Date().toISOString().slice(0,10)}.bats`;
+            downloadFile(dataStr, filename, 'application/json');
+
+            investigation.hasBeenSaved = true;
+            showNotification(`📥 Investigation saved as ${filename}`, 'info', 5000);
+        } else if (investigation.caseId) {
+            // For subsequent saves, just notify that auto-save would occur
+            console.log(`Auto-save ready for Hop ${hopNumber} - use Ctrl+S or Save button to persist`);
+            showNotification(`💾 Hop ${hopNumber} complete - Remember to save your progress`, 'info', 3000);
+        }
+    } catch (error) {
+        console.error('Auto-save error:', error);
+        showNotification('⚠️ Auto-save failed - Please save manually', 'error', 5000);
     }
 }
 
@@ -12660,14 +12716,14 @@ function checkHopCompletionStatus(hop) {
                     <button class="btn btn-success" onclick="closeHopAndProceed(${hop.hopNumber}, this.parentElement.parentElement)">
                         ${buttonText}
                     </button>
-                    <button class="btn btn-primary" onclick="saveInvestigationFile(); this.parentElement.parentElement.remove()">
-                        💾 Save Progress
-                    </button>
                     ${!allThreadsTerminal ? `
                         <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">
                             Add More Entries
                         </button>
                     ` : ''}
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 6px;">
+                    <small style="color: #2e7d32;">💾 Investigation will auto-save after hop completion</small>
                 </div>
             `;
             
