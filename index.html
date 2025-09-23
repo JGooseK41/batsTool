@@ -3119,7 +3119,7 @@
         }
 
         // Enhanced fetch with timeout and retry logic
-        async function fetchWithTimeout(url, options = {}, timeoutMs = 15000, retries = 2) {
+        async function fetchWithTimeout(url, options = {}, timeoutMs = 30000, retries = 3) {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -3952,7 +3952,9 @@
                 apiKey: null,
                 fallbackUrls: [
                     'https://api.blockcypher.com/v1/btc/main/txs/',
-                    'https://mempool.space/api/tx/'
+                    'https://mempool.space/api/tx/',
+                    'https://api.blockchair.com/bitcoin/raw/transaction/',
+                    'https://btc.blockbook.api.blockchair.com/api/v2/tx/'
                 ],
                 parseResponse: (data) => {
                     if (data.hash) {
@@ -4124,8 +4126,9 @@
                 labelApiUrl: 'https://api.etherscan.io/v2/api?chainid=1&module=account&action=addressinfo&address=',
                 apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
                 fallbackUrls: [
-                    // Removed Ropsten as it no longer exists
-                    // Blockchair doesn't support transaction lookup by hash in this format
+                    'https://eth.blockscout.com/api/v2/transactions/',
+                    'https://api.blockcypher.com/v1/eth/main/txs/',
+                    'https://eth-mainnet.g.alchemy.com/v2/demo'
                 ],
                 parseResponse: parseEVMResponse
             },
@@ -22355,9 +22358,71 @@ async function lookupTransaction() {
 }
 
 function showLookupError(message) {
-    const errorDiv = document.getElementById('lookupError');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
+    // Show error in existing error div if it exists
+    const existingErrorDiv = document.getElementById('lookupError');
+    if (existingErrorDiv) {
+        existingErrorDiv.textContent = message;
+        existingErrorDiv.style.display = 'block';
+        return;
+    }
+
+    // Otherwise create a modal
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #ff6b6b;
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        max-width: 500px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    `;
+
+    // Check if it's a network/API issue
+    const isNetworkIssue = message && (
+        message.includes('Network') ||
+        message.includes('timeout') ||
+        message.includes('API') ||
+        message.includes('rate')
+    );
+
+    errorDiv.innerHTML = `
+        <h3>🔄 Lookup Failed</h3>
+        <p style="white-space: pre-line;">${message || 'Network connection error'}</p>
+        ${isNetworkIssue ? `
+        <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 6px; margin: 15px 0; text-align: left;">
+            <strong>Quick Solutions:</strong>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Wait 30 seconds if rate limited</li>
+                <li>Try using a VPN if blocked</li>
+                <li>Check transaction on Etherscan directly</li>
+                <li>Use manual entry as fallback</li>
+            </ul>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+            <button onclick="this.parentElement.parentElement.remove(); setTimeout(() => document.querySelector('[onclick*=lookupWizardTransaction]')?.click(), 100)"
+                    class="btn btn-primary" style="background: white; color: #ff6b6b;">🔄 Retry Lookup</button>
+            <button onclick="this.parentElement.parentElement.remove()"
+                    class="btn btn-secondary" style="background: rgba(255,255,255,0.2);">Close</button>
+        </div>
+        ` : `
+        <button onclick="this.parentElement.remove()" class="btn btn-secondary" style="margin-top: 15px;">Close</button>
+        `}
+    `;
+
+    document.body.appendChild(errorDiv);
+
+    // Auto-remove after 30 seconds
+    setTimeout(() => {
+        if (errorDiv.parentElement) {
+            errorDiv.remove();
+        }
+    }, 30000);
 }
 
 function displayTransactionData(txData) {
@@ -24240,9 +24305,30 @@ async function lookupEthereumTransaction(txHash) {
             let url = `${apiUrl}${txHash}&apikey=${apiKey}`;
             if (corsEnabled) url = corsProxyUrl + url;
 
-            const response = await fetchWithTimeout(url);
+            // Use shorter timeout for each attempt
+            const response = await fetchWithTimeout(url,
+                apiUrl.includes('alchemy') ? {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        method: 'eth_getTransactionByHash',
+                        params: [txHash],
+                        id: 1
+                    })
+                } : {},
+                8000, 1);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
             const data = await response.json();
-            if (!data.result || data.result === null) continue;
+
+            // Check if we got valid data
+            if (!data || (!data.result && !data.hash && !data.txhash)) {
+                throw new Error('Invalid response format');
+            }
             
             // Also check for token transfers
             let tokenData = null;

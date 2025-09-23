@@ -3,27 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 19:24)
+## Latest Commit (Auto-updated: 2025-09-23 19:32)
 
-**Commit:** 5804b6180e5d9182e7440a15bde1c8a270bd7aa6
+**Commit:** d402adc6d8f27aa54831d5c3aeea9324689dce62
 **Author:** Your Name
-**Message:** Fix terminal wallet detection and trace completion logic
+**Message:** Streamline hop workflow and reduce redundant clicks
 
-Critical fixes for proper terminal wallet detection and trace completion:
+Major UX improvements to reduce clicks and improve workflow clarity:
 
-1. Fixed terminal wallet type detection - now checks both 'purple' and 'PURPLE'
-2. Fixed thread creation logic to not create threads for terminal wallets
-3. Updated hop completion modal to show 'Complete Trace' when all threads are terminal
-4. Fixed ART calculation to exclude terminal threads from next hop
-5. Added visual indicators (🟪 TERMINAL) to terminal wallet threads
-6. Fixed formatAmount missing function error
-7. Improved finalization modal to properly detect trace completion
+## Removed Redundancies
+- Eliminated 3-second delay before hop completion modal
+- Removed auto-dismissing notifications that disappear after 10 seconds
+- Consolidated multiple success modals into single notifications
+- Skip finalization modal when hop is already balanced
 
-This ensures:
-- No Hop 3 is created when all threads reach terminal wallets
-- Proper trace completion ceremony is shown
-- Clear visual indicators when funds reach exchanges
-- Correct handling of swapped currency tracking
+## Enhanced Visual Feedback
+- Added real-time progress bar to hop headers
+- Visual checkmark (✓) when hop is fully accounted
+- Concise corner notifications instead of blocking modals
+- Immediate feedback without unnecessary delays
+
+## Improved Workflow Flow
+- Auto-scroll to next hop after completion (100ms vs 500ms)
+- Single-click hop completion when balanced
+- 'Review Details' option for users wanting more info
+- Streamlined thread summary in notifications
+
+## User Control
+- Notifications don't auto-dismiss - user controls when to proceed
+- 'Continue Adding Entries' option remains available
+- Clear distinction between hop completion and trace completion
+- Progress indicators provide continuous feedback
+
+Result: Fewer clicks, clearer feedback, smoother progression through investigation workflow.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -31,23 +43,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 99 ++++++++++++++++++++++++++++++++------------------------------
- index.html | 58 ++++++++++++++++++++++++++----------
- 2 files changed, 93 insertions(+), 64 deletions(-)
+ CLAUDE.md  |  74 +++++++++-----------------
+ index.html | 171 +++++++++++++++++++++++++++++++++++++++----------------------
+ 2 files changed, 134 insertions(+), 111 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5804b61 Fix terminal wallet detection and trace completion logic (1 second ago)
-- a771d15 Implement auto-save after hop completion (14 minutes ago)
-- 10cf459 Add comprehensive trace completion ceremony (22 minutes ago)
-- c9f7c5b CRITICAL FIX: Use validated swap handling in hop finalization (26 minutes ago)
-- 39e5b12 Fix terminal wallet detection in hop completion (62 minutes ago)
+- d402adc Streamline hop workflow and reduce redundant clicks (0 seconds ago)
+- 5804b61 Fix terminal wallet detection and trace completion logic (8 minutes ago)
+- a771d15 Implement auto-save after hop completion (21 minutes ago)
+- 10cf459 Add comprehensive trace completion ceremony (30 minutes ago)
+- c9f7c5b CRITICAL FIX: Use validated swap handling in hop finalization (34 minutes ago)
+- 39e5b12 Fix terminal wallet detection in hop completion (70 minutes ago)
 - 05e95d3 Fix swap currency tracking in hop validation (2 hours ago)
 - 1db32cf Enhanced investigation summary dashboard on file load (2 hours ago)
 - eed83c3 Fix saved file loading and thread availability issues (2 hours ago)
 - cb65a32 Fix investigation completion detection to prevent premature display (2 hours ago)
-- deb6362 Implement hop-centric DAG visualization for investigation traces (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
