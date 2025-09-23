@@ -3,23 +3,51 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 13:17)
+## Latest Commit (Auto-updated: 2025-09-23 13:25)
 
-**Commit:** 8f66faae7ee247c2b5751cd300894a64832403e3
+**Commit:** 047980655a503398f10ce50132588e7fb6e298d5
 **Author:** Your Name
-**Message:** Implement dynamic wallet attribution via Etherscan API
+**Message:** Add comprehensive terminal wallet tracking and reporting system
 
-- Enhanced getWalletAttribution() to fetch wallet labels from multiple Etherscan endpoints
-- Added comprehensive exchange detection using API labels, token transfers, and contract data
-- Integrated attribution alerts into transaction lookup workflow
-- Automatically detect and alert on terminal wallets (exchanges/VASPs) during lookups
-- Set wallet type to PURPLE for detected exchanges/VASPs
-- Cache attribution results to minimize API calls
-- Display attribution details in wizard UI with visual alerts
-- Include attribution source (API label, contract, known addresses) in entry notes
-- Support both synchronous (checkExchangeAttribution) and async (getWalletAttribution) flows
+Major enhancements for terminal wallet (exchange) detection and reporting:
 
-This ensures every transaction lookup includes wallet attribution checks and brings terminal wallet detection to the investigator's attention immediately.
+## Attribution System
+- Added Bitcoin wallet attribution via Arkham Intelligence API
+- Fallback to blockchain.info transaction analysis for high-activity wallets
+- Integrated known Bitcoin exchange addresses (Binance, Coinbase, Kraken, etc.)
+- Enhanced attribution for both EVM and Bitcoin blockchains
+
+## Terminal Wallet Index
+- Created terminalWalletIndex array in investigation object
+- Automatically tracks all terminal wallet arrivals with:
+  - Timestamp, transaction hash, hop number
+  - Sending and receiving wallets
+  - Exchange name and detection source
+  - Amount and currency
+
+## User Prompts & Workflow
+- Added terminal wallet confirmation prompts during transaction lookup
+- "End Trace at Terminal Wallet" button for marking funds as arrived
+- "Continue Trace" option for manual override with documentation
+- Visual alerts (purple) when terminal wallets are detected
+
+## Reporting Features
+- Enhanced terminal summary in Analysis tab with detailed table view
+- Export Terminal Wallet Report button (CSV format)
+- Copy Report to Clipboard for quick sharing
+- Comprehensive report includes:
+  - All terminal wallet arrivals grouped by exchange
+  - Timestamps, amounts, transaction hashes
+  - Legal process requirements section
+  - Summary statistics by exchange and currency
+
+## Display Improvements
+- Terminal wallet entries automatically marked as PURPLE
+- Exchange attribution shown in entry notes
+- Detection source tracked (API, known addresses, manual)
+- Enhanced Analysis tab with exchange grouping and totals
+
+This system provides investigators with a complete audit trail of funds arriving at exchanges, making it easier to coordinate with legal teams for asset recovery.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -27,23 +55,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  53 +++++----
- index.html | 380 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 379 insertions(+), 54 deletions(-)
+ CLAUDE.md  |  55 ++++---
+ index.html | 513 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 523 insertions(+), 45 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8f66faa Implement dynamic wallet attribution via Etherscan API (0 seconds ago)
-- 3a6026f Add automatic exchange detection with Bybit and other major exchanges (17 minutes ago)
-- abe51e1 Fix Total Accounted display to not double-count swap amounts (28 minutes ago)
-- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (41 minutes ago)
-- de7d528 Fix wizard-created entries not auto-collapsing and manual form appearing (43 minutes ago)
-- b8336a8 Fix ART and remaining calculations to properly handle currency swaps (47 minutes ago)
-- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (56 minutes ago)
-- e3e9a2f Fix swap currency lookup issue in hop wizard (64 minutes ago)
-- 094ed34 Implement dual-layer thread tracking system for complex swap handling (73 minutes ago)
-- 45ce04e WIP: Begin implementation of dual-layer thread tracking system (81 minutes ago)
+- 0479806 Add comprehensive terminal wallet tracking and reporting system (0 seconds ago)
+- 8f66faa Implement dynamic wallet attribution via Etherscan API (9 minutes ago)
+- 3a6026f Add automatic exchange detection with Bybit and other major exchanges (26 minutes ago)
+- abe51e1 Fix Total Accounted display to not double-count swap amounts (36 minutes ago)
+- 1a425c5 Fix duplicate availableThreads declaration causing syntax error (49 minutes ago)
+- de7d528 Fix wizard-created entries not auto-collapsing and manual form appearing (51 minutes ago)
+- b8336a8 Fix ART and remaining calculations to properly handle currency swaps (56 minutes ago)
+- e62e16c Fix updateThreadAvailabilityFromSwap to properly convert threads between currencies (64 minutes ago)
+- e3e9a2f Fix swap currency lookup issue in hop wizard (72 minutes ago)
+- 094ed34 Implement dual-layer thread tracking system for complex swap handling (81 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

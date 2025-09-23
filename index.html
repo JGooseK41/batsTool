@@ -18443,6 +18443,40 @@ function createHopEntryFromWizard() {
         }
     }
 
+    // Check if this is a terminal wallet
+    let isTerminalWallet = false;
+    let terminalAttribution = null;
+
+    if (wizardData.isTerminalWallet || wizardData.terminalWalletType === 'purple') {
+        isTerminalWallet = true;
+        terminalAttribution = wizardData.detectedAttribution;
+        toWalletType = 'purple';
+    } else if (wizardData.detectedAttribution && toWallet &&
+               toWallet.toLowerCase() === (wizardData.txData?.to || '').toLowerCase()) {
+        // Auto-detect terminal wallet
+        const attribution = wizardData.detectedAttribution;
+        if (attribution) {
+            isTerminalWallet = true;
+            terminalAttribution = attribution;
+            toWalletType = 'purple';
+        }
+    }
+
+    // Handle terminal wallet notes
+    let entryNotes = wizardData.manualData?.notes || '';
+    if (isTerminalWallet && terminalAttribution) {
+        const terminalNote = `Terminal wallet: ${terminalAttribution.name || terminalAttribution.label}\nType: ${terminalAttribution.type || 'CEX'}\nDetection source: ${terminalAttribution.source || 'detected'}`;
+        entryNotes = terminalNote + (entryNotes ? '\n' + entryNotes : '');
+    } else if (isSwap) {
+        entryNotes = `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${toWallet}` + (entryNotes ? '\n' + entryNotes : '');
+    }
+    if (partialTraceNote) {
+        entryNotes += `\n${partialTraceNote}`;
+    }
+    if (wizardData.pifoNote) {
+        entryNotes += `\n${wizardData.pifoNote}`;
+    }
+
     // Create new entry with wizard data
     const entry = {
         id: hop.entries.length + 1,
@@ -18462,7 +18496,7 @@ function createHopEntryFromWizard() {
         txHash: wizardData.txHash,
         timestamp: timestamp,
         timezone: 'UTC',
-        notes: wizardData.manualData?.notes || (isSwap ? `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${toWallet}` : '') + (partialTraceNote ? `\n${partialTraceNote}` : '') + (wizardData.pifoNote ? `\n${wizardData.pifoNote}` : ''),
+        notes: entryNotes,
         category: '',
         justification: '',
         // Swap tracking
@@ -18487,11 +18521,44 @@ function createHopEntryFromWizard() {
         individualSourceAssignments: wizardData.selectedThreads.length > 1 ? wizardData.allocations :
             wizardData.selectedThreads.length === 1 ? {[wizardData.selectedThreads[0]]: traceAmount} : {}
     };
-    
+
+    // Add terminal wallet attribution if present
+    if (isTerminalWallet && terminalAttribution) {
+        entry.exchangeAttribution = terminalAttribution;
+        entry.isTerminalWallet = true;
+    }
+
     // Save undo state
     saveUndoState(`Add trace entry to Hop ${hop.hopNumber}`);
-    
+
     hop.entries.push(entry);
+
+    // If this is a terminal wallet, add to the terminal wallet index
+    if (isTerminalWallet && terminalAttribution) {
+        addToTerminalWalletIndex(entry);
+        console.log('🟣 Added terminal wallet arrival to index');
+    }
+
+    // Handle remainder thread creation for terminal wallets
+    if (isTerminalWallet && totalAllocated > traceAmount) {
+        const remainderAmount = totalAllocated - traceAmount;
+        console.log(`Creating remainder thread for untraced amount: ${remainderAmount} ${entryCurrency}`);
+
+        // For each source thread that contributed, create a remainder thread
+        for (const threadId in wizardData.allocations) {
+            const originalAllocation = wizardData.allocations[threadId];
+            const usedAmount = originalAllocation * (traceAmount / totalAllocated);
+            const threadRemainder = originalAllocation - usedAmount;
+
+            if (threadRemainder > 0.01) { // Only create remainder if significant
+                // The remainder stays at the current hop level for future tracing
+                console.log(`Thread ${threadId}: Used ${usedAmount}, Remainder ${threadRemainder}`);
+
+                // Update the available threads database to reflect the partial use
+                // The buildAvailableThreadsIndex() call later will handle this
+            }
+        }
+    }
 
     // Mark entry for auto-collapse BEFORE sorting
     const entryKey = `${hop.hopNumber}_${entry.id}`;
