@@ -5477,7 +5477,17 @@ function buildAvailableThreadsIndex() {
             if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
                 // Don't create thread if this trace has been swapped
                 if (!swappedThreadIds.has(entry.notation)) {
-                    updateThreadAvailabilityFromHop(entry);
+                    // Don't create output threads for terminal wallets (purple, gray, blue)
+                    const isTerminal = entry.toWalletType === 'purple' ||
+                                     entry.toWalletType === 'gray' ||
+                                     entry.toWalletType === 'blue' ||
+                                     entry.isTerminalWallet === true;
+
+                    if (isTerminal) {
+                        console.log(`Skipping thread creation for terminal wallet (${entry.toWalletType}): ${entry.notation}`);
+                    } else {
+                        updateThreadAvailabilityFromHop(entry);
+                    }
                 } else {
                     console.log(`Skipping thread creation for swapped trace: ${entry.notation}`);
                 }
@@ -5490,6 +5500,13 @@ function buildAvailableThreadsIndex() {
 
 // 2.2 Update Thread Availability from Hop Entry
 function updateThreadAvailabilityFromHop(entry) {
+    // Skip terminal wallets - they don't create output threads
+    if (entry.toWalletType === 'purple' || entry.toWalletType === 'gray' ||
+        entry.toWalletType === 'blue' || entry.isTerminalWallet) {
+        console.log(`Not creating output thread for terminal wallet entry: ${entry.notation}`);
+        return;
+    }
+
     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
     const amount = parseFloat(entry.amount);
 
@@ -9472,8 +9489,20 @@ function addNewHop() {
             
             // Get the ART amount for this currency at this hop
             let artAmount = 0;
-            if (hop && hop.artAtStartByCurrency && currency) {
-                artAmount = hop.artAtStartByCurrency[currency] || 0;
+            let displayCurrency = currency;
+
+            // For swap entries, show both input and output
+            if (entry.entryType === 'swap' && entry.swapDetails) {
+                // For swaps, show input amount and currency
+                displayCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                if (hop && hop.artAtStartByCurrency && displayCurrency) {
+                    artAmount = hop.artAtStartByCurrency[displayCurrency] || 0;
+                }
+            } else {
+                // For regular entries, get ART for the entry's currency
+                if (hop && hop.artAtStartByCurrency && currency) {
+                    artAmount = hop.artAtStartByCurrency[currency] || 0;
+                }
             }
             
             // Calculate thread number within hop (sequential numbering for entries with notation)
@@ -9544,11 +9573,17 @@ function addNewHop() {
                                     ` : ''}
                                 </div>
                                 <div style="text-align: right;">
-                                    ${amount > 0 ? `
-                                        <span style="font-weight: bold; color: #27ae60;">
-                                            ${amount.toLocaleString()} ${currency} / ${artAmount.toLocaleString()} ${currency}
-                                        </span>
-                                    ` : `
+                                    ${amount > 0 ? (
+                                        entry.entryType === 'swap' && entry.swapDetails ? `
+                                            <span style="font-weight: bold; color: #27ae60;">
+                                                ${amount.toLocaleString()} ${displayCurrency} → ${parseFloat(entry.outputAmount || 0).toLocaleString()} ${entry.outputCurrency || ''}
+                                            </span>
+                                        ` : `
+                                            <span style="font-weight: bold; color: #27ae60;">
+                                                ${amount.toLocaleString()} ${currency} / ${artAmount.toLocaleString()} ${currency}
+                                            </span>
+                                        `
+                                    ) : `
                                         <span style="color: #e74c3c; font-size: 12px;">
                                             Not logged
                                         </span>
@@ -9586,15 +9621,21 @@ function addNewHop() {
                                         ` : ''}
                                     </div>
                                     <div style="text-align: right;">
-                                        ${amount > 0 ? `
-                                            <span style="font-weight: bold; color: #27ae60;">
-                                                ${amount.toLocaleString()} ${currency} / ART
-                                            </span>
-                                        ` : `
+                                        ${amount > 0 ? (
+                                            entry.entryType === 'swap' && entry.swapDetails ? `
+                                                <span style="font-weight: bold; color: #27ae60;">
+                                                    ${amount.toLocaleString()} ${displayCurrency} → ${parseFloat(entry.outputAmount || 0).toLocaleString()} ${entry.outputCurrency || ''}
+                                                </span>
+                                            ` : `
+                                                <span style="font-weight: bold; color: #27ae60;">
+                                                    ${amount.toLocaleString()} ${currency} / ART
+                                                </span>
+                                            `
+                                        ) : `
                                             <span style="color: #e74c3c; font-size: 12px;">
                                                 Not logged yet
                                             </span>
-                                        `}
+                                        `)
                                     </div>
                                 </div>
                             </div>
@@ -10312,7 +10353,8 @@ function addNewHop() {
                         wallet: thread.toWallet,
                         amount: thread.amount,
                         currency: thread.currency,
-                        exchangeName: 'Unknown Exchange'
+                        exchangeName: 'Unknown Exchange',
+                        hopNumber: thread.hopNumber
                     });
                 } else if (thread.toWalletType === 'gray') {
                     terminals['Gray (Obfuscated)'].push({
