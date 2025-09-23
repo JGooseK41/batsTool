@@ -11643,6 +11643,9 @@ function completeHopAndProceed(hop) {
     updateWorkflowSteps();
     updateValidationStatus();
 
+    // Check if investigation is complete
+    updateInvestigationCompletionStatus();
+
     // Show single confirmation message
     const threadSummary = threadsCreated.map(t =>
         `${t.notation}: ${formatAmount(t.amount, t.currency)} → ${t.toWallet.substring(0, 8)}...`
@@ -12266,6 +12269,9 @@ function showRemainingThreadsSummary(hop) {
         // All threads consumed - hop is complete
         showAlert(`🎉 Hop ${hop.hopNumber} fully traced!\n\nAll source threads have been accounted for.\n\n${hop.hopNumber < investigation.hops.length ? 'You can now proceed to the next hop.' : 'Consider adding the next hop to continue tracing.'}`, 'success');
     }
+
+    // Update investigation completion status to check if we're done
+    updateInvestigationCompletionStatus();
 }
 
 function checkHopCompletionStatus(hop) {
@@ -13897,30 +13903,41 @@ function updateInvestigationCompletionStatus() {
     
     // Check if all threads have reached terminal wallets
     const threadStatus = checkAllThreadsTerminated();
-    
-    // Calculate next hop ART
+
+    // Calculate next hop ART from available threads
     const lastHop = investigation.hops[investigation.hops.length - 1];
     let nextHopART = {};
     let hasActiveThreads = false;
-    
-    if (lastHop && lastHop.completed) {
-        // Calculate ART from trace outputs of last completed hop
-        lastHop.entries.forEach(entry => {
-            if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && 
-                entry.toWalletType !== 'purple' && entry.toWalletType !== 'gray') {
-                const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+
+    // Get available threads for the next hop
+    if (lastHop) {
+        const nextHopNumber = lastHop.hopNumber + 1;
+        const availableThreads = getAvailableSourcesForHop(nextHopNumber, null);
+
+        // Check if any threads are available for tracing
+        availableThreads.forEach(thread => {
+            if (thread.availableAmount > 0) {
+                const currency = thread.currency;
                 if (!nextHopART[currency]) {
                     nextHopART[currency] = 0;
                 }
-                nextHopART[currency] += parseFloat(entry.amount);
+                nextHopART[currency] += thread.availableAmount;
                 hasActiveThreads = true;
             }
         });
     }
     
     // Show different buttons based on state
-    if (threadStatus.allTerminated && allHopsComplete && totalValidationErrors === 0) {
-        // Investigation truly complete - all threads at terminal wallets
+    if (!hasActiveThreads && investigation.hops.length > 0) {
+        // No active threads - investigation is complete
+        addHopBtn.style.display = 'none';
+        completeSection.style.display = 'block';
+        if (visualizationSection) {
+            visualizationSection.style.display = 'block';
+        }
+        updateFinalThreadSummary();
+    } else if (threadStatus.allTerminated && allHopsComplete && totalValidationErrors === 0) {
+        // All threads at terminal wallets
         addHopBtn.style.display = 'none';
         completeSection.style.display = 'block';
         if (visualizationSection) {
@@ -13940,12 +13957,8 @@ function updateInvestigationCompletionStatus() {
         };
         completeSection.style.display = 'none';
     } else if (lastHopComplete && !hasActiveThreads) {
-        // No active threads found - investigation may be complete
-        addHopBtn.innerHTML = `🎯 Investigation Complete - No Active Threads`;
-        addHopBtn.style.display = 'inline-block';
-        addHopBtn.disabled = true;
-        addHopBtn.style.opacity = '0.6';
-        addHopBtn.onclick = null;
+        // No active threads found - investigation is complete
+        addHopBtn.style.display = 'none';
 
         // Show completion section
         completeSection.style.display = 'block';
