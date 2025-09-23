@@ -3070,6 +3070,15 @@
         }
         
         // Format currency amount with proper precision
+        // Simple wrapper for backwards compatibility
+        function formatCurrency(amount, currency) {
+            // Default to no currency symbol if not provided
+            if (!currency) {
+                return amount.toLocaleString();
+            }
+            return formatCurrencyAmount(amount, currency);
+        }
+
         function formatCurrencyAmount(amount, currency) {
             const precision = getCurrencyPrecision(currency);
             return parseFloat(amount).toFixed(precision);
@@ -19983,6 +19992,10 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 return;
             }
 
+            // Ensure all necessary indices are built before saving
+            buildAvailableThreadsIndex();
+
+            // The investigation object now includes availableThreads index
             const dataStr = JSON.stringify(investigation, null, 2);
             
             // If we have a file handle from the File System Access API, use it
@@ -20062,21 +20075,28 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             });
             
             // Re-render everything
+            // IMPORTANT: Rebuild thread index after loading to ensure availability
+            buildAvailableThreadsIndex();
+
             renderAll();
             updateWorkflowSteps();
-            
+
+            // Update investigation completion status to show proper buttons
+            updateInvestigationCompletionStatus();
+
             // Alert about chronology errors after rendering
             if (chronologyErrors.length > 0) {
                 setTimeout(() => {
                     alert(`⚠️ WARNING: Transaction Chronology Issues Detected!\n\n${chronologyErrors.join('\n\n')}\n\nThe V-T notation requires transactions to be numbered in chronological order. Please review and correct the transaction order to ensure PIFO (Proceeds In First Out) compliance.\n\nYou can manually adjust the dates or re-number the transactions.`);
                 }, 500);
             }
-            
+
             // Clear the file input to allow re-loading the same file
             event.target.value = '';
-            
+
             console.log('Investigation loaded successfully!');
-            
+            console.log('Available threads after loading:', investigation.availableThreads);
+
             // Show case status dashboard instead of simple alert
             showCaseStatusDashboard();
             
@@ -26248,7 +26268,7 @@ To (RED Wallet): ${transfer.to}`;
             
             // Format amounts
             const amountsHtml = Object.entries(totalTracedAmounts)
-                .map(([currency, amount]) => `<div>${formatCurrency(amount, currency)}</div>`)
+                .map(([currency, amount]) => `<div>${formatCurrencyAmount(amount, currency)}</div>`)
                 .join('');
             
             statsContainer.innerHTML = `
