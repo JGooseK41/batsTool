@@ -3,18 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 09:45)
+## Latest Commit (Auto-updated: 2025-09-23 09:54)
 
-**Commit:** b558cc0de85eb3d9adff08e800c942abab278b7f
+**Commit:** a365dc3437a36d7982be59cc81404fd8aa0c2c4b
 **Author:** Your Name
-**Message:** Fix swap currency tracking - ensure threads use output currency after swap conversion
+**Message:** Fix swap thread replacement - original threads now completely replaced by swap outputs
 
-- Fixed thread ID consistency between updateThreadsAfterSwap and updateThreadAvailabilityFromSwap
-- Both functions now use swap entry's notation as thread ID (includes [SWAP: X → Y] suffix)
-- Added proper availableAmount and thread properties to swap output threads
-- Enhanced logging to track currency conversions in lookup wizard
-- Swap entries correctly maintain same hop number (no advancement)
-- After swapping USDC to USDT, the system now correctly tracks USDT in next hop
+- When a thread is swapped, the original currency thread ceases to exist
+- Only the swap output thread (with new currency) remains available
+- Prevents confusion by ensuring no dual existence of threads
+- Skip trace threads that have been swapped in both buildAvailableThreadsIndex and getAvailableSourcesForHop
+- After USDC->USDT swap, only USDT thread exists (USDC thread is gone)
+- Audit trail preserved in swap entry documentation
 
 🤖 Generated with Claude Code
 
@@ -22,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 46 +++++++++++++++++++++++++++-------------------
- index.html | 40 +++++++++++++++++++++++++++-------------
- 2 files changed, 54 insertions(+), 32 deletions(-)
+ CLAUDE.md  | 48 +++++++++++++++++++++---------------------------
+ index.html | 40 +++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 60 insertions(+), 28 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b558cc0 Fix swap currency tracking - ensure threads use output currency after swap conversion (0 seconds ago)
-- 4e0d269 Fix swap wizard to properly handle currency conversion and auto-create entries (10 minutes ago)
-- 4b64742 Fix renderHopEntry missing hop parameter causing undefined error (49 minutes ago)
-- 0ed7ee6 Update CLAUDE.md with latest changes (57 minutes ago)
-- a2465ca Remove duplicate functions and clean up redundant code (58 minutes ago)
-- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (66 minutes ago)
-- abdd5b5 Fix duplicate hopNumber declaration in reopenHop function (68 minutes ago)
-- 0883ca5 Fix duplicate hopNumber declaration in showSwapWizard (78 minutes ago)
+- a365dc3 Fix swap thread replacement - original threads now completely replaced by swap outputs (0 seconds ago)
+- b558cc0 Fix swap currency tracking - ensure threads use output currency after swap conversion (8 minutes ago)
+- 4e0d269 Fix swap wizard to properly handle currency conversion and auto-create entries (18 minutes ago)
+- 4b64742 Fix renderHopEntry missing hop parameter causing undefined error (58 minutes ago)
+- 0ed7ee6 Update CLAUDE.md with latest changes (66 minutes ago)
+- a2465ca Remove duplicate functions and clean up redundant code (67 minutes ago)
+- b66d53d Remove duplicate nextBtn declaration in checkWizardButtonState (74 minutes ago)
+- abdd5b5 Fix duplicate hopNumber declaration in reopenHop function (76 minutes ago)
+- 0883ca5 Fix duplicate hopNumber declaration in showSwapWizard (87 minutes ago)
 - a86c083 Fix hop wizard progression and remove all hop ID references (2 hours ago)
-- bf1e5df Fix hop wizard step 3 'Log Entry' button disabled issue (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
