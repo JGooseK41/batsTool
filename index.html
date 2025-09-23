@@ -14965,9 +14965,16 @@ function closeHopWizard() {
 
 // Dedicated swap wizard for more flexibility
 function showSwapWizard(hopId) {
-    const hop = investigation.hops.find(h => h.id === hopId);
+    console.log('showSwapWizard called with hopId:', hopId, 'type:', typeof hopId);
+    console.log('Available hops:', investigation.hops.map(h => ({ id: h.id, hopNumber: h.hopNumber, type: typeof h.id })));
+
+    // Try both strict and loose comparison to handle type mismatches
+    let hop = investigation.hops.find(h => h.id === hopId || h.id == hopId);
+
     if (!hop) {
         console.error('Hop not found for swap wizard:', hopId);
+        console.error('Looking for hop with ID:', hopId);
+        console.error('Available hop IDs:', investigation.hops.map(h => h.id));
         return;
     }
 
