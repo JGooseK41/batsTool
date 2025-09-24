@@ -4568,9 +4568,16 @@
         
         // Reopen a completed hop for editing
         function reopenHop(hopNumber) {
+            event.stopPropagation(); // Prevent hop collapse toggle
+
             const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             if (!hop) return;
-            
+
+            // Mark hop as not completed to allow editing
+            hop.completed = false;
+            hop.isCollapsed = false;
+            window.hopCollapseState[hop.hopNumber] = false;
+
             // Check for dependent hops
             const dependentHops = investigation.hops.filter(h => h.hopNumber > hop.hopNumber);
             
@@ -11644,6 +11651,25 @@ function finalizeHop(hopNumber) {
     if (hop.completed) {
         console.log(`Hop ${hopNumber} is already completed`);
         alert(`Hop ${hopNumber} has already been completed`);
+        return;
+    }
+
+    // CRITICAL: Check if hop has any entries at all
+    if (!hop.entries || hop.entries.length === 0) {
+        console.error(`Hop ${hopNumber} has no entries - cannot finalize empty hop`);
+        alert(`Cannot finalize Hop ${hopNumber} - no entries added yet!\n\nPlease add at least one trace, swap, or write-off entry before finalizing.`);
+        return;
+    }
+
+    // Check if hop has any meaningful entries (not just empty placeholders)
+    const hasValidEntries = hop.entries.some(entry =>
+        entry.amount && parseFloat(entry.amount) > 0 &&
+        ['trace', 'swap', 'writeoff', 'cold_storage'].includes(entry.entryType)
+    );
+
+    if (!hasValidEntries) {
+        console.error(`Hop ${hopNumber} has no valid entries with amounts`);
+        alert(`Cannot finalize Hop ${hopNumber} - no valid entries!\n\nEntries must have amounts greater than 0.`);
         return;
     }
 
