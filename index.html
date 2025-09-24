@@ -4028,14 +4028,14 @@
         // Shared EVM chain response parser
         const parseEVMResponse = (data, receiptData, blockTimestamp) => {
             // This is the same parser used for all EVM chains
-            console.log('parseEVMResponse called with:', {
-                hasData: !!data,
-                hasReceiptData: !!receiptData,
-                receiptKeys: receiptData ? Object.keys(receiptData) : [],
-                hasResult: receiptData && receiptData.result ? true : false,
-                hasLogs: receiptData && receiptData.result && receiptData.result.logs ? true : false,
-                logsLength: receiptData && receiptData.result && receiptData.result.logs ? receiptData.result.logs.length : 0
-            });
+            console.log('parseEVMResponse called with:',
+                'hasData:', !!data,
+                'hasReceiptData:', !!receiptData,
+                'receiptKeys:', receiptData ? Object.keys(receiptData) : [],
+                'hasResult:', receiptData && receiptData.result ? true : false,
+                'hasLogs:', receiptData && receiptData.result && receiptData.result.logs ? true : false,
+                'logsLength:', receiptData && receiptData.result && receiptData.result.logs ? receiptData.result.logs.length : 0
+            );
 
             // Check if we have a token transfer in the receipt logs
             if (receiptData && receiptData.result && receiptData.result.logs && receiptData.result.logs.length > 0) {
