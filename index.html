@@ -2219,6 +2219,7 @@
                     <div class="export-section">
                         <div class="section-title">Export Options</div>
                         <button class="btn btn-success" onclick="exportReport()">Export B.A.T.S. Report</button>
+                        <button class="btn btn-primary" onclick="exportNarrativeReport()" style="background: #0066cc;">📄 Export Narrative Report (Word)</button>
                         <button class="btn btn-secondary" onclick="exportJSON()">Export JSON Data</button>
                         <button class="btn" onclick="exportCSV()">Export CSV</button>
                         <button class="btn" onclick="openApiSettings()" style="background: #95a5a6;">⚙️ API Settings</button>
@@ -21276,6 +21277,397 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 `;
             }).join('') : '<p>No confirmed root totals available.</p>'}
         </div>
+    </div>
+</body>
+</html>`;
+        }
+
+        // Comprehensive Narrative Report Generator for Word/Legal Documentation
+        function exportNarrativeReport() {
+            const report = generateNarrativeReport();
+            const filename = `BATS_Narrative_Report_${investigation.caseId || 'Investigation'}_${new Date().toISOString().split('T')[0]}.doc`;
+            downloadFile(report, filename, 'application/msword');
+        }
+
+        function generateNarrativeReport() {
+            const reportDate = new Date().toISOString().split('T')[0];
+            const reportTime = new Date().toISOString().split('T')[1].replace('.000Z', ' UTC');
+
+            // Helper function to format currency amounts
+            const formatAmount = (amount, currency) => {
+                const val = parseFloat(amount);
+                return `${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${currency}`;
+            };
+
+            // Helper function to format wallet addresses
+            const formatWallet = (address) => {
+                if (!address) return 'N/A';
+                return `${address.substring(0, 10)}...${address.substring(address.length - 8)}`;
+            };
+
+            // Build victim narrative section
+            const victimNarratives = investigation.victims.map(victim => {
+                const totalLoss = parseFloat(victim.totalLoss);
+                const transactions = victim.transactions.map(tx => {
+                    const currency = tx.currency === 'CUSTOM' ? tx.customCurrency : tx.currency;
+                    return `Transaction ${tx.id} occurred on ${formatDateTimeForReport(tx.datetime, tx.timezone || 'UTC')}, ` +
+                           `transferring ${formatAmount(tx.amount, currency)} to wallet ${formatWallet(tx.receivingWallet)}` +
+                           (tx.notes ? `. ${tx.notes}` : '.');
+                }).join(' ');
+
+                return `<p><strong>Victim ${victim.id}: ${victim.name}</strong><br/>
+                Contact: ${victim.contactInfo}<br/>
+                Total Loss: ${formatAmount(totalLoss, 'USD equivalent')}<br/>
+                ${victim.notes ? `Background: ${victim.notes}<br/>` : ''}
+                <br/>
+                ${transactions}</p>`;
+            }).join('\n');
+
+            // Build hop-by-hop narrative
+            let hopNarratives = '';
+            let previousWallets = new Set();
+
+            investigation.hops.forEach(hop => {
+                const hopART = hop.artAtStartByCurrency || {};
+                const hopStartAmounts = Object.entries(hopART).map(([currency, amount]) =>
+                    formatAmount(amount, currency)
+                ).join(', ');
+
+                hopNarratives += `<h3>Hop ${hop.hopNumber}: Movement Analysis</h3>\n`;
+                hopNarratives += `<p><em>Starting ART (Adjusted Root Total): ${hopStartAmounts}</em></p>\n`;
+
+                const narrativeEntries = hop.entries.map(entry => {
+                    let narrative = '';
+                    const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                    const amount = formatAmount(entry.amount, currency);
+
+                    if (entry.entryType === 'trace') {
+                        const walletType = walletTypes[entry.toWalletType] || entry.toWalletType;
+                        narrative = `On ${formatDateTimeForReport(entry.timestamp, entry.timezone || 'UTC')}, ` +
+                                  `traced funds totaling ${amount} moving from wallet ${formatWallet(entry.fromWallet)} ` +
+                                  `to wallet ${formatWallet(entry.toWallet)} (classified as ${walletType}). ` +
+                                  `Transaction hash: ${entry.txHash || 'Not provided'}. `;
+
+                        if (entry.isTerminalWallet) {
+                            const exchangeName = entry.exchangeName || 'Unknown Exchange';
+                            narrative += `<strong>TERMINAL WALLET DETECTED:</strong> These funds have arrived at ${exchangeName}. `;
+                        }
+
+                        if (entry.notes) {
+                            narrative += `<em>Investigator's notes: ${entry.notes}</em> `;
+                        }
+                    } else if (entry.entryType === 'swap') {
+                        const outputAmount = formatAmount(entry.outputAmount || entry.swapDetails?.toAmount,
+                                                         entry.outputCurrency || entry.swapDetails?.toCurrency);
+                        const dexName = entry.swapDetails?.dexName || 'Unknown DEX';
+
+                        narrative = `On ${formatDateTimeForReport(entry.timestamp, entry.timezone || 'UTC')}, ` +
+                                  `observed a currency swap on ${dexName} converting ${amount} to ${outputAmount}. ` +
+                                  `The swap occurred within wallet ${formatWallet(entry.fromWallet)}. ` +
+                                  `Transaction hash: ${entry.txHash || 'Not provided'}. `;
+
+                        if (entry.notes) {
+                            narrative += `<em>Investigator's notes: ${entry.notes}</em> `;
+                        }
+                    } else if (entry.entryType === 'writeoff') {
+                        const category = entry.category || 'unspecified';
+                        narrative = `Write-off documented: ${amount} marked as unrecoverable (Category: ${category}). ` +
+                                  `Justification: ${entry.justification || 'No justification provided'}. `;
+
+                        if (entry.notes) {
+                            narrative += `<em>Additional notes: ${entry.notes}</em> `;
+                        }
+                    } else if (entry.entryType === 'cold_storage') {
+                        narrative = `Cold storage identified: ${amount} moved to cold storage wallet ${formatWallet(entry.toWallet)}. ` +
+                                  `Transaction hash: ${entry.txHash || 'Not provided'}. `;
+
+                        if (entry.notes) {
+                            narrative += `<em>Investigator's notes: ${entry.notes}</em> `;
+                        }
+                    }
+
+                    // Add source thread information
+                    if (entry.sourceThreadId) {
+                        narrative += `[Source: Thread ${entry.sourceThreadId}] `;
+                    }
+
+                    return `<p>${narrative}</p>`;
+                }).join('\n');
+
+                hopNarratives += narrativeEntries;
+
+                if (hop.completed) {
+                    hopNarratives += `<p><strong>Hop ${hop.hopNumber} Status:</strong> COMPLETED</p>\n`;
+                } else {
+                    hopNarratives += `<p><strong>Hop ${hop.hopNumber} Status:</strong> IN PROGRESS</p>\n`;
+                }
+
+                hopNarratives += '<hr/>\n';
+            });
+
+            // Build terminal wallet summary
+            let terminalWalletNarrative = '';
+            if (investigation.terminalWalletIndex && investigation.terminalWalletIndex.length > 0) {
+                const groupedByExchange = {};
+                investigation.terminalWalletIndex.forEach(terminal => {
+                    const exchange = terminal.exchangeName || 'Unknown Exchange';
+                    if (!groupedByExchange[exchange]) {
+                        groupedByExchange[exchange] = [];
+                    }
+                    groupedByExchange[exchange].push(terminal);
+                });
+
+                terminalWalletNarrative = '<h2>Terminal Wallet Analysis</h2>\n';
+                terminalWalletNarrative += '<p>The following funds have been traced to cryptocurrency exchanges where legal process may be required for recovery:</p>\n';
+
+                Object.entries(groupedByExchange).forEach(([exchange, terminals]) => {
+                    const totalByExchange = {};
+                    terminals.forEach(t => {
+                        if (!totalByExchange[t.currency]) {
+                            totalByExchange[t.currency] = 0;
+                        }
+                        totalByExchange[t.currency] += parseFloat(t.amount);
+                    });
+
+                    terminalWalletNarrative += `<h3>${exchange}</h3>\n`;
+                    terminalWalletNarrative += '<ul>\n';
+
+                    terminals.forEach(terminal => {
+                        terminalWalletNarrative += `<li>${formatDateTimeForReport(terminal.timestamp, 'UTC')}: ` +
+                                                  `${formatAmount(terminal.amount, terminal.currency)} ` +
+                                                  `received at wallet ${formatWallet(terminal.toWallet)} ` +
+                                                  `(Transaction: ${terminal.txHash})</li>\n`;
+                    });
+
+                    terminalWalletNarrative += '</ul>\n';
+                    terminalWalletNarrative += '<p><strong>Total at ' + exchange + ':</strong> ';
+                    terminalWalletNarrative += Object.entries(totalByExchange).map(([curr, amt]) =>
+                        formatAmount(amt, curr)
+                    ).join(', ');
+                    terminalWalletNarrative += '</p>\n';
+                });
+            }
+
+            // Build investigation summary
+            const rootTotalsByCurrency = investigation.confirmedRootTotalsByCurrency || {};
+            const summaryByCurrency = Object.entries(rootTotalsByCurrency).map(([currency, amount]) => {
+                return formatAmount(amount, currency);
+            }).join(', ');
+
+            // Calculate total traced and write-offs
+            let tracedByCurrency = {};
+            let writeoffByCurrency = {};
+
+            investigation.hops.forEach(hop => {
+                hop.entries.forEach(entry => {
+                    const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                    if (entry.entryType === 'trace' && entry.isTerminalWallet) {
+                        if (!tracedByCurrency[currency]) tracedByCurrency[currency] = 0;
+                        tracedByCurrency[currency] += parseFloat(entry.amount);
+                    } else if (entry.entryType === 'writeoff') {
+                        if (!writeoffByCurrency[currency]) writeoffByCurrency[currency] = 0;
+                        writeoffByCurrency[currency] += parseFloat(entry.amount);
+                    }
+                });
+            });
+
+            // Generate the full Word-compatible HTML report
+            return `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns:m="http://schemas.microsoft.com/office/2004/12/omml" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+    <meta charset="UTF-8">
+    <title>B.A.T.S. Investigation Narrative Report - ${investigation.caseId}</title>
+    <style>
+        @page {
+            size: 8.5in 11in;
+            margin: 1in;
+        }
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: #000000;
+            background: white;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 18pt;
+            text-align: center;
+            margin-bottom: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        h2 {
+            font-size: 14pt;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+            font-weight: bold;
+            border-bottom: 2px solid #000;
+            padding-bottom: 4pt;
+        }
+        h3 {
+            font-size: 12pt;
+            margin-top: 12pt;
+            margin-bottom: 8pt;
+            font-weight: bold;
+            font-style: italic;
+        }
+        p {
+            margin: 8pt 0;
+            text-align: justify;
+        }
+        .header-info {
+            text-align: center;
+            margin-bottom: 24pt;
+            border: 2px solid #000;
+            padding: 12pt;
+        }
+        .header-info p {
+            margin: 4pt 0;
+            text-align: center;
+        }
+        strong {
+            font-weight: bold;
+        }
+        em {
+            font-style: italic;
+            color: #444;
+        }
+        ul {
+            margin-left: 24pt;
+        }
+        li {
+            margin: 6pt 0;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 12pt 0;
+        }
+        .executive-summary {
+            background: #f5f5f5;
+            border: 1px solid #ccc;
+            padding: 12pt;
+            margin: 18pt 0;
+        }
+        .conclusion {
+            margin-top: 24pt;
+            padding-top: 12pt;
+            border-top: 2px solid #000;
+        }
+        @media print {
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>B.A.T.S. CRYPTOCURRENCY INVESTIGATION<br/>NARRATIVE REPORT</h1>
+
+    <div class="header-info">
+        <p><strong>CASE IDENTIFIER:</strong> ${investigation.caseId}</p>
+        <p><strong>CASE TITLE:</strong> ${investigation.caseTitle || 'Cryptocurrency Fraud Investigation'}</p>
+        <p><strong>LEAD INVESTIGATOR:</strong> ${investigation.investigator}</p>
+        <p><strong>INVESTIGATION PERIOD:</strong> ${new Date(investigation.startDate || investigation.created).toLocaleDateString()} - ${new Date().toLocaleDateString()}</p>
+        <p><strong>REPORT GENERATED:</strong> ${reportDate} at ${reportTime}</p>
+        <p><strong>CLASSIFICATION:</strong> ${investigation.caseType || 'Financial Crime Investigation'}</p>
+    </div>
+
+    <div class="executive-summary">
+        <h2>EXECUTIVE SUMMARY</h2>
+        <p>This report documents the comprehensive blockchain analysis conducted as part of investigation ${investigation.caseId}.
+        The investigation encompasses ${investigation.victims.length} victim(s) with confirmed losses totaling ${summaryByCurrency}.
+        Through systematic application of the Block Audit Tracing Standard (B.A.T.S.) methodology,
+        ${investigation.hops.length} transaction hops were analyzed to trace the movement of stolen cryptocurrency assets.</p>
+
+        ${investigation.caseSynopsis ? `
+        <p><strong>Case Synopsis:</strong><br/>
+        ${investigation.caseSynopsis.replace(/\n/g, '<br/>')}</p>
+        ` : ''}
+    </div>
+
+    <h2>SECTION 1: VICTIM IMPACT ASSESSMENT</h2>
+    ${victimNarratives}
+
+    <div class="page-break"></div>
+
+    <h2>SECTION 2: BLOCKCHAIN TRANSACTION ANALYSIS</h2>
+    <p>The following section provides a detailed chronological narrative of all cryptocurrency movements identified during the investigation.
+    Each "hop" represents a distinct phase in the money laundering chain, with funds being transferred between different blockchain addresses
+    in an attempt to obfuscate their origin.</p>
+
+    ${hopNarratives}
+
+    ${terminalWalletNarrative}
+
+    <div class="page-break"></div>
+
+    <h2>SECTION 3: FINANCIAL RECONCILIATION</h2>
+
+    <h3>Root Total Analysis</h3>
+    <p>The confirmed root total for this investigation is: <strong>${summaryByCurrency}</strong></p>
+
+    ${Object.keys(tracedByCurrency).length > 0 ? `
+    <h3>Funds Successfully Traced to Exchanges</h3>
+    <ul>
+        ${Object.entries(tracedByCurrency).map(([currency, amount]) =>
+            `<li>${formatAmount(amount, currency)}</li>`
+        ).join('\n')}
+    </ul>
+    ` : ''}
+
+    ${Object.keys(writeoffByCurrency).length > 0 ? `
+    <h3>Unrecoverable Funds (Write-offs)</h3>
+    <ul>
+        ${Object.entries(writeoffByCurrency).map(([currency, amount]) =>
+            `<li>${formatAmount(amount, currency)}</li>`
+        ).join('\n')}
+    </ul>
+    ` : ''}
+
+    <div class="conclusion">
+        <h2>SECTION 4: INVESTIGATIVE CONCLUSIONS</h2>
+
+        <p>This investigation has successfully traced cryptocurrency transactions through ${investigation.hops.length} distinct hops,
+        documenting the flow of funds from initial victim deposits through various intermediary wallets
+        ${investigation.terminalWalletIndex && investigation.terminalWalletIndex.length > 0 ?
+            `to their current location at identified cryptocurrency exchange(s)` :
+            'to their current locations'}.</p>
+
+        ${investigation.terminalWalletIndex && investigation.terminalWalletIndex.length > 0 ? `
+        <h3>Recommended Legal Actions</h3>
+        <p>Based on the terminal wallet analysis, the following legal processes are recommended:</p>
+        <ol>
+            <li><strong>Immediate Asset Preservation:</strong> Issue preservation orders to identified exchanges to prevent withdrawal of traced funds.</li>
+            <li><strong>Subpoena Requirements:</strong> Obtain court orders for KYC (Know Your Customer) information from exchanges holding terminal wallets.</li>
+            <li><strong>International Cooperation:</strong> If exchanges operate in foreign jurisdictions, coordinate with appropriate international law enforcement agencies.</li>
+            <li><strong>Civil Recovery:</strong> Initiate civil asset recovery proceedings based on the documented fund flow.</li>
+        </ol>
+        ` : ''}
+
+        <h3>Methodology Statement</h3>
+        <p>All blockchain analysis was conducted using industry-standard forensic techniques and the B.A.T.S. (Block Audit Tracing Standard) methodology.
+        Transaction data was verified against multiple blockchain explorers and validated through mathematical reconciliation.
+        This report represents a true and accurate accounting of cryptocurrency movements as recorded on the relevant blockchain(s).</p>
+
+        <h3>Certification</h3>
+        <p>I, ${investigation.investigator}, certify that the information contained in this report is true and accurate to the best of my knowledge,
+        based on blockchain data available as of ${reportDate}. This report was generated using validated blockchain forensic methodologies
+        and may be used for legal proceedings, regulatory compliance, and asset recovery efforts.</p>
+
+        <br/><br/>
+        <p>_________________________________<br/>
+        ${investigation.investigator}<br/>
+        Lead Investigator<br/>
+        ${reportDate}</p>
+    </div>
+
+    <div style="margin-top: 40pt; padding-top: 20pt; border-top: 1px solid #ccc; font-size: 10pt; color: #666;">
+        <p><em>This report was generated using the B.A.T.S. Tool - Block Audit Tracing Standard<br/>
+        Report Version: 1.0 | Tool Version: ${investigation.version || '2.0'}<br/>
+        All timestamps are in ${investigation.defaultTimezone || 'UTC'} unless otherwise specified</em></p>
     </div>
 </body>
 </html>`;
