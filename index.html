@@ -5650,7 +5650,35 @@ function buildAvailableThreadsIndex() {
         return;
     }
 
+    // CRITICAL FIX: Preserve manually created swap output threads
+    // Store existing swap output threads before rebuilding
+    const existingSwapOutputs = {};
+    if (investigation.availableThreads) {
+        for (const currency in investigation.availableThreads) {
+            for (const threadKey in investigation.availableThreads[currency]) {
+                const thread = investigation.availableThreads[currency][threadKey];
+                // Preserve swap output threads that were manually created
+                if (thread.sourceType === 'swap_output' || thread.swapConverted) {
+                    if (!existingSwapOutputs[currency]) {
+                        existingSwapOutputs[currency] = {};
+                    }
+                    existingSwapOutputs[currency][threadKey] = thread;
+                }
+            }
+        }
+    }
+
     investigation.availableThreads = {};
+
+    // Restore preserved swap output threads
+    for (const currency in existingSwapOutputs) {
+        if (!investigation.availableThreads[currency]) {
+            investigation.availableThreads[currency] = {};
+        }
+        for (const threadKey in existingSwapOutputs[currency]) {
+            investigation.availableThreads[currency][threadKey] = existingSwapOutputs[currency][threadKey];
+        }
+    }
 
     // Start with ALL victim transactions (RED wallets) from ALL victims
     investigation.victims.forEach(victim => {
@@ -17387,14 +17415,27 @@ function showSwapWizardStep(step) {
 
     if (step === 1) {
         // Step 1: Select source threads
-        const availableThreads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+        const allThreads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+
+        // CRITICAL: Filter to only show threads that actually have availability
+        const availableThreads = allThreads.filter(thread => thread.availableAmount > 0);
+
+        // Log for debugging
+        console.log('Swap wizard - All threads:', allThreads);
+        console.log('Swap wizard - Available threads (>0 amount):', availableThreads);
 
         content.innerHTML = `
             <h3>Step 1: Select Source Threads</h3>
             <p>Select the thread(s) and amounts to swap:</p>
 
+            ${availableThreads.length === 0 ? `
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+                    <p style="margin: 0; color: #856404; font-weight: bold;">⚠️ No threads available for swapping</p>
+                    <p style="margin: 10px 0 0 0; color: #856404;">All threads have been fully assigned. Please check your previous entries.</p>
+                </div>
+            ` : `
             <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin: 20px 0;">
-                ${availableThreads.length > 0 ? availableThreads.map(thread => {
+                ${availableThreads.map(thread => {
                     const isSelected = wizardData.selectedThreads.includes(thread.threadId);
                     const threadAmount = wizardData.threadAmounts[thread.threadId] || thread.availableAmount;
                     return `
@@ -17587,6 +17628,20 @@ function toggleSwapThread(threadId) {
     const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
     const thread = threads.find(t => t.threadId === threadId);
 
+    if (!thread) {
+        alert('Error: Thread not found');
+        return;
+    }
+
+    // CRITICAL: Validate thread is actually available
+    if (thread.availableAmount <= 0) {
+        alert(`Thread ${threadId} has no available amount to swap. It may have been fully assigned already.`);
+        // Uncheck the checkbox
+        const checkbox = document.getElementById(`swap_thread_${threadId}`);
+        if (checkbox) checkbox.checked = false;
+        return;
+    }
+
     if (index > -1) {
         // Remove thread and clear amount
         wizardData.selectedThreads.splice(index, 1);
@@ -17740,6 +17795,31 @@ async function lookupSwapTransaction() {
             lookupBtn.textContent = originalText;
             lookupBtn.disabled = false;
             return;
+        }
+
+        // CRITICAL VALIDATION: Verify the transaction involves the correct wallet(s)
+        if (wizardData.selectedThreads && wizardData.selectedThreads.length > 0) {
+            const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+            const selectedThreadData = wizardData.selectedThreads.map(id => threads.find(t => t.threadId === id));
+
+            // Get all wallets associated with selected threads
+            const threadWallets = selectedThreadData.map(t => t.sourceWallet).filter(w => w);
+
+            // Check if the transaction involves any of the thread wallets
+            const txSender = (txData.transaction?.from || txData.from || '').toLowerCase();
+            const hasMatchingWallet = threadWallets.some(wallet =>
+                wallet.toLowerCase() === txSender
+            );
+
+            if (!hasMatchingWallet && threadWallets.length > 0) {
+                const walletList = threadWallets.join(', ');
+                const proceed = confirm(`⚠️ WARNING: This transaction sender does not match your selected thread wallet(s).\n\nSelected thread wallet(s): ${walletList}\nTransaction sender: ${txSender}\n\nThis may indicate you selected the wrong thread or wrong transaction.\n\nContinue anyway?`);
+                if (!proceed) {
+                    lookupBtn.textContent = originalText;
+                    lookupBtn.disabled = false;
+                    return;
+                }
+            }
         }
 
         // Filter transfers to find what left and what came back to the user

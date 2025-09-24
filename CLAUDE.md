@@ -3,43 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 06:26)
+## Latest Commit (Auto-updated: 2025-09-24 06:27)
 
-**Commit:** 8d27f9f603b48c8841d33c2c9d99a0c70fdcfb85
+**Commit:** 5783f8b999a3226ed49c7bcaf786ea952014aa93
 **Author:** Your Name
-**Message:** Simplify available threads display - remove separate swap thread section
-
-- Removed separate blue box for swap output threads
-- All available threads (including swap outputs) shown in single list
-- Simplified visual design with cleaner layout
-- Reduced visual clutter by showing just percentage instead of detailed assignment text
-- Swap threads are just regular threads once created, no special treatment needed
-
-This provides a cleaner, simpler interface that treats all threads equally.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commits
 
 ### Changed Files:
 ```
- CLAUDE.md  | 40 +++++++++++++++++++++++++++-------------
- index.html | 46 +++++++---------------------------------------
- 2 files changed, 34 insertions(+), 52 deletions(-)
+ CLAUDE.md | 37 ++++++++++++++++++-------------------
+ 1 file changed, 18 insertions(+), 19 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8d27f9f Simplify available threads display - remove separate swap thread section (0 seconds ago)
+- 5783f8b Update CLAUDE.md with latest commits (0 seconds ago)
+- 8d27f9f Simplify available threads display - remove separate swap thread section (52 seconds ago)
 - 6f99660 Fix available threads display to show current hop allocation status (3 minutes ago)
-- 9f00870 Update CLAUDE.md with latest commits (14 minutes ago)
-- bb65c9d Fix graph visualization error with terminal wallets (16 minutes ago)
-- b5f8faf Add comprehensive Case Conclusion Dashboard with unified index access (18 minutes ago)
-- ab2dc0e Fix graph visualization error with terminal wallets (30 minutes ago)
+- 9f00870 Update CLAUDE.md with latest commits (15 minutes ago)
+- bb65c9d Fix graph visualization error with terminal wallets (17 minutes ago)
+- b5f8faf Add comprehensive Case Conclusion Dashboard with unified index access (19 minutes ago)
+- ab2dc0e Fix graph visualization error with terminal wallets (31 minutes ago)
 - 0d63436 Complete comprehensive B.A.T.S. tool testing and bug analysis (7 hours ago)
 - c36475d Implement comprehensive Word-format narrative investigation report (8 hours ago)
 - 0448ce8 Disable Add Entry button for completed hops with reopen option (8 hours ago)
-- eb5a4c9 Add critical wallet validation for transaction lookups (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
