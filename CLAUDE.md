@@ -3,29 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 20:27)
+## Latest Commit (Auto-updated: 2025-09-23 20:31)
 
-**Commit:** b6d2280151f2dc2c126d3eafff2ed775265478db
+**Commit:** ec6396ed5710f57bea3b8bf5bf1f210090db0a32
 **Author:** Your Name
-**Message:** Add comprehensive test suite and documentation
+**Message:** Add pre-configured test investigation files
 
-Created testing framework for B.A.T.S. tool:
-- TEST_SCENARIOS.md: Comprehensive manual test cases covering all features
-- test-runner.html: Automated test runner with visual interface
-- 10 critical test scenarios documented
-- Quick tests for rapid validation
-- Swap-specific test suite
-- Performance and regression test guidelines
+Created three .bats test files for different scenarios:
 
-Test coverage includes:
-- Basic linear traces
-- Swap validation
-- Terminal wallet detection
-- Multi-currency handling
-- Write-offs and cold storage
-- Save/load persistence
-- Error handling
-- Edge cases and limits
+1. test-investigation.bats - Basic swap scenario
+   - USDC to USDT swap in Hop 2
+   - Unallocated USDT threads for testing validation
+   - Tests swap validation and hop progression
+
+2. test-investigation-terminal.bats - Terminal wallet scenario
+   - Complete trace to exchanges (Binance & Coinbase)
+   - Tests terminal wallet detection
+   - Split funds between two exchanges
+
+3. test-investigation-writeoff.bats - Write-off scenario
+   - Partial trace with mixer write-off
+   - Tests write-off functionality
+   - Reduced ART for subsequent hops
+
+All files use the actual transaction hashes provided for realistic testing.
+Load any file to instantly test specific functionality without manual entry.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -33,24 +35,25 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md         |  46 +++----
- TEST_SCENARIOS.md | 276 ++++++++++++++++++++++++++++++++++++++++
- test-runner.html  | 370 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 669 insertions(+), 23 deletions(-)
+ CLAUDE.md                        |  60 +++++++------
+ test-investigation-terminal.bats | 176 +++++++++++++++++++++++++++++++++++++
+ test-investigation-writeoff.bats | 133 ++++++++++++++++++++++++++++
+ test-investigation.bats          | 181 +++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 525 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b6d2280 Add comprehensive test suite and documentation (0 seconds ago)
-- 77a039b Fix missing Finalize Hop button and improve hop progression (5 minutes ago)
-- a8c73c0 Add detailed debugging to hop finalization process (8 minutes ago)
-- f78b054 Update CLAUDE.md with latest changes (13 minutes ago)
-- 4aa4619 Fix trace completion incorrectly showing complete with unallocated swap outputs (15 minutes ago)
-- d919071 Fix swap validation bug where converted funds showed as balanced (21 minutes ago)
-- 37a8ed5 Fix swap validation incorrectly showing balanced with unallocated outputs (32 minutes ago)
-- 0c24e1f CRITICAL FIX: Hop validation now properly detects unallocated remainder threads (44 minutes ago)
-- c0571a1 Improve network resilience and error handling for blockchain lookups (46 minutes ago)
-- d402adc Streamline hop workflow and reduce redundant clicks (55 minutes ago)
+- ec6396e Add pre-configured test investigation files (0 seconds ago)
+- b6d2280 Add comprehensive test suite and documentation (5 minutes ago)
+- 77a039b Fix missing Finalize Hop button and improve hop progression (9 minutes ago)
+- a8c73c0 Add detailed debugging to hop finalization process (13 minutes ago)
+- f78b054 Update CLAUDE.md with latest changes (17 minutes ago)
+- 4aa4619 Fix trace completion incorrectly showing complete with unallocated swap outputs (19 minutes ago)
+- d919071 Fix swap validation bug where converted funds showed as balanced (25 minutes ago)
+- 37a8ed5 Fix swap validation incorrectly showing balanced with unallocated outputs (37 minutes ago)
+- 0c24e1f CRITICAL FIX: Hop validation now properly detects unallocated remainder threads (49 minutes ago)
+- c0571a1 Improve network resilience and error handling for blockchain lookups (51 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
