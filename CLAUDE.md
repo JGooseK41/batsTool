@@ -3,15 +3,46 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 22:36)
+## Latest Commit (Auto-updated: 2025-09-23 22:43)
 
-**Commit:** bb1cb9763d77951082749502bffbb0a1587cbf35
+**Commit:** eb5a4c9fde4e25c7e3d787a0e9406594214fb0d6
 **Author:** Your Name
-**Message:** Fix center alignment of Generate Root Total button
+**Message:** Add critical wallet validation for transaction lookups
 
-- Added margin: 0 auto to ensure button is centered
-- Added vertical margin to container for better spacing
-- Button now properly centers when displayed
+Implements validation to ensure transaction integrity when using blockchain lookups:
+
+## Validation Features
+- Verifies transaction actually spends from the source thread's wallet
+- Compares transaction 'from' address with thread's known wallet location
+- Prevents investigators from accidentally using wrong transactions
+
+## Two-Stage Validation
+
+### 1. Lookup Stage (Visual Feedback)
+- Shows green success box when wallet matches thread
+- Shows red warning box when wallet doesn't match
+- Changes button appearance based on validation status
+- Displays both expected and actual wallet addresses
+
+### 2. Apply Stage (Enforcement)
+- Blocks application of mismatched transactions
+- Shows detailed error explaining the issue
+- Lists possible causes (wrong hash, wrong thread, etc.)
+- Provides guidance for resolution
+
+## Additional Checks
+- Amount validation warns if transaction exceeds available thread amount
+- Allows override for legitimate cases (commingling, additional funds)
+- Success message confirms wallet validation passed
+
+## Benefits
+- Prevents trace chain breaks
+- Ensures fund flow integrity
+- Reduces investigation errors
+- Maintains chain of custody
+- Improves accuracy of traces
+
+This validation ensures investigators can't accidentally apply transactions that don't actually continue the fund flow from the selected source thread, maintaining the integrity of the investigation.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -19,23 +50,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 88 +++++++++++++++++++++++++++++++++++---------------------------
- index.html |  4 +--
- 2 files changed, 52 insertions(+), 40 deletions(-)
+ CLAUDE.md  |  70 ++++++++------------------
+ index.html | 168 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 176 insertions(+), 62 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bb1cb97 Fix center alignment of Generate Root Total button (0 seconds ago)
-- 6d41977 Add comprehensive PDF report export for case presentations (4 minutes ago)
-- ba22286 Enhanced UI to highlight PNG metadata embedding feature (9 minutes ago)
-- 542a891 Add PNG metadata embedding for round-trip export/import (12 minutes ago)
-- 206b607 Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling (20 minutes ago)
-- 09dcf23 Enforce terminal wallet treatment for exchange arrivals (35 minutes ago)
-- fbbcd7e Add protection against adding entries to fully allocated hops (42 minutes ago)
-- 3d0af9d Fix syntax error - remove extra closing brace at end of file (51 minutes ago)
-- 5dcf6fa Implement progressive disclosure and improved spatial organization for DAG (54 minutes ago)
-- 1caa390 Implement T-account DAG visualization with hop-centric ART reconciliation (67 minutes ago)
+- eb5a4c9 Add critical wallet validation for transaction lookups (0 seconds ago)
+- bb1cb97 Fix center alignment of Generate Root Total button (7 minutes ago)
+- 6d41977 Add comprehensive PDF report export for case presentations (12 minutes ago)
+- ba22286 Enhanced UI to highlight PNG metadata embedding feature (16 minutes ago)
+- 542a891 Add PNG metadata embedding for round-trip export/import (19 minutes ago)
+- 206b607 Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling (27 minutes ago)
+- 09dcf23 Enforce terminal wallet treatment for exchange arrivals (42 minutes ago)
+- fbbcd7e Add protection against adding entries to fully allocated hops (49 minutes ago)
+- 3d0af9d Fix syntax error - remove extra closing brace at end of file (58 minutes ago)
+- 5dcf6fa Implement progressive disclosure and improved spatial organization for DAG (62 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

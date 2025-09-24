@@ -11050,21 +11050,38 @@ function addNewHop() {
                                         }
                                     })()}
 
-                                    <h4 style="margin-bottom: 15px; color: #2c3e50;">Next Action:</h4>
-                                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                        <button class="btn btn-primary" onclick="showAddEntryWizard(${hop.hopNumber})"
-                                                style="padding: 12px 24px; background: #3498db; color: white; font-size: 16px;">
-                                            + Add Entry
-                                        </button>
-                                        <button class="btn btn-secondary" onclick="viewAvailableThreads(${hop.hopNumber})"
-                                                style="padding: 12px 24px; font-size: 16px;">
-                                            📊 View Available Threads
-                                        </button>
-                                        <button class="btn btn-confirm" onclick="finalizeHop(${hop.hopNumber})"
-                                                style="margin-left: auto; background: #27ae60; padding: 10px 30px;">
-                                            Finalize Hop ${hop.hopNumber}
-                                        </button>
-                                    </div>
+                                    ${!hop.completed ? `
+                                        <h4 style="margin-bottom: 15px; color: #2c3e50;">Next Action:</h4>
+                                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                            <button class="btn btn-primary" onclick="showAddEntryWizard(${hop.hopNumber})"
+                                                    style="padding: 12px 24px; background: #3498db; color: white; font-size: 16px;">
+                                                + Add Entry
+                                            </button>
+                                            <button class="btn btn-secondary" onclick="viewAvailableThreads(${hop.hopNumber})"
+                                                    style="padding: 12px 24px; font-size: 16px;">
+                                                📊 View Available Threads
+                                            </button>
+                                            <button class="btn btn-confirm" onclick="finalizeHop(${hop.hopNumber})"
+                                                    style="margin-left: auto; background: #27ae60; padding: 10px 30px;">
+                                                Finalize Hop ${hop.hopNumber}
+                                            </button>
+                                        </div>
+                                    ` : `
+                                        <div style="background: #d4edda; border: 2px solid #27ae60; border-radius: 8px; padding: 20px; margin-top: 20px;">
+                                            <h4 style="margin: 0 0 10px 0; color: #1e7e34;">✅ Hop ${hop.hopNumber} Completed</h4>
+                                            <p style="margin: 0 0 15px 0; color: #155724;">This hop has been finalized. To make changes, you must reopen it for editing.</p>
+                                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                                <button class="btn btn-warning" onclick="reopenHopForEditing(${hop.hopNumber})"
+                                                        style="padding: 10px 20px; background: #ff9800; color: white;">
+                                                    🔓 Reopen for Editing
+                                                </button>
+                                                <button class="btn btn-secondary" onclick="viewAvailableThreads(${hop.hopNumber})"
+                                                        style="padding: 10px 20px;">
+                                                    📊 View Thread Summary
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `}
                                 </div>
                             ` : ''}
                         </div>
@@ -11766,6 +11783,60 @@ function viewAvailableThreads(hopNumber) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Reopen a completed hop for editing
+function reopenHopForEditing(hopNumber) {
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+    if (!hop) {
+        alert('Hop not found');
+        return;
+    }
+
+    // Check if there are dependent hops
+    const hasSubsequentHops = investigation.hops.some(h => h.hopNumber > hopNumber);
+
+    if (hasSubsequentHops) {
+        const confirmReopen = confirm(
+            `⚠️ WARNING: Reopening Hop ${hopNumber} for Editing\n\n` +
+            `This hop has subsequent hops that depend on it.\n\n` +
+            `Reopening this hop may affect:\n` +
+            `• Thread allocations in later hops\n` +
+            `• Fund flow continuity\n` +
+            `• Investigation integrity\n\n` +
+            `Are you sure you want to reopen Hop ${hopNumber}?\n\n` +
+            `Note: You may need to review and update subsequent hops after making changes.`
+        );
+
+        if (!confirmReopen) {
+            return;
+        }
+    }
+
+    // Save undo state
+    saveUndoState(`Reopen Hop ${hopNumber} for editing`);
+
+    // Mark hop as not completed
+    hop.completed = false;
+    hop.isCollapsed = false;
+    window.hopCollapseState[hop.hopNumber] = false;
+
+    // Log the action
+    console.log(`Reopened Hop ${hopNumber} for editing`);
+
+    // Re-render the hops
+    renderHops();
+
+    // Show success notification
+    showNotification(`🔓 Hop ${hopNumber} has been reopened for editing`, 'info');
+
+    // Scroll to the reopened hop
+    setTimeout(() => {
+        const hopElement = document.querySelector(`[data-hop="${hopNumber}"]`);
+        if (hopElement) {
+            hopElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 100);
 }
 
 function finalizeHop(hopNumber) {
