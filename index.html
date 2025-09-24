@@ -16422,7 +16422,18 @@ function addHopEntry(hopNumber, entryType = 'trace') {
     // or called from other parts of the code
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
-    
+
+    // Check if hop is fully allocated (only for trace entries)
+    if (entryType === 'trace') {
+        const availableSources = getAvailableSourcesForHop(hopNumber, null);
+        const hasAvailableFunds = availableSources.some(source => source.availableAmount > 0);
+
+        if (!hasAvailableFunds) {
+            showNotification('❌ This hop has been fully allocated. No funds remaining to trace. Please close this hop and proceed to the next hop.', 'error');
+            return;
+        }
+    }
+
     // Check if wizard is disabled
     const wizardDisabled = localStorage.getItem('bats_hop_wizard_disabled') === 'true';
     
@@ -16443,7 +16454,18 @@ function createHopEntryDirectly(hopNumber, entryType = 'trace') {
         console.error('Hop not found in createHopEntryDirectly:', hopNumber, 'numericHopNumber:', numericHopNumber);
         return;
     }
-    
+
+    // Check if hop is fully allocated before creating entry (only for trace entries)
+    if (entryType === 'trace') {
+        const availableSources = getAvailableSourcesForHop(hopNumber, null);
+        const hasAvailableFunds = availableSources.some(source => source.availableAmount > 0);
+
+        if (!hasAvailableFunds) {
+            showNotification('❌ This hop has been fully allocated. No funds remaining to trace. Please close this hop and proceed to the next hop.', 'error');
+            return;
+        }
+    }
+
     // Apply Sequential Hop Rule for convergence scenarios
     let effectiveHopNumber = hop.hopNumber;
     if (entryType === 'trace' && hop.entries.length > 0) {
@@ -16555,18 +16577,27 @@ function sortHopEntriesChronologically(hop) {
 function showHopEntryWizard(hopNumber) {
     console.log('showHopEntryWizard called for hopNumber:', hopNumber, 'type:', typeof hopNumber);
     console.log('Available hops:', investigation.hops.map(h => ({ id: h.id, type: typeof h.id, hopNumber: h.hopNumber })));
-    
+
     // Convert hopId to number to ensure type matching
     const numericHopNumber = typeof hopNumber === 'string' ? parseInt(hopNumber) : hopNumber;
     const hop = investigation.hops.find(h => h.hopNumber === numericHopNumber);
-    
+
     if (!hop) {
         console.error('Hop not found in showHopEntryWizard:', hopNumber);
         console.error('Looking for id:', numericHopNumber, 'in hops:', investigation.hops);
         return;
     }
     console.log('Found hop:', hop);
-    
+
+    // Check if hop is fully allocated before showing wizard
+    const availableSources = getAvailableSourcesForHop(hopNumber, null);
+    const hasAvailableFunds = availableSources.some(source => source.availableAmount > 0);
+
+    if (!hasAvailableFunds) {
+        showNotification('❌ This hop has been fully allocated. No funds remaining to trace. Please close this hop and proceed to the next hop.', 'error');
+        return;
+    }
+
     // Initialize wizard data
     window.hopWizardData = {
         hopNumber: hop.hopNumber,
