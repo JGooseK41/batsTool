@@ -1311,6 +1311,9 @@
                     <button onclick="document.getElementById('excelInput').click(); toggleFileMenu();" style="display: block; width: 100%; padding: 12px 20px; border: none; background: none; text-align: left; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
                         📊 Import Excel Traces
                     </button>
+                    <button onclick="document.getElementById('graphImageInput').click(); toggleFileMenu();" style="display: block; width: 100%; padding: 12px 20px; border: none; background: none; text-align: left; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
+                        🖼️ Import Graph Image
+                    </button>
                     <div style="border-top: 1px solid #e0e0e0; margin: 5px 0;"></div>
                     <button onclick="showNavigationMenu(); toggleFileMenu();" style="display: block; width: 100%; padding: 12px 20px; border: none; background: none; text-align: left; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
                         📍 Navigate
@@ -1325,6 +1328,7 @@
         <!-- Hidden file inputs -->
         <input type="file" id="fileInput" accept=".bats,.json" onchange="loadInvestigation(event)" style="display: none;">
         <input type="file" id="excelInput" accept=".xlsx,.xls,.csv" onchange="importExcelTraces(event)" style="display: none;">
+        <input type="file" id="graphImageInput" accept=".png" onchange="importGraphImage(event)" style="display: none;">
 
         <!-- Progress Indicator (hidden by default, shown when case is loaded) -->
         <div id="progressIndicator" style="display: none; background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
@@ -28707,25 +28711,56 @@ To (RED Wallet): ${transfer.to}`;
             const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
             const url = URL.createObjectURL(svgBlob);
 
+            // Prepare investigation data for embedding
+            const investigationData = JSON.stringify({
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                investigation: investigation
+            });
+
             const img = new Image();
-            img.onload = function() {
+            img.onload = async function() {
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                canvas.toBlob(function(blob) {
-                    const pngUrl = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = pngUrl;
-                    a.download = `BATS_Graph_${investigation.caseId || 'export'}_${new Date().toISOString().split('T')[0]}.png`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(pngUrl);
-                    URL.revokeObjectURL(url);
+                canvas.toBlob(async function(blob) {
+                    try {
+                        // Convert blob to array buffer
+                        const arrayBuffer = await blob.arrayBuffer();
+                        const uint8Array = new Uint8Array(arrayBuffer);
+
+                        // Embed BATS data in PNG metadata
+                        const pngWithMetadata = embedBATSData(uint8Array, investigationData);
+                        const metadataBlob = new Blob([pngWithMetadata], { type: 'image/png' });
+
+                        const pngUrl = URL.createObjectURL(metadataBlob);
+                        const a = document.createElement('a');
+                        a.href = pngUrl;
+                        a.download = `BATS_Graph_${investigation.caseId || 'export'}_${new Date().toISOString().split('T')[0]}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(pngUrl);
+                        URL.revokeObjectURL(url);
+
+                        showNotification('🎉 Graph exported with embedded data - can be re-imported!', 'success');
+                    } catch (error) {
+                        console.error('Error embedding metadata:', error);
+                        // Fallback to regular export
+                        const pngUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = pngUrl;
+                        a.download = `BATS_Graph_${investigation.caseId || 'export'}_${new Date().toISOString().split('T')[0]}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(pngUrl);
+                        URL.revokeObjectURL(url);
+
+                        showNotification('Graph exported as PNG', 'success');
+                    }
                 });
             };
             img.src = url;
-
-            showNotification('Graph exported as PNG', 'success');
         }
 
         // Show transaction notes popup
@@ -28828,6 +28863,204 @@ To (RED Wallet): ${transfer.to}`;
                 backdrop.remove();
             };
             document.body.appendChild(backdrop);
+        }
+
+        // Embed BATS data into PNG file using tEXt chunk
+        function embedBATSData(pngArray, jsonData) {
+            // Create tEXt chunk with BATS data
+            const keyword = 'BATS_Investigation';
+            const keywordBytes = new TextEncoder().encode(keyword);
+            const separator = new Uint8Array([0]); // Null separator
+            const textBytes = new TextEncoder().encode(jsonData);
+
+            // Chunk data: keyword + null + text
+            const chunkData = new Uint8Array(keywordBytes.length + 1 + textBytes.length);
+            chunkData.set(keywordBytes, 0);
+            chunkData.set(separator, keywordBytes.length);
+            chunkData.set(textBytes, keywordBytes.length + 1);
+
+            // Chunk type: 'tEXt'
+            const chunkType = new TextEncoder().encode('tEXt');
+
+            // Length (4 bytes, big-endian)
+            const length = new ArrayBuffer(4);
+            const lengthView = new DataView(length);
+            lengthView.setUint32(0, chunkData.length, false);
+
+            // Calculate CRC32
+            const crc = calculateCRC32([...chunkType, ...chunkData]);
+            const crcBytes = new ArrayBuffer(4);
+            const crcView = new DataView(crcBytes);
+            crcView.setUint32(0, crc, false);
+
+            // Find IEND chunk position
+            let iendPos = -1;
+            for (let i = pngArray.length - 12; i >= 0; i--) {
+                if (pngArray[i] === 0x49 && pngArray[i+1] === 0x45 &&
+                    pngArray[i+2] === 0x4E && pngArray[i+3] === 0x44) {
+                    iendPos = i - 4; // Position before IEND length
+                    break;
+                }
+            }
+
+            if (iendPos === -1) {
+                console.error('IEND chunk not found in PNG');
+                return pngArray;
+            }
+
+            // Create new PNG with custom chunk
+            const newPng = new Uint8Array(pngArray.length + 12 + chunkData.length);
+
+            // Copy everything before IEND
+            newPng.set(pngArray.slice(0, iendPos), 0);
+
+            // Add our custom tEXt chunk
+            let offset = iendPos;
+            newPng.set(new Uint8Array(length), offset);
+            offset += 4;
+            newPng.set(chunkType, offset);
+            offset += 4;
+            newPng.set(chunkData, offset);
+            offset += chunkData.length;
+            newPng.set(new Uint8Array(crcBytes), offset);
+            offset += 4;
+
+            // Copy IEND chunk
+            newPng.set(pngArray.slice(iendPos), offset);
+
+            return newPng;
+        }
+
+        // CRC32 calculation for PNG chunks
+        function calculateCRC32(bytes) {
+            const crcTable = [];
+            for (let n = 0; n < 256; n++) {
+                let c = n;
+                for (let k = 0; k < 8; k++) {
+                    c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+                }
+                crcTable[n] = c;
+            }
+
+            let crc = 0xFFFFFFFF;
+            for (let i = 0; i < bytes.length; i++) {
+                crc = (crc >>> 8) ^ crcTable[(crc ^ bytes[i]) & 0xFF];
+            }
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        }
+
+        // Extract BATS data from uploaded PNG
+        async function extractBATSDataFromImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const arrayBuffer = e.target.result;
+                        const uint8Array = new Uint8Array(arrayBuffer);
+
+                        // Look for tEXt chunk with BATS_Investigation keyword
+                        const keyword = 'BATS_Investigation';
+                        const keywordBytes = new TextEncoder().encode(keyword);
+
+                        // Search through PNG chunks
+                        let pos = 8; // Skip PNG signature
+                        while (pos < uint8Array.length) {
+                            // Read chunk length
+                            const lengthBytes = uint8Array.slice(pos, pos + 4);
+                            const length = new DataView(lengthBytes.buffer, lengthBytes.byteOffset, 4).getUint32(0, false);
+                            pos += 4;
+
+                            // Read chunk type
+                            const typeBytes = uint8Array.slice(pos, pos + 4);
+                            const type = new TextDecoder().decode(typeBytes);
+                            pos += 4;
+
+                            // Check if it's a tEXt chunk
+                            if (type === 'tEXt') {
+                                const chunkData = uint8Array.slice(pos, pos + length);
+
+                                // Check if keyword matches
+                                let keywordMatch = true;
+                                for (let j = 0; j < keywordBytes.length && j < chunkData.length; j++) {
+                                    if (chunkData[j] !== keywordBytes[j]) {
+                                        keywordMatch = false;
+                                        break;
+                                    }
+                                }
+
+                                if (keywordMatch) {
+                                    // Extract text data (after keyword and null separator)
+                                    const textStart = keywordBytes.length + 1;
+                                    if (textStart < chunkData.length) {
+                                        const textData = chunkData.slice(textStart);
+                                        const jsonString = new TextDecoder().decode(textData);
+
+                                        try {
+                                            const data = JSON.parse(jsonString);
+                                            resolve(data);
+                                            return;
+                                        } catch (parseError) {
+                                            console.error('Failed to parse embedded JSON:', parseError);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Move to next chunk
+                            pos += length + 4; // Skip chunk data and CRC
+
+                            // Check for IEND
+                            if (type === 'IEND') break;
+                        }
+
+                        // No BATS data found
+                        resolve(null);
+                    } catch (error) {
+                        console.error('Error reading PNG:', error);
+                        reject(error);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Import graph image with embedded data
+        async function importGraphImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showNotification('Extracting investigation data from image...', 'info');
+
+            try {
+                const extractedData = await extractBATSDataFromImage(file);
+
+                if (extractedData && extractedData.investigation) {
+                    // Load the investigation
+                    investigation = extractedData.investigation;
+
+                    // Update all displays
+                    if (typeof updateVictimsDisplay === 'function') updateVictimsDisplay();
+                    if (typeof updateCaseDetailsDisplay === 'function') updateCaseDetailsDisplay();
+
+                    // Switch to flow diagram tab to show the graph
+                    switchTab('flowdiagram');
+
+                    // Initialize graph visualization after a short delay
+                    setTimeout(() => {
+                        initializeGraphVisualization();
+                    }, 100);
+
+                    showNotification('🎉 Investigation loaded from image successfully!', 'success');
+                } else {
+                    showNotification('No BATS data found in this image. Please use an image exported from BATS.', 'error');
+                }
+            } catch (error) {
+                console.error('Error extracting data from image:', error);
+                showNotification('Failed to extract data from image', 'error');
+            }
+
+            // Clear the input for next use
+            event.target.value = '';
         }
 
         function shareGraph() {
