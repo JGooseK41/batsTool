@@ -3,20 +3,29 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 20:22)
+## Latest Commit (Auto-updated: 2025-09-23 20:27)
 
-**Commit:** 77a039b7cc02485091764c7ebf0db1d5135e8f21
+**Commit:** b6d2280151f2dc2c126d3eafff2ed775265478db
 **Author:** Your Name
-**Message:** Fix missing Finalize Hop button and improve hop progression
+**Message:** Add comprehensive test suite and documentation
 
-Fixed critical issue where Finalize button wasn't showing for hops with entries:
-- Modified condition to show Finalize button for any hop with entries
-- Button now shows even if hop is marked complete (safety check)
-- Added better validation feedback when hop has unallocated funds
-- Finalization modal properly appears when funds need to be written off
+Created testing framework for B.A.T.S. tool:
+- TEST_SCENARIOS.md: Comprehensive manual test cases covering all features
+- test-runner.html: Automated test runner with visual interface
+- 10 critical test scenarios documented
+- Quick tests for rapid validation
+- Swap-specific test suite
+- Performance and regression test guidelines
 
-The button now correctly shows when a hop has traced funds that create new threads
-for the next hop. Users can finalize with write-offs or continue tracing.
+Test coverage includes:
+- Basic linear traces
+- Swap validation
+- Terminal wallet detection
+- Multi-currency handling
+- Write-offs and cold storage
+- Save/load persistence
+- Error handling
+- Edge cases and limits
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -24,23 +33,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 44 +++++++++++++++++++++++++++++---------------
- index.html |  2 +-
- 2 files changed, 30 insertions(+), 16 deletions(-)
+ CLAUDE.md         |  46 +++----
+ TEST_SCENARIOS.md | 276 ++++++++++++++++++++++++++++++++++++++++
+ test-runner.html  | 370 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 669 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 77a039b Fix missing Finalize Hop button and improve hop progression (0 seconds ago)
-- a8c73c0 Add detailed debugging to hop finalization process (4 minutes ago)
-- f78b054 Update CLAUDE.md with latest changes (8 minutes ago)
-- 4aa4619 Fix trace completion incorrectly showing complete with unallocated swap outputs (10 minutes ago)
-- d919071 Fix swap validation bug where converted funds showed as balanced (16 minutes ago)
-- 37a8ed5 Fix swap validation incorrectly showing balanced with unallocated outputs (28 minutes ago)
-- 0c24e1f CRITICAL FIX: Hop validation now properly detects unallocated remainder threads (39 minutes ago)
-- c0571a1 Improve network resilience and error handling for blockchain lookups (41 minutes ago)
-- d402adc Streamline hop workflow and reduce redundant clicks (50 minutes ago)
-- 5804b61 Fix terminal wallet detection and trace completion logic (58 minutes ago)
+- b6d2280 Add comprehensive test suite and documentation (0 seconds ago)
+- 77a039b Fix missing Finalize Hop button and improve hop progression (5 minutes ago)
+- a8c73c0 Add detailed debugging to hop finalization process (8 minutes ago)
+- f78b054 Update CLAUDE.md with latest changes (13 minutes ago)
+- 4aa4619 Fix trace completion incorrectly showing complete with unallocated swap outputs (15 minutes ago)
+- d919071 Fix swap validation bug where converted funds showed as balanced (21 minutes ago)
+- 37a8ed5 Fix swap validation incorrectly showing balanced with unallocated outputs (32 minutes ago)
+- 0c24e1f CRITICAL FIX: Hop validation now properly detects unallocated remainder threads (44 minutes ago)
+- c0571a1 Improve network resilience and error handling for blockchain lookups (46 minutes ago)
+- d402adc Streamline hop workflow and reduce redundant clicks (55 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
