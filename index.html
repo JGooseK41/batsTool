@@ -11051,7 +11051,28 @@ function addNewHop() {
 
                                         // Get available threads for the CURRENT hop to see what needs to be traced
                                         const currentHopThreads = getAvailableSourcesForHop(hop.hopNumber, null);
-                                        const unallocatedInCurrentHop = currentHopThreads.filter(t => t.availableAmount > 0);
+
+                                        // Add total amount information to each thread
+                                        const unallocatedInCurrentHop = currentHopThreads.filter(t => t.availableAmount > 0).map(thread => {
+                                            // Find the original thread to get total amount
+                                            let totalAmount = thread.availableAmount;
+
+                                            // Search in the threads database for the total
+                                            for (const currency in investigation.availableThreads) {
+                                                for (const threadKey in investigation.availableThreads[currency]) {
+                                                    const dbThread = investigation.availableThreads[currency][threadKey];
+                                                    if ((dbThread.notation === thread.threadId || dbThread.internalId === thread.internalId) && currency === thread.currency) {
+                                                        totalAmount = dbThread.totalAmount || totalAmount;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
+                                            return {
+                                                ...thread,
+                                                totalAmount: totalAmount
+                                            };
+                                        });
 
                                         // Get available threads for the NEXT hop (created by this hop's entries)
                                         const nextHopNumber = hop.hopNumber + 1;
@@ -11061,50 +11082,74 @@ function addNewHop() {
                                         // Check if any threads are from swaps in the current hop
                                         const hasSwapOutputs = availableForNextHop.some(t => t.sourceType === 'swap_output' && t.hopLevel === hop.hopNumber);
 
-                                        // If no entries yet, show threads available for THIS hop
-                                        if (!hasEntries && unallocatedInCurrentHop.length > 0) {
+                                        // Always show threads available for CURRENT hop that still need assignment
+                                        if (unallocatedInCurrentHop.length > 0) {
+                                            // Calculate what's been assigned so far in this hop
+                                            let assignedInCurrentHop = {};
+                                            hop.entries.forEach(entry => {
+                                                if (entry.entryType === 'trace' && entry.amount) {
+                                                    const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                                                    if (!assignedInCurrentHop[currency]) assignedInCurrentHop[currency] = 0;
+                                                    assignedInCurrentHop[currency] += parseFloat(entry.amount);
+                                                }
+                                            });
+
                                             return `
                                                 <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-                                                    <h4 style="margin: 0 0 10px 0; color: #e65100;">📋 Available Threads for Hop ${hop.hopNumber}:</h4>
+                                                    <h4 style="margin: 0 0 10px 0; color: #e65100;">📋 Threads to Assign in Hop ${hop.hopNumber}:</h4>
                                                     <div style="display: grid; gap: 8px;">
-                                                        ${unallocatedInCurrentHop.map(thread => `
-                                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: white; border-radius: 4px;">
-                                                                <span style="font-weight: bold; color: #2c3e50;">${thread.threadId}</span>
-                                                                <span style="color: #e67e22; font-weight: 600;">${thread.availableAmount.toLocaleString()} ${thread.currency}</span>
-                                                            </div>
-                                                        `).join('')}
+                                                        ${unallocatedInCurrentHop.map(thread => {
+                                                            // Show the remaining amount for this thread
+                                                            const remaining = thread.availableAmount;
+                                                            const original = thread.totalAmount || thread.availableAmount;
+                                                            const assigned = original - remaining;
+                                                            const percentAssigned = original > 0 ? Math.round((assigned / original) * 100) : 0;
+
+                                                            return `
+                                                                <div style="padding: 10px; background: white; border-radius: 4px; border: 1px solid #ffcc80;">
+                                                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                                                        <span style="font-weight: bold; color: #2c3e50;">${thread.threadId}</span>
+                                                                        <span style="color: #e67e22; font-weight: 600;">${remaining.toLocaleString()} ${thread.currency} remaining</span>
+                                                                    </div>
+                                                                    ${assigned > 0 ? `
+                                                                        <div style="margin-top: 5px;">
+                                                                            <div style="background: #f0f0f0; height: 8px; border-radius: 4px; overflow: hidden;">
+                                                                                <div style="background: #ff9800; height: 100%; width: ${percentAssigned}%;"></div>
+                                                                            </div>
+                                                                            <small style="color: #666; font-size: 11px;">${assigned.toLocaleString()} of ${original.toLocaleString()} assigned (${percentAssigned}%)</small>
+                                                                        </div>
+                                                                    ` : ''}
+                                                                </div>
+                                                            `;
+                                                        }).join('')}
                                                     </div>
                                                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffcc80;">
-                                                        <small style="color: #bf6000;">💡 Start tracing these funds by adding entries</small>
+                                                        <small style="color: #bf6000;">💡 Continue assigning these threads to trace all funds</small>
                                                     </div>
                                                 </div>
                                             `;
                                         }
-                                        // If entries exist and threads remain for next hop
-                                        else if (availableForNextHop.length > 0) {
-                                            // Determine the appropriate heading based on whether swaps are present
-                                            const heading = hasSwapOutputs ?
-                                                `📋 Available Threads (including swap outputs):` :
-                                                `📋 Available Threads for Hop ${nextHopNumber}:`;
-
-                                            return `
-                                                <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-                                                    <h4 style="margin: 0 0 10px 0; color: #e65100;">${heading}</h4>
-                                                    <div style="display: grid; gap: 8px;">
-                                                        ${availableForNextHop.map(thread => `
-                                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: white; border-radius: 4px;">
-                                                                <span style="font-weight: bold; color: #2c3e50;">${thread.threadId}</span>
-                                                                <span style="color: #e67e22; font-weight: 600;">${thread.availableAmount.toLocaleString()} ${thread.currency}</span>
-                                                            </div>
-                                                        `).join('')}
+                                        // If no unallocated threads but has swap outputs for next hop
+                                        else if (availableForNextHop.length > 0 && availableForNextHop.some(t => t.sourceType === 'swap_output')) {
+                                            const swapOutputs = availableForNextHop.filter(t => t.sourceType === 'swap_output' && t.hopLevel === hop.hopNumber);
+                                            if (swapOutputs.length > 0) {
+                                                return `
+                                                    <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                                                        <h4 style="margin: 0 0 10px 0; color: #1565c0;">🔄 Swap Output Threads Available:</h4>
+                                                        <div style="display: grid; gap: 8px;">
+                                                            ${swapOutputs.map(thread => `
+                                                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: white; border-radius: 4px;">
+                                                                    <span style="font-weight: bold; color: #2c3e50;">${thread.threadId}</span>
+                                                                    <span style="color: #1976d2; font-weight: 600;">${thread.availableAmount.toLocaleString()} ${thread.currency}</span>
+                                                                </div>
+                                                            `).join('')}
+                                                        </div>
+                                                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #90caf9;">
+                                                            <small style="color: #0d47a1;">💡 These swap outputs can be traced in this hop</small>
+                                                        </div>
                                                     </div>
-                                                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffcc80;">
-                                                        <small style="color: #bf6000;">💡 ${hasSwapOutputs ?
-                                                            'Swap outputs are available to use in this hop' :
-                                                            'Continue adding transactions to account for these remaining funds'}</small>
-                                                    </div>
-                                                </div>
-                                            `;
+                                                `;
+                                            }
                                         }
                                         // All threads fully traced - ready to finalize
                                         else {
