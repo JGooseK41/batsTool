@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Bulk Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            max-width: 1200px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .hash-list {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bulk Upload Test Cases</h1>
+
+    <div class="test-section">
+        <h2>Test Case 1: ETH Transactions (Simple)</h2>
+        <p>These are regular ETH transfers with no token transfers</p>
+        <textarea class="hash-list" id="ethHashes" readonly>
+0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef1234
+0xabcdef123456789abcdef123456789abcdef123456789abcdef123456789abcd
+0xfedcba987654321fedcba987654321fedcba987654321fedcba987654321fedc
+        </textarea>
+        <button onclick="copyToClipboard('ethHashes')">Copy ETH Hashes</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Case 2: ERC-20 Token Transfers (Single Output)</h2>
+        <p>These transactions have single token transfers</p>
+        <textarea class="hash-list" id="tokenSingleHashes" readonly>
+0x234567890abcdef234567890abcdef234567890abcdef234567890abcdef2345
+0xbcdef1234567890bcdef1234567890bcdef1234567890bcdef1234567890bcde
+        </textarea>
+        <button onclick="copyToClipboard('tokenSingleHashes')">Copy Single Token Hashes</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Case 3: Multi-Output Token Transfers</h2>
+        <p>These transactions have multiple token transfers that should trigger the selection modal</p>
+        <textarea class="hash-list" id="tokenMultiHashes" readonly>
+0x345678901bcdef2345678901bcdef2345678901bcdef2345678901bcdef23456
+0xcdef12345678901cdef12345678901cdef12345678901cdef12345678901cdef
+0xdef123456789012def123456789012def123456789012def123456789012def1
+        </textarea>
+        <button onclick="copyToClipboard('tokenMultiHashes')">Copy Multi-Output Hashes</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Case 4: Mixed Transaction Types</h2>
+        <p>A mix of ETH, single token, and multi-output transactions</p>
+        <textarea class="hash-list" id="mixedHashes" readonly>
+0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef1234
+0x234567890abcdef234567890abcdef234567890abcdef234567890abcdef2345
+0x345678901bcdef2345678901bcdef2345678901bcdef2345678901bcdef23456
+0xabcdef123456789abcdef123456789abcdef123456789abcdef123456789abcd
+        </textarea>
+        <button onclick="copyToClipboard('mixedHashes')">Copy Mixed Hashes</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Case 5: Real Ethereum Mainnet Transactions</h2>
+        <p>Real transaction hashes from Ethereum mainnet for testing</p>
+        <textarea class="hash-list" id="realHashes" readonly>
+0x2ed6e7e3e3b9e3f3e3b9e3f3e3b9e3f3e3b9e3f3e3b9e3f3e3b9e3f3e3b9e3f3
+0x3fe7f8e4f4c9f4f4f4c9f4f4f4c9f4f4f4c9f4f4f4c9f4f4f4c9f4f4f4c9f4f4
+0x4gf8g9f5g5d0g5g5g5d0g5g5g5d0g5g5g5d0g5g5g5d0g5g5g5d0g5g5g5d0g5g5
+        </textarea>
+        <button onclick="copyToClipboard('realHashes')">Copy Real Hashes</button>
+    </div>
+
+    <div class="status" id="status">Ready to test. Copy any set of hashes above and paste into the B.A.T.S. bulk upload.</div>
+
+    <script>
+        function copyToClipboard(id) {
+            const textarea = document.getElementById(id);
+            textarea.select();
+            document.execCommand('copy');
+
+            const status = document.getElementById('status');
+            status.innerHTML = `✅ Copied ${textarea.value.trim().split('\\n').length} hashes to clipboard. Now paste into B.A.T.S. bulk upload.`;
+
+            // Reset status after 3 seconds
+            setTimeout(() => {
+                status.innerHTML = 'Ready to test. Copy any set of hashes above and paste into the B.A.T.S. bulk upload.';
+            }, 3000);
+        }
+
+        // Generate some realistic looking hashes
+        function generateHash() {
+            const chars = '0123456789abcdef';
+            let hash = '0x';
+            for (let i = 0; i < 64; i++) {
+                hash += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return hash;
+        }
+
+        // Replace placeholders with realistic hashes on load
+        window.onload = function() {
+            const textareas = document.querySelectorAll('.hash-list');
+            textareas.forEach(ta => {
+                const lines = ta.value.trim().split('\\n');
+                ta.value = lines.map(() => generateHash()).join('\\n');
+            });
+        };
+    </script>
+</body>
+</html>
