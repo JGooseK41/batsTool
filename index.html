@@ -5534,6 +5534,23 @@ function migrateThreadsToDualLayer() {
     console.log('Thread migration complete');
 }
 
+// Helper function to get thread by notation
+function getThreadByNotation(notation) {
+    if (!notation || !investigation.availableThreads) return null;
+
+    // Search through all currencies
+    for (const currency in investigation.availableThreads) {
+        for (const threadId in investigation.availableThreads[currency]) {
+            const thread = investigation.availableThreads[currency][threadId];
+            if (thread.notation === notation) {
+                return thread;
+            }
+        }
+    }
+
+    return null;
+}
+
 // 2.1 Build Available Threads Index
 function buildAvailableThreadsIndex() {
     // Check if we need to migrate existing data
@@ -22819,17 +22836,140 @@ function displayTransactionData(txData) {
     `;
     
     document.getElementById('lookupResult').style.display = 'block';
-    document.getElementById('applyTxDataBtn').style.display = 'inline-block';
+
+    // Validate against source thread wallet and show appropriate warnings
+    if (targetEntryContext && currentTxData) {
+        const { hopNumber, entryId } = targetEntryContext;
+        const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+        const entry = hop?.entries.find(e => e.id === entryId);
+
+        if (entry?.sourceThreadId) {
+            const sourceThread = getThreadByNotation(entry.sourceThreadId);
+            if (sourceThread?.sourceWallet) {
+                const threadWallet = sourceThread.sourceWallet.toLowerCase();
+                const txFromWallet = currentTxData.from.toLowerCase();
+
+                if (threadWallet !== txFromWallet) {
+                    // Add wallet mismatch warning
+                    const warningHtml = `
+                        <div style="background: #ffebee; border: 2px solid #f44336; border-radius: 4px; padding: 12px; margin: 10px 0;">
+                            <strong style="color: #c62828; font-size: 14px;">⚠️ WALLET MISMATCH DETECTED!</strong><br>
+                            <div style="margin-top: 8px; color: #d32f2f;">
+                                This transaction does NOT spend from thread ${entry.sourceThreadId}
+                            </div>
+                            <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                                <div><strong>Expected wallet (where thread exists):</strong></div>
+                                <div style="font-family: monospace; font-size: 11px; margin: 2px 0;">${threadWallet}</div>
+                                <div style="margin-top: 5px;"><strong>Transaction from wallet:</strong></div>
+                                <div style="font-family: monospace; font-size: 11px; margin: 2px 0;">${txFromWallet}</div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 11px; color: #666; border-top: 1px solid #ffcdd2; padding-top: 8px;">
+                                ⚠️ This transaction cannot be used as it doesn't continue the fund flow from the selected source thread.
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('lookupResult').innerHTML += warningHtml;
+
+                    // Change button appearance to indicate issue
+                    document.getElementById('applyTxDataBtn').style.display = 'inline-block';
+                    document.getElementById('applyTxDataBtn').style.background = '#f44336';
+                    document.getElementById('applyTxDataBtn').textContent = '⚠️ Cannot Apply - Wrong Wallet';
+                    document.getElementById('applyTxDataBtn').disabled = false; // Allow click to show detailed error
+                } else {
+                    // Add success validation message
+                    const successHtml = `
+                        <div style="background: #e8f5e9; border: 2px solid #4caf50; border-radius: 4px; padding: 12px; margin: 10px 0;">
+                            <strong style="color: #2e7d32; font-size: 14px;">✓ Wallet Verification Passed!</strong><br>
+                            <div style="margin-top: 8px; color: #388e3c;">
+                                Transaction correctly spends from thread ${entry.sourceThreadId}
+                            </div>
+                            <div style="margin-top: 5px; font-size: 11px; color: #666;">
+                                Source wallet matches: ${threadWallet.substring(0, 20)}...
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('lookupResult').innerHTML += successHtml;
+
+                    document.getElementById('applyTxDataBtn').style.display = 'inline-block';
+                    document.getElementById('applyTxDataBtn').style.background = '';
+                    document.getElementById('applyTxDataBtn').textContent = 'Apply to Entry';
+                    document.getElementById('applyTxDataBtn').disabled = false;
+                }
+            } else {
+                // Source thread found but no wallet info - show normal button
+                document.getElementById('applyTxDataBtn').style.display = 'inline-block';
+                document.getElementById('applyTxDataBtn').textContent = 'Apply to Entry';
+            }
+        } else {
+            // No source thread - show normal button
+            document.getElementById('applyTxDataBtn').style.display = 'inline-block';
+            document.getElementById('applyTxDataBtn').textContent = 'Apply to Entry';
+        }
+    } else {
+        document.getElementById('applyTxDataBtn').style.display = 'inline-block';
+        document.getElementById('applyTxDataBtn').textContent = 'Apply to Entry';
+    }
 }
 
 function applyTransactionData() {
     if (!currentTxData || !targetEntryContext) return;
-    
+
     const { hopNumber, entryId } = targetEntryContext;
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
-    
-    // Apply the data to the entry
+
+    // CRITICAL VALIDATION: Verify the transaction spends from the source thread's wallet
+    if (entry.sourceThreadId) {
+        // Get the source thread to find its wallet
+        const sourceThread = getThreadByNotation(entry.sourceThreadId);
+        if (sourceThread && sourceThread.sourceWallet) {
+            // Normalize wallet addresses for comparison (lowercase)
+            const threadWallet = sourceThread.sourceWallet.toLowerCase();
+            const txFromWallet = currentTxData.from.toLowerCase();
+
+            if (threadWallet !== txFromWallet) {
+                // Show detailed error with wallet information
+                const errorMessage = `❌ WALLET MISMATCH DETECTED!\n\n` +
+                    `This transaction DOES NOT spend from the source thread's wallet.\n\n` +
+                    `Source Thread: ${entry.sourceThreadId}\n` +
+                    `Expected Wallet (where thread exists):\n${threadWallet}\n\n` +
+                    `Transaction From Wallet:\n${txFromWallet}\n\n` +
+                    `This transaction cannot be used because it doesn't continue the fund flow from thread ${entry.sourceThreadId}.\n\n` +
+                    `Possible issues:\n` +
+                    `• Wrong transaction hash entered\n` +
+                    `• Transaction from a different wallet\n` +
+                    `• Incorrect source thread selected\n\n` +
+                    `Please verify you have the correct transaction hash or select the appropriate source thread.`;
+
+                alert(errorMessage);
+
+                // Don't apply the data - keep the modal open for correction
+                return;
+            }
+
+            // Additional validation: Check if amount exceeds available thread amount
+            const availableAmount = sourceThread.availableAmount || 0;
+            const requestedAmount = parseFloat(currentTxData.amount);
+
+            if (requestedAmount > availableAmount + 0.01) { // Small tolerance for rounding
+                const warningMessage = `⚠️ AMOUNT WARNING!\n\n` +
+                    `This transaction amount (${requestedAmount} ${currentTxData.currency}) ` +
+                    `exceeds the available amount in thread ${entry.sourceThreadId} ` +
+                    `(${availableAmount} ${sourceThread.currency}).\n\n` +
+                    `Do you want to proceed anyway?\n\n` +
+                    `Note: This might indicate:\n` +
+                    `• Additional funds were added to this wallet\n` +
+                    `• You may need to trace other sources\n` +
+                    `• Possible commingling of funds`;
+
+                if (!confirm(warningMessage)) {
+                    return;
+                }
+            }
+        }
+    }
+
+    // Apply the data to the entry (validation passed)
     entry.txHash = currentTxData.rawHash;
     entry.timestamp = new Date(currentTxData.time).toISOString().slice(0, 16); // Format for datetime-local
     entry.timezone = 'UTC';
@@ -22837,31 +22977,35 @@ function applyTransactionData() {
     entry.currency = currentTxData.currency;
     entry.fromWallet = currentTxData.from;
     entry.toWallet = currentTxData.to;
-    
+
     // Update the form fields
     document.getElementById(`txHash_${hopNumber}_${entryId}`).value = entry.txHash;
     document.getElementById(`timestamp_${hopNumber}_${entryId}`).value = entry.timestamp;
     document.getElementById(`assignAmount_${hopNumber}_${entryId}`).value = entry.amount;
     document.getElementById(`toWallet_${hopNumber}_${entryId}`).value = entry.toWallet;
-    
+
     // Note: fromWallet is stored but not displayed in the form
     // It's used internally for transaction tracking
-    
+
     // Update currency dropdown
     const currencySelect = document.querySelector(`select[onchange*="updateEntry(${hopNumber}, ${entryId}, 'currency'"]`);
     if (currencySelect) {
         currencySelect.value = entry.currency;
     }
-    
+
     saveToStorage();
     closeBlockchainLookupModal();
-    
-    let alertMessage = `✅ Transaction data applied successfully!\n\nAmount: ${entry.amount} ${entry.currency}\nFrom: ${entry.fromWallet.slice(0, 20)}...\nTo: ${entry.toWallet.slice(0, 20)}...`;
-    
+
+    let alertMessage = `✅ Transaction data applied successfully!\n\n` +
+        `Amount: ${entry.amount} ${entry.currency}\n` +
+        `From: ${entry.fromWallet.slice(0, 20)}...\n` +
+        `To: ${entry.toWallet.slice(0, 20)}...\n\n` +
+        `✓ Wallet validation passed - transaction spends from thread ${entry.sourceThreadId}`;
+
     if (currentTxData.hasRealTimestamp === false) {
         alertMessage += '\n\n⚠️ WARNING: Could not retrieve actual transaction timestamp. Please manually verify and update the date/time field!';
     }
-    
+
     alert(alertMessage);
 }
 
