@@ -3,47 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 08:44)
+## Latest Commit (Auto-updated: 2025-09-24 08:50)
 
-**Commit:** d51c880e6fc2c2d986cd9a3463ec439b83fa0b20
+**Commit:** 4cde5fef48c3ae9c715a8b0bb9e8118739e1500f
 **Author:** Your Name
-**Message:** Add advanced Bitcoin change address detection heuristics
+**Message:** Add unnecessary input heuristic - most reliable change detection method
 
-Implemented sophisticated change detection scoring system (0-100%):
+Implemented two powerful change detection heuristics:
 
-1. Same Address (100% - Automatic)
-   - Output returns to sender address
-   - Automatically classified as change
+1. UNNECESSARY INPUT HEURISTIC (+40 points)
+   - Analyzes if payment could have been made with fewer inputs
+   - If all inputs used when fewer would suffice, MUST have change
+   - Example: Using [5 BTC, 3 BTC] inputs for 6 BTC payment
+   - The 2 BTC output MUST be change (why else use both inputs?)
 
-2. Decimal Places Analysis (+30 points)
-   - Many significant figures (>4 decimals) indicate change
-   - Non-round amounts (+20 points) suggest change
-   - Round amounts (1.0, 0.1, 0.01) suggest payment
+2. PERFECT CHANGE CALCULATION (+25 points)
+   - Calculates expected change: inputs - payment - estimated fee
+   - If output matches expected change amount (±10%), likely change
+   - Provides expected amount for verification
 
-3. Output Order Heuristic (+15 points)
-   - In 2-output transactions, change often comes second
-   - Based on common wallet behavior patterns
+Enhanced Bitcoin transaction parsing:
+- Now captures all input amounts and addresses
+- Passes total input amount to change detection
+- Enables sophisticated UTXO analysis
 
-4. Address Type Matching (+10 points)
-   - Change often uses same script type as input
-   - Detects P2PKH (1...), P2SH (3...), Bech32 (bc1...)
-   - Matching types suggest same wallet control
+Example with unnecessary inputs:
+- Inputs: [5 BTC, 3 BTC, 1 BTC] = 9 BTC total
+- Output 1: 6 BTC (payment)
+- Output 2: 2.9998 BTC
+- Analysis: Could make 6 BTC with just [5, 3], so 1 BTC input unnecessary
+- Result: Output 2 scored as change (unnecessary input + matches expected)
 
-5. Amount Comparison (+10 points)
-   - In simple transactions, change is often smaller
-   - Compares relative output sizes
-
-Scoring Thresholds:
-- Score >= 40%: Likely change (suggested, editable)
-- Score < 40%: Likely payment (default selection)
-
-UI Improvements:
-- Shows change score percentage
-- Lists specific change indicators detected
-- Clear visual distinction between automatic and suggested
-
-This provides investigators with transparent, evidence-based change detection
-while maintaining full control over final classification decisions.
+Note: APIs (blockchain.info, BlockCypher) don't explicitly mark change,
+but provide sufficient data for these heuristics to work effectively.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -51,23 +43,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 46 ++++++++++++++++--------------
- index.html | 95 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 112 insertions(+), 29 deletions(-)
+ CLAUDE.md  | 66 +++++++++++++++++++++++++++++++--------------------
+ index.html | 80 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 117 insertions(+), 29 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d51c880 Add advanced Bitcoin change address detection heuristics (0 seconds ago)
-- 8feac2a Improve change address detection with automatic and optional modes (3 minutes ago)
-- b8d3614 Implement change address handling as same-hop threads (like swaps) (8 minutes ago)
+- 4cde5fe Add unnecessary input heuristic - most reliable change detection method (0 seconds ago)
+- d51c880 Add advanced Bitcoin change address detection heuristics (6 minutes ago)
+- 8feac2a Improve change address detection with automatic and optional modes (9 minutes ago)
+- b8d3614 Implement change address handling as same-hop threads (like swaps) (14 minutes ago)
 - ed49d5d Add comprehensive report viewer and improved navigation (2 hours ago)
 - b3885d2 Fix currency mismatch after swap - prevent duplicate thread creation (2 hours ago)
 - 751b868 Fix duplicate swap output thread creation bug (2 hours ago)
 - 9d3b5fd Fix syntax error in swap wizard template string (2 hours ago)
 - 9a9c03d Update CLAUDE.md with latest commits (2 hours ago)
 - ca3f69c Fix critical thread tracking and validation issues (2 hours ago)
-- 5783f8b Update CLAUDE.md with latest commits (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

@@ -20044,14 +20044,18 @@ function createHopEntryFromWizard() {
             console.log(`Limiting trace amount from ${totalAllocated} to transaction amount ${txAmount}`);
             traceAmount = txAmount;
 
-            // Proportionally reduce allocations to match transaction amount
-            const ratio = txAmount / totalAllocated;
-            const adjustedAllocations = {};
-            for (const threadId in wizardData.allocations) {
-                adjustedAllocations[threadId] = wizardData.allocations[threadId] * ratio;
+            // Re-apply PIFO allocation with the correct amount instead of proportional reduction
+            console.log(`Re-applying PIFO allocation for ${txAmount} across selected threads`);
+            wizardData.allocations = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
+
+            // Log PIFO results
+            const allocLog = [];
+            for (const [threadId, amount] of Object.entries(wizardData.allocations)) {
+                if (amount > 0) {
+                    allocLog.push(`${threadId}: ${amount.toFixed(2)}`);
+                }
             }
-            wizardData.allocations = adjustedAllocations;
-            console.log(`Adjusted allocations:`, wizardData.allocations);
+            console.log(`PIFO allocations applied:`, allocLog.join(', '));
         }
     }
 
@@ -23733,16 +23737,43 @@ function distributeProportionally(hopNumber, entryId) {
     
     if (totalAvailable <= 0) return;
     
-    // Distribute proportionally
-    entry.multipleSourceThreads.forEach(sourceId => {
-        const available = getMaxAssignableAmount(sourceId, currency);
-        const proportion = available / totalAvailable;
-        const assignedAmount = proportion * totalAvailable;
-        
-        if (!entry.individualSourceAssignments) {
-            entry.individualSourceAssignments = {};
+    // Apply PIFO allocation instead of proportional distribution
+    let remainingToAllocate = totalAvailable;
+    if (!entry.individualSourceAssignments) {
+        entry.individualSourceAssignments = {};
+    }
+
+    // Sort threads for PIFO order (V1-T1 before V1-T2, etc.)
+    const sortedThreads = [...entry.multipleSourceThreads].sort((a, b) => {
+        const parseThreadId = (id) => {
+            const parts = id.match(/V(\d+)-T(\d+)/);
+            if (parts) {
+                return { victim: parseInt(parts[1]), transaction: parseInt(parts[2]) };
+            }
+            return { victim: 999, transaction: 999 };
+        };
+        const threadA = parseThreadId(a);
+        const threadB = parseThreadId(b);
+        if (threadA.victim !== threadB.victim) {
+            return threadA.victim - threadB.victim;
         }
-        entry.individualSourceAssignments[sourceId] = assignedAmount;
+        return threadA.transaction - threadB.transaction;
+    });
+
+    // Apply PIFO allocation
+    sortedThreads.forEach(sourceId => {
+        if (remainingToAllocate <= 0) {
+            entry.individualSourceAssignments[sourceId] = 0;
+            return;
+        }
+
+        const available = getMaxAssignableAmount(sourceId, currency);
+        const toAllocate = Math.min(available, remainingToAllocate);
+
+        entry.individualSourceAssignments[sourceId] = toAllocate;
+        remainingToAllocate -= toAllocate;
+
+        console.log(`PIFO allocation for ${sourceId}: ${toAllocate}/${available} ${currency}`);
     });
     
     // Update total
