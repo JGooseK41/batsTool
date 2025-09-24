@@ -3,33 +3,45 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 22:26)
+## Latest Commit (Auto-updated: 2025-09-23 22:31)
 
-**Commit:** ba222863455cf5a8fba151ac307081708f5a4b2b
+**Commit:** 6d41977bb3fcf4a9d44f7e9b0d362d20fd903f46
 **Author:** Your Name
-**Message:** Enhanced UI to highlight PNG metadata embedding feature
+**Message:** Add comprehensive PDF report export for case presentations
 
-Users now clearly understand the revolutionary power of PNG exports:
+Created a printer-friendly PDF report perfect for legal proceedings and case presentations:
 
-## Export Dialog Improvements
-- PNG option highlighted as 'Recommended' with orange border
-- Clear explanation of embedded data capabilities
-- Feature benefits listed: Complete data, Share & Recover, Dual purpose
-- Use cases specified: Email, documentation, archiving
-- Visual hierarchy guides users to PNG option
-- PDF/SVG clearly marked as 'visual only, no embedded data'
+## PDF Report Features
+- Professional header with case ID, investigator, and date
+- Investigation summary with key statistics grid
+- Victim information table with losses and wallets
+- Full-page fund flow visualization graph
+- Terminal wallet (exchange) analysis section
+- Complete transaction flow details by hop
+- Legal action guidance for asset recovery
+- Print-optimized CSS with page breaks
+- Browser print dialog for PDF generation
 
-## Import Button Enhancement
-- Added sparkle (✨) indicator to Import Graph Image button
-- Tooltip explains PNG contains embedded investigation data
-- Visual cue that this is a special feature
+## Enhanced All Export Formats
+- PNG exports now include case header (Case ID, Investigator, Date)
+- SVG exports include metadata header section
+- All formats properly labeled with investigation details
+- Consistent naming convention with case ID and date
 
-## Success Notifications
-- More informative message when exporting PNG
-- Explicitly mentions sharing capability
-- Reminds users that recipients can import back into BATS
+## Export Dialog Updates
+- PDF option now describes comprehensive report capability
+- Emphasizes suitability for court filings and legal proceedings
+- Clear differentiation between format purposes
 
-These UI changes ensure investigators understand they're not just exporting an image - they're creating a self-contained investigation package that can be shared, archived, and fully recovered.
+## Report Sections
+1. Investigation Summary (6 key metrics)
+2. Victim Information with contact details
+3. Graph Visualization (full page)
+4. Terminal Wallet Analysis with exchange details
+5. Transaction Flow Details (all hops)
+6. Legal disclaimers and timestamps
+
+This provides investigators with a professional, court-ready document that includes all investigation details in a clear, organized format suitable for presentation to legal teams, law enforcement, and judicial proceedings.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -37,23 +49,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 65 ++++++++++++++++++++++++++++++++++++++++---------------------
- index.html | 66 ++++++++++++++++++++++++++++++++++++++++++++++----------------
- 2 files changed, 92 insertions(+), 39 deletions(-)
+ CLAUDE.md  |  73 +++++----
+ index.html | 489 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 482 insertions(+), 80 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ba22286 Enhanced UI to highlight PNG metadata embedding feature (1 second ago)
-- 542a891 Add PNG metadata embedding for round-trip export/import (3 minutes ago)
-- 206b607 Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling (10 minutes ago)
-- 09dcf23 Enforce terminal wallet treatment for exchange arrivals (26 minutes ago)
-- fbbcd7e Add protection against adding entries to fully allocated hops (33 minutes ago)
-- 3d0af9d Fix syntax error - remove extra closing brace at end of file (42 minutes ago)
-- 5dcf6fa Implement progressive disclosure and improved spatial organization for DAG (45 minutes ago)
-- 1caa390 Implement T-account DAG visualization with hop-centric ART reconciliation (58 minutes ago)
-- f47cb44 Add comprehensive graph visualization with proper navigation from trace completion (74 minutes ago)
-- dcd1638 Fix validation incorrectly showing traced funds as unaccounted (88 minutes ago)
+- 6d41977 Add comprehensive PDF report export for case presentations (0 seconds ago)
+- ba22286 Enhanced UI to highlight PNG metadata embedding feature (5 minutes ago)
+- 542a891 Add PNG metadata embedding for round-trip export/import (8 minutes ago)
+- 206b607 Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling (15 minutes ago)
+- 09dcf23 Enforce terminal wallet treatment for exchange arrivals (30 minutes ago)
+- fbbcd7e Add protection against adding entries to fully allocated hops (38 minutes ago)
+- 3d0af9d Fix syntax error - remove extra closing brace at end of file (47 minutes ago)
+- 5dcf6fa Implement progressive disclosure and improved spatial organization for DAG (50 minutes ago)
+- 1caa390 Implement T-account DAG visualization with hop-centric ART reconciliation (63 minutes ago)
+- f47cb44 Add comprehensive graph visualization with proper navigation from trace completion (79 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
