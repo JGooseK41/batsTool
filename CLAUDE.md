@@ -3,20 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 06:24)
+## Latest Commit (Auto-updated: 2025-09-24 06:26)
 
-**Commit:** 6f996600127d48f4a38e558a8ec93c958bfd8949
+**Commit:** 8d27f9f603b48c8841d33c2c9d99a0c70fdcfb85
 **Author:** Your Name
-**Message:** Fix available threads display to show current hop allocation status
+**Message:** Simplify available threads display - remove separate swap thread section
 
-- Changed yellow available threads box to show threads for CURRENT hop instead of NEXT hop
-- Added real-time progress tracking with percentage bars showing assignment status
-- Shows remaining amount to assign for each thread in the current hop
-- Displays X of Y assigned with visual progress bar for partially assigned threads
-- Threads update automatically as entries are added/edited in the hop
-- Separate blue box for swap output threads when applicable
+- Removed separate blue box for swap output threads
+- All available threads (including swap outputs) shown in single list
+- Simplified visual design with cleaner layout
+- Reduced visual clutter by showing just percentage instead of detailed assignment text
+- Swap threads are just regular threads once created, no special treatment needed
 
-This provides investigators with clear visibility of what still needs to be traced in the current hop, updating in real-time as they work.
+This provides a cleaner, simpler interface that treats all threads equally.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -24,23 +23,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  30 +++++-----------
- index.html | 115 ++++++++++++++++++++++++++++++++++++++++++-------------------
- 2 files changed, 89 insertions(+), 56 deletions(-)
+ CLAUDE.md  | 40 +++++++++++++++++++++++++++-------------
+ index.html | 46 +++++++---------------------------------------
+ 2 files changed, 34 insertions(+), 52 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6f99660 Fix available threads display to show current hop allocation status (0 seconds ago)
-- 9f00870 Update CLAUDE.md with latest commits (12 minutes ago)
-- bb65c9d Fix graph visualization error with terminal wallets (14 minutes ago)
-- b5f8faf Add comprehensive Case Conclusion Dashboard with unified index access (15 minutes ago)
-- ab2dc0e Fix graph visualization error with terminal wallets (27 minutes ago)
+- 8d27f9f Simplify available threads display - remove separate swap thread section (0 seconds ago)
+- 6f99660 Fix available threads display to show current hop allocation status (3 minutes ago)
+- 9f00870 Update CLAUDE.md with latest commits (14 minutes ago)
+- bb65c9d Fix graph visualization error with terminal wallets (16 minutes ago)
+- b5f8faf Add comprehensive Case Conclusion Dashboard with unified index access (18 minutes ago)
+- ab2dc0e Fix graph visualization error with terminal wallets (30 minutes ago)
 - 0d63436 Complete comprehensive B.A.T.S. tool testing and bug analysis (7 hours ago)
 - c36475d Implement comprehensive Word-format narrative investigation report (8 hours ago)
 - 0448ce8 Disable Add Entry button for completed hops with reopen option (8 hours ago)
 - eb5a4c9 Add critical wallet validation for transaction lookups (8 hours ago)
-- bb1cb97 Fix center alignment of Generate Root Total button (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
