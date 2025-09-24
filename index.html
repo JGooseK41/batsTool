@@ -11577,14 +11577,34 @@ function viewAvailableThreads(hopNumber) {
 }
 
 function finalizeHop(hopNumber) {
+    console.log(`🎯 Attempting to finalize Hop ${hopNumber}`);
+
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) {
+        console.error(`Hop ${hopNumber} not found in investigation`);
         alert('Hop not found');
+        return;
+    }
+
+    console.log(`Found hop:`, hop);
+
+    // Check if hop is already completed
+    if (hop.completed) {
+        console.log(`Hop ${hopNumber} is already completed`);
+        alert(`Hop ${hopNumber} has already been completed`);
         return;
     }
 
     // USE the validateHopCompletion function which properly handles swaps!
     const validation = validateHopCompletion(hopNumber);
+    console.log(`Hop ${hopNumber} validation result:`, validation);
+
+    // Check for validation errors
+    if (validation.errors && validation.errors.length > 0) {
+        console.error(`Hop ${hopNumber} has validation errors:`, validation.errors);
+        alert(`Cannot finalize hop - validation errors:\n${validation.errors.join('\n')}`);
+        return;
+    }
 
     // Use the remaining amounts from validation (which already accounts for swaps)
     const remainingByCurrency = validation.remainingByCurrency || {};
@@ -11594,12 +11614,15 @@ function finalizeHop(hopNumber) {
     const isBalanced = totalRemaining < 0.01;
 
     console.log(`Finalizing Hop ${hopNumber}: Total remaining = ${totalRemaining}, Is balanced = ${isBalanced}`);
+    console.log(`Remaining by currency:`, remainingByCurrency);
 
     if (isBalanced) {
         // Skip finalization modal if already balanced - go straight to completion
+        console.log(`✅ Hop ${hopNumber} is balanced - proceeding to completion`);
         completeHopAndProceed(hop);
     } else {
         // Show finalization only if there are unbalanced amounts
+        console.log(`⚠️ Hop ${hopNumber} has unbalanced amounts - showing finalization options`);
         const walletsWithRemainingFunds = analyzeUntracedBalances(hop);
         showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemainingFunds);
     }

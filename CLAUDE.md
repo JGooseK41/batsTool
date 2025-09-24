@@ -3,48 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 20:12)
+## Latest Commit (Auto-updated: 2025-09-23 20:14)
 
-**Commit:** 4aa461955dc96fde48fa104a12c2d39987d2efe4
+**Commit:** f78b054ed2c436d3ff7bc4312cb3d45da6907e00
 **Author:** Your Name
-**Message:** Fix trace completion incorrectly showing complete with unallocated swap outputs
-
-Critical fix prevents marking trace as complete when swap outputs haven't been allocated:
-
-- Rewrote checkAllThreadsTerminated() to check availableThreads for unallocated amounts
-- Now properly detects swap outputs (USDT) that haven't been traced yet
-- Added unallocatedThreads tracking to identify funds that need tracing
-- Investigation only marked complete when both conditions met:
-  1. No unallocated threads (including swap outputs)
-  2. All traced threads reached terminal wallets
-
-Previous logic only looked at traced entries, missing swap-created threads that
-hadn't been allocated yet. This allowed users to incorrectly "complete" traces
-with untraced swap outputs.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest changes
 
 ### Changed Files:
 ```
- CLAUDE.md  | 70 +++++++++++++++++++--------------------------------
- index.html | 85 +++++++++++++++++++++++++++++++++++++++++++++++++-------------
- 2 files changed, 94 insertions(+), 61 deletions(-)
+ CLAUDE.md | 54 +++++++++++++++++++++++++++---------------------------
+ 1 file changed, 27 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4aa4619 Fix trace completion incorrectly showing complete with unallocated swap outputs (0 seconds ago)
-- d919071 Fix swap validation bug where converted funds showed as balanced (6 minutes ago)
-- 37a8ed5 Fix swap validation incorrectly showing balanced with unallocated outputs (18 minutes ago)
-- 0c24e1f CRITICAL FIX: Hop validation now properly detects unallocated remainder threads (29 minutes ago)
-- c0571a1 Improve network resilience and error handling for blockchain lookups (31 minutes ago)
-- d402adc Streamline hop workflow and reduce redundant clicks (40 minutes ago)
-- 5804b61 Fix terminal wallet detection and trace completion logic (48 minutes ago)
-- a771d15 Implement auto-save after hop completion (62 minutes ago)
-- 10cf459 Add comprehensive trace completion ceremony (70 minutes ago)
-- c9f7c5b CRITICAL FIX: Use validated swap handling in hop finalization (74 minutes ago)
+- f78b054 Update CLAUDE.md with latest changes (0 seconds ago)
+- 4aa4619 Fix trace completion incorrectly showing complete with unallocated swap outputs (2 minutes ago)
+- d919071 Fix swap validation bug where converted funds showed as balanced (8 minutes ago)
+- 37a8ed5 Fix swap validation incorrectly showing balanced with unallocated outputs (20 minutes ago)
+- 0c24e1f CRITICAL FIX: Hop validation now properly detects unallocated remainder threads (32 minutes ago)
+- c0571a1 Improve network resilience and error handling for blockchain lookups (33 minutes ago)
+- d402adc Streamline hop workflow and reduce redundant clicks (42 minutes ago)
+- 5804b61 Fix terminal wallet detection and trace completion logic (50 minutes ago)
+- a771d15 Implement auto-save after hop completion (64 minutes ago)
+- 10cf459 Add comprehensive trace completion ceremony (72 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
