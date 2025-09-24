@@ -28163,23 +28163,26 @@ To (RED Wallet): ${transfer.to}`;
                         }
 
                         // Create edge from previous hop's wallet to this wallet
-                        const prevHopNumber = hop.hopNumber - 1;
-                        const fromNodeKey = `hop${prevHopNumber}_${entry.fromWallet}`;
-                        const fromNode = walletNodeMap[fromNodeKey];
+                        // Only create edge for non-terminal wallets (terminal edges are created above)
+                        if (!entry.isTerminalWallet) {
+                            const prevHopNumber = hop.hopNumber - 1;
+                            const fromNodeKey = `hop${prevHopNumber}_${entry.fromWallet}`;
+                            const fromNode = walletNodeMap[fromNodeKey];
 
-                        if (fromNode) {
-                            graphState.edges.push({
-                                from: fromNode.id,
-                                to: toNode.id,
-                                amount: parseFloat(entry.amount),
-                                currency: entry.currency,
-                                thread: entry.notation || entry.sourceThreadId,
-                                notes: entry.notes || '',
-                                txHash: entry.txHash,
-                                hopNumber: hop.hopNumber,
-                                isTerminal: entry.isTerminalWallet,
-                                color: getThreadColor(entry.notation || entry.sourceThreadId)
-                            });
+                            if (fromNode && toNode) {
+                                graphState.edges.push({
+                                    from: fromNode.id,
+                                    to: toNode.id,
+                                    amount: parseFloat(entry.amount),
+                                    currency: entry.currency,
+                                    thread: entry.notation || entry.sourceThreadId,
+                                    notes: entry.notes || '',
+                                    txHash: entry.txHash,
+                                    hopNumber: hop.hopNumber,
+                                    isTerminal: entry.isTerminalWallet,
+                                    color: getThreadColor(entry.notation || entry.sourceThreadId)
+                                });
+                            }
                         }
 
                         // Update hop ART
