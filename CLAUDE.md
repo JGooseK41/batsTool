@@ -3,19 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 06:52)
+## Latest Commit (Auto-updated: 2025-09-24 06:57)
 
-**Commit:** 751b86853670802fe6cf14bd8e9bfc03a0d9ca19
+**Commit:** b3885d29842ecc15033bb97bc7c4dc4d2f079608
 **Author:** Your Name
-**Message:** Fix duplicate swap output thread creation bug
+**Message:** Fix currency mismatch after swap - prevent duplicate thread creation
 
-- Add duplicate check before creating swap output threads in updateThreadAvailabilityFromSwap
-- Check if thread with same notation already exists in output currency
-- Add _swapProcessed flag to prevent reprocessing same swap entry
-- Prevents creation of 10+ duplicate threads after a single swap
+- Add global swapped thread ID tracking across all hops
+- Check both local and global swapped IDs before creating trace threads
+- Prevents USDC threads from being recreated after swap to USDT
+- Fixes issue where V1-T1-H1 existed in both currencies simultaneously
 
-This fixes the issue where swapping 79999 USDC for 79929 USDT would create
-multiple duplicate V1-T1-H1 threads all with the same 79929.747 USDT amount.
+This resolves the currency mismatch error that occurred when trying to
+assign threads after a swap, where the system incorrectly showed both
+the original USDC thread and the new USDT thread with the same notation.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -23,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 39 ++++++++++++++++++++++++---------------
- index.html | 39 ++++++++++++++++++++++++++++++++-------
- 2 files changed, 56 insertions(+), 22 deletions(-)
+ CLAUDE.md  | 42 +++++++++++++++++++++++-------------------
+ index.html | 20 +++++++++++++++++---
+ 2 files changed, 40 insertions(+), 22 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 751b868 Fix duplicate swap output thread creation bug (0 seconds ago)
-- 9d3b5fd Fix syntax error in swap wizard template string (8 minutes ago)
-- 9a9c03d Update CLAUDE.md with latest commits (10 minutes ago)
-- ca3f69c Fix critical thread tracking and validation issues (11 minutes ago)
-- 5783f8b Update CLAUDE.md with latest commits (24 minutes ago)
-- 8d27f9f Simplify available threads display - remove separate swap thread section (25 minutes ago)
-- 6f99660 Fix available threads display to show current hop allocation status (28 minutes ago)
-- 9f00870 Update CLAUDE.md with latest commits (39 minutes ago)
-- bb65c9d Fix graph visualization error with terminal wallets (41 minutes ago)
-- b5f8faf Add comprehensive Case Conclusion Dashboard with unified index access (43 minutes ago)
+- b3885d2 Fix currency mismatch after swap - prevent duplicate thread creation (0 seconds ago)
+- 751b868 Fix duplicate swap output thread creation bug (6 minutes ago)
+- 9d3b5fd Fix syntax error in swap wizard template string (14 minutes ago)
+- 9a9c03d Update CLAUDE.md with latest commits (15 minutes ago)
+- ca3f69c Fix critical thread tracking and validation issues (16 minutes ago)
+- 5783f8b Update CLAUDE.md with latest commits (30 minutes ago)
+- 8d27f9f Simplify available threads display - remove separate swap thread section (31 minutes ago)
+- 6f99660 Fix available threads display to show current hop allocation status (33 minutes ago)
+- 9f00870 Update CLAUDE.md with latest commits (45 minutes ago)
+- bb65c9d Fix graph visualization error with terminal wallets (47 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

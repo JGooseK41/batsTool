@@ -2093,6 +2093,8 @@
                                 <button onclick="collapseAllHops()" class="btn btn-primary" title="Collapse All Hops">📁 Collapse All</button>
                                 <button onclick="showExportOptions()" class="btn btn-success" title="Export Graph">💾 Export</button>
                                 <button onclick="shareGraph()" class="btn btn-info" title="Share">📤 Share</button>
+                                <button onclick="showComprehensiveReport()" class="btn btn-warning" title="View Report" style="background: linear-gradient(135deg, #f39c12, #e67e22); color: white; font-weight: bold;">📄 Full Report</button>
+                                <button onclick="showTab('summary')" class="btn btn-secondary" title="Go to Summary">📊 Summary</button>
                             </div>
                         </div>
 
@@ -21510,6 +21512,319 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             const filename = `BATS_Narrative_Report_${investigation.caseId || 'Investigation'}_${new Date().toISOString().split('T')[0]}.doc`;
             downloadFile(report, filename, 'application/msword');
         }
+
+        // Comprehensive Report Function
+        function showComprehensiveReport() {
+            // Generate all reports and indices
+            const narrativeReport = generateNarrativeReport();
+            const victimIndex = generateVictimIndex();
+            const walletIndex = generateUniversalWalletIndex();
+            const terminalReport = generateTerminalWalletReport();
+            const redWalletIndex = generateRedWalletIndex();
+
+            // Create modal with all reports
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: auto;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                width: 90%;
+                max-width: 1200px;
+                max-height: 90vh;
+                overflow-y: auto;
+                border-radius: 12px;
+                position: relative;
+            `;
+
+            // Calculate totals
+            let totalsByCurrency = {};
+            if (investigation.rootTotals) {
+                Object.entries(investigation.rootTotals).forEach(([currency, amount]) => {
+                    if (!totalsByCurrency[currency]) totalsByCurrency[currency] = 0;
+                    totalsByCurrency[currency] += amount;
+                });
+            }
+
+            const totalAmount = Object.values(totalsByCurrency).reduce((sum, amount) => sum + amount, 0);
+            const currencyBreakdown = Object.entries(totalsByCurrency)
+                .map(([currency, amount]) => `${amount.toFixed(6)} ${currency}`)
+                .join(' + ');
+
+            content.innerHTML = `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0;">
+                    <button onclick="this.closest('[style*=\\"z-index: 10000\\"]').remove()" style="position: absolute; right: 15px; top: 15px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 16px;">✕</button>
+                    <h2 style="margin: 0 0 10px 0; font-size: 2rem;">📋 Comprehensive Investigation Report</h2>
+                    <p style="margin: 0; opacity: 0.95;">Complete analysis with all indices, narratives, and terminal wallet tracking</p>
+                    <div style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div>
+                                <div style="opacity: 0.8; font-size: 12px;">Total Traced</div>
+                                <div style="font-size: 20px; font-weight: bold;">${totalAmount.toFixed(2)}</div>
+                                <div style="opacity: 0.8; font-size: 11px;">${currencyBreakdown}</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 12px;">Victims</div>
+                                <div style="font-size: 20px; font-weight: bold;">${investigation.victims ? investigation.victims.length : 0}</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 12px;">Hops Traced</div>
+                                <div style="font-size: 20px; font-weight: bold;">${investigation.hops ? investigation.hops.length : 0}</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 12px;">Terminal Wallets</div>
+                                <div style="font-size: 20px; font-weight: bold;">${investigation.terminalWalletIndex ? investigation.terminalWalletIndex.length : 0}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding: 20px;">
+                    <!-- Navigation Tabs -->
+                    <div style="display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0;">
+                        <button onclick="showReportSection('narrative')" class="report-tab-btn active" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px 8px 0 0; cursor: pointer;">📖 Narrative</button>
+                        <button onclick="showReportSection('victims')" class="report-tab-btn" style="padding: 10px 20px; background: #f0f0f0; color: #333; border: none; border-radius: 8px 8px 0 0; cursor: pointer;">👥 Victims</button>
+                        <button onclick="showReportSection('wallets')" class="report-tab-btn" style="padding: 10px 20px; background: #f0f0f0; color: #333; border: none; border-radius: 8px 8px 0 0; cursor: pointer;">💼 All Wallets</button>
+                        <button onclick="showReportSection('terminals')" class="report-tab-btn" style="padding: 10px 20px; background: #f0f0f0; color: #333; border: none; border-radius: 8px 8px 0 0; cursor: pointer;">🏦 Exchanges</button>
+                        <button onclick="showReportSection('redwallets')" class="report-tab-btn" style="padding: 10px 20px; background: #f0f0f0; color: #333; border: none; border-radius: 8px 8px 0 0; cursor: pointer;">🚨 Red Wallets</button>
+                    </div>
+
+                    <!-- Report Sections -->
+                    <div id="narrative-section" class="report-section" style="display: block;">
+                        <h3>📖 Narrative Report</h3>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; max-height: 500px; overflow-y: auto;">
+                            ${narrativeReport}
+                        </div>
+                    </div>
+
+                    <div id="victims-section" class="report-section" style="display: none;">
+                        <h3>👥 Victim Index</h3>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; max-height: 500px; overflow-y: auto;">
+                            ${victimIndex}
+                        </div>
+                    </div>
+
+                    <div id="wallets-section" class="report-section" style="display: none;">
+                        <h3>💼 Universal Wallet Index</h3>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; max-height: 500px; overflow-y: auto;">
+                            ${walletIndex}
+                        </div>
+                    </div>
+
+                    <div id="terminals-section" class="report-section" style="display: none;">
+                        <h3>🏦 Terminal Wallet Report</h3>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; max-height: 500px; overflow-y: auto;">
+                            ${terminalReport}
+                        </div>
+                    </div>
+
+                    <div id="redwallets-section" class="report-section" style="display: none;">
+                        <h3>🚨 Red Wallet Index</h3>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; max-height: 500px; overflow-y: auto;">
+                            ${redWalletIndex}
+                        </div>
+                    </div>
+
+                    <!-- Export Buttons -->
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; display: flex; gap: 10px; justify-content: center;">
+                        <button onclick="exportComprehensiveReport('pdf')" class="btn btn-primary">📄 Export as PDF</button>
+                        <button onclick="exportComprehensiveReport('html')" class="btn btn-success">🌐 Export as HTML</button>
+                        <button onclick="copyComprehensiveReport()" class="btn btn-info">📋 Copy to Clipboard</button>
+                        <button onclick="printComprehensiveReport()" class="btn btn-secondary">🖨️ Print Report</button>
+                    </div>
+                </div>
+            `;
+
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+
+            // Add styles for tab switching
+            const style = document.createElement('style');
+            style.textContent = `
+                .report-tab-btn.active {
+                    background: #667eea !important;
+                    color: white !important;
+                }
+                .report-section {
+                    animation: fadeIn 0.3s ease;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Function to switch between report sections
+        window.showReportSection = function(section) {
+            // Hide all sections
+            document.querySelectorAll('.report-section').forEach(s => s.style.display = 'none');
+            // Show selected section
+            document.getElementById(`${section}-section`).style.display = 'block';
+            // Update tab buttons
+            document.querySelectorAll('.report-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.background = '#f0f0f0';
+                btn.style.color = '#333';
+            });
+            event.target.classList.add('active');
+            event.target.style.background = '#667eea';
+            event.target.style.color = 'white';
+        };
+
+        // Export comprehensive report function
+        window.exportComprehensiveReport = function(format) {
+            const allReports = {
+                narrative: generateNarrativeReport(),
+                victims: generateVictimIndex(),
+                wallets: generateUniversalWalletIndex(),
+                terminals: generateTerminalWalletReport(),
+                redWallets: generateRedWalletIndex()
+            };
+
+            if (format === 'html') {
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>BATS Investigation Report - ${investigation.metadata?.caseNumber || 'Investigation'}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+                            h1 { color: #667eea; }
+                            h2 { color: #764ba2; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
+                            .section { margin-bottom: 40px; }
+                            table { width: 100%; border-collapse: collapse; }
+                            th, td { padding: 8px; text-align: left; border: 1px solid #ddd; }
+                            th { background: #f0f0f0; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Comprehensive Investigation Report</h1>
+                        <div class="section">
+                            <h2>Narrative Report</h2>
+                            ${allReports.narrative}
+                        </div>
+                        <div class="section">
+                            <h2>Victim Index</h2>
+                            ${allReports.victims}
+                        </div>
+                        <div class="section">
+                            <h2>Universal Wallet Index</h2>
+                            ${allReports.wallets}
+                        </div>
+                        <div class="section">
+                            <h2>Terminal Wallet Report</h2>
+                            ${allReports.terminals}
+                        </div>
+                        <div class="section">
+                            <h2>Red Wallet Index</h2>
+                            ${allReports.redWallets}
+                        </div>
+                    </body>
+                    </html>
+                `;
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `BATS_Report_${investigation.metadata?.caseNumber || 'Investigation'}_${new Date().toISOString().split('T')[0]}.html`;
+                a.click();
+            } else if (format === 'pdf') {
+                alert('PDF export requires print functionality. Please use Print Report and select "Save as PDF" in the print dialog.');
+            }
+        };
+
+        // Copy comprehensive report to clipboard
+        window.copyComprehensiveReport = function() {
+            const allReports = `
+COMPREHENSIVE INVESTIGATION REPORT
+Generated: ${new Date().toISOString()}
+
+=== NARRATIVE REPORT ===
+${generateNarrativeReport().replace(/<[^>]*>/g, '')}
+
+=== VICTIM INDEX ===
+${generateVictimIndex().replace(/<[^>]*>/g, '')}
+
+=== UNIVERSAL WALLET INDEX ===
+${generateUniversalWalletIndex().replace(/<[^>]*>/g, '')}
+
+=== TERMINAL WALLET REPORT ===
+${generateTerminalWalletReport().replace(/<[^>]*>/g, '')}
+
+=== RED WALLET INDEX ===
+${generateRedWalletIndex().replace(/<[^>]*>/g, '')}
+            `;
+            navigator.clipboard.writeText(allReports);
+            alert('Comprehensive report copied to clipboard!');
+        };
+
+        // Print comprehensive report
+        window.printComprehensiveReport = function() {
+            const printWindow = window.open('', '_blank');
+            const allReports = {
+                narrative: generateNarrativeReport(),
+                victims: generateVictimIndex(),
+                wallets: generateUniversalWalletIndex(),
+                terminals: generateTerminalWalletReport(),
+                redWallets: generateRedWalletIndex()
+            };
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>BATS Investigation Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        h1, h2 { color: #333; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        th, td { padding: 8px; text-align: left; border: 1px solid #ddd; }
+                        th { background: #f0f0f0; }
+                        .section { margin-bottom: 40px; page-break-inside: avoid; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Comprehensive Investigation Report</h1>
+                    <div class="section">
+                        <h2>Narrative Report</h2>
+                        ${allReports.narrative}
+                    </div>
+                    <div class="section">
+                        <h2>Victim Index</h2>
+                        ${allReports.victims}
+                    </div>
+                    <div class="section">
+                        <h2>Universal Wallet Index</h2>
+                        ${allReports.wallets}
+                    </div>
+                    <div class="section">
+                        <h2>Terminal Wallet Report</h2>
+                        ${allReports.terminals}
+                    </div>
+                    <div class="section">
+                        <h2>Red Wallet Index</h2>
+                        ${allReports.redWallets}
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        };
 
         function generateNarrativeReport() {
             const reportDate = new Date().toISOString().split('T')[0];
