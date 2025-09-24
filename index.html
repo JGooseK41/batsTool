@@ -24995,25 +24995,21 @@ async function searchBitcoinAddresses(searchType, pattern) {
     const addresses = [];
 
     try {
-        // Use blockchain.info API directly without CORS proxy (like main app does)
-        const blockchainApiKey = localStorage.getItem('bats_blockchain_api_key') || '';
+        // For Bitcoin partial address search, we need a different approach
+        // since most APIs require complete addresses
 
-        // For Bitcoin address search, we'll use the blockchain.info API
-        // which has proper CORS headers for their API endpoints
-        if (searchType === 'prefix' || searchType === 'suffix' || searchType === 'contains') {
+        // First check if it's a complete address (at least 26 characters for Bitcoin)
+        if (pattern.length >= 26) {
             try {
-                // Use the raw address endpoint which supports partial matching
-                // This is a different approach - we'll search for transactions with matching addresses
-                const searchUrl = `https://blockchain.info/rawaddr/${pattern}`;
-
-                // Don't use CORS proxy - make direct request like main app
-                const response = await fetch(searchUrl, {
+                // Try to check it as a complete address
+                const checkUrl = `https://blockchain.info/rawaddr/${pattern}`;
+                const response = await fetch(checkUrl, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json'
                     }
                 }).catch(err => {
-                    console.warn('Bitcoin address search failed:', err);
+                    console.log('Not a valid complete address:', pattern);
                     return null;
                 });
 
@@ -25031,41 +25027,86 @@ async function searchBitcoinAddresses(searchType, pattern) {
                     }
                 }
             } catch (e) {
-                console.log('Blockchain.info API failed:', e);
+                console.log('Address lookup failed:', e);
             }
         }
 
-        // For partial matches, we can generate possible addresses
-        // This is useful for prefix searches with specific patterns
-        if (searchType === 'prefix' && addresses.length === 0) {
-            // Generate common address patterns based on prefix
-            const commonPatterns = generateBitcoinAddressPatterns(pattern);
-            for (const generatedAddr of commonPatterns) {
-                try {
-                    // Validate each generated address
-                    const checkUrl = `https://blockchain.info/rawaddr/${generatedAddr}`;
-                    const response = await fetch(checkUrl, {
-                        method: 'GET',
-                        headers: { 'Accept': 'application/json' }
-                    }).catch(() => null);
+        // For partial addresses, use Blockchain.info's search API
+        // This endpoint accepts partial strings and searches their database
+        if (addresses.length === 0 && pattern.length >= 4) {
+            try {
+                // Use the multiaddr endpoint for searching multiple potential addresses
+                // Or use their search endpoint which is more forgiving
+                const searchUrl = `https://blockchain.info/multiaddr?active=${pattern}`;
 
-                    if (response && response.ok) {
-                        const data = await response.json();
-                        if (data && data.address) {
-                            addresses.push({
-                                address: data.address,
-                                type: data.address.startsWith('1') ? 'P2PKH' :
-                                      data.address.startsWith('3') ? 'P2SH' : 'Bech32',
-                                balance: data.final_balance / 100000000,
-                                txCount: data.n_tx,
-                                source: 'Pattern Match'
-                            });
+                const response = await fetch(searchUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).catch(err => {
+                    console.log('Blockchain.info multiaddr search failed:', err);
+                    return null;
+                });
+
+                if (response && response.ok) {
+                    const data = await response.json();
+                    if (data && data.addresses) {
+                        for (const addr of data.addresses) {
+                            if ((searchType === 'prefix' && addr.address.startsWith(pattern)) ||
+                                (searchType === 'suffix' && addr.address.endsWith(pattern)) ||
+                                (searchType === 'contains' && addr.address.includes(pattern))) {
+                                addresses.push({
+                                    address: addr.address,
+                                    type: addr.address.startsWith('1') ? 'P2PKH' :
+                                          addr.address.startsWith('3') ? 'P2SH' : 'Bech32',
+                                    balance: addr.final_balance / 100000000,
+                                    txCount: addr.n_tx,
+                                    source: 'Blockchain.info Search'
+                                });
+                            }
                         }
                     }
-                } catch (e) {
-                    // Skip invalid addresses
-                    continue;
                 }
+            } catch (e) {
+                console.log('Blockchain search failed:', e);
+            }
+        }
+
+        // If still no results and we have an API key, try BlockCypher
+        // BlockCypher supports partial address matching in some endpoints
+        const blockCypherKey = localStorage.getItem('bats_blockcypher_api_key');
+        if (addresses.length === 0 && blockCypherKey && pattern.length >= 4) {
+            try {
+                // BlockCypher doesn't have a direct address search, but we can try their address endpoint
+                // with the partial and see if it suggests completions
+                const bcUrl = `https://api.blockcypher.com/v1/btc/main/addrs/${pattern}?token=${blockCypherKey}`;
+
+                const response = await fetch(bcUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).catch(err => {
+                    console.log('BlockCypher search failed:', err);
+                    return null;
+                });
+
+                if (response && response.ok) {
+                    const data = await response.json();
+                    if (data && data.address) {
+                        addresses.push({
+                            address: data.address,
+                            type: data.address.startsWith('1') ? 'P2PKH' :
+                                  data.address.startsWith('3') ? 'P2SH' : 'Bech32',
+                            balance: data.balance / 100000000,
+                            txCount: data.n_tx,
+                            source: 'BlockCypher'
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log('BlockCypher API failed:', e);
             }
         }
 
@@ -25388,6 +25429,10 @@ function displayAddressFinderResults(addresses, chain) {
                 <h4 style="color: #666; margin-bottom: 15px;">No Matching Addresses Found</h4>
                 <p style="color: #999; margin-bottom: 20px;">Try the following:</p>
                 <ul style="text-align: left; display: inline-block; color: #777;">
+                    <li>Provide at least 8-10 characters for partial searches</li>
+                    <li>For Bitcoin, use at least 26 characters</li>
+                    <li>Consider using complete addresses for best results</li>
+                    <li>Configure Arkham Intelligence API key in settings for advanced search</li>
                     <li>Check your pattern for typos</li>
                     <li>Try a shorter prefix (minimum 3-4 characters)</li>
                     <li>Disable "Show only active addresses" filter</li>

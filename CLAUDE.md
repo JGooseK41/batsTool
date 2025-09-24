@@ -3,35 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 10:48)
+## Latest Commit (Auto-updated: 2025-09-24 10:55)
 
-**Commit:** b2d0e080fc2744d0f14feb4b8f202145c9a9306d
+**Commit:** da2eaa120e5bd71142161ba70c33e73e9a1f6588
 **Author:** Your Name
-**Message:** Fix variable shadowing issue preventing token data from being passed to parseResponse
+**Message:** Fix address search by using direct API calls without CORS proxies
 
-- Removed redeclaration of tokenData that was shadowing outer scope variable
-- Token data will now properly be passed to parseEVMResponse
-- Bulk upload should now detect and show USDT transfers correctly
+- Removed fetchWithCORS usage that was causing CSP violations
+- Use direct API calls like the main app does (corsEnabled = false)
+- Added Arkham Intelligence API integration for address search
+- Fixed blockchain.info API usage for Bitcoin address lookups
+- Fixed syntax errors in EVM address search
+- Added proper error handling with fallback to null
 
 ### Changed Files:
 ```
- CLAUDE.md  | 28 ++++++++++++----------------
- index.html |  2 +-
- 2 files changed, 13 insertions(+), 17 deletions(-)
+ CLAUDE.md  |  26 +++++----
+ index.html | 175 +++++++++++++++++++++++++++++++++++++++++++++++--------------
+ 2 files changed, 152 insertions(+), 49 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b2d0e08 Fix variable shadowing issue preventing token data from being passed to parseResponse (0 seconds ago)
-- 3c26574 Improve parseEVMResponse logging format for better visibility (32 seconds ago)
-- 33f6d1c Add detailed logging to debug token transfer parsing in bulk upload (3 minutes ago)
-- 2cb002c Fix bulk upload token transfer detection for all EVM chains (6 minutes ago)
-- ad194ac Fix bulk upload API calls and add error handling for extension interference (10 minutes ago)
-- 140cd3f Add bulk upload test file and complete implementation (16 minutes ago)
-- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (17 minutes ago)
-- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (32 minutes ago)
+- da2eaa1 Fix address search by using direct API calls without CORS proxies (0 seconds ago)
+- b2d0e08 Fix variable shadowing issue preventing token data from being passed to parseResponse (7 minutes ago)
+- 3c26574 Improve parseEVMResponse logging format for better visibility (8 minutes ago)
+- 33f6d1c Add detailed logging to debug token transfer parsing in bulk upload (10 minutes ago)
+- 2cb002c Fix bulk upload token transfer detection for all EVM chains (13 minutes ago)
+- ad194ac Fix bulk upload API calls and add error handling for extension interference (17 minutes ago)
+- 140cd3f Add bulk upload test file and complete implementation (23 minutes ago)
+- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (24 minutes ago)
+- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (39 minutes ago)
 - 4cde5fe Add unnecessary input heuristic - most reliable change detection method (2 hours ago)
-- d51c880 Add advanced Bitcoin change address detection heuristics (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
