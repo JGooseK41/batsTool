@@ -5718,9 +5718,23 @@ function buildAvailableThreadsIndex() {
         });
     });
     
+    // First, collect ALL swapped thread IDs across ALL hops (global)
+    const globalSwappedThreadIds = new Set();
+    investigation.hops.forEach(hop => {
+        hop.entries.forEach(entry => {
+            if (entry.entryType === 'swap') {
+                if (entry.sourceThreadId) {
+                    globalSwappedThreadIds.add(entry.sourceThreadId);
+                } else if (entry.multipleSourceThreads) {
+                    entry.multipleSourceThreads.forEach(id => globalSwappedThreadIds.add(id));
+                }
+            }
+        });
+    });
+
     // Process ALL hop entries to update available threads
     investigation.hops.forEach(hop => {
-        // First collect swapped thread IDs within this hop
+        // Also collect swapped thread IDs within this hop (for backward compatibility)
         const swappedThreadIds = new Set();
         hop.entries.forEach(entry => {
             if (entry.entryType === 'swap') {
@@ -5759,8 +5773,8 @@ function buildAvailableThreadsIndex() {
         // Second pass: Process traces (after swaps have updated threads)
         hop.entries.forEach(entry => {
             if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
-                // Don't create thread if this trace has been swapped
-                if (!swappedThreadIds.has(entry.notation)) {
+                // Don't create thread if this trace has been swapped (check both local and global)
+                if (!swappedThreadIds.has(entry.notation) && !globalSwappedThreadIds.has(entry.notation)) {
                     // Don't create output threads for terminal wallets (purple, gray, blue)
                     const isTerminal = entry.toWalletType === 'purple' ||
                                      entry.toWalletType === 'gray' ||
