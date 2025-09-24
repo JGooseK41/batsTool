@@ -3,23 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 05:56)
+## Latest Commit (Auto-updated: 2025-09-24 06:08)
 
-**Commit:** ab2dc0e449dea65f2319c4d31fe249acd0d03d65
+**Commit:** b5f8faf523392db6a276e5a1c643e24f04f3bd89
 **Author:** Your Name
-**Message:** Fix graph visualization error with terminal wallets
+**Message:** Add comprehensive Case Conclusion Dashboard with unified index access
 
-The issue occurred when processing terminal wallet entries in the graph visualization.
-The code would create a 'terminalNode' variable for terminal wallets but then
-incorrectly reference an undefined 'toNode' variable when creating edges.
+- Created Case Conclusion Dashboard in Summary tab with complete overview
+- Added quick stats cards showing victims, wallets, terminals, and funds traced
+- Consolidated all index access (Victim, Red Wallet, Universal, Terminal) in one place
+- Added dedicated Victim Index view with export functionality
+- Implemented Export All Indexes function for bulk export
+- Enhanced reporting section with all export options clearly organized
+- Improved natural flow for investigators to complete and document cases
+- All indexes now easily accessible from single dashboard for case conclusion
 
-Fix:
-- Added conditional check to only create edges for non-terminal wallets
-- Terminal wallet edges are already created in the terminal wallet processing block
-- Added null check for toNode existence before creating edges
-
-This resolves the 'Uncaught ReferenceError: toNode is not defined' error that
-occurred when trying to visualize investigations with terminal wallets.
+This provides investigators with a centralized location to review all investigation data and generate necessary reports for legal proceedings and case documentation.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -27,24 +26,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                           | 101 ++++--
- docs/BATS-Updated-Training-Guide.md | 620 ++++++++++++++++++++++++++++++++++++
- index.html                          |  37 ++-
- 3 files changed, 708 insertions(+), 50 deletions(-)
+ CLAUDE.md  |  97 +++++++----------------
+ index.html | 264 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 290 insertions(+), 71 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ab2dc0e Fix graph visualization error with terminal wallets (0 seconds ago)
-- 0d63436 Complete comprehensive B.A.T.S. tool testing and bug analysis (6 hours ago)
+- b5f8faf Add comprehensive Case Conclusion Dashboard with unified index access (0 seconds ago)
+- ab2dc0e Fix graph visualization error with terminal wallets (12 minutes ago)
+- 0d63436 Complete comprehensive B.A.T.S. tool testing and bug analysis (7 hours ago)
 - c36475d Implement comprehensive Word-format narrative investigation report (7 hours ago)
 - 0448ce8 Disable Add Entry button for completed hops with reopen option (7 hours ago)
 - eb5a4c9 Add critical wallet validation for transaction lookups (7 hours ago)
-- bb1cb97 Fix center alignment of Generate Root Total button (7 hours ago)
-- 6d41977 Add comprehensive PDF report export for case presentations (7 hours ago)
+- bb1cb97 Fix center alignment of Generate Root Total button (8 hours ago)
+- 6d41977 Add comprehensive PDF report export for case presentations (8 hours ago)
 - ba22286 Enhanced UI to highlight PNG metadata embedding feature (8 hours ago)
 - 542a891 Add PNG metadata embedding for round-trip export/import (8 hours ago)
-- 206b607 Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

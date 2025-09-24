@@ -28257,6 +28257,8 @@ To (RED Wallet): ${transfer.to}`;
                             const prevHopNumber = hop.hopNumber - 1;
                             const fromNodeKey = `hop${prevHopNumber}_${entry.fromWallet}`;
                             const fromNode = walletNodeMap[fromNodeKey];
+                            const toNodeKey = `hop${hop.hopNumber}_${entry.toWallet}`;
+                            const toNode = walletNodeMap[toNodeKey];
 
                             if (fromNode && toNode) {
                                 graphState.edges.push({
