@@ -3,30 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 06:42)
+## Latest Commit (Auto-updated: 2025-09-24 06:43)
 
-**Commit:** 9a9c03d9a6326a382854978135ddf4bb3d9d286a
+**Commit:** 9d3b5fdf2932e18fe94f970b42a92d708e62af1a
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commits
+**Message:** Fix syntax error in swap wizard template string
+
+- Fixed missing closing bracket in template expression
+- Corrected template literal structure in swap wizard step 1
+- Resolved 'Uncaught SyntaxError: Missing } in template expression' error
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 45 ++++++++++++++++++++++++++++++++-------------
- 1 file changed, 32 insertions(+), 13 deletions(-)
+ CLAUDE.md  | 43 ++++++++++++-------------------------------
+ index.html |  3 ++-
+ 2 files changed, 14 insertions(+), 32 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9a9c03d Update CLAUDE.md with latest commits (0 seconds ago)
-- ca3f69c Fix critical thread tracking and validation issues (55 seconds ago)
-- 5783f8b Update CLAUDE.md with latest commits (15 minutes ago)
-- 8d27f9f Simplify available threads display - remove separate swap thread section (16 minutes ago)
-- 6f99660 Fix available threads display to show current hop allocation status (18 minutes ago)
-- 9f00870 Update CLAUDE.md with latest commits (30 minutes ago)
-- bb65c9d Fix graph visualization error with terminal wallets (32 minutes ago)
-- b5f8faf Add comprehensive Case Conclusion Dashboard with unified index access (33 minutes ago)
-- ab2dc0e Fix graph visualization error with terminal wallets (45 minutes ago)
-- 0d63436 Complete comprehensive B.A.T.S. tool testing and bug analysis (7 hours ago)
+- 9d3b5fd Fix syntax error in swap wizard template string (0 seconds ago)
+- 9a9c03d Update CLAUDE.md with latest commits (2 minutes ago)
+- ca3f69c Fix critical thread tracking and validation issues (2 minutes ago)
+- 5783f8b Update CLAUDE.md with latest commits (16 minutes ago)
+- 8d27f9f Simplify available threads display - remove separate swap thread section (17 minutes ago)
+- 6f99660 Fix available threads display to show current hop allocation status (20 minutes ago)
+- 9f00870 Update CLAUDE.md with latest commits (31 minutes ago)
+- bb65c9d Fix graph visualization error with terminal wallets (33 minutes ago)
+- b5f8faf Add comprehensive Case Conclusion Dashboard with unified index access (35 minutes ago)
+- ab2dc0e Fix graph visualization error with terminal wallets (47 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

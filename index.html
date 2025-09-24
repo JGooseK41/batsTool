@@ -5738,14 +5738,21 @@ function buildAvailableThreadsIndex() {
         // First pass: Process all swaps to update thread currencies
         hop.entries.forEach(entry => {
             if (entry.entryType === 'swap' && entry.swapDetails) {
-                // For swap entries, we need to handle the currency conversion
-                // The output replaces the input thread with new currency
-                console.log(`Processing swap entry in hop ${hop.hopNumber}:`, entry);
-                // Make sure the entry has the hop number
-                if (!entry.hopNumber) {
-                    entry.hopNumber = hop.hopNumber;
+                // Check if this swap has already been processed
+                if (!entry._swapProcessed) {
+                    // For swap entries, we need to handle the currency conversion
+                    // The output replaces the input thread with new currency
+                    console.log(`Processing swap entry in hop ${hop.hopNumber}:`, entry);
+                    // Make sure the entry has the hop number
+                    if (!entry.hopNumber) {
+                        entry.hopNumber = hop.hopNumber;
+                    }
+                    updateThreadAvailabilityFromSwap(entry);
+                    // Mark as processed to prevent duplicate processing
+                    entry._swapProcessed = true;
+                } else {
+                    console.log('Skipping already processed swap entry:', entry.id);
                 }
-                updateThreadAvailabilityFromSwap(entry);
             }
         });
 
@@ -5937,6 +5944,24 @@ function updateThreadAvailabilityFromSwap(entry) {
         // Create output threads with same notation
         threadsToProcess.forEach(item => {
             const notation = item.notation;
+
+            // Check if this swap output already exists (prevent duplicates)
+            let existingOutputThread = null;
+            for (const key in investigation.availableThreads[outputCurrency]) {
+                const thread = investigation.availableThreads[outputCurrency][key];
+                if (thread.notation === notation && thread.sourceType === 'swap_output') {
+                    existingOutputThread = { key, thread };
+                    console.log(`Swap output thread ${notation} already exists in ${outputCurrency}, skipping creation`);
+                    break;
+                }
+            }
+
+            // If thread already exists, skip creation
+            if (existingOutputThread) {
+                console.log(`Skipping duplicate swap output creation for ${notation} in ${outputCurrency}`);
+                return;
+            }
+
             const newInternalId = generateInternalThreadId(notation, outputCurrency);
 
             // Calculate proportional output for this thread
