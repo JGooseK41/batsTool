@@ -3,30 +3,34 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 20:37)
+## Latest Commit (Auto-updated: 2025-09-23 20:44)
 
-**Commit:** e1ad0ba2e4c599b81a80002ee34e25087f254fe9
+**Commit:** 3774502e339007ee188ae41896a0c228190fe787
 **Author:** Your Name
-**Message:** Fix incorrect 'All threads fully traced' message on empty hop
+**Message:** Prevent finalizing empty hops and fix editing completed hops
 
-Critical fix for false completion message when starting a new hop:
+Critical fixes to prevent invalid hop states:
 
-Problem:
-- System was checking threads for NEXT hop instead of CURRENT hop
-- When no entries existed, it found no threads for next hop and showed "fully traced"
-- This was completely backwards - empty hop should show AVAILABLE threads
+1. Prevent Empty Hop Finalization:
+   - Added validation to check for entries before allowing finalization
+   - Checks both that entries exist AND have valid amounts > 0
+   - Shows clear error messages explaining why finalization is blocked
+   - Prevents the bug where empty hops could be marked complete
 
-Solution:
-- Check threads available for CURRENT hop when no entries exist
-- Show available threads that need to be traced
-- Only show "fully traced" when entries exist AND all threads are allocated
-- Added proper edge case handling for various states
+2. Fix Hop Editing After Completion:
+   - Enhanced reopenHop function to properly reset hop state
+   - Sets completed = false to re-enable editing
+   - Expands collapsed hop automatically
+   - Prevents event propagation to avoid toggle conflicts
+   - Maintains existing downstream validation logic
 
-The fix properly distinguishes between:
-1. No entries yet → Show available threads for current hop
-2. Has entries, threads remain → Show threads for next hop
-3. All accounted for → Show "fully traced" message
-4. Edge cases → Show appropriate warnings
+3. Entry Validation:
+   - Ensures entries have valid types (trace, swap, writeoff, cold_storage)
+   - Validates amounts are greater than zero
+   - Prevents placeholder or invalid entries from allowing finalization
+
+The system now correctly enforces that hops must have meaningful entries
+before they can be finalized, and allows proper editing of completed hops.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -34,23 +38,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 57 ++++++++++++---------------------------------
- index.html | 78 +++++++++++++++++++++++++++++++++++++++++++++++++++-----------
- 2 files changed, 80 insertions(+), 55 deletions(-)
+ CLAUDE.md  | 54 +++++++++++++++++++++++++++++++++++++++---------------
+ index.html | 28 +++++++++++++++++++++++++++-
+ 2 files changed, 66 insertions(+), 16 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e1ad0ba Fix incorrect 'All threads fully traced' message on empty hop (0 seconds ago)
-- a7114b7 Update CLAUDE.md with latest commit info (4 minutes ago)
-- ec6396e Add pre-configured test investigation files (6 minutes ago)
-- b6d2280 Add comprehensive test suite and documentation (10 minutes ago)
-- 77a039b Fix missing Finalize Hop button and improve hop progression (15 minutes ago)
-- a8c73c0 Add detailed debugging to hop finalization process (18 minutes ago)
-- f78b054 Update CLAUDE.md with latest changes (23 minutes ago)
-- 4aa4619 Fix trace completion incorrectly showing complete with unallocated swap outputs (25 minutes ago)
-- d919071 Fix swap validation bug where converted funds showed as balanced (31 minutes ago)
-- 37a8ed5 Fix swap validation incorrectly showing balanced with unallocated outputs (43 minutes ago)
+- 3774502 Prevent finalizing empty hops and fix editing completed hops (0 seconds ago)
+- e1ad0ba Fix incorrect 'All threads fully traced' message on empty hop (7 minutes ago)
+- a7114b7 Update CLAUDE.md with latest commit info (11 minutes ago)
+- ec6396e Add pre-configured test investigation files (12 minutes ago)
+- b6d2280 Add comprehensive test suite and documentation (17 minutes ago)
+- 77a039b Fix missing Finalize Hop button and improve hop progression (22 minutes ago)
+- a8c73c0 Add detailed debugging to hop finalization process (25 minutes ago)
+- f78b054 Update CLAUDE.md with latest changes (30 minutes ago)
+- 4aa4619 Fix trace completion incorrectly showing complete with unallocated swap outputs (32 minutes ago)
+- d919071 Fix swap validation bug where converted funds showed as balanced (38 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

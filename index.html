@@ -14448,37 +14448,59 @@ function validateHopCompletion(hopNumber) {
                 });
             });
             
-            // CRITICAL FIX: Use available threads for next hop to determine what's remaining
-            // This properly accounts for:
-            // 1. Remainder threads that were created but not yet allocated
-            // 2. Swap outputs that haven't been traced yet
+            // CRITICAL FIX: Distinguish between untraced funds and funds traced to next hop
+            // Funds traced to non-terminal wallets create threads for the next hop - that's EXPECTED
+            // Only funds that haven't been traced AT ALL in this hop are "remaining/unaccounted"
             const remainingByCurrency = {};
 
-            // Get available threads for the NEXT hop - these are what's actually unallocated
-            const nextHopNumber = hopNumber + 1;
-            console.log(`Getting available threads for Hop ${nextHopNumber} to check for unallocated funds...`);
-            const availableThreadsForNext = getAvailableSourcesForHop(nextHopNumber, null);
-            console.log(`Found ${availableThreadsForNext.length} available threads for Hop ${nextHopNumber}:`, availableThreadsForNext);
+            // Compare what was available at START of this hop vs what was actually used
+            Object.entries(startingART).forEach(([currency, startAmount]) => {
+                const tracedAmount = entryTotalsByCurrency[currency] || 0;
+                const unaccounted = startAmount - tracedAmount;
 
-            // Sum up available amounts by currency - these are the TRUE remaining amounts
-            // This includes swap outputs (new currency) and remainder threads
-            availableThreadsForNext.forEach(thread => {
-                console.log(`Checking thread ${thread.threadId}: ${thread.availableAmount} ${thread.currency} (sourceType: ${thread.sourceType})`);
-                if (thread.availableAmount > 0.01) {
-                    if (!remainingByCurrency[thread.currency]) {
-                        remainingByCurrency[thread.currency] = 0;
-                    }
-                    remainingByCurrency[thread.currency] += thread.availableAmount;
-
-                    // Log swap-created threads specifically for debugging
-                    if (thread.sourceType === 'swap_output') {
-                        console.log(`⚠️ Found unallocated swap output: ${thread.threadId} - ${thread.availableAmount} ${thread.currency}`);
+                // Only consider it "remaining" if we haven't traced it at all
+                if (unaccounted > 0.01) {
+                    // Check if this currency was swapped
+                    if (swappedOutCurrencies.has(currency)) {
+                        // For swapped currencies, we expect the full amount to be in the swap entry
+                        if (tracedAmount < startAmount - 0.01) {
+                            remainingByCurrency[currency] = unaccounted;
+                        }
+                    } else {
+                        // For non-swapped currencies, any untraced amount is truly remaining
+                        remainingByCurrency[currency] = unaccounted;
                     }
                 }
             });
 
-            console.log(`Hop ${hopNumber} validation - FINAL remaining amounts:`, remainingByCurrency);
-            console.log(`Hop ${hopNumber} has balanced: ${Object.keys(remainingByCurrency).length === 0}`);
+            // Special case: Check for swap outputs created IN THIS HOP that haven't been traced
+            hop.entries.forEach(entry => {
+                if (entry.entryType === 'swap' && entry.swapDetails) {
+                    const outputCurrency = entry.swapDetails.toCurrency;
+                    const outputAmount = parseFloat(entry.swapDetails.toAmount || 0);
+
+                    // Check if this swap output has been traced in this same hop
+                    const tracedSwapOutput = hop.entries.filter(e =>
+                        e.entryType === 'trace' &&
+                        e.currency === outputCurrency &&
+                        parseFloat(e.amount) > 0 &&
+                        e.id !== entry.id  // Don't count the swap itself
+                    ).reduce((sum, e) => sum + parseFloat(e.amount), 0);
+
+                    if (tracedSwapOutput < outputAmount - 0.01) {
+                        // Swap output exists but hasn't been traced yet in this hop
+                        // This IS remaining because swaps in the same hop should be traced
+                        if (!remainingByCurrency[outputCurrency]) {
+                            remainingByCurrency[outputCurrency] = 0;
+                        }
+                        remainingByCurrency[outputCurrency] += (outputAmount - tracedSwapOutput);
+                        console.log(`⚠️ Swap output not traced: ${outputAmount - tracedSwapOutput} ${outputCurrency} from swap`);
+                    }
+                }
+            });
+
+            console.log(`Hop ${hopNumber} validation - truly unaccounted amounts:`, remainingByCurrency);
+            console.log(`Hop ${hopNumber} is balanced: ${Object.keys(remainingByCurrency).length === 0}`);
 
             // Add swapped-in currencies to the available threads for next hop
             Object.entries(swappedInAmounts).forEach(([currency, amount]) => {
