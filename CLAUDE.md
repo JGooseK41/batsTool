@@ -3,61 +3,61 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 21:12)
+## Latest Commit (Auto-updated: 2025-09-23 21:28)
 
-**Commit:** f47cb44b8692865e8f6a7ec56c506bf97b5e86f4
+**Commit:** 1caa3907e74ea33c9c10f4ccb26c34d1ab77ddde
 **Author:** Your Name
-**Message:** Add comprehensive graph visualization with proper navigation from trace completion
+**Message:** Implement T-account DAG visualization with hop-centric ART reconciliation
 
-Major improvements to post-completion flow and visualization:
+Major improvements to create a focused T-account style DAG visualization:
 
-## Navigation Fix
-- Changed 'Go to Analysis' button to 'View Investigation Graph' with gradient purple styling
-- Redirects to Flow Diagram tab instead of Analysis tab after trace completion
-- Automatically initializes graph visualization when navigating from completion ceremony
+## Core Design Changes
+- Simplified to DAG-only layout (removed unnecessary layout options)
+- Hop-centric vertical layers with shaded backgrounds
+- T-account style positioning (source nodes left, terminal/writeoff right)
+- Wallet duplication per hop to prevent cyclic flows
 
-## Comprehensive Graph Visualization System
-- Fully interactive, zoomable, pannable graph visualization
-- Multiple layout algorithms:
-  - Hierarchical (default) - Shows hop progression
-  - Force-directed - Physics-based layout
-  - Circular - Radial arrangement
-  - Timeline - Temporal progression
-  - DAG Layout - Directed acyclic graph
+## Universal Wallet Index Integration
+- Uses friendly names from UWI (RED 1, BLACK 2, YELLOW 3, etc.)
+- Correlates directly with permanent wallet IDs
+- Falls back to generating temporary friendly names for unindexed wallets
 
-## Interactive Features
-- Zoom controls (mouse wheel + buttons)
-- Pan by dragging
-- Zoom level indicator (percentage)
-- Fit to screen functionality
-- Search wallets with live filtering
-- Toggle labels and amounts
-- Click nodes for detailed information
-- Hover tooltips
+## ART (Adjusted Root Total) Reconciliation
+- ART displayed at TOP of each hop (what's coming IN)
+- ART displayed at BOTTOM of each hop (what's going OUT)
+- Green background for incoming ART
+- Red background for outgoing ART
+- Visual reconciliation by looking down each hop's shaded area
+- Automatic validation with warning for unbalanced hops
 
-## Visual Design
-- Color-coded nodes by wallet type (gradients for special types)
-- Terminal wallets with purple glow effect
-- Exchange names displayed on terminal nodes
-- Edge amounts shown on connections
-- Comprehensive legend
-- Statistics panel with totals
+## Currency Swap Handling
+- Diamond-shaped nodes for swaps with ⇄ symbol
+- Shows currency conversion (e.g., 'SWAP USDC→USDT')
+- Properly calculates ART changes when currencies convert
+- Displays conversion amounts on swap nodes
+- Accounts for currency changes in hop validation
 
-## Export Capabilities
-- Export to SVG (vector format, fully zoomable)
-- Export to PNG (high resolution image)
-- Export to PDF-ready format
-- Share functionality with clipboard support
+## Thread-Based Edge Rendering
+- Color-coded edges by source thread
+- Thread notation shown on edges (V1-T1, etc.)
+- Amounts displayed with thread information
+- Dashed lines for inter-hop connections
+- Terminal wallet edges highlighted in purple
 
-## Technical Implementation
-- Pure SVG rendering for crisp visuals at any zoom
-- Efficient graph data structure from investigation
-- Real-time layout recalculation
-- Node clustering by hop number
-- Minimap placeholder for large graphs
-- Responsive design
+## Visual Hierarchy
+- Alternating hop background colors for clarity
+- Hop titles (VICTIMS, HOP 1, HOP 2, etc.)
+- Triangle nodes for writeoffs
+- Glowing purple circles for terminal/exchange wallets
+- Clear T-account structure within each hop
 
-This provides users with a clear, guided path from trace completion to a detailed, professional visualization of their investigation that can be zoomed, exported, and shared.
+## Validation Features
+- Real-time ART validation per hop
+- Warning indicators for unaccounted funds
+- Shows differences when hop is unbalanced
+- Accounts for swaps, writeoffs, and terminal wallets
+
+This creates a clear, accountant-friendly visualization where each hop can be reconciled by looking at the IN amount at top, following the transactions through the hop, and verifying the OUT amount at bottom matches expectations.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -65,23 +65,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  61 ++--
- index.html | 935 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 957 insertions(+), 39 deletions(-)
+ CLAUDE.md  |  94 ++++---
+ index.html | 813 ++++++++++++++++++++++++++++++++++++++++++-------------------
+ 2 files changed, 633 insertions(+), 274 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f47cb44 Add comprehensive graph visualization with proper navigation from trace completion (0 seconds ago)
-- dcd1638 Fix validation incorrectly showing traced funds as unaccounted (14 minutes ago)
-- 3774502 Prevent finalizing empty hops and fix editing completed hops (28 minutes ago)
-- e1ad0ba Fix incorrect 'All threads fully traced' message on empty hop (35 minutes ago)
-- a7114b7 Update CLAUDE.md with latest commit info (39 minutes ago)
-- ec6396e Add pre-configured test investigation files (41 minutes ago)
-- b6d2280 Add comprehensive test suite and documentation (45 minutes ago)
-- 77a039b Fix missing Finalize Hop button and improve hop progression (50 minutes ago)
-- a8c73c0 Add detailed debugging to hop finalization process (53 minutes ago)
-- f78b054 Update CLAUDE.md with latest changes (58 minutes ago)
+- 1caa390 Implement T-account DAG visualization with hop-centric ART reconciliation (0 seconds ago)
+- f47cb44 Add comprehensive graph visualization with proper navigation from trace completion (16 minutes ago)
+- dcd1638 Fix validation incorrectly showing traced funds as unaccounted (30 minutes ago)
+- 3774502 Prevent finalizing empty hops and fix editing completed hops (44 minutes ago)
+- e1ad0ba Fix incorrect 'All threads fully traced' message on empty hop (51 minutes ago)
+- a7114b7 Update CLAUDE.md with latest commit info (55 minutes ago)
+- ec6396e Add pre-configured test investigation files (57 minutes ago)
+- b6d2280 Add comprehensive test suite and documentation (61 minutes ago)
+- 77a039b Fix missing Finalize Hop button and improve hop progression (66 minutes ago)
+- a8c73c0 Add detailed debugging to hop finalization process (70 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

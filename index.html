@@ -2084,6 +2084,8 @@
                             </div>
 
                             <div class="export-controls" style="display: flex; gap: 8px;">
+                                <button onclick="expandAllHops()" class="btn btn-primary" title="Expand All Hops">📂 Expand All</button>
+                                <button onclick="collapseAllHops()" class="btn btn-primary" title="Collapse All Hops">📁 Collapse All</button>
                                 <button onclick="exportGraphToPDF()" class="btn btn-success" title="Export as PDF">📄 PDF</button>
                                 <button onclick="exportGraphToSVG()" class="btn btn-success" title="Export as SVG">🎨 SVG</button>
                                 <button onclick="exportGraphToPNG()" class="btn btn-success" title="Export as PNG">🖼️ PNG</button>
@@ -27330,7 +27332,9 @@ To (RED Wallet): ${transfer.to}`;
             showAmounts: true,
             nodes: [],
             edges: [],
-            selectedNode: null
+            selectedNode: null,
+            collapsedHops: new Set(),  // Track which hops are collapsed
+            detailLevel: 'medium'      // 'overview', 'medium', 'detailed'
         };
 
         // Initialize the graph visualization
