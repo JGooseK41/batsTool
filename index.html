@@ -2058,6 +2058,134 @@
 
                 <!-- Flow Diagram Tab -->
                 <div id="flowdiagram-tab" class="tab-content">
+                    <!-- Enhanced Graph Visualization Container -->
+                    <div id="visualizationContainer" style="width: 100%; min-height: 800px; background: #f8f9fa;">
+                        <div class="visualization-header" style="padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <h2 style="margin: 0 0 10px 0; font-size: 2rem;">🌐 Investigation Flow Visualization</h2>
+                            <p style="margin: 0; opacity: 0.95;">Interactive graph showing the complete flow of stolen funds through the blockchain</p>
+                        </div>
+
+                        <div class="visualization-controls" style="padding: 15px 20px; background: white; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <div class="zoom-controls" style="display: flex; gap: 8px;">
+                                <button onclick="zoomIn()" class="btn btn-secondary" title="Zoom In">🔍+</button>
+                                <button onclick="zoomOut()" class="btn btn-secondary" title="Zoom Out">🔍-</button>
+                                <button onclick="resetZoom()" class="btn btn-secondary" title="Reset View">🎯</button>
+                                <button onclick="fitToScreen()" class="btn btn-secondary" title="Fit to Screen">📐</button>
+                                <span id="zoomLevel" style="padding: 8px 12px; background: #f8f9fa; border-radius: 4px; font-family: monospace;">100%</span>
+                            </div>
+
+                            <div class="layout-controls">
+                                <select id="layoutType" onchange="changeLayout(this.value)" class="form-control" style="padding: 8px 12px; border-radius: 4px;">
+                                    <option value="hierarchical">Hierarchical Layout</option>
+                                    <option value="force">Force-Directed</option>
+                                    <option value="circular">Circular</option>
+                                    <option value="timeline">Timeline</option>
+                                    <option value="dagre">DAG Layout</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-controls" style="display: flex; gap: 8px;">
+                                <input type="text" id="searchWallet" placeholder="Search wallet..." onkeyup="searchGraph(this.value)"
+                                       style="padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 4px; width: 200px;">
+                                <button onclick="toggleLabels()" class="btn btn-secondary" title="Toggle Labels">🏷️</button>
+                                <button onclick="toggleAmounts()" class="btn btn-secondary" title="Toggle Amounts">💰</button>
+                            </div>
+
+                            <div class="export-controls" style="display: flex; gap: 8px;">
+                                <button onclick="exportGraphToPDF()" class="btn btn-success" title="Export as PDF">📄 PDF</button>
+                                <button onclick="exportGraphToSVG()" class="btn btn-success" title="Export as SVG">🎨 SVG</button>
+                                <button onclick="exportGraphToPNG()" class="btn btn-success" title="Export as PNG">🖼️ PNG</button>
+                                <button onclick="shareGraph()" class="btn btn-info" title="Share">📤 Share</button>
+                            </div>
+                        </div>
+
+                        <div style="position: relative; width: 100%; background: white;">
+                            <div id="graphContainer" style="width: 100%; height: 700px; position: relative; overflow: hidden; cursor: grab;">
+                                <svg id="investigationGraph" width="100%" height="100%">
+                                    <defs>
+                                        <!-- Define gradients and patterns -->
+                                        <linearGradient id="victimGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#ee5a24;stop-opacity:1" />
+                                        </linearGradient>
+                                        <linearGradient id="exchangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#a29bfe;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#6c5ce7;stop-opacity:1" />
+                                        </linearGradient>
+                                        <linearGradient id="mixerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#636e72;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#2d3436;stop-opacity:1" />
+                                        </linearGradient>
+                                        <!-- Arrow markers for different edge types -->
+                                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                            <polygon points="0 0, 10 3, 0 6" fill="#555" />
+                                        </marker>
+                                        <marker id="arrowhead-terminal" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                            <polygon points="0 0, 10 3, 0 6" fill="#6c5ce7" />
+                                        </marker>
+                                    </defs>
+                                    <g id="graphContent" transform="translate(0,0) scale(1)">
+                                        <!-- Graph will be dynamically generated here -->
+                                    </g>
+                                </svg>
+
+                                <!-- Minimap for navigation -->
+                                <div id="miniMap" style="position: absolute; bottom: 20px; right: 20px; width: 200px; height: 150px; background: white; border: 2px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+                                    <svg id="miniMapSvg" width="100%" height="100%" style="background: #f8f9fa;">
+                                        <!-- Minimap content -->
+                                    </svg>
+                                    <div id="viewportIndicator" style="position: absolute; border: 2px solid #007bff; background: rgba(0,123,255,0.1); pointer-events: none;"></div>
+                                </div>
+
+                                <!-- Node details popup -->
+                                <div id="nodeDetailsPopup" style="display: none; position: absolute; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; max-width: 300px;">
+                                    <div id="nodeDetailsContent"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="visualization-legend" style="padding: 20px; background: white; border-top: 1px solid #dee2e6;">
+                            <h4 style="margin: 0 0 15px 0; color: #495057;">Legend</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 20px; font-size: 14px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="display: inline-block; width: 24px; height: 24px; background: linear-gradient(135deg, #ff6b6b, #ee5a24); border-radius: 50%;"></span>
+                                    <span>Victim / RED Wallet</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="display: inline-block; width: 24px; height: 24px; background: #2d3436; border-radius: 50%;"></span>
+                                    <span>BLACK Wallet (Attacker)</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="display: inline-block; width: 24px; height: 24px; background: linear-gradient(135deg, #a29bfe, #6c5ce7); border-radius: 50%;"></span>
+                                    <span>PURPLE (Exchange)</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="display: inline-block; width: 24px; height: 24px; background: #636e72; border-radius: 50%;"></span>
+                                    <span>GRAY (Mixer/Obfuscated)</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="display: inline-block; width: 24px; height: 24px; background: #fdcb6e; border-radius: 50%;"></span>
+                                    <span>YELLOW (Hub/Convergence)</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="display: inline-block; width: 24px; height: 24px; background: #00b894; border-radius: 50%;"></span>
+                                    <span>GREEN (Clean/Verified)</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="display: inline-block; width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 20px solid #e17055;"></span>
+                                    <span>Swap/Conversion</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Statistics panel -->
+                        <div id="graphStats" style="padding: 20px; background: #f8f9fa; border-top: 1px solid #dee2e6;">
+                            <h4 style="margin: 0 0 15px 0; color: #495057;">Graph Statistics</h4>
+                            <div id="statsContent" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <!-- Stats will be populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
                     <div class="section-title">Visual Flow Diagram</div>
                     
                     <div id="flowDiagramControls" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
@@ -12019,8 +12147,8 @@ function showTraceCompletionCeremony(hop, threadsCreated) {
                 💾 Save Investigation File
             </button>
             <button class="btn btn-primary" onclick="closeTraceCompletionAndGoToAnalysis()"
-                    style="padding: 12px 30px;">
-                📊 Go to Analysis
+                    style="padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; font-weight: bold;">
+                🌐 View Investigation Graph
             </button>
             <button class="btn btn-secondary" onclick="closeTraceCompletionModal()">
                 Continue Reviewing
@@ -12074,7 +12202,12 @@ function saveInvestigationAfterCompletion() {
 
 function closeTraceCompletionAndGoToAnalysis() {
     closeTraceCompletionModal();
-    switchTab('analysis');
+    // Navigate to flow diagram visualization instead of analysis tab
+    switchTab('flowdiagram');
+    // Initialize the visualization after a short delay
+    setTimeout(() => {
+        initializeGraphVisualization();
+    }, 100);
 }
 
 function closeTraceCompletionModal() {
@@ -27188,6 +27321,802 @@ To (RED Wallet): ${transfer.to}`;
             
             // Update card appearance on load
             updateSetupCard();
+        });
+
+        // ============================================
+        // GRAPH VISUALIZATION SYSTEM
+        // ============================================
+
+        let graphState = {
+            zoom: 1,
+            translateX: 0,
+            translateY: 0,
+            isDragging: false,
+            dragStartX: 0,
+            dragStartY: 0,
+            showLabels: true,
+            showAmounts: true,
+            currentLayout: 'hierarchical',
+            nodes: [],
+            edges: [],
+            selectedNode: null
+        };
+
+        // Initialize the graph visualization
+        function initializeGraphVisualization() {
+            console.log('Initializing graph visualization...');
+
+            // Build graph data from investigation
+            buildGraphData();
+
+            // Render the graph
+            renderGraph();
+
+            // Setup event handlers
+            setupGraphInteraction();
+
+            // Update statistics
+            updateGraphStatistics();
+
+            // Fit to screen initially
+            setTimeout(fitToScreen, 100);
+        }
+
+        // Build graph data from investigation
+        function buildGraphData() {
+            graphState.nodes = [];
+            graphState.edges = [];
+            const nodeMap = {};
+            let nodeId = 0;
+
+            // Add victim nodes
+            investigation.victims?.forEach(victim => {
+                victim.transactions?.forEach(tx => {
+                    const victimNodeId = `victim_${victim.id}_${tx.id}`;
+                    if (!nodeMap[victimNodeId]) {
+                        nodeMap[victimNodeId] = nodeId++;
+                        graphState.nodes.push({
+                            id: victimNodeId,
+                            label: `Victim ${victim.id}`,
+                            type: 'victim',
+                            wallet: tx.receivingWallet,
+                            amount: parseFloat(tx.amount),
+                            currency: tx.currency,
+                            x: 100,
+                            y: 100 + (nodeId * 100)
+                        });
+                    }
+                });
+            });
+
+            // Add nodes from hops
+            investigation.hops?.forEach(hop => {
+                hop.entries?.forEach(entry => {
+                    if (entry.entryType === 'trace') {
+                        // Add from wallet
+                        if (entry.fromWallet && !nodeMap[entry.fromWallet]) {
+                            nodeMap[entry.fromWallet] = nodeId++;
+                            graphState.nodes.push({
+                                id: entry.fromWallet,
+                                label: getWalletLabel(entry.fromWallet, entry.fromWalletType),
+                                type: entry.fromWalletType || 'black',
+                                wallet: entry.fromWallet,
+                                hopNumber: hop.hopNumber,
+                                x: 200 + (hop.hopNumber * 250),
+                                y: 100 + (nodeId * 80)
+                            });
+                        }
+
+                        // Add to wallet
+                        if (entry.toWallet && !nodeMap[entry.toWallet]) {
+                            nodeMap[entry.toWallet] = nodeId++;
+                            graphState.nodes.push({
+                                id: entry.toWallet,
+                                label: getWalletLabel(entry.toWallet, entry.toWalletType),
+                                type: entry.toWalletType || 'black',
+                                wallet: entry.toWallet,
+                                hopNumber: hop.hopNumber,
+                                isTerminal: entry.isTerminalWallet,
+                                exchangeName: entry.exchangeName,
+                                x: 200 + ((hop.hopNumber + 1) * 250),
+                                y: 100 + (nodeId * 80)
+                            });
+                        }
+
+                        // Add edge
+                        graphState.edges.push({
+                            from: entry.fromWallet,
+                            to: entry.toWallet,
+                            amount: parseFloat(entry.amount),
+                            currency: entry.currency,
+                            txHash: entry.txHash,
+                            hopNumber: hop.hopNumber,
+                            isTerminal: entry.isTerminalWallet
+                        });
+                    }
+                });
+            });
+
+            // Apply layout
+            applyLayout(graphState.currentLayout);
+        }
+
+        // Get wallet label
+        function getWalletLabel(address, type) {
+            // Check if wallet has a known name
+            const walletEntry = investigation.universalWalletIndex?.find(w => w.address === address);
+            if (walletEntry?.permanentId) {
+                return walletEntry.permanentId;
+            }
+            // Shorten address
+            return address.substring(0, 6) + '...' + address.substring(address.length - 4);
+        }
+
+        // Apply graph layout
+        function applyLayout(layoutType) {
+            const width = document.getElementById('graphContainer').offsetWidth;
+            const height = document.getElementById('graphContainer').offsetHeight;
+
+            switch(layoutType) {
+                case 'hierarchical':
+                    applyHierarchicalLayout(width, height);
+                    break;
+                case 'force':
+                    applyForceLayout(width, height);
+                    break;
+                case 'circular':
+                    applyCircularLayout(width, height);
+                    break;
+                case 'timeline':
+                    applyTimelineLayout(width, height);
+                    break;
+                case 'dagre':
+                    applyDAGLayout(width, height);
+                    break;
+            }
+        }
+
+        // Hierarchical layout
+        function applyHierarchicalLayout(width, height) {
+            const layers = {};
+
+            // Group nodes by hop number
+            graphState.nodes.forEach(node => {
+                const layer = node.hopNumber || 0;
+                if (!layers[layer]) layers[layer] = [];
+                layers[layer].push(node);
+            });
+
+            // Position nodes
+            const layerKeys = Object.keys(layers).sort((a, b) => a - b);
+            const xSpacing = width / (layerKeys.length + 1);
+
+            layerKeys.forEach((layer, layerIndex) => {
+                const nodes = layers[layer];
+                const ySpacing = height / (nodes.length + 1);
+
+                nodes.forEach((node, nodeIndex) => {
+                    node.x = xSpacing * (layerIndex + 1);
+                    node.y = ySpacing * (nodeIndex + 1);
+                });
+            });
+        }
+
+        // Force-directed layout
+        function applyForceLayout(width, height) {
+            // Simple force simulation
+            const iterations = 50;
+            const k = Math.sqrt((width * height) / graphState.nodes.length);
+
+            for (let i = 0; i < iterations; i++) {
+                // Repulsive forces
+                graphState.nodes.forEach((node1, i) => {
+                    graphState.nodes.forEach((node2, j) => {
+                        if (i !== j) {
+                            const dx = node1.x - node2.x;
+                            const dy = node1.y - node2.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            if (distance > 0) {
+                                const force = k * k / distance;
+                                node1.x += (dx / distance) * force * 0.1;
+                                node1.y += (dy / distance) * force * 0.1;
+                            }
+                        }
+                    });
+                });
+
+                // Attractive forces (edges)
+                graphState.edges.forEach(edge => {
+                    const node1 = graphState.nodes.find(n => n.id === edge.from);
+                    const node2 = graphState.nodes.find(n => n.id === edge.to);
+                    if (node1 && node2) {
+                        const dx = node2.x - node1.x;
+                        const dy = node2.y - node1.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance > 0) {
+                            const force = distance * distance / k;
+                            const fx = (dx / distance) * force * 0.1;
+                            const fy = (dy / distance) * force * 0.1;
+                            node1.x += fx;
+                            node1.y += fy;
+                            node2.x -= fx;
+                            node2.y -= fy;
+                        }
+                    }
+                });
+
+                // Keep nodes within bounds
+                graphState.nodes.forEach(node => {
+                    node.x = Math.max(50, Math.min(width - 50, node.x));
+                    node.y = Math.max(50, Math.min(height - 50, node.y));
+                });
+            }
+        }
+
+        // Circular layout
+        function applyCircularLayout(width, height) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) * 0.4;
+
+            graphState.nodes.forEach((node, index) => {
+                const angle = (2 * Math.PI * index) / graphState.nodes.length;
+                node.x = centerX + radius * Math.cos(angle);
+                node.y = centerY + radius * Math.sin(angle);
+            });
+        }
+
+        // Timeline layout
+        function applyTimelineLayout(width, height) {
+            // Group nodes by timestamp/hop order
+            const timeline = {};
+            let timeIndex = 0;
+
+            // First pass: victims
+            graphState.nodes.filter(n => n.type === 'victim').forEach(node => {
+                if (!timeline[0]) timeline[0] = [];
+                timeline[0].push(node);
+            });
+
+            // Second pass: by hop number
+            investigation.hops?.forEach(hop => {
+                const hopTime = hop.hopNumber;
+                graphState.nodes.filter(n => n.hopNumber === hop.hopNumber).forEach(node => {
+                    if (!timeline[hopTime]) timeline[hopTime] = [];
+                    timeline[hopTime].push(node);
+                });
+            });
+
+            // Position nodes
+            const timeKeys = Object.keys(timeline).sort((a, b) => a - b);
+            const xSpacing = width / (timeKeys.length + 1);
+
+            timeKeys.forEach((time, timeIndex) => {
+                const nodes = timeline[time];
+                const ySpacing = height / (nodes.length + 1);
+
+                nodes.forEach((node, nodeIndex) => {
+                    node.x = xSpacing * (timeIndex + 1);
+                    node.y = ySpacing * (nodeIndex + 1);
+                });
+            });
+        }
+
+        // DAG layout
+        function applyDAGLayout(width, height) {
+            // Similar to hierarchical but with better edge routing
+            applyHierarchicalLayout(width, height);
+        }
+
+        // Render the graph
+        function renderGraph() {
+            const svg = document.getElementById('investigationGraph');
+            const content = document.getElementById('graphContent');
+
+            // Clear existing content
+            while (content.firstChild) {
+                content.removeChild(content.firstChild);
+            }
+
+            // Draw edges
+            graphState.edges.forEach(edge => {
+                const fromNode = graphState.nodes.find(n => n.id === edge.from);
+                const toNode = graphState.nodes.find(n => n.id === edge.to);
+
+                if (fromNode && toNode) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', fromNode.x);
+                    line.setAttribute('y1', fromNode.y);
+                    line.setAttribute('x2', toNode.x);
+                    line.setAttribute('y2', toNode.y);
+                    line.setAttribute('stroke', edge.isTerminal ? '#6c5ce7' : '#555');
+                    line.setAttribute('stroke-width', '2');
+                    line.setAttribute('marker-end', edge.isTerminal ? 'url(#arrowhead-terminal)' : 'url(#arrowhead)');
+                    line.setAttribute('opacity', '0.6');
+                    line.style.cursor = 'pointer';
+
+                    // Add edge label if amounts are shown
+                    if (graphState.showAmounts) {
+                        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        text.setAttribute('x', (fromNode.x + toNode.x) / 2);
+                        text.setAttribute('y', (fromNode.y + toNode.y) / 2 - 5);
+                        text.setAttribute('text-anchor', 'middle');
+                        text.setAttribute('font-size', '12');
+                        text.setAttribute('fill', '#666');
+                        text.textContent = `${edge.amount.toLocaleString()} ${edge.currency}`;
+                        content.appendChild(text);
+                    }
+
+                    content.appendChild(line);
+                }
+            });
+
+            // Draw nodes
+            graphState.nodes.forEach(node => {
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+                g.style.cursor = 'pointer';
+
+                // Node circle
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('r', node.isTerminal ? '25' : '20');
+                circle.setAttribute('fill', getNodeColor(node.type));
+                circle.setAttribute('stroke', '#fff');
+                circle.setAttribute('stroke-width', '2');
+
+                // Add glow for terminal nodes
+                if (node.isTerminal) {
+                    circle.setAttribute('filter', 'drop-shadow(0 0 10px rgba(108, 92, 231, 0.5))');
+                }
+
+                g.appendChild(circle);
+
+                // Node label
+                if (graphState.showLabels) {
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('y', '35');
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('font-size', '12');
+                    text.setAttribute('fill', '#333');
+                    text.textContent = node.label;
+                    g.appendChild(text);
+
+                    // Exchange name for terminal nodes
+                    if (node.exchangeName) {
+                        const exchangeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        exchangeText.setAttribute('y', '48');
+                        exchangeText.setAttribute('text-anchor', 'middle');
+                        exchangeText.setAttribute('font-size', '10');
+                        exchangeText.setAttribute('fill', '#6c5ce7');
+                        exchangeText.setAttribute('font-weight', 'bold');
+                        exchangeText.textContent = node.exchangeName;
+                        g.appendChild(exchangeText);
+                    }
+                }
+
+                // Click handler
+                g.addEventListener('click', () => showNodeDetails(node));
+                g.addEventListener('mouseenter', (e) => showNodeTooltip(e, node));
+                g.addEventListener('mouseleave', hideNodeTooltip);
+
+                content.appendChild(g);
+            });
+
+            // Update transform
+            updateGraphTransform();
+        }
+
+        // Get node color based on type
+        function getNodeColor(type) {
+            const colors = {
+                'victim': 'url(#victimGradient)',
+                'red': '#ee5a24',
+                'black': '#2d3436',
+                'purple': 'url(#exchangeGradient)',
+                'gray': 'url(#mixerGradient)',
+                'yellow': '#fdcb6e',
+                'brown': '#6c4e31',
+                'green': '#00b894',
+                'blue': '#74b9ff',
+                'pink': '#fd79a8',
+                'orange': '#e17055'
+            };
+            return colors[type] || '#95a5a6';
+        }
+
+        // Setup graph interaction
+        function setupGraphInteraction() {
+            const svg = document.getElementById('investigationGraph');
+            const container = document.getElementById('graphContainer');
+
+            // Pan functionality
+            svg.addEventListener('mousedown', startDrag);
+            svg.addEventListener('mousemove', drag);
+            svg.addEventListener('mouseup', endDrag);
+            svg.addEventListener('mouseleave', endDrag);
+
+            // Zoom with mouse wheel
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                graphState.zoom *= delta;
+                graphState.zoom = Math.max(0.1, Math.min(5, graphState.zoom));
+                updateGraphTransform();
+                updateZoomLevel();
+            });
+        }
+
+        // Drag functions
+        function startDrag(e) {
+            if (e.target.tagName === 'svg') {
+                graphState.isDragging = true;
+                graphState.dragStartX = e.clientX - graphState.translateX;
+                graphState.dragStartY = e.clientY - graphState.translateY;
+                e.currentTarget.style.cursor = 'grabbing';
+            }
+        }
+
+        function drag(e) {
+            if (graphState.isDragging) {
+                graphState.translateX = e.clientX - graphState.dragStartX;
+                graphState.translateY = e.clientY - graphState.dragStartY;
+                updateGraphTransform();
+            }
+        }
+
+        function endDrag(e) {
+            graphState.isDragging = false;
+            e.currentTarget.style.cursor = 'grab';
+        }
+
+        // Update graph transform
+        function updateGraphTransform() {
+            const content = document.getElementById('graphContent');
+            content.setAttribute('transform',
+                `translate(${graphState.translateX}, ${graphState.translateY}) scale(${graphState.zoom})`);
+        }
+
+        // Zoom controls
+        function zoomIn() {
+            graphState.zoom *= 1.2;
+            graphState.zoom = Math.min(5, graphState.zoom);
+            updateGraphTransform();
+            updateZoomLevel();
+        }
+
+        function zoomOut() {
+            graphState.zoom *= 0.8;
+            graphState.zoom = Math.max(0.1, graphState.zoom);
+            updateGraphTransform();
+            updateZoomLevel();
+        }
+
+        function resetZoom() {
+            graphState.zoom = 1;
+            graphState.translateX = 0;
+            graphState.translateY = 0;
+            updateGraphTransform();
+            updateZoomLevel();
+        }
+
+        function fitToScreen() {
+            if (graphState.nodes.length === 0) return;
+
+            const container = document.getElementById('graphContainer');
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+
+            // Find bounds
+            let minX = Infinity, minY = Infinity;
+            let maxX = -Infinity, maxY = -Infinity;
+
+            graphState.nodes.forEach(node => {
+                minX = Math.min(minX, node.x);
+                minY = Math.min(minY, node.y);
+                maxX = Math.max(maxX, node.x);
+                maxY = Math.max(maxY, node.y);
+            });
+
+            const graphWidth = maxX - minX + 100;
+            const graphHeight = maxY - minY + 100;
+
+            const scaleX = width / graphWidth;
+            const scaleY = height / graphHeight;
+            graphState.zoom = Math.min(scaleX, scaleY, 1);
+
+            graphState.translateX = (width - graphWidth * graphState.zoom) / 2 - minX * graphState.zoom + 50 * graphState.zoom;
+            graphState.translateY = (height - graphHeight * graphState.zoom) / 2 - minY * graphState.zoom + 50 * graphState.zoom;
+
+            updateGraphTransform();
+            updateZoomLevel();
+        }
+
+        function updateZoomLevel() {
+            const zoomLevel = document.getElementById('zoomLevel');
+            if (zoomLevel) {
+                zoomLevel.textContent = Math.round(graphState.zoom * 100) + '%';
+            }
+        }
+
+        // Layout change
+        function changeLayout(layoutType) {
+            graphState.currentLayout = layoutType;
+            applyLayout(layoutType);
+            renderGraph();
+        }
+
+        // Toggle functions
+        function toggleLabels() {
+            graphState.showLabels = !graphState.showLabels;
+            renderGraph();
+        }
+
+        function toggleAmounts() {
+            graphState.showAmounts = !graphState.showAmounts;
+            renderGraph();
+        }
+
+        // Search function
+        function searchGraph(query) {
+            const lowerQuery = query.toLowerCase();
+
+            graphState.nodes.forEach(node => {
+                const element = document.querySelector(`[transform*="${node.x}, ${node.y}"]`);
+                if (element) {
+                    const matches = node.wallet.toLowerCase().includes(lowerQuery) ||
+                                   node.label.toLowerCase().includes(lowerQuery) ||
+                                   (node.exchangeName && node.exchangeName.toLowerCase().includes(lowerQuery));
+
+                    element.style.opacity = matches || !query ? '1' : '0.2';
+                }
+            });
+        }
+
+        // Show node details
+        function showNodeDetails(node) {
+            graphState.selectedNode = node;
+            const popup = document.getElementById('nodeDetailsPopup');
+            const content = document.getElementById('nodeDetailsContent');
+
+            // Build details HTML
+            let html = `
+                <h4 style="margin: 0 0 10px 0;">${node.label}</h4>
+                <div style="font-size: 12px; color: #666;">
+                    <p><strong>Type:</strong> ${node.type.toUpperCase()}</p>
+                    <p><strong>Address:</strong><br>${node.wallet}</p>
+            `;
+
+            if (node.exchangeName) {
+                html += `<p><strong>Exchange:</strong> ${node.exchangeName}</p>`;
+            }
+
+            if (node.amount) {
+                html += `<p><strong>Amount:</strong> ${node.amount.toLocaleString()} ${node.currency}</p>`;
+            }
+
+            // Find related transactions
+            const relatedEdges = graphState.edges.filter(e => e.from === node.id || e.to === node.id);
+            if (relatedEdges.length > 0) {
+                html += '<p><strong>Transactions:</strong></p><ul style="margin: 5px 0; padding-left: 20px;">';
+                relatedEdges.forEach(edge => {
+                    html += `<li>${edge.amount.toLocaleString()} ${edge.currency}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            html += '</div>';
+            content.innerHTML = html;
+
+            // Position popup
+            popup.style.display = 'block';
+            popup.style.left = (node.x * graphState.zoom + graphState.translateX + 30) + 'px';
+            popup.style.top = (node.y * graphState.zoom + graphState.translateY - 30) + 'px';
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                if (graphState.selectedNode === node) {
+                    popup.style.display = 'none';
+                    graphState.selectedNode = null;
+                }
+            }, 5000);
+        }
+
+        // Tooltip functions
+        function showNodeTooltip(e, node) {
+            // Simple tooltip on hover
+            const tooltip = document.createElement('div');
+            tooltip.id = 'nodeTooltip';
+            tooltip.style.cssText = `
+                position: absolute;
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                pointer-events: none;
+                z-index: 1001;
+            `;
+            tooltip.textContent = `${node.label} (${node.type})`;
+
+            const container = document.getElementById('graphContainer');
+            container.appendChild(tooltip);
+
+            tooltip.style.left = (e.offsetX + 10) + 'px';
+            tooltip.style.top = (e.offsetY - 30) + 'px';
+        }
+
+        function hideNodeTooltip() {
+            const tooltip = document.getElementById('nodeTooltip');
+            if (tooltip) tooltip.remove();
+        }
+
+        // Update statistics
+        function updateGraphStatistics() {
+            const statsContent = document.getElementById('statsContent');
+            if (!statsContent) return;
+
+            const totalNodes = graphState.nodes.length;
+            const totalEdges = graphState.edges.length;
+            const terminalNodes = graphState.nodes.filter(n => n.isTerminal).length;
+            const exchanges = [...new Set(graphState.nodes.filter(n => n.exchangeName).map(n => n.exchangeName))];
+
+            // Calculate total amounts by currency
+            const totalsByCurrency = {};
+            graphState.edges.forEach(edge => {
+                if (!totalsByCurrency[edge.currency]) {
+                    totalsByCurrency[edge.currency] = 0;
+                }
+                totalsByCurrency[edge.currency] += edge.amount;
+            });
+
+            statsContent.innerHTML = `
+                <div class="stat-card" style="padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h5 style="margin: 0 0 5px 0; color: #6c757d; font-size: 12px;">Total Nodes</h5>
+                    <p style="margin: 0; font-size: 24px; font-weight: bold;">${totalNodes}</p>
+                </div>
+                <div class="stat-card" style="padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h5 style="margin: 0 0 5px 0; color: #6c757d; font-size: 12px;">Total Edges</h5>
+                    <p style="margin: 0; font-size: 24px; font-weight: bold;">${totalEdges}</p>
+                </div>
+                <div class="stat-card" style="padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h5 style="margin: 0 0 5px 0; color: #6c757d; font-size: 12px;">Terminal Wallets</h5>
+                    <p style="margin: 0; font-size: 24px; font-weight: bold; color: #6c5ce7;">${terminalNodes}</p>
+                </div>
+                <div class="stat-card" style="padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h5 style="margin: 0 0 5px 0; color: #6c757d; font-size: 12px;">Exchanges</h5>
+                    <p style="margin: 0; font-size: 24px; font-weight: bold;">${exchanges.length}</p>
+                </div>
+                ${Object.entries(totalsByCurrency).map(([currency, total]) => `
+                    <div class="stat-card" style="padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h5 style="margin: 0 0 5px 0; color: #6c757d; font-size: 12px;">Total ${currency}</h5>
+                        <p style="margin: 0; font-size: 20px; font-weight: bold;">${total.toLocaleString()}</p>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // Export functions
+        async function exportGraphToPDF() {
+            showNotification('Generating PDF... This may take a moment.', 'info');
+
+            // Create a temporary canvas
+            const svg = document.getElementById('investigationGraph');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas size
+            canvas.width = 1920;
+            canvas.height = 1080;
+
+            // Draw white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Convert SVG to image
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                // Convert to PDF using jsPDF (would need to include library)
+                // For now, export as image
+                canvas.toBlob(function(blob) {
+                    const pdfUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = pdfUrl;
+                    a.download = `BATS_Graph_${investigation.caseId || 'export'}_${new Date().toISOString().split('T')[0]}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(pdfUrl);
+                    URL.revokeObjectURL(url);
+                    showNotification('Graph exported as image (PDF library not loaded)', 'success');
+                });
+            };
+            img.src = url;
+        }
+
+        function exportGraphToSVG() {
+            const svg = document.getElementById('investigationGraph');
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `BATS_Graph_${investigation.caseId || 'export'}_${new Date().toISOString().split('T')[0]}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showNotification('Graph exported as SVG', 'success');
+        }
+
+        function exportGraphToPNG() {
+            const svg = document.getElementById('investigationGraph');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = 1920;
+            canvas.height = 1080;
+
+            // White background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Convert SVG to image
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob(function(blob) {
+                    const pngUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = pngUrl;
+                    a.download = `BATS_Graph_${investigation.caseId || 'export'}_${new Date().toISOString().split('T')[0]}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(pngUrl);
+                    URL.revokeObjectURL(url);
+                });
+            };
+            img.src = url;
+
+            showNotification('Graph exported as PNG', 'success');
+        }
+
+        function shareGraph() {
+            // Create shareable link or copy graph data
+            const graphData = {
+                investigation: investigation.caseId,
+                nodes: graphState.nodes.length,
+                edges: graphState.edges.length,
+                timestamp: new Date().toISOString()
+            };
+
+            const shareText = `BATS Investigation Graph - ${investigation.caseId || 'Untitled'}\n${graphState.nodes.length} nodes, ${graphState.edges.length} edges\nExported: ${new Date().toLocaleString()}`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'BATS Investigation Graph',
+                    text: shareText
+                }).catch(err => console.log('Share failed:', err));
+            } else {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    showNotification('Graph summary copied to clipboard', 'success');
+                });
+            }
+        }
+
         });
     </script>
 </body>
