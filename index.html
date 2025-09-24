@@ -18715,20 +18715,91 @@ async function lookupWizardTransaction() {
                 const sourceWallet = window.hopWizardData.selectedThreads && window.hopWizardData.selectedThreads.length > 0 ?
                     getAvailableSourcesForHop(window.hopWizardData.hopNumber, null).find(t => t.threadId === window.hopWizardData.selectedThreads[0])?.sourceWallet : null;
 
-                // Pre-classify outputs based on change detection
+                // Pre-classify outputs based on advanced change detection heuristics
                 relevantTransfers.forEach((transfer, index) => {
                     const isBackToSender = sourceWallet && transfer.to.toLowerCase() === sourceWallet.toLowerCase();
-                    const isRoundAmount = transfer.amount % 1 === 0 || transfer.amount % 10 === 0;
 
+                    // Advanced change detection heuristics
+                    let changeScore = 0;
+                    let changeReasons = [];
+
+                    // 1. Same address (100% change)
+                    if (isBackToSender) {
+                        changeScore = 100;
+                        changeReasons.push('Same address as sender');
+                    } else {
+                        // 2. Round amount heuristic (payments are often round)
+                        const isRoundAmount = transfer.amount % 1 === 0 || transfer.amount % 0.1 === 0 || transfer.amount % 0.01 === 0;
+                        const hasManySigFigs = transfer.amount.toString().split('.')[1]?.length > 4;
+
+                        if (hasManySigFigs) {
+                            changeScore += 30;
+                            changeReasons.push('Many decimal places');
+                        } else if (!isRoundAmount) {
+                            changeScore += 20;
+                            changeReasons.push('Non-round amount');
+                        }
+
+                        // 3. Output order heuristic (change often comes last in Bitcoin)
+                        if (relevantTransfers.length === 2 && index === 1) {
+                            changeScore += 15;
+                            changeReasons.push('Second of two outputs');
+                        }
+
+                        // 4. Address type matching (change often uses same script type)
+                        if (transfer.scriptType && sourceWallet) {
+                            // Check if address types match (P2PKH, P2SH, P2WPKH, etc.)
+                            const sourcePrefix = sourceWallet.substring(0, 1);
+                            const destPrefix = transfer.to.substring(0, 1);
+
+                            // Bitcoin address prefixes
+                            const p2pkhPrefixes = ['1']; // Legacy
+                            const p2shPrefixes = ['3'];  // SegWit nested
+                            const bech32Prefixes = ['bc1']; // Native SegWit
+
+                            const sourceType = transfer.to.startsWith('bc1') ? 'bech32' :
+                                              p2shPrefixes.includes(sourcePrefix) ? 'p2sh' :
+                                              p2pkhPrefixes.includes(sourcePrefix) ? 'p2pkh' : 'unknown';
+
+                            const destType = transfer.to.startsWith('bc1') ? 'bech32' :
+                                            p2shPrefixes.includes(destPrefix) ? 'p2sh' :
+                                            p2pkhPrefixes.includes(destPrefix) ? 'p2pkh' : 'unknown';
+
+                            if (sourceType === destType && sourceType !== 'unknown') {
+                                changeScore += 10;
+                                changeReasons.push('Same address type');
+                            }
+                        }
+
+                        // 5. Amount comparison (change is often smaller than payment in simple transactions)
+                        if (relevantTransfers.length === 2) {
+                            const otherTransfer = relevantTransfers[1 - index];
+                            if (transfer.amount < otherTransfer.amount * 0.5) {
+                                changeScore += 10;
+                                changeReasons.push('Smaller output');
+                            }
+                        }
+
+                        // 6. Fee analysis (if we have input amounts)
+                        // In real transactions, change = inputs - payment - fee
+                        // This would need transaction input data to calculate
+                    }
+
+                    // Store change analysis for display
+                    transfer.changeScore = changeScore;
+                    transfer.changeReasons = changeReasons;
+
+                    // Classification based on score
                     if (isBackToSender) {
                         // Automatic change classification for same-address
                         window.hopWizardData.outputClassifications[index] = 'change';
                         window.hopWizardData.selectedOutputs.push(index);
-                    } else if (!isRoundAmount) {
-                        // Suggest change for non-round amounts to new addresses
+                    } else if (changeScore >= 40) {
+                        // High probability of change
                         window.hopWizardData.outputClassifications[index] = 'change';
+                        // Don't auto-select suspected change for tracking (user decides)
                     } else {
-                        // Default to payment for round amounts to new addresses
+                        // Likely payment
                         window.hopWizardData.outputClassifications[index] = 'payment';
                         window.hopWizardData.selectedOutputs.push(index);
                     }
@@ -18749,10 +18820,10 @@ async function lookupWizardTransaction() {
 
                     <div style="max-height: 400px; overflow-y: auto;">
                         ${relevantTransfers.map((transfer, index) => {
-                            const isRoundAmount = transfer.amount % 1 === 0 || transfer.amount % 10 === 0;
                             const isBackToSender = sourceWallet && transfer.to.toLowerCase() === sourceWallet.toLowerCase();
                             const isDefinitelyChange = isBackToSender; // Same address = definitely change
-                            const likelyChange = !isRoundAmount && !isBackToSender; // Different address but looks like change
+                            const changeScore = transfer.changeScore || 0;
+                            const likelyChange = !isDefinitelyChange && changeScore >= 40; // High change probability
 
                             // Check attribution for this output asynchronously
                             getWalletAttribution(transfer.to).then(attribution => {
@@ -18784,8 +18855,16 @@ async function lookupWizardTransaction() {
                                             ${isDefinitelyChange ?
                                                 '<span style="color: #ff9800; margin-left: 10px; font-weight: bold;">🔄 Auto-detected Change (Same Address)</span>' :
                                                 likelyChange ?
-                                                '<span style="color: #ff9800; margin-left: 10px;">⚠️ Possible Change (New Address)</span>' : ''}
+                                                `<span style="color: #ff9800; margin-left: 10px;">⚠️ Likely Change (Score: ${changeScore}%)</span>` : ''}
                                         </div>
+                                        ${transfer.changeReasons && transfer.changeReasons.length > 0 && !isDefinitelyChange ? `
+                                        <div style="background: #fff8e1; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 11px;">
+                                            <strong>Change indicators:</strong>
+                                            <ul style="margin: 5px 0 0 20px; padding: 0;">
+                                                ${transfer.changeReasons.map(reason => `<li>${reason}</li>`).join('')}
+                                            </ul>
+                                        </div>
+                                        ` : ''}
                                         <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
                                             <div>From: ${transfer.from.slice(0, 15)}...${transfer.from.slice(-10)}</div>
                                             <div>To: ${transfer.to.slice(0, 15)}...${transfer.to.slice(-10)}</div>

@@ -3,27 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 08:36)
+## Latest Commit (Auto-updated: 2025-09-24 08:41)
 
-**Commit:** b8d3614c04abdc5eee85987ed2bab23ef528bd5c
+**Commit:** 8feac2a8dd9a2204d370a57cd6eff3d771d9e6f9
 **Author:** Your Name
-**Message:** Implement change address handling as same-hop threads (like swaps)
+**Message:** Improve change address detection with automatic and optional modes
 
-- Change outputs now create trackable threads at the SAME hop level
-- Works like swaps: consumes source thread, creates new thread available for current hop
-- Change threads maintain same hop notation (e.g., V1-T1 stays V1-T1, not V1-T1-H1)
-- Added new 'change' entry type with orange wallet color
-- Change threads marked with sourceType: 'change_output' and isChange: true
+- Automatic change detection when output returns to SAME address as sender
+  - Automatically classified as change (cannot be changed)
+  - Shows '🔄 Auto-detected Change (Same Address)' label
+  - Radio buttons disabled to prevent misclassification
 
-This allows investigators to:
-- Track change addresses without creating new hops
-- Continue following funds through change addresses
-- Maintain proper hop counting (only real transfers increment hops)
-- Have flexibility in how to handle suspected change outputs
+- Optional change detection for NEW addresses
+  - Shows '⚠️ Possible Change (New Address)' for non-round amounts
+  - Investigator can choose: Payment (new hop) or Change (same-hop thread)
+  - Pre-selected based on amount patterns but fully editable
 
-Example: BTC transaction with 2 outputs
-- Payment output: Creates V1-T1-H1 thread for next hop
-- Change output: Creates V1-T1 thread available at current hop
+- UI improvements:
+  - Clear distinction between automatic vs suggested change
+  - Change creates 'Same-Hop Thread' (not 'Orange Thread')
+  - Payment creates 'New Hop' for clarity
+
+This gives investigators full control while automating obvious cases:
+- Same address = always change (automatic)
+- New address + decimal amount = suggested change (editable)
+- New address + round amount = suggested payment (editable)
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -31,14 +35,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  55 +++++++++++++------------
- index.html | 134 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 153 insertions(+), 36 deletions(-)
+ CLAUDE.md  | 62 ++++++++++++++++++++++++++++++++------------------------------
+ index.html | 62 ++++++++++++++++++++++++++++++++++++++++++++++----------------
+ 2 files changed, 78 insertions(+), 46 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b8d3614 Implement change address handling as same-hop threads (like swaps) (0 seconds ago)
+- 8feac2a Improve change address detection with automatic and optional modes (0 seconds ago)
+- b8d3614 Implement change address handling as same-hop threads (like swaps) (5 minutes ago)
 - ed49d5d Add comprehensive report viewer and improved navigation (2 hours ago)
 - b3885d2 Fix currency mismatch after swap - prevent duplicate thread creation (2 hours ago)
 - 751b868 Fix duplicate swap output thread creation bug (2 hours ago)
@@ -47,7 +52,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - ca3f69c Fix critical thread tracking and validation issues (2 hours ago)
 - 5783f8b Update CLAUDE.md with latest commits (2 hours ago)
 - 8d27f9f Simplify available threads display - remove separate swap thread section (2 hours ago)
-- 6f99660 Fix available threads display to show current hop allocation status (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
