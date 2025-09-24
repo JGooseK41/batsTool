@@ -23989,8 +23989,11 @@ async function lookupTransaction() {
                         corsProxyUrl + `${config.tokenApiUrl}${txHash}&apikey=${apiKey}` :
                         `${config.tokenApiUrl}${txHash}&apikey=${apiKey}`;
                     
-                    const tokenResponse = await fetch(tokenUrl);
-                    if (tokenResponse.ok) {
+                    const tokenResponse = await fetch(tokenUrl).catch(err => {
+                        console.warn(`Token fetch failed:`, err);
+                        return null;
+                    });
+                    if (tokenResponse && tokenResponse.ok) {
                         tokenData = await tokenResponse.json();
                         console.log('Receipt/Token data received:', tokenData);
                         
@@ -25956,9 +25959,13 @@ async function processBulkTransactions() {
                 results.push({ hash, status: 'error', message: 'Unknown blockchain format' });
                 continue;
             }
-            
-            // Use parseTransactionData (same as individual lookup) instead of fetchTransactionData
-            const txData = await parseTransactionData(hash, detectedChain);
+
+            console.log(`Processing hash ${i + 1}/${hashes.length}: ${hash} on ${detectedChain}`);
+
+            // Use fetchTransactionData with proper parsing
+            const txData = await fetchTransactionData(hash, detectedChain);
+
+            console.log(`Transaction data received for ${hash}:`, txData);
 
             if (txData) {
                 // Handle multiple transfers (token transactions)
@@ -26214,12 +26221,14 @@ async function fetchTransactionData(hash, blockchain) {
     // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
     const corsEnabled = false;
     const corsProxyUrl = '';
-    
+
     // Try primary and fallback URLs
     const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
-    
+
     for (let apiUrl of urlsToTry) {
         try {
+            // Add a small delay to prevent extension interference
+            await new Promise(resolve => setTimeout(resolve, 100));
             let data;
             let url;
             let tokenData = null; // Define tokenData at this scope
@@ -26228,9 +26237,12 @@ async function fetchTransactionData(hash, blockchain) {
                 url = apiUrl + hash;
                 if (config.apiKey) url += `?api_key=${config.apiKey}`;
                 if (corsEnabled) url = corsProxyUrl + url;
-                
-                const response = await fetch(url);
-                if (!response.ok) continue;
+
+                const response = await fetch(url).catch(err => {
+                    console.warn(`Bitcoin fetch failed for ${url}:`, err);
+                    return null;
+                });
+                if (!response || !response.ok) continue;
                 data = await response.json();
                 
             } else if (blockchain === 'ethereum') {
@@ -26239,9 +26251,12 @@ async function fetchTransactionData(hash, blockchain) {
                 // First get the basic transaction
                 url = `${apiUrl}${hash}&apikey=${apiKey}`;
                 if (corsEnabled) url = corsProxyUrl + url;
-                
-                const response = await fetch(url);
-                if (!response.ok) continue;
+
+                const response = await fetch(url).catch(err => {
+                    console.warn(`Ethereum fetch failed for ${url}:`, err);
+                    return null;
+                });
+                if (!response || !response.ok) continue;
                 data = await response.json();
                 if (!data.result || data.result === null) continue;
                 
@@ -26252,8 +26267,11 @@ async function fetchTransactionData(hash, blockchain) {
                         corsProxyUrl + `${config.tokenApiUrl}${hash}&apikey=${apiKey}` :
                         `${config.tokenApiUrl}${hash}&apikey=${apiKey}`;
                     
-                    const tokenResponse = await fetch(tokenUrl);
-                    if (tokenResponse.ok) {
+                    const tokenResponse = await fetch(tokenUrl).catch(err => {
+                        console.warn(`Token fetch failed:`, err);
+                        return null;
+                    });
+                    if (tokenResponse && tokenResponse.ok) {
                         tokenData = await tokenResponse.json();
                         console.log('Receipt/Token data received:', tokenData);
                         

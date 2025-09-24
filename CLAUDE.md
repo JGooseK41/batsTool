@@ -3,29 +3,35 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 10:31)
+## Latest Commit (Auto-updated: 2025-09-24 10:32)
 
-**Commit:** 66b6133b66a30c7884bf781166cff491e3c5a10d
+**Commit:** 140cd3fff4e89489a24693b479ab0c59d1298903
 **Author:** Your Name
-**Message:** Fix bulk upload to use parseTransactionData and add multi-transfer selection modal
+**Message:** Add bulk upload test file and complete implementation
 
-- Refactored bulk upload to use same parseTransactionData logic as individual lookups
-- Added showBulkTransferSelectionModal for handling multiple outputs
-- Transactions with multiple transfers now show selection UI
-- Fixed CSP violations by using proper API endpoints
-- Improved bulk results display with pending status for multi-transfers
+- Created test-bulk-upload.html with various test cases
+- Test cases include ETH, single token, and multi-output transactions
+- Generates realistic transaction hashes for testing
+- Provides easy copy-to-clipboard functionality for testing bulk upload
+
+The bulk upload feature is now fully functional with:
+- Same parseTransactionData logic as individual lookups
+- Multi-transfer selection modal for transactions with multiple outputs
+- Proper error handling and status reporting
+- No more CSP violations
 
 ### Changed Files:
 ```
- CLAUDE.md  |  87 +++++++++++-----------
- index.html | 243 +++++++++++++++++++++++++++++++++++++++++++++++++++++--------
- 2 files changed, 255 insertions(+), 75 deletions(-)
+ CLAUDE.md             |  57 ++++++----------------
+ test-bulk-upload.html | 131 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 147 insertions(+), 41 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (0 seconds ago)
-- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (14 minutes ago)
+- 140cd3f Add bulk upload test file and complete implementation (0 seconds ago)
+- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (84 seconds ago)
+- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (16 minutes ago)
 - 4cde5fe Add unnecessary input heuristic - most reliable change detection method (2 hours ago)
 - d51c880 Add advanced Bitcoin change address detection heuristics (2 hours ago)
 - 8feac2a Improve change address detection with automatic and optional modes (2 hours ago)
@@ -33,7 +39,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - ed49d5d Add comprehensive report viewer and improved navigation (3 hours ago)
 - b3885d2 Fix currency mismatch after swap - prevent duplicate thread creation (4 hours ago)
 - 751b868 Fix duplicate swap output thread creation bug (4 hours ago)
-- 9d3b5fd Fix syntax error in swap wizard template string (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
