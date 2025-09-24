@@ -3,40 +3,28 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 22:47)
+## Latest Commit (Auto-updated: 2025-09-23 22:54)
 
-**Commit:** 0448ce8e44d1e696ed7abcd452ad21956b4fb6ef
+**Commit:** c36475dc1149641d0ac88ff93414eebade49f6bd
 **Author:** Your Name
-**Message:** Disable Add Entry button for completed hops with reopen option
+**Message:** Implement comprehensive Word-format narrative investigation report
 
-Fixes the issue where completed/finalized hops still showed active Add Entry buttons:
+- Added 'Export Narrative Report (Word)' button in summary tab
+- Created generateNarrativeReport() function for Word-compatible HTML output
+- Structured narrative format with 4 main sections:
+  1. Executive Summary with case synopsis
+  2. Victim Impact Assessment with transaction narratives
+  3. Blockchain Transaction Analysis with hop-by-hop chronological narrative
+  4. Investigative Conclusions with legal recommendations
+- Incorporates all transaction notes into narrative prose
+- Includes terminal wallet analysis grouped by exchange
+- Professional formatting optimized for Word/legal documents
+- Page breaks for better document structure
+- Certification section for legal validity
+- Comprehensive financial reconciliation section
+- Recommended legal actions for asset recovery
 
-## Changes Made
-- Add Entry button now hidden for completed hops
-- Shows completion status message instead
-- Adds 'Reopen for Editing' button for completed hops
-- View Thread Summary remains available for review
-
-## Reopen for Editing Feature
-- Allows investigators to unlock completed hops when needed
-- Shows warning if subsequent hops exist (dependencies)
-- Warns about potential impacts on thread allocations
-- Creates undo state before reopening
-- Auto-expands and scrolls to reopened hop
-
-## UI Improvements
-- Green completion box clearly indicates hop is finalized
-- Orange 'Reopen' button makes intent clear
-- Prevents accidental modifications to completed work
-- Maintains investigation integrity
-
-## Workflow Benefits
-- Enforces proper hop completion workflow
-- Prevents accidental changes to finalized hops
-- Clear visual distinction between active and completed hops
-- Explicit action required to modify completed work
-
-This ensures investigators must consciously decide to modify completed hops rather than accidentally adding entries to finalized sections.
+The narrative report transforms the structured data into readable prose suitable for legal proceedings, incorporating all investigator notes and transaction details into a coherent story of the fund flow.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -44,23 +32,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  69 +++++++++++++++++++++++++++++------------
- index.html | 101 ++++++++++++++++++++++++++++++++++++++++++++++++++++---------
- 2 files changed, 136 insertions(+), 34 deletions(-)
+ CLAUDE.md  |  84 ++++++-------
+ index.html | 392 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 431 insertions(+), 45 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0448ce8 Disable Add Entry button for completed hops with reopen option (0 seconds ago)
-- eb5a4c9 Add critical wallet validation for transaction lookups (4 minutes ago)
-- bb1cb97 Fix center alignment of Generate Root Total button (11 minutes ago)
-- 6d41977 Add comprehensive PDF report export for case presentations (16 minutes ago)
-- ba22286 Enhanced UI to highlight PNG metadata embedding feature (21 minutes ago)
-- 542a891 Add PNG metadata embedding for round-trip export/import (24 minutes ago)
-- 206b607 Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling (31 minutes ago)
-- 09dcf23 Enforce terminal wallet treatment for exchange arrivals (46 minutes ago)
-- fbbcd7e Add protection against adding entries to fully allocated hops (54 minutes ago)
-- 3d0af9d Fix syntax error - remove extra closing brace at end of file (63 minutes ago)
+- c36475d Implement comprehensive Word-format narrative investigation report (0 seconds ago)
+- 0448ce8 Disable Add Entry button for completed hops with reopen option (7 minutes ago)
+- eb5a4c9 Add critical wallet validation for transaction lookups (12 minutes ago)
+- bb1cb97 Fix center alignment of Generate Root Total button (19 minutes ago)
+- 6d41977 Add comprehensive PDF report export for case presentations (23 minutes ago)
+- ba22286 Enhanced UI to highlight PNG metadata embedding feature (28 minutes ago)
+- 542a891 Add PNG metadata embedding for round-trip export/import (31 minutes ago)
+- 206b607 Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling (38 minutes ago)
+- 09dcf23 Enforce terminal wallet treatment for exchange arrivals (54 minutes ago)
+- fbbcd7e Add protection against adding entries to fully allocated hops (61 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

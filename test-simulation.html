@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B.A.T.S. Tool - Comprehensive Test Simulation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .control-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-config {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .config-item {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input, select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        .progress-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: none;
+        }
+        .progress-bar {
+            background: #ecf0f1;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .results-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .error-log {
+            background: #fff5f5;
+            border: 1px solid #ffcccc;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-left: 4px solid #e74c3c;
+            border-radius: 2px;
+        }
+        .warning-item {
+            border-left-color: #f39c12;
+        }
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .test-case {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-case:hover {
+            background: #e9ecef;
+        }
+        .test-passed {
+            border-left: 4px solid #27ae60;
+        }
+        .test-failed {
+            border-left: 4px solid #e74c3c;
+        }
+        .test-warning {
+            border-left: 4px solid #f39c12;
+        }
+        #detailedResults {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 20px;
+            background: #f8f9fa;
+        }
+        .scenario-details {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .metric-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .metric-good {
+            background: #d4edda;
+            color: #155724;
+        }
+        .metric-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .metric-bad {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 B.A.T.S. Tool Comprehensive Test Simulation Suite</h1>
+
+    <div class="control-panel">
+        <h2>Test Configuration</h2>
+        <div class="test-config">
+            <div class="config-item">
+                <label>Number of Simulations</label>
+                <input type="number" id="numSimulations" value="1000" min="1" max="10000">
+            </div>
+            <div class="config-item">
+                <label>Min Victims</label>
+                <input type="number" id="minVictims" value="1" min="1" max="10">
+            </div>
+            <div class="config-item">
+                <label>Max Victims</label>
+                <input type="number" id="maxVictims" value="10" min="1" max="50">
+            </div>
+            <div class="config-item">
+                <label>Min Transactions/Victim</label>
+                <input type="number" id="minTransactions" value="1" min="1" max="20">
+            </div>
+            <div class="config-item">
+                <label>Max Transactions/Victim</label>
+                <input type="number" id="maxTransactions" value="20" min="1" max="100">
+            </div>
+            <div class="config-item">
+                <label>Min Hops</label>
+                <input type="number" id="minHops" value="1" min="1" max="40">
+            </div>
+            <div class="config-item">
+                <label>Max Hops</label>
+                <input type="number" id="maxHops" value="40" min="1" max="100">
+            </div>
+            <div class="config-item">
+                <label>Test Focus</label>
+                <select id="testFocus">
+                    <option value="all">All Features</option>
+                    <option value="tracing">Tracing Logic</option>
+                    <option value="commingling">Commingling/Splitting</option>
+                    <option value="swaps">Currency Swaps</option>
+                    <option value="terminal">Terminal Wallets</option>
+                    <option value="validation">Validation Rules</option>
+                    <option value="graph">Graph Generation</option>
+                    <option value="reports">Report Generation</option>
+                </select>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="runSimulations()" id="runButton">▶️ Run Simulations</button>
+            <button onclick="stopSimulations()" id="stopButton" disabled>⏹️ Stop</button>
+            <button onclick="exportResults()" id="exportButton" disabled>📥 Export Results</button>
+            <button onclick="clearResults()">🗑️ Clear</button>
+        </div>
+    </div>
+
+    <div class="progress-container" id="progressContainer">
+        <h3>Simulation Progress</h3>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+        <p id="progressText">Initializing...</p>
+        <div id="liveStats" class="stats-grid" style="margin-top: 20px;">
+            <div class="stat-card">
+                <div class="stat-value" id="liveCompleted">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="livePassed">0</div>
+                <div class="stat-label">Passed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="liveFailed">0</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="liveWarnings">0</div>
+                <div class="stat-label">Warnings</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-container" id="resultsContainer">
+        <h2>Test Results Summary</h2>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalTests">0</div>
+                <div class="stat-label">Total Tests</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="passRate">0%</div>
+                <div class="stat-label">Pass Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgDuration">0ms</div>
+                <div class="stat-label">Avg Duration</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalErrors">0</div>
+                <div class="stat-label">Total Errors</div>
+            </div>
+        </div>
+
+        <h3>Issues by Category</h3>
+        <div class="stats-grid" id="issueCategories">
+            <!-- Populated dynamically -->
+        </div>
+
+        <h3>Critical Errors</h3>
+        <div class="error-log" id="errorLog">
+            <!-- Populated with errors -->
+        </div>
+
+        <h3>Performance Metrics</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="maxVictimsProcessed">0</div>
+                <div class="stat-label">Max Victims Processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="maxHopsProcessed">0</div>
+                <div class="stat-label">Max Hops Processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="maxThreadsManaged">0</div>
+                <div class="stat-label">Max Threads Managed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgGraphGenTime">0ms</div>
+                <div class="stat-label">Avg Graph Gen Time</div>
+            </div>
+        </div>
+
+        <h3>Detailed Test Results</h3>
+        <div id="detailedResults">
+            <!-- Populated with individual test results -->
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let simulations = [];
+        let isRunning = false;
+        let stopRequested = false;
+        let testResults = {
+            passed: 0,
+            failed: 0,
+            warnings: 0,
+            errors: [],
+            issuesByCategory: {
+                tracing: 0,
+                commingling: 0,
+                splitting: 0,
+                swaps: 0,
+                validation: 0,
+                graph: 0,
+                reports: 0,
+                terminal: 0,
+                performance: 0
+            },
+            performanceMetrics: {
+                maxVictims: 0,
+                maxHops: 0,
+                maxThreads: 0,
+                totalGraphTime: 0,
+                graphCount: 0
+            }
+        };
+
+        // Utility functions
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function randomChoice(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        function generateRandomWallet() {
+            const chars = '0123456789abcdef';
+            let wallet = '0x';
+            for (let i = 0; i < 40; i++) {
+                wallet += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return wallet;
+        }
+
+        function generateRandomTxHash() {
+            const chars = '0123456789abcdef';
+            let hash = '0x';
+            for (let i = 0; i < 64; i++) {
+                hash += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return hash;
+        }
+
+        function generateRandomAmount(min = 100, max = 1000000) {
+            return (Math.random() * (max - min) + min).toFixed(6);
+        }
+
+        // Test scenario generators
+        function generateVictim(id) {
+            const numTransactions = randomInt(
+                parseInt(document.getElementById('minTransactions').value),
+                parseInt(document.getElementById('maxTransactions').value)
+            );
+
+            const transactions = [];
+            let totalLoss = 0;
+
+            for (let i = 1; i <= numTransactions; i++) {
+                const amount = generateRandomAmount();
+                const currency = randomChoice(['USDT', 'USDC', 'ETH', 'BTC', 'DAI']);
+                totalLoss += parseFloat(amount);
+
+                transactions.push({
+                    id: i,
+                    txHash: generateRandomTxHash(),
+                    amount: amount,
+                    currency: currency,
+                    datetime: new Date(Date.now() - randomInt(0, 30) * 24 * 60 * 60 * 1000).toISOString(),
+                    timezone: 'UTC',
+                    receivingWallet: generateRandomWallet(),
+                    notes: `Test transaction ${i} for victim ${id}`
+                });
+            }
+
+            return {
+                id: id,
+                name: `Test Victim ${id}`,
+                contactInfo: `victim${id}@test.com`,
+                totalLoss: totalLoss.toString(),
+                transactions: transactions,
+                isComplete: true
+            };
+        }
+
+        function generateHopEntry(hopNumber, entryId, sourceThreadId, currency, amount) {
+            const entryType = randomChoice(['trace', 'trace', 'trace', 'swap', 'writeoff']);
+            const fromWallet = generateRandomWallet();
+            const toWallet = generateRandomWallet();
+
+            let entry = {
+                id: entryId,
+                hopNumber: hopNumber,
+                entryType: entryType,
+                txHash: generateRandomTxHash(),
+                amount: amount,
+                currency: currency,
+                fromWallet: fromWallet,
+                toWallet: toWallet,
+                toWalletType: randomChoice(['black', 'red', 'green', 'purple', 'gray']),
+                notation: `V${randomInt(1,10)}-T${randomInt(1,20)}-H${hopNumber}`,
+                sourceThreadId: sourceThreadId,
+                timestamp: new Date().toISOString(),
+                timezone: 'UTC'
+            };
+
+            // Add swap-specific fields
+            if (entryType === 'swap') {
+                const outputCurrency = randomChoice(['USDT', 'USDC', 'ETH', 'BTC', 'DAI'].filter(c => c !== currency));
+                const outputAmount = (parseFloat(amount) * (0.95 + Math.random() * 0.1)).toFixed(6);
+
+                entry.outputCurrency = outputCurrency;
+                entry.outputAmount = outputAmount;
+                entry.swapDetails = {
+                    fromCurrency: currency,
+                    toCurrency: outputCurrency,
+                    fromAmount: amount,
+                    toAmount: outputAmount,
+                    dexName: randomChoice(['Uniswap', 'SushiSwap', '1inch', 'Curve']),
+                    dexAddress: generateRandomWallet()
+                };
+            }
+
+            // Add writeoff-specific fields
+            if (entryType === 'writeoff') {
+                entry.category = randomChoice(['mixer', 'lost', 'unrecoverable', 'burned']);
+                entry.justification = `Test writeoff for hop ${hopNumber}`;
+            }
+
+            // Randomly mark some as terminal wallets
+            if (entryType === 'trace' && Math.random() < 0.2) {
+                entry.isTerminalWallet = true;
+                entry.exchangeName = randomChoice(['Binance', 'Coinbase', 'Kraken', 'Bitfinex']);
+            }
+
+            return entry;
+        }
+
+        function generateTestScenario(scenarioId) {
+            const numVictims = randomInt(
+                parseInt(document.getElementById('minVictims').value),
+                parseInt(document.getElementById('maxVictims').value)
+            );
+            const numHops = randomInt(
+                parseInt(document.getElementById('minHops').value),
+                parseInt(document.getElementById('maxHops').value)
+            );
+
+            // Generate victims
+            const victims = [];
+            for (let i = 1; i <= numVictims; i++) {
+                victims.push(generateVictim(i));
+            }
+
+            // Generate hops
+            const hops = [];
+            const availableThreads = {};
+
+            // Initialize threads from victim transactions
+            victims.forEach(victim => {
+                victim.transactions.forEach(tx => {
+                    const threadId = `V${victim.id}-T${tx.id}`;
+                    const currency = tx.currency;
+
+                    if (!availableThreads[currency]) {
+                        availableThreads[currency] = {};
+                    }
+
+                    availableThreads[currency][threadId] = {
+                        notation: threadId,
+                        totalAmount: parseFloat(tx.amount),
+                        availableAmount: parseFloat(tx.amount),
+                        currency: currency,
+                        sourceType: 'victim_transaction'
+                    };
+                });
+            });
+
+            // Generate hop entries with various scenarios
+            for (let h = 1; h <= numHops; h++) {
+                const numEntries = randomInt(1, 5);
+                const entries = [];
+
+                for (let e = 1; e <= numEntries; e++) {
+                    // Pick a random available thread
+                    const currencies = Object.keys(availableThreads);
+                    if (currencies.length === 0) break;
+
+                    const currency = randomChoice(currencies);
+                    const threads = Object.keys(availableThreads[currency]);
+                    if (threads.length === 0) continue;
+
+                    const threadId = randomChoice(threads);
+                    const thread = availableThreads[currency][threadId];
+
+                    // Generate amount (might be partial)
+                    const maxAmount = thread.availableAmount;
+                    const amount = (maxAmount * (0.1 + Math.random() * 0.9)).toFixed(6);
+
+                    const entry = generateHopEntry(h, e, threadId, currency, amount);
+                    entries.push(entry);
+
+                    // Update thread availability
+                    thread.availableAmount -= parseFloat(amount);
+                    if (thread.availableAmount <= 0.01) {
+                        delete availableThreads[currency][threadId];
+                    }
+
+                    // Create new thread if not writeoff or terminal
+                    if (entry.entryType === 'trace' && !entry.isTerminalWallet) {
+                        const newThreadId = `${threadId}-H${h}`;
+                        if (!availableThreads[currency]) {
+                            availableThreads[currency] = {};
+                        }
+                        availableThreads[currency][newThreadId] = {
+                            notation: newThreadId,
+                            totalAmount: parseFloat(amount),
+                            availableAmount: parseFloat(amount),
+                            currency: currency,
+                            sourceType: 'hop_output'
+                        };
+                    }
+
+                    // Handle swaps - create thread in new currency
+                    if (entry.entryType === 'swap') {
+                        const newCurrency = entry.outputCurrency;
+                        const newThreadId = `${threadId}_${newCurrency}`;
+                        if (!availableThreads[newCurrency]) {
+                            availableThreads[newCurrency] = {};
+                        }
+                        availableThreads[newCurrency][newThreadId] = {
+                            notation: threadId,
+                            totalAmount: parseFloat(entry.outputAmount),
+                            availableAmount: parseFloat(entry.outputAmount),
+                            currency: newCurrency,
+                            sourceType: 'swap_output'
+                        };
+                    }
+                }
+
+                hops.push({
+                    id: `hop_${h}`,
+                    hopNumber: h,
+                    entries: entries,
+                    completed: Math.random() < 0.7, // 70% chance of being completed
+                    artAtStartByCurrency: {}
+                });
+            }
+
+            return {
+                id: scenarioId,
+                caseId: `TEST-${scenarioId}`,
+                caseTitle: `Test Scenario ${scenarioId}`,
+                investigator: 'Test Bot',
+                victims: victims,
+                hops: hops,
+                availableThreads: availableThreads,
+                terminalWalletIndex: [],
+                confirmedRootTotalsByCurrency: {}
+            };
+        }
+
+        // Test validation functions
+        function validateScenario(scenario) {
+            const errors = [];
+            const warnings = [];
+
+            // Validate victims
+            if (!scenario.victims || scenario.victims.length === 0) {
+                errors.push('No victims in scenario');
+            }
+
+            scenario.victims?.forEach(victim => {
+                if (!victim.transactions || victim.transactions.length === 0) {
+                    errors.push(`Victim ${victim.id} has no transactions`);
+                }
+
+                // Check total loss calculation
+                const calculatedLoss = victim.transactions.reduce((sum, tx) =>
+                    sum + parseFloat(tx.amount), 0);
+                if (Math.abs(calculatedLoss - parseFloat(victim.totalLoss)) > 0.01) {
+                    warnings.push(`Victim ${victim.id} total loss mismatch`);
+                }
+            });
+
+            // Validate hops
+            scenario.hops?.forEach(hop => {
+                if (hop.entries.length === 0) {
+                    warnings.push(`Hop ${hop.hopNumber} has no entries`);
+                }
+
+                // Check for duplicate transaction hashes
+                const txHashes = new Set();
+                hop.entries.forEach(entry => {
+                    if (txHashes.has(entry.txHash)) {
+                        errors.push(`Duplicate tx hash in hop ${hop.hopNumber}`);
+                    }
+                    txHashes.add(entry.txHash);
+
+                    // Validate swap entries
+                    if (entry.entryType === 'swap') {
+                        if (!entry.swapDetails || !entry.outputCurrency) {
+                            errors.push(`Invalid swap entry in hop ${hop.hopNumber}`);
+                        }
+                    }
+
+                    // Validate writeoff entries
+                    if (entry.entryType === 'writeoff') {
+                        if (!entry.category || !entry.justification) {
+                            warnings.push(`Incomplete writeoff in hop ${hop.hopNumber}`);
+                        }
+                    }
+                });
+            });
+
+            // Validate thread consistency
+            const threadTracking = {};
+            scenario.hops?.forEach(hop => {
+                hop.entries.forEach(entry => {
+                    if (entry.sourceThreadId) {
+                        if (!threadTracking[entry.sourceThreadId]) {
+                            threadTracking[entry.sourceThreadId] = {
+                                allocated: 0,
+                                currency: entry.currency
+                            };
+                        }
+                        threadTracking[entry.sourceThreadId].allocated += parseFloat(entry.amount);
+                    }
+                });
+            });
+
+            // Check for over-allocation
+            Object.entries(threadTracking).forEach(([threadId, data]) => {
+                const thread = scenario.availableThreads[data.currency]?.[threadId];
+                if (thread && data.allocated > thread.totalAmount * 1.01) {
+                    errors.push(`Thread ${threadId} over-allocated: ${data.allocated} > ${thread.totalAmount}`);
+                }
+            });
+
+            return { errors, warnings };
+        }
+
+        // Test execution functions
+        function testTracingLogic(scenario) {
+            const issues = [];
+
+            // Test thread allocation
+            const allocations = {};
+            scenario.hops.forEach(hop => {
+                hop.entries.forEach(entry => {
+                    if (entry.sourceThreadId) {
+                        if (!allocations[entry.sourceThreadId]) {
+                            allocations[entry.sourceThreadId] = 0;
+                        }
+                        allocations[entry.sourceThreadId] += parseFloat(entry.amount);
+                    }
+                });
+            });
+
+            // Check for issues
+            Object.entries(allocations).forEach(([thread, amount]) => {
+                if (amount <= 0) {
+                    issues.push(`Invalid allocation for thread ${thread}`);
+                }
+            });
+
+            return issues;
+        }
+
+        function testComminglingAndSplitting(scenario) {
+            const issues = [];
+
+            // Check for commingling (multiple source threads in single hop)
+            scenario.hops.forEach(hop => {
+                const sourceThreads = new Set();
+                hop.entries.forEach(entry => {
+                    if (entry.sourceThreadId) {
+                        sourceThreads.add(entry.sourceThreadId);
+                    }
+                });
+
+                if (sourceThreads.size > 1 && hop.entries.length === 1) {
+                    issues.push(`Hop ${hop.hopNumber}: Commingling detection issue`);
+                }
+            });
+
+            // Check for splitting (single thread to multiple outputs)
+            scenario.hops.forEach(hop => {
+                const threadOutputs = {};
+                hop.entries.forEach(entry => {
+                    if (!threadOutputs[entry.sourceThreadId]) {
+                        threadOutputs[entry.sourceThreadId] = [];
+                    }
+                    threadOutputs[entry.sourceThreadId].push(entry.toWallet);
+                });
+
+                Object.entries(threadOutputs).forEach(([thread, outputs]) => {
+                    if (outputs.length > 1 && new Set(outputs).size === 1) {
+                        issues.push(`Hop ${hop.hopNumber}: Split detection issue for ${thread}`);
+                    }
+                });
+            });
+
+            return issues;
+        }
+
+        function testSwapHandling(scenario) {
+            const issues = [];
+
+            scenario.hops.forEach(hop => {
+                hop.entries.forEach(entry => {
+                    if (entry.entryType === 'swap') {
+                        // Validate swap ratio
+                        const inputAmount = parseFloat(entry.amount);
+                        const outputAmount = parseFloat(entry.outputAmount || 0);
+                        const ratio = outputAmount / inputAmount;
+
+                        if (ratio <= 0 || ratio > 2) {
+                            issues.push(`Hop ${hop.hopNumber}: Invalid swap ratio ${ratio}`);
+                        }
+
+                        // Check currency conversion
+                        if (entry.currency === entry.outputCurrency) {
+                            issues.push(`Hop ${hop.hopNumber}: Swap to same currency`);
+                        }
+
+                        // Validate swap details
+                        if (!entry.swapDetails?.dexName) {
+                            issues.push(`Hop ${hop.hopNumber}: Missing DEX information`);
+                        }
+                    }
+                });
+            });
+
+            return issues;
+        }
+
+        function testTerminalWallets(scenario) {
+            const issues = [];
+            let terminalCount = 0;
+
+            scenario.hops.forEach(hop => {
+                hop.entries.forEach(entry => {
+                    if (entry.isTerminalWallet) {
+                        terminalCount++;
+
+                        // Check if marked as correct wallet type
+                        if (!['purple', 'gray', 'blue'].includes(entry.toWalletType)) {
+                            issues.push(`Hop ${hop.hopNumber}: Terminal wallet has wrong type ${entry.toWalletType}`);
+                        }
+
+                        // Check exchange name
+                        if (!entry.exchangeName) {
+                            issues.push(`Hop ${hop.hopNumber}: Terminal wallet missing exchange name`);
+                        }
+
+                        // Check if appears in terminal index
+                        const inIndex = scenario.terminalWalletIndex?.some(t =>
+                            t.txHash === entry.txHash
+                        );
+                        if (!inIndex && scenario.terminalWalletIndex) {
+                            issues.push(`Hop ${hop.hopNumber}: Terminal wallet not in index`);
+                        }
+                    }
+                });
+            });
+
+            if (terminalCount === 0 && scenario.hops.length > 10) {
+                issues.push('No terminal wallets in large investigation');
+            }
+
+            return issues;
+        }
+
+        function testValidationRules(scenario) {
+            const issues = [];
+
+            // Test amount validation
+            scenario.hops.forEach(hop => {
+                let hopTotal = 0;
+                hop.entries.forEach(entry => {
+                    const amount = parseFloat(entry.amount);
+                    if (amount <= 0) {
+                        issues.push(`Hop ${hop.hopNumber}: Invalid amount ${amount}`);
+                    }
+                    if (amount > 1e12) {
+                        issues.push(`Hop ${hop.hopNumber}: Unrealistic amount ${amount}`);
+                    }
+                    hopTotal += amount;
+                });
+
+                // Check hop completion rules
+                if (hop.completed && hopTotal === 0) {
+                    issues.push(`Hop ${hop.hopNumber}: Completed with zero total`);
+                }
+            });
+
+            // Test wallet address validation
+            scenario.hops.forEach(hop => {
+                hop.entries.forEach(entry => {
+                    if (!entry.fromWallet?.startsWith('0x') || entry.fromWallet.length !== 42) {
+                        issues.push(`Hop ${hop.hopNumber}: Invalid from wallet format`);
+                    }
+                    if (!entry.toWallet?.startsWith('0x') || entry.toWallet.length !== 42) {
+                        issues.push(`Hop ${hop.hopNumber}: Invalid to wallet format`);
+                    }
+                });
+            });
+
+            return issues;
+        }
+
+        async function runSingleSimulation(scenarioId) {
+            const startTime = Date.now();
+            const scenario = generateTestScenario(scenarioId);
+            const result = {
+                id: scenarioId,
+                scenario: scenario,
+                passed: true,
+                issues: [],
+                warnings: [],
+                duration: 0
+            };
+
+            try {
+                // Run validation
+                const validation = validateScenario(scenario);
+                result.issues.push(...validation.errors);
+                result.warnings.push(...validation.warnings);
+
+                // Run specific tests based on focus
+                const testFocus = document.getElementById('testFocus').value;
+
+                if (testFocus === 'all' || testFocus === 'tracing') {
+                    const tracingIssues = testTracingLogic(scenario);
+                    result.issues.push(...tracingIssues);
+                    if (tracingIssues.length > 0) {
+                        testResults.issuesByCategory.tracing += tracingIssues.length;
+                    }
+                }
+
+                if (testFocus === 'all' || testFocus === 'commingling') {
+                    const comminglingIssues = testComminglingAndSplitting(scenario);
+                    result.issues.push(...comminglingIssues);
+                    if (comminglingIssues.length > 0) {
+                        testResults.issuesByCategory.commingling += comminglingIssues.length;
+                    }
+                }
+
+                if (testFocus === 'all' || testFocus === 'swaps') {
+                    const swapIssues = testSwapHandling(scenario);
+                    result.issues.push(...swapIssues);
+                    if (swapIssues.length > 0) {
+                        testResults.issuesByCategory.swaps += swapIssues.length;
+                    }
+                }
+
+                if (testFocus === 'all' || testFocus === 'terminal') {
+                    const terminalIssues = testTerminalWallets(scenario);
+                    result.issues.push(...terminalIssues);
+                    if (terminalIssues.length > 0) {
+                        testResults.issuesByCategory.terminal += terminalIssues.length;
+                    }
+                }
+
+                if (testFocus === 'all' || testFocus === 'validation') {
+                    const validationIssues = testValidationRules(scenario);
+                    result.issues.push(...validationIssues);
+                    if (validationIssues.length > 0) {
+                        testResults.issuesByCategory.validation += validationIssues.length;
+                    }
+                }
+
+                // Update performance metrics
+                testResults.performanceMetrics.maxVictims = Math.max(
+                    testResults.performanceMetrics.maxVictims,
+                    scenario.victims.length
+                );
+                testResults.performanceMetrics.maxHops = Math.max(
+                    testResults.performanceMetrics.maxHops,
+                    scenario.hops.length
+                );
+
+                // Determine pass/fail
+                if (result.issues.length > 0) {
+                    result.passed = false;
+                    testResults.failed++;
+                } else if (result.warnings.length > 0) {
+                    testResults.warnings++;
+                    testResults.passed++;
+                } else {
+                    testResults.passed++;
+                }
+
+            } catch (error) {
+                result.passed = false;
+                result.issues.push(`Runtime error: ${error.message}`);
+                testResults.failed++;
+                testResults.errors.push({
+                    scenario: scenarioId,
+                    error: error.message,
+                    stack: error.stack
+                });
+            }
+
+            result.duration = Date.now() - startTime;
+            return result;
+        }
+
+        async function runSimulations() {
+            const numSimulations = parseInt(document.getElementById('numSimulations').value);
+
+            // Reset state
+            simulations = [];
+            testResults = {
+                passed: 0,
+                failed: 0,
+                warnings: 0,
+                errors: [],
+                issuesByCategory: {
+                    tracing: 0,
+                    commingling: 0,
+                    splitting: 0,
+                    swaps: 0,
+                    validation: 0,
+                    graph: 0,
+                    reports: 0,
+                    terminal: 0,
+                    performance: 0
+                },
+                performanceMetrics: {
+                    maxVictims: 0,
+                    maxHops: 0,
+                    maxThreads: 0,
+                    totalGraphTime: 0,
+                    graphCount: 0
+                }
+            };
+
+            // Update UI
+            document.getElementById('runButton').disabled = true;
+            document.getElementById('stopButton').disabled = false;
+            document.getElementById('exportButton').disabled = true;
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('resultsContainer').style.display = 'none';
+
+            isRunning = true;
+            stopRequested = false;
+
+            // Run simulations with progress updates
+            for (let i = 1; i <= numSimulations; i++) {
+                if (stopRequested) {
+                    break;
+                }
+
+                // Update progress
+                const progress = (i / numSimulations) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressFill').textContent = Math.round(progress) + '%';
+                document.getElementById('progressText').textContent =
+                    `Running simulation ${i} of ${numSimulations}...`;
+
+                // Run simulation
+                const result = await runSingleSimulation(i);
+                simulations.push(result);
+
+                // Update live stats
+                document.getElementById('liveCompleted').textContent = i;
+                document.getElementById('livePassed').textContent = testResults.passed;
+                document.getElementById('liveFailed').textContent = testResults.failed;
+                document.getElementById('liveWarnings').textContent = testResults.warnings;
+
+                // Small delay to prevent UI freeze
+                if (i % 10 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 1));
+                }
+            }
+
+            // Show results
+            showResults();
+
+            // Update UI
+            document.getElementById('runButton').disabled = false;
+            document.getElementById('stopButton').disabled = true;
+            document.getElementById('exportButton').disabled = false;
+            isRunning = false;
+        }
+
+        function stopSimulations() {
+            stopRequested = true;
+            document.getElementById('stopButton').disabled = true;
+        }
+
+        function showResults() {
+            document.getElementById('resultsContainer').style.display = 'block';
+
+            // Calculate statistics
+            const totalTests = simulations.length;
+            const passRate = totalTests > 0 ?
+                ((testResults.passed / totalTests) * 100).toFixed(2) : 0;
+            const avgDuration = totalTests > 0 ?
+                (simulations.reduce((sum, s) => sum + s.duration, 0) / totalTests).toFixed(2) : 0;
+
+            // Update summary stats
+            document.getElementById('totalTests').textContent = totalTests;
+            document.getElementById('passRate').textContent = passRate + '%';
+            document.getElementById('avgDuration').textContent = avgDuration + 'ms';
+            document.getElementById('totalErrors').textContent = testResults.failed;
+
+            // Update performance metrics
+            document.getElementById('maxVictimsProcessed').textContent =
+                testResults.performanceMetrics.maxVictims;
+            document.getElementById('maxHopsProcessed').textContent =
+                testResults.performanceMetrics.maxHops;
+            document.getElementById('maxThreadsManaged').textContent =
+                testResults.performanceMetrics.maxThreads || 'N/A';
+            document.getElementById('avgGraphGenTime').textContent =
+                testResults.performanceMetrics.graphCount > 0 ?
+                (testResults.performanceMetrics.totalGraphTime / testResults.performanceMetrics.graphCount).toFixed(2) + 'ms' :
+                'N/A';
+
+            // Show issues by category
+            const categoriesHtml = Object.entries(testResults.issuesByCategory)
+                .filter(([_, count]) => count > 0)
+                .map(([category, count]) => `
+                    <div class="stat-card">
+                        <div class="stat-value">${count}</div>
+                        <div class="stat-label">${category.charAt(0).toUpperCase() + category.slice(1)} Issues</div>
+                    </div>
+                `).join('');
+            document.getElementById('issueCategories').innerHTML = categoriesHtml ||
+                '<div class="success-message">No issues found in any category!</div>';
+
+            // Show critical errors
+            const errorLogHtml = testResults.errors.slice(0, 10).map(error => `
+                <div class="error-item">
+                    <strong>Scenario ${error.scenario}:</strong> ${error.error}
+                    ${error.stack ? `<pre style="font-size: 11px; margin-top: 5px;">${error.stack.substring(0, 200)}...</pre>` : ''}
+                </div>
+            `).join('');
+            document.getElementById('errorLog').innerHTML = errorLogHtml ||
+                '<div class="success-message">No critical errors encountered!</div>';
+
+            // Show detailed results
+            const detailedHtml = simulations.slice(0, 100).map(sim => {
+                const statusClass = sim.passed ?
+                    (sim.warnings.length > 0 ? 'test-warning' : 'test-passed') :
+                    'test-failed';
+                const statusIcon = sim.passed ?
+                    (sim.warnings.length > 0 ? '⚠️' : '✅') :
+                    '❌';
+
+                return `
+                    <div class="test-case ${statusClass}" onclick="showScenarioDetails(${sim.id})">
+                        ${statusIcon} Scenario ${sim.id}:
+                        ${sim.scenario.victims.length} victims,
+                        ${sim.scenario.hops.length} hops
+                        (${sim.duration}ms)
+                        ${sim.issues.length > 0 ? `<span class="metric-badge metric-bad">${sim.issues.length} issues</span>` : ''}
+                        ${sim.warnings.length > 0 ? `<span class="metric-badge metric-warning">${sim.warnings.length} warnings</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('detailedResults').innerHTML = detailedHtml ||
+                '<div>No results to display</div>';
+        }
+
+        function showScenarioDetails(id) {
+            const sim = simulations.find(s => s.id === id);
+            if (!sim) return;
+
+            const details = `
+                <div class="scenario-details">
+                    <h4>Scenario ${id} Details</h4>
+                    <p><strong>Configuration:</strong></p>
+                    <ul>
+                        <li>Victims: ${sim.scenario.victims.length}</li>
+                        <li>Total Transactions: ${sim.scenario.victims.reduce((sum, v) => sum + v.transactions.length, 0)}</li>
+                        <li>Hops: ${sim.scenario.hops.length}</li>
+                        <li>Total Entries: ${sim.scenario.hops.reduce((sum, h) => sum + h.entries.length, 0)}</li>
+                    </ul>
+                    ${sim.issues.length > 0 ? `
+                        <p><strong>Issues Found:</strong></p>
+                        <ul>${sim.issues.map(issue => `<li style="color: #e74c3c;">${issue}</li>`).join('')}</ul>
+                    ` : ''}
+                    ${sim.warnings.length > 0 ? `
+                        <p><strong>Warnings:</strong></p>
+                        <ul>${sim.warnings.map(warning => `<li style="color: #f39c12;">${warning}</li>`).join('')}</ul>
+                    ` : ''}
+                </div>
+            `;
+
+            // Show in a modal or replace content
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+                z-index: 1000;
+            `;
+            modal.innerHTML = details + '<button onclick="this.parentElement.remove()">Close</button>';
+            document.body.appendChild(modal);
+        }
+
+        function exportResults() {
+            const exportData = {
+                metadata: {
+                    timestamp: new Date().toISOString(),
+                    totalSimulations: simulations.length,
+                    configuration: {
+                        minVictims: document.getElementById('minVictims').value,
+                        maxVictims: document.getElementById('maxVictims').value,
+                        minTransactions: document.getElementById('minTransactions').value,
+                        maxTransactions: document.getElementById('maxTransactions').value,
+                        minHops: document.getElementById('minHops').value,
+                        maxHops: document.getElementById('maxHops').value,
+                        testFocus: document.getElementById('testFocus').value
+                    }
+                },
+                summary: {
+                    passed: testResults.passed,
+                    failed: testResults.failed,
+                    warnings: testResults.warnings,
+                    passRate: ((testResults.passed / simulations.length) * 100).toFixed(2) + '%'
+                },
+                issuesByCategory: testResults.issuesByCategory,
+                performanceMetrics: testResults.performanceMetrics,
+                criticalErrors: testResults.errors,
+                detailedResults: simulations.map(sim => ({
+                    id: sim.id,
+                    passed: sim.passed,
+                    issues: sim.issues,
+                    warnings: sim.warnings,
+                    duration: sim.duration,
+                    victims: sim.scenario.victims.length,
+                    hops: sim.scenario.hops.length
+                }))
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+            const exportFileDefaultName = `BATS_Test_Results_${new Date().toISOString().split('T')[0]}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        function clearResults() {
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('resultsContainer').style.display = 'none';
+            simulations = [];
+            testResults = {
+                passed: 0,
+                failed: 0,
+                warnings: 0,
+                errors: [],
+                issuesByCategory: {
+                    tracing: 0,
+                    commingling: 0,
+                    splitting: 0,
+                    swaps: 0,
+                    validation: 0,
+                    graph: 0,
+                    reports: 0,
+                    terminal: 0,
+                    performance: 0
+                },
+                performanceMetrics: {
+                    maxVictims: 0,
+                    maxHops: 0,
+                    maxThreads: 0,
+                    totalGraphTime: 0,
+                    graphCount: 0
+                }
+            };
+        }
+
+        // Initialize
+        console.log('B.A.T.S. Test Simulation Suite loaded and ready');
+    </script>
+</body>
+</html>
