@@ -3,61 +3,35 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 21:28)
+## Latest Commit (Auto-updated: 2025-09-23 22:01)
 
-**Commit:** 1caa3907e74ea33c9c10f4ccb26c34d1ab77ddde
+**Commit:** 09dcf23fb1affd5aa435cc77d52d71ac98c7afcd
 **Author:** Your Name
-**Message:** Implement T-account DAG visualization with hop-centric ART reconciliation
+**Message:** Enforce terminal wallet treatment for exchange arrivals
 
-Major improvements to create a focused T-account style DAG visualization:
+Major changes to prevent users from bypassing terminal wallet marking
+when funds arrive at exchanges:
 
-## Core Design Changes
-- Simplified to DAG-only layout (removed unnecessary layout options)
-- Hop-centric vertical layers with shaded backgrounds
-- T-account style positioning (source nodes left, terminal/writeoff right)
-- Wallet duplication per hop to prevent cyclic flows
+## Enforcement Changes
+- Removed "Continue Trace" option - exchanges MUST be marked terminal
+- Disabled "Log Entry" button until terminal wallet is confirmed
+- Button changes to "Confirm Terminal Wallet First" when exchange detected
+- After confirmation, button becomes "Create Terminal Entry" (purple)
 
-## Universal Wallet Index Integration
-- Uses friendly names from UWI (RED 1, BLACK 2, YELLOW 3, etc.)
-- Correlates directly with permanent wallet IDs
-- Falls back to generating temporary friendly names for unindexed wallets
+## UI/UX Improvements
+- Clearer messaging: "Exchange Detected - MANDATORY Terminal Entry"
+- Emphasized that terminal marking is required, not optional
+- Added legal process reminder in the alert
+- Purple color scheme for terminal-related buttons
 
-## ART (Adjusted Root Total) Reconciliation
-- ART displayed at TOP of each hop (what's coming IN)
-- ART displayed at BOTTOM of each hop (what's going OUT)
-- Green background for incoming ART
-- Red background for outgoing ART
-- Visual reconciliation by looking down each hop's shaded area
-- Automatic validation with warning for unbalanced hops
+## Workflow Changes
+- confirmTerminalWallet() no longer shows confirmation dialog
+- Immediate marking as terminal when button clicked
+- Removed continueTraceFromTerminal() function entirely
+- Forces proper documentation of exchange arrivals
 
-## Currency Swap Handling
-- Diamond-shaped nodes for swaps with ⇄ symbol
-- Shows currency conversion (e.g., 'SWAP USDC→USDT')
-- Properly calculates ART changes when currencies convert
-- Displays conversion amounts on swap nodes
-- Accounts for currency changes in hop validation
-
-## Thread-Based Edge Rendering
-- Color-coded edges by source thread
-- Thread notation shown on edges (V1-T1, etc.)
-- Amounts displayed with thread information
-- Dashed lines for inter-hop connections
-- Terminal wallet edges highlighted in purple
-
-## Visual Hierarchy
-- Alternating hop background colors for clarity
-- Hop titles (VICTIMS, HOP 1, HOP 2, etc.)
-- Triangle nodes for writeoffs
-- Glowing purple circles for terminal/exchange wallets
-- Clear T-account structure within each hop
-
-## Validation Features
-- Real-time ART validation per hop
-- Warning indicators for unaccounted funds
-- Shows differences when hop is unbalanced
-- Accounts for swaps, writeoffs, and terminal wallets
-
-This creates a clear, accountant-friendly visualization where each hop can be reconciled by looking at the IN amount at top, following the transactions through the hop, and verifying the OUT amount at bottom matches expectations.
+This ensures investigators cannot accidentally continue tracing
+past exchange wallets, which require legal process for recovery.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -65,23 +39,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  94 ++++---
- index.html | 813 ++++++++++++++++++++++++++++++++++++++++++-------------------
- 2 files changed, 633 insertions(+), 274 deletions(-)
+ index.html | 126 +++++++++++++++++++++++++++++++++----------------------------
+ 1 file changed, 69 insertions(+), 57 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1caa390 Implement T-account DAG visualization with hop-centric ART reconciliation (0 seconds ago)
-- f47cb44 Add comprehensive graph visualization with proper navigation from trace completion (16 minutes ago)
-- dcd1638 Fix validation incorrectly showing traced funds as unaccounted (30 minutes ago)
-- 3774502 Prevent finalizing empty hops and fix editing completed hops (44 minutes ago)
-- e1ad0ba Fix incorrect 'All threads fully traced' message on empty hop (51 minutes ago)
-- a7114b7 Update CLAUDE.md with latest commit info (55 minutes ago)
-- ec6396e Add pre-configured test investigation files (57 minutes ago)
-- b6d2280 Add comprehensive test suite and documentation (61 minutes ago)
-- 77a039b Fix missing Finalize Hop button and improve hop progression (66 minutes ago)
-- a8c73c0 Add detailed debugging to hop finalization process (70 minutes ago)
+- 09dcf23 Enforce terminal wallet treatment for exchange arrivals (0 seconds ago)
+- fbbcd7e Add protection against adding entries to fully allocated hops (7 minutes ago)
+- 3d0af9d Fix syntax error - remove extra closing brace at end of file (16 minutes ago)
+- 5dcf6fa Implement progressive disclosure and improved spatial organization for DAG (20 minutes ago)
+- 1caa390 Implement T-account DAG visualization with hop-centric ART reconciliation (33 minutes ago)
+- f47cb44 Add comprehensive graph visualization with proper navigation from trace completion (49 minutes ago)
+- dcd1638 Fix validation incorrectly showing traced funds as unaccounted (62 minutes ago)
+- 3774502 Prevent finalizing empty hops and fix editing completed hops (77 minutes ago)
+- e1ad0ba Fix incorrect 'All threads fully traced' message on empty hop (84 minutes ago)
+- a7114b7 Update CLAUDE.md with latest commit info (88 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

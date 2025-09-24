@@ -2086,14 +2086,12 @@
                             <div class="export-controls" style="display: flex; gap: 8px;">
                                 <button onclick="expandAllHops()" class="btn btn-primary" title="Expand All Hops">📂 Expand All</button>
                                 <button onclick="collapseAllHops()" class="btn btn-primary" title="Collapse All Hops">📁 Collapse All</button>
-                                <button onclick="exportGraphToPDF()" class="btn btn-success" title="Export as PDF">📄 PDF</button>
-                                <button onclick="exportGraphToSVG()" class="btn btn-success" title="Export as SVG">🎨 SVG</button>
-                                <button onclick="exportGraphToPNG()" class="btn btn-success" title="Export as PNG">🖼️ PNG</button>
+                                <button onclick="showExportOptions()" class="btn btn-success" title="Export Graph">💾 Export</button>
                                 <button onclick="shareGraph()" class="btn btn-info" title="Share">📤 Share</button>
                             </div>
                         </div>
 
-                        <div style="position: relative; width: 100%; background: white;">
+                        <div style="position: relative; width: 100%; background: white; max-height: 80vh; overflow-y: auto;">
                             <div id="graphContainer" style="width: 100%; height: 700px; position: relative; overflow: hidden; cursor: grab;">
                                 <svg id="investigationGraph" width="100%" height="100%">
                                     <defs>
@@ -27377,7 +27375,9 @@ To (RED Wallet): ${transfer.to}`;
             edges: [],
             selectedNode: null,
             collapsedHops: new Set(),  // Track which hops are collapsed
-            detailLevel: 'medium'      // 'overview', 'medium', 'detailed'
+            detailLevel: 'medium',      // 'overview', 'medium', 'detailed'
+            textNotes: [],              // Array of text notes on the graph
+            nextNoteId: 1               // ID counter for notes
         };
 
         // Initialize the graph visualization
@@ -27400,40 +27400,50 @@ To (RED Wallet): ${transfer.to}`;
             setTimeout(fitToScreen, 100);
         }
 
-        // Build T-account DAG with hop-centric layers and wallet duplication
+        // Build T-account DAG - ONLY show receiving wallets per hop
         function buildGraphData() {
             graphState.nodes = [];
             graphState.edges = [];
             graphState.hopLayers = [];
             let nodeId = 0;
 
-            // Track wallets per hop to allow duplication
-            const walletsByHop = {};
+            // Track wallet nodes by address and hop for connection
+            const walletNodeMap = {};
 
-            // Create Hop 0 - Victim/RED wallets layer
+            // Create Hop 0 - Victim RED wallets (receiving wallets)
             const hop0Nodes = [];
 
-            // Add victim RED wallet nodes
+            // Add victim RED wallet nodes (these are the initial receiving wallets)
             investigation.victims?.forEach(victim => {
                 victim.transactions?.forEach(tx => {
-                    const nodeKey = `hop0_victim${victim.id}_tx${tx.id}`;
-                    const node = {
-                        id: nodeKey,
-                        uniqueId: nodeId++,
-                        label: `Victim ${victim.id} (RED)`,
-                        type: 'red',
-                        wallet: tx.receivingWallet,
-                        amount: parseFloat(tx.amount),
-                        currency: tx.currency,
-                        hopNumber: 0,
-                        thread: `V${victim.id}-T${tx.id}`,
-                        artIn: 0,
-                        artOut: parseFloat(tx.amount),
-                        x: 0,
-                        y: 0
-                    };
-                    graphState.nodes.push(node);
-                    hop0Nodes.push(node);
+                    const nodeKey = `hop0_${tx.receivingWallet}`;
+
+                    // Check if this wallet already exists in hop 0
+                    let node = walletNodeMap[nodeKey];
+                    if (!node) {
+                        node = {
+                            id: nodeKey,
+                            uniqueId: nodeId++,
+                            label: getWalletLabel(tx.receivingWallet, 'red'),
+                            type: 'red',
+                            wallet: tx.receivingWallet,
+                            hopNumber: 0,
+                            threads: [],
+                            totalIn: 0,
+                            totalOut: 0,
+                            currency: tx.currency,
+                            x: 0,
+                            y: 0
+                        };
+                        graphState.nodes.push(node);
+                        hop0Nodes.push(node);
+                        walletNodeMap[nodeKey] = node;
+                    }
+
+                    // Add thread and amount to this wallet
+                    node.threads.push(`V${victim.id}-T${tx.id}`);
+                    node.totalIn += parseFloat(tx.amount);
+                    node.totalOut += parseFloat(tx.amount);
                 });
             });
 
@@ -27445,79 +27455,120 @@ To (RED Wallet): ${transfer.to}`;
                 title: 'Victims (RED Wallets)'
             });
 
-            // Process each hop
+            // Track terminal wallets separately
+            const terminalNodes = [];
+
+            // Process each hop - ONLY create nodes for receiving wallets
             investigation.hops?.forEach(hop => {
                 const hopNodes = [];
                 const hopArtIn = {};
                 const hopArtOut = {};
 
-                // Track unique wallets in this hop for deduplication
-                const walletNodesInHop = {};
-
                 hop.entries?.forEach(entry => {
                     if (entry.entryType === 'trace') {
-                        // Create unique node for FROM wallet in this hop
-                        const fromNodeKey = `hop${hop.hopNumber}_from_${entry.fromWallet}_${entry.id}`;
+                        // Check if this is a terminal wallet
+                        if (entry.isTerminalWallet) {
+                            // Create terminal wallet node in special terminal column
+                            const terminalNodeKey = `terminal_${entry.toWallet}`;
 
-                        // Check if we need to create a FROM node
-                        if (!walletNodesInHop[entry.fromWallet]) {
-                            const fromNode = {
-                                id: fromNodeKey,
-                                uniqueId: nodeId++,
-                                label: getWalletLabel(entry.fromWallet, entry.fromWalletType),
-                                type: entry.fromWalletType || 'black',
-                                wallet: entry.fromWallet,
-                                hopNumber: hop.hopNumber,
-                                isSource: true,
-                                thread: entry.sourceThreadId || entry.notation,
-                                artIn: 0,  // Will be calculated
-                                artOut: 0,  // Will be calculated
-                                x: 0,
-                                y: 0
-                            };
-                            graphState.nodes.push(fromNode);
-                            hopNodes.push(fromNode);
-                            walletNodesInHop[entry.fromWallet] = fromNode;
+                            let terminalNode = walletNodeMap[terminalNodeKey];
+                            if (!terminalNode) {
+                                terminalNode = {
+                                    id: terminalNodeKey,
+                                    uniqueId: nodeId++,
+                                    label: getWalletLabel(entry.toWallet, 'purple'),
+                                    type: 'purple',
+                                    wallet: entry.toWallet,
+                                    hopNumber: 'terminal', // Special hop number for terminals
+                                    isTerminal: true,
+                                    exchangeName: entry.exchangeName,
+                                    threads: [],
+                                    totalIn: 0,
+                                    totalOut: 0, // Terminal wallets don't output
+                                    currency: entry.currency,
+                                    x: 0,
+                                    y: 0
+                                };
+                                graphState.nodes.push(terminalNode);
+                                terminalNodes.push(terminalNode);
+                                walletNodeMap[terminalNodeKey] = terminalNode;
+                            }
+
+                            // Add thread and amount to terminal wallet
+                            terminalNode.threads.push(entry.notation || entry.sourceThreadId);
+                            terminalNode.totalIn += parseFloat(entry.amount);
+
+                            // Create edge from previous hop to terminal
+                            const prevHopNumber = hop.hopNumber - 1;
+                            const fromNodeKey = `hop${prevHopNumber}_${entry.fromWallet}`;
+                            const fromNode = walletNodeMap[fromNodeKey];
+
+                            if (fromNode) {
+                                graphState.edges.push({
+                                    from: fromNode.id,
+                                    to: terminalNode.id,
+                                    amount: parseFloat(entry.amount),
+                                    currency: entry.currency,
+                                    thread: entry.notation || entry.sourceThreadId,
+                                    notes: entry.notes || '',
+                                    txHash: entry.txHash,
+                                    hopNumber: hop.hopNumber,
+                                    isTerminal: true,
+                                    color: '#9c27b0' // Purple for terminal edges
+                                });
+                            }
+                        } else {
+                            // Regular (non-terminal) wallet node
+                            const toNodeKey = `hop${hop.hopNumber}_${entry.toWallet}`;
+
+                            let toNode = walletNodeMap[toNodeKey];
+                            if (!toNode) {
+                                toNode = {
+                                    id: toNodeKey,
+                                    uniqueId: nodeId++,
+                                    label: getWalletLabel(entry.toWallet, entry.toWalletType),
+                                    type: entry.toWalletType || 'black',
+                                    wallet: entry.toWallet,
+                                    hopNumber: hop.hopNumber,
+                                    isTerminal: false,
+                                    exchangeName: null,
+                                    threads: [],
+                                    totalIn: 0,
+                                    totalOut: 0,
+                                    currency: entry.currency,
+                                    x: 0,
+                                    y: 0
+                                };
+                                graphState.nodes.push(toNode);
+                                hopNodes.push(toNode);
+                                walletNodeMap[toNodeKey] = toNode;
+                            }
+
+                            // Add thread and amount to this wallet
+                            toNode.threads.push(entry.notation || entry.sourceThreadId);
+                            toNode.totalIn += parseFloat(entry.amount);
+                            toNode.totalOut += parseFloat(entry.amount);
                         }
 
-                        // Update ART for FROM wallet
-                        const fromNode = walletNodesInHop[entry.fromWallet];
-                        fromNode.artOut += parseFloat(entry.amount);
+                        // Create edge from previous hop's wallet to this wallet
+                        const prevHopNumber = hop.hopNumber - 1;
+                        const fromNodeKey = `hop${prevHopNumber}_${entry.fromWallet}`;
+                        const fromNode = walletNodeMap[fromNodeKey];
 
-                        // Create unique node for TO wallet in this hop
-                        const toNodeKey = `hop${hop.hopNumber}_to_${entry.toWallet}_${entry.id}`;
-
-                        // Always create a TO node (allows duplication)
-                        const toNode = {
-                            id: toNodeKey,
-                            uniqueId: nodeId++,
-                            label: getWalletLabel(entry.toWallet, entry.toWalletType),
-                            type: entry.toWalletType || 'black',
-                            wallet: entry.toWallet,
-                            hopNumber: hop.hopNumber,
-                            isTerminal: entry.isTerminalWallet,
-                            exchangeName: entry.exchangeName,
-                            thread: entry.notation,
-                            artIn: parseFloat(entry.amount),
-                            artOut: entry.isTerminalWallet ? 0 : parseFloat(entry.amount),
-                            x: 0,
-                            y: 0
-                        };
-                        graphState.nodes.push(toNode);
-                        hopNodes.push(toNode);
-
-                        // Create edge with thread information
-                        graphState.edges.push({
-                            from: fromNode.id,
-                            to: toNode.id,
-                            amount: parseFloat(entry.amount),
-                            currency: entry.currency,
-                            thread: entry.notation || entry.sourceThreadId,
-                            txHash: entry.txHash,
-                            hopNumber: hop.hopNumber,
-                            isTerminal: entry.isTerminalWallet,
-                            color: getThreadColor(entry.notation || entry.sourceThreadId)
-                        });
+                        if (fromNode) {
+                            graphState.edges.push({
+                                from: fromNode.id,
+                                to: toNode.id,
+                                amount: parseFloat(entry.amount),
+                                currency: entry.currency,
+                                thread: entry.notation || entry.sourceThreadId,
+                                notes: entry.notes || '',
+                                txHash: entry.txHash,
+                                hopNumber: hop.hopNumber,
+                                isTerminal: entry.isTerminalWallet,
+                                color: getThreadColor(entry.notation || entry.sourceThreadId)
+                            });
+                        }
 
                         // Update hop ART
                         const currency = entry.currency;
@@ -27578,6 +27629,18 @@ To (RED Wallet): ${transfer.to}`;
                     completed: hop.completed
                 });
             });
+
+            // Add terminal wallet column if there are any terminals
+            if (terminalNodes.length > 0) {
+                graphState.hopLayers.push({
+                    hopNumber: 'terminal',
+                    nodes: terminalNodes,
+                    artIn: {}, // Will be calculated from incoming edges
+                    artOut: {}, // Terminal wallets have no output
+                    title: 'TERMINAL WALLETS',
+                    isTerminal: true
+                });
+            }
 
             // Connect hops - find connections between layers
             for (let i = 0; i < graphState.hopLayers.length - 1; i++) {
@@ -27644,62 +27707,100 @@ To (RED Wallet): ${transfer.to}`;
             return address.substring(0, 6) + '...' + address.substring(address.length - 4);
         }
 
-        // Apply T-account DAG layout with hop-centric layers
+        // Apply T-account DAG layout with MUCH better spacing
         function applyTAccountDAGLayout() {
             const container = document.getElementById('graphContainer');
-            const width = container ? container.offsetWidth : 1200;
-            const height = container ? container.offsetHeight : 700;
+            // Make canvas MUCH larger to prevent overlap
+            const width = Math.max(container ? container.offsetWidth : 1200, graphState.hopLayers.length * 500);
+            const height = Math.max(container ? container.offsetHeight : 700, 2400);
 
-            // Position nodes in hop-centric vertical layers
-            const layerWidth = width / (graphState.hopLayers.length || 1);
-            const nodeHeight = 60;
-            const nodeSpacing = 20;
-            const layerPadding = 50;
+            // Set SVG viewBox to match the larger size
+            const svg = document.getElementById('investigationGraph');
+            if (svg) {
+                svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+                svg.setAttribute('width', width);
+                svg.setAttribute('height', height);
+            }
+
+            // Position nodes with MUCH more spacing
+            const layerWidth = Math.max(500, width / (graphState.hopLayers.length || 1));
+            const nodeHeight = 100;  // Increased from 60
+            const nodeSpacing = 120;  // Increased from 20
+            const groupSpacing = 180; // Space between node groups
+            const layerPadding = 150;
 
             graphState.hopLayers.forEach((layer, layerIndex) => {
                 const x = layerWidth * layerIndex + layerWidth / 2;
 
-                // Calculate total height needed for this layer
-                const totalNodesHeight = layer.nodes.length * (nodeHeight + nodeSpacing);
-                const startY = (height - totalNodesHeight) / 2;
+                // Group nodes by type with logical flow pattern
+                const nodeGroups = {
+                    sources: layer.nodes.filter(n => n.isSource),      // Incoming from previous hop
+                    regular: layer.nodes.filter(n => !n.isSource && !n.isTerminal && !n.isSwap && n.type !== 'writeoff'),
+                    swaps: layer.nodes.filter(n => n.isSwap),          // Currency conversions
+                    terminals: layer.nodes.filter(n => n.isTerminal),   // Exchanges (endpoints)
+                    writeoffs: layer.nodes.filter(n => n.type === 'writeoff') // Lost funds
+                };
 
-                // Group nodes by type for better organization
-                const sourceNodes = layer.nodes.filter(n => n.isSource);
-                const terminalNodes = layer.nodes.filter(n => n.isTerminal);
-                const swapNodes = layer.nodes.filter(n => n.isSwap);
-                const writeoffNodes = layer.nodes.filter(n => n.type === 'writeoff');
-                const regularNodes = layer.nodes.filter(n => !n.isSource && !n.isTerminal && !n.isSwap && n.type !== 'writeoff');
-
-                // Position nodes with T-account style alignment
-                let currentY = startY;
-
-                // Place source nodes first (left side of T-account)
-                sourceNodes.forEach(node => {
-                    node.x = x - 30;  // Slightly left
-                    node.y = currentY;
-                    currentY += nodeHeight + nodeSpacing;
+                // Calculate total height with group spacing
+                let totalHeight = layerPadding * 2;
+                Object.values(nodeGroups).forEach(group => {
+                    if (group.length > 0) {
+                        totalHeight += group.length * nodeHeight + (group.length - 1) * nodeSpacing + groupSpacing;
+                    }
                 });
 
-                // Regular nodes in center
-                regularNodes.forEach(node => {
-                    node.x = x;
-                    node.y = currentY;
-                    currentY += nodeHeight + nodeSpacing;
-                });
+                // Start from top with padding
+                let currentY = layerPadding;
 
-                // Swap nodes
-                swapNodes.forEach(node => {
-                    node.x = x;
-                    node.y = currentY;
-                    currentY += nodeHeight + nodeSpacing;
-                });
+                // Place nodes with clear vertical pattern
+                // SOURCES (incoming connections) - aligned left
+                if (nodeGroups.sources.length > 0) {
+                    nodeGroups.sources.forEach(node => {
+                        node.x = x - 60;  // Left alignment for T-account
+                        node.y = currentY;
+                        currentY += nodeHeight + nodeSpacing;
+                    });
+                    currentY += groupSpacing;
+                }
 
-                // Terminal and writeoff nodes (right side of T-account)
-                [...terminalNodes, ...writeoffNodes].forEach(node => {
-                    node.x = x + 30;  // Slightly right
-                    node.y = currentY;
-                    currentY += nodeHeight + nodeSpacing;
-                });
+                // REGULAR TRACES - center aligned
+                if (nodeGroups.regular.length > 0) {
+                    nodeGroups.regular.forEach(node => {
+                        node.x = x;
+                        node.y = currentY;
+                        currentY += nodeHeight + nodeSpacing;
+                    });
+                    currentY += groupSpacing;
+                }
+
+                // SWAPS - center with emphasis
+                if (nodeGroups.swaps.length > 0) {
+                    nodeGroups.swaps.forEach(node => {
+                        node.x = x;
+                        node.y = currentY;
+                        currentY += nodeHeight + nodeSpacing;
+                    });
+                    currentY += groupSpacing;
+                }
+
+                // TERMINALS (exchanges) - aligned right
+                if (nodeGroups.terminals.length > 0) {
+                    nodeGroups.terminals.forEach(node => {
+                        node.x = x + 60;  // Right alignment for endpoints
+                        node.y = currentY;
+                        currentY += nodeHeight + nodeSpacing;
+                    });
+                    currentY += groupSpacing;
+                }
+
+                // WRITEOFFS - aligned right
+                if (nodeGroups.writeoffs.length > 0) {
+                    nodeGroups.writeoffs.forEach(node => {
+                        node.x = x + 60;  // Right alignment for exits
+                        node.y = currentY;
+                        currentY += nodeHeight + nodeSpacing;
+                    });
+                }
             });
         }
 
@@ -27713,37 +27814,46 @@ To (RED Wallet): ${transfer.to}`;
                 content.removeChild(content.firstChild);
             }
 
-            // Draw hop backgrounds/shading first
+            // Draw hop backgrounds with CLEAR alternating colors
             if (graphState.hopLayers) {
                 const container = document.getElementById('graphContainer');
-                const layerWidth = (container ? container.offsetWidth : 1200) / graphState.hopLayers.length;
-                const containerHeight = container ? container.offsetHeight : 700;
+                const totalWidth = Math.max(container ? container.offsetWidth : 1200, graphState.hopLayers.length * 500);
+                const layerWidth = totalWidth / graphState.hopLayers.length;
+                const containerHeight = Math.max(container ? container.offsetHeight : 700, 2400);
 
                 graphState.hopLayers.forEach((layer, index) => {
                     const xStart = index * layerWidth;
                     const xCenter = xStart + layerWidth / 2;
 
-                    // Create shaded background for each hop
+                    // Create CLEARLY VISIBLE alternating backgrounds
                     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                     rect.setAttribute('x', xStart);
                     rect.setAttribute('y', 0);
                     rect.setAttribute('width', layerWidth);
                     rect.setAttribute('height', containerHeight);
-                    rect.setAttribute('fill', index % 2 === 0 ? '#f0f8ff' : '#f8f8f8');
-                    rect.setAttribute('opacity', '0.6');
-                    rect.setAttribute('stroke', '#dee2e6');
-                    rect.setAttribute('stroke-width', '1');
+                    // Strong alternating white and light blue
+                    rect.setAttribute('fill', index % 2 === 0 ? '#ffffff' : '#e1f5fe');
+                    rect.setAttribute('opacity', '1');
+                    rect.setAttribute('stroke', '#0288d1');
+                    rect.setAttribute('stroke-width', '2');
                     content.appendChild(rect);
 
                     // Add hop title at top
                     const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                     title.setAttribute('x', xCenter);
-                    title.setAttribute('y', 25);
+                    title.setAttribute('y', 35);
                     title.setAttribute('text-anchor', 'middle');
-                    title.setAttribute('font-size', '16');
+                    title.setAttribute('font-size', '20');
                     title.setAttribute('font-weight', 'bold');
-                    title.setAttribute('fill', '#2c3e50');
-                    title.textContent = layer.hopNumber === 0 ? 'VICTIMS' : `HOP ${layer.hopNumber}`;
+                    title.setAttribute('fill', '#0288d1');
+                    title.setAttribute('font-family', 'Arial, sans-serif');
+                    // Special title for terminal column
+                    if (layer.isTerminal) {
+                        title.textContent = 'TERMINAL WALLETS';
+                        title.setAttribute('fill', '#9c27b0'); // Purple for terminals
+                    } else {
+                        title.textContent = layer.hopNumber === 0 ? 'VICTIMS' : `HOP ${layer.hopNumber}`;
+                    }
                     content.appendChild(title);
 
                     // Get ART at start of hop (what's coming IN to this hop)
@@ -27924,16 +28034,22 @@ To (RED Wallet): ${transfer.to}`;
                     const d = `M${fromNode.x},${fromNode.y} Q${(fromNode.x + toNode.x) / 2},${(fromNode.y + toNode.y) / 2 + dr} ${toNode.x},${toNode.y}`;
                     path.setAttribute('d', d);
                     path.setAttribute('fill', 'none');
-                    path.setAttribute('stroke', edge.color || (edge.isTerminal ? '#6c5ce7' : '#555'));
-                    path.setAttribute('stroke-width', edge.isInterHop ? '1' : '2');
+                    path.setAttribute('stroke', edge.color || (edge.isTerminal ? '#9c27b0' : '#2196f3'));
+                    path.setAttribute('stroke-width', '3'); // Thick visible lines
                     if (edge.dashArray) {
                         path.setAttribute('stroke-dasharray', edge.dashArray);
                     }
                     path.setAttribute('marker-end', edge.isTerminal ? 'url(#arrowhead-terminal)' : 'url(#arrowhead)');
-                    path.setAttribute('opacity', edge.isInterHop ? '0.3' : '0.6');
+                    path.setAttribute('opacity', '0.9'); // Much more visible
                     path.style.cursor = 'pointer';
 
                     content.appendChild(path);
+
+                    // Add click handler for showing notes
+                    path.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showTransactionNotes(edge.notes || 'No notes available', e.clientX, e.clientY);
+                    });
 
                     // Add edge label with thread and amount
                     if (graphState.showAmounts && !edge.isInterHop) {
@@ -27942,37 +28058,42 @@ To (RED Wallet): ${transfer.to}`;
                         // Background for better readability
                         const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                         const labelX = (fromNode.x + toNode.x) / 2;
-                        const labelY = (fromNode.y + toNode.y) / 2 - 5;
+                        const labelY = (fromNode.y + toNode.y) / 2;
 
-                        bgRect.setAttribute('x', labelX - 40);
-                        bgRect.setAttribute('y', labelY - 10);
-                        bgRect.setAttribute('width', '80');
-                        bgRect.setAttribute('height', '20');
+                        bgRect.setAttribute('x', labelX - 70);
+                        bgRect.setAttribute('y', labelY - 22);
+                        bgRect.setAttribute('width', '140');
+                        bgRect.setAttribute('height', '45');
                         bgRect.setAttribute('fill', 'white');
-                        bgRect.setAttribute('opacity', '0.8');
-                        bgRect.setAttribute('rx', '3');
+                        bgRect.setAttribute('stroke', edge.color || '#2196f3');
+                        bgRect.setAttribute('stroke-width', '2');
+                        bgRect.setAttribute('opacity', '0.95');
+                        bgRect.setAttribute('rx', '5');
                         labelGroup.appendChild(bgRect);
 
-                        // Thread label
+                        // Thread label - CLEAR and VISIBLE
                         if (edge.thread) {
                             const threadText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                             threadText.setAttribute('x', labelX);
-                            threadText.setAttribute('y', labelY - 2);
+                            threadText.setAttribute('y', labelY - 5);
                             threadText.setAttribute('text-anchor', 'middle');
-                            threadText.setAttribute('font-size', '10');
-                            threadText.setAttribute('fill', edge.color || '#333');
+                            threadText.setAttribute('font-size', '14');
+                            threadText.setAttribute('fill', edge.color || '#1976d2');
                             threadText.setAttribute('font-weight', 'bold');
+                            threadText.setAttribute('font-family', 'Arial, sans-serif');
                             threadText.textContent = edge.thread;
                             labelGroup.appendChild(threadText);
                         }
 
-                        // Amount label
+                        // Amount label - CLEAR and VISIBLE
                         const amountText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                         amountText.setAttribute('x', labelX);
-                        amountText.setAttribute('y', labelY + 8);
+                        amountText.setAttribute('y', labelY + 12);
                         amountText.setAttribute('text-anchor', 'middle');
-                        amountText.setAttribute('font-size', '10');
-                        amountText.setAttribute('fill', '#666');
+                        amountText.setAttribute('font-size', '13');
+                        amountText.setAttribute('fill', '#424242');
+                        amountText.setAttribute('font-weight', '600');
+                        amountText.setAttribute('font-family', 'Arial, sans-serif');
                         amountText.textContent = `${edge.amount.toLocaleString()} ${edge.currency}`;
                         labelGroup.appendChild(amountText);
 
@@ -28016,10 +28137,11 @@ To (RED Wallet): ${transfer.to}`;
                 } else {
                     // Regular node circle
                     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                    circle.setAttribute('r', node.isTerminal ? '25' : '20');
+                    circle.setAttribute('r', node.isTerminal ? '35' : '30');
                     circle.setAttribute('fill', getNodeColor(node.type));
                     circle.setAttribute('stroke', '#fff');
-                    circle.setAttribute('stroke-width', '2');
+                    circle.setAttribute('stroke-width', '3');
+                    circle.setAttribute('filter', 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))');
 
                     // Add glow for terminal nodes
                     if (node.isTerminal) {
@@ -28071,38 +28193,125 @@ To (RED Wallet): ${transfer.to}`;
                 content.appendChild(g);
             });
 
+            // Draw text notes on top of everything
+            graphState.textNotes.forEach(note => {
+                const noteGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                noteGroup.setAttribute('transform', `translate(${note.x}, ${note.y})`);
+
+                // Note background
+                const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                const textLines = note.text.split('\n');
+                const maxLineLength = Math.max(...textLines.map(line => line.length));
+                const width = maxLineLength * 8 + 20;
+                const height = textLines.length * 20 + 15;
+
+                bgRect.setAttribute('x', '-5');
+                bgRect.setAttribute('y', '-15');
+                bgRect.setAttribute('width', width);
+                bgRect.setAttribute('height', height);
+                bgRect.setAttribute('fill', note.backgroundColor || '#fffde7');
+                bgRect.setAttribute('stroke', note.color || '#1976d2');
+                bgRect.setAttribute('stroke-width', '2');
+                bgRect.setAttribute('rx', '5');
+                bgRect.setAttribute('opacity', '0.95');
+                bgRect.style.cursor = 'pointer';
+                noteGroup.appendChild(bgRect);
+
+                // Note text (support multiline)
+                textLines.forEach((line, index) => {
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', '5');
+                    text.setAttribute('y', index * 20);
+                    text.setAttribute('font-size', note.fontSize || '14');
+                    text.setAttribute('fill', note.color || '#1976d2');
+                    text.setAttribute('font-family', 'Arial, sans-serif');
+                    text.setAttribute('font-weight', '600');
+                    text.style.cursor = 'pointer';
+                    text.style.userSelect = 'none';
+                    text.textContent = line;
+                    noteGroup.appendChild(text);
+                });
+
+                // Delete button (X)
+                const deleteBtn = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                deleteBtn.setAttribute('transform', `translate(${width - 15}, -10)`);
+                deleteBtn.style.cursor = 'pointer';
+
+                const deleteBg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                deleteBg.setAttribute('r', '8');
+                deleteBg.setAttribute('fill', '#f44336');
+                deleteBg.setAttribute('stroke', '#fff');
+                deleteBg.setAttribute('stroke-width', '1');
+                deleteBtn.appendChild(deleteBg);
+
+                const deleteX = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                deleteX.setAttribute('y', '3');
+                deleteX.setAttribute('text-anchor', 'middle');
+                deleteX.setAttribute('fill', 'white');
+                deleteX.setAttribute('font-size', '12');
+                deleteX.setAttribute('font-weight', 'bold');
+                deleteX.textContent = '×';
+                deleteBtn.appendChild(deleteX);
+
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteTextNote(note.id);
+                });
+                noteGroup.appendChild(deleteBtn);
+
+                // Double-click to edit
+                noteGroup.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    editTextNote(note.id);
+                });
+
+                content.appendChild(noteGroup);
+            });
+
             // Update transform
             updateGraphTransform();
         }
 
         // Get node color based on type
         function getNodeColor(type) {
+            // Modern Material Design colors
             const colors = {
-                'victim': 'url(#victimGradient)',
-                'red': '#ee5a24',
-                'black': '#2d3436',
-                'purple': 'url(#exchangeGradient)',
-                'gray': 'url(#mixerGradient)',
-                'yellow': '#fdcb6e',
-                'brown': '#6c4e31',
-                'green': '#00b894',
-                'blue': '#74b9ff',
-                'pink': '#fd79a8',
-                'orange': '#e17055'
+                'victim': '#f44336',   // Material red 500
+                'red': '#f44336',      // Material red 500
+                'black': '#424242',    // Material grey 800
+                'purple': '#9c27b0',   // Material purple 500
+                'gray': '#757575',     // Material grey 600
+                'yellow': '#ffc107',   // Material amber 500
+                'brown': '#795548',    // Material brown 500
+                'green': '#4caf50',    // Material green 500
+                'blue': '#2196f3',     // Material blue 500
+                'pink': '#e91e63',     // Material pink 500
+                'orange': '#ff9800'    // Material orange 500
             };
             return colors[type] || '#95a5a6';
         }
 
-        // Setup graph interaction
+        // Setup graph interaction with notes support
         function setupGraphInteraction() {
             const svg = document.getElementById('investigationGraph');
             const container = document.getElementById('graphContainer');
+
+            // Set cursor for dragging
+            svg.style.cursor = 'grab';
 
             // Pan functionality
             svg.addEventListener('mousedown', startDrag);
             svg.addEventListener('mousemove', drag);
             svg.addEventListener('mouseup', endDrag);
             svg.addEventListener('mouseleave', endDrag);
+
+            // Right-click for adding notes
+            svg.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (!graphState.isDragging) {
+                    addTextNoteAtPosition(e);
+                }
+            });
 
             // Zoom with mouse wheel
             container.addEventListener('wheel', (e) => {
@@ -28115,13 +28324,69 @@ To (RED Wallet): ${transfer.to}`;
             });
         }
 
-        // Drag functions
+        // Add a text note at the clicked position
+        function addTextNoteAtPosition(e) {
+            const svg = document.getElementById('investigationGraph');
+            const pt = svg.createSVGPoint();
+            pt.x = e.clientX;
+            pt.y = e.clientY;
+
+            // Transform to SVG coordinates
+            const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+            const x = (svgP.x - graphState.translateX) / graphState.zoom;
+            const y = (svgP.y - graphState.translateY) / graphState.zoom;
+
+            // Create note object
+            const note = {
+                id: graphState.nextNoteId++,
+                x: x,
+                y: y,
+                text: 'Double-click to edit',
+                fontSize: 14,
+                color: '#1976d2',
+                backgroundColor: '#fffde7',
+                editing: false
+            };
+
+            graphState.textNotes.push(note);
+            renderGraph(); // Re-render to show the note
+
+            // Start editing immediately
+            setTimeout(() => editTextNote(note.id), 100);
+        }
+
+        // Edit a text note
+        function editTextNote(noteId) {
+            const note = graphState.textNotes.find(n => n.id === noteId);
+            if (!note) return;
+
+            const newText = prompt('Edit note text:', note.text);
+            if (newText !== null) {
+                if (newText.trim() === '') {
+                    // Delete empty notes
+                    graphState.textNotes = graphState.textNotes.filter(n => n.id !== noteId);
+                } else {
+                    note.text = newText;
+                }
+                renderGraph();
+            }
+        }
+
+        // Delete a text note
+        function deleteTextNote(noteId) {
+            graphState.textNotes = graphState.textNotes.filter(n => n.id !== noteId);
+            renderGraph();
+        }
+
+        // Drag functions - allow dragging from anywhere
         function startDrag(e) {
-            if (e.target.tagName === 'svg') {
+            // Allow dragging unless clicking a button
+            if (!e.target.closest('button')) {
                 graphState.isDragging = true;
                 graphState.dragStartX = e.clientX - graphState.translateX;
                 graphState.dragStartY = e.clientY - graphState.translateY;
-                e.currentTarget.style.cursor = 'grabbing';
+                document.getElementById('investigationGraph').style.cursor = 'grabbing';
+                e.preventDefault(); // Prevent text selection
             }
         }
 
@@ -28135,7 +28400,8 @@ To (RED Wallet): ${transfer.to}`;
 
         function endDrag(e) {
             graphState.isDragging = false;
-            e.currentTarget.style.cursor = 'grab';
+            const svg = document.getElementById('investigationGraph');
+            if (svg) svg.style.cursor = 'grab';
         }
 
         // Update graph transform
@@ -28460,6 +28726,108 @@ To (RED Wallet): ${transfer.to}`;
             img.src = url;
 
             showNotification('Graph exported as PNG', 'success');
+        }
+
+        // Show transaction notes popup
+        function showTransactionNotes(notes, x, y) {
+            // Remove existing popup if any
+            const existing = document.getElementById('transactionNotesPopup');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Create popup
+            const popup = document.createElement('div');
+            popup.id = 'transactionNotesPopup';
+            popup.style.cssText = `
+                position: fixed;
+                left: ${x + 10}px;
+                top: ${y - 30}px;
+                background: #333;
+                color: white;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                max-width: 300px;
+                z-index: 10000;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            `;
+            popup.innerHTML = `<strong>Transaction Notes:</strong><br>${notes || 'No notes available'}`;
+            document.body.appendChild(popup);
+
+            // Auto-remove after 3 seconds or on click
+            setTimeout(() => {
+                if (document.getElementById('transactionNotesPopup')) {
+                    popup.remove();
+                }
+            }, 3000);
+
+            popup.addEventListener('click', () => popup.remove());
+        }
+
+        // Export format selection dialog
+        function showExportOptions() {
+            // Remove existing modal if any
+            const existingModal = document.getElementById('exportModal');
+            if (existingModal) existingModal.remove();
+            const existingBackdrop = document.getElementById('exportBackdrop');
+            if (existingBackdrop) existingBackdrop.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'exportModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                z-index: 10000;
+            `;
+
+            modal.innerHTML = `
+                <h3 style="margin-top: 0;">Select Export Format</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button onclick="exportGraphToPDF(); document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
+                            style="padding: 10px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        📄 Export as PDF
+                    </button>
+                    <button onclick="exportGraphToSVG(); document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
+                            style="padding: 10px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        🎨 Export as SVG
+                    </button>
+                    <button onclick="exportGraphToPNG(); document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
+                            style="padding: 10px; background: #ff9800; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        🖼️ Export as PNG
+                    </button>
+                    <button onclick="document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
+                            style="padding: 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Cancel
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Click outside to close
+            const backdrop = document.createElement('div');
+            backdrop.id = 'exportBackdrop';
+            backdrop.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 9999;
+            `;
+            backdrop.onclick = () => {
+                modal.remove();
+                backdrop.remove();
+            };
+            document.body.appendChild(backdrop);
         }
 
         function shareGraph() {
