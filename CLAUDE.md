@@ -3,39 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 08:50)
+## Latest Commit (Auto-updated: 2025-09-24 10:17)
 
-**Commit:** 4cde5fef48c3ae9c715a8b0bb9e8118739e1500f
+**Commit:** cd72cb87ad062dc18596c3b5f4369fc1a6e4449d
 **Author:** Your Name
-**Message:** Add unnecessary input heuristic - most reliable change detection method
+**Message:** Fix PIFO allocation - replace proportional distribution with proper sequential allocation
 
-Implemented two powerful change detection heuristics:
+Critical fix for multi-thread assignment:
 
-1. UNNECESSARY INPUT HEURISTIC (+40 points)
-   - Analyzes if payment could have been made with fewer inputs
-   - If all inputs used when fewer would suffice, MUST have change
-   - Example: Using [5 BTC, 3 BTC] inputs for 6 BTC payment
-   - The 2 BTC output MUST be change (why else use both inputs?)
+BEFORE (Incorrect - Proportional):
+- V1-T1: 53,388 USDT (54% assigned)
+- V1-T2: 53,383 USDT (54% assigned)
+- V1-T3: 552,735 USDT (54% assigned)
+- V1-T4: 552,873 USDT (54% assigned)
+Total: 1,212,380 USDT (evenly distributed)
 
-2. PERFECT CHANGE CALCULATION (+25 points)
-   - Calculates expected change: inputs - payment - estimated fee
-   - If output matches expected change amount (±10%), likely change
-   - Provides expected amount for verification
+AFTER (Correct - PIFO):
+- V1-T1: 98,145 USDT (100% assigned)
+- V1-T2: 98,135 USDT (100% assigned)
+- V1-T3: 1,016,099 USDT (100% assigned)
+- V1-T4: 0 USDT (0% assigned - not needed)
+Total: 1,212,380 USDT (sequential allocation)
 
-Enhanced Bitcoin transaction parsing:
-- Now captures all input amounts and addresses
-- Passes total input amount to change detection
-- Enables sophisticated UTXO analysis
+Changes:
+1. Fixed createHopEntryFromWizard() to use PIFO instead of proportional ratio
+2. Fixed autoAllocateMaxForMultipleSources() to use PIFO order
+3. Threads now consumed sequentially (V1-T1, then V1-T2, then V1-T3, etc.)
 
-Example with unnecessary inputs:
-- Inputs: [5 BTC, 3 BTC, 1 BTC] = 9 BTC total
-- Output 1: 6 BTC (payment)
-- Output 2: 2.9998 BTC
-- Analysis: Could make 6 BTC with just [5, 3], so 1 BTC input unnecessary
-- Result: Output 2 scored as change (unnecessary input + matches expected)
-
-Note: APIs (blockchain.info, BlockCypher) don't explicitly mark change,
-but provide sufficient data for these heuristics to work effectively.
+PIFO (Proceeds In First Out) ensures:
+- Maintains golden thread chronologically
+- Uses earliest transactions first
+- Matches court-accepted tracing methodology
+- Prevents artificial spreading of funds
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -43,23 +42,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 66 +++++++++++++++++++++++++++++++--------------------
- index.html | 80 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
- 2 files changed, 117 insertions(+), 29 deletions(-)
+ CLAUDE.md  | 72 ++++++++++++++++++++++++++++----------------------------------
+ index.html | 63 ++++++++++++++++++++++++++++++++++++++++--------------
+ 2 files changed, 79 insertions(+), 56 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4cde5fe Add unnecessary input heuristic - most reliable change detection method (0 seconds ago)
-- d51c880 Add advanced Bitcoin change address detection heuristics (6 minutes ago)
-- 8feac2a Improve change address detection with automatic and optional modes (9 minutes ago)
-- b8d3614 Implement change address handling as same-hop threads (like swaps) (14 minutes ago)
-- ed49d5d Add comprehensive report viewer and improved navigation (2 hours ago)
-- b3885d2 Fix currency mismatch after swap - prevent duplicate thread creation (2 hours ago)
-- 751b868 Fix duplicate swap output thread creation bug (2 hours ago)
-- 9d3b5fd Fix syntax error in swap wizard template string (2 hours ago)
-- 9a9c03d Update CLAUDE.md with latest commits (2 hours ago)
-- ca3f69c Fix critical thread tracking and validation issues (2 hours ago)
+- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (0 seconds ago)
+- 4cde5fe Add unnecessary input heuristic - most reliable change detection method (87 minutes ago)
+- d51c880 Add advanced Bitcoin change address detection heuristics (2 hours ago)
+- 8feac2a Improve change address detection with automatic and optional modes (2 hours ago)
+- b8d3614 Implement change address handling as same-hop threads (like swaps) (2 hours ago)
+- ed49d5d Add comprehensive report viewer and improved navigation (3 hours ago)
+- b3885d2 Fix currency mismatch after swap - prevent duplicate thread creation (3 hours ago)
+- 751b868 Fix duplicate swap output thread creation bug (3 hours ago)
+- 9d3b5fd Fix syntax error in swap wizard template string (4 hours ago)
+- 9a9c03d Update CLAUDE.md with latest commits (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

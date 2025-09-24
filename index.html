@@ -4117,11 +4117,12 @@
             else if (data.result) {
                 const tx = data.result;
                 
-                // Skip 0 ETH transactions when there are no token transfers
+                // For bulk upload, don't skip 0 ETH transactions - they might have token transfers
+                // that we couldn't detect due to API limitations
                 const ethAmount = parseInt(tx.value, 16) / 1e18;
                 if (ethAmount === 0) {
-                    console.log('Skipping 0 ETH transaction with no token transfers');
-                    return null;
+                    console.log('Warning: 0 ETH transaction - may have token transfers not detected by API');
+                    // Still return transaction data for user to review
                 }
                 
                 // Use block timestamp if available, otherwise current time
@@ -25956,32 +25957,72 @@ async function processBulkTransactions() {
                 continue;
             }
             
-            // Fetch transaction data
-            const txData = await fetchTransactionData(hash, detectedChain);
-            
+            // Use parseTransactionData (same as individual lookup) instead of fetchTransactionData
+            const txData = await parseTransactionData(hash, detectedChain);
+
             if (txData) {
-                // Create transaction object
-                const transaction = {
-                    id: 0, // Will be reassigned after sorting
-                    txHash: hash,
-                    amount: txData.amount.toString(),
-                    currency: txData.currency,
-                    customCurrency: '',
-                    receivingWallet: txData.to,
-                    datetime: new Date(txData.time).toISOString().slice(0, 16),
-                    timezone: 'UTC',
-                    notes: `From: ${txData.from} | ${txData.blockchain} transaction`
-                };
-                
-                tempTransactions.push(transaction);
-                results.push({ 
-                    hash, 
-                    status: 'success', 
-                    message: `${txData.amount} ${txData.currency} ${txData.to.substring(0, 20)}...`,
-                    timestamp: txData.time
-                });
+                // Handle multiple transfers (token transactions)
+                if (txData.multipleTransfers && txData.transfers && txData.transfers.length > 0) {
+                    console.log(`Transaction ${hash} has ${txData.transfers.length} transfers`);
+
+                    // For bulk upload, if only one transfer, auto-select it
+                    // If multiple, take the first one and note it needs review
+                    if (txData.transfers.length === 1) {
+                        const transfer = txData.transfers[0];
+                        const transaction = {
+                            id: 0, // Will be reassigned after sorting
+                            txHash: hash,
+                            amount: transfer.amount.toString(),
+                            currency: transfer.currency || 'Unknown',
+                            customCurrency: '',
+                            receivingWallet: transfer.to,
+                            datetime: txData.time ? new Date(txData.time).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+                            timezone: 'UTC',
+                            notes: `From: ${transfer.from}`
+                        };
+
+                        tempTransactions.push(transaction);
+                        results.push({
+                            hash,
+                            status: 'success',
+                            message: `${transfer.amount} ${transfer.currency} to ${transfer.to.substring(0, 20)}...`,
+                            timestamp: txData.time
+                        });
+                    } else {
+                        // Multiple transfers - store for batch selection later
+                        results.push({
+                            hash,
+                            status: 'pending',
+                            message: `${txData.transfers.length} transfers - requires selection`,
+                            timestamp: txData.time,
+                            transfers: txData.transfers,
+                            from: txData.from
+                        });
+                    }
+                } else {
+                    // Single transfer or ETH transaction
+                    const transaction = {
+                        id: 0, // Will be reassigned after sorting
+                        txHash: hash,
+                        amount: (txData.amount || 0).toString(),
+                        currency: txData.currency || 'ETH',
+                        customCurrency: '',
+                        receivingWallet: txData.to || '',
+                        datetime: txData.time ? new Date(txData.time).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+                        timezone: 'UTC',
+                        notes: txData.from ? `From: ${txData.from}` : ''
+                    };
+
+                    tempTransactions.push(transaction);
+                    results.push({
+                        hash,
+                        status: 'success',
+                        message: `${txData.amount || 0} ${txData.currency || 'ETH'} to ${(txData.to || '').substring(0, 20)}...`,
+                        timestamp: txData.time
+                    });
+                }
             } else {
-                results.push({ hash, status: 'error', message: 'Failed to fetch data' });
+                results.push({ hash, status: 'error', message: 'Failed to parse transaction data' });
             }
             
         } catch (error) {
@@ -25992,11 +26033,44 @@ async function processBulkTransactions() {
         await new Promise(resolve => setTimeout(resolve, 500));
     }
     
+    // Check if we have any pending multi-transfer transactions
+    const pendingMultiTransfers = results.filter(r => r.status === 'pending');
+
+    if (pendingMultiTransfers.length > 0) {
+        // Show bulk transfer selection modal
+        document.getElementById('bulkProgressText').textContent = 'Select transfers for multi-output transactions...';
+
+        const selectedTransfers = await showBulkTransferSelectionModal(pendingMultiTransfers);
+
+        // Process selected transfers
+        selectedTransfers.forEach(selection => {
+            const transaction = {
+                id: 0,
+                txHash: selection.hash,
+                amount: selection.transfer.amount.toString(),
+                currency: selection.transfer.currency || 'Unknown',
+                customCurrency: '',
+                receivingWallet: selection.transfer.to,
+                datetime: selection.timestamp ? new Date(selection.timestamp).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+                timezone: 'UTC',
+                notes: `From: ${selection.transfer.from}`
+            };
+            tempTransactions.push(transaction);
+
+            // Update result status
+            const resultIndex = results.findIndex(r => r.hash === selection.hash);
+            if (resultIndex !== -1) {
+                results[resultIndex].status = 'success';
+                results[resultIndex].message = `${selection.transfer.amount} ${selection.transfer.currency} to ${selection.transfer.to.substring(0, 20)}...`;
+            }
+        });
+    }
+
     // Add all successful transactions to the victim
     tempTransactions.forEach(tx => {
         victim.transactions.push(tx);
     });
-    
+
     // Show results
     document.getElementById('bulkProgressText').textContent = 'Complete! Sorting transactions chronologically...';
     showBulkResults(results);
@@ -26014,8 +26088,12 @@ async function processBulkTransactions() {
 function showBulkResults(results) {
     const resultsList = document.getElementById('bulkResultsList');
     resultsList.innerHTML = results.map(result => {
-        const icon = result.status === 'success' ? '✅' : '❌';
-        const color = result.status === 'success' ? '#27ae60' : '#dc3545';
+        const icon = result.status === 'success' ? '✅' :
+                     result.status === 'warning' ? '⚠️' :
+                     result.status === 'pending' ? '⏳' : '❌';
+        const color = result.status === 'success' ? '#27ae60' :
+                      result.status === 'warning' ? '#ff9800' :
+                      result.status === 'pending' ? '#2196f3' : '#dc3545';
         return `
             <div style="padding: 8px; border-bottom: 1px solid #e0e0e0;">
                 <span style="color: ${color};">${icon}</span>
@@ -26024,8 +26102,111 @@ function showBulkResults(results) {
             </div>
         `;
     }).join('');
-    
+
     document.getElementById('bulkProcessingResults').style.display = 'block';
+}
+
+// New function to handle bulk transfer selection
+async function showBulkTransferSelectionModal(pendingTransfers) {
+    return new Promise(resolve => {
+        const selectedTransfers = [];
+        let currentIndex = 0;
+
+        // Create modal HTML if it doesn't exist
+        let modal = document.getElementById('bulkTransferSelectionModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'bulkTransferSelectionModal';
+            modal.className = 'modal';
+            modal.style.cssText = 'display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);';
+            modal.innerHTML = `
+                <div class="modal-content" style="background: white; margin: 5% auto; padding: 20px; width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto; border-radius: 8px;">
+                    <h2>Select Transfers for Multi-Output Transactions</h2>
+                    <p id="bulkTransferProgress" style="color: #666; margin: 10px 0;"></p>
+                    <div id="bulkTransfersList" style="margin: 20px 0;"></div>
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                        <button id="bulkTransferSkip" class="btn btn-secondary" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Skip This Transaction</button>
+                        <button id="bulkTransferNext" class="btn btn-primary" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Confirm Selection</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function showNextTransaction() {
+            if (currentIndex >= pendingTransfers.length) {
+                // All done
+                modal.style.display = 'none';
+                resolve(selectedTransfers);
+                return;
+            }
+
+            const tx = pendingTransfers[currentIndex];
+            document.getElementById('bulkTransferProgress').textContent =
+                `Transaction ${currentIndex + 1} of ${pendingTransfers.length} - ${tx.hash.substring(0, 20)}...`;
+
+            const transfersList = document.getElementById('bulkTransfersList');
+            transfersList.innerHTML = '<h3>Select transfers to include:</h3>';
+
+            // Add "Select All" checkbox
+            const selectAllDiv = document.createElement('div');
+            selectAllDiv.style.cssText = 'margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px;';
+            selectAllDiv.innerHTML = `
+                <label style="font-weight: bold; cursor: pointer;">
+                    <input type="checkbox" id="bulkSelectAll" checked> Select All
+                </label>
+            `;
+            transfersList.appendChild(selectAllDiv);
+
+            // Add transfer options
+            tx.transfers.forEach((transfer, index) => {
+                const div = document.createElement('div');
+                div.style.cssText = 'padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;';
+                div.innerHTML = `
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" value="${index}" style="margin-right: 10px;" checked>
+                        <div style="flex: 1;">
+                            <div><strong>${transfer.amount} ${transfer.currency}</strong></div>
+                            <div style="font-size: 12px; color: #666;">To: ${transfer.to}</div>
+                            <div style="font-size: 12px; color: #666;">From: ${transfer.from}</div>
+                        </div>
+                    </label>
+                `;
+                transfersList.appendChild(div);
+            });
+
+            document.getElementById('bulkSelectAll').onchange = function(e) {
+                const checkboxes = transfersList.querySelectorAll('input[type="checkbox"]:not(#bulkSelectAll)');
+                checkboxes.forEach(cb => cb.checked = e.target.checked);
+            };
+        }
+
+        document.getElementById('bulkTransferNext').onclick = function() {
+            const tx = pendingTransfers[currentIndex];
+            const checkboxes = document.getElementById('bulkTransfersList').querySelectorAll('input[type="checkbox"]:not(#bulkSelectAll):checked');
+
+            checkboxes.forEach(cb => {
+                const index = parseInt(cb.value);
+                selectedTransfers.push({
+                    hash: tx.hash,
+                    transfer: tx.transfers[index],
+                    timestamp: tx.timestamp
+                });
+            });
+
+            currentIndex++;
+            showNextTransaction();
+        };
+
+        document.getElementById('bulkTransferSkip').onclick = function() {
+            currentIndex++;
+            showNextTransaction();
+        };
+
+        // Show modal and start with first transaction
+        modal.style.display = 'block';
+        showNextTransaction();
+    });
 }
 
 async function fetchTransactionData(hash, blockchain) {
