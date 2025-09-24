@@ -28636,51 +28636,449 @@ To (RED Wallet): ${transfer.to}`;
 
         // Export functions
         async function exportGraphToPDF() {
-            showNotification('Generating PDF... This may take a moment.', 'info');
+            showNotification('Generating comprehensive PDF report...', 'info');
 
-            // Create a temporary canvas
-            const svg = document.getElementById('investigationGraph');
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            // Create a printer-friendly HTML document
+            const printWindow = window.open('', '_blank');
 
-            // Set canvas size
-            canvas.width = 1920;
-            canvas.height = 1080;
+            if (!printWindow) {
+                showNotification('Please allow pop-ups to generate PDF report', 'error');
+                return;
+            }
 
-            // Draw white background
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Calculate investigation statistics
+            let totalVictims = investigation.victims?.length || 0;
+            let totalTransactions = 0;
+            let totalLoss = {};
+            let terminalWallets = investigation.terminalWalletIndex || [];
 
-            // Convert SVG to image
-            const svgData = new XMLSerializer().serializeToString(svg);
-            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(svgBlob);
-
-            const img = new Image();
-            img.onload = function() {
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                // Convert to PDF using jsPDF (would need to include library)
-                // For now, export as image
-                canvas.toBlob(function(blob) {
-                    const pdfUrl = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = pdfUrl;
-                    a.download = `BATS_Graph_${investigation.caseId || 'export'}_${new Date().toISOString().split('T')[0]}.png`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(pdfUrl);
-                    URL.revokeObjectURL(url);
-                    showNotification('Graph exported as image (PDF library not loaded)', 'success');
+            investigation.victims?.forEach(victim => {
+                victim.transactions?.forEach(tx => {
+                    totalTransactions++;
+                    const currency = tx.currency;
+                    const amount = parseFloat(tx.amount);
+                    if (!totalLoss[currency]) totalLoss[currency] = 0;
+                    totalLoss[currency] += amount;
                 });
-            };
-            img.src = url;
+            });
+
+            // Count hops and entries
+            let totalHops = investigation.hops?.length || 0;
+            let totalEntries = 0;
+            investigation.hops?.forEach(hop => {
+                totalEntries += hop.entries?.length || 0;
+            });
+
+            // Build the comprehensive PDF report content
+            const pdfContent = `<!DOCTYPE html>
+<html>
+<head>
+    <title>BATS Investigation Report - ${investigation.caseId || 'Untitled'}</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+            .page-break { page-break-after: always; }
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #2196f3;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #1976d2;
+            margin: 10px 0;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-left: 4px solid #2196f3;
+            border-radius: 4px;
+        }
+        h2 {
+            color: #1976d2;
+            margin-top: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1976d2;
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #2196f3;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background: #f5f5f5;
+        }
+        .victim-section {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+        .terminal-section {
+            background: #f3e5f5;
+            border-left: 4px solid #9c27b0;
+        }
+        .graph-container {
+            margin: 30px 0;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .graph-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #666;
+        }
+        #graphImage {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        .no-print {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+        .print-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 5px;
+        }
+        .print-btn:hover {
+            background: #1976d2;
+        }
+        .wallet-address {
+            font-family: monospace;
+            font-size: 11px;
+            background: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+            word-break: break-all;
+        }
+        .amount {
+            font-weight: bold;
+            color: #2e7d32;
+        }
+        .warning-box {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .warning-box strong {
+            color: #e65100;
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button class="print-btn" onclick="window.print(); return false;">🖨️ Print / Save as PDF</button>
+        <button class="print-btn" onclick="window.close()" style="background: #666;">Close</button>
+    </div>
+
+    <div class="header">
+        <h1>BLOCKCHAIN INVESTIGATION REPORT</h1>
+        <div class="subtitle">B.A.T.S. - Block Audit Tracing Standard</div>
+        <div style="margin-top: 10px;">
+            <strong>Case ID:</strong> ${investigation.caseId || 'Not Specified'}<br>
+            <strong>Case Title:</strong> ${investigation.caseTitle || 'Untitled Investigation'}<br>
+            <strong>Investigator:</strong> ${investigation.investigator || 'Not Specified'}<br>
+            <strong>Report Generated:</strong> ${new Date().toLocaleString()}
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📊 Investigation Summary</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Victims</div>
+                <div class="stat-value">${totalVictims}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Loss</div>
+                <div class="stat-value" style="font-size: 18px;">${Object.entries(totalLoss).map(([curr, amt]) =>
+                    `${amt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${curr}`
+                ).join('<br>')}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Hops Traced</div>
+                <div class="stat-value">${totalHops}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Transactions</div>
+                <div class="stat-value">${totalTransactions}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Trace Entries</div>
+                <div class="stat-value">${totalEntries}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Terminal Wallets</div>
+                <div class="stat-value">${terminalWallets.length}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section victim-section">
+        <h2>👥 Victim Information</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Victim</th>
+                    <th>Total Loss</th>
+                    <th>Transactions</th>
+                    <th>Initial Receiving Wallet</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${investigation.victims?.map(victim => `
+                    <tr>
+                        <td>${victim.name || 'Unknown'}<br><small>${victim.contactInfo || ''}</small></td>
+                        <td class="amount">${victim.totalLoss} ${victim.transactions?.[0]?.currency || ''}</td>
+                        <td>${victim.transactions?.length || 0}</td>
+                        <td><span class="wallet-address">${victim.transactions?.[0]?.receivingWallet || 'N/A'}</span></td>
+                    </tr>
+                `).join('') || '<tr><td colspan="4">No victims recorded</td></tr>'}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="graph-container page-break">
+        <div class="graph-title">FUND FLOW VISUALIZATION</div>
+        <img id="graphImage" src="" alt="Investigation Graph">
+    </div>
+
+    ${terminalWallets.length > 0 ? `
+    <div class="section terminal-section">
+        <h2>🏦 Terminal Wallet Arrivals (Exchanges)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Exchange</th>
+                    <th>Amount</th>
+                    <th>Currency</th>
+                    <th>Receiving Wallet</th>
+                    <th>Transaction Hash</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${terminalWallets.map(tw => `
+                    <tr>
+                        <td><strong>${tw.exchangeName || 'Unknown'}</strong></td>
+                        <td class="amount">${tw.amount?.toLocaleString() || '0'}</td>
+                        <td>${tw.currency || ''}</td>
+                        <td><span class="wallet-address">${tw.toWallet || ''}</span></td>
+                        <td><span class="wallet-address">${(tw.txHash || '').substring(0, 20)}...</span></td>
+                        <td>${tw.timestamp || ''}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        <div class="warning-box">
+            <strong>⚖️ Legal Action Required:</strong> Funds have been traced to identified exchange wallets.
+            Legal process (subpoena, court order, or law enforcement request) will be required to freeze
+            and recover these assets. Contact legal counsel to initiate appropriate procedures with the exchanges listed above.
+        </div>
+    </div>
+    ` : ''}
+
+    <div class="section">
+        <h2>🔍 Transaction Flow Details</h2>
+        ${investigation.hops?.map((hop, index) => `
+            <h3 style="color: #1976d2;">Hop ${hop.hopNumber}</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>From Wallet</th>
+                        <th>To Wallet</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${hop.entries?.map(entry => `
+                        <tr>
+                            <td>${entry.entryType?.toUpperCase() || 'TRACE'}</td>
+                            <td class="amount">${parseFloat(entry.amount).toLocaleString()} ${entry.currency}</td>
+                            <td><span class="wallet-address">${(entry.fromWallet || 'N/A').substring(0, 20)}...</span></td>
+                            <td><span class="wallet-address">${(entry.toWallet || 'N/A').substring(0, 20)}...</span></td>
+                            <td>${entry.notes || '-'}</td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="5">No entries</td></tr>'}
+                </tbody>
+            </table>
+        `).join('') || '<p>No hops recorded</p>'}
+    </div>
+
+    <div class="footer">
+        <p>
+            <strong>Generated by B.A.T.S. Tool</strong><br>
+            Block Audit Tracing Standard - Version 1.0<br>
+            ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}<br>
+            <br>
+            <em>This report is for investigative purposes only. All wallet addresses and transaction
+            data should be independently verified before taking legal action.</em>
+        </p>
+    </div>
+</body>
+</html>`;
+
+            // Write the content to the new window
+            printWindow.document.write(pdfContent);
+            printWindow.document.close();
+
+            // Add the graph image after a short delay
+            setTimeout(() => {
+                const svg = document.getElementById('investigationGraph');
+                if (svg) {
+                    const svgData = new XMLSerializer().serializeToString(svg);
+                    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                    const url = URL.createObjectURL(svgBlob);
+
+                    const img = new Image();
+                    img.onload = function() {
+                        // Create canvas to convert SVG to image
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 1920;
+                        canvas.height = 1080;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                        // Set the image in the print window
+                        const graphImg = printWindow.document.getElementById('graphImage');
+                        if (graphImg) {
+                            graphImg.src = canvas.toDataURL('image/png');
+                        }
+                        URL.revokeObjectURL(url);
+                    };
+                    img.src = url;
+                }
+
+                showNotification('📄 PDF report opened in new window. Click "Print / Save as PDF" to save.', 'success');
+            }, 500);
         }
 
         function exportGraphToSVG() {
-            const svg = document.getElementById('investigationGraph');
-            const svgData = new XMLSerializer().serializeToString(svg);
+            const originalSvg = document.getElementById('investigationGraph');
+
+            // Clone the SVG to add header
+            const svgClone = originalSvg.cloneNode(true);
+
+            // Add header group at the top
+            const headerGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            headerGroup.setAttribute('transform', 'translate(0, 0)');
+
+            // Add background rect for header
+            const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bgRect.setAttribute('x', '0');
+            bgRect.setAttribute('y', '0');
+            bgRect.setAttribute('width', '100%');
+            bgRect.setAttribute('height', '80');
+            bgRect.setAttribute('fill', '#f5f5f5');
+            headerGroup.appendChild(bgRect);
+
+            // Add case title
+            const caseText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            caseText.setAttribute('x', '20');
+            caseText.setAttribute('y', '35');
+            caseText.setAttribute('font-family', 'Arial, sans-serif');
+            caseText.setAttribute('font-size', '24');
+            caseText.setAttribute('font-weight', 'bold');
+            caseText.setAttribute('fill', '#333');
+            caseText.textContent = `Case: ${investigation.caseId || 'Untitled'}`;
+            headerGroup.appendChild(caseText);
+
+            // Add investigator and date
+            const infoText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            infoText.setAttribute('x', '20');
+            infoText.setAttribute('y', '60');
+            infoText.setAttribute('font-family', 'Arial, sans-serif');
+            infoText.setAttribute('font-size', '16');
+            infoText.setAttribute('fill', '#666');
+            infoText.textContent = `Investigator: ${investigation.investigator || 'Not Specified'} | Date: ${new Date().toLocaleDateString()}`;
+            headerGroup.appendChild(infoText);
+
+            // Shift existing content down
+            const graphContent = svgClone.getElementById('graphContent');
+            if (graphContent) {
+                const currentTransform = graphContent.getAttribute('transform') || '';
+                graphContent.setAttribute('transform', `${currentTransform} translate(0, 80)`);
+            }
+
+            // Insert header at the beginning
+            svgClone.insertBefore(headerGroup, svgClone.firstChild);
+
+            const svgData = new XMLSerializer().serializeToString(svgClone);
             const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
             const url = URL.createObjectURL(svgBlob);
 
@@ -28692,7 +29090,7 @@ To (RED Wallet): ${transfer.to}`;
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            showNotification('Graph exported as SVG', 'success');
+            showNotification('Graph exported as SVG with case metadata', 'success');
         }
 
         function exportGraphToPNG() {
@@ -28712,6 +29110,16 @@ To (RED Wallet): ${transfer.to}`;
             const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
             const url = URL.createObjectURL(svgBlob);
 
+            // Add header information to the canvas
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fillRect(0, 0, canvas.width, 80);
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Case: ${investigation.caseId || 'Untitled'}`, 20, 30);
+            ctx.font = '16px Arial';
+            ctx.fillText(`Investigator: ${investigation.investigator || 'Not Specified'} | Date: ${new Date().toLocaleDateString()}`, 20, 55);
+
             // Prepare investigation data for embedding
             const investigationData = JSON.stringify({
                 version: '1.0',
@@ -28721,7 +29129,8 @@ To (RED Wallet): ${transfer.to}`;
 
             const img = new Image();
             img.onload = async function() {
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                // Draw the graph below the header
+                ctx.drawImage(img, 0, 80, canvas.width, canvas.height - 80);
 
                 canvas.toBlob(async function(blob) {
                     try {
@@ -28852,10 +29261,10 @@ To (RED Wallet): ${transfer.to}`;
                     <div style="border: 1px solid #ddd; border-radius: 6px; padding: 12px; background: #fafafa;">
                         <button onclick="exportGraphToPDF(); document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
                                 style="width: 100%; padding: 10px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                            📄 Export as PDF
+                            📄 Export as PDF Report
                         </button>
                         <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">
-                            Standard PDF document for reports and printing (visual only, no embedded data)
+                            <strong>Comprehensive report for case presentation:</strong> Includes investigation summary, victim details, graph visualization, terminal wallet analysis, and all transaction flows. Perfect for court filings and legal proceedings.
                         </p>
                     </div>
 
