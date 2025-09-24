@@ -5772,9 +5772,45 @@ function buildAvailableThreadsIndex() {
             }
         });
 
-        // Second pass: Process traces (after swaps have updated threads)
+        // Second pass: Process traces and change entries (after swaps have updated threads)
         hop.entries.forEach(entry => {
-            if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
+            // Handle change entries - create same-hop threads
+            if (entry.entryType === 'change' && parseFloat(entry.amount) > 0 && entry.notation) {
+                console.log(`Processing change entry: ${entry.notation} with ${entry.amount} ${entry.currency}`);
+
+                // Change entries create threads at the SAME hop level (like swaps)
+                // They consume the source thread and create a new thread available for the current hop
+                const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+
+                if (!investigation.availableThreads[currency]) {
+                    investigation.availableThreads[currency] = {};
+                }
+
+                // Generate internal ID for the change thread
+                const newInternalId = generateInternalThreadId(entry.notation, currency);
+
+                // Create the change thread at the same hop level
+                investigation.availableThreads[currency][newInternalId] = {
+                    notation: entry.notation,
+                    internalId: newInternalId,
+                    totalAmount: parseFloat(entry.amount),
+                    availableAmount: parseFloat(entry.amount),
+                    assignments: [],
+                    sourceWallet: entry.toWallet,
+                    sourceType: 'change_output',
+                    hopLevel: hop.hopNumber - 1, // Same hop level as source
+                    createdAt: entry.timestamp || new Date().toISOString(),
+                    isActive: true,
+                    currency: currency,
+                    isChange: true,
+                    parentInternalIds: entry.multipleSourceInternalIds || [entry.sourceThreadInternalId],
+                    parentNotations: entry.multipleSourceThreads || [entry.sourceThreadId]
+                };
+
+                console.log(`Created change thread ${entry.notation} in ${currency} with ${entry.amount} at hop level ${hop.hopNumber - 1}`);
+            }
+            // Handle regular trace entries
+            else if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
                 // Don't create thread if this trace has been swapped (check both local and global)
                 if (!swappedThreadIds.has(entry.notation) && !globalSwappedThreadIds.has(entry.notation)) {
                     // Don't create output threads for terminal wallets (purple, gray, blue)
@@ -19229,20 +19265,96 @@ function updateThreadsAfterSwap(hop, swapEntry) {
 }
 
 function createSingleHopEntry(hop, wizardData, output, outputIndex) {
-    // Skip creating entries for change outputs - funds remain in source thread
+    // Handle change outputs - create a same-hop thread (like swaps)
     if (output.isChange) {
-        console.log(`Skipping change output: ${output.amount} ${output.currency} returns to sender, remains in source thread`);
+        console.log(`Processing change output: ${output.amount} ${output.currency} to ${output.to}`);
 
-        // Document the change in notes but don't create an entry
-        const changeNote = `Change: ${output.amount} ${output.currency} returned to ${output.to} (remains in source thread)`;
+        // Create a change entry that generates a same-hop thread
+        // This works like a swap - consumes source thread and creates new thread at same hop level
 
-        // Store change note to add to next payment entry
-        if (!wizardData.changeNotes) {
-            wizardData.changeNotes = [];
+        // Generate the base notation for the change thread
+        let changeNotation = '';
+        if (wizardData.selectedThreads.length === 1) {
+            const baseNotation = wizardData.selectedThreads[0];
+            // Change threads stay at same hop level (no -H increment)
+            // Extract the base V-T notation without hop
+            const vtMatch = baseNotation.match(/^(V\d+-T[\d,]+)/);
+            if (vtMatch) {
+                changeNotation = vtMatch[1];
+                // If source already has hop, keep same hop level
+                const hopMatch = baseNotation.match(/-H(\d+)/);
+                if (hopMatch) {
+                    changeNotation += `-H${hopMatch[1]}`;
+                }
+            } else {
+                changeNotation = baseNotation;
+            }
+        } else {
+            // Commingling - create combined notation
+            const threadsByVictim = {};
+            wizardData.selectedThreads.forEach(threadId => {
+                const match = threadId.match(/V(\d+)-T([\d,]+)/);
+                if (match) {
+                    const victimId = match[1];
+                    const transactionIds = match[2];
+                    if (!threadsByVictim[victimId]) {
+                        threadsByVictim[victimId] = [];
+                    }
+                    threadsByVictim[victimId].push(transactionIds);
+                }
+            });
+
+            const notationParts = [];
+            Object.keys(threadsByVictim).sort((a, b) => parseInt(a) - parseInt(b)).forEach(victimId => {
+                const transactions = threadsByVictim[victimId].sort().join(',');
+                notationParts.push(`(V${victimId}-T${transactions})`);
+            });
+
+            // For change, stay at current hop level (not incrementing)
+            const currentHopLevel = hop.hopNumber - 1; // Since we're in hop N, threads come from hop N-1
+            changeNotation = currentHopLevel > 0 ?
+                `${notationParts.join(' ')} H${currentHopLevel}` :
+                notationParts.join(' ');
         }
-        wizardData.changeNotes.push(changeNote);
 
-        return; // Don't create an entry for change
+        // Create the change entry
+        const changeEntry = {
+            id: Date.now() + outputIndex + 1000, // Ensure unique ID
+            hopNumber: hop.hopNumber,
+            entryType: 'change', // New entry type for change addresses
+
+            // Thread tracking
+            sourceThreadInternalId: wizardData.selectedInternalIds && wizardData.selectedInternalIds.length === 1 ?
+                wizardData.selectedInternalIds[0] : '',
+            multipleSourceInternalIds: wizardData.selectedInternalIds && wizardData.selectedInternalIds.length > 1 ?
+                wizardData.selectedInternalIds : [],
+            sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
+            multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : [],
+
+            amount: output.amount.toString(),
+            currency: output.currency || 'BTC',
+            txHash: wizardData.txHash,
+            fromWallet: output.from,
+            toWallet: output.to,
+            toWalletType: 'orange', // ORANGE for change addresses
+            timestamp: wizardData.txData?.time ? new Date(wizardData.txData.time).toISOString() : new Date().toISOString(),
+            timezone: 'UTC',
+            notes: `Change output: ${output.amount} ${output.currency} sent to ${output.to}\nFunds remain trackable at same hop level (${changeNotation})`,
+            notation: changeNotation,
+            isChange: true,
+            createsSameHopThread: true // Flag to indicate this creates a same-hop thread
+        };
+
+        // Add to hop entries
+        hop.entries.push(changeEntry);
+
+        // The thread will be created by updateThreadAvailabilityFromHop
+        // but we need to ensure it's created at the same hop level
+        console.log(`Created change entry with notation ${changeNotation} at hop ${hop.hopNumber}`);
+
+        // Don't return - continue to process other outputs
+        // But skip the rest of this function for this output
+        return;
     }
 
     // Calculate how much of the source amount goes to this output
