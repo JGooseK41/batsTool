@@ -3,35 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 10:45)
+## Latest Commit (Auto-updated: 2025-09-24 10:48)
 
-**Commit:** 33f6d1c44f474ce1d95f6527fddae8f58b50180a
+**Commit:** 3c265745253a7de5548ce51c65c1726802d111d6
 **Author:** Your Name
-**Message:** Add detailed logging to debug token transfer parsing in bulk upload
-
-- Added comprehensive logging to parseEVMResponse
-- Will show receipt data structure and logs detection
-- Helps identify why token transfers aren't being parsed correctly
+**Message:** Improve parseEVMResponse logging format for better visibility
 
 ### Changed Files:
 ```
  CLAUDE.md  | 31 +++++++++++++++----------------
- index.html |  9 +++++++++
- 2 files changed, 24 insertions(+), 16 deletions(-)
+ index.html | 16 ++++++++--------
+ 2 files changed, 23 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 33f6d1c Add detailed logging to debug token transfer parsing in bulk upload (0 seconds ago)
-- 2cb002c Fix bulk upload token transfer detection for all EVM chains (2 minutes ago)
-- ad194ac Fix bulk upload API calls and add error handling for extension interference (6 minutes ago)
-- 140cd3f Add bulk upload test file and complete implementation (13 minutes ago)
-- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (14 minutes ago)
-- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (28 minutes ago)
+- 3c26574 Improve parseEVMResponse logging format for better visibility (0 seconds ago)
+- 33f6d1c Add detailed logging to debug token transfer parsing in bulk upload (3 minutes ago)
+- 2cb002c Fix bulk upload token transfer detection for all EVM chains (5 minutes ago)
+- ad194ac Fix bulk upload API calls and add error handling for extension interference (9 minutes ago)
+- 140cd3f Add bulk upload test file and complete implementation (15 minutes ago)
+- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (17 minutes ago)
+- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (31 minutes ago)
 - 4cde5fe Add unnecessary input heuristic - most reliable change detection method (2 hours ago)
 - d51c880 Add advanced Bitcoin change address detection heuristics (2 hours ago)
 - 8feac2a Improve change address detection with automatic and optional modes (2 hours ago)
-- b8d3614 Implement change address handling as same-hop threads (like swaps) (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

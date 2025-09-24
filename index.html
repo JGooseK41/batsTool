@@ -26271,7 +26271,7 @@ async function fetchTransactionData(hash, blockchain) {
                 if (!data.result || data.result === null) continue;
 
                 // Also check for token transfers
-                let tokenData = null;
+                tokenData = null; // Use the outer scope tokenData, don't redeclare
                 try {
                     const tokenUrl = corsEnabled ?
                         corsProxyUrl + `${config.tokenApiUrl}${hash}&apikey=${apiKey}` :
