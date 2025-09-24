@@ -3,42 +3,37 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 10:32)
+## Latest Commit (Auto-updated: 2025-09-24 10:39)
 
-**Commit:** 140cd3fff4e89489a24693b479ab0c59d1298903
+**Commit:** ad194ac3ec932e567db36c42cb0f4567f738f03d
 **Author:** Your Name
-**Message:** Add bulk upload test file and complete implementation
+**Message:** Fix bulk upload API calls and add error handling for extension interference
 
-- Created test-bulk-upload.html with various test cases
-- Test cases include ETH, single token, and multi-output transactions
-- Generates realistic transaction hashes for testing
-- Provides easy copy-to-clipboard functionality for testing bulk upload
-
-The bulk upload feature is now fully functional with:
-- Same parseTransactionData logic as individual lookups
-- Multi-transfer selection modal for transactions with multiple outputs
-- Proper error handling and status reporting
-- No more CSP violations
+- Fixed undefined parseTransactionData call - now uses fetchTransactionData
+- Added error handling to catch browser extension interference
+- Added delays between API calls to prevent rate limiting
+- Added console logging for debugging bulk upload issues
+- Wrapped all fetch calls in try-catch to handle extension errors gracefully
 
 ### Changed Files:
 ```
- CLAUDE.md             |  57 ++++++----------------
- test-bulk-upload.html | 131 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 147 insertions(+), 41 deletions(-)
+ CLAUDE.md  | 33 +++++++++++++++++++--------------
+ index.html | 48 +++++++++++++++++++++++++++++++++---------------
+ 2 files changed, 52 insertions(+), 29 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 140cd3f Add bulk upload test file and complete implementation (0 seconds ago)
-- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (84 seconds ago)
-- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (16 minutes ago)
+- ad194ac Fix bulk upload API calls and add error handling for extension interference (0 seconds ago)
+- 140cd3f Add bulk upload test file and complete implementation (6 minutes ago)
+- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (8 minutes ago)
+- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (22 minutes ago)
 - 4cde5fe Add unnecessary input heuristic - most reliable change detection method (2 hours ago)
 - d51c880 Add advanced Bitcoin change address detection heuristics (2 hours ago)
 - 8feac2a Improve change address detection with automatic and optional modes (2 hours ago)
 - b8d3614 Implement change address handling as same-hop threads (like swaps) (2 hours ago)
-- ed49d5d Add comprehensive report viewer and improved navigation (3 hours ago)
+- ed49d5d Add comprehensive report viewer and improved navigation (4 hours ago)
 - b3885d2 Fix currency mismatch after swap - prevent duplicate thread creation (4 hours ago)
-- 751b868 Fix duplicate swap output thread creation bug (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

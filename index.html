@@ -26245,28 +26245,29 @@ async function fetchTransactionData(hash, blockchain) {
                 if (!response || !response.ok) continue;
                 data = await response.json();
                 
-            } else if (blockchain === 'ethereum') {
+            } else if (['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc'].includes(blockchain)) {
+                // Handle all EVM chains
                 const apiKey = localStorage.getItem('bats_etherscan_api_key') || config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
-                
+
                 // First get the basic transaction
                 url = `${apiUrl}${hash}&apikey=${apiKey}`;
                 if (corsEnabled) url = corsProxyUrl + url;
 
                 const response = await fetch(url).catch(err => {
-                    console.warn(`Ethereum fetch failed for ${url}:`, err);
+                    console.warn(`${blockchain} fetch failed for ${url}:`, err);
                     return null;
                 });
                 if (!response || !response.ok) continue;
                 data = await response.json();
                 if (!data.result || data.result === null) continue;
-                
+
                 // Also check for token transfers
                 let tokenData = null;
                 try {
-                    const tokenUrl = corsEnabled ? 
+                    const tokenUrl = corsEnabled ?
                         corsProxyUrl + `${config.tokenApiUrl}${hash}&apikey=${apiKey}` :
                         `${config.tokenApiUrl}${hash}&apikey=${apiKey}`;
-                    
+
                     const tokenResponse = await fetch(tokenUrl).catch(err => {
                         console.warn(`Token fetch failed:`, err);
                         return null;
@@ -26274,7 +26275,7 @@ async function fetchTransactionData(hash, blockchain) {
                     if (tokenResponse && tokenResponse.ok) {
                         tokenData = await tokenResponse.json();
                         console.log('Receipt/Token data received:', tokenData);
-                        
+
                         // Check if Etherscan returned an error
                         if (tokenData && tokenData.status === '0' && tokenData.message === 'NOTOK') {
                             console.error('Etherscan API error:', tokenData.result);
@@ -26284,7 +26285,7 @@ async function fetchTransactionData(hash, blockchain) {
                 } catch (err) {
                     console.log('No token transfers found');
                 }
-                
+
             } else if (blockchain === 'tron') {
                 url = apiUrl + hash;
                 const headers = config.apiKey ? { 'TRON-PRO-API-KEY': config.apiKey } : {};
@@ -26313,9 +26314,10 @@ async function fetchTransactionData(hash, blockchain) {
                 if (data.error) continue;
             }
             
-            // Parse and return the data (pass tokenData for Ethereum)
-            const txData = blockchain === 'ethereum' ? 
-                config.parseResponse(data, tokenData) : 
+            // Parse and return the data (pass tokenData for all EVM chains)
+            const evmChains = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc'];
+            const txData = evmChains.includes(blockchain) ?
+                config.parseResponse(data, tokenData) :
                 config.parseResponse(data);
             if (txData) {
                 txData.blockchain = config.name;
