@@ -3889,56 +3889,47 @@
             }
 
             const attribution = window.hopWizardData.detectedAttribution;
-            const confirmMsg = `🛑 Terminal Wallet Detected\n\n` +
-                `Exchange: ${attribution.name || attribution.label}\n` +
-                `Type: ${attribution.type}\n` +
-                `Detection Source: ${attribution.source}\n\n` +
-                `Do you want to end the trace at this terminal wallet?\n\n` +
-                `This will:\n` +
-                `• Create a PURPLE (terminal) wallet entry\n` +
-                `• Mark funds as arrived at exchange\n` +
-                `• Add to terminal wallet index for reporting\n` +
-                `• Stop tracing this thread`;
 
-            if (confirm(confirmMsg)) {
-                // Mark wizard data to create terminal entry
-                window.hopWizardData.isTerminalWallet = true;
-                window.hopWizardData.terminalWalletType = 'purple';
+            // Mark wizard data to create terminal entry (no confirmation dialog - it's required)
+            window.hopWizardData.isTerminalWallet = true;
+            window.hopWizardData.terminalWalletType = 'purple';
 
-                // Update the UI to show terminal wallet will be created
-                const resultDiv = document.getElementById('wizardTxResult');
-                const terminalNote = document.createElement('div');
-                terminalNote.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; padding: 10px; margin-top: 10px; border-radius: 4px;';
-                terminalNote.innerHTML = `
-                    <strong>🟣 Terminal Wallet Entry Will Be Created</strong><br>
-                    This entry will be marked as a terminal wallet (PURPLE) and added to the terminal wallet index.
-                `;
+            // Update the UI to show terminal wallet will be created
+            const resultDiv = document.getElementById('wizardTxResult');
 
-                const existingNote = resultDiv.querySelector('div[style*="#e1bee7"]');
-                if (!existingNote) {
-                    resultDiv.appendChild(terminalNote);
-                }
-
-                showNotification('Terminal wallet confirmed. Entry will be marked as PURPLE.', 'success');
+            // Remove the action buttons div since decision was made
+            const actionDiv = resultDiv.querySelector('div[style*="#fff3cd"]');
+            if (actionDiv) {
+                actionDiv.remove();
             }
+
+            // Add confirmation message
+            const terminalNote = document.createElement('div');
+            terminalNote.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; padding: 10px; margin-top: 10px; border-radius: 4px;';
+            terminalNote.innerHTML = `
+                <strong>✅ Terminal Wallet Entry Confirmed</strong><br>
+                Exchange: ${attribution.name || attribution.label}<br>
+                This will be marked as a PURPLE terminal wallet and added to the terminal index.
+            `;
+
+            const existingNote = resultDiv.querySelector('div[style*="#e1bee7"]');
+            if (!existingNote) {
+                resultDiv.appendChild(terminalNote);
+            }
+
+            // Re-enable and update the Next/Log Entry button
+            const nextBtn = document.getElementById('wizardNextBtn');
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Create Terminal Entry';
+                nextBtn.style.background = '#9c27b0'; // Purple button for terminal
+            }
+
+            showNotification('✅ Terminal wallet confirmed. Click "Create Terminal Entry" to proceed.', 'success');
         }
 
-        function continueTraceFromTerminal() {
-            if (!window.hopWizardData) return;
-
-            const confirmMsg = `⚠️ Continue Trace from Terminal Wallet\n\n` +
-                `Are you sure you want to continue tracing from this terminal wallet?\n\n` +
-                `Note: Funds at exchanges are typically pooled and further tracing may not be meaningful without exchange cooperation.\n\n` +
-                `This will create a regular entry but note the terminal wallet detection.`;
-
-            if (confirm(confirmMsg)) {
-                // Don't mark as terminal, but add note about detection
-                window.hopWizardData.isTerminalWallet = false;
-                window.hopWizardData.addTerminalNote = true;
-
-                showNotification('Continuing trace. Terminal wallet detection will be noted.', 'info');
-            }
-        }
+        // REMOVED: continueTraceFromTerminal function
+        // Exchange wallets MUST be marked as terminal - no option to continue regular trace
 
         // Shared EVM chain response parser
         const parseEVMResponse = (data, receiptData, blockTimestamp) => {
@@ -18569,26 +18560,29 @@ async function lookupWizardTransaction() {
             const alertDiv = document.createElement('div');
             alertDiv.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; border-radius: 8px; padding: 15px; margin-top: 15px;';
             alertDiv.innerHTML = `
-                <h4 style="margin: 0 0 10px 0; color: #6a1b9a;">🟣 Terminal Wallet Detected!</h4>
+                <h4 style="margin: 0 0 10px 0; color: #6a1b9a;">🟣 Exchange Wallet Detected - MANDATORY Terminal Entry</h4>
                 <div style="font-size: 14px;">
                     <strong>Exchange/Service:</strong> ${attribution.name || attribution.label}<br>
                     <strong>Type:</strong> ${attribution.type}<br>
                     <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span><br>
                     <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
-                        <strong>ℹ️ What this means:</strong><br>
-                        • This is likely a centralized exchange or service wallet<br>
-                        • Funds may be pooled with other users' funds<br>
-                        • Further tracing may require legal process or exchange cooperation<br>
-                        • Mark as PURPLE (Terminal/VASP) when creating the entry
+                        <strong>⚠️ IMPORTANT:</strong><br>
+                        • Funds have arrived at a centralized exchange<br>
+                        • This MUST be marked as a terminal wallet (PURPLE)<br>
+                        • Further recovery requires legal process<br>
+                        • The trace ends here for this thread
                     </div>
-                    <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
-                        <strong>⚠️ Terminal Wallet Action Required:</strong><br>
-                        <button class="btn btn-warning" onclick="confirmTerminalWallet()" style="margin-top: 10px;">
-                            🛑 End Trace at Terminal Wallet
+                    <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border: 1px solid #9c27b0; border-radius: 4px;">
+                        <strong>🛑 Exchange Detected - Confirm Terminal Entry:</strong><br>
+                        <p style="margin: 10px 0; color: #6a1b9a; font-weight: bold;">
+                            You must confirm this terminal wallet to continue.
+                        </p>
+                        <button class="btn btn-warning" onclick="confirmTerminalWallet()" style="margin-top: 10px; background: #9c27b0; border-color: #9c27b0; font-size: 16px; padding: 10px 20px;">
+                            ✅ Confirm Terminal Wallet Entry
                         </button>
-                        <button class="btn btn-secondary" onclick="continueTraceFromTerminal()" style="margin-top: 10px; margin-left: 10px;">
-                            ➡️ Continue Trace (Manual)
-                        </button>
+                        <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                            ⚖️ Legal process (subpoena/court order) will be required to recover funds from ${attribution.name || 'this exchange'}
+                        </div>
                     </div>
                 </div>
             `;
@@ -18630,10 +18624,28 @@ async function lookupWizardTransaction() {
         </div>
     `;
 
-    // Enable the Log Entry button
+    // Check if terminal wallet was detected
+    const hasTerminalWallet = window.hopWizardData && window.hopWizardData.detectedAttribution;
+
+    // Handle button state based on terminal wallet detection
     const nextBtn = document.getElementById('wizardNextBtn');
     if (nextBtn) {
-        nextBtn.disabled = false;
+        if (hasTerminalWallet && !window.hopWizardData.isTerminalWallet) {
+            // Terminal wallet detected but not confirmed - disable button
+            nextBtn.disabled = true;
+            nextBtn.textContent = 'Confirm Terminal Wallet First';
+            nextBtn.style.background = '#6c757d'; // Gray out the button
+        } else {
+            // Normal case or terminal confirmed
+            nextBtn.disabled = false;
+            if (window.hopWizardData.isTerminalWallet) {
+                nextBtn.textContent = 'Create Terminal Entry';
+                nextBtn.style.background = '#9c27b0'; // Purple for terminal
+            } else {
+                nextBtn.textContent = 'Log Entry';
+                nextBtn.style.background = ''; // Default color
+            }
+        }
         // Make sure the wizard data has the txData
         if (!window.hopWizardData.txData) {
             window.hopWizardData.txData = txData;
