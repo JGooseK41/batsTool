@@ -3,19 +3,40 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 22:16)
+## Latest Commit (Auto-updated: 2025-09-23 22:23)
 
-**Commit:** 206b607b2ac90545a5a51a5709f3eb9723d3af24
+**Commit:** 542a8918adbf6b00207809f6fa6d57835cddb5f5
 **Author:** Your Name
-**Message:** Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling
+**Message:** Add PNG metadata embedding for round-trip export/import
 
-- Added clickable transaction lines that show notes on click
-- Consolidated export buttons into single button with format selection dialog
-- Fixed scroll issue by separating graph and page scrolling
-- Added notes field to edge data structures for transaction information
-- Implemented popup display for transaction notes (3-second auto-dismiss)
-- Created modal dialog for export format selection (PDF/SVG/PNG)
-- Improved container scrolling with max-height constraint
+This revolutionary feature allows complete investigation recovery from exported graph images:
+
+## Metadata Embedding
+- Full investigation data embedded in PNG tEXt chunks (PNG standard compliant)
+- Includes all victims, hops, threads, wallets, and transaction details
+- CRC32 validation ensures data integrity
+- Graceful fallback if embedding fails
+
+## Import Functionality
+- New 'Import Graph Image' button in File menu
+- Extracts embedded BATS data from PNG files
+- Automatically loads investigation and navigates to graph view
+- Clear user feedback for success/failure
+
+## Technical Implementation
+- Uses PNG tEXt chunks with 'BATS_Investigation' keyword
+- Data stored as JSON in metadata (not visible in image)
+- Complete round-trip preservation of all investigation data
+- Works with any BATS-exported PNG file
+
+## User Benefits
+- Share investigations as simple image files
+- No need to manage separate .bats files
+- Images can be viewed normally AND imported back
+- Perfect for email attachments and documentation
+- Investigators can recover full case from screenshot
+
+This enables a powerful workflow where exported graphs serve as both visual documentation AND complete data backups.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -23,23 +44,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 105 ++++-----
- index.html | 736 +++++++++++++++++++++++++++++++++++++++++++++----------------
- 2 files changed, 591 insertions(+), 250 deletions(-)
+ CLAUDE.md  |  61 ++++++---------
+ index.html | 259 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 269 insertions(+), 51 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 206b607 Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling (0 seconds ago)
-- 09dcf23 Enforce terminal wallet treatment for exchange arrivals (15 minutes ago)
-- fbbcd7e Add protection against adding entries to fully allocated hops (23 minutes ago)
-- 3d0af9d Fix syntax error - remove extra closing brace at end of file (32 minutes ago)
-- 5dcf6fa Implement progressive disclosure and improved spatial organization for DAG (35 minutes ago)
-- 1caa390 Implement T-account DAG visualization with hop-centric ART reconciliation (48 minutes ago)
-- f47cb44 Add comprehensive graph visualization with proper navigation from trace completion (64 minutes ago)
-- dcd1638 Fix validation incorrectly showing traced funds as unaccounted (78 minutes ago)
+- 542a891 Add PNG metadata embedding for round-trip export/import (0 seconds ago)
+- 206b607 Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling (7 minutes ago)
+- 09dcf23 Enforce terminal wallet treatment for exchange arrivals (23 minutes ago)
+- fbbcd7e Add protection against adding entries to fully allocated hops (30 minutes ago)
+- 3d0af9d Fix syntax error - remove extra closing brace at end of file (39 minutes ago)
+- 5dcf6fa Implement progressive disclosure and improved spatial organization for DAG (42 minutes ago)
+- 1caa390 Implement T-account DAG visualization with hop-centric ART reconciliation (55 minutes ago)
+- f47cb44 Add comprehensive graph visualization with proper navigation from trace completion (71 minutes ago)
+- dcd1638 Fix validation incorrectly showing traced funds as unaccounted (85 minutes ago)
 - 3774502 Prevent finalizing empty hops and fix editing completed hops (2 hours ago)
-- e1ad0ba Fix incorrect 'All threads fully traced' message on empty hop (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

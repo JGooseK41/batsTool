@@ -1311,8 +1311,9 @@
                     <button onclick="document.getElementById('excelInput').click(); toggleFileMenu();" style="display: block; width: 100%; padding: 12px 20px; border: none; background: none; text-align: left; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
                         📊 Import Excel Traces
                     </button>
-                    <button onclick="document.getElementById('graphImageInput').click(); toggleFileMenu();" style="display: block; width: 100%; padding: 12px 20px; border: none; background: none; text-align: left; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
+                    <button onclick="document.getElementById('graphImageInput').click(); toggleFileMenu();" style="display: block; width: 100%; padding: 12px 20px; border: none; background: none; text-align: left; cursor: pointer; font-size: 14px; transition: background 0.2s; position: relative;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'" title="Import a PNG graph exported from BATS - contains embedded investigation data!">
                         🖼️ Import Graph Image
+                        <span style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; background: #ff9800; color: white; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold;">✨</span>
                     </button>
                     <div style="border-top: 1px solid #e0e0e0; margin: 5px 0;"></div>
                     <button onclick="showNavigationMenu(); toggleFileMenu();" style="display: block; width: 100%; padding: 12px 20px; border: none; background: none; text-align: left; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
@@ -28742,7 +28743,7 @@ To (RED Wallet): ${transfer.to}`;
                         URL.revokeObjectURL(pngUrl);
                         URL.revokeObjectURL(url);
 
-                        showNotification('🎉 Graph exported with embedded data - can be re-imported!', 'success');
+                        showNotification('🎉 PNG exported with full investigation embedded! Share this image and recipients can import it back into BATS.', 'success');
                     } catch (error) {
                         console.error('Error embedding metadata:', error);
                         // Fallback to regular export
@@ -28823,22 +28824,53 @@ To (RED Wallet): ${transfer.to}`;
             `;
 
             modal.innerHTML = `
-                <h3 style="margin-top: 0;">Select Export Format</h3>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <button onclick="exportGraphToPDF(); document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
-                            style="padding: 10px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        📄 Export as PDF
-                    </button>
-                    <button onclick="exportGraphToSVG(); document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
-                            style="padding: 10px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        🎨 Export as SVG
-                    </button>
-                    <button onclick="exportGraphToPNG(); document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
-                            style="padding: 10px; background: #ff9800; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        🖼️ Export as PNG
-                    </button>
+                <h3 style="margin-top: 0; color: #333;">Select Export Format</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+
+                    <div style="border: 2px solid #ff9800; border-radius: 6px; padding: 12px; background: #fff3e0;">
+                        <button onclick="exportGraphToPNG(); document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
+                                style="width: 100%; padding: 12px; background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;">
+                            🖼️ Export as PNG (Recommended)
+                        </button>
+                        <div style="margin-top: 10px; padding: 10px; background: #fffbf7; border-radius: 4px;">
+                            <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                                <span style="font-size: 18px; margin-right: 8px;">🎉</span>
+                                <strong style="color: #e65100;">POWERFUL FEATURE:</strong>
+                            </div>
+                            <ul style="margin: 5px 0 0 20px; padding: 0; font-size: 13px; color: #5d4037; line-height: 1.6;">
+                                <li><strong>Complete Data Embedded:</strong> The PNG contains your entire investigation invisibly embedded</li>
+                                <li><strong>Share & Recover:</strong> Recipients can import the image back into BATS to continue the investigation</li>
+                                <li><strong>Dual Purpose:</strong> Works as both a regular image AND a complete data backup</li>
+                                <li><strong>Perfect for:</strong> Email attachments, documentation, and archiving</li>
+                            </ul>
+                            <div style="margin-top: 8px; padding: 6px; background: #fff8e1; border-left: 3px solid #ffc107; font-size: 12px; color: #6d4c41;">
+                                💡 <strong>Tip:</strong> Anyone can view the image normally, but BATS users can extract the full investigation!
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border: 1px solid #ddd; border-radius: 6px; padding: 12px; background: #fafafa;">
+                        <button onclick="exportGraphToPDF(); document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
+                                style="width: 100%; padding: 10px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            📄 Export as PDF
+                        </button>
+                        <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">
+                            Standard PDF document for reports and printing (visual only, no embedded data)
+                        </p>
+                    </div>
+
+                    <div style="border: 1px solid #ddd; border-radius: 6px; padding: 12px; background: #fafafa;">
+                        <button onclick="exportGraphToSVG(); document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
+                                style="width: 100%; padding: 10px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            🎨 Export as SVG
+                        </button>
+                        <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">
+                            Scalable vector graphics for editing in design software (visual only, no embedded data)
+                        </p>
+                    </div>
+
                     <button onclick="document.getElementById('exportModal').remove(); document.getElementById('exportBackdrop').remove();"
-                            style="padding: 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            style="width: 100%; padding: 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">
                         Cancel
                     </button>
                 </div>
