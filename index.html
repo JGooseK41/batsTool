@@ -4221,6 +4221,21 @@
                         // Show selection modal if there are 2 or more outputs
                         // Even with just 2, user needs to choose which one is theirs
                         if (significantOutputs.length > 1) {
+                            // Calculate total input amount for unnecessary input heuristic
+                            let totalInputAmount = 0;
+                            let inputDetails = [];
+
+                            inputs.forEach(input => {
+                                if (input.prev_out && input.prev_out.value) {
+                                    const inputAmount = input.prev_out.value / 100000000;
+                                    totalInputAmount += inputAmount;
+                                    inputDetails.push({
+                                        address: input.prev_out.addr || 'Unknown',
+                                        amount: inputAmount
+                                    });
+                                }
+                            });
+
                             // Multiple outputs - return them as transfers for selection
                             const transfers = significantOutputs.map((output, index) => ({
                                 from: senderAddress || 'Unknown',
@@ -4229,7 +4244,11 @@
                                 currency: 'BTC',
                                 outputIndex: index,
                                 scriptType: output.script ? output.script.substring(0, 6) : 'unknown',
-                                rawData: output
+                                rawData: output,
+                                // Include input info for change detection
+                                totalInputAmount: totalInputAmount,
+                                inputCount: inputs.length,
+                                inputDetails: inputDetails
                             }));
                             
                             return {
@@ -18780,9 +18799,62 @@ async function lookupWizardTransaction() {
                             }
                         }
 
-                        // 6. Fee analysis (if we have input amounts)
-                        // In real transactions, change = inputs - payment - fee
-                        // This would need transaction input data to calculate
+                        // 6. Unnecessary input heuristic (most reliable)
+                        // If payment could be made with fewer inputs, there MUST be change
+                        if (relevantTransfers.length > 0 && relevantTransfers[0].totalInputAmount) {
+                            const totalInputAmount = relevantTransfers[0].totalInputAmount;
+                            const inputCount = relevantTransfers[0].inputCount || 0;
+                            const inputDetails = relevantTransfers[0].inputDetails || [];
+
+                            // Calculate total output amount
+                            const totalOutputAmount = relevantTransfers.reduce((sum, t) => sum + t.amount, 0);
+
+                            // Estimated fee (very rough: ~0.0001 BTC per input)
+                            const estimatedFee = inputCount * 0.0001;
+
+                            // Check if we could have made the largest output with fewer inputs
+                            if (inputDetails.length > 1 && relevantTransfers.length === 2) {
+                                const largestOutput = Math.max(relevantTransfers[0].amount, relevantTransfers[1].amount);
+
+                                // Sort inputs by size (largest first)
+                                const sortedInputs = [...inputDetails].sort((a, b) => b.amount - a.amount);
+
+                                // See if we could make the payment with fewer inputs
+                                let runningTotal = 0;
+                                let neededInputs = 0;
+
+                                for (const input of sortedInputs) {
+                                    runningTotal += input.amount;
+                                    neededInputs++;
+
+                                    // If we have enough for the largest output plus estimated fee
+                                    if (runningTotal >= largestOutput + estimatedFee) {
+                                        break;
+                                    }
+                                }
+
+                                // If we used ALL inputs but only needed some, there MUST be change
+                                if (neededInputs < inputCount) {
+                                    changeScore += 40; // Very strong indicator
+                                    changeReasons.push(`Unnecessary input used (${inputCount} inputs used, only ${neededInputs} needed)`);
+                                }
+                            }
+
+                            // 7. Perfect change calculation
+                            // Change should approximately equal: inputs - other output - fee
+                            if (relevantTransfers.length === 2 && totalInputAmount > 0) {
+                                const otherOutput = relevantTransfers[1 - index];
+                                const expectedChange = totalInputAmount - otherOutput.amount - estimatedFee;
+                                const actualAmount = transfer.amount;
+
+                                // If this output is within 10% of expected change amount
+                                const difference = Math.abs(expectedChange - actualAmount);
+                                if (difference < expectedChange * 0.1 && expectedChange > 0) {
+                                    changeScore += 25;
+                                    changeReasons.push(`Matches expected change amount (~${expectedChange.toFixed(8)} BTC)`);
+                                }
+                            }
+                        }
                     }
 
                     // Store change analysis for display

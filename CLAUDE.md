@@ -3,31 +3,47 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 08:41)
+## Latest Commit (Auto-updated: 2025-09-24 08:44)
 
-**Commit:** 8feac2a8dd9a2204d370a57cd6eff3d771d9e6f9
+**Commit:** d51c880e6fc2c2d986cd9a3463ec439b83fa0b20
 **Author:** Your Name
-**Message:** Improve change address detection with automatic and optional modes
+**Message:** Add advanced Bitcoin change address detection heuristics
 
-- Automatic change detection when output returns to SAME address as sender
-  - Automatically classified as change (cannot be changed)
-  - Shows '🔄 Auto-detected Change (Same Address)' label
-  - Radio buttons disabled to prevent misclassification
+Implemented sophisticated change detection scoring system (0-100%):
 
-- Optional change detection for NEW addresses
-  - Shows '⚠️ Possible Change (New Address)' for non-round amounts
-  - Investigator can choose: Payment (new hop) or Change (same-hop thread)
-  - Pre-selected based on amount patterns but fully editable
+1. Same Address (100% - Automatic)
+   - Output returns to sender address
+   - Automatically classified as change
 
-- UI improvements:
-  - Clear distinction between automatic vs suggested change
-  - Change creates 'Same-Hop Thread' (not 'Orange Thread')
-  - Payment creates 'New Hop' for clarity
+2. Decimal Places Analysis (+30 points)
+   - Many significant figures (>4 decimals) indicate change
+   - Non-round amounts (+20 points) suggest change
+   - Round amounts (1.0, 0.1, 0.01) suggest payment
 
-This gives investigators full control while automating obvious cases:
-- Same address = always change (automatic)
-- New address + decimal amount = suggested change (editable)
-- New address + round amount = suggested payment (editable)
+3. Output Order Heuristic (+15 points)
+   - In 2-output transactions, change often comes second
+   - Based on common wallet behavior patterns
+
+4. Address Type Matching (+10 points)
+   - Change often uses same script type as input
+   - Detects P2PKH (1...), P2SH (3...), Bech32 (bc1...)
+   - Matching types suggest same wallet control
+
+5. Amount Comparison (+10 points)
+   - In simple transactions, change is often smaller
+   - Compares relative output sizes
+
+Scoring Thresholds:
+- Score >= 40%: Likely change (suggested, editable)
+- Score < 40%: Likely payment (default selection)
+
+UI Improvements:
+- Shows change score percentage
+- Lists specific change indicators detected
+- Clear visual distinction between automatic and suggested
+
+This provides investigators with transparent, evidence-based change detection
+while maintaining full control over final classification decisions.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -35,15 +51,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 62 ++++++++++++++++++++++++++++++++------------------------------
- index.html | 62 ++++++++++++++++++++++++++++++++++++++++++++++----------------
- 2 files changed, 78 insertions(+), 46 deletions(-)
+ CLAUDE.md  | 46 ++++++++++++++++--------------
+ index.html | 95 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 112 insertions(+), 29 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8feac2a Improve change address detection with automatic and optional modes (0 seconds ago)
-- b8d3614 Implement change address handling as same-hop threads (like swaps) (5 minutes ago)
+- d51c880 Add advanced Bitcoin change address detection heuristics (0 seconds ago)
+- 8feac2a Improve change address detection with automatic and optional modes (3 minutes ago)
+- b8d3614 Implement change address handling as same-hop threads (like swaps) (8 minutes ago)
 - ed49d5d Add comprehensive report viewer and improved navigation (2 hours ago)
 - b3885d2 Fix currency mismatch after swap - prevent duplicate thread creation (2 hours ago)
 - 751b868 Fix duplicate swap output thread creation bug (2 hours ago)
@@ -51,7 +68,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 9a9c03d Update CLAUDE.md with latest commits (2 hours ago)
 - ca3f69c Fix critical thread tracking and validation issues (2 hours ago)
 - 5783f8b Update CLAUDE.md with latest commits (2 hours ago)
-- 8d27f9f Simplify available threads display - remove separate swap thread section (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
