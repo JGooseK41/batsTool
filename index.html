@@ -2213,10 +2213,98 @@
 
                 <!-- Summary Tab -->
                 <div id="summary-tab" class="tab-content">
-                    <div class="section-title">Step 6: Investigation Summary</div>
+                    <div class="section-title">Step 6: Investigation Summary & Case Conclusion</div>
+
+                    <!-- Case Conclusion Dashboard -->
+                    <div id="caseConclusionDashboard" style="margin-bottom: 30px;">
+                        <div style="background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%); color: white; padding: 25px; border-radius: 12px 12px 0 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <h2 style="margin: 0 0 10px 0; font-size: 1.8rem;">📊 Case Conclusion Dashboard</h2>
+                            <p style="margin: 0; opacity: 0.95;">Complete overview of your investigation with all indexes and reports</p>
+                        </div>
+
+                        <!-- Quick Stats Cards -->
+                        <div style="background: white; padding: 20px; border: 1px solid #dee2e6; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div class="stat-card" style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; border-radius: 4px;">
+                                <h4 style="color: #ff9800; margin: 0 0 5px 0;">Victims</h4>
+                                <div id="victimCountStat" style="font-size: 24px; font-weight: bold; color: #333;">0</div>
+                            </div>
+                            <div class="stat-card" style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; border-radius: 4px;">
+                                <h4 style="color: #2196f3; margin: 0 0 5px 0;">Total Wallets</h4>
+                                <div id="walletCountStat" style="font-size: 24px; font-weight: bold; color: #333;">0</div>
+                            </div>
+                            <div class="stat-card" style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 15px; border-radius: 4px;">
+                                <h4 style="color: #9c27b0; margin: 0 0 5px 0;">Terminal Wallets</h4>
+                                <div id="terminalCountStat" style="font-size: 24px; font-weight: bold; color: #333;">0</div>
+                            </div>
+                            <div class="stat-card" style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; border-radius: 4px;">
+                                <h4 style="color: #4caf50; margin: 0 0 5px 0;">Funds Traced</h4>
+                                <div id="fundsTracedStat" style="font-size: 24px; font-weight: bold; color: #333;">0</div>
+                            </div>
+                        </div>
+
+                        <!-- Index Access Section -->
+                        <div style="background: white; padding: 20px; border: 1px solid #dee2e6; margin-bottom: 20px;">
+                            <h3 style="color: #2c3e50; margin-bottom: 20px; border-bottom: 2px solid #3498db; padding-bottom: 10px;">📁 Investigation Indexes</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                                <!-- Victim Index -->
+                                <div class="index-card" style="border: 1px solid #ffc107; border-radius: 8px; padding: 15px; background: #fffaf0;">
+                                    <h4 style="color: #ff6b6b; margin: 0 0 10px 0;">🎯 Victim Index</h4>
+                                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;">All victim deposits and initial transactions</p>
+                                    <button class="btn btn-sm" onclick="viewVictimIndex()" style="background: #ff6b6b; color: white; width: 100%;">View & Export</button>
+                                </div>
+
+                                <!-- Red Wallet Index -->
+                                <div class="index-card" style="border: 1px solid #dc3545; border-radius: 8px; padding: 15px; background: #fff5f5;">
+                                    <h4 style="color: #dc3545; margin: 0 0 10px 0;">🔴 Red Wallet Index</h4>
+                                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Victim-facing wallets that received initial funds</p>
+                                    <button class="btn btn-sm" onclick="switchTab('walletindexes'); switchWalletIndex('red');" style="background: #dc3545; color: white; width: 100%;">View & Export</button>
+                                </div>
+
+                                <!-- Universal Wallet Index -->
+                                <div class="index-card" style="border: 1px solid #3498db; border-radius: 8px; padding: 15px; background: #f0f8ff;">
+                                    <h4 style="color: #3498db; margin: 0 0 10px 0;">🌐 Universal Wallet Index</h4>
+                                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Complete catalog of all wallets in investigation</p>
+                                    <button class="btn btn-sm" onclick="switchTab('walletindexes'); switchWalletIndex('universal');" style="background: #3498db; color: white; width: 100%;">View & Export</button>
+                                </div>
+
+                                <!-- Terminal Wallet Index -->
+                                <div class="index-card" style="border: 1px solid #9c27b0; border-radius: 8px; padding: 15px; background: #faf0ff;">
+                                    <h4 style="color: #9c27b0; margin: 0 0 10px 0;">🏦 Terminal Wallet Index</h4>
+                                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;">All exchange arrivals and terminal points</p>
+                                    <button class="btn btn-sm" onclick="viewTerminalWalletIndex()" style="background: #9c27b0; color: white; width: 100%;">View & Export</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reports Section -->
+                        <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 0 0 12px 12px;">
+                            <h3 style="color: #2c3e50; margin-bottom: 20px; border-bottom: 2px solid #27ae60; padding-bottom: 10px;">📄 Generate Reports</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                                <button class="btn btn-success btn-large" onclick="exportReport()" style="padding: 15px;">
+                                    📊 Export Complete B.A.T.S. Report
+                                </button>
+                                <button class="btn btn-primary btn-large" onclick="exportNarrativeReport()" style="background: #0066cc; padding: 15px;">
+                                    📝 Export Narrative Report (Word)
+                                </button>
+                                <button class="btn btn-secondary btn-large" onclick="exportTerminalWalletReport()" style="padding: 15px;">
+                                    🏦 Export Terminal Wallet Report
+                                </button>
+                                <button class="btn btn-info btn-large" onclick="exportAllIndexes()" style="background: #17a2b8; padding: 15px;">
+                                    📦 Export All Indexes (ZIP)
+                                </button>
+                                <button class="btn btn-warning btn-large" onclick="exportJSON()" style="background: #ffc107; color: #333; padding: 15px;">
+                                    💾 Export JSON Data
+                                </button>
+                                <button class="btn btn-large" onclick="exportCSV()" style="padding: 15px;">
+                                    📋 Export CSV Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="summaryContent"></div>
-                    
-                    <div class="export-section">
+
+                    <div class="export-section" style="display: none;">
                         <div class="section-title">Export Options</div>
                         <button class="btn btn-success" onclick="exportReport()">Export B.A.T.S. Report</button>
                         <button class="btn btn-primary" onclick="exportNarrativeReport()" style="background: #0066cc;">📄 Export Narrative Report (Word)</button>
@@ -7640,6 +7728,7 @@ function updateFormFieldsFromInvestigation() {
         window.tabActions = {
             'summary': () => {
                 if (typeof renderSummary !== 'undefined') renderSummary();
+                if (typeof updateCaseConclusionStats !== 'undefined') updateCaseConclusionStats();
             },
             'walletindexes': () => {
                 if (typeof renderUniversalWalletIndex !== 'undefined') {
@@ -29914,6 +30003,175 @@ To (RED Wallet): ${transfer.to}`;
                 backdrop.remove();
             };
             document.body.appendChild(backdrop);
+        }
+
+        // Case Conclusion Dashboard Functions
+        function updateCaseConclusionStats() {
+            // Update victim count
+            const victimCount = investigation.victims ? investigation.victims.length : 0;
+            document.getElementById('victimCountStat').textContent = victimCount;
+
+            // Update wallet count
+            const walletCount = investigation.universalWalletIndex ? investigation.universalWalletIndex.length : 0;
+            document.getElementById('walletCountStat').textContent = walletCount;
+
+            // Update terminal wallet count
+            const terminalCount = investigation.terminalWalletIndex ? investigation.terminalWalletIndex.length : 0;
+            document.getElementById('terminalCountStat').textContent = terminalCount;
+
+            // Calculate total funds traced
+            let fundsTraced = {};
+            if (investigation.victims) {
+                investigation.victims.forEach(victim => {
+                    victim.transactions?.forEach(tx => {
+                        const currency = tx.currency === 'CUSTOM' ? tx.customCurrency : tx.currency;
+                        if (!fundsTraced[currency]) fundsTraced[currency] = 0;
+                        fundsTraced[currency] += parseFloat(tx.amount || 0);
+                    });
+                });
+            }
+
+            // Format funds traced
+            const fundsTracedText = Object.entries(fundsTraced)
+                .map(([curr, amt]) => `${amt.toFixed(2)} ${curr}`)
+                .join(', ') || '0';
+            document.getElementById('fundsTracedStat').textContent = fundsTracedText;
+        }
+
+        // View Victim Index
+        function viewVictimIndex() {
+            const modalHTML = `
+                <div id="victimIndexModal" class="modal" style="display: block;">
+                    <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+                        <div class="modal-header">
+                            <h2>🎯 Victim Index</h2>
+                            <button class="close-btn" onclick="document.getElementById('victimIndexModal').remove()">×</button>
+                        </div>
+                        <div style="padding: 20px;">
+                            ${generateVictimIndexHTML()}
+                        </div>
+                        <div class="modal-footer" style="text-align: center; padding: 20px; border-top: 1px solid #eee;">
+                            <button class="btn btn-success" onclick="exportVictimIndex()" style="margin-right: 10px;">
+                                📊 Export to Excel
+                            </button>
+                            <button class="btn btn-secondary" onclick="document.getElementById('victimIndexModal').remove()">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            createCenteredModal('victimIndexModal', modalHTML);
+        }
+
+        // Generate Victim Index HTML
+        function generateVictimIndexHTML() {
+            if (!investigation.victims || investigation.victims.length === 0) {
+                return '<p>No victims recorded in this investigation.</p>';
+            }
+
+            let html = '<div style="background: #fff5f5; border: 2px solid #ff6b6b; border-radius: 8px; padding: 20px; margin-bottom: 20px;">';
+            html += '<h4 style="color: #ff6b6b; margin-bottom: 15px;">Victim Transaction Summary</h4>';
+            html += '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<thead><tr style="background: #f8f9fa;">';
+            html += '<th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Victim</th>';
+            html += '<th style="padding: 10px; border: 1px solid #ddd; text-align: left;">V-T Notation</th>';
+            html += '<th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Date</th>';
+            html += '<th style="padding: 10px; border: 1px solid #ddd; text-align: right;">Amount</th>';
+            html += '<th style="padding: 10px; border: 1px solid #ddd; text-align: left;">To Wallet</th>';
+            html += '<th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Transaction Hash</th>';
+            html += '</tr></thead><tbody>';
+
+            investigation.victims.forEach((victim, vIndex) => {
+                victim.transactions?.forEach((tx, tIndex) => {
+                    html += '<tr>';
+                    html += `<td style="padding: 10px; border: 1px solid #ddd;">${victim.name || `Victim ${vIndex + 1}`}</td>`;
+                    html += `<td style="padding: 10px; border: 1px solid #ddd; font-family: monospace;">V${vIndex + 1}-T${tIndex + 1}</td>`;
+                    html += `<td style="padding: 10px; border: 1px solid #ddd;">${tx.date || 'N/A'}</td>`;
+                    html += `<td style="padding: 10px; border: 1px solid #ddd; text-align: right;">${tx.amount} ${tx.currency}</td>`;
+                    html += `<td style="padding: 10px; border: 1px solid #ddd; font-family: monospace; font-size: 12px;">${tx.toAddress}</td>`;
+                    html += `<td style="padding: 10px; border: 1px solid #ddd; font-family: monospace; font-size: 12px;">${tx.hash}</td>`;
+                    html += '</tr>';
+                });
+            });
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        // Export Victim Index
+        function exportVictimIndex() {
+            if (!investigation.victims || investigation.victims.length === 0) {
+                alert('No victims to export');
+                return;
+            }
+
+            let csvContent = 'Victim Name,V-T Notation,Date,Amount,Currency,To Wallet,Transaction Hash,Notes\n';
+
+            investigation.victims.forEach((victim, vIndex) => {
+                victim.transactions?.forEach((tx, tIndex) => {
+                    const victimName = (victim.name || `Victim ${vIndex + 1}`).replace(/"/g, '""');
+                    const notation = `V${vIndex + 1}-T${tIndex + 1}`;
+                    const date = tx.date || 'N/A';
+                    const amount = tx.amount || '0';
+                    const currency = tx.currency || '';
+                    const toAddress = tx.toAddress || '';
+                    const hash = tx.hash || '';
+                    const notes = (tx.notes || '').replace(/"/g, '""');
+
+                    csvContent += `"${victimName}","${notation}","${date}","${amount}","${currency}","${toAddress}","${hash}","${notes}"\n`;
+                });
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Victim_Index_${investigation.caseId}_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // View Terminal Wallet Index
+        function viewTerminalWalletIndex() {
+            switchTab('hops');
+            setTimeout(() => {
+                showAnalysisTools();
+                setTimeout(() => {
+                    switchAnalysisTab('terminal-summary');
+                }, 100);
+            }, 100);
+        }
+
+        // Export All Indexes as ZIP
+        async function exportAllIndexes() {
+            // This would require a ZIP library, so for now we'll export them sequentially
+            const exports = [
+                { name: 'Victim Index', func: exportVictimIndex },
+                { name: 'Red Wallet Index', func: exportRedWalletIndexCSV },
+                { name: 'Universal Wallet Index', func: exportUniversalWalletIndex },
+                { name: 'Terminal Wallet Report', func: exportTerminalWalletReport }
+            ];
+
+            const confirmed = confirm('This will download 4 separate files:\n\n' +
+                '1. Victim Index (CSV)\n' +
+                '2. Red Wallet Index (CSV)\n' +
+                '3. Universal Wallet Index (CSV)\n' +
+                '4. Terminal Wallet Report (CSV)\n\n' +
+                'Continue?');
+
+            if (!confirmed) return;
+
+            // Export each file with a small delay
+            for (let i = 0; i < exports.length; i++) {
+                setTimeout(() => {
+                    exports[i].func();
+                }, i * 500); // 500ms delay between each export
+            }
+
+            showNotification('All indexes exported successfully!', 'success');
         }
 
         // Embed BATS data into PNG file using tEXt chunk

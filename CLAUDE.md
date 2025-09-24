@@ -3,56 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 23:32)
+## Latest Commit (Auto-updated: 2025-09-24 05:56)
 
-**Commit:** 0d63436fc6a80d6916d7e93013198dee8eaf7b4b
+**Commit:** ab2dc0e449dea65f2319c4d31fe249acd0d03d65
 **Author:** Your Name
-**Message:** Complete comprehensive B.A.T.S. tool testing and bug analysis
+**Message:** Fix graph visualization error with terminal wallets
 
-Major accomplishments:
+The issue occurred when processing terminal wallet entries in the graph visualization.
+The code would create a 'terminalNode' variable for terminal wallets but then
+incorrectly reference an undefined 'toNode' variable when creating edges.
 
-1. IDENTIFIED: Original test results showing 87.1% failure rate were due to flawed test generation, not application bugs
+Fix:
+- Added conditional check to only create edges for non-terminal wallets
+- Terminal wallet edges are already created in the terminal wallet processing block
+- Added null check for toNode existence before creating edges
 
-2. CREATED: Comprehensive test suite with 1000 automated scenarios testing:
-   - Terminal wallet thread continuation logic
-   - Thread over-allocation validation
-   - Complex commingling and splitting scenarios
-   - Currency swap handling
-   - Validation rules and edge cases
-
-3. VERIFIED: Core application logic is fundamentally sound with 7/7 tests passing:
-   ✅ Terminal wallet detection and thread prevention
-   ✅ Over-allocation validation
-   ✅ Swap thread creation
-   ✅ Thread filtering logic
-   ✅ Wallet type classification
-   ✅ Amount validation
-   ✅ Thread chain detection
-
-4. CONFIRMED: Multi-layered protection systems in place:
-   - Thread creation prevention for terminal wallets (lines 5642-5655)
-   - Double validation in thread updates (lines 5665-5669)
-   - Real-time allocation validation (lines 19314-19333)
-
-5. PERFORMANCE VALIDATED: Successfully handles up to:
-   - 10 victims per investigation
-   - 40 hops per investigation
-   - 153 transactions total
-   - Complex scenarios with 0.63ms average processing
-
-6. FINAL ASSESSMENT: B.A.T.S. tool is PRODUCTION READY with HIGH confidence
-   - No critical bugs found in main application
-   - Robust error handling and validation throughout
-   - Comprehensive thread management system
-   - Proper terminal wallet handling at multiple layers
-
-Test files created:
-- test-simulation.html (comprehensive browser-based test suite)
-- run-automated-tests.js (1000 scenario automated testing)
-- run-simple-tests.js (core logic validation)
-- TEST-COVERAGE.md (documentation)
-- TEST-RESULTS-ANALYSIS.md (detailed analysis)
-- FINAL-BUG-ANALYSIS.md (production readiness assessment)
+This resolves the 'Uncaught ReferenceError: toNode is not defined' error that
+occurred when trying to visualize investigations with terminal wallets.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -60,30 +27,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                    |   78 +-
- FINAL-BUG-ANALYSIS.md        |  157 +
- TEST-COVERAGE.md             |  194 +
- TEST-RESULTS-ANALYSIS.md     |  169 +
- run-automated-tests.js       |  787 ++++
- run-simple-tests.js          |  284 ++
- run-tests.sh                 |   65 +
- test-results-2025-09-24.json | 9190 ++++++++++++++++++++++++++++++++++++++++++
- test-simulation.html         | 1247 ++++++
- 9 files changed, 12126 insertions(+), 45 deletions(-)
+ CLAUDE.md                           | 101 ++++--
+ docs/BATS-Updated-Training-Guide.md | 620 ++++++++++++++++++++++++++++++++++++
+ index.html                          |  37 ++-
+ 3 files changed, 708 insertions(+), 50 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0d63436 Complete comprehensive B.A.T.S. tool testing and bug analysis (0 seconds ago)
-- c36475d Implement comprehensive Word-format narrative investigation report (37 minutes ago)
-- 0448ce8 Disable Add Entry button for completed hops with reopen option (45 minutes ago)
-- eb5a4c9 Add critical wallet validation for transaction lookups (49 minutes ago)
-- bb1cb97 Fix center alignment of Generate Root Total button (56 minutes ago)
-- 6d41977 Add comprehensive PDF report export for case presentations (60 minutes ago)
-- ba22286 Enhanced UI to highlight PNG metadata embedding feature (65 minutes ago)
-- 542a891 Add PNG metadata embedding for round-trip export/import (68 minutes ago)
-- 206b607 Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling (76 minutes ago)
-- 09dcf23 Enforce terminal wallet treatment for exchange arrivals (2 hours ago)
+- ab2dc0e Fix graph visualization error with terminal wallets (0 seconds ago)
+- 0d63436 Complete comprehensive B.A.T.S. tool testing and bug analysis (6 hours ago)
+- c36475d Implement comprehensive Word-format narrative investigation report (7 hours ago)
+- 0448ce8 Disable Add Entry button for completed hops with reopen option (7 hours ago)
+- eb5a4c9 Add critical wallet validation for transaction lookups (7 hours ago)
+- bb1cb97 Fix center alignment of Generate Root Total button (7 hours ago)
+- 6d41977 Add comprehensive PDF report export for case presentations (7 hours ago)
+- ba22286 Enhanced UI to highlight PNG metadata embedding feature (8 hours ago)
+- 542a891 Add PNG metadata embedding for round-trip export/import (8 hours ago)
+- 206b607 Enhanced graph UX: clickable transaction lines, export dialog, and improved scrolling (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
