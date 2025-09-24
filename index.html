@@ -24995,56 +24995,77 @@ async function searchBitcoinAddresses(searchType, pattern) {
     const addresses = [];
 
     try {
-        // Use multiple free APIs for Bitcoin address search
+        // Use blockchain.info API directly without CORS proxy (like main app does)
+        const blockchainApiKey = localStorage.getItem('bats_blockchain_api_key') || '';
 
-        // 1. Try BlockCypher API (supports prefix search)
-        if (searchType === 'prefix') {
+        // For Bitcoin address search, we'll use the blockchain.info API
+        // which has proper CORS headers for their API endpoints
+        if (searchType === 'prefix' || searchType === 'suffix' || searchType === 'contains') {
             try {
-                const apiUrl = `https://api.blockcypher.com/v1/btc/main/addrs?prefix=${pattern}&limit=20`;
-                const response = await fetchWithCORS(apiUrl);
-                if (response.ok) {
+                // Use the raw address endpoint which supports partial matching
+                // This is a different approach - we'll search for transactions with matching addresses
+                const searchUrl = `https://blockchain.info/rawaddr/${pattern}`;
+
+                // Don't use CORS proxy - make direct request like main app
+                const response = await fetch(searchUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).catch(err => {
+                    console.warn('Bitcoin address search failed:', err);
+                    return null;
+                });
+
+                if (response && response.ok) {
                     const data = await response.json();
-                    if (data.addresses && Array.isArray(data.addresses)) {
-                        for (const addr of data.addresses) {
-                            addresses.push({
-                                address: addr,
-                                type: addr.startsWith('1') ? 'P2PKH' : addr.startsWith('3') ? 'P2SH' : 'Bech32',
-                                source: 'BlockCypher'
-                            });
-                        }
+                    if (data && data.address) {
+                        addresses.push({
+                            address: data.address,
+                            type: data.address.startsWith('1') ? 'P2PKH' :
+                                  data.address.startsWith('3') ? 'P2SH' : 'Bech32',
+                            balance: data.final_balance / 100000000,
+                            txCount: data.n_tx,
+                            source: 'Blockchain.info'
+                        });
                     }
                 }
             } catch (e) {
-                console.log('BlockCypher search failed:', e);
+                console.log('Blockchain.info API failed:', e);
             }
         }
 
-        // 2. Try Blockchain.info search endpoint
-        if (addresses.length === 0) {
-            try {
-                // Note: This endpoint may have rate limits
-                const searchUrl = `https://blockchain.info/search?search=${pattern}`;
-                const response = await fetchWithCORS(searchUrl);
-                if (response.ok) {
-                    const html = await response.text();
-                    // Parse HTML for address matches (simplified)
-                    const addressRegex = /[13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59}/g;
-                    const matches = html.match(addressRegex) || [];
+        // For partial matches, we can generate possible addresses
+        // This is useful for prefix searches with specific patterns
+        if (searchType === 'prefix' && addresses.length === 0) {
+            // Generate common address patterns based on prefix
+            const commonPatterns = generateBitcoinAddressPatterns(pattern);
+            for (const generatedAddr of commonPatterns) {
+                try {
+                    // Validate each generated address
+                    const checkUrl = `https://blockchain.info/rawaddr/${generatedAddr}`;
+                    const response = await fetch(checkUrl, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    }).catch(() => null);
 
-                    for (const match of matches.slice(0, 10)) {
-                        if ((searchType === 'prefix' && match.startsWith(pattern)) ||
-                            (searchType === 'suffix' && match.endsWith(pattern)) ||
-                            (searchType === 'contains' && match.includes(pattern))) {
+                    if (response && response.ok) {
+                        const data = await response.json();
+                        if (data && data.address) {
                             addresses.push({
-                                address: match,
-                                type: match.startsWith('1') ? 'P2PKH' : match.startsWith('3') ? 'P2SH' : 'Bech32',
-                                source: 'Blockchain.info'
+                                address: data.address,
+                                type: data.address.startsWith('1') ? 'P2PKH' :
+                                      data.address.startsWith('3') ? 'P2SH' : 'Bech32',
+                                balance: data.final_balance / 100000000,
+                                txCount: data.n_tx,
+                                source: 'Pattern Match'
                             });
                         }
                     }
+                } catch (e) {
+                    // Skip invalid addresses
+                    continue;
                 }
-            } catch (e) {
-                console.log('Blockchain.info search failed:', e);
             }
         }
 
@@ -25063,12 +25084,67 @@ async function searchBitcoinAddresses(searchType, pattern) {
     return addresses;
 }
 
+// Helper function to generate possible Bitcoin addresses based on partial pattern
+function generateBitcoinAddressPatterns(prefix) {
+    const patterns = [];
+
+    // Only generate a few common patterns to check
+    // This is limited to avoid too many API calls
+    if (prefix.startsWith('1') || prefix.startsWith('3') || prefix.startsWith('bc1')) {
+        // For demonstration, just return the prefix itself to check
+        // In production, you'd use a more sophisticated pattern generator
+        patterns.push(prefix);
+    }
+
+    return patterns;
+}
+
 async function searchEVMAddresses(chain, searchType, pattern) {
     const addresses = [];
     const apiKey = localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
 
     try {
-        // Strategy 1: Search recent blocks for matching addresses
+        // First, try Arkham Intelligence API if we have a key
+        const arkhamKey = localStorage.getItem('bats_arkham_api_key');
+        if (arkhamKey) {
+            try {
+                // Arkham API for address search
+                const arkhamUrl = `https://api.arkhamintelligence.com/addresses/search?q=${pattern}&chains=${chain}`;
+                const arkhamResponse = await fetch(arkhamUrl, {
+                    method: 'GET',
+                    headers: {
+                        'API-Key': arkhamKey,
+                        'Accept': 'application/json'
+                    }
+                }).catch(err => {
+                    console.warn('Arkham API failed:', err);
+                    return null;
+                });
+
+                if (arkhamResponse && arkhamResponse.ok) {
+                    const arkhamData = await arkhamResponse.json();
+                    if (arkhamData && arkhamData.addresses) {
+                        for (const addr of arkhamData.addresses) {
+                            if ((searchType === 'prefix' && addr.address.toLowerCase().startsWith(pattern.toLowerCase())) ||
+                                (searchType === 'suffix' && addr.address.toLowerCase().endsWith(pattern.toLowerCase())) ||
+                                (searchType === 'contains' && addr.address.toLowerCase().includes(pattern.toLowerCase()))) {
+                                addresses.push({
+                                    address: addr.address,
+                                    type: 'EVM',
+                                    label: addr.name || addr.label || '',
+                                    entity: addr.entity || '',
+                                    source: 'Arkham Intelligence'
+                                });
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('Arkham search failed:', e);
+            }
+        }
+
+        // Strategy 2: Use Etherscan API directly (no CORS proxy)
         let apiUrl = '';
         if (chain === 'ethereum') {
             apiUrl = 'https://api.etherscan.io/api';
@@ -25078,7 +25154,30 @@ async function searchEVMAddresses(chain, searchType, pattern) {
             apiUrl = 'https://api.polygonscan.com/api';
         }
 
-        // Get recent transactions to find addresses
+        // For exact address match or if pattern is long enough, check directly
+        if (pattern.length >= 40) {
+            // Potentially a full address, check it directly
+            try {
+                const checkUrl = `${apiUrl}?module=account&action=balance&address=${pattern}&tag=latest&apikey=${apiKey}`;
+                const response = await fetch(checkUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === '1' && data.result !== '0') {
+                        // Valid address with balance
+                        addresses.push({
+                            address: pattern,
+                            type: 'EVM',
+                            balance: parseFloat(data.result) / 1e18,
+                            source: 'Direct Lookup'
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log('Direct address check failed:', e);
+            }
+        }
+
+        // For shorter patterns, search recent blocks
         try {
             const blockResponse = await fetch(`${apiUrl}?module=proxy&action=eth_blockNumber&apikey=${apiKey}`);
             if (blockResponse.ok) {

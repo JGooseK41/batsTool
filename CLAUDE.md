@@ -5,29 +5,33 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-09-24 10:48)
 
-**Commit:** 3c265745253a7de5548ce51c65c1726802d111d6
+**Commit:** b2d0e080fc2744d0f14feb4b8f202145c9a9306d
 **Author:** Your Name
-**Message:** Improve parseEVMResponse logging format for better visibility
+**Message:** Fix variable shadowing issue preventing token data from being passed to parseResponse
+
+- Removed redeclaration of tokenData that was shadowing outer scope variable
+- Token data will now properly be passed to parseEVMResponse
+- Bulk upload should now detect and show USDT transfers correctly
 
 ### Changed Files:
 ```
- CLAUDE.md  | 31 +++++++++++++++----------------
- index.html | 16 ++++++++--------
- 2 files changed, 23 insertions(+), 24 deletions(-)
+ CLAUDE.md  | 28 ++++++++++++----------------
+ index.html |  2 +-
+ 2 files changed, 13 insertions(+), 17 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3c26574 Improve parseEVMResponse logging format for better visibility (0 seconds ago)
+- b2d0e08 Fix variable shadowing issue preventing token data from being passed to parseResponse (0 seconds ago)
+- 3c26574 Improve parseEVMResponse logging format for better visibility (32 seconds ago)
 - 33f6d1c Add detailed logging to debug token transfer parsing in bulk upload (3 minutes ago)
-- 2cb002c Fix bulk upload token transfer detection for all EVM chains (5 minutes ago)
-- ad194ac Fix bulk upload API calls and add error handling for extension interference (9 minutes ago)
-- 140cd3f Add bulk upload test file and complete implementation (15 minutes ago)
+- 2cb002c Fix bulk upload token transfer detection for all EVM chains (6 minutes ago)
+- ad194ac Fix bulk upload API calls and add error handling for extension interference (10 minutes ago)
+- 140cd3f Add bulk upload test file and complete implementation (16 minutes ago)
 - 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (17 minutes ago)
-- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (31 minutes ago)
+- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (32 minutes ago)
 - 4cde5fe Add unnecessary input heuristic - most reliable change detection method (2 hours ago)
 - d51c880 Add advanced Bitcoin change address detection heuristics (2 hours ago)
-- 8feac2a Improve change address detection with automatic and optional modes (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
