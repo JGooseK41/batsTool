@@ -10816,15 +10816,42 @@ function addNewHop() {
                             ${(!isComplete || (hop.entries && hop.entries.length > 0)) ? `
                                 <div style="margin-top: 15px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                                     ${(() => {
-                                        // Get available threads - these include both existing threads and any swap outputs from this hop
+                                        // First check if this hop has any entries at all
+                                        const hasEntries = hop.entries && hop.entries.length > 0;
+
+                                        // Get available threads for the CURRENT hop to see what needs to be traced
+                                        const currentHopThreads = getAvailableSourcesForHop(hop.hopNumber, null);
+                                        const unallocatedInCurrentHop = currentHopThreads.filter(t => t.availableAmount > 0);
+
+                                        // Get available threads for the NEXT hop (created by this hop's entries)
                                         const nextHopNumber = hop.hopNumber + 1;
-                                        const availableThreads = getAvailableSourcesForHop(nextHopNumber, null);
-                                        const remainingThreads = availableThreads.filter(t => t.availableAmount > 0);
+                                        const nextHopThreads = getAvailableSourcesForHop(nextHopNumber, null);
+                                        const availableForNextHop = nextHopThreads.filter(t => t.availableAmount > 0);
 
                                         // Check if any threads are from swaps in the current hop
-                                        const hasSwapOutputs = remainingThreads.some(t => t.sourceType === 'swap_output' && t.hopLevel === hop.hopNumber);
+                                        const hasSwapOutputs = availableForNextHop.some(t => t.sourceType === 'swap_output' && t.hopLevel === hop.hopNumber);
 
-                                        if (remainingThreads.length > 0) {
+                                        // If no entries yet, show threads available for THIS hop
+                                        if (!hasEntries && unallocatedInCurrentHop.length > 0) {
+                                            return `
+                                                <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                                                    <h4 style="margin: 0 0 10px 0; color: #e65100;">📋 Available Threads for Hop ${hop.hopNumber}:</h4>
+                                                    <div style="display: grid; gap: 8px;">
+                                                        ${unallocatedInCurrentHop.map(thread => `
+                                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: white; border-radius: 4px;">
+                                                                <span style="font-weight: bold; color: #2c3e50;">${thread.threadId}</span>
+                                                                <span style="color: #e67e22; font-weight: 600;">${thread.availableAmount.toLocaleString()} ${thread.currency}</span>
+                                                            </div>
+                                                        `).join('')}
+                                                    </div>
+                                                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffcc80;">
+                                                        <small style="color: #bf6000;">💡 Start tracing these funds by adding entries</small>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }
+                                        // If entries exist and threads remain for next hop
+                                        else if (availableForNextHop.length > 0) {
                                             // Determine the appropriate heading based on whether swaps are present
                                             const heading = hasSwapOutputs ?
                                                 `📋 Available Threads (including swap outputs):` :
@@ -10834,7 +10861,7 @@ function addNewHop() {
                                                 <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
                                                     <h4 style="margin: 0 0 10px 0; color: #e65100;">${heading}</h4>
                                                     <div style="display: grid; gap: 8px;">
-                                                        ${remainingThreads.map(thread => `
+                                                        ${availableForNextHop.map(thread => `
                                                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: white; border-radius: 4px;">
                                                                 <span style="font-weight: bold; color: #2c3e50;">${thread.threadId}</span>
                                                                 <span style="color: #e67e22; font-weight: 600;">${thread.availableAmount.toLocaleString()} ${thread.currency}</span>
@@ -10848,13 +10875,38 @@ function addNewHop() {
                                                     </div>
                                                 </div>
                                             `;
-                                        } else {
-                                            return `
-                                                <div style="background: #d4edda; border-left: 4px solid #27ae60; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-                                                    <h4 style="margin: 0; color: #1e7e34;">✅ All threads fully traced!</h4>
-                                                    <p style="margin: 10px 0 0 0; color: #155724;">All source funds have been accounted for. You can finalize this hop.</p>
-                                                </div>
-                                            `;
+                                        }
+                                        // All threads fully traced - ready to finalize
+                                        else {
+                                            // Check if we actually have entries and they're all accounted for
+                                            const allAccountedFor = hasEntries &&
+                                                                   unallocatedInCurrentHop.length === 0 &&
+                                                                   availableForNextHop.length === 0;
+
+                                            if (allAccountedFor) {
+                                                return `
+                                                    <div style="background: #d4edda; border-left: 4px solid #27ae60; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                                                        <h4 style="margin: 0; color: #1e7e34;">✅ All threads fully traced!</h4>
+                                                        <p style="margin: 10px 0 0 0; color: #155724;">All source funds have been accounted for. You can finalize this hop.</p>
+                                                    </div>
+                                                `;
+                                            } else if (!hasEntries) {
+                                                // No entries yet but also no available threads (shouldn't normally happen)
+                                                return `
+                                                    <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                                                        <h4 style="margin: 0; color: #721c24;">⚠️ No threads available</h4>
+                                                        <p style="margin: 10px 0 0 0; color: #721c24;">Check that previous hops have been completed correctly.</p>
+                                                    </div>
+                                                `;
+                                            } else {
+                                                // Has entries but threads still need allocation
+                                                return `
+                                                    <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                                                        <h4 style="margin: 0; color: #e65100;">⚠️ Threads need allocation</h4>
+                                                        <p style="margin: 10px 0 0 0; color: #856404;">Continue adding entries to account for all funds.</p>
+                                                    </div>
+                                                `;
+                                            }
                                         }
                                     })()}
 
