@@ -10813,7 +10813,7 @@ function addNewHop() {
                                 ${(hop.entries || []).map((entry, entryIndex) => renderCollapsibleHopEntry(entry, entryIndex, hop)).join('')}
                             </div>
                             
-                            ${!isComplete ? `
+                            ${(!isComplete || (hop.entries && hop.entries.length > 0)) ? `
                                 <div style="margin-top: 15px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                                     ${(() => {
                                         // Get available threads - these include both existing threads and any swap outputs from this hop
