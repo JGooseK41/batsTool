@@ -15048,15 +15048,49 @@ function isTerminalWalletType(walletType) {
 function checkAllThreadsTerminated() {
     const activeThreads = [];
     const nonTerminalThreads = [];
-    
-    // Find the most recent trace for each thread path
+    const unallocatedThreads = [];
+
+    // CRITICAL FIX: First check for any unallocated threads in availableThreads
+    // This includes swap outputs that haven't been traced yet
+    buildAvailableThreadsIndex(); // Ensure index is up to date
+
+    // Check all available threads for any unallocated amounts
+    Object.entries(investigation.availableThreads || {}).forEach(([currency, threads]) => {
+        Object.entries(threads).forEach(([threadId, thread]) => {
+            const availableAmount = getMaxAssignableAmount(thread.internalId || threadId, currency);
+
+            if (availableAmount > 0.01) {
+                // This thread has unallocated funds!
+                unallocatedThreads.push({
+                    threadId: thread.notation || threadId,
+                    internalId: thread.internalId || threadId,
+                    amount: availableAmount,
+                    currency: currency,
+                    sourceType: thread.sourceType,
+                    isSwapOutput: thread.sourceType === 'swap_output'
+                });
+
+                // These are NOT terminated - they need to be traced
+                nonTerminalThreads.push({
+                    path: thread.notation || threadId,
+                    amount: availableAmount,
+                    currency: currency,
+                    toWalletType: 'unallocated',
+                    toWallet: 'NOT_TRACED_YET',
+                    walletTypeDisplay: 'Unallocated Funds'
+                });
+            }
+        });
+    });
+
+    // Now check traced threads for their terminal status
     const threadPaths = {};
-    
+
     investigation.hops.forEach(hop => {
         hop.entries.forEach(entry => {
             if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0) {
                 let threadPath = null;
-                
+
                 // Try to extract thread path from notation
                 if (entry.notation) {
                     const pathMatch = entry.notation.match(/^(V\d+-T\d+)/);
@@ -15064,7 +15098,7 @@ function checkAllThreadsTerminated() {
                         threadPath = pathMatch[1];
                     }
                 }
-                
+
                 // If no valid notation, create a unique identifier based on source
                 if (!threadPath) {
                     // Use sourceThreadId or create a generic identifier
@@ -15077,7 +15111,7 @@ function checkAllThreadsTerminated() {
                         threadPath = `H${hop.hopNumber}-E${entry.id}`;
                     }
                 }
-                
+
                 // Store the most recent (highest hop number) entry for each thread
                 if (!threadPaths[threadPath] || hop.hopNumber > threadPaths[threadPath].hopNumber) {
                     threadPaths[threadPath] = {
@@ -15093,28 +15127,45 @@ function checkAllThreadsTerminated() {
             }
         });
     });
-    
-    // Check each thread's terminal status
+
+    // Check each traced thread's terminal status
     Object.entries(threadPaths).forEach(([threadPath, threadData]) => {
         activeThreads.push({
             path: threadPath,
             ...threadData
         });
-        
+
         if (!isTerminalWalletType(threadData.toWalletType)) {
-            nonTerminalThreads.push({
-                path: threadPath,
-                ...threadData,
-                walletTypeDisplay: walletTypes[threadData.toWalletType] || threadData.toWalletType
-            });
+            // Only add to nonTerminalThreads if not already there as unallocated
+            const isAlreadyUnallocated = nonTerminalThreads.some(t => t.path === threadPath);
+            if (!isAlreadyUnallocated) {
+                nonTerminalThreads.push({
+                    path: threadPath,
+                    ...threadData,
+                    walletTypeDisplay: walletTypes[threadData.toWalletType] || threadData.toWalletType
+                });
+            }
         }
     });
-    
+
+    console.log('Thread termination check:', {
+        unallocatedThreads: unallocatedThreads,
+        activeThreads: activeThreads,
+        nonTerminalThreads: nonTerminalThreads
+    });
+
+    // Investigation is only complete if:
+    // 1. No unallocated threads (including swap outputs)
+    // 2. All traced threads reached terminal wallets
+    const allTerminated = unallocatedThreads.length === 0 && nonTerminalThreads.length === 0;
+
     return {
-        allTerminated: nonTerminalThreads.length === 0,
+        allTerminated: allTerminated,
         activeThreads: activeThreads,
         nonTerminalThreads: nonTerminalThreads,
-        totalActiveAmount: activeThreads.reduce((sum, thread) => sum + thread.amount, 0)
+        unallocatedThreads: unallocatedThreads,
+        totalActiveAmount: activeThreads.reduce((sum, thread) => sum + thread.amount, 0),
+        hasUnallocatedFunds: unallocatedThreads.length > 0
     };
 }
         function updateFinalThreadSummary() {
