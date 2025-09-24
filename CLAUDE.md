@@ -3,22 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 06:08)
+## Latest Commit (Auto-updated: 2025-09-24 06:10)
 
-**Commit:** b5f8faf523392db6a276e5a1c643e24f04f3bd89
+**Commit:** bb65c9d629f4dabeb9a21fc85a51625c0a2465e9
 **Author:** Your Name
-**Message:** Add comprehensive Case Conclusion Dashboard with unified index access
+**Message:** Fix graph visualization error with terminal wallets
 
-- Created Case Conclusion Dashboard in Summary tab with complete overview
-- Added quick stats cards showing victims, wallets, terminals, and funds traced
-- Consolidated all index access (Victim, Red Wallet, Universal, Terminal) in one place
-- Added dedicated Victim Index view with export functionality
-- Implemented Export All Indexes function for bulk export
-- Enhanced reporting section with all export options clearly organized
-- Improved natural flow for investigators to complete and document cases
-- All indexes now easily accessible from single dashboard for case conclusion
+- Fixed 'toNode is not defined' error when creating edges for terminal wallets
+- The issue was that toNode was only defined in the non-terminal branch
+- Now properly fetching toNode from walletNodeMap when creating edges
+- Terminal wallet edges are still created separately in their own block
 
-This provides investigators with a centralized location to review all investigation data and generate necessary reports for legal proceedings and case documentation.
+This resolves the graph visualization crash when terminal wallets are present in the investigation.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -26,15 +22,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  97 +++++++----------------
- index.html | 264 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 290 insertions(+), 71 deletions(-)
+ CLAUDE.md  | 42 ++++++++++++++++++++----------------------
+ index.html |  2 ++
+ 2 files changed, 22 insertions(+), 22 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b5f8faf Add comprehensive Case Conclusion Dashboard with unified index access (0 seconds ago)
-- ab2dc0e Fix graph visualization error with terminal wallets (12 minutes ago)
+- bb65c9d Fix graph visualization error with terminal wallets (0 seconds ago)
+- b5f8faf Add comprehensive Case Conclusion Dashboard with unified index access (2 minutes ago)
+- ab2dc0e Fix graph visualization error with terminal wallets (14 minutes ago)
 - 0d63436 Complete comprehensive B.A.T.S. tool testing and bug analysis (7 hours ago)
 - c36475d Implement comprehensive Word-format narrative investigation report (7 hours ago)
 - 0448ce8 Disable Add Entry button for completed hops with reopen option (7 hours ago)
@@ -42,7 +39,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - bb1cb97 Fix center alignment of Generate Root Total button (8 hours ago)
 - 6d41977 Add comprehensive PDF report export for case presentations (8 hours ago)
 - ba22286 Enhanced UI to highlight PNG metadata embedding feature (8 hours ago)
-- 542a891 Add PNG metadata embedding for round-trip export/import (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
