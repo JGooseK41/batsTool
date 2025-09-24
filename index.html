@@ -2074,15 +2074,7 @@
                                 <span id="zoomLevel" style="padding: 8px 12px; background: #f8f9fa; border-radius: 4px; font-family: monospace;">100%</span>
                             </div>
 
-                            <div class="layout-controls">
-                                <select id="layoutType" onchange="changeLayout(this.value)" class="form-control" style="padding: 8px 12px; border-radius: 4px;">
-                                    <option value="hierarchical">Hierarchical Layout</option>
-                                    <option value="force">Force-Directed</option>
-                                    <option value="circular">Circular</option>
-                                    <option value="timeline">Timeline</option>
-                                    <option value="dagre">DAG Layout</option>
-                                </select>
-                            </div>
+                            <!-- DAG-only visualization - no layout selector needed -->
 
                             <div class="filter-controls" style="display: flex; gap: 8px;">
                                 <input type="text" id="searchWallet" placeholder="Search wallet..." onkeyup="searchGraph(this.value)"
@@ -27336,7 +27328,6 @@ To (RED Wallet): ${transfer.to}`;
             dragStartY: 0,
             showLabels: true,
             showAmounts: true,
-            currentLayout: 'hierarchical',
             nodes: [],
             edges: [],
             selectedNode: null
@@ -27362,253 +27353,310 @@ To (RED Wallet): ${transfer.to}`;
             setTimeout(fitToScreen, 100);
         }
 
-        // Build graph data from investigation
+        // Build T-account DAG with hop-centric layers and wallet duplication
         function buildGraphData() {
             graphState.nodes = [];
             graphState.edges = [];
-            const nodeMap = {};
+            graphState.hopLayers = [];
             let nodeId = 0;
 
-            // Add victim nodes
+            // Track wallets per hop to allow duplication
+            const walletsByHop = {};
+
+            // Create Hop 0 - Victim/RED wallets layer
+            const hop0Nodes = [];
+
+            // Add victim RED wallet nodes
             investigation.victims?.forEach(victim => {
                 victim.transactions?.forEach(tx => {
-                    const victimNodeId = `victim_${victim.id}_${tx.id}`;
-                    if (!nodeMap[victimNodeId]) {
-                        nodeMap[victimNodeId] = nodeId++;
-                        graphState.nodes.push({
-                            id: victimNodeId,
-                            label: `Victim ${victim.id}`,
-                            type: 'victim',
-                            wallet: tx.receivingWallet,
-                            amount: parseFloat(tx.amount),
-                            currency: tx.currency,
-                            x: 100,
-                            y: 100 + (nodeId * 100)
-                        });
-                    }
+                    const nodeKey = `hop0_victim${victim.id}_tx${tx.id}`;
+                    const node = {
+                        id: nodeKey,
+                        uniqueId: nodeId++,
+                        label: `Victim ${victim.id} (RED)`,
+                        type: 'red',
+                        wallet: tx.receivingWallet,
+                        amount: parseFloat(tx.amount),
+                        currency: tx.currency,
+                        hopNumber: 0,
+                        thread: `V${victim.id}-T${tx.id}`,
+                        artIn: 0,
+                        artOut: parseFloat(tx.amount),
+                        x: 0,
+                        y: 0
+                    };
+                    graphState.nodes.push(node);
+                    hop0Nodes.push(node);
                 });
             });
 
-            // Add nodes from hops
+            graphState.hopLayers.push({
+                hopNumber: 0,
+                nodes: hop0Nodes,
+                artIn: {},
+                artOut: {},
+                title: 'Victims (RED Wallets)'
+            });
+
+            // Process each hop
             investigation.hops?.forEach(hop => {
+                const hopNodes = [];
+                const hopArtIn = {};
+                const hopArtOut = {};
+
+                // Track unique wallets in this hop for deduplication
+                const walletNodesInHop = {};
+
                 hop.entries?.forEach(entry => {
                     if (entry.entryType === 'trace') {
-                        // Add from wallet
-                        if (entry.fromWallet && !nodeMap[entry.fromWallet]) {
-                            nodeMap[entry.fromWallet] = nodeId++;
-                            graphState.nodes.push({
-                                id: entry.fromWallet,
+                        // Create unique node for FROM wallet in this hop
+                        const fromNodeKey = `hop${hop.hopNumber}_from_${entry.fromWallet}_${entry.id}`;
+
+                        // Check if we need to create a FROM node
+                        if (!walletNodesInHop[entry.fromWallet]) {
+                            const fromNode = {
+                                id: fromNodeKey,
+                                uniqueId: nodeId++,
                                 label: getWalletLabel(entry.fromWallet, entry.fromWalletType),
                                 type: entry.fromWalletType || 'black',
                                 wallet: entry.fromWallet,
                                 hopNumber: hop.hopNumber,
-                                x: 200 + (hop.hopNumber * 250),
-                                y: 100 + (nodeId * 80)
-                            });
+                                isSource: true,
+                                thread: entry.sourceThreadId || entry.notation,
+                                artIn: 0,  // Will be calculated
+                                artOut: 0,  // Will be calculated
+                                x: 0,
+                                y: 0
+                            };
+                            graphState.nodes.push(fromNode);
+                            hopNodes.push(fromNode);
+                            walletNodesInHop[entry.fromWallet] = fromNode;
                         }
 
-                        // Add to wallet
-                        if (entry.toWallet && !nodeMap[entry.toWallet]) {
-                            nodeMap[entry.toWallet] = nodeId++;
-                            graphState.nodes.push({
-                                id: entry.toWallet,
-                                label: getWalletLabel(entry.toWallet, entry.toWalletType),
-                                type: entry.toWalletType || 'black',
-                                wallet: entry.toWallet,
-                                hopNumber: hop.hopNumber,
-                                isTerminal: entry.isTerminalWallet,
-                                exchangeName: entry.exchangeName,
-                                x: 200 + ((hop.hopNumber + 1) * 250),
-                                y: 100 + (nodeId * 80)
-                            });
-                        }
+                        // Update ART for FROM wallet
+                        const fromNode = walletNodesInHop[entry.fromWallet];
+                        fromNode.artOut += parseFloat(entry.amount);
 
-                        // Add edge
+                        // Create unique node for TO wallet in this hop
+                        const toNodeKey = `hop${hop.hopNumber}_to_${entry.toWallet}_${entry.id}`;
+
+                        // Always create a TO node (allows duplication)
+                        const toNode = {
+                            id: toNodeKey,
+                            uniqueId: nodeId++,
+                            label: getWalletLabel(entry.toWallet, entry.toWalletType),
+                            type: entry.toWalletType || 'black',
+                            wallet: entry.toWallet,
+                            hopNumber: hop.hopNumber,
+                            isTerminal: entry.isTerminalWallet,
+                            exchangeName: entry.exchangeName,
+                            thread: entry.notation,
+                            artIn: parseFloat(entry.amount),
+                            artOut: entry.isTerminalWallet ? 0 : parseFloat(entry.amount),
+                            x: 0,
+                            y: 0
+                        };
+                        graphState.nodes.push(toNode);
+                        hopNodes.push(toNode);
+
+                        // Create edge with thread information
                         graphState.edges.push({
-                            from: entry.fromWallet,
-                            to: entry.toWallet,
+                            from: fromNode.id,
+                            to: toNode.id,
                             amount: parseFloat(entry.amount),
                             currency: entry.currency,
+                            thread: entry.notation || entry.sourceThreadId,
                             txHash: entry.txHash,
                             hopNumber: hop.hopNumber,
-                            isTerminal: entry.isTerminalWallet
+                            isTerminal: entry.isTerminalWallet,
+                            color: getThreadColor(entry.notation || entry.sourceThreadId)
+                        });
+
+                        // Update hop ART
+                        const currency = entry.currency;
+                        if (!hopArtIn[currency]) hopArtIn[currency] = 0;
+                        if (!hopArtOut[currency]) hopArtOut[currency] = 0;
+                        hopArtIn[currency] += parseFloat(entry.amount);
+                        if (!entry.isTerminalWallet) {
+                            hopArtOut[currency] += parseFloat(entry.amount);
+                        }
+                    } else if (entry.entryType === 'swap') {
+                        // Handle swaps specially
+                        const swapNodeKey = `hop${hop.hopNumber}_swap_${entry.id}`;
+                        const swapNode = {
+                            id: swapNodeKey,
+                            uniqueId: nodeId++,
+                            label: `SWAP ${entry.currency}→${entry.swapDetails?.toCurrency}`,
+                            type: 'swap',
+                            wallet: entry.fromWallet || entry.toWallet,
+                            hopNumber: hop.hopNumber,
+                            isSwap: true,
+                            thread: entry.notation || entry.sourceThreadId,
+                            artIn: parseFloat(entry.amount),
+                            artOut: parseFloat(entry.swapDetails?.toAmount || 0),
+                            inputCurrency: entry.currency,
+                            outputCurrency: entry.swapDetails?.toCurrency,
+                            x: 0,
+                            y: 0
+                        };
+                        graphState.nodes.push(swapNode);
+                        hopNodes.push(swapNode);
+                    } else if (entry.entryType === 'writeoff') {
+                        // Handle writeoffs
+                        const writeoffNodeKey = `hop${hop.hopNumber}_writeoff_${entry.id}`;
+                        const writeoffNode = {
+                            id: writeoffNodeKey,
+                            uniqueId: nodeId++,
+                            label: `WRITE-OFF (${entry.category})`,
+                            type: 'writeoff',
+                            hopNumber: hop.hopNumber,
+                            thread: entry.notation || entry.sourceThreadId,
+                            artIn: parseFloat(entry.amount),
+                            artOut: 0,
+                            currency: entry.currency,
+                            x: 0,
+                            y: 0
+                        };
+                        graphState.nodes.push(writeoffNode);
+                        hopNodes.push(writeoffNode);
+                    }
+                });
+
+                graphState.hopLayers.push({
+                    hopNumber: hop.hopNumber,
+                    nodes: hopNodes,
+                    artIn: hopArtIn,
+                    artOut: hopArtOut,
+                    title: `Hop ${hop.hopNumber}`,
+                    completed: hop.completed
+                });
+            });
+
+            // Connect hops - find connections between layers
+            for (let i = 0; i < graphState.hopLayers.length - 1; i++) {
+                const currentLayer = graphState.hopLayers[i];
+                const nextLayer = graphState.hopLayers[i + 1];
+
+                currentLayer.nodes.forEach(fromNode => {
+                    if (fromNode.artOut > 0) {
+                        // Find matching wallet in next layer
+                        nextLayer.nodes.forEach(toNode => {
+                            if (toNode.isSource && toNode.wallet === fromNode.wallet && !fromNode.isTerminal) {
+                                // Create inter-hop connection
+                                graphState.edges.push({
+                                    from: fromNode.id,
+                                    to: toNode.id,
+                                    amount: fromNode.artOut,
+                                    currency: fromNode.currency || 'USDT',
+                                    thread: fromNode.thread,
+                                    hopNumber: i,
+                                    isInterHop: true,
+                                    color: '#888',
+                                    dashArray: '5,5'
+                                });
+                            }
                         });
                     }
                 });
-            });
+            }
 
-            // Apply layout
-            applyLayout(graphState.currentLayout);
+            // Apply T-account DAG layout
+            applyTAccountDAGLayout();
         }
 
-        // Get wallet label
+        // Get color for thread
+        function getThreadColor(thread) {
+            if (!thread) return '#555';
+            // Generate consistent color based on thread ID
+            const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
+            let hash = 0;
+            for (let i = 0; i < thread.length; i++) {
+                hash = thread.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        // Get wallet label from Universal Wallet Index (RED 1, BLACK 2, etc.)
         function getWalletLabel(address, type) {
-            // Check if wallet has a known name
+            // First check Universal Wallet Index for the permanent ID
             const walletEntry = investigation.universalWalletIndex?.find(w => w.address === address);
             if (walletEntry?.permanentId) {
+                // Use the permanent ID (e.g., "BLACK 2", "RED 1", "YELLOW 3")
                 return walletEntry.permanentId;
             }
-            // Shorten address
+
+            // If not in UWI but we know the type, generate a temporary friendly name
+            if (type) {
+                // Count existing wallets of this type to generate number
+                const existingCount = (investigation.universalWalletIndex || [])
+                    .filter(w => w.permanentType === type).length;
+                return `${type.toUpperCase()} ${existingCount + 1}`;
+            }
+
+            // Fallback to shortened address
             return address.substring(0, 6) + '...' + address.substring(address.length - 4);
         }
 
-        // Apply graph layout
-        function applyLayout(layoutType) {
-            const width = document.getElementById('graphContainer').offsetWidth;
-            const height = document.getElementById('graphContainer').offsetHeight;
+        // Apply T-account DAG layout with hop-centric layers
+        function applyTAccountDAGLayout() {
+            const container = document.getElementById('graphContainer');
+            const width = container ? container.offsetWidth : 1200;
+            const height = container ? container.offsetHeight : 700;
 
-            switch(layoutType) {
-                case 'hierarchical':
-                    applyHierarchicalLayout(width, height);
-                    break;
-                case 'force':
-                    applyForceLayout(width, height);
-                    break;
-                case 'circular':
-                    applyCircularLayout(width, height);
-                    break;
-                case 'timeline':
-                    applyTimelineLayout(width, height);
-                    break;
-                case 'dagre':
-                    applyDAGLayout(width, height);
-                    break;
-            }
-        }
+            // Position nodes in hop-centric vertical layers
+            const layerWidth = width / (graphState.hopLayers.length || 1);
+            const nodeHeight = 60;
+            const nodeSpacing = 20;
+            const layerPadding = 50;
 
-        // Hierarchical layout
-        function applyHierarchicalLayout(width, height) {
-            const layers = {};
+            graphState.hopLayers.forEach((layer, layerIndex) => {
+                const x = layerWidth * layerIndex + layerWidth / 2;
 
-            // Group nodes by hop number
-            graphState.nodes.forEach(node => {
-                const layer = node.hopNumber || 0;
-                if (!layers[layer]) layers[layer] = [];
-                layers[layer].push(node);
-            });
+                // Calculate total height needed for this layer
+                const totalNodesHeight = layer.nodes.length * (nodeHeight + nodeSpacing);
+                const startY = (height - totalNodesHeight) / 2;
 
-            // Position nodes
-            const layerKeys = Object.keys(layers).sort((a, b) => a - b);
-            const xSpacing = width / (layerKeys.length + 1);
+                // Group nodes by type for better organization
+                const sourceNodes = layer.nodes.filter(n => n.isSource);
+                const terminalNodes = layer.nodes.filter(n => n.isTerminal);
+                const swapNodes = layer.nodes.filter(n => n.isSwap);
+                const writeoffNodes = layer.nodes.filter(n => n.type === 'writeoff');
+                const regularNodes = layer.nodes.filter(n => !n.isSource && !n.isTerminal && !n.isSwap && n.type !== 'writeoff');
 
-            layerKeys.forEach((layer, layerIndex) => {
-                const nodes = layers[layer];
-                const ySpacing = height / (nodes.length + 1);
+                // Position nodes with T-account style alignment
+                let currentY = startY;
 
-                nodes.forEach((node, nodeIndex) => {
-                    node.x = xSpacing * (layerIndex + 1);
-                    node.y = ySpacing * (nodeIndex + 1);
+                // Place source nodes first (left side of T-account)
+                sourceNodes.forEach(node => {
+                    node.x = x - 30;  // Slightly left
+                    node.y = currentY;
+                    currentY += nodeHeight + nodeSpacing;
+                });
+
+                // Regular nodes in center
+                regularNodes.forEach(node => {
+                    node.x = x;
+                    node.y = currentY;
+                    currentY += nodeHeight + nodeSpacing;
+                });
+
+                // Swap nodes
+                swapNodes.forEach(node => {
+                    node.x = x;
+                    node.y = currentY;
+                    currentY += nodeHeight + nodeSpacing;
+                });
+
+                // Terminal and writeoff nodes (right side of T-account)
+                [...terminalNodes, ...writeoffNodes].forEach(node => {
+                    node.x = x + 30;  // Slightly right
+                    node.y = currentY;
+                    currentY += nodeHeight + nodeSpacing;
                 });
             });
         }
 
-        // Force-directed layout
-        function applyForceLayout(width, height) {
-            // Simple force simulation
-            const iterations = 50;
-            const k = Math.sqrt((width * height) / graphState.nodes.length);
-
-            for (let i = 0; i < iterations; i++) {
-                // Repulsive forces
-                graphState.nodes.forEach((node1, i) => {
-                    graphState.nodes.forEach((node2, j) => {
-                        if (i !== j) {
-                            const dx = node1.x - node2.x;
-                            const dy = node1.y - node2.y;
-                            const distance = Math.sqrt(dx * dx + dy * dy);
-                            if (distance > 0) {
-                                const force = k * k / distance;
-                                node1.x += (dx / distance) * force * 0.1;
-                                node1.y += (dy / distance) * force * 0.1;
-                            }
-                        }
-                    });
-                });
-
-                // Attractive forces (edges)
-                graphState.edges.forEach(edge => {
-                    const node1 = graphState.nodes.find(n => n.id === edge.from);
-                    const node2 = graphState.nodes.find(n => n.id === edge.to);
-                    if (node1 && node2) {
-                        const dx = node2.x - node1.x;
-                        const dy = node2.y - node1.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        if (distance > 0) {
-                            const force = distance * distance / k;
-                            const fx = (dx / distance) * force * 0.1;
-                            const fy = (dy / distance) * force * 0.1;
-                            node1.x += fx;
-                            node1.y += fy;
-                            node2.x -= fx;
-                            node2.y -= fy;
-                        }
-                    }
-                });
-
-                // Keep nodes within bounds
-                graphState.nodes.forEach(node => {
-                    node.x = Math.max(50, Math.min(width - 50, node.x));
-                    node.y = Math.max(50, Math.min(height - 50, node.y));
-                });
-            }
-        }
-
-        // Circular layout
-        function applyCircularLayout(width, height) {
-            const centerX = width / 2;
-            const centerY = height / 2;
-            const radius = Math.min(width, height) * 0.4;
-
-            graphState.nodes.forEach((node, index) => {
-                const angle = (2 * Math.PI * index) / graphState.nodes.length;
-                node.x = centerX + radius * Math.cos(angle);
-                node.y = centerY + radius * Math.sin(angle);
-            });
-        }
-
-        // Timeline layout
-        function applyTimelineLayout(width, height) {
-            // Group nodes by timestamp/hop order
-            const timeline = {};
-            let timeIndex = 0;
-
-            // First pass: victims
-            graphState.nodes.filter(n => n.type === 'victim').forEach(node => {
-                if (!timeline[0]) timeline[0] = [];
-                timeline[0].push(node);
-            });
-
-            // Second pass: by hop number
-            investigation.hops?.forEach(hop => {
-                const hopTime = hop.hopNumber;
-                graphState.nodes.filter(n => n.hopNumber === hop.hopNumber).forEach(node => {
-                    if (!timeline[hopTime]) timeline[hopTime] = [];
-                    timeline[hopTime].push(node);
-                });
-            });
-
-            // Position nodes
-            const timeKeys = Object.keys(timeline).sort((a, b) => a - b);
-            const xSpacing = width / (timeKeys.length + 1);
-
-            timeKeys.forEach((time, timeIndex) => {
-                const nodes = timeline[time];
-                const ySpacing = height / (nodes.length + 1);
-
-                nodes.forEach((node, nodeIndex) => {
-                    node.x = xSpacing * (timeIndex + 1);
-                    node.y = ySpacing * (nodeIndex + 1);
-                });
-            });
-        }
-
-        // DAG layout
-        function applyDAGLayout(width, height) {
-            // Similar to hierarchical but with better edge routing
-            applyHierarchicalLayout(width, height);
-        }
-
-        // Render the graph
+        // Render the graph with hop shading and T-account structure
         function renderGraph() {
             const svg = document.getElementById('investigationGraph');
             const content = document.getElementById('graphContent');
@@ -27618,36 +27666,271 @@ To (RED Wallet): ${transfer.to}`;
                 content.removeChild(content.firstChild);
             }
 
-            // Draw edges
+            // Draw hop backgrounds/shading first
+            if (graphState.hopLayers) {
+                const container = document.getElementById('graphContainer');
+                const layerWidth = (container ? container.offsetWidth : 1200) / graphState.hopLayers.length;
+                const containerHeight = container ? container.offsetHeight : 700;
+
+                graphState.hopLayers.forEach((layer, index) => {
+                    const xStart = index * layerWidth;
+                    const xCenter = xStart + layerWidth / 2;
+
+                    // Create shaded background for each hop
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', xStart);
+                    rect.setAttribute('y', 0);
+                    rect.setAttribute('width', layerWidth);
+                    rect.setAttribute('height', containerHeight);
+                    rect.setAttribute('fill', index % 2 === 0 ? '#f0f8ff' : '#f8f8f8');
+                    rect.setAttribute('opacity', '0.6');
+                    rect.setAttribute('stroke', '#dee2e6');
+                    rect.setAttribute('stroke-width', '1');
+                    content.appendChild(rect);
+
+                    // Add hop title at top
+                    const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    title.setAttribute('x', xCenter);
+                    title.setAttribute('y', 25);
+                    title.setAttribute('text-anchor', 'middle');
+                    title.setAttribute('font-size', '16');
+                    title.setAttribute('font-weight', 'bold');
+                    title.setAttribute('fill', '#2c3e50');
+                    title.textContent = layer.hopNumber === 0 ? 'VICTIMS' : `HOP ${layer.hopNumber}`;
+                    content.appendChild(title);
+
+                    // Get ART at start of hop (what's coming IN to this hop)
+                    let startingART = {};
+                    if (layer.hopNumber === 0) {
+                        // For victims layer, starting ART is 0, ending is victim amounts
+                        investigation.victims?.forEach(victim => {
+                            victim.transactions?.forEach(tx => {
+                                const currency = tx.currency;
+                                if (!startingART[currency]) startingART[currency] = 0;
+                                startingART[currency] += parseFloat(tx.amount);
+                            });
+                        });
+                    } else {
+                        // For other hops, get from investigation hop data
+                        const hopData = investigation.hops?.find(h => h.hopNumber === layer.hopNumber);
+                        if (hopData?.artAtStartByCurrency) {
+                            startingART = hopData.artAtStartByCurrency;
+                        }
+                    }
+
+                    // ART at TOP of shaded area (what's available at start)
+                    if (Object.keys(startingART).length > 0) {
+                        // Background box for better readability
+                        const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        bgRect.setAttribute('x', xStart + 10);
+                        bgRect.setAttribute('y', 40);
+                        bgRect.setAttribute('width', layerWidth - 20);
+                        bgRect.setAttribute('height', 25);
+                        bgRect.setAttribute('fill', '#e8f5e9');
+                        bgRect.setAttribute('rx', '4');
+                        bgRect.setAttribute('opacity', '0.9');
+                        content.appendChild(bgRect);
+
+                        const artStartText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        artStartText.setAttribute('x', xCenter);
+                        artStartText.setAttribute('y', 57);
+                        artStartText.setAttribute('text-anchor', 'middle');
+                        artStartText.setAttribute('font-size', '13');
+                        artStartText.setAttribute('font-weight', 'bold');
+                        artStartText.setAttribute('fill', '#2e7d32');
+                        artStartText.textContent = '⬇ IN: ' + Object.entries(startingART)
+                            .map(([curr, amt]) => `${amt.toLocaleString()} ${curr}`)
+                            .join(' | ');
+                        content.appendChild(artStartText);
+                    }
+
+                    // ART at BOTTOM of shaded area (what's going out)
+                    // Need to account for swaps that change currency
+                    let endingART = {};
+                    if (layer.hopNumber === 0) {
+                        // For victims, ending ART equals starting (all goes to Hop 1)
+                        endingART = startingART;
+                    } else {
+                        // Calculate ending ART accounting for traces, swaps, and writeoffs
+                        const hopData = investigation.hops?.find(h => h.hopNumber === layer.hopNumber);
+                        if (hopData) {
+                            // Start with what came in
+                            Object.assign(endingART, startingART);
+
+                            hopData.entries?.forEach(entry => {
+                                if (entry.entryType === 'swap' && entry.swapDetails) {
+                                    // Swap removes from one currency and adds to another
+                                    const fromCurrency = entry.currency;
+                                    const toCurrency = entry.swapDetails.toCurrency;
+                                    const fromAmount = parseFloat(entry.amount);
+                                    const toAmount = parseFloat(entry.swapDetails.toAmount || 0);
+
+                                    // Deduct from source currency
+                                    if (endingART[fromCurrency]) {
+                                        endingART[fromCurrency] -= fromAmount;
+                                        if (endingART[fromCurrency] < 0.01) {
+                                            delete endingART[fromCurrency];
+                                        }
+                                    }
+
+                                    // Add to target currency
+                                    if (!endingART[toCurrency]) {
+                                        endingART[toCurrency] = 0;
+                                    }
+                                    endingART[toCurrency] += toAmount;
+                                } else if (entry.entryType === 'writeoff') {
+                                    // Writeoffs remove from ART
+                                    const currency = entry.currency;
+                                    const amount = parseFloat(entry.amount);
+                                    if (endingART[currency]) {
+                                        endingART[currency] -= amount;
+                                        if (endingART[currency] < 0.01) {
+                                            delete endingART[currency];
+                                        }
+                                    }
+                                } else if (entry.entryType === 'trace' && entry.isTerminalWallet) {
+                                    // Terminal wallets remove from ART
+                                    const currency = entry.currency;
+                                    const amount = parseFloat(entry.amount);
+                                    if (endingART[currency]) {
+                                        endingART[currency] -= amount;
+                                        if (endingART[currency] < 0.01) {
+                                            delete endingART[currency];
+                                        }
+                                    }
+                                }
+                                // Regular traces continue to next hop so ART stays the same
+                            });
+                        }
+                    }
+
+                    if (Object.keys(endingART).length > 0) {
+                        // Background box for better readability
+                        const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        bgRect.setAttribute('x', xStart + 10);
+                        bgRect.setAttribute('y', containerHeight - 35);
+                        bgRect.setAttribute('width', layerWidth - 20);
+                        bgRect.setAttribute('height', 25);
+                        bgRect.setAttribute('fill', '#ffebee');
+                        bgRect.setAttribute('rx', '4');
+                        bgRect.setAttribute('opacity', '0.9');
+                        content.appendChild(bgRect);
+
+                        const artEndText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        artEndText.setAttribute('x', xCenter);
+                        artEndText.setAttribute('y', containerHeight - 15);
+                        artEndText.setAttribute('text-anchor', 'middle');
+                        artEndText.setAttribute('font-size', '13');
+                        artEndText.setAttribute('font-weight', 'bold');
+                        artEndText.setAttribute('fill', '#c62828');
+                        artEndText.textContent = '⬇ OUT: ' + Object.entries(endingART)
+                            .map(([curr, amt]) => `${amt.toLocaleString()} ${curr}`)
+                            .join(' | ');
+                        content.appendChild(artEndText);
+                    }
+
+                    // Add validation status indicator
+                    const isBalanced = JSON.stringify(startingART) === JSON.stringify(endingART);
+                    if (layer.hopNumber > 0 && !isBalanced) {
+                        // Show warning if hop is not balanced
+                        const warningText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        warningText.setAttribute('x', xCenter);
+                        warningText.setAttribute('y', containerHeight / 2);
+                        warningText.setAttribute('text-anchor', 'middle');
+                        warningText.setAttribute('font-size', '12');
+                        warningText.setAttribute('fill', '#ff9800');
+                        warningText.setAttribute('font-weight', 'bold');
+
+                        // Calculate difference
+                        let differences = [];
+                        Object.keys(startingART).forEach(curr => {
+                            const inAmt = startingART[curr] || 0;
+                            const outAmt = endingART[curr] || 0;
+                            if (Math.abs(inAmt - outAmt) > 0.01) {
+                                differences.push(`${Math.abs(inAmt - outAmt).toLocaleString()} ${curr}`);
+                            }
+                        });
+
+                        if (differences.length > 0) {
+                            warningText.textContent = '⚠ UNACCOUNTED: ' + differences.join(', ');
+                            content.appendChild(warningText);
+                        }
+                    }
+                });
+            }
+
+            // Draw edges with thread-specific colors and labeling
             graphState.edges.forEach(edge => {
                 const fromNode = graphState.nodes.find(n => n.id === edge.from);
                 const toNode = graphState.nodes.find(n => n.id === edge.to);
 
                 if (fromNode && toNode) {
-                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                    line.setAttribute('x1', fromNode.x);
-                    line.setAttribute('y1', fromNode.y);
-                    line.setAttribute('x2', toNode.x);
-                    line.setAttribute('y2', toNode.y);
-                    line.setAttribute('stroke', edge.isTerminal ? '#6c5ce7' : '#555');
-                    line.setAttribute('stroke-width', '2');
-                    line.setAttribute('marker-end', edge.isTerminal ? 'url(#arrowhead-terminal)' : 'url(#arrowhead)');
-                    line.setAttribute('opacity', '0.6');
-                    line.style.cursor = 'pointer';
+                    // Use path for better curve control
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
-                    // Add edge label if amounts are shown
-                    if (graphState.showAmounts) {
-                        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        text.setAttribute('x', (fromNode.x + toNode.x) / 2);
-                        text.setAttribute('y', (fromNode.y + toNode.y) / 2 - 5);
-                        text.setAttribute('text-anchor', 'middle');
-                        text.setAttribute('font-size', '12');
-                        text.setAttribute('fill', '#666');
-                        text.textContent = `${edge.amount.toLocaleString()} ${edge.currency}`;
-                        content.appendChild(text);
+                    // Calculate curve for better visual flow
+                    const dx = toNode.x - fromNode.x;
+                    const dy = toNode.y - fromNode.y;
+                    const dr = Math.sqrt(dx * dx + dy * dy) * 0.1;
+
+                    // Create path with slight curve
+                    const d = `M${fromNode.x},${fromNode.y} Q${(fromNode.x + toNode.x) / 2},${(fromNode.y + toNode.y) / 2 + dr} ${toNode.x},${toNode.y}`;
+                    path.setAttribute('d', d);
+                    path.setAttribute('fill', 'none');
+                    path.setAttribute('stroke', edge.color || (edge.isTerminal ? '#6c5ce7' : '#555'));
+                    path.setAttribute('stroke-width', edge.isInterHop ? '1' : '2');
+                    if (edge.dashArray) {
+                        path.setAttribute('stroke-dasharray', edge.dashArray);
                     }
+                    path.setAttribute('marker-end', edge.isTerminal ? 'url(#arrowhead-terminal)' : 'url(#arrowhead)');
+                    path.setAttribute('opacity', edge.isInterHop ? '0.3' : '0.6');
+                    path.style.cursor = 'pointer';
 
-                    content.appendChild(line);
+                    content.appendChild(path);
+
+                    // Add edge label with thread and amount
+                    if (graphState.showAmounts && !edge.isInterHop) {
+                        const labelGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+                        // Background for better readability
+                        const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        const labelX = (fromNode.x + toNode.x) / 2;
+                        const labelY = (fromNode.y + toNode.y) / 2 - 5;
+
+                        bgRect.setAttribute('x', labelX - 40);
+                        bgRect.setAttribute('y', labelY - 10);
+                        bgRect.setAttribute('width', '80');
+                        bgRect.setAttribute('height', '20');
+                        bgRect.setAttribute('fill', 'white');
+                        bgRect.setAttribute('opacity', '0.8');
+                        bgRect.setAttribute('rx', '3');
+                        labelGroup.appendChild(bgRect);
+
+                        // Thread label
+                        if (edge.thread) {
+                            const threadText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                            threadText.setAttribute('x', labelX);
+                            threadText.setAttribute('y', labelY - 2);
+                            threadText.setAttribute('text-anchor', 'middle');
+                            threadText.setAttribute('font-size', '10');
+                            threadText.setAttribute('fill', edge.color || '#333');
+                            threadText.setAttribute('font-weight', 'bold');
+                            threadText.textContent = edge.thread;
+                            labelGroup.appendChild(threadText);
+                        }
+
+                        // Amount label
+                        const amountText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        amountText.setAttribute('x', labelX);
+                        amountText.setAttribute('y', labelY + 8);
+                        amountText.setAttribute('text-anchor', 'middle');
+                        amountText.setAttribute('font-size', '10');
+                        amountText.setAttribute('fill', '#666');
+                        amountText.textContent = `${edge.amount.toLocaleString()} ${edge.currency}`;
+                        labelGroup.appendChild(amountText);
+
+                        content.appendChild(labelGroup);
+                    }
                 }
             });
 
@@ -27657,29 +27940,68 @@ To (RED Wallet): ${transfer.to}`;
                 g.setAttribute('transform', `translate(${node.x}, ${node.y})`);
                 g.style.cursor = 'pointer';
 
-                // Node circle
-                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                circle.setAttribute('r', node.isTerminal ? '25' : '20');
-                circle.setAttribute('fill', getNodeColor(node.type));
-                circle.setAttribute('stroke', '#fff');
-                circle.setAttribute('stroke-width', '2');
+                // Special shape for swap nodes (diamond/rhombus)
+                if (node.isSwap) {
+                    const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    diamond.setAttribute('points', '0,-25 25,0 0,25 -25,0');
+                    diamond.setAttribute('fill', '#e17055');
+                    diamond.setAttribute('stroke', '#fff');
+                    diamond.setAttribute('stroke-width', '2');
+                    g.appendChild(diamond);
 
-                // Add glow for terminal nodes
-                if (node.isTerminal) {
-                    circle.setAttribute('filter', 'drop-shadow(0 0 10px rgba(108, 92, 231, 0.5))');
+                    // Add swap text
+                    const swapText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    swapText.setAttribute('y', '5');
+                    swapText.setAttribute('text-anchor', 'middle');
+                    swapText.setAttribute('font-size', '10');
+                    swapText.setAttribute('fill', 'white');
+                    swapText.setAttribute('font-weight', 'bold');
+                    swapText.textContent = '⇄';
+                    g.appendChild(swapText);
+                } else if (node.type === 'writeoff') {
+                    // Special shape for writeoff nodes (triangle)
+                    const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    triangle.setAttribute('points', '0,-22 19,11 -19,11');
+                    triangle.setAttribute('fill', '#95a5a6');
+                    triangle.setAttribute('stroke', '#fff');
+                    triangle.setAttribute('stroke-width', '2');
+                    g.appendChild(triangle);
+                } else {
+                    // Regular node circle
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('r', node.isTerminal ? '25' : '20');
+                    circle.setAttribute('fill', getNodeColor(node.type));
+                    circle.setAttribute('stroke', '#fff');
+                    circle.setAttribute('stroke-width', '2');
+
+                    // Add glow for terminal nodes
+                    if (node.isTerminal) {
+                        circle.setAttribute('filter', 'drop-shadow(0 0 10px rgba(108, 92, 231, 0.5))');
+                    }
+
+                    g.appendChild(circle);
                 }
-
-                g.appendChild(circle);
 
                 // Node label
                 if (graphState.showLabels) {
                     const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    text.setAttribute('y', '35');
+                    text.setAttribute('y', node.isSwap ? '40' : '35');
                     text.setAttribute('text-anchor', 'middle');
-                    text.setAttribute('font-size', '12');
+                    text.setAttribute('font-size', node.isSwap ? '11' : '12');
                     text.setAttribute('fill', '#333');
                     text.textContent = node.label;
                     g.appendChild(text);
+
+                    // For swap nodes, show conversion details
+                    if (node.isSwap && node.artIn && node.artOut) {
+                        const conversionText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        conversionText.setAttribute('y', '55');
+                        conversionText.setAttribute('text-anchor', 'middle');
+                        conversionText.setAttribute('font-size', '10');
+                        conversionText.setAttribute('fill', '#e17055');
+                        conversionText.textContent = `${node.artIn.toLocaleString()} → ${node.artOut.toLocaleString()}`;
+                        g.appendChild(conversionText);
+                    }
 
                     // Exchange name for terminal nodes
                     if (node.exchangeName) {
@@ -27838,10 +28160,9 @@ To (RED Wallet): ${transfer.to}`;
             }
         }
 
-        // Layout change
-        function changeLayout(layoutType) {
-            graphState.currentLayout = layoutType;
-            applyLayout(layoutType);
+        // Re-render graph with updated T-account DAG layout
+        function refreshGraph() {
+            buildGraphData();  // Rebuild with latest data
             renderGraph();
         }
 

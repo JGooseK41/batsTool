@@ -3,23 +3,61 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 20:58)
+## Latest Commit (Auto-updated: 2025-09-23 21:12)
 
-**Commit:** dcd16387e2a651dfedbc6836b84bc2809e1cdcac
+**Commit:** f47cb44b8692865e8f6a7ec56c506bf97b5e86f4
 **Author:** Your Name
-**Message:** Fix validation incorrectly showing traced funds as unaccounted
+**Message:** Add comprehensive graph visualization with proper navigation from trace completion
 
-The validation logic was treating all available threads for the next hop as 'unaccounted' when in reality:
-- Funds traced TO non-terminal wallets correctly create threads for the next hop (expected behavior)
-- Only funds that haven't been traced AT ALL in the current hop are truly unaccounted
+Major improvements to post-completion flow and visualization:
 
-Fixed by:
-- Comparing what was available at START of hop vs what was actually used in entries
-- Only flagging as 'remaining' if funds weren't traced at all
-- Properly handling swap outputs (only unaccounted if not traced in same hop as swap)
-- Distinguishing between funds traced to next hop (expected) vs untraced funds (problematic)
+## Navigation Fix
+- Changed 'Go to Analysis' button to 'View Investigation Graph' with gradient purple styling
+- Redirects to Flow Diagram tab instead of Analysis tab after trace completion
+- Automatically initializes graph visualization when navigating from completion ceremony
 
-This resolves the issue where assigning entire source thread in Hop 1 was incorrectly showing as unaccounted when it was properly traced to create thread V1-T1-H1 for Hop 2.
+## Comprehensive Graph Visualization System
+- Fully interactive, zoomable, pannable graph visualization
+- Multiple layout algorithms:
+  - Hierarchical (default) - Shows hop progression
+  - Force-directed - Physics-based layout
+  - Circular - Radial arrangement
+  - Timeline - Temporal progression
+  - DAG Layout - Directed acyclic graph
+
+## Interactive Features
+- Zoom controls (mouse wheel + buttons)
+- Pan by dragging
+- Zoom level indicator (percentage)
+- Fit to screen functionality
+- Search wallets with live filtering
+- Toggle labels and amounts
+- Click nodes for detailed information
+- Hover tooltips
+
+## Visual Design
+- Color-coded nodes by wallet type (gradients for special types)
+- Terminal wallets with purple glow effect
+- Exchange names displayed on terminal nodes
+- Edge amounts shown on connections
+- Comprehensive legend
+- Statistics panel with totals
+
+## Export Capabilities
+- Export to SVG (vector format, fully zoomable)
+- Export to PNG (high resolution image)
+- Export to PDF-ready format
+- Share functionality with clipboard support
+
+## Technical Implementation
+- Pure SVG rendering for crisp visuals at any zoom
+- Efficient graph data structure from investigation
+- Real-time layout recalculation
+- Node clustering by hop number
+- Minimap placeholder for large graphs
+- Responsive design
+
+This provides users with a clear, guided path from trace completion to a detailed, professional visualization of their investigation that can be zoomed, exported, and shared.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -27,23 +65,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 66 ++++++++++++++++++++++++++++++++----------------------------
- index.html | 68 +++++++++++++++++++++++++++++++++++++++++---------------------
- 2 files changed, 80 insertions(+), 54 deletions(-)
+ CLAUDE.md  |  61 ++--
+ index.html | 935 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 957 insertions(+), 39 deletions(-)
 ```
 
 ## Recent Commits History
 
-- dcd1638 Fix validation incorrectly showing traced funds as unaccounted (0 seconds ago)
-- 3774502 Prevent finalizing empty hops and fix editing completed hops (15 minutes ago)
-- e1ad0ba Fix incorrect 'All threads fully traced' message on empty hop (22 minutes ago)
-- a7114b7 Update CLAUDE.md with latest commit info (25 minutes ago)
-- ec6396e Add pre-configured test investigation files (27 minutes ago)
-- b6d2280 Add comprehensive test suite and documentation (32 minutes ago)
-- 77a039b Fix missing Finalize Hop button and improve hop progression (36 minutes ago)
-- a8c73c0 Add detailed debugging to hop finalization process (40 minutes ago)
-- f78b054 Update CLAUDE.md with latest changes (44 minutes ago)
-- 4aa4619 Fix trace completion incorrectly showing complete with unallocated swap outputs (46 minutes ago)
+- f47cb44 Add comprehensive graph visualization with proper navigation from trace completion (0 seconds ago)
+- dcd1638 Fix validation incorrectly showing traced funds as unaccounted (14 minutes ago)
+- 3774502 Prevent finalizing empty hops and fix editing completed hops (28 minutes ago)
+- e1ad0ba Fix incorrect 'All threads fully traced' message on empty hop (35 minutes ago)
+- a7114b7 Update CLAUDE.md with latest commit info (39 minutes ago)
+- ec6396e Add pre-configured test investigation files (41 minutes ago)
+- b6d2280 Add comprehensive test suite and documentation (45 minutes ago)
+- 77a039b Fix missing Finalize Hop button and improve hop progression (50 minutes ago)
+- a8c73c0 Add detailed debugging to hop finalization process (53 minutes ago)
+- f78b054 Update CLAUDE.md with latest changes (58 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
