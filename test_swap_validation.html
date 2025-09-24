@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swap Validation Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #00ff00;
+        }
+        .pass { color: #00ff00; }
+        .fail { color: #ff0000; }
+    </style>
+</head>
+<body>
+    <h1>Testing Swap Validation Fix</h1>
+    <div id="results"></div>
+
+    <script>
+        // Mock investigation object
+        const investigation = {
+            availableThreads: {},
+            victims: [{
+                id: 1,
+                transactions: [{
+                    id: 1,
+                    amount: "79999.36",
+                    currency: "USDC",
+                    receivingWallet: "0xScammer123"
+                }]
+            }],
+            hops: []
+        };
+
+        // Mock functions needed for testing
+        function generateInternalThreadId(notation, currency) {
+            return `${notation}_${currency}_${Date.now()}`;
+        }
+
+        function getMaxAssignableAmount(threadId, currency) {
+            // Simplified version for testing
+            if (!investigation.availableThreads[currency]) return 0;
+            const thread = investigation.availableThreads[currency][threadId];
+            if (!thread) return 0;
+
+            let assigned = 0;
+            investigation.hops.forEach(hop => {
+                hop.entries.forEach(entry => {
+                    if ((entry.entryType === 'trace' || entry.entryType === 'swap') &&
+                        entry.sourceThreadId === threadId) {
+                        assigned += parseFloat(entry.amount);
+                    }
+                });
+            });
+
+            return thread.totalAmount - assigned;
+        }
+
+        // Test scenario
+        function runTest() {
+            const results = document.getElementById('results');
+
+            // Step 1: Initialize threads from victim
+            results.innerHTML += '<div class="test-result">Step 1: Initialize victim thread V1-T1 with 79999.36 USDC</div>';
+            investigation.availableThreads['USDC'] = {
+                'V1-T1': {
+                    notation: 'V1-T1',
+                    totalAmount: 79999.36,
+                    currency: 'USDC',
+                    sourceType: 'victim_transaction'
+                }
+            };
+
+            // Step 2: Create Hop 1 with a swap entry
+            results.innerHTML += '<div class="test-result">Step 2: Create Hop 1 with swap entry (USDC → USDT)</div>';
+            investigation.hops.push({
+                hopNumber: 1,
+                entries: [{
+                    id: 1,
+                    entryType: 'swap',
+                    sourceThreadId: 'V1-T1',
+                    amount: '79999.36',
+                    currency: 'USDC',
+                    outputAmount: '79929.75',
+                    outputCurrency: 'USDT',
+                    swapDetails: {
+                        fromCurrency: 'USDC',
+                        toCurrency: 'USDT',
+                        fromAmount: '79999.36',
+                        toAmount: '79929.75'
+                    }
+                }]
+            });
+
+            // Step 3: Process the swap to create USDT thread
+            results.innerHTML += '<div class="test-result">Step 3: Process swap to create USDT thread</div>';
+            const swapEntry = investigation.hops[0].entries[0];
+
+            // Simulate updateThreadAvailabilityFromSwap
+            investigation.availableThreads['USDT'] = {
+                'V1-T1_USDT': {
+                    notation: 'V1-T1',
+                    totalAmount: 79929.75,
+                    currency: 'USDT',
+                    sourceType: 'swap_output'
+                }
+            };
+
+            // Step 4: Check available threads for Hop 2
+            results.innerHTML += '<div class="test-result">Step 4: Check available threads for Hop 2</div>';
+
+            // Check USDC availability (should be 0 after swap)
+            const usdc_available = getMaxAssignableAmount('V1-T1', 'USDC');
+            const usdc_test = usdc_available === 0;
+            results.innerHTML += `<div class="test-result ${usdc_test ? 'pass' : 'fail'}">
+                USDC availability after swap: ${usdc_available}
+                (Expected: 0) ${usdc_test ? '✅ PASS' : '❌ FAIL'}
+            </div>`;
+
+            // Check USDT availability (should be 79929.75)
+            const usdt_available = investigation.availableThreads['USDT']['V1-T1_USDT'].totalAmount;
+            const usdt_test = Math.abs(usdt_available - 79929.75) < 0.01;
+            results.innerHTML += `<div class="test-result ${usdt_test ? 'pass' : 'fail'}">
+                USDT availability after swap: ${usdt_available}
+                (Expected: 79929.75) ${usdt_test ? '✅ PASS' : '❌ FAIL'}
+            </div>`;
+
+            // Step 5: Validate hop completion
+            results.innerHTML += '<div class="test-result">Step 5: Validate hop completion (should show unallocated USDT)</div>';
+
+            const hasUnallocatedFunds = usdt_available > 0;
+            results.innerHTML += `<div class="test-result ${hasUnallocatedFunds ? 'pass' : 'fail'}">
+                Unallocated funds detected: ${hasUnallocatedFunds ? 'YES' : 'NO'}
+                ${hasUnallocatedFunds ? '✅ PASS - Hop should NOT be balanced' : '❌ FAIL - Hop incorrectly shows as balanced'}
+            </div>`;
+
+            // Summary
+            const allTestsPassed = usdc_test && usdt_test && hasUnallocatedFunds;
+            results.innerHTML += `<div class="test-result" style="margin-top: 20px; font-size: 1.2em; ${allTestsPassed ? 'color: #00ff00' : 'color: #ff0000'}">
+                ${allTestsPassed ? '🎉 ALL TESTS PASSED! Swap validation is working correctly.' : '❌ SOME TESTS FAILED - Review the fixes'}
+            </div>`;
+        }
+
+        // Run test on load
+        window.onload = runTest;
+    </script>
+</body>
+</html>

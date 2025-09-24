@@ -5483,6 +5483,11 @@ function buildAvailableThreadsIndex() {
             if (entry.entryType === 'swap' && entry.swapDetails) {
                 // For swap entries, we need to handle the currency conversion
                 // The output replaces the input thread with new currency
+                console.log(`Processing swap entry in hop ${hop.hopNumber}:`, entry);
+                // Make sure the entry has the hop number
+                if (!entry.hopNumber) {
+                    entry.hopNumber = hop.hopNumber;
+                }
                 updateThreadAvailabilityFromSwap(entry);
             }
         });
@@ -5559,11 +5564,19 @@ function updateThreadAvailabilityFromHop(entry) {
 // Handle swap entries to create threads with the output currency
 function updateThreadAvailabilityFromSwap(entry) {
     const inputCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-    const outputCurrency = entry.outputCurrency;
+    // Fix: Get output currency and amount from swapDetails
+    const outputCurrency = entry.swapDetails?.toCurrency || entry.outputCurrency;
     const inputAmount = parseFloat(entry.amount);
-    const outputAmount = parseFloat(entry.outputAmount);
+    const outputAmount = parseFloat(entry.swapDetails?.toAmount || entry.outputAmount || 0);
 
     console.log(`Processing swap: ${inputAmount} ${inputCurrency} → ${outputAmount} ${outputCurrency}`);
+    console.log(`Swap entry details:`, entry);
+
+    if (!outputCurrency || !outputAmount) {
+        console.error('Swap is missing output currency or amount!');
+        console.log('Entry swapDetails:', entry.swapDetails);
+        return;
+    }
 
     // For dual-layer: Get internal IDs of source threads
     const sourceInternalIds = entry.sourceThreadInternalId ? [entry.sourceThreadInternalId] :
@@ -5683,9 +5696,9 @@ function updateThreadAvailabilityFromSwap(entry) {
 
                 // Tracking
                 assignments: [],
-                sourceWallet: entry.toWallet,
+                sourceWallet: entry.toWallet || entry.swapDetails?.dexAddress || '',
                 sourceType: 'swap_output',
-                hopLevel: entry.hopNumber,
+                hopLevel: entry.hopNumber || 1,
                 createdAt: entry.timestamp || new Date().toISOString(),
                 isActive: true,
 
@@ -5705,7 +5718,8 @@ function updateThreadAvailabilityFromSwap(entry) {
                 }
             };
 
-            console.log(`Created ${notation} in ${outputCurrency}: ${outputPortion} (ID: ${newInternalId})`);
+            console.log(`✅ Created swap output thread ${notation} in ${outputCurrency}: ${outputPortion} (ID: ${newInternalId})`);
+            console.log(`Thread details:`, investigation.availableThreads[outputCurrency][newInternalId]);
         });
     }
 
@@ -14341,11 +14355,14 @@ function validateHopCompletion(hopNumber) {
 
             // Get available threads for the NEXT hop - these are what's actually unallocated
             const nextHopNumber = hopNumber + 1;
+            console.log(`Getting available threads for Hop ${nextHopNumber} to check for unallocated funds...`);
             const availableThreadsForNext = getAvailableSourcesForHop(nextHopNumber, null);
+            console.log(`Found ${availableThreadsForNext.length} available threads for Hop ${nextHopNumber}:`, availableThreadsForNext);
 
             // Sum up available amounts by currency - these are the TRUE remaining amounts
             // This includes swap outputs (new currency) and remainder threads
             availableThreadsForNext.forEach(thread => {
+                console.log(`Checking thread ${thread.threadId}: ${thread.availableAmount} ${thread.currency} (sourceType: ${thread.sourceType})`);
                 if (thread.availableAmount > 0.01) {
                     if (!remainingByCurrency[thread.currency]) {
                         remainingByCurrency[thread.currency] = 0;
@@ -14354,12 +14371,13 @@ function validateHopCompletion(hopNumber) {
 
                     // Log swap-created threads specifically for debugging
                     if (thread.sourceType === 'swap_output') {
-                        console.log(`Found unallocated swap output: ${thread.threadId} - ${thread.availableAmount} ${thread.currency}`);
+                        console.log(`⚠️ Found unallocated swap output: ${thread.threadId} - ${thread.availableAmount} ${thread.currency}`);
                     }
                 }
             });
 
-            console.log(`Hop ${hopNumber} validation - Remaining amounts (including swap outputs):`, remainingByCurrency);
+            console.log(`Hop ${hopNumber} validation - FINAL remaining amounts:`, remainingByCurrency);
+            console.log(`Hop ${hopNumber} has balanced: ${Object.keys(remainingByCurrency).length === 0}`);
 
             // Add swapped-in currencies to the available threads for next hop
             Object.entries(swappedInAmounts).forEach(([currency, amount]) => {
@@ -15503,7 +15521,8 @@ function getMaxAssignableAmount(sourceThreadIdentifier, currency, excludeEntryId
                 return; // Skip this entry
             }
 
-            if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0) {
+            // Check both trace and swap entries - swaps also consume source threads
+            if ((entry.entryType === 'trace' || entry.entryType === 'swap') && parseFloat(entry.amount) > 0) {
                 const entryCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
 
                 if (entryCurrency === actualCurrency) {

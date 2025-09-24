@@ -3,39 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 19:43)
+## Latest Commit (Auto-updated: 2025-09-23 19:54)
 
-**Commit:** 0c24e1fa422ed4530a1f62bed05793c31ad37c97
+**Commit:** 37a8ed55fdd0251a6ae9458a510f7c297236304a
 **Author:** Your Name
-**Message:** CRITICAL FIX: Hop validation now properly detects unallocated remainder threads
+**Message:** Fix swap validation incorrectly showing balanced with unallocated outputs
 
-Fixed serious bug where hop validation incorrectly showed as 'balanced' when remainder threads existed but weren't allocated.
+Critical bug fix: Hop validation now properly detects unallocated swap outputs.
 
 ## The Problem
-When allocating 79,000 USDT to a 45,000 USDT transaction:
-- System correctly created 34,000 USDT remainder thread
-- BUT validation showed hop as 'balanced' even with 34,000 unallocated
-- Would allow closing hop with significant funds untraced
+After converting USDC to USDT via swap:
+- System correctly created USDT thread from swap
+- BUT validation showed hop as 'balanced' even though USDT wasn't traced
+- Would allow closing hop without allocating converted funds
 
-## The Fix
-Changed validation logic to check available threads for next hop:
-- Previously: Only checked if entries matched starting ART
-- Now: Checks getAvailableSourcesForHop() for actual unallocated amounts
-- Properly detects remainder threads that need allocation
+## Root Cause
+Validation was only checking if swap INPUT was accounted for, not if swap OUTPUT was allocated to subsequent transactions.
 
-## Technical Changes
-1. validateHopCompletion() now uses available threads to calculate remaining
-2. Checks availableAmount > 0.01 for each thread
-3. Sums up all unallocated threads by currency
-4. Only shows 'balanced' when total remaining < 0.01
+## The Solution
+Enhanced validation to check available threads for next hop, which includes:
+1. Remainder threads from partial allocations
+2. Swap output threads that haven't been traced yet
+3. Any other unallocated funds
+
+## Technical Details
+- validateHopCompletion() now checks getAvailableSourcesForHop(hopNumber + 1)
+- Specifically logs swap_output threads for debugging
+- Properly sums all unallocated amounts regardless of source
+- Shows correct remaining amount (e.g., '79,999 USDT remaining' after swap)
 
 ## Result
-- Hop cannot be closed with unallocated remainder threads
-- Proper warning shown: '34,000 USDT remaining'
-- Forces user to allocate or write-off remainder before proceeding
-- Prevents incomplete traces due to forgotten remainders
+- Cannot close hop with unallocated swap outputs
+- Proper warning: 'X USDT remaining' after USDC→USDT swap
+- Forces allocation of converted funds before proceeding
+- Maintains trace integrity through currency conversions
 
-This ensures investigation integrity by preventing accidental loss of thread tracking.
+This ensures swaps are fully traced, not just executed.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -43,23 +46,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 69 +++++++++++++++++++++++++++++++-------------------------------
- index.html | 40 ++++++++++++++++++------------------
- 2 files changed, 54 insertions(+), 55 deletions(-)
+ CLAUDE.md  | 71 +++++++++++++++++++++++++++++++-------------------------------
+ index.html | 16 +++++++++++---
+ 2 files changed, 49 insertions(+), 38 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0c24e1f CRITICAL FIX: Hop validation now properly detects unallocated remainder threads (0 seconds ago)
-- c0571a1 Improve network resilience and error handling for blockchain lookups (2 minutes ago)
-- d402adc Streamline hop workflow and reduce redundant clicks (11 minutes ago)
-- 5804b61 Fix terminal wallet detection and trace completion logic (19 minutes ago)
-- a771d15 Implement auto-save after hop completion (32 minutes ago)
-- 10cf459 Add comprehensive trace completion ceremony (41 minutes ago)
-- c9f7c5b CRITICAL FIX: Use validated swap handling in hop finalization (45 minutes ago)
-- 39e5b12 Fix terminal wallet detection in hop completion (81 minutes ago)
+- 37a8ed5 Fix swap validation incorrectly showing balanced with unallocated outputs (0 seconds ago)
+- 0c24e1f CRITICAL FIX: Hop validation now properly detects unallocated remainder threads (12 minutes ago)
+- c0571a1 Improve network resilience and error handling for blockchain lookups (14 minutes ago)
+- d402adc Streamline hop workflow and reduce redundant clicks (23 minutes ago)
+- 5804b61 Fix terminal wallet detection and trace completion logic (30 minutes ago)
+- a771d15 Implement auto-save after hop completion (44 minutes ago)
+- 10cf459 Add comprehensive trace completion ceremony (52 minutes ago)
+- c9f7c5b CRITICAL FIX: Use validated swap handling in hop finalization (56 minutes ago)
+- 39e5b12 Fix terminal wallet detection in hop completion (2 hours ago)
 - 05e95d3 Fix swap currency tracking in hop validation (2 hours ago)
-- 1db32cf Enhanced investigation summary dashboard on file load (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
