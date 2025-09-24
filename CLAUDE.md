@@ -3,25 +3,27 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 07:05)
+## Latest Commit (Auto-updated: 2025-09-24 08:36)
 
-**Commit:** ed49d5d25cf27f03672eec3f1815738376277b18
+**Commit:** b8d3614c04abdc5eee85987ed2bab23ef528bd5c
 **Author:** Your Name
-**Message:** Add comprehensive report viewer and improved navigation
+**Message:** Implement change address handling as same-hop threads (like swaps)
 
-- Added Full Report button to graph tab for easy access to all indices
-- Created comprehensive report modal with all investigation data
-- Includes tabbed navigation between Narrative, Victims, Wallets, Terminals, and Red Wallets
-- Added export options for HTML, PDF (via print), and clipboard
-- Shows summary statistics at top (total traced, victims, hops, terminals)
-- Added Summary button to graph tab for quick navigation
+- Change outputs now create trackable threads at the SAME hop level
+- Works like swaps: consumes source thread, creates new thread available for current hop
+- Change threads maintain same hop notation (e.g., V1-T1 stays V1-T1, not V1-T1-H1)
+- Added new 'change' entry type with orange wallet color
+- Change threads marked with sourceType: 'change_output' and isChange: true
 
-The comprehensive report provides investigators with a single view of:
-- Complete narrative report with chronological events
-- Victim index with all loss details
-- Universal wallet index showing all addresses
-- Terminal wallet report for exchange arrivals
-- Red wallet index for suspicious addresses
+This allows investigators to:
+- Track change addresses without creating new hops
+- Continue following funds through change addresses
+- Maintain proper hop counting (only real transfers increment hops)
+- Have flexibility in how to handle suspected change outputs
+
+Example: BTC transaction with 2 outputs
+- Payment output: Creates V1-T1-H1 thread for next hop
+- Change output: Creates V1-T1 thread available at current hop
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -29,23 +31,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  45 ++++-----
- index.html | 315 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 338 insertions(+), 22 deletions(-)
+ CLAUDE.md  |  55 +++++++++++++------------
+ index.html | 134 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 153 insertions(+), 36 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ed49d5d Add comprehensive report viewer and improved navigation (1 second ago)
-- b3885d2 Fix currency mismatch after swap - prevent duplicate thread creation (8 minutes ago)
-- 751b868 Fix duplicate swap output thread creation bug (14 minutes ago)
-- 9d3b5fd Fix syntax error in swap wizard template string (22 minutes ago)
-- 9a9c03d Update CLAUDE.md with latest commits (23 minutes ago)
-- ca3f69c Fix critical thread tracking and validation issues (24 minutes ago)
-- 5783f8b Update CLAUDE.md with latest commits (38 minutes ago)
-- 8d27f9f Simplify available threads display - remove separate swap thread section (39 minutes ago)
-- 6f99660 Fix available threads display to show current hop allocation status (41 minutes ago)
-- 9f00870 Update CLAUDE.md with latest commits (53 minutes ago)
+- b8d3614 Implement change address handling as same-hop threads (like swaps) (0 seconds ago)
+- ed49d5d Add comprehensive report viewer and improved navigation (2 hours ago)
+- b3885d2 Fix currency mismatch after swap - prevent duplicate thread creation (2 hours ago)
+- 751b868 Fix duplicate swap output thread creation bug (2 hours ago)
+- 9d3b5fd Fix syntax error in swap wizard template string (2 hours ago)
+- 9a9c03d Update CLAUDE.md with latest commits (2 hours ago)
+- ca3f69c Fix critical thread tracking and validation issues (2 hours ago)
+- 5783f8b Update CLAUDE.md with latest commits (2 hours ago)
+- 8d27f9f Simplify available threads display - remove separate swap thread section (2 hours ago)
+- 6f99660 Fix available threads display to show current hop allocation status (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
