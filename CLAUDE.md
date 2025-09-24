@@ -3,20 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-23 20:19)
+## Latest Commit (Auto-updated: 2025-09-23 20:22)
 
-**Commit:** a8c73c03d645c63ad975f773cda914c215fb9ec5
+**Commit:** 77a039b7cc02485091764c7ebf0db1d5135e8f21
 **Author:** Your Name
-**Message:** Add detailed debugging to hop finalization process
+**Message:** Fix missing Finalize Hop button and improve hop progression
 
-Enhanced error handling and console logging for troubleshooting hop progression issues:
-- Added detailed console logging to finalizeHop function
-- Check if hop is already completed before processing
-- Log validation results and remaining amounts
-- Clear error messages if validation fails
-- Better visibility into why hop finalization might be blocked
+Fixed critical issue where Finalize button wasn't showing for hops with entries:
+- Modified condition to show Finalize button for any hop with entries
+- Button now shows even if hop is marked complete (safety check)
+- Added better validation feedback when hop has unallocated funds
+- Finalization modal properly appears when funds need to be written off
 
-This helps diagnose issues when users can't progress after allocating all funds.
+The button now correctly shows when a hop has traced funds that create new threads
+for the next hop. Users can finalize with write-offs or continue tracing.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -24,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 48 +++++++++++++++---------------------------------
- index.html | 23 +++++++++++++++++++++++
- 2 files changed, 38 insertions(+), 33 deletions(-)
+ CLAUDE.md  | 44 +++++++++++++++++++++++++++++---------------
+ index.html |  2 +-
+ 2 files changed, 30 insertions(+), 16 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a8c73c0 Add detailed debugging to hop finalization process (0 seconds ago)
-- f78b054 Update CLAUDE.md with latest changes (4 minutes ago)
-- 4aa4619 Fix trace completion incorrectly showing complete with unallocated swap outputs (7 minutes ago)
-- d919071 Fix swap validation bug where converted funds showed as balanced (13 minutes ago)
-- 37a8ed5 Fix swap validation incorrectly showing balanced with unallocated outputs (24 minutes ago)
-- 0c24e1f CRITICAL FIX: Hop validation now properly detects unallocated remainder threads (36 minutes ago)
-- c0571a1 Improve network resilience and error handling for blockchain lookups (38 minutes ago)
-- d402adc Streamline hop workflow and reduce redundant clicks (47 minutes ago)
-- 5804b61 Fix terminal wallet detection and trace completion logic (55 minutes ago)
-- a771d15 Implement auto-save after hop completion (68 minutes ago)
+- 77a039b Fix missing Finalize Hop button and improve hop progression (0 seconds ago)
+- a8c73c0 Add detailed debugging to hop finalization process (4 minutes ago)
+- f78b054 Update CLAUDE.md with latest changes (8 minutes ago)
+- 4aa4619 Fix trace completion incorrectly showing complete with unallocated swap outputs (10 minutes ago)
+- d919071 Fix swap validation bug where converted funds showed as balanced (16 minutes ago)
+- 37a8ed5 Fix swap validation incorrectly showing balanced with unallocated outputs (28 minutes ago)
+- 0c24e1f CRITICAL FIX: Hop validation now properly detects unallocated remainder threads (39 minutes ago)
+- c0571a1 Improve network resilience and error handling for blockchain lookups (41 minutes ago)
+- d402adc Streamline hop workflow and reduce redundant clicks (50 minutes ago)
+- 5804b61 Fix terminal wallet detection and trace completion logic (58 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

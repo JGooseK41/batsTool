@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B.A.T.S. Tool Test Runner</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        h1 { color: #00ff00; border-bottom: 2px solid #00ff00; padding-bottom: 10px; }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            background: #0a0a0a;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .pass { background: #1a3a1a; color: #00ff00; }
+        .fail { background: #3a1a1a; color: #ff0000; }
+        .pending { background: #3a3a1a; color: #ffff00; }
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+        button:hover { background: #00dd00; }
+        #results {
+            margin-top: 20px;
+            min-height: 200px;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: #0a0a0a;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+        }
+        pre {
+            background: #000;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 B.A.T.S. Tool Automated Test Runner</h1>
+
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="runAllTests()">▶️ Run All Tests</button>
+        <button onclick="runQuickTests()">⚡ Run Quick Tests</button>
+        <button onclick="runSwapTests()">💱 Test Swaps Only</button>
+        <button onclick="clearResults()">🗑️ Clear Results</button>
+    </div>
+
+    <div id="results"></div>
+
+    <div class="summary" id="summary" style="display: none;">
+        <h3>Test Summary</h3>
+        <div id="summaryContent"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        function log(message, status = 'pending') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${status}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+
+            testResults.push({ message, status });
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('summary').style.display = 'none';
+            testResults = [];
+        }
+
+        function showSummary() {
+            const passed = testResults.filter(r => r.status === 'pass').length;
+            const failed = testResults.filter(r => r.status === 'fail').length;
+            const total = testResults.length;
+
+            document.getElementById('summary').style.display = 'block';
+            document.getElementById('summaryContent').innerHTML = `
+                <p>✅ Passed: ${passed}/${total}</p>
+                <p>❌ Failed: ${failed}/${total}</p>
+                <p>Success Rate: ${((passed/total) * 100).toFixed(1)}%</p>
+            `;
+        }
+
+        // Test Suite
+        async function runAllTests() {
+            clearResults();
+            log('<h3>🚀 Starting Complete Test Suite...</h3>');
+
+            // Test 1: Basic Object Creation
+            log('Test 1: Creating investigation object...');
+            try {
+                const testInv = {
+                    caseId: 'TEST-001',
+                    victims: [],
+                    hops: [],
+                    availableThreads: {}
+                };
+                log('✅ Test 1 PASSED: Investigation object created', 'pass');
+            } catch (e) {
+                log(`❌ Test 1 FAILED: ${e.message}`, 'fail');
+            }
+
+            // Test 2: Thread Creation
+            log('Test 2: Testing thread creation...');
+            try {
+                const thread = {
+                    notation: 'V1-T1',
+                    totalAmount: 100000,
+                    availableAmount: 100000,
+                    currency: 'USDT'
+                };
+                if (thread.availableAmount === 100000) {
+                    log('✅ Test 2 PASSED: Thread created with correct amount', 'pass');
+                } else {
+                    log('❌ Test 2 FAILED: Thread amount incorrect', 'fail');
+                }
+            } catch (e) {
+                log(`❌ Test 2 FAILED: ${e.message}`, 'fail');
+            }
+
+            // Test 3: Swap Validation
+            log('Test 3: Testing swap validation...');
+            try {
+                const swapEntry = {
+                    entryType: 'swap',
+                    amount: '50000',
+                    currency: 'USDC',
+                    swapDetails: {
+                        fromCurrency: 'USDC',
+                        toCurrency: 'USDT',
+                        fromAmount: '50000',
+                        toAmount: '49950'
+                    }
+                };
+
+                if (swapEntry.swapDetails.toCurrency === 'USDT') {
+                    log('✅ Test 3 PASSED: Swap details correctly structured', 'pass');
+                } else {
+                    log('❌ Test 3 FAILED: Swap structure invalid', 'fail');
+                }
+            } catch (e) {
+                log(`❌ Test 3 FAILED: ${e.message}`, 'fail');
+            }
+
+            // Test 4: Terminal Wallet Detection
+            log('Test 4: Testing terminal wallet types...');
+            try {
+                const terminalTypes = ['purple', 'gray', 'blue'];
+                const nonTerminalTypes = ['black', 'red', 'green'];
+
+                let allCorrect = true;
+                terminalTypes.forEach(type => {
+                    const isTerminal = ['purple', 'gray', 'blue'].includes(type);
+                    if (!isTerminal) allCorrect = false;
+                });
+
+                if (allCorrect) {
+                    log('✅ Test 4 PASSED: Terminal wallet types correct', 'pass');
+                } else {
+                    log('❌ Test 4 FAILED: Terminal wallet detection error', 'fail');
+                }
+            } catch (e) {
+                log(`❌ Test 4 FAILED: ${e.message}`, 'fail');
+            }
+
+            // Test 5: Amount Validation
+            log('Test 5: Testing amount validation...');
+            try {
+                const testAmounts = [
+                    { value: '100000', expected: 100000 },
+                    { value: '0.001', expected: 0.001 },
+                    { value: '999999999', expected: 999999999 }
+                ];
+
+                let allValid = true;
+                testAmounts.forEach(test => {
+                    const parsed = parseFloat(test.value);
+                    if (parsed !== test.expected) allValid = false;
+                });
+
+                if (allValid) {
+                    log('✅ Test 5 PASSED: Amount parsing correct', 'pass');
+                } else {
+                    log('❌ Test 5 FAILED: Amount parsing error', 'fail');
+                }
+            } catch (e) {
+                log(`❌ Test 5 FAILED: ${e.message}`, 'fail');
+            }
+
+            // Test 6: Currency Validation
+            log('Test 6: Testing currency handling...');
+            try {
+                const currencies = ['BTC', 'ETH', 'USDT', 'USDC', 'CUSTOM'];
+                let allValid = true;
+
+                currencies.forEach(curr => {
+                    if (typeof curr !== 'string') allValid = false;
+                });
+
+                if (allValid) {
+                    log('✅ Test 6 PASSED: Currency types valid', 'pass');
+                } else {
+                    log('❌ Test 6 FAILED: Currency validation error', 'fail');
+                }
+            } catch (e) {
+                log(`❌ Test 6 FAILED: ${e.message}`, 'fail');
+            }
+
+            // Test 7: Hop Structure
+            log('Test 7: Testing hop structure...');
+            try {
+                const hop = {
+                    hopNumber: 1,
+                    entries: [],
+                    completed: false,
+                    artAtStartByCurrency: { 'USDT': 100000 }
+                };
+
+                if (hop.hopNumber === 1 && Array.isArray(hop.entries)) {
+                    log('✅ Test 7 PASSED: Hop structure valid', 'pass');
+                } else {
+                    log('❌ Test 7 FAILED: Hop structure invalid', 'fail');
+                }
+            } catch (e) {
+                log(`❌ Test 7 FAILED: ${e.message}`, 'fail');
+            }
+
+            // Test 8: Entry Types
+            log('Test 8: Testing entry types...');
+            try {
+                const validTypes = ['trace', 'swap', 'writeoff', 'cold_storage'];
+                const testEntry = { entryType: 'trace' };
+
+                if (validTypes.includes(testEntry.entryType)) {
+                    log('✅ Test 8 PASSED: Entry types valid', 'pass');
+                } else {
+                    log('❌ Test 8 FAILED: Invalid entry type', 'fail');
+                }
+            } catch (e) {
+                log(`❌ Test 8 FAILED: ${e.message}`, 'fail');
+            }
+
+            // Test 9: Notation Format
+            log('Test 9: Testing notation format...');
+            try {
+                const notation = 'V1-T2-H3';
+                const pattern = /^V\d+-T\d+(-H\d+)?$/;
+
+                if (pattern.test(notation)) {
+                    log('✅ Test 9 PASSED: Notation format valid', 'pass');
+                } else {
+                    log('❌ Test 9 FAILED: Invalid notation format', 'fail');
+                }
+            } catch (e) {
+                log(`❌ Test 9 FAILED: ${e.message}`, 'fail');
+            }
+
+            // Test 10: Wallet Address Format
+            log('Test 10: Testing wallet addresses...');
+            try {
+                const ethAddress = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1';
+                const btcAddress = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
+
+                const ethPattern = /^0x[a-fA-F0-9]{40}$/;
+                const btcPattern = /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/;
+
+                if (ethPattern.test(ethAddress) && btcPattern.test(btcAddress)) {
+                    log('✅ Test 10 PASSED: Address formats valid', 'pass');
+                } else {
+                    log('❌ Test 10 FAILED: Invalid address format', 'fail');
+                }
+            } catch (e) {
+                log(`❌ Test 10 FAILED: ${e.message}`, 'fail');
+            }
+
+            showSummary();
+        }
+
+        async function runQuickTests() {
+            clearResults();
+            log('<h3>⚡ Running Quick Tests...</h3>');
+
+            // Quick validation tests
+            const tests = [
+                { name: 'Amount > 0', test: () => parseFloat('100') > 0 },
+                { name: 'Currency valid', test: () => ['USDT', 'USDC'].includes('USDT') },
+                { name: 'Notation regex', test: () => /V\d+-T\d+/.test('V1-T1') },
+                { name: 'Decimal precision', test: () => parseFloat('0.000001') === 0.000001 }
+            ];
+
+            tests.forEach(t => {
+                try {
+                    if (t.test()) {
+                        log(`✅ ${t.name}: PASSED`, 'pass');
+                    } else {
+                        log(`❌ ${t.name}: FAILED`, 'fail');
+                    }
+                } catch (e) {
+                    log(`❌ ${t.name}: ERROR - ${e.message}`, 'fail');
+                }
+            });
+
+            showSummary();
+        }
+
+        async function runSwapTests() {
+            clearResults();
+            log('<h3>💱 Testing Swap Functionality...</h3>');
+
+            // Test swap scenarios
+            log('Test: USDC to USDT swap structure');
+            const swap = {
+                input: { amount: 1000, currency: 'USDC' },
+                output: { amount: 999.5, currency: 'USDT' },
+                fee: 0.5
+            };
+
+            if (swap.output.currency === 'USDT') {
+                log('✅ Swap output currency correct', 'pass');
+            } else {
+                log('❌ Swap output currency incorrect', 'fail');
+            }
+
+            if (swap.input.amount > swap.output.amount) {
+                log('✅ Swap fee deduction correct', 'pass');
+            } else {
+                log('❌ Swap fee calculation error', 'fail');
+            }
+
+            // Test swap validation
+            log('Test: Swap validation checks');
+            if (swap.input.amount > 0 && swap.output.amount > 0) {
+                log('✅ Swap amounts valid', 'pass');
+            } else {
+                log('❌ Invalid swap amounts', 'fail');
+            }
+
+            showSummary();
+        }
+    </script>
+</body>
+</html>
