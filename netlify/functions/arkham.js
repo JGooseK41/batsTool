@@ -1,101 +1,64 @@
-// Netlify Function to proxy Arkham Intelligence API requests
-// This avoids CORS issues when calling from the browser
-
-const https = require('https');
-
-exports.handler = async (event, context) => {
-    // CORS headers for all responses
+// Netlify Function for Arkham API proxy
+exports.handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, X-Arkham-API-Key',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Content-Type': 'application/json'
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
     };
 
-    // Handle CORS preflight
+    // Handle preflight
     if (event.httpMethod === 'OPTIONS') {
-        return {
-            statusCode: 200,
-            headers,
-            body: ''
-        };
+        return { statusCode: 200, headers, body: '' };
     }
 
-    try {
-        // Parse query parameters
-        const { endpoint, ...queryParams } = event.queryStringParameters || {};
+    // Log for debugging
+    console.log('Function called:', event.httpMethod, event.path);
 
-        console.log('Netlify Function called:', {
-            method: event.httpMethod,
-            endpoint: endpoint,
-            params: queryParams
-        });
+    try {
+        const params = event.queryStringParameters || {};
+        const { endpoint, ...otherParams } = params;
 
         if (!endpoint) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({
-                    error: 'Missing endpoint parameter',
-                    received: event.queryStringParameters
-                })
+                body: JSON.stringify({ error: 'Missing endpoint parameter' })
             };
         }
 
-        // Get API key from header or use default
-        const apiKey = event.headers['x-arkham-api-key'] ||
-                       event.headers['X-Arkham-API-Key'] ||
-                       'd377a526-c9ea-4cb6-a647-775559583ff6';
+        const apiKey = event.headers['x-arkham-api-key'] || 'd377a526-c9ea-4cb6-a647-775559583ff6';
 
-        // Build the Arkham API URL
-        const baseUrl = 'https://api.arkhamintelligence.com';
-        const queryString = new URLSearchParams(queryParams).toString();
-        const arkhamUrl = `${baseUrl}${endpoint}${queryString ? '?' + queryString : ''}`;
+        // Build URL
+        const queryString = new URLSearchParams(otherParams).toString();
+        const url = `https://api.arkhamintelligence.com${endpoint}${queryString ? '?' + queryString : ''}`;
 
-        console.log('Proxying to Arkham:', arkhamUrl);
+        console.log('Fetching:', url);
 
-        // Make the request using native https module
-        const arkhamResponse = await new Promise((resolve, reject) => {
-            const url = new URL(arkhamUrl);
-            const options = {
-                hostname: url.hostname,
-                path: url.pathname + url.search,
-                method: 'GET',
-                headers: {
-                    'API-Key': apiKey,
-                    'Accept': 'application/json'
-                }
-            };
-
-            https.get(options, (res) => {
-                let data = '';
-                res.on('data', chunk => data += chunk);
-                res.on('end', () => {
-                    resolve({
-                        statusCode: res.statusCode,
-                        data: data
-                    });
-                });
-            }).on('error', reject);
+        // Make request
+        const response = await fetch(url, {
+            headers: {
+                'API-Key': apiKey,
+                'Accept': 'application/json'
+            }
         });
 
+        const data = await response.text();
+
         return {
-            statusCode: arkhamResponse.statusCode || 200,
-            headers,
-            body: arkhamResponse.data
+            statusCode: response.status,
+            headers: {
+                ...headers,
+                'Content-Type': 'application/json'
+            },
+            body: data
         };
 
     } catch (error) {
-        console.error('Arkham proxy error:', error);
+        console.error('Error:', error);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({
-                error: 'Failed to proxy request',
-                details: error.message,
-                method: event.httpMethod,
-                endpoint: event.queryStringParameters?.endpoint
-            })
+            body: JSON.stringify({ error: error.message })
         };
     }
 };
