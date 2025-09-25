@@ -3,28 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 05:48)
+## Latest Commit (Auto-updated: 2025-09-25 05:50)
 
-**Commit:** 6456a6b6961b598b79a7c15de2bbc086414b0749
+**Commit:** e55e0d3b2146c350e28c0e55f2cb9d952fbabebd
 **Author:** Your Name
-**Message:** Rewrite Netlify function with better error handling and native https module
-
-- Use native https module instead of fetch
-- Add comprehensive logging for debugging
-- Include CORS headers on all responses
-- Better error details in response body
-- Handle all HTTP methods properly
+**Message:** Add test page for Netlify function debugging
 
 ### Changed Files:
 ```
- CLAUDE.md                         |  43 ++++++-------
- netlify/functions/arkham-proxy.js | 128 ++++++++++++++++++++------------------
- 2 files changed, 87 insertions(+), 84 deletions(-)
+ CLAUDE.md          | 41 +++++++++++++++++++++--------------------
+ test-function.html | 35 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 56 insertions(+), 20 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6456a6b Rewrite Netlify function with better error handling and native https module (0 seconds ago)
+- e55e0d3 Add test page for Netlify function debugging (0 seconds ago)
+- 6456a6b Rewrite Netlify function with better error handling and native https module (85 seconds ago)
 - 773920c Fix Netlify function to handle CORS preflight OPTIONS requests (8 hours ago)
 - bd8aff8 Add Netlify Function proxy for Arkham API to avoid CORS issues (8 hours ago)
 - d75e0a1 Add CORS error handling to all Arkham API calls (8 hours ago)
@@ -33,7 +28,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 2292952 Add Arkham Intelligence API for wallet attribution in main tracing tool (9 hours ago)
 - bb9f0fa Enhance EVM address search to display contract names for tokens (9 hours ago)
 - 9bf6cc3 Display entity attribution from Arkham in address finder results (9 hours ago)
-- f62bd0b Use default Arkham API key for Bitcoin address search (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

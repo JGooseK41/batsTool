@@ -3615,7 +3615,7 @@
                 if (arkhamApiKey) {
                     try {
                         // Use Netlify Function proxy for Arkham API
-                        const proxyUrl = `/.netlify/functions/arkham-proxy?endpoint=/intelligence/address/${address}`;
+                        const proxyUrl = `/.netlify/functions/arkham?endpoint=/intelligence/address/${address}`;
                         const arkhamResponse = await fetch(proxyUrl, {
                             headers: {
                                 'X-Arkham-API-Key': arkhamApiKey,
@@ -3919,7 +3919,7 @@
                 if (arkhamApiKey) {
                     try {
                         // Use Netlify Function proxy for Arkham API
-                        const proxyUrl = `/.netlify/functions/arkham-proxy?endpoint=/intelligence/address/${address}`;
+                        const proxyUrl = `/.netlify/functions/arkham?endpoint=/intelligence/address/${address}`;
                         const arkhamResponse = await fetch(proxyUrl, {
                             headers: {
                                 'X-Arkham-API-Key': arkhamApiKey,
@@ -25213,7 +25213,7 @@ async function searchBitcoinAddresses(searchType, pattern) {
                 // Arkham supports partial address search and has excellent attribution
                 // For "both" search, we search by prefix and then filter by suffix
                 // Use Netlify Function proxy to avoid CORS issues
-                const proxyUrl = `/.netlify/functions/arkham-proxy?endpoint=/addresses/search&q=${encodeURIComponent(arkhamSearchTerm)}&chains=bitcoin`;
+                const proxyUrl = `/.netlify/functions/arkham?endpoint=/addresses/search&q=${encodeURIComponent(arkhamSearchTerm)}&chains=bitcoin`;
                 const arkhamResponse = await fetch(proxyUrl, {
                     method: 'GET',
                     headers: {
@@ -25576,7 +25576,7 @@ async function searchEVMAddresses(chain, searchType, pattern) {
         if (arkhamKey) {
             try {
                 // Use Netlify Function proxy for Arkham API
-                const proxyUrl = `/.netlify/functions/arkham-proxy?endpoint=/addresses/search&q=${pattern}&chains=${chain}`;
+                const proxyUrl = `/.netlify/functions/arkham?endpoint=/addresses/search&q=${pattern}&chains=${chain}`;
                 const arkhamResponse = await fetch(proxyUrl, {
                     method: 'GET',
                     headers: {

@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/arkham.js": {
+      "maxDuration": 10
+    }
+  }
+}

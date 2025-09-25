@@ -15,13 +15,13 @@
 
             try {
                 // Test the function endpoint directly
-                const response = await fetch('/.netlify/functions/arkham-proxy?endpoint=/test');
+                const response = await fetch('/.netlify/functions/arkham?endpoint=/test');
                 const text = await response.text();
 
                 resultDiv.textContent = `Status: ${response.status}\n${text}`;
 
                 // Try a real Arkham endpoint
-                const realResponse = await fetch('/.netlify/functions/arkham-proxy?endpoint=/addresses/search&q=bc1q&chains=bitcoin');
+                const realResponse = await fetch('/.netlify/functions/arkham?endpoint=/addresses/search&q=bc1q&chains=bitcoin');
                 const realText = await realResponse.text();
 
                 resultDiv.textContent += `\n\nReal API call status: ${realResponse.status}\n${realText}`;
