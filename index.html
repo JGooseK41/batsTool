@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https://api.etherscan.io https://api.blockcypher.com https://blockchain.info https://api.blockchair.com https://*.infura.io https://mempool.space https://api.mainnet-beta.solana.com https://rpc.ankr.com https://solana-mainnet.g.alchemy.com https://api.arkhamintelligence.com https://api.trongrid.io https://tronscan.org https://api.blockchain.info https://blockchain.info; img-src 'self' data: https:; font-src 'self' data:;">
     <title>B.A.T.S. - Block Audit Tracing Standard</title>
-    
+
     <script>
         // Mobile detection and redirect
         (function() {
@@ -25133,40 +25134,58 @@ async function searchBitcoinAddresses(searchType, pattern) {
     const foundAddresses = new Set(); // Prevent duplicates
 
     try {
-        // Strategy 1: Try Mempool.space search endpoint (undocumented but may exist)
-        // Their electrs backend has prefix search capability built in
-        if (pattern.length >= 3) {
+        // IMPORTANT: Bitcoin blockchain doesn't have native partial address search
+        // We can only validate COMPLETE addresses or use specialized services
+
+        // For partial addresses, provide guidance
+        if (pattern.length < 26) {
+            console.log(`Pattern too short for Bitcoin address validation. Bitcoin addresses are typically 26-35 characters. Current pattern: ${pattern.length} chars`);
+
+            // Return informative message for UI
+            if (addresses.length === 0) {
+                return [{
+                    address: `Need ${26 - pattern.length} more characters`,
+                    type: 'Info',
+                    entity: 'Partial Address',
+                    name: 'Bitcoin addresses are 26-35 characters',
+                    firstSeen: 'N/A',
+                    lastSeen: 'Provide complete address to search'
+                }];
+            }
+        }
+
+        // Strategy 1: Try BlockCypher API for complete addresses
+        if (pattern.length >= 26 && pattern.length <= 35) {
             try {
-                // Try potential search endpoints - these are educated guesses based on common patterns
-                const searchEndpoints = [
-                    `https://mempool.space/api/v1/validate-address/${pattern}`, // Validation endpoint
-                    `https://mempool.space/api/address-prefix/${pattern}`, // Potential prefix endpoint
-                ];
+                const blockcypherUrl = `https://api.blockcypher.com/v1/btc/main/addrs/${pattern}/balance`;
+                const response = await fetch(blockcypherUrl).catch(() => null);
 
-                for (const endpoint of searchEndpoints) {
-                    try {
-                        const response = await fetch(endpoint, {
-                            method: 'GET',
-                            headers: {
-                                'Accept': 'application/json'
-                            }
-                        }).catch(() => null);
-
-                        if (response && response.ok) {
-                            const data = await response.json();
-                            console.log(`Mempool.space search endpoint worked: ${endpoint}`, data);
-                            // Process any returned addresses
-                            if (data && (data.addresses || data.isvalid)) {
-                                // Handle response based on what we get back
-                                break;
-                            }
-                        }
-                    } catch (e) {
-                        // Silent fail - these are experimental endpoints
+                if (response && response.ok) {
+                    const data = await response.json();
+                    if (data.address) {
+                        addresses.push({
+                            address: data.address,
+                            type: 'Bitcoin Address',
+                            entity: 'Validated Address',
+                            name: `Balance: ${(data.balance / 100000000).toFixed(8)} BTC`,
+                            firstSeen: 'Active',
+                            lastSeen: new Date().toISOString().split('T')[0]
+                        });
+                        foundAddresses.add(data.address);
                     }
+                } else if (response && response.status === 404) {
+                    // Address format is valid but not found on blockchain
+                    addresses.push({
+                        address: pattern,
+                        type: 'Bitcoin Address',
+                        entity: 'Not Found',
+                        name: 'Valid format but no activity',
+                        firstSeen: 'Never',
+                        lastSeen: 'No blockchain activity'
+                    });
                 }
             } catch (e) {
-                console.log('Mempool.space search attempts failed silently');
+                console.log('BlockCypher API error:', e);
             }
         }
 
@@ -25287,10 +25306,11 @@ async function searchBitcoinAddresses(searchType, pattern) {
             }
         }
 
-        // Strategy 4: Try blockchain.info's q parameter search (supports partial addresses)
-        if (pattern.length >= 5 && addresses.length < 10) {
+        // Strategy 4: Only use blockchain.info for COMPLETE addresses
+        // The addressfirstseen endpoint doesn't support partial addresses
+        if (pattern.length >= 26) { // Bitcoin addresses are at least 26 chars
             try {
-                // This endpoint sometimes works for partial address search
+                // Only check if this looks like a complete address
                 const searchUrl = `https://blockchain.info/q/addressfirstseen/${pattern}`;
                 const response = await fetch(searchUrl, {
                     method: 'GET',
@@ -25298,7 +25318,7 @@ async function searchBitcoinAddresses(searchType, pattern) {
                         'Accept': 'text/plain'
                     }
                 }).catch(err => {
-                    console.log('Blockchain.info q search failed:', err);
+                    // Expected to fail for partial addresses
                     return null;
                 });
 

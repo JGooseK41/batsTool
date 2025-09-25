@@ -3,38 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 10:58)
+## Latest Commit (Auto-updated: 2025-09-24 20:37)
 
-**Commit:** a8a484b44eb9391e714cdab2e617b90fc7eaf65a
+**Commit:** c0fceabb57cf69984cf43ccda8e3308da414f5d5
 **Author:** Your Name
-**Message:** Improve address search to handle partial addresses correctly
+**Message:** Add comprehensive Solana network support to BATS tool
 
-- Fixed Bitcoin address search to check address length before API calls
-- Only use rawaddr endpoint for complete addresses (26+ chars)
-- Added multiaddr endpoint for partial address searches
-- Added BlockCypher API support as fallback
-- Improved user guidance for partial address searches
-- Better error handling for 404 responses from APIs
+- Added Solana to address finder with known addresses database (exchanges, SPL tokens, protocols)
+- Implemented Solana address search functionality with pattern matching
+- Enhanced Solana transaction parsing to handle SPL token transfers (USDC, USDT, BONK, etc.)
+- Improved transaction parser to handle multiple transfers and token balance changes
+- Added test pages for API verification (test-apis.html, test-solana-apis.html)
+- Solana now fully integrated in victim setup and hop transaction tracking
+- Support for both native SOL and SPL token transfers in investigation workflow
 
 ### Changed Files:
 ```
- CLAUDE.md  |  39 ++++++++++---------
- index.html | 125 +++++++++++++++++++++++++++++++++++++++++--------------------
- 2 files changed, 106 insertions(+), 58 deletions(-)
+ CLAUDE.md             |  64 ++++--
+ index.html            | 569 ++++++++++++++++++++++++++++++++++++++++++++++----
+ test-apis.html        | 322 ++++++++++++++++++++++++++++
+ test-solana-apis.html | 536 +++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 1423 insertions(+), 68 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a8a484b Improve address search to handle partial addresses correctly (0 seconds ago)
-- da2eaa1 Fix address search by using direct API calls without CORS proxies (3 minutes ago)
-- b2d0e08 Fix variable shadowing issue preventing token data from being passed to parseResponse (10 minutes ago)
-- 3c26574 Improve parseEVMResponse logging format for better visibility (10 minutes ago)
-- 33f6d1c Add detailed logging to debug token transfer parsing in bulk upload (13 minutes ago)
-- 2cb002c Fix bulk upload token transfer detection for all EVM chains (15 minutes ago)
-- ad194ac Fix bulk upload API calls and add error handling for extension interference (19 minutes ago)
-- 140cd3f Add bulk upload test file and complete implementation (26 minutes ago)
-- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (27 minutes ago)
-- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (41 minutes ago)
+- c0fceab Add comprehensive Solana network support to BATS tool (0 seconds ago)
+- a8a484b Improve address search to handle partial addresses correctly (10 hours ago)
+- da2eaa1 Fix address search by using direct API calls without CORS proxies (10 hours ago)
+- b2d0e08 Fix variable shadowing issue preventing token data from being passed to parseResponse (10 hours ago)
+- 3c26574 Improve parseEVMResponse logging format for better visibility (10 hours ago)
+- 33f6d1c Add detailed logging to debug token transfer parsing in bulk upload (10 hours ago)
+- 2cb002c Fix bulk upload token transfer detection for all EVM chains (10 hours ago)
+- ad194ac Fix bulk upload API calls and add error handling for extension interference (10 hours ago)
+- 140cd3f Add bulk upload test file and complete implementation (10 hours ago)
+- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (10 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
