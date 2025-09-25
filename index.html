@@ -7555,9 +7555,21 @@ function renderEnhancedHopEntry(entry) {
             <div class="form-group">
                 <label>Currency</label>
                 <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'currency', this.value)">
-                    ${Object.entries(currencies).map(([key, currency]) => 
-                        `<option value="${key}" ${entry.currency === key ? 'selected' : ''}>${currency.name}</option>`
-                    ).join('')}
+                    <option value="USD" ${entry.currency === 'USD' ? 'selected' : ''}>US Dollar</option>
+                    <option value="BTC" ${entry.currency === 'BTC' ? 'selected' : ''}>Bitcoin</option>
+                    <option value="ETH" ${entry.currency === 'ETH' ? 'selected' : ''}>Ethereum</option>
+                    <option value="USDT" ${entry.currency === 'USDT' ? 'selected' : ''}>Tether</option>
+                    <option value="USDC" ${entry.currency === 'USDC' ? 'selected' : ''}>USD Coin</option>
+                    <option value="TRX" ${entry.currency === 'TRX' ? 'selected' : ''}>TRON</option>
+                    <option value="SOL" ${entry.currency === 'SOL' ? 'selected' : ''}>Solana</option>
+                    <option value="ADA" ${entry.currency === 'ADA' ? 'selected' : ''}>Cardano</option>
+                    <option value="DAI" ${entry.currency === 'DAI' ? 'selected' : ''}>DAI</option>
+                    <option value="BNB" ${entry.currency === 'BNB' ? 'selected' : ''}>BNB</option>
+                    <option value="MATIC" ${entry.currency === 'MATIC' ? 'selected' : ''}>MATIC</option>
+                    <option value="AVAX" ${entry.currency === 'AVAX' ? 'selected' : ''}>AVAX</option>
+                    <option value="HYPE" ${entry.currency === 'HYPE' ? 'selected' : ''}>HYPE</option>
+                    <option value="MNT" ${entry.currency === 'MNT' ? 'selected' : ''}>MNT</option>
+                    <option value="CUSTOM" ${entry.currency === 'CUSTOM' ? 'selected' : ''}>Custom Currency</option>
                 </select>
             </div>
             
@@ -8763,15 +8775,27 @@ function updateFormFieldsFromInvestigation() {
                                        step="${getCurrencyStep(transaction.currency)}" 
                                        value="${transaction.amount}" 
                                        onchange="updateTransaction(${victim.id}, ${transaction.id}, 'amount', this.value)"
-                                       title="${currencies[transaction.currency]?.name || transaction.currency} supports ${getCurrencyDecimals(transaction.currency)} decimal places">
+                                       title="${transaction.currency} supports ${getCurrencyDecimals(transaction.currency)} decimal places">
                             </div>
                             <div class="form-group">
                                 <label>Currency</label>
                                 <select id="currency_victim_${victim.id}_${transaction.id}"
                                         onchange="updateTransactionCurrency(${victim.id}, ${transaction.id}, this.value)">
-                                    ${Object.entries(currencies).map(([key, currency]) => 
-                                        `<option value="${key}" ${transaction.currency === key ? 'selected' : ''}>${currency.name}</option>`
-                                    ).join('')}
+                                    <option value="USD" ${transaction.currency === 'USD' ? 'selected' : ''}>US Dollar</option>
+                                    <option value="BTC" ${transaction.currency === 'BTC' ? 'selected' : ''}>Bitcoin</option>
+                                    <option value="ETH" ${transaction.currency === 'ETH' ? 'selected' : ''}>Ethereum</option>
+                                    <option value="USDT" ${transaction.currency === 'USDT' ? 'selected' : ''}>Tether</option>
+                                    <option value="USDC" ${transaction.currency === 'USDC' ? 'selected' : ''}>USD Coin</option>
+                                    <option value="TRX" ${transaction.currency === 'TRX' ? 'selected' : ''}>TRON</option>
+                                    <option value="SOL" ${transaction.currency === 'SOL' ? 'selected' : ''}>Solana</option>
+                                    <option value="ADA" ${transaction.currency === 'ADA' ? 'selected' : ''}>Cardano</option>
+                                    <option value="DAI" ${transaction.currency === 'DAI' ? 'selected' : ''}>DAI</option>
+                                    <option value="BNB" ${transaction.currency === 'BNB' ? 'selected' : ''}>BNB</option>
+                                    <option value="MATIC" ${transaction.currency === 'MATIC' ? 'selected' : ''}>MATIC</option>
+                                    <option value="AVAX" ${transaction.currency === 'AVAX' ? 'selected' : ''}>AVAX</option>
+                                    <option value="HYPE" ${transaction.currency === 'HYPE' ? 'selected' : ''}>HYPE</option>
+                                    <option value="MNT" ${transaction.currency === 'MNT' ? 'selected' : ''}>MNT</option>
+                                    <option value="CUSTOM" ${transaction.currency === 'CUSTOM' ? 'selected' : ''}>Custom Currency</option>
                                 </select>
                             </div>
                             <div class="form-group" style="grid-column: span 2;">
@@ -17040,9 +17064,21 @@ function validateThreadAssignment(sourceThreadId, requestedAmount, currency, exc
             <div class="form-group">
                 <label>Currency</label>
                 <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'currency', this.value)">
-                    ${Object.entries(currencies).map(([key, currency]) => 
-                        `<option value="${key}" ${entry.currency === key ? 'selected' : ''}>${currency.name}</option>`
-                    ).join('')}
+                    <option value="USD" ${entry.currency === 'USD' ? 'selected' : ''}>US Dollar</option>
+                    <option value="BTC" ${entry.currency === 'BTC' ? 'selected' : ''}>Bitcoin</option>
+                    <option value="ETH" ${entry.currency === 'ETH' ? 'selected' : ''}>Ethereum</option>
+                    <option value="USDT" ${entry.currency === 'USDT' ? 'selected' : ''}>Tether</option>
+                    <option value="USDC" ${entry.currency === 'USDC' ? 'selected' : ''}>USD Coin</option>
+                    <option value="TRX" ${entry.currency === 'TRX' ? 'selected' : ''}>TRON</option>
+                    <option value="SOL" ${entry.currency === 'SOL' ? 'selected' : ''}>Solana</option>
+                    <option value="ADA" ${entry.currency === 'ADA' ? 'selected' : ''}>Cardano</option>
+                    <option value="DAI" ${entry.currency === 'DAI' ? 'selected' : ''}>DAI</option>
+                    <option value="BNB" ${entry.currency === 'BNB' ? 'selected' : ''}>BNB</option>
+                    <option value="MATIC" ${entry.currency === 'MATIC' ? 'selected' : ''}>MATIC</option>
+                    <option value="AVAX" ${entry.currency === 'AVAX' ? 'selected' : ''}>AVAX</option>
+                    <option value="HYPE" ${entry.currency === 'HYPE' ? 'selected' : ''}>HYPE</option>
+                    <option value="MNT" ${entry.currency === 'MNT' ? 'selected' : ''}>MNT</option>
+                    <option value="CUSTOM" ${entry.currency === 'CUSTOM' ? 'selected' : ''}>Custom Currency</option>
                 </select>
             </div>
             

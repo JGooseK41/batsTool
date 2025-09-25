@@ -3,38 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 13:33)
+## Latest Commit (Auto-updated: 2025-09-25 13:41)
 
-**Commit:** 0d43ae38dfb370471f90322a810d99432f78653d
+**Commit:** c95401bdbb7b71e0a6c945dd7ef56a9265ef096f
 **Author:** Your Name
-**Message:** Fix currency dropdown to properly show native currencies
+**Message:** Fix HyperEVM currency display to show HYPE instead of HyperEVM
 
-- Added dynamic currency option creation when lookup returns new currencies
-- Added native currencies to predefined list (HYPE, AVAX, MNT, etc.)
-- Currency dropdown now correctly shows HYPE instead of defaulting to Bitcoin
-- Supports all native currencies for new chains
+- Add dynamic currency option creation in applyTransactionData
+- Add HYPE, MATIC, AVAX, MNT to predefined currency options
+- Ensure currency dropdown properly displays native tokens for all chains
 
-This fixes the issue where HyperEVM transactions showed Bitcoin as currency
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 38 +++++++++++++++++---------------------
- index.html | 27 +++++++++++++++++++++++++--
- 2 files changed, 42 insertions(+), 23 deletions(-)
+ CLAUDE.md  | 36 ++++++++++++++++++------------------
+ index.html | 16 ++++++++++++++++
+ 2 files changed, 34 insertions(+), 18 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0d43ae3 Fix currency dropdown to properly show native currencies (0 seconds ago)
-- c3d4198 Enable multi-chain wallet attribution via Etherscan API v2 (17 minutes ago)
-- 10f9d12 Add comprehensive multi-chain token support (26 minutes ago)
-- b5efb85 Add native currency support for all EVM chains (28 minutes ago)
-- 8c44044 Add chain selector dropdown for victim transaction lookups (35 minutes ago)
-- 784011c Fix EVM chain detection and remove problematic fallback URLs (54 minutes ago)
-- 977d9c5 Add support for 20+ EVM chains via Etherscan API v2 (61 minutes ago)
+- c95401b Fix HyperEVM currency display to show HYPE instead of HyperEVM (0 seconds ago)
+- 0d43ae3 Fix currency dropdown to properly show native currencies (8 minutes ago)
+- c3d4198 Enable multi-chain wallet attribution via Etherscan API v2 (26 minutes ago)
+- 10f9d12 Add comprehensive multi-chain token support (34 minutes ago)
+- b5efb85 Add native currency support for all EVM chains (37 minutes ago)
+- 8c44044 Add chain selector dropdown for victim transaction lookups (43 minutes ago)
+- 784011c Fix EVM chain detection and remove problematic fallback URLs (62 minutes ago)
+- 977d9c5 Add support for 20+ EVM chains via Etherscan API v2 (69 minutes ago)
 - cbfae51 Address finder improvements - API-based partial search and attribution (3 hours ago)
 - 4b5ee9b Add auto-detection of blockchain type from address pattern (7 hours ago)
-- f17f73d Add user guidance for Bitcoin address search limitations (7 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
