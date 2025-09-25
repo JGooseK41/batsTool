@@ -3,38 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 12:58)
+## Latest Commit (Auto-updated: 2025-09-25 13:05)
 
-**Commit:** 8c44044a2e846d9d6f168175d041a14461efe3c3
+**Commit:** b5efb85e66e2482441a46493f0bafe67654fdb04
 **Author:** Your Name
-**Message:** Add chain selector dropdown for victim transaction lookups
+**Message:** Add native currency support for all EVM chains
 
-- Added dropdown with all 20+ supported chains
-- Users can now manually select chain for EVM transactions
-- Fallback to auto-detection when no chain selected
-- Fixes issue where all EVM txs were detected as Ethereum
+- Added nativeCurrency field to all chain configurations
+- HyperEVM now correctly shows HYPE instead of ETH
+- Polygon shows MATIC, BSC shows BNB, Avalanche shows AVAX, etc.
+- parseEVMResponse now uses chain-specific native currency
 
-This allows proper lookup of transactions on Base, Arbitrum, HyperEVM, etc.
+Fixed issue where all EVM chains showed ETH as native currency
 
 ### Changed Files:
 ```
- CLAUDE.md  | 35 +++++++++++++++--------------------
- index.html | 45 ++++++++++++++++++++++++++++++++++++---------
- 2 files changed, 51 insertions(+), 29 deletions(-)
+ CLAUDE.md  | 36 +++++++++++++++++++-----------------
+ index.html | 42 ++++++++++++++++++++++++++++++++----------
+ 2 files changed, 51 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8c44044 Add chain selector dropdown for victim transaction lookups (0 seconds ago)
-- 784011c Fix EVM chain detection and remove problematic fallback URLs (19 minutes ago)
-- 977d9c5 Add support for 20+ EVM chains via Etherscan API v2 (26 minutes ago)
-- cbfae51 Address finder improvements - API-based partial search and attribution (2 hours ago)
+- b5efb85 Add native currency support for all EVM chains (0 seconds ago)
+- 8c44044 Add chain selector dropdown for victim transaction lookups (7 minutes ago)
+- 784011c Fix EVM chain detection and remove problematic fallback URLs (26 minutes ago)
+- 977d9c5 Add support for 20+ EVM chains via Etherscan API v2 (32 minutes ago)
+- cbfae51 Address finder improvements - API-based partial search and attribution (3 hours ago)
 - 4b5ee9b Add auto-detection of blockchain type from address pattern (7 hours ago)
 - f17f73d Add user guidance for Bitcoin address search limitations (7 hours ago)
 - 3ab4fc8 Fix CSP to allow www.walletexplorer.com domain (7 hours ago)
 - d676a69 Add WalletExplorer API integration for Bitcoin address search and attribution (7 hours ago)
 - 5b44bdd Add Arkham attribution to address finder for complete Bitcoin addresses (7 hours ago)
-- 23dc8e9 Fix Arkham API integration - use working intelligence endpoint (7 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
