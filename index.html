@@ -18071,8 +18071,9 @@ window.showWriteoffConfirmation = function() {
     console.log('showWriteoffConfirmation called');
     const wizardData = window.hopWizardData;
 
-    // Calculate total amount from allocations
-    const totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+    // Use the actual transaction amount, not allocations
+    const actualTxAmount = wizardData.txData ? parseFloat(wizardData.txData.amount) : 0;
+    const totalAmount = actualTxAmount > 0 ? actualTxAmount : Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
 
     // Get currency from first thread
     const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
@@ -18098,8 +18099,8 @@ window.showWriteoffConfirmation = function() {
                 <p><strong>This action will:</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px;">
                     <li>Record the transaction hash: <code>${wizardData.txHash || 'Not provided'}</code></li>
-                    <li>Document the amount as unrecoverable</li>
-                    <li>Reduce the source thread by ${totalAmount.toLocaleString()} ${currency}</li>
+                    <li>Document ${totalAmount.toLocaleString()} ${currency} as unrecoverable</li>
+                    <li>Reduce the source thread by this amount</li>
                     <li>NOT create a new thread for further tracking</li>
                     <li>Mark the entry with "-WO" suffix</li>
                 </ul>
@@ -18143,7 +18144,7 @@ window.showWriteoffConfirmation = function() {
     document.body.appendChild(modal);
 }
 
-function confirmWriteoff() {
+window.confirmWriteoff = function() {
     // Get the write-off details from the confirmation dialog
     const category = document.getElementById('confirmWriteoffCategory').value;
     const notes = document.getElementById('confirmWriteoffNotes').value;
@@ -20628,14 +20629,31 @@ function createWriteoffEntryFromWizard() {
 
     saveUndoState(`Create write-off entry in Hop ${hop.hopNumber}`);
 
-    // Calculate total amount from allocations
-    const totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+    // Use the actual transaction amount if available, otherwise use allocations
+    const actualTxAmount = wizardData.txData ? parseFloat(wizardData.txData.amount) : 0;
+    const totalAmount = actualTxAmount > 0 ? actualTxAmount : Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
 
-    // Get currency from first thread
+    // Get currency from transaction data or first thread
     const threads = getAvailableSourcesForHop(hop.hopNumber, null);
     const firstThreadId = wizardData.selectedThreads[0];
     const thread = threads.find(t => t.threadId === firstThreadId);
-    const currency = thread ? thread.currency : 'USD';
+    const currency = wizardData.txData?.currency || (thread ? thread.currency : 'USD');
+
+    // Adjust allocations to use actual transaction amount
+    const adjustedAllocations = {};
+    if (actualTxAmount > 0 && wizardData.selectedThreads.length === 1) {
+        // For single thread, use the actual transaction amount
+        adjustedAllocations[wizardData.selectedThreads[0]] = totalAmount;
+    } else if (actualTxAmount > 0 && wizardData.selectedThreads.length > 1) {
+        // For multiple threads, proportionally adjust based on transaction amount
+        const allocationTotal = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+        for (const [threadId, allocation] of Object.entries(wizardData.allocations)) {
+            adjustedAllocations[threadId] = (allocation / allocationTotal) * totalAmount;
+        }
+    } else {
+        // No transaction data, use original allocations
+        Object.assign(adjustedAllocations, wizardData.allocations);
+    }
 
     // Create write-off entry
     const writeoffEntry = {
@@ -20650,10 +20668,10 @@ function createWriteoffEntryFromWizard() {
         justification: wizardData.writeoffNotes || `Amount too small to track: ${totalAmount.toLocaleString()} ${currency}`,
         notes: wizardData.manualData?.notes || '',
 
-        // Thread allocation data
+        // Thread allocation data with adjusted amounts
         sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
         multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : null,
-        individualSourceAssignments: wizardData.allocations,
+        individualSourceAssignments: adjustedAllocations,
 
         // Transaction details if available
         fromWallet: '',
@@ -20717,12 +20735,23 @@ function createWriteoffEntryFromWizard() {
     renderHops();
     saveToStorage();
 
+    // Calculate remaining balance in source thread
+    let remainingBalance = 'N/A';
+    if (wizardData.selectedThreads.length === 1) {
+        const sourceThread = threads.find(t => t.threadId === wizardData.selectedThreads[0]);
+        if (sourceThread) {
+            const originalAmount = sourceThread.amount || 0;
+            remainingBalance = (originalAmount - totalAmount).toLocaleString();
+        }
+    }
+
     // Show confirmation
     const confirmMsg = `✅ Write-off entry created:\n\n` +
-                       `Amount: ${totalAmount.toLocaleString()} ${currency}\n` +
+                       `Amount Written Off: ${totalAmount.toLocaleString()} ${currency}\n` +
                        `Transaction: ${wizardData.txHash || 'Not provided'}\n` +
                        `Category: ${wizardData.writeoffCategory || 'minimal_amount'}\n` +
-                       `\nThe source thread has been reduced by ${totalAmount.toLocaleString()} ${currency}.`;
+                       `\nThe source thread has been reduced by ${totalAmount.toLocaleString()} ${currency}.\n` +
+                       `Remaining traceable amount: ${remainingBalance} ${currency}`;
 
     alert(confirmMsg);
 

@@ -3,19 +3,25 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 17:54)
+## Latest Commit (Auto-updated: 2025-09-25 19:03)
 
-**Commit:** c783a6f30208919faa611e6a56f810b16b81b6a5
+**Commit:** 67ed03de92ca2e4569d2c1ede70810de0642a4eb
 **Author:** Your Name
-**Message:** Fix hop wizard buttons not working - enable after transaction lookup
+**Message:** Fix hop wizard buttons not responding to clicks
 
-- Fixed disabled button state by updating after transaction lookup completes
-- Added updateStep3Buttons function to enable/disable buttons based on txHash
-- Call updateStep3Buttons after successful transaction lookup
-- Call updateStep3Buttons after multi-output confirmation
-- Fixed currentStep vs step property check
-- Added close button (X) to wizard modal with hover effects
-- Buttons now properly enable when transaction hash is entered/looked up
+The core issue: buttons were created with event listeners but remained disabled after transaction lookup.
+
+Fixed by:
+- Storing button references globally (window.step3LogEntryBtn, window.step3WriteoffBtn)
+- Updating updateStep3Buttons to use stored references
+- Checking for both txHash AND txData before enabling buttons
+- Setting both 'step' and 'currentStep' properties for compatibility
+- Fixing condition checks to handle both property names
+
+The buttons were being created correctly with addEventListener, but:
+1. They stayed disabled because updateStep3Buttons couldn't find them
+2. Disabled buttons don't fire click events
+3. Button references weren't stored for later updating
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -23,23 +29,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 43 +++++++++++++++++++++----------------------
- index.html | 49 +++++++++++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 68 insertions(+), 24 deletions(-)
+ CLAUDE.md  | 48 ++++++++++++++++++++++++------------------------
+ index.html | 28 +++++++++++++++++-----------
+ 2 files changed, 41 insertions(+), 35 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c783a6f Fix hop wizard buttons not working - enable after transaction lookup (1 second ago)
-- 25c4fc0 Debug Step 3 buttons with addEventListener and console logging (10 minutes ago)
-- ed27959 Fix wizard buttons and styling issues (26 minutes ago)
-- 5b7a40e Fix non-working buttons in hop wizard Step 3 (31 minutes ago)
-- 0d8e8b5 Fix hop wizard not finding hop - string/number conversion issue (36 minutes ago)
-- d14dc14 Add detailed debug logging for wizard creation issue (40 minutes ago)
-- e6a973f Clarify wizard creation - direct DOM insertion is correct approach (45 minutes ago)
-- 6917778 Fix wizard not appearing by directly inserting HTML to DOM (46 minutes ago)
-- cd0f815 Fix hop wizard error by removing duplicate wizard creation code (50 minutes ago)
-- ab56a50 Clean up hop wizard buttons and fix Log Entry functionality (55 minutes ago)
+- 67ed03d Fix hop wizard buttons not responding to clicks (0 seconds ago)
+- c783a6f Fix hop wizard buttons not working - enable after transaction lookup (69 minutes ago)
+- 25c4fc0 Debug Step 3 buttons with addEventListener and console logging (79 minutes ago)
+- ed27959 Fix wizard buttons and styling issues (2 hours ago)
+- 5b7a40e Fix non-working buttons in hop wizard Step 3 (2 hours ago)
+- 0d8e8b5 Fix hop wizard not finding hop - string/number conversion issue (2 hours ago)
+- d14dc14 Add detailed debug logging for wizard creation issue (2 hours ago)
+- e6a973f Clarify wizard creation - direct DOM insertion is correct approach (2 hours ago)
+- 6917778 Fix wizard not appearing by directly inserting HTML to DOM (2 hours ago)
+- cd0f815 Fix hop wizard error by removing duplicate wizard creation code (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
