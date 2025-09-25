@@ -3,18 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 17:23)
+## Latest Commit (Auto-updated: 2025-09-25 17:28)
 
-**Commit:** 5b7a40e7a78c44c3881ac6d2d5e33f6751bbeb06
+**Commit:** ed27959f4c465df3c518a803ae6b2c1950d99d55
 **Author:** Your Name
-**Message:** Fix non-working buttons in hop wizard Step 3
+**Message:** Fix wizard buttons and styling issues
 
-- Changed from innerHTML string buttons to createElement with proper event listeners
+- Made hopWizardNext, hopWizardBack, and showWriteoffConfirmation global (window.)
+- Fixed write-off button styling: gray background with red border
+- Added close button (X) to wizard header with red styling
 - Added console logging to debug button clicks
-- Changed write-off button to red (#dc3545) with red border
-- Buttons now properly call their functions
+- Added function existence checks before calling
 
-The issue was that innerHTML onclick attributes weren't properly binding to functions.
+Buttons should now work properly as functions are explicitly in global scope.
 
 🤖 Generated with Claude Code
 https://claude.ai/code
@@ -23,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 33 ++++++++++++++++++---------------
- index.html | 59 ++++++++++++++++++++++++++++++++++++++---------------------
- 2 files changed, 56 insertions(+), 36 deletions(-)
+ CLAUDE.md  | 36 ++++++++++++++++++------------------
+ index.html | 44 ++++++++++++++++++++++++++++++++++----------
+ 2 files changed, 52 insertions(+), 28 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5b7a40e Fix non-working buttons in hop wizard Step 3 (0 seconds ago)
-- 0d8e8b5 Fix hop wizard not finding hop - string/number conversion issue (5 minutes ago)
-- d14dc14 Add detailed debug logging for wizard creation issue (8 minutes ago)
-- e6a973f Clarify wizard creation - direct DOM insertion is correct approach (14 minutes ago)
-- 6917778 Fix wizard not appearing by directly inserting HTML to DOM (15 minutes ago)
-- cd0f815 Fix hop wizard error by removing duplicate wizard creation code (19 minutes ago)
-- ab56a50 Clean up hop wizard buttons and fix Log Entry functionality (24 minutes ago)
+- ed27959 Fix wizard buttons and styling issues (0 seconds ago)
+- 5b7a40e Fix non-working buttons in hop wizard Step 3 (5 minutes ago)
+- 0d8e8b5 Fix hop wizard not finding hop - string/number conversion issue (10 minutes ago)
+- d14dc14 Add detailed debug logging for wizard creation issue (14 minutes ago)
+- e6a973f Clarify wizard creation - direct DOM insertion is correct approach (19 minutes ago)
+- 6917778 Fix wizard not appearing by directly inserting HTML to DOM (20 minutes ago)
+- cd0f815 Fix hop wizard error by removing duplicate wizard creation code (24 minutes ago)
+- ab56a50 Clean up hop wizard buttons and fix Log Entry functionality (29 minutes ago)
 - 5757439 Redesign write-off workflow with dedicated button and confirmation (2 hours ago)
 - 7ecf37b Add debug logging for write-off option visibility in hop wizard step 3 (2 hours ago)
-- ec03da5 Add write-off option to hop wizard for documenting small transactions (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

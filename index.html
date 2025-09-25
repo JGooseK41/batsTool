@@ -17947,11 +17947,12 @@ function showHopWizardStep(step) {
         backBtn.id = 'wizardBackBtn';
         backBtn.textContent = '← Back';
         backBtn.style.cssText = 'padding: 10px 20px;';
-        backBtn.onclick = () => {
-            console.log('Back button clicked');
-            hopWizardBack();
-        };
+        backBtn.addEventListener('click', function() {
+            console.log('Back button clicked via addEventListener');
+            window.hopWizardBack();
+        });
         footerButtons.appendChild(backBtn);
+        console.log('Back button added to Step 3');
 
         // Log Entry button
         const logEntryBtn = document.createElement('button');
@@ -17959,17 +17960,15 @@ function showHopWizardStep(step) {
         logEntryBtn.textContent = '✅ Log Entry';
         logEntryBtn.style.cssText = 'padding: 10px 20px;';
         logEntryBtn.disabled = !hasRequiredData;
-        logEntryBtn.onclick = () => {
-            console.log('Log Entry button clicked');
+        logEntryBtn.addEventListener('click', function() {
+            console.log('Log Entry button clicked via addEventListener');
             console.log('Current wizard step:', wizardData.step);
-            console.log('Wizard data:', wizardData);
-            if (typeof hopWizardNext === 'function') {
-                hopWizardNext();
-            } else {
-                console.error('hopWizardNext function not found');
-            }
-        };
+            console.log('Calling hopWizardNext...');
+            // Call the global function directly
+            window.hopWizardNext();
+        });
         footerButtons.appendChild(logEntryBtn);
+        console.log('Log Entry button added, disabled:', logEntryBtn.disabled);
 
         // Log Write-off button (gray with red border)
         const writeoffBtn = document.createElement('button');
@@ -17977,15 +17976,13 @@ function showHopWizardStep(step) {
         writeoffBtn.textContent = '🚫 Log Write-off';
         writeoffBtn.style.cssText = 'padding: 10px 20px; background: #9e9e9e; color: white; border: 2px solid #dc3545;';
         writeoffBtn.disabled = !hasRequiredData;
-        writeoffBtn.onclick = () => {
-            console.log('Write-off button clicked');
-            if (typeof showWriteoffConfirmation === 'function') {
-                showWriteoffConfirmation();
-            } else {
-                console.error('showWriteoffConfirmation function not found');
-            }
-        };
+        writeoffBtn.addEventListener('click', function() {
+            console.log('Write-off button clicked via addEventListener');
+            // Call the global function directly
+            window.showWriteoffConfirmation();
+        });
         footerButtons.appendChild(writeoffBtn);
+        console.log('Write-off button added, disabled:', writeoffBtn.disabled);
     }
     
     wizardData.step = step;
