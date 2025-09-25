@@ -3,43 +3,43 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 17:44)
+## Latest Commit (Auto-updated: 2025-09-25 17:54)
 
-**Commit:** 25c4fc0c8ce33804e0bdbaa3f0c6d3f13ac50b4b
+**Commit:** c783a6f30208919faa611e6a56f810b16b81b6a5
 **Author:** Your Name
-**Message:** Debug Step 3 buttons with addEventListener and console logging
+**Message:** Fix hop wizard buttons not working - enable after transaction lookup
 
-- Changed from onclick to addEventListener for all Step 3 buttons
-- Added console logs to track button creation and disabled state
-- Using window.functionName() to ensure global scope access
-- Added debug messages for each button click
+- Fixed disabled button state by updating after transaction lookup completes
+- Added updateStep3Buttons function to enable/disable buttons based on txHash
+- Call updateStep3Buttons after successful transaction lookup
+- Call updateStep3Buttons after multi-output confirmation
+- Fixed currentStep vs step property check
+- Added close button (X) to wizard modal with hover effects
+- Buttons now properly enable when transaction hash is entered/looked up
 
-This should help identify why buttons aren't responding.
-
-🤖 Generated with Claude Code
-https://claude.ai/code
+🤖 Generated with [Claude Code](https://claude.ai/code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 37 +++++++++++++++++++------------------
- index.html | 39 ++++++++++++++++++---------------------
- 2 files changed, 37 insertions(+), 39 deletions(-)
+ CLAUDE.md  | 43 +++++++++++++++++++++----------------------
+ index.html | 49 +++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 68 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 25c4fc0 Debug Step 3 buttons with addEventListener and console logging (0 seconds ago)
-- ed27959 Fix wizard buttons and styling issues (16 minutes ago)
-- 5b7a40e Fix non-working buttons in hop wizard Step 3 (21 minutes ago)
-- 0d8e8b5 Fix hop wizard not finding hop - string/number conversion issue (27 minutes ago)
-- d14dc14 Add detailed debug logging for wizard creation issue (30 minutes ago)
-- e6a973f Clarify wizard creation - direct DOM insertion is correct approach (35 minutes ago)
-- 6917778 Fix wizard not appearing by directly inserting HTML to DOM (36 minutes ago)
-- cd0f815 Fix hop wizard error by removing duplicate wizard creation code (40 minutes ago)
-- ab56a50 Clean up hop wizard buttons and fix Log Entry functionality (45 minutes ago)
-- 5757439 Redesign write-off workflow with dedicated button and confirmation (3 hours ago)
+- c783a6f Fix hop wizard buttons not working - enable after transaction lookup (1 second ago)
+- 25c4fc0 Debug Step 3 buttons with addEventListener and console logging (10 minutes ago)
+- ed27959 Fix wizard buttons and styling issues (26 minutes ago)
+- 5b7a40e Fix non-working buttons in hop wizard Step 3 (31 minutes ago)
+- 0d8e8b5 Fix hop wizard not finding hop - string/number conversion issue (36 minutes ago)
+- d14dc14 Add detailed debug logging for wizard creation issue (40 minutes ago)
+- e6a973f Clarify wizard creation - direct DOM insertion is correct approach (45 minutes ago)
+- 6917778 Fix wizard not appearing by directly inserting HTML to DOM (46 minutes ago)
+- cd0f815 Fix hop wizard error by removing duplicate wizard creation code (50 minutes ago)
+- ab56a50 Clean up hop wizard buttons and fix Log Entry functionality (55 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

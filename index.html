@@ -17985,9 +17985,14 @@ function showHopWizardStep(step) {
         });
         footerButtons.appendChild(writeoffBtn);
         console.log('Write-off button added, disabled:', writeoffBtn.disabled);
+
+        // Store button references globally for updating
+        window.step3LogEntryBtn = logEntryBtn;
+        window.step3WriteoffBtn = writeoffBtn;
     }
-    
+
     wizardData.step = step;
+    wizardData.currentStep = step; // Set both for compatibility
 }
 
 window.hopWizardNext = function() {
@@ -18032,23 +18037,24 @@ window.hopWizardBack = function() {
 // Update Step 3 buttons when txHash changes
 window.updateStep3Buttons = function() {
     const wizardData = window.hopWizardData;
-    if (!wizardData || wizardData.currentStep !== 3) return;
+    if (!wizardData) return;
 
-    console.log('Updating Step 3 buttons, txHash:', wizardData.txHash);
+    console.log('Updating Step 3 buttons, txHash:', wizardData.txHash, 'step:', wizardData.step);
 
-    // Find the buttons
-    const logEntryBtn = document.querySelector('#wizardFooterButtons button:nth-child(2)');
-    const writeoffBtn = document.querySelector('#wizardFooterButtons button:nth-child(3)');
+    // Use stored button references or find them
+    const logEntryBtn = window.step3LogEntryBtn || document.querySelector('#wizardFooterButtons button:nth-child(2)');
+    const writeoffBtn = window.step3WriteoffBtn || document.querySelector('#wizardFooterButtons button:nth-child(3)');
 
-    // Check if we have required data
+    // Check if we have required data - we need both txHash and txData
     let hasRequiredData = false;
     if (wizardData.entryMode === 'manual') {
         hasRequiredData = wizardData.txHash && wizardData.manualData?.toWallet;
     } else {
-        hasRequiredData = !!wizardData.txHash;
+        // For lookup mode, we need both txHash and successful txData
+        hasRequiredData = !!(wizardData.txHash && wizardData.txData);
     }
 
-    console.log('Updating buttons - hasRequiredData:', hasRequiredData);
+    console.log('Updating buttons - hasRequiredData:', hasRequiredData, 'txData exists:', !!wizardData.txData);
 
     // Enable/disable buttons
     if (logEntryBtn) {
@@ -20057,7 +20063,7 @@ async function lookupWizardTransaction() {
     }
 
     // Update Step 3 buttons if we're in Step 3
-    if (window.hopWizardData && window.hopWizardData.currentStep === 3 && window.updateStep3Buttons) {
+    if (window.hopWizardData && (window.hopWizardData.currentStep === 3 || window.hopWizardData.step === 3) && window.updateStep3Buttons) {
         window.hopWizardData.txHash = txHash; // Store the hash
         window.updateStep3Buttons();
     }
@@ -20229,7 +20235,7 @@ function confirmWizardOutputSelection() {
     document.getElementById('wizardNextBtn').disabled = false;
 
     // Update Step 3 buttons if we're in Step 3
-    if (window.hopWizardData && window.hopWizardData.currentStep === 3 && window.updateStep3Buttons) {
+    if (window.hopWizardData && (window.hopWizardData.currentStep === 3 || window.hopWizardData.step === 3) && window.updateStep3Buttons) {
         window.updateStep3Buttons();
     }
 }
