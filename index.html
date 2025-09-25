@@ -17542,118 +17542,8 @@ function sortHopEntriesChronologically(hop) {
 }
 
 function showHopEntryWizard(hopNumber) {
-    console.log('showHopEntryWizard called for hopNumber:', hopNumber, 'type:', typeof hopNumber);
-    console.log('Available hops:', investigation.hops.map(h => ({ id: h.id, type: typeof h.id, hopNumber: h.hopNumber })));
-
-    // Convert hopId to number to ensure type matching
-    const numericHopNumber = typeof hopNumber === 'string' ? parseInt(hopNumber) : hopNumber;
-    const hop = investigation.hops.find(h => h.hopNumber === numericHopNumber);
-
-    if (!hop) {
-        console.error('Hop not found in showHopEntryWizard:', hopNumber);
-        console.error('Looking for id:', numericHopNumber, 'in hops:', investigation.hops);
-        return;
-    }
-    console.log('Found hop:', hop);
-
-    // Check if hop is fully allocated before showing wizard
-    const availableSources = getAvailableSourcesForHop(hopNumber, null);
-    const hasAvailableFunds = availableSources.some(source => source.availableAmount > 0);
-
-    if (!hasAvailableFunds) {
-        showNotification('❌ This hop has been fully allocated. No funds remaining to trace. Please close this hop and proceed to the next hop.', 'error');
-        return;
-    }
-
-    // Detect chain from source threads if possible
-    let detectedChain = null;
-    const availableThreads = getAvailableSourcesForHop(hopNumber, null);
-    if (availableThreads && availableThreads.length > 0) {
-        // Try to get chain from the first available thread
-        const firstThread = availableThreads[0];
-        if (firstThread.threadId) {
-            // Parse the thread ID to get victim and transaction
-            const match = firstThread.threadId.match(/V(\d+)-T(\d+)/);
-            if (match) {
-                const victimId = parseInt(match[1]);
-                const transactionId = parseInt(match[2]);
-                const victim = investigation.victims.find(v => v.id === victimId);
-                const transaction = victim?.transactions.find(t => t.id === transactionId);
-                if (transaction?.chain) {
-                    detectedChain = transaction.chain;
-                    console.log(`Detected chain '${detectedChain}' from available thread ${firstThread.threadId}`);
-                }
-            }
-        }
-    }
-
-    // Initialize wizard data
-    window.hopWizardData = {
-        hopNumber: hop.hopNumber,
-        step: 1,
-        selectedThreads: [],
-        allocations: {},
-        txHash: '',
-        txData: null,
-        entryMode: 'lookup', // 'lookup' or 'manual'
-        manualData: {
-            fromWallet: '',
-            toWallet: '',
-            timestamp: new Date().toISOString().slice(0, 16)
-        },
-        detectedChain: detectedChain // Store the detected chain
-    };
-    
-    const wizardHTML = `
-        <div id="hopEntryWizard" class="modal" style="display: block; z-index: 9999;">
-            <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
-                <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10; border-bottom: 2px solid #eee; padding-bottom: 15px;">
-                    <button class="close-btn" onclick="closeHopWizard()"
-                            style="position: absolute; right: 15px; top: 15px; width: 30px; height: 30px;
-                                   font-size: 24px; background: #e74c3c; color: white; border: none;
-                                   border-radius: 50%; cursor: pointer; display: flex; align-items: center;
-                                   justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                                   transition: all 0.3s ease; font-weight: bold; line-height: 1;"
-                            onmouseover="this.style.background='#c0392b'; this.style.transform='scale(1.1)'"
-                            onmouseout="this.style.background='#e74c3c'; this.style.transform='scale(1)'"
-                            title="Close Wizard">×</button>
-                    <h2>🧙‍♂️ Hop Entry Wizard - Step 1 of 3</h2>
-                    <div style="margin-top: 10px;">
-                        <div style="background: #f0f0f0; height: 8px; border-radius: 4px;">
-                            <div id="wizardProgress" style="background: #3498db; height: 100%; width: 33%; border-radius: 4px; transition: width 0.3s;"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="wizardContent" style="padding: 20px;">
-                    <!-- Content will be dynamically updated -->
-                </div>
-                
-                <div class="modal-footer" style="position: sticky; bottom: 0; background: white; border-top: 2px solid #eee; padding-top: 15px; display: flex; justify-content: flex-end; align-items: center;">
-                    <div>
-                        <button class="btn btn-secondary" onclick="cancelWizardToManual()" title="Transfer data to manual entry">Cancel to Manual</button>
-                        <button class="btn btn-secondary" id="wizardBackBtn" onclick="hopWizardBack()" style="display: none;">Back</button>
-                        <button class="btn btn-primary" id="wizardNextBtn" onclick="hopWizardNext()">Next</button>
-                        <button class="btn btn-secondary" onclick="skipWizardThisTime()" title="Skip wizard for this entry only">Skip This Time</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    console.log('About to insert hop entry wizard HTML');
-    createCenteredModal('hopEntryWizard', wizardHTML);
-    console.log('Hop entry wizard HTML inserted');
-    
-    // Verify wizard was created
-    const wizardElement = document.getElementById('hopEntryWizard');
-    console.log('Wizard element exists after insertion:', !!wizardElement);
-    if (wizardElement) {
-        console.log('Wizard display style:', wizardElement.style.display);
-    }
-    
-    // Show first step
-    showHopWizardStep(1);
+    // This function now just redirects to openHopEntryWizard
+    openHopEntryWizard(hopNumber);
 }
 
 function showHopWizardStep(step) {
@@ -17678,6 +17568,12 @@ function showHopWizardStep(step) {
     const progress = document.getElementById('wizardProgress');
     const header = document.querySelector('#hopEntryWizard .modal-header h2');
     const footerButtons = document.getElementById('wizardFooterButtons');
+
+    // Check if footerButtons exists before manipulating it
+    if (!footerButtons) {
+        console.error('Footer buttons container not found');
+        return;
+    }
 
     // Restore standard buttons for steps 1 and 2
     if (step !== 3) {
