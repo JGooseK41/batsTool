@@ -19288,22 +19288,42 @@ async function lookupWizardTransaction() {
             throw new Error('Unable to detect blockchain from hash');
         }
 
+        // Call the appropriate lookup function based on chain type
         let txData;
-        switch(detectedChain) {
-            case 'ethereum':
-                txData = await lookupEthereumTransaction(txHash);
-                break;
-            case 'bitcoin':
-                txData = await lookupBitcoinTransaction(txHash);
-                break;
-            case 'tron':
-                txData = await lookupTronTransaction(txHash);
-                break;
-            case 'solana':
-                txData = await lookupSolanaTransaction(txHash);
-                break;
-            default:
-                throw new Error('Unsupported blockchain');
+        const evmChains = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc',
+                          'avalanche', 'hyperevm', 'linea', 'scroll', 'mantle', 'blast',
+                          'zksync', 'gnosis', 'celo', 'moonbeam', 'moonriver', 'fraxtal',
+                          'taiko', 'arbitrumnova', 'bittorrent', 'opbnb'];
+
+        if (evmChains.includes(detectedChain)) {
+            // For EVM chains, temporarily set chain selector and use the ethereum lookup
+            // which will actually use the detected chain from the selector
+            const originalChain = document.getElementById('chainSelector')?.value;
+            if (document.getElementById('chainSelector')) {
+                document.getElementById('chainSelector').value = detectedChain;
+            }
+
+            // Call the existing lookup with the specific chain
+            txData = await lookupEthereumTransaction(txHash, detectedChain);
+
+            // Restore original chain selector
+            if (document.getElementById('chainSelector') && originalChain !== undefined) {
+                document.getElementById('chainSelector').value = originalChain;
+            }
+        } else {
+            switch(detectedChain) {
+                case 'bitcoin':
+                    txData = await lookupBitcoinTransaction(txHash);
+                    break;
+                case 'tron':
+                    txData = await lookupTronTransaction(txHash);
+                    break;
+                case 'solana':
+                    txData = await lookupSolanaTransaction(txHash);
+                    break;
+                default:
+                    throw new Error('Unsupported blockchain');
+            }
         }
 
         // Check if wizard was closed or session changed during the async operation
@@ -27755,8 +27775,12 @@ async function fetchTransactionData(hash, blockchain) {
 }
 
 // Individual blockchain lookup functions for hop transactions
-async function lookupEthereumTransaction(txHash) {
-    const config = blockchainAPIs.ethereum;
+async function lookupEthereumTransaction(txHash, chainName = null) {
+    // If no chain specified, detect it or default to ethereum
+    if (!chainName) {
+        chainName = detectBlockchainFromHash(txHash) || 'ethereum';
+    }
+    const config = blockchainAPIs[chainName] || blockchainAPIs.ethereum;
     // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
     const corsEnabled = false;
     const corsProxyUrl = '';
@@ -27854,9 +27878,10 @@ async function lookupEthereumTransaction(txHash) {
             console.error(`Failed with ${apiUrl}:`, error);
         }
     }
-    
+
     throw new Error('Failed to fetch Ethereum transaction');
 }
+
 
 async function lookupBitcoinTransaction(txHash) {
     const config = blockchainAPIs.bitcoin;
