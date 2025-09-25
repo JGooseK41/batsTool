@@ -3614,15 +3614,15 @@
 
                 if (arkhamApiKey) {
                     try {
-                        const arkhamUrl = `https://api.arkhamintelligence.com/intelligence/address/${address}`;
-                        const arkhamResponse = await fetch(arkhamUrl, {
+                        // Use Netlify Function proxy for Arkham API
+                        const proxyUrl = `/.netlify/functions/arkham-proxy?endpoint=/intelligence/address/${address}`;
+                        const arkhamResponse = await fetch(proxyUrl, {
                             headers: {
-                                'API-Key': arkhamApiKey,
+                                'X-Arkham-API-Key': arkhamApiKey,
                                 'Accept': 'application/json'
-                            },
-                            mode: 'cors'
+                            }
                         }).catch(err => {
-                            console.log('Main tool Arkham attribution API failed (CORS):', err);
+                            console.log('Main tool Arkham attribution API failed:', err);
                             return null;
                         });
 
@@ -3918,16 +3918,15 @@
 
                 if (arkhamApiKey) {
                     try {
-                        // Use the correct Arkham endpoint for entity information
-                        const arkhamUrl = `https://api.arkhamintelligence.com/intelligence/address/${address}`;
-                        const arkhamResponse = await fetch(arkhamUrl, {
+                        // Use Netlify Function proxy for Arkham API
+                        const proxyUrl = `/.netlify/functions/arkham-proxy?endpoint=/intelligence/address/${address}`;
+                        const arkhamResponse = await fetch(proxyUrl, {
                             headers: {
-                                'API-Key': arkhamApiKey,
+                                'X-Arkham-API-Key': arkhamApiKey,
                                 'Accept': 'application/json'
-                            },
-                            mode: 'cors'
+                            }
                         }).catch(err => {
-                            console.log('Main tool Arkham attribution API failed (CORS):', err);
+                            console.log('Bitcoin Arkham attribution API failed:', err);
                             return null;
                         });
 
@@ -25213,14 +25212,14 @@ async function searchBitcoinAddresses(searchType, pattern) {
 
                 // Arkham supports partial address search and has excellent attribution
                 // For "both" search, we search by prefix and then filter by suffix
-                const arkhamUrl = `https://api.arkhamintelligence.com/addresses/search?q=${encodeURIComponent(arkhamSearchTerm)}&chains=bitcoin`;
-                const arkhamResponse = await fetch(arkhamUrl, {
+                // Use Netlify Function proxy to avoid CORS issues
+                const proxyUrl = `/.netlify/functions/arkham-proxy?endpoint=/addresses/search&q=${encodeURIComponent(arkhamSearchTerm)}&chains=bitcoin`;
+                const arkhamResponse = await fetch(proxyUrl, {
                     method: 'GET',
                     headers: {
-                        'API-Key': arkhamKey,
+                        'X-Arkham-API-Key': arkhamKey,
                         'Accept': 'application/json'
-                    },
-                    mode: 'cors'
+                    }
                 }).catch(err => {
                     console.log('Arkham API request failed:', err);
                     return null;
@@ -25576,12 +25575,12 @@ async function searchEVMAddresses(chain, searchType, pattern) {
         const arkhamKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
         if (arkhamKey) {
             try {
-                // Arkham API for address search
-                const arkhamUrl = `https://api.arkhamintelligence.com/addresses/search?q=${pattern}&chains=${chain}`;
-                const arkhamResponse = await fetch(arkhamUrl, {
+                // Use Netlify Function proxy for Arkham API
+                const proxyUrl = `/.netlify/functions/arkham-proxy?endpoint=/addresses/search&q=${pattern}&chains=${chain}`;
+                const arkhamResponse = await fetch(proxyUrl, {
                     method: 'GET',
                     headers: {
-                        'API-Key': arkhamKey,
+                        'X-Arkham-API-Key': arkhamKey,
                         'Accept': 'application/json'
                     }
                 }).catch(err => {
