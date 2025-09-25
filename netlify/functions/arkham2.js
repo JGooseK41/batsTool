@@ -25,11 +25,12 @@ exports.handler = async (event) => {
                 statusCode: 200,
                 headers,
                 body: JSON.stringify({
-                    error: 'Missing endpoint',
+                    error: 'Missing endpoint parameter',
                     debug: {
                         method: event.httpMethod,
                         params: params,
-                        path: event.path
+                        path: event.path,
+                        receivedQuery: event.queryStringParameters
                     }
                 })
             };
