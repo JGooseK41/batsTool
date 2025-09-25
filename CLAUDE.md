@@ -3,37 +3,37 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 21:13)
+## Latest Commit (Auto-updated: 2025-09-24 21:15)
 
-**Commit:** bb9f0fa3844a8747acfecd13da027527f2794ad2
+**Commit:** 2292952fe0e43d1a82942be44eb5d54f5967c60f
 **Author:** Your Name
-**Message:** Enhance EVM address search to display contract names for tokens
+**Message:** Add Arkham Intelligence API for wallet attribution in main tracing tool
 
-- Use Etherscan's getsourcecode API to get contract names for verified contracts
-- Add visual indicators for token contracts (🪙) and contracts (📜)
-- Prominently display entity attribution for known services
-- Detect common token contracts (USDT, USDC, DAI) from contract names
-- Improve result display with better formatting and icons
+- Fix getBitcoinWalletAttribution to use actual Arkham API key instead of placeholder
+- Add Arkham attribution to getWalletAttribution for EVM chains as primary source
+- Use same default API key as address finder for consistency
+- Fall back to Etherscan/WalletExplorer when Arkham doesn't have data
+- Cache Arkham responses to reduce API calls
 
 ### Changed Files:
 ```
- CLAUDE.md  | 38 ++++++++++++++++++++------------------
- index.html | 46 ++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 60 insertions(+), 24 deletions(-)
+ CLAUDE.md  | 41 +++++++++++++++++++----------------------
+ index.html | 45 +++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 58 insertions(+), 28 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bb9f0fa Enhance EVM address search to display contract names for tokens (0 seconds ago)
-- 9bf6cc3 Display entity attribution from Arkham in address finder results (8 minutes ago)
-- f62bd0b Use default Arkham API key for Bitcoin address search (11 minutes ago)
-- e973895 Fix pattern type checking to prevent API errors (12 minutes ago)
-- 49da831 Fix 'First and Last characters' search for Bitcoin addresses (16 minutes ago)
-- 7635044 Optimize Bitcoin address search to prioritize Arkham API for partial matches (18 minutes ago)
-- 6a50c49 Fix address finder API issues and add proper CSP headers (30 minutes ago)
-- c0fceab Add comprehensive Solana network support to BATS tool (36 minutes ago)
+- 2292952 Add Arkham Intelligence API for wallet attribution in main tracing tool (0 seconds ago)
+- bb9f0fa Enhance EVM address search to display contract names for tokens (2 minutes ago)
+- 9bf6cc3 Display entity attribution from Arkham in address finder results (10 minutes ago)
+- f62bd0b Use default Arkham API key for Bitcoin address search (13 minutes ago)
+- e973895 Fix pattern type checking to prevent API errors (14 minutes ago)
+- 49da831 Fix 'First and Last characters' search for Bitcoin addresses (18 minutes ago)
+- 7635044 Optimize Bitcoin address search to prioritize Arkham API for partial matches (20 minutes ago)
+- 6a50c49 Fix address finder API issues and add proper CSP headers (32 minutes ago)
+- c0fceab Add comprehensive Solana network support to BATS tool (38 minutes ago)
 - a8a484b Improve address search to handle partial addresses correctly (10 hours ago)
-- da2eaa1 Fix address search by using direct API calls without CORS proxies (10 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
