@@ -1,5 +1,6 @@
 // Simple test function to verify Netlify Functions are working
 exports.handler = async (event) => {
+    // Always return success for any method
     return {
         statusCode: 200,
         headers: {
@@ -10,6 +11,7 @@ exports.handler = async (event) => {
             message: 'Netlify Functions are working!',
             method: event.httpMethod,
             path: event.path,
+            query: event.queryStringParameters,
             timestamp: new Date().toISOString()
         })
     };
