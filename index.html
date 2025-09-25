@@ -17938,27 +17938,44 @@ function showHopWizardStep(step) {
             hasRequiredData = wizardData.txHash;
         }
 
-        // Replace entire footer button content
-        footerButtons.innerHTML = `
-            <button class="btn btn-secondary"
-                    id="wizardBackBtn"
-                    onclick="hopWizardBack()"
-                    style="padding: 10px 20px;">
-                ← Back
-            </button>
-            <button class="btn btn-primary"
-                    onclick="hopWizardNext()"
-                    ${!hasRequiredData ? 'disabled' : ''}
-                    style="padding: 10px 20px;">
-                ✅ Log Entry
-            </button>
-            <button class="btn btn-secondary"
-                    onclick="showWriteoffConfirmation()"
-                    ${!hasRequiredData ? 'disabled' : ''}
-                    style="padding: 10px 20px; background: #9e9e9e; color: white; border: none;">
-                🚫 Log Write-off
-            </button>
-        `;
+        // Clear and recreate buttons with proper event listeners
+        footerButtons.innerHTML = '';
+
+        // Back button
+        const backBtn = document.createElement('button');
+        backBtn.className = 'btn btn-secondary';
+        backBtn.id = 'wizardBackBtn';
+        backBtn.textContent = '← Back';
+        backBtn.style.cssText = 'padding: 10px 20px;';
+        backBtn.onclick = () => {
+            console.log('Back button clicked');
+            hopWizardBack();
+        };
+        footerButtons.appendChild(backBtn);
+
+        // Log Entry button
+        const logEntryBtn = document.createElement('button');
+        logEntryBtn.className = 'btn btn-primary';
+        logEntryBtn.textContent = '✅ Log Entry';
+        logEntryBtn.style.cssText = 'padding: 10px 20px;';
+        logEntryBtn.disabled = !hasRequiredData;
+        logEntryBtn.onclick = () => {
+            console.log('Log Entry button clicked');
+            hopWizardNext();
+        };
+        footerButtons.appendChild(logEntryBtn);
+
+        // Log Write-off button
+        const writeoffBtn = document.createElement('button');
+        writeoffBtn.className = 'btn btn-secondary';
+        writeoffBtn.textContent = '🚫 Log Write-off';
+        writeoffBtn.style.cssText = 'padding: 10px 20px; background: #dc3545; color: white; border: 2px solid #dc3545;';
+        writeoffBtn.disabled = !hasRequiredData;
+        writeoffBtn.onclick = () => {
+            console.log('Write-off button clicked');
+            showWriteoffConfirmation();
+        };
+        footerButtons.appendChild(writeoffBtn);
     }
     
     wizardData.step = step;
