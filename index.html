@@ -25113,7 +25113,7 @@ function updateAddressFinderInputs() {
 }
 
 async function searchAddresses() {
-    const chain = document.getElementById('addressFinderChain').value;
+    let chain = document.getElementById('addressFinderChain').value;
     const searchType = document.getElementById('addressFinderType').value;
     const activeOnly = document.getElementById('activeOnly').checked;
 
@@ -25134,6 +25134,38 @@ async function searchAddresses() {
             return;
         }
         searchPattern = input;
+    }
+
+    // Auto-detect chain based on address pattern
+    const patternStr = typeof searchPattern === 'string' ? searchPattern : searchPattern.prefix;
+    if (patternStr.toLowerCase().startsWith('0x')) {
+        // Ethereum/EVM address
+        if (chain === 'bitcoin' || chain === 'tron' || chain === 'solana') {
+            console.log('Auto-detected Ethereum address, switching to Ethereum chain');
+            chain = 'ethereum';
+            document.getElementById('addressFinderChain').value = 'ethereum';
+        }
+    } else if (patternStr.startsWith('T') && patternStr.length > 10) {
+        // Likely Tron address
+        if (chain !== 'tron') {
+            console.log('Auto-detected Tron address, switching to Tron chain');
+            chain = 'tron';
+            document.getElementById('addressFinderChain').value = 'tron';
+        }
+    } else if (patternStr.match(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/) && !patternStr.startsWith('0x')) {
+        // Likely Solana address (base58, 32-44 chars)
+        if (chain !== 'solana' && patternStr.length > 30) {
+            console.log('Auto-detected Solana address, switching to Solana chain');
+            chain = 'solana';
+            document.getElementById('addressFinderChain').value = 'solana';
+        }
+    } else if (patternStr.match(/^[13]/) || patternStr.toLowerCase().startsWith('bc1')) {
+        // Bitcoin address
+        if (chain !== 'bitcoin') {
+            console.log('Auto-detected Bitcoin address, switching to Bitcoin chain');
+            chain = 'bitcoin';
+            document.getElementById('addressFinderChain').value = 'bitcoin';
+        }
     }
 
     // Show loading

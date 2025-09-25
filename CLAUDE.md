@@ -3,36 +3,37 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 06:19)
+## Latest Commit (Auto-updated: 2025-09-25 06:24)
 
-**Commit:** 3ab4fc836a119d1f1a9c07028c06019aa72b70fb
+**Commit:** f17f73dd374b6a72fc11e70c773e37968afd119f
 **Author:** Your Name
-**Message:** Fix CSP to allow www.walletexplorer.com domain
+**Message:** Add user guidance for Bitcoin address search limitations
 
-- Add https://www.walletexplorer.com to CSP connect-src
-- WalletExplorer API uses www subdomain
-- Update both HTML meta tag and netlify.toml
+- WalletExplorer firstbits only returns the FIRST chronological match
+- Add warning that this is the first match only
+- Guide users to add more characters (8+ recommended) for better specificity
+- Suggest using first + last character search for more precision
+- Display helpful tips when pattern is too short
 
 ### Changed Files:
 ```
- CLAUDE.md    | 42 +++++++++++++++++++++---------------------
- index.html   |  2 +-
- netlify.toml |  2 +-
- 3 files changed, 23 insertions(+), 23 deletions(-)
+ CLAUDE.md  | 41 ++++++++++++++++++++---------------------
+ index.html | 15 ++++++++++++++-
+ 2 files changed, 34 insertions(+), 22 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3ab4fc8 Fix CSP to allow www.walletexplorer.com domain (0 seconds ago)
-- d676a69 Add WalletExplorer API integration for Bitcoin address search and attribution (2 minutes ago)
-- 5b44bdd Add Arkham attribution to address finder for complete Bitcoin addresses (10 minutes ago)
-- 23dc8e9 Fix Arkham API integration - use working intelligence endpoint (13 minutes ago)
-- 5f9610d Add arkham4 function to test different API endpoints and approaches (15 minutes ago)
-- 4ab6956 Create arkham3 function with comprehensive debugging (18 minutes ago)
-- e4bc996 Add minimal test function to debug Netlify deployment (20 minutes ago)
-- fb71186 Debug Netlify function issues - create new arkham2 function (22 minutes ago)
-- 49fe4fa Fix Netlify functions - use https module instead of fetch (23 minutes ago)
-- 807dd60 Simplify Netlify function and add test endpoint (25 minutes ago)
+- f17f73d Add user guidance for Bitcoin address search limitations (0 seconds ago)
+- 3ab4fc8 Fix CSP to allow www.walletexplorer.com domain (5 minutes ago)
+- d676a69 Add WalletExplorer API integration for Bitcoin address search and attribution (7 minutes ago)
+- 5b44bdd Add Arkham attribution to address finder for complete Bitcoin addresses (15 minutes ago)
+- 23dc8e9 Fix Arkham API integration - use working intelligence endpoint (18 minutes ago)
+- 5f9610d Add arkham4 function to test different API endpoints and approaches (20 minutes ago)
+- 4ab6956 Create arkham3 function with comprehensive debugging (23 minutes ago)
+- e4bc996 Add minimal test function to debug Netlify deployment (25 minutes ago)
+- fb71186 Debug Netlify function issues - create new arkham2 function (27 minutes ago)
+- 49fe4fa Fix Netlify functions - use https module instead of fetch (29 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
