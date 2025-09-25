@@ -3,38 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 06:28)
+## Latest Commit (Auto-updated: 2025-09-25 10:29)
 
-**Commit:** 4b5ee9b7fddd98a3b1dbd0009711a283d3725adf
+**Commit:** cbfae5191edf12afb124b670d85e71460e9cd699
 **Author:** Your Name
-**Message:** Add auto-detection of blockchain type from address pattern
+**Message:** Address finder improvements - API-based partial search and attribution
 
-- Automatically detect Ethereum addresses starting with 0x
-- Detect Bitcoin addresses starting with 1, 3, or bc1
-- Detect Tron addresses starting with T
-- Detect Solana addresses (base58 format, 32-44 chars)
-- Auto-switch chain selector to match detected address type
-- Prevents searching EVM addresses as Bitcoin addresses
+- Integrated WalletExplorer firstbits API for Bitcoin partial address search
+- Set up Netlify Functions proxy for Arkham API (avoiding CORS issues)
+- Implemented chain auto-detection based on address patterns
+- Added attribution hierarchy: Arkham → WalletExplorer → Etherscan
+- Fixed CSP headers to allow all required API endpoints
+- Removed hardcoded address databases per user requirements
+
+Note: Ethereum partial search remains limited to full addresses only
 
 ### Changed Files:
 ```
- CLAUDE.md  | 41 +++++++++++++++++++++--------------------
- index.html | 34 +++++++++++++++++++++++++++++++++-
- 2 files changed, 54 insertions(+), 21 deletions(-)
+ CLAUDE.md | 43 ++++++++++++++++++++++---------------------
+ 1 file changed, 22 insertions(+), 21 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4b5ee9b Add auto-detection of blockchain type from address pattern (0 seconds ago)
-- f17f73d Add user guidance for Bitcoin address search limitations (4 minutes ago)
-- 3ab4fc8 Fix CSP to allow www.walletexplorer.com domain (9 minutes ago)
-- d676a69 Add WalletExplorer API integration for Bitcoin address search and attribution (11 minutes ago)
-- 5b44bdd Add Arkham attribution to address finder for complete Bitcoin addresses (19 minutes ago)
-- 23dc8e9 Fix Arkham API integration - use working intelligence endpoint (22 minutes ago)
-- 5f9610d Add arkham4 function to test different API endpoints and approaches (24 minutes ago)
-- 4ab6956 Create arkham3 function with comprehensive debugging (27 minutes ago)
-- e4bc996 Add minimal test function to debug Netlify deployment (29 minutes ago)
-- fb71186 Debug Netlify function issues - create new arkham2 function (31 minutes ago)
+- cbfae51 Address finder improvements - API-based partial search and attribution (0 seconds ago)
+- 4b5ee9b Add auto-detection of blockchain type from address pattern (4 hours ago)
+- f17f73d Add user guidance for Bitcoin address search limitations (4 hours ago)
+- 3ab4fc8 Fix CSP to allow www.walletexplorer.com domain (4 hours ago)
+- d676a69 Add WalletExplorer API integration for Bitcoin address search and attribution (4 hours ago)
+- 5b44bdd Add Arkham attribution to address finder for complete Bitcoin addresses (4 hours ago)
+- 23dc8e9 Fix Arkham API integration - use working intelligence endpoint (4 hours ago)
+- 5f9610d Add arkham4 function to test different API endpoints and approaches (4 hours ago)
+- 4ab6956 Create arkham3 function with comprehensive debugging (4 hours ago)
+- e4bc996 Add minimal test function to debug Netlify deployment (5 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
