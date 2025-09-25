@@ -3,22 +3,11 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 14:56)
+## Latest Commit (Auto-updated: 2025-09-25 15:05)
 
-**Commit:** ec03da5a3408243969453bd57139da39fe4f47d1
+**Commit:** 7ecf37b886525ce589b8f7e407893d7a4c12af44
 **Author:** Your Name
-**Message:** Add write-off option to hop wizard for documenting small transactions
-
-- Added write-off checkbox and controls in Step 3 of hop wizard
-- Created createWriteoffEntryFromWizard function to handle write-off entries
-- Write-off entries record transaction hash but immediately mark funds as unrecoverable
-- Added justification categories (minimal amount, operational, untraceable, etc.)
-- Write-offs properly reduce source thread amounts without creating new threads
-- Added notation suffix '-WO' for write-off entries
-- Updated getMaxAssignableAmount to include writeoff entries in thread consumption
-- Perfect for documenting small transactions not worth tracking further
-
-Example use case: 450 HYPE thread with 300 HYPE traced, 1 HYPE can be documented with hash and written off
+**Message:** Add debug logging for write-off option visibility in hop wizard step 3
 
 🤖 Generated with Claude Code
 https://claude.ai/code
@@ -27,23 +16,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  46 ++++++++-------
- index.html | 197 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 218 insertions(+), 25 deletions(-)
+ CLAUDE.md  | 48 ++++++++++++++++++++++++++----------------------
+ index.html |  3 ++-
+ 2 files changed, 28 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ec03da5 Add write-off option to hop wizard for documenting small transactions (0 seconds ago)
-- aed125f Complete chain tracking implementation for source threads (12 minutes ago)
-- a156ab3 Store and use chain ID from source thread in hop wizard (21 minutes ago)
-- 729ea7a Fix blockchain API config scope for hop wizard lookups (26 minutes ago)
-- f4250df Fix hop wizard EVM chain transaction lookups (30 minutes ago)
-- 9b70d87 Auto-detect blockchain from source thread in hop wizard (42 minutes ago)
-- 9001b5a Fix currency dropdown for victim transactions (54 minutes ago)
-- c95401b Fix HyperEVM currency display to show HYPE instead of HyperEVM (74 minutes ago)
-- 0d43ae3 Fix currency dropdown to properly show native currencies (83 minutes ago)
-- c3d4198 Enable multi-chain wallet attribution via Etherscan API v2 (2 hours ago)
+- 7ecf37b Add debug logging for write-off option visibility in hop wizard step 3 (0 seconds ago)
+- ec03da5 Add write-off option to hop wizard for documenting small transactions (10 minutes ago)
+- aed125f Complete chain tracking implementation for source threads (22 minutes ago)
+- a156ab3 Store and use chain ID from source thread in hop wizard (30 minutes ago)
+- 729ea7a Fix blockchain API config scope for hop wizard lookups (35 minutes ago)
+- f4250df Fix hop wizard EVM chain transaction lookups (40 minutes ago)
+- 9b70d87 Auto-detect blockchain from source thread in hop wizard (52 minutes ago)
+- 9001b5a Fix currency dropdown for victim transactions (63 minutes ago)
+- c95401b Fix HyperEVM currency display to show HYPE instead of HyperEVM (84 minutes ago)
+- 0d43ae3 Fix currency dropdown to properly show native currencies (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

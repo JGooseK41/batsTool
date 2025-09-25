@@ -8090,7 +8090,6 @@ function updateFullNotationDisplayMultiple(hopNumber, entryId) {
         const entryTypes = {
             'trace': 'Outgoing Transaction',
             'swap': 'DEX/Asset Conversion',
-            'writeoff': 'Dead End (Mixer/DeFi)',
             'cold_storage': 'Still in Wallet'
         };
 
@@ -17292,11 +17291,6 @@ function showAddEntryWizard(hopNumber) {
             description: 'DEX/Asset Conversion - Funds were swapped for a different currency',
             color: '#ff9800'
         },
-        'writeoff': {
-            icon: '❌',
-            description: 'Dead End - Funds went to mixer, DeFi, or cannot be traced further',
-            color: '#e74c3c'
-        },
         'cold_storage': {
             icon: '🧊',
             description: 'Still in Wallet - Funds haven\'t moved yet (mark as cold storage)',
@@ -17685,12 +17679,21 @@ function showHopWizardStep(step) {
     const backBtn = document.getElementById('wizardBackBtn');
     const nextBtn = document.getElementById('wizardNextBtn');
     const header = document.querySelector('#hopEntryWizard .modal-header h2');
-    
+
+    // Clean up any custom buttons from Step 3
+    const existingButtons = document.getElementById('wizardActionButtons');
+    if (existingButtons) existingButtons.remove();
+
+    // Restore the Next button for steps 1 and 2
+    if (step !== 3) {
+        nextBtn.style.display = 'inline-block';
+    }
+
     // Update progress
     progress.style.width = `${step * 33}%`;
     backBtn.style.display = step > 1 ? 'inline-block' : 'none';
     header.textContent = `🧙‍♂️ Hop Entry Wizard - Step ${step} of 3`;
-    
+
     if (step === 1) {
         // Step 1: Select source threads
         const availableThreads = getAvailableSourcesForHop(wizardData.hopNumber, null);
@@ -18014,55 +18017,6 @@ function showHopWizardStep(step) {
                     <!-- Transaction details will appear here -->
                 </div>
 
-                <!-- Write-off option -->
-                <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border: 2px solid #9e9e9e; border-radius: 8px;">
-                    <label style="display: flex; align-items: flex-start; cursor: pointer;">
-                        <input type="checkbox"
-                               id="wizardWriteoff"
-                               onchange="window.hopWizardData.isWriteoff = this.checked; updateWriteoffDisplay()"
-                               ${wizardData.isWriteoff ? 'checked' : ''}
-                               style="margin-right: 10px; margin-top: 2px;">
-                        <div>
-                            <strong>🚫 Mark as Write-off</strong>
-                            <p style="margin: 5px 0; font-size: 14px; color: #666;">
-                                Document this transaction but immediately write it off as unrecoverable.
-                                Perfect for small amounts not worth tracking further.
-                            </p>
-                            ${wizardData.isWriteoff ? `
-                                <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-top: 10px;">
-                                    <strong>Write-off Mode Active</strong><br>
-                                    <small>This entry will:</small>
-                                    <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px;">
-                                        <li>Record the transaction hash and amount</li>
-                                        <li>Reduce the source thread immediately</li>
-                                        <li>Not create a new thread for further tracking</li>
-                                        <li>Be marked with notation suffix "-WO"</li>
-                                    </ul>
-                                </div>
-                            ` : ''}
-                        </div>
-                    </label>
-
-                    <div id="writeoffJustification" style="margin-top: 15px; display: ${wizardData.isWriteoff ? 'block' : 'none'};">
-                        <label style="font-weight: bold;">Write-off Justification:</label>
-                        <select id="wizardWriteoffCategory"
-                                onchange="window.hopWizardData.writeoffCategory = this.value"
-                                style="width: 100%; padding: 8px; margin-top: 5px;">
-                            <option value="minimal_amount" ${wizardData.writeoffCategory === 'minimal_amount' ? 'selected' : ''}>Minimal Amount - Not worth tracking</option>
-                            <option value="operational" ${wizardData.writeoffCategory === 'operational' ? 'selected' : ''}>Operational - Network fees/costs</option>
-                            <option value="untraceable" ${wizardData.writeoffCategory === 'untraceable' ? 'selected' : ''}>Untraceable - Lost trail</option>
-                            <option value="mixer" ${wizardData.writeoffCategory === 'mixer' ? 'selected' : ''}>Mixer/Obfuscation Service</option>
-                            <option value="scam_fee" ${wizardData.writeoffCategory === 'scam_fee' ? 'selected' : ''}>Scam Fee - Paid to accomplices</option>
-                            <option value="other" ${wizardData.writeoffCategory === 'other' ? 'selected' : ''}>Other - See notes</option>
-                        </select>
-                        <textarea id="wizardWriteoffNotes"
-                                  rows="2"
-                                  placeholder="Additional justification or notes..."
-                                  onchange="window.hopWizardData.writeoffNotes = this.value"
-                                  style="width: 100%; padding: 8px; margin-top: 10px;">${wizardData.writeoffNotes || ''}</textarea>
-                    </div>
-                </div>
-
                 <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
                     <h4 style="margin-top: 0;">Summary</h4>
                     <div style="font-size: 14px; line-height: 1.6;">
@@ -18076,23 +18030,44 @@ function showHopWizardStep(step) {
             </div>
         `;
         
-        // Change button text to indicate direct creation
-        nextBtn.textContent = 'Log Entry';
-        // Enable next button if we have required data
+        // Hide the single Next button and show dual action buttons
+        nextBtn.style.display = 'none';
+
+        // Add custom buttons for this step
+        const footerDiv = document.querySelector('.wizard-footer');
+        const existingButtons = document.getElementById('wizardActionButtons');
+        if (existingButtons) existingButtons.remove();
+
+        const actionButtons = document.createElement('div');
+        actionButtons.id = 'wizardActionButtons';
+        actionButtons.style.cssText = 'display: flex; gap: 10px;';
+
+        // Check if required data is available
+        let hasRequiredData = false;
         if (wizardData.entryMode === 'manual') {
-            // In manual mode, just need txHash and toWallet
-            nextBtn.disabled = !wizardData.txHash || !wizardData.manualData?.toWallet;
+            hasRequiredData = wizardData.txHash && wizardData.manualData?.toWallet;
         } else {
-            // In lookup mode, enable if we have txHash (txData will be fetched)
-            // If txData exists, great. If not but we have txHash, still allow proceeding
-            nextBtn.disabled = !wizardData.txHash;
+            hasRequiredData = wizardData.txHash;
         }
-        
-        // Remove the Create & Finalize button since we're streamlining
-        const createFinalizeBtn = document.getElementById('wizardCreateFinalizeBtn');
-        if (createFinalizeBtn) {
-            createFinalizeBtn.remove();
-        }
+
+        actionButtons.innerHTML = `
+            <button class="btn btn-primary"
+                    onclick="createHopEntryFromWizard()"
+                    ${!hasRequiredData ? 'disabled' : ''}
+                    style="padding: 10px 20px;">
+                ✅ Log Entry
+            </button>
+            <button class="btn btn-warning"
+                    onclick="showWriteoffConfirmation()"
+                    ${!hasRequiredData ? 'disabled' : ''}
+                    style="padding: 10px 20px; background: #ff9800; color: white; border: none;">
+                🚫 Log Write-off
+            </button>
+        `;
+
+        // Insert after the back button
+        const backBtn = document.getElementById('wizardBackBtn');
+        backBtn.parentNode.insertBefore(actionButtons, backBtn.nextSibling);
     }
     
     wizardData.step = step;
@@ -18132,17 +18107,96 @@ function hopWizardBack() {
     }
 }
 
-function updateWriteoffDisplay() {
-    const writeoffDiv = document.getElementById('writeoffJustification');
-    if (writeoffDiv) {
-        writeoffDiv.style.display = window.hopWizardData?.isWriteoff ? 'block' : 'none';
-    }
+function showWriteoffConfirmation() {
+    const wizardData = window.hopWizardData;
 
-    // Update the summary to reflect write-off status
-    const step = window.hopWizardData?.step;
-    if (step === 3) {
-        showHopWizardStep(3);  // Refresh step 3 to show write-off status
-    }
+    // Calculate total amount from allocations
+    const totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+
+    // Get currency from first thread
+    const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+    const firstThreadId = wizardData.selectedThreads[0];
+    const thread = threads.find(t => t.threadId === firstThreadId);
+    const currency = thread ? thread.currency : 'USD';
+
+    // Create confirmation dialog
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" style="background: #ff9800; color: white;">
+                <h2>🚫 Confirm Write-off</h2>
+            </div>
+
+            <div class="modal-body" style="padding: 20px;">
+                <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px;">
+                    <strong>⚠️ Write-off Confirmation</strong><br>
+                    You are about to write off <strong>${totalAmount.toLocaleString()} ${currency}</strong>
+                </div>
+
+                <p><strong>This action will:</strong></p>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Record the transaction hash: <code>${wizardData.txHash || 'Not provided'}</code></li>
+                    <li>Document the amount as unrecoverable</li>
+                    <li>Reduce the source thread by ${totalAmount.toLocaleString()} ${currency}</li>
+                    <li>NOT create a new thread for further tracking</li>
+                    <li>Mark the entry with "-WO" suffix</li>
+                </ul>
+
+                <div style="margin-top: 20px;">
+                    <label style="font-weight: bold;">Write-off Category:</label>
+                    <select id="confirmWriteoffCategory"
+                            style="width: 100%; padding: 8px; margin-top: 5px;">
+                        <option value="minimal_amount">Minimal Amount - Not worth tracking</option>
+                        <option value="operational">Operational - Network fees/costs</option>
+                        <option value="untraceable">Untraceable - Lost trail</option>
+                        <option value="mixer">Mixer/Obfuscation Service</option>
+                        <option value="scam_fee">Scam Fee - Paid to accomplices</option>
+                        <option value="other">Other - See notes</option>
+                    </select>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label style="font-weight: bold;">Justification Notes (Optional):</label>
+                    <textarea id="confirmWriteoffNotes"
+                              rows="3"
+                              placeholder="Additional justification or notes..."
+                              style="width: 100%; padding: 8px; margin-top: 5px;"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: space-between; padding: 15px;">
+                <button class="btn btn-secondary"
+                        onclick="this.closest('.modal').remove()">
+                    Cancel
+                </button>
+                <button class="btn btn-warning"
+                        style="background: #ff9800; color: white; border: none;"
+                        onclick="confirmWriteoff()">
+                    🚫 Confirm Write-off
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+
+function confirmWriteoff() {
+    // Get the write-off details from the confirmation dialog
+    const category = document.getElementById('confirmWriteoffCategory').value;
+    const notes = document.getElementById('confirmWriteoffNotes').value;
+
+    // Store in wizard data
+    window.hopWizardData.isWriteoff = true;
+    window.hopWizardData.writeoffCategory = category;
+    window.hopWizardData.writeoffNotes = notes;
+
+    // Remove the confirmation modal
+    document.querySelector('.modal').remove();
+
+    // Create the write-off entry
+    createWriteoffEntryFromWizard();
 }
 
 function closeHopWizard() {
