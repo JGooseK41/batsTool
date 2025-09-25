@@ -3,41 +3,36 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 12:32)
+## Latest Commit (Auto-updated: 2025-09-25 12:39)
 
-**Commit:** 977d9c52af5ee6da74870f54694b28357d1a056b
+**Commit:** 784011c8316389341597234e7faca1394c826df1
 **Author:** Your Name
-**Message:** Add support for 20+ EVM chains via Etherscan API v2
+**Message:** Fix EVM chain detection and remove problematic fallback URLs
 
-Added comprehensive blockchain support including:
-- HyperEVM (Chain ID: 999)
-- Avalanche C-Chain, Linea, Scroll, Mantle
-- Blast, zkSync, Gnosis, Celo
-- Moonbeam, Moonriver, Fraxtal
-- Taiko, Arbitrum Nova, BitTorrent Chain, opBNB
-
-All chains use Etherscan API v2 with chainid parameter
-Ready for transaction lookups across all supported chains
+- Updated chain detection to include all new EVM chains in lookup functions
+- Removed fallback URLs that were causing CSP violations
+- Fixed isEVMChain checks to include all supported chains
+- This resolves transaction lookup errors for new chains
 
 ### Changed Files:
 ```
- CLAUDE.md  |  45 +++++++------
- index.html | 225 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 248 insertions(+), 22 deletions(-)
+ CLAUDE.md  | 46 ++++++++++++++++++++++++----------------------
+ index.html | 21 +++++++++++++--------
+ 2 files changed, 37 insertions(+), 30 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 977d9c5 Add support for 20+ EVM chains via Etherscan API v2 (0 seconds ago)
+- 784011c Fix EVM chain detection and remove problematic fallback URLs (0 seconds ago)
+- 977d9c5 Add support for 20+ EVM chains via Etherscan API v2 (6 minutes ago)
 - cbfae51 Address finder improvements - API-based partial search and attribution (2 hours ago)
 - 4b5ee9b Add auto-detection of blockchain type from address pattern (6 hours ago)
 - f17f73d Add user guidance for Bitcoin address search limitations (6 hours ago)
 - 3ab4fc8 Fix CSP to allow www.walletexplorer.com domain (6 hours ago)
 - d676a69 Add WalletExplorer API integration for Bitcoin address search and attribution (6 hours ago)
-- 5b44bdd Add Arkham attribution to address finder for complete Bitcoin addresses (6 hours ago)
-- 23dc8e9 Fix Arkham API integration - use working intelligence endpoint (6 hours ago)
-- 5f9610d Add arkham4 function to test different API endpoints and approaches (6 hours ago)
-- 4ab6956 Create arkham3 function with comprehensive debugging (7 hours ago)
+- 5b44bdd Add Arkham attribution to address finder for complete Bitcoin addresses (7 hours ago)
+- 23dc8e9 Fix Arkham API integration - use working intelligence endpoint (7 hours ago)
+- 5f9610d Add arkham4 function to test different API endpoints and approaches (7 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
