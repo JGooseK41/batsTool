@@ -4356,7 +4356,8 @@
         };
         
         // Blockchain API configurations
-        const blockchainAPIs = {
+        // Make it globally accessible for other functions
+        const blockchainAPIs = window.blockchainAPIs = {
             bitcoin: {
                 name: 'Bitcoin',
                 hashPattern: /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$|^bc1[a-z0-9]{39,59}$/,
@@ -27780,7 +27781,11 @@ async function lookupEthereumTransaction(txHash, chainName = null) {
     if (!chainName) {
         chainName = detectBlockchainFromHash(txHash) || 'ethereum';
     }
-    const config = blockchainAPIs[chainName] || blockchainAPIs.ethereum;
+    // Use global blockchainAPIs
+    const config = window.blockchainAPIs[chainName] || window.blockchainAPIs.ethereum;
+    if (!config) {
+        throw new Error(`Configuration not found for chain: ${chainName}`);
+    }
     // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
     const corsEnabled = false;
     const corsProxyUrl = '';
@@ -27884,7 +27889,7 @@ async function lookupEthereumTransaction(txHash, chainName = null) {
 
 
 async function lookupBitcoinTransaction(txHash) {
-    const config = blockchainAPIs.bitcoin;
+    const config = window.blockchainAPIs.bitcoin;
     // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
     const corsEnabled = false;
     const corsProxyUrl = '';
@@ -27918,7 +27923,7 @@ async function lookupBitcoinTransaction(txHash) {
 }
 
 async function lookupTronTransaction(txHash) {
-    const config = blockchainAPIs.tron;
+    const config = window.blockchainAPIs.tron;
     // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
     const corsEnabled = false;
     const corsProxyUrl = '';
@@ -27951,7 +27956,7 @@ async function lookupTronTransaction(txHash) {
 }
 
 async function lookupSolanaTransaction(txHash) {
-    const config = blockchainAPIs.solana;
+    const config = window.blockchainAPIs.solana;
     // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
     const corsEnabled = false;
     const corsProxyUrl = '';
