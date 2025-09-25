@@ -3,37 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 06:04)
+## Latest Commit (Auto-updated: 2025-09-25 06:06)
 
-**Commit:** 5f9610df6a8aeb2ad98657ffb55b00d6bae4d100
+**Commit:** 23dc8e93d493b3e36d9ae3ab242ca1de126b018c
 **Author:** Your Name
-**Message:** Add arkham4 function to test different API endpoints and approaches
+**Message:** Fix Arkham API integration - use working intelligence endpoint
 
-- Test multiple endpoints to find what works
-- Show response headers from Arkham
-- Try different URL patterns
-- Better debugging of API key usage
+- Arkham's /addresses/search endpoint doesn't exist or requires different auth
+- The /intelligence/address/{address} endpoint works perfectly for attribution
+- Update proxy to return clean JSON responses for successful calls
+- Disable partial address search via Arkham until correct endpoint is found
+- Attribution for complete addresses now works through the proxy
 
 ### Changed Files:
 ```
- CLAUDE.md                    |  36 +++++++++------
- netlify/functions/arkham3.js |   3 +-
- netlify/functions/arkham4.js | 107 +++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 130 insertions(+), 16 deletions(-)
+ CLAUDE.md                    | 42 +++++++++++++++++++++---------------------
+ index.html                   | 23 ++++++-----------------
+ netlify/functions/arkham3.js | 36 ++++++++++++++++++++++++------------
+ 3 files changed, 51 insertions(+), 50 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5f9610d Add arkham4 function to test different API endpoints and approaches (0 seconds ago)
-- 4ab6956 Create arkham3 function with comprehensive debugging (3 minutes ago)
-- e4bc996 Add minimal test function to debug Netlify deployment (5 minutes ago)
-- fb71186 Debug Netlify function issues - create new arkham2 function (7 minutes ago)
-- 49fe4fa Fix Netlify functions - use https module instead of fetch (8 minutes ago)
-- 807dd60 Simplify Netlify function and add test endpoint (10 minutes ago)
-- ffe75d1 Simplify function setup and add Vercel as backup option (11 minutes ago)
-- e55e0d3 Add test page for Netlify function debugging (14 minutes ago)
-- 6456a6b Rewrite Netlify function with better error handling and native https module (15 minutes ago)
-- 773920c Fix Netlify function to handle CORS preflight OPTIONS requests (9 hours ago)
+- 23dc8e9 Fix Arkham API integration - use working intelligence endpoint (0 seconds ago)
+- 5f9610d Add arkham4 function to test different API endpoints and approaches (2 minutes ago)
+- 4ab6956 Create arkham3 function with comprehensive debugging (5 minutes ago)
+- e4bc996 Add minimal test function to debug Netlify deployment (7 minutes ago)
+- fb71186 Debug Netlify function issues - create new arkham2 function (9 minutes ago)
+- 49fe4fa Fix Netlify functions - use https module instead of fetch (11 minutes ago)
+- 807dd60 Simplify Netlify function and add test endpoint (13 minutes ago)
+- ffe75d1 Simplify function setup and add Vercel as backup option (14 minutes ago)
+- e55e0d3 Add test page for Netlify function debugging (16 minutes ago)
+- 6456a6b Rewrite Netlify function with better error handling and native https module (18 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

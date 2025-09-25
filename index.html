@@ -25257,20 +25257,47 @@ async function searchBitcoinAddresses(searchType, pattern) {
             }
         }
 
-        // Strategy 2: Try BlockCypher API for complete addresses
+        // Strategy 2: Try BlockCypher API for complete addresses AND get Arkham attribution
         if (typeof pattern === 'string' && pattern.length >= 26 && pattern.length <= 35) {
             try {
+                // First get basic address info from BlockCypher
                 const blockcypherUrl = `https://api.blockcypher.com/v1/btc/main/addrs/${pattern}/balance`;
                 const response = await fetch(blockcypherUrl).catch(() => null);
 
                 if (response && response.ok) {
                     const data = await response.json();
                     if (data.address) {
+                        let entity = 'Validated Address';
+                        let name = `Balance: ${(data.balance / 100000000).toFixed(8)} BTC`;
+
+                        // Try to get attribution from Arkham for complete address
+                        if (arkhamKey) {
+                            try {
+                                const arkhamUrl = `/.netlify/functions/arkham3?endpoint=/intelligence/address/${pattern}`;
+                                const arkhamResp = await fetch(arkhamUrl, {
+                                    headers: {
+                                        'X-Arkham-API-Key': arkhamKey
+                                    }
+                                });
+
+                                if (arkhamResp.ok) {
+                                    const arkhamData = await arkhamResp.json();
+                                    if (arkhamData.arkhamEntity) {
+                                        entity = arkhamData.arkhamEntity.name || entity;
+                                        name = `${arkhamData.arkhamEntity.name} | Balance: ${(data.balance / 100000000).toFixed(8)} BTC`;
+                                        console.log(`Found Arkham attribution for ${pattern}: ${entity}`);
+                                    }
+                                }
+                            } catch (e) {
+                                console.log('Failed to get Arkham attribution:', e);
+                            }
+                        }
+
                         addresses.push({
                             address: data.address,
                             type: 'Bitcoin Address',
-                            entity: 'Validated Address',
-                            name: `Balance: ${(data.balance / 100000000).toFixed(8)} BTC`,
+                            entity: entity,
+                            name: name,
                             firstSeen: 'Active',
                             lastSeen: new Date().toISOString().split('T')[0]
                         });
@@ -25312,6 +25339,32 @@ async function searchBitcoinAddresses(searchType, pattern) {
                 if (response && response.ok) {
                     const data = await response.json();
                     if (data && data.address && !foundAddresses.has(data.address)) {
+                        let entity = 'Unknown';
+                        let name = '';
+
+                        // Try to get Arkham attribution for this address
+                        if (arkhamKey) {
+                            try {
+                                const arkhamUrl = `/.netlify/functions/arkham3?endpoint=/intelligence/address/${data.address}`;
+                                const arkhamResp = await fetch(arkhamUrl, {
+                                    headers: {
+                                        'X-Arkham-API-Key': arkhamKey
+                                    }
+                                });
+
+                                if (arkhamResp.ok) {
+                                    const arkhamData = await arkhamResp.json();
+                                    if (arkhamData.arkhamEntity) {
+                                        entity = arkhamData.arkhamEntity.name || entity;
+                                        name = arkhamData.arkhamEntity.name || '';
+                                        console.log(`Found Arkham attribution for ${data.address}: ${entity}`);
+                                    }
+                                }
+                            } catch (e) {
+                                console.log('Failed to get Arkham attribution:', e);
+                            }
+                        }
+
                         foundAddresses.add(data.address);
                         addresses.push({
                             address: data.address,
@@ -25320,6 +25373,8 @@ async function searchBitcoinAddresses(searchType, pattern) {
                                   data.address.startsWith('bc1') ? 'Bech32' : 'Unknown',
                             balance: data.final_balance / 100000000,
                             txCount: data.n_tx,
+                            entity: entity,
+                            name: name,
                             source: 'Blockchain.info'
                         });
                     }
