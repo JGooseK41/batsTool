@@ -56,11 +56,12 @@ exports.handler = async (event) => {
                 headers: {
                     'API-Key': apiKey,
                     'Accept': 'application/json',
+                    'Content-Type': 'application/json',
                     'User-Agent': 'BATS-Tool/1.0'
                 }
             };
 
-            const req = https.get(options, (res) => {
+            const req = https.request(options, (res) => {
                 let data = '';
                 res.on('data', chunk => data += chunk);
                 res.on('end', () => {
