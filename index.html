@@ -18892,9 +18892,15 @@ function reopenHopWizard(hopNumber, entryId) {
 }
 
 function openHopEntryWizard(hopNumber) {
+    console.log('openHopEntryWizard called with hopNumber:', hopNumber);
+
     // Get hop data
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
-    if (!hop) return;
+    if (!hop) {
+        console.error('Hop not found for hopNumber:', hopNumber);
+        return;
+    }
+    console.log('Hop found:', hop);
 
     // IMPORTANT: Rebuild threads database to ensure we have latest state after any swaps
     buildAvailableThreadsIndex();
@@ -18945,18 +18951,29 @@ function openHopEntryWizard(hopNumber) {
     // Remove any existing wizard
     const existingWizard = document.getElementById('hopEntryWizard');
     if (existingWizard) {
+        console.log('Removing existing wizard');
         existingWizard.remove();
     }
+
+    console.log('About to insert wizard HTML to DOM');
+    console.log('HTML length:', wizardHTML.length);
 
     // Add wizard directly to DOM
     document.body.insertAdjacentHTML('beforeend', wizardHTML);
 
+    console.log('Wizard HTML inserted, checking for element...');
+
     // Verify wizard was created
     const wizardElement = document.getElementById('hopEntryWizard');
+    console.log('Wizard element found:', !!wizardElement);
+
     if (!wizardElement) {
         console.error('Failed to create hop entry wizard');
+        console.error('Body children count:', document.body.children.length);
         return;
     }
+
+    console.log('Wizard created successfully, showing first step');
 
     // Show first step
     showHopWizardStep(1);

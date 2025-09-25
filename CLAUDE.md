@@ -3,16 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 17:08)
+## Latest Commit (Auto-updated: 2025-09-25 17:09)
 
-**Commit:** 69177788773813c2c06b82dcf2f3e220fcfc94c8
+**Commit:** e6a973f7332787328929391ffe3d9d28787a1c4f
 **Author:** Your Name
-**Message:** Fix wizard not appearing by directly inserting HTML to DOM
+**Message:** Clarify wizard creation - direct DOM insertion is correct approach
 
-- Replaced createCenteredModal with direct DOM insertion
-- Added verification check after wizard creation
-- Properly removes any existing wizard before creating new one
-- Fixes issue where wizard element was not found after creation
+The issue was caused by consolidating two wizard functions with different HTML structures:
+- Old showHopEntryWizard used class='modal' style='display:block'
+- New openHopEntryWizard used class='modal show'
+- createCenteredModal regex only matched the old format
+
+Direct DOM insertion is simpler and more reliable.
 
 🤖 Generated with Claude Code
 https://claude.ai/code
@@ -21,23 +23,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 31 ++++++++++++++-----------------
- index.html | 18 ++++++++++++++++--
- 2 files changed, 30 insertions(+), 19 deletions(-)
+ CLAUDE.md  | 29 ++++++++++++++---------------
+ index.html |  2 +-
+ 2 files changed, 15 insertions(+), 16 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6917778 Fix wizard not appearing by directly inserting HTML to DOM (1 second ago)
-- cd0f815 Fix hop wizard error by removing duplicate wizard creation code (4 minutes ago)
-- ab56a50 Clean up hop wizard buttons and fix Log Entry functionality (9 minutes ago)
+- e6a973f Clarify wizard creation - direct DOM insertion is correct approach (1 second ago)
+- 6917778 Fix wizard not appearing by directly inserting HTML to DOM (88 seconds ago)
+- cd0f815 Fix hop wizard error by removing duplicate wizard creation code (5 minutes ago)
+- ab56a50 Clean up hop wizard buttons and fix Log Entry functionality (10 minutes ago)
 - 5757439 Redesign write-off workflow with dedicated button and confirmation (2 hours ago)
 - 7ecf37b Add debug logging for write-off option visibility in hop wizard step 3 (2 hours ago)
 - ec03da5 Add write-off option to hop wizard for documenting small transactions (2 hours ago)
 - aed125f Complete chain tracking implementation for source threads (2 hours ago)
 - a156ab3 Store and use chain ID from source thread in hop wizard (3 hours ago)
 - 729ea7a Fix blockchain API config scope for hop wizard lookups (3 hours ago)
-- f4250df Fix hop wizard EVM chain transaction lookups (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
