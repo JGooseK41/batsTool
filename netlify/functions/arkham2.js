@@ -1,7 +1,8 @@
-// Netlify Function for Arkham API proxy
+// Arkham API proxy - renamed to arkham2 to avoid cache issues
 const https = require('https');
 
 exports.handler = async (event) => {
+    // CORS headers
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, X-Arkham-API-Key',
@@ -9,23 +10,27 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json'
     };
 
-    // Handle preflight
+    // Handle OPTIONS
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
 
+    // Allow all methods for testing
     try {
         const params = event.queryStringParameters || {};
         const { endpoint, ...otherParams } = params;
 
         if (!endpoint) {
             return {
-                statusCode: 400,
+                statusCode: 200,
                 headers,
                 body: JSON.stringify({
-                    error: 'Missing endpoint parameter',
-                    method: event.httpMethod,
-                    params: params
+                    error: 'Missing endpoint',
+                    debug: {
+                        method: event.httpMethod,
+                        params: params,
+                        path: event.path
+                    }
                 })
             };
         }
@@ -34,14 +39,11 @@ exports.handler = async (event) => {
                       event.headers['X-Arkham-API-Key'] ||
                       'd377a526-c9ea-4cb6-a647-775559583ff6';
 
-        // Build URL
         const queryString = new URLSearchParams(otherParams).toString();
         const arkhamPath = `${endpoint}${queryString ? '?' + queryString : ''}`;
 
-        console.log('Proxying to Arkham:', arkhamPath);
-
-        // Make request using https module
-        const arkhamData = await new Promise((resolve, reject) => {
+        // Make HTTPS request
+        const result = await new Promise((resolve) => {
             const options = {
                 hostname: 'api.arkhamintelligence.com',
                 path: arkhamPath,
@@ -55,24 +57,32 @@ exports.handler = async (event) => {
             https.get(options, (res) => {
                 let data = '';
                 res.on('data', chunk => data += chunk);
-                res.on('end', () => resolve({ status: res.statusCode, data }));
-            }).on('error', reject);
+                res.on('end', () => resolve({
+                    status: res.statusCode,
+                    data: data
+                }));
+            }).on('error', (err) => {
+                resolve({
+                    status: 500,
+                    data: JSON.stringify({ error: err.message })
+                });
+            });
         });
 
         return {
-            statusCode: arkhamData.status,
+            statusCode: result.status,
             headers,
-            body: arkhamData.data
+            body: result.data
         };
 
     } catch (error) {
-        console.error('Arkham proxy error:', error);
         return {
-            statusCode: 500,
+            statusCode: 200,
             headers,
             body: JSON.stringify({
-                error: 'Proxy failed',
-                message: error.message
+                error: 'Exception caught',
+                message: error.message,
+                method: event.httpMethod
             })
         };
     }

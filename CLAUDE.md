@@ -3,37 +3,37 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 05:53)
+## Latest Commit (Auto-updated: 2025-09-25 05:55)
 
-**Commit:** 807dd6079593c631f1653f76e2103edb4a6d9729
+**Commit:** 49fe4fa13b4fe8329ad68e81cf55ba39e4d4352d
 **Author:** Your Name
-**Message:** Simplify Netlify function and add test endpoint
+**Message:** Fix Netlify functions - use https module instead of fetch
 
-- Rewrite arkham.js to use simpler syntax with fetch
-- Add hello.js test function to verify Netlify Functions work
-- Remove unnecessary complexity from function code
-- Better error logging
+- Replace fetch with Node.js https module (fetch not available in Netlify runtime)
+- Add better error messages showing method and params
+- Functions are confirmed deployed (getting 405 responses)
+- Should now properly proxy Arkham API requests
 
 ### Changed Files:
 ```
- CLAUDE.md                   |  29 ++++++++-----
- netlify/functions/arkham.js | 101 ++++++++++++++------------------------------
- netlify/functions/hello.js  |  16 +++++++
- 3 files changed, 67 insertions(+), 79 deletions(-)
+ CLAUDE.md                   | 33 +++++++++++-------------
+ netlify/functions/arkham.js | 63 ++++++++++++++++++++++++++++-----------------
+ netlify/functions/hello.js  |  2 ++
+ 3 files changed, 56 insertions(+), 42 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 807dd60 Simplify Netlify function and add test endpoint (0 seconds ago)
-- ffe75d1 Simplify function setup and add Vercel as backup option (50 seconds ago)
-- e55e0d3 Add test page for Netlify function debugging (4 minutes ago)
-- 6456a6b Rewrite Netlify function with better error handling and native https module (5 minutes ago)
+- 49fe4fa Fix Netlify functions - use https module instead of fetch (0 seconds ago)
+- 807dd60 Simplify Netlify function and add test endpoint (2 minutes ago)
+- ffe75d1 Simplify function setup and add Vercel as backup option (3 minutes ago)
+- e55e0d3 Add test page for Netlify function debugging (6 minutes ago)
+- 6456a6b Rewrite Netlify function with better error handling and native https module (7 minutes ago)
 - 773920c Fix Netlify function to handle CORS preflight OPTIONS requests (8 hours ago)
 - bd8aff8 Add Netlify Function proxy for Arkham API to avoid CORS issues (8 hours ago)
-- d75e0a1 Add CORS error handling to all Arkham API calls (8 hours ago)
+- d75e0a1 Add CORS error handling to all Arkham API calls (9 hours ago)
 - ab6db58 Fix CSP headers blocking Arkham API calls (9 hours ago)
 - e6958f1 Update CSP to include additional API endpoints (9 hours ago)
-- 2292952 Add Arkham Intelligence API for wallet attribution in main tracing tool (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
