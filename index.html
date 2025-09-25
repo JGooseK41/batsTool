@@ -25527,7 +25527,8 @@ async function searchEVMAddresses(chain, searchType, pattern) {
 
     try {
         // First, try Arkham Intelligence API if we have a key
-        const arkhamKey = localStorage.getItem('bats_arkham_api_key');
+        // Use default key as fallback for entity attribution
+        const arkhamKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
         if (arkhamKey) {
             try {
                 // Arkham API for address search
@@ -25586,11 +25587,42 @@ async function searchEVMAddresses(chain, searchType, pattern) {
                     const data = await response.json();
                     if (data.status === '1' && data.result !== '0') {
                         // Valid address with balance
+                        // Try to get contract name if it's a contract
+                        let contractName = '';
+                        let entity = 'Unknown';
+
+                        try {
+                            const contractUrl = `${apiUrl}?module=contract&action=getsourcecode&address=${pattern}&apikey=${apiKey}`;
+                            const contractResponse = await fetch(contractUrl);
+                            if (contractResponse.ok) {
+                                const contractData = await contractResponse.json();
+                                if (contractData.status === '1' && contractData.result[0]) {
+                                    contractName = contractData.result[0].ContractName || '';
+                                    // Common contract names to entity mapping
+                                    if (contractName.toLowerCase().includes('tether')) entity = 'Tether (USDT)';
+                                    else if (contractName.toLowerCase().includes('usdc')) entity = 'Circle (USDC)';
+                                    else if (contractName.toLowerCase().includes('uniswap')) entity = 'Uniswap';
+                                    else if (contractName.toLowerCase().includes('compound')) entity = 'Compound';
+                                    else if (contractName.toLowerCase().includes('aave')) entity = 'Aave';
+                                    else if (contractName === '') entity = 'EOA (Wallet)';
+                                    else entity = contractName;
+                                }
+                            }
+                        } catch (e) {
+                            console.log('Could not fetch contract info:', e);
+                        }
+
                         addresses.push({
                             address: pattern,
-                            type: 'EVM',
+                            type: contractName ? 'Contract' : 'EOA',
+                            entity: entity,
+                            name: contractName,
                             balance: parseFloat(data.result) / 1e18,
-                            source: 'Direct Lookup'
+                            source: 'Etherscan',
+                            isToken: contractName && (contractName.toLowerCase().includes('token') ||
+                                                     contractName.toLowerCase().includes('usdt') ||
+                                                     contractName.toLowerCase().includes('usdc') ||
+                                                     contractName.toLowerCase().includes('dai'))
                         });
                     }
                 }
@@ -26004,10 +26036,12 @@ function displayAddressFinderResults(addresses, chain) {
                             Copy
                         </button>
                     </div>
-                    <div style="display: flex; gap: 20px; font-size: 12px; color: #666;">
+                    <div style="display: flex; gap: 20px; font-size: 12px; color: #666; flex-wrap: wrap;">
                         <span>Type: <strong>${addr.type || 'Unknown'}</strong></span>
-                        ${addr.entity && addr.entity !== 'Unknown' ? `<span style="color: #e74c3c; font-weight: bold;">Entity: <strong style="color: #c0392b;">${addr.entity}</strong></span>` : ''}
-                        ${addr.name ? `<span>Label: <strong>${addr.name}</strong></span>` : ''}
+                        ${addr.name && addr.type === 'Contract' ? `<span style="color: #9b59b6; font-weight: bold;">📜 Contract: <strong style="color: #8e44ad;">${addr.name}</strong></span>` : ''}
+                        ${addr.entity && addr.entity !== 'Unknown' ? `<span style="color: #e74c3c; font-weight: bold;">🏢 Entity: <strong style="color: #c0392b;">${addr.entity}</strong></span>` : ''}
+                        ${addr.isToken ? `<span style="color: #27ae60; font-weight: bold;">🪙 Token</span>` : ''}
+                        ${addr.name && addr.type !== 'Contract' ? `<span>Label: <strong>${addr.name}</strong></span>` : ''}
                         <span>Balance: <strong>${addr.balance || 'Unknown'}</strong></span>
                         <span>Txs: <strong>${addr.txCount || 'Unknown'}</strong></span>
                     </div>
