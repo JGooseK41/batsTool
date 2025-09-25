@@ -17806,7 +17806,7 @@ function showHopWizardStep(step) {
                                    id="wizardTxHash"
                                    placeholder="Paste transaction hash here"
                                    value="${wizardData.txHash || ''}"
-                                   onchange="window.hopWizardData.txHash = this.value; if(typeof checkWizardButtonState === 'function') checkWizardButtonState();"
+                                   onchange="window.hopWizardData.txHash = this.value; updateStep3Buttons();"
                                    style="flex: 1; padding: 12px; font-size: 16px;">
                             <button class="btn btn-primary" onclick="lookupWizardTransaction()">
                                 🔍 Lookup
@@ -17931,12 +17931,14 @@ function showHopWizardStep(step) {
         const footerButtons = document.getElementById('wizardFooterButtons');
 
         // Check if required data is available
+        console.log('Checking required data - txHash:', wizardData.txHash, 'entryMode:', wizardData.entryMode);
         let hasRequiredData = false;
         if (wizardData.entryMode === 'manual') {
             hasRequiredData = wizardData.txHash && wizardData.manualData?.toWallet;
         } else {
-            hasRequiredData = wizardData.txHash;
+            hasRequiredData = !!wizardData.txHash;
         }
+        console.log('hasRequiredData:', hasRequiredData);
 
         // Clear and recreate buttons with proper event listeners
         footerButtons.innerHTML = '';
@@ -18024,6 +18026,38 @@ window.hopWizardBack = function() {
     if (wizardData && wizardData.step > 1) {
         wizardData.step = wizardData.step - 1;
         showHopWizardStep(wizardData.step);
+    }
+}
+
+// Update Step 3 buttons when txHash changes
+window.updateStep3Buttons = function() {
+    const wizardData = window.hopWizardData;
+    if (!wizardData || wizardData.currentStep !== 3) return;
+
+    console.log('Updating Step 3 buttons, txHash:', wizardData.txHash);
+
+    // Find the buttons
+    const logEntryBtn = document.querySelector('#wizardFooterButtons button:nth-child(2)');
+    const writeoffBtn = document.querySelector('#wizardFooterButtons button:nth-child(3)');
+
+    // Check if we have required data
+    let hasRequiredData = false;
+    if (wizardData.entryMode === 'manual') {
+        hasRequiredData = wizardData.txHash && wizardData.manualData?.toWallet;
+    } else {
+        hasRequiredData = !!wizardData.txHash;
+    }
+
+    console.log('Updating buttons - hasRequiredData:', hasRequiredData);
+
+    // Enable/disable buttons
+    if (logEntryBtn) {
+        logEntryBtn.disabled = !hasRequiredData;
+        console.log('Log Entry button disabled:', logEntryBtn.disabled);
+    }
+    if (writeoffBtn) {
+        writeoffBtn.disabled = !hasRequiredData;
+        console.log('Write-off button disabled:', writeoffBtn.disabled);
     }
 }
 
@@ -20022,6 +20056,12 @@ async function lookupWizardTransaction() {
         }
     }
 
+    // Update Step 3 buttons if we're in Step 3
+    if (window.hopWizardData && window.hopWizardData.currentStep === 3 && window.updateStep3Buttons) {
+        window.hopWizardData.txHash = txHash; // Store the hash
+        window.updateStep3Buttons();
+    }
+
     } catch (error) {
         console.error('Transaction lookup error:', error);
 
@@ -20187,6 +20227,11 @@ function confirmWizardOutputSelection() {
     `;
     
     document.getElementById('wizardNextBtn').disabled = false;
+
+    // Update Step 3 buttons if we're in Step 3
+    if (window.hopWizardData && window.hopWizardData.currentStep === 3 && window.updateStep3Buttons) {
+        window.updateStep3Buttons();
+    }
 }
 
 // Keep the old function for backward compatibility but update it
