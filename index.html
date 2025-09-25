@@ -17862,8 +17862,9 @@ function showHopWizardStep(step) {
         
     } else if (step === 3) {
         // Step 3: Transaction details
+        console.log('Showing hop wizard step 3 with write-off option');
         const isHop1 = wizardData.hopNumber === 1;
-        
+
         content.innerHTML = `
             <h3>Step 3: Transaction Details</h3>
             ${window.expectingSwapEntry ? `

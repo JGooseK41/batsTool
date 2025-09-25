@@ -3,18 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 14:44)
+## Latest Commit (Auto-updated: 2025-09-25 14:56)
 
-**Commit:** aed125f5b7e3095be446e083f1dd034157423db7
+**Commit:** ec03da5a3408243969453bd57139da39fe4f47d1
 **Author:** Your Name
-**Message:** Complete chain tracking implementation for source threads
+**Message:** Add write-off option to hop wizard for documenting small transactions
 
-- Added chainId and chainName to thread data structure in buildAvailableThreadsIndex
-- Updated getAvailableSourcesForHop to include chain info in returned threads
-- Modified updateWizardThreadSelection to detect and store chain from selected threads
-- Enhanced reopenHopWizard to detect chain from existing entry data
-- Chain information now properly propagates through thread references
-- Hop wizard automatically detects correct blockchain for transaction lookups
+- Added write-off checkbox and controls in Step 3 of hop wizard
+- Created createWriteoffEntryFromWizard function to handle write-off entries
+- Write-off entries record transaction hash but immediately mark funds as unrecoverable
+- Added justification categories (minimal amount, operational, untraceable, etc.)
+- Write-offs properly reduce source thread amounts without creating new threads
+- Added notation suffix '-WO' for write-off entries
+- Updated getMaxAssignableAmount to include writeoff entries in thread consumption
+- Perfect for documenting small transactions not worth tracking further
+
+Example use case: 450 HYPE thread with 300 HYPE traced, 1 HYPE can be documented with hash and written off
 
 🤖 Generated with Claude Code
 https://claude.ai/code
@@ -23,23 +27,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 40 ++++++++++++++--------------
- index.html | 90 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 103 insertions(+), 27 deletions(-)
+ CLAUDE.md  |  46 ++++++++-------
+ index.html | 197 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 218 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- aed125f Complete chain tracking implementation for source threads (0 seconds ago)
-- a156ab3 Store and use chain ID from source thread in hop wizard (9 minutes ago)
-- 729ea7a Fix blockchain API config scope for hop wizard lookups (14 minutes ago)
-- f4250df Fix hop wizard EVM chain transaction lookups (18 minutes ago)
-- 9b70d87 Auto-detect blockchain from source thread in hop wizard (30 minutes ago)
-- 9001b5a Fix currency dropdown for victim transactions (42 minutes ago)
-- c95401b Fix HyperEVM currency display to show HYPE instead of HyperEVM (63 minutes ago)
-- 0d43ae3 Fix currency dropdown to properly show native currencies (71 minutes ago)
-- c3d4198 Enable multi-chain wallet attribution via Etherscan API v2 (88 minutes ago)
-- 10f9d12 Add comprehensive multi-chain token support (2 hours ago)
+- ec03da5 Add write-off option to hop wizard for documenting small transactions (0 seconds ago)
+- aed125f Complete chain tracking implementation for source threads (12 minutes ago)
+- a156ab3 Store and use chain ID from source thread in hop wizard (21 minutes ago)
+- 729ea7a Fix blockchain API config scope for hop wizard lookups (26 minutes ago)
+- f4250df Fix hop wizard EVM chain transaction lookups (30 minutes ago)
+- 9b70d87 Auto-detect blockchain from source thread in hop wizard (42 minutes ago)
+- 9001b5a Fix currency dropdown for victim transactions (54 minutes ago)
+- c95401b Fix HyperEVM currency display to show HYPE instead of HyperEVM (74 minutes ago)
+- 0d43ae3 Fix currency dropdown to properly show native currencies (83 minutes ago)
+- c3d4198 Enable multi-chain wallet attribution via Etherscan API v2 (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
