@@ -25134,27 +25134,86 @@ async function searchBitcoinAddresses(searchType, pattern) {
     const foundAddresses = new Set(); // Prevent duplicates
 
     try {
-        // IMPORTANT: Bitcoin blockchain doesn't have native partial address search
-        // We can only validate COMPLETE addresses or use specialized services
+        // Check if we have Arkham API key for partial searches
+        const arkhamKey = localStorage.getItem('bats_arkham_api_key');
 
-        // For partial addresses, provide guidance
-        if (pattern.length < 26) {
-            console.log(`Pattern too short for Bitcoin address validation. Bitcoin addresses are typically 26-35 characters. Current pattern: ${pattern.length} chars`);
+        // Only show guidance if we don't have Arkham API and pattern is too short
+        if (!arkhamKey && pattern.length < 26) {
+            console.log(`Pattern too short without Arkham API. Bitcoin addresses are typically 26-35 characters. Current pattern: ${pattern.length} chars`);
 
-            // Return informative message for UI
-            if (addresses.length === 0) {
-                return [{
-                    address: `Need ${26 - pattern.length} more characters`,
-                    type: 'Info',
-                    entity: 'Partial Address',
-                    name: 'Bitcoin addresses are 26-35 characters',
-                    firstSeen: 'N/A',
-                    lastSeen: 'Provide complete address to search'
-                }];
+            // Return informative message for UI only if no Arkham API
+            return [{
+                address: `Need ${26 - pattern.length} more characters`,
+                type: 'Info',
+                entity: 'No Arkham API configured',
+                name: 'Configure Arkham API key in settings for partial search',
+                firstSeen: 'Or provide complete address (26-35 chars)',
+                lastSeen: 'Bitcoin addresses need 26+ characters'
+            }];
+        }
+
+        // Strategy 1: Try Arkham Intelligence API FIRST (best for partial matches)
+        if (arkhamKey && pattern.length >= 3) {
+            try {
+                console.log(`Searching Arkham for pattern: ${pattern}`);
+
+                // Arkham supports partial address search and has excellent attribution
+                const arkhamUrl = `https://api.arkhamintelligence.com/addresses/search?q=${encodeURIComponent(pattern)}&chains=bitcoin`;
+                const arkhamResponse = await fetch(arkhamUrl, {
+                    method: 'GET',
+                    headers: {
+                        'API-Key': arkhamKey,
+                        'Accept': 'application/json'
+                    }
+                }).catch(err => {
+                    console.log('Arkham API request failed:', err);
+                    return null;
+                });
+
+                if (arkhamResponse && arkhamResponse.ok) {
+                    const arkhamData = await arkhamResponse.json();
+                    if (arkhamData && arkhamData.addresses) {
+                        console.log(`Arkham found ${arkhamData.addresses.length} addresses for pattern: ${pattern}`);
+
+                        for (const addr of arkhamData.addresses) {
+                            // Check if address matches our search pattern based on search type
+                            let matchesPattern = false;
+
+                            if (searchType === 'prefix') {
+                                matchesPattern = addr.address.toLowerCase().startsWith(pattern.toLowerCase());
+                            } else if (searchType === 'suffix') {
+                                matchesPattern = addr.address.toLowerCase().endsWith(pattern.toLowerCase());
+                            } else if (searchType === 'contains') {
+                                matchesPattern = addr.address.toLowerCase().includes(pattern.toLowerCase());
+                            } else if (searchType === 'both' && pattern.prefix && pattern.suffix) {
+                                matchesPattern = addr.address.toLowerCase().startsWith(pattern.prefix.toLowerCase()) &&
+                                               addr.address.toLowerCase().endsWith(pattern.suffix.toLowerCase());
+                            }
+
+                            if (matchesPattern && !foundAddresses.has(addr.address)) {
+                                foundAddresses.add(addr.address);
+                                addresses.push({
+                                    address: addr.address,
+                                    type: addr.address.startsWith('1') ? 'P2PKH' :
+                                          addr.address.startsWith('3') ? 'P2SH' :
+                                          addr.address.startsWith('bc1') ? 'Bech32' : 'Bitcoin',
+                                    entity: addr.entity || addr.name || 'Unknown',
+                                    name: addr.label || addr.name || '',
+                                    firstSeen: addr.firstSeen || 'Unknown',
+                                    lastSeen: addr.lastSeen || new Date().toISOString().split('T')[0]
+                                });
+                            }
+                        }
+                    }
+                } else if (arkhamResponse) {
+                    console.log('Arkham API response not OK:', arkhamResponse.status);
+                }
+            } catch (e) {
+                console.log('Arkham search error:', e);
             }
         }
 
-        // Strategy 1: Try BlockCypher API for complete addresses
+        // Strategy 2: Try BlockCypher API for complete addresses
         if (pattern.length >= 26 && pattern.length <= 35) {
             try {
                 const blockcypherUrl = `https://api.blockcypher.com/v1/btc/main/addrs/${pattern}/balance`;
@@ -25189,53 +25248,7 @@ async function searchBitcoinAddresses(searchType, pattern) {
             }
         }
 
-        // Strategy 2: Try Arkham Intelligence API (best for attribution and partial matches)
-        const arkhamKey = localStorage.getItem('bats_arkham_api_key');
-        if (arkhamKey && pattern.length >= 3) {
-            try {
-                // Arkham supports partial address search and has excellent attribution
-                const arkhamUrl = `https://api.arkhamintelligence.com/addresses/search?q=${encodeURIComponent(pattern)}&chains=bitcoin`;
-                const arkhamResponse = await fetch(arkhamUrl, {
-                    method: 'GET',
-                    headers: {
-                        'API-Key': arkhamKey,
-                        'Accept': 'application/json'
-                    }
-                }).catch(err => {
-                    console.log('Arkham API request failed:', err);
-                    return null;
-                });
-
-                if (arkhamResponse && arkhamResponse.ok) {
-                    const arkhamData = await arkhamResponse.json();
-                    if (arkhamData && arkhamData.addresses) {
-                        console.log(`Arkham found ${arkhamData.addresses.length} addresses for pattern: ${pattern}`);
-                        for (const addr of arkhamData.addresses) {
-                            // Check if address matches our search pattern
-                            const matchesPattern =
-                                (searchType === 'prefix' && addr.address.startsWith(pattern)) ||
-                                (searchType === 'suffix' && addr.address.endsWith(pattern)) ||
-                                (searchType === 'contains' && addr.address.includes(pattern));
-
-                            if (matchesPattern && !foundAddresses.has(addr.address)) {
-                                foundAddresses.add(addr.address);
-                                addresses.push({
-                                    address: addr.address,
-                                    type: addr.address.startsWith('1') ? 'P2PKH' :
-                                          addr.address.startsWith('3') ? 'P2SH' :
-                                          addr.address.startsWith('bc1') ? 'Bech32' : 'Unknown',
-                                    label: addr.name || addr.label || '',
-                                    entity: addr.entity || '',
-                                    source: 'Arkham Intelligence'
-                                });
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                console.log('Arkham search error:', e);
-            }
-        }
+        // (Arkham API already checked above as Strategy 1)
 
         // Strategy 2: For complete addresses (26+ chars), use blockchain.info
         if (pattern.length >= 26 && !foundAddresses.has(pattern)) {

@@ -3,32 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 20:37)
+## Latest Commit (Auto-updated: 2025-09-24 20:43)
 
-**Commit:** c0fceabb57cf69984cf43ccda8e3308da414f5d5
+**Commit:** 6a50c4912b3ae326aa456f6092ada8be6bd38b1e
 **Author:** Your Name
-**Message:** Add comprehensive Solana network support to BATS tool
+**Message:** Fix address finder API issues and add proper CSP headers
 
-- Added Solana to address finder with known addresses database (exchanges, SPL tokens, protocols)
-- Implemented Solana address search functionality with pattern matching
-- Enhanced Solana transaction parsing to handle SPL token transfers (USDC, USDT, BONK, etc.)
-- Improved transaction parser to handle multiple transfers and token balance changes
-- Added test pages for API verification (test-apis.html, test-solana-apis.html)
-- Solana now fully integrated in victim setup and hop transaction tracking
-- Support for both native SOL and SPL token transfers in investigation workflow
+- Added Content-Security-Policy meta tag to allow all necessary API endpoints
+- Fixed CSP violations by allowing mempool.space, Solana, and other blockchain APIs
+- Improved Bitcoin address search to only use APIs for complete addresses (26+ chars)
+- Added user guidance for partial addresses explaining Bitcoin address requirements
+- Removed experimental/failing API calls that were causing 404 errors
+- BlockCypher API now used for complete address validation
+- Clear messaging when addresses are too short for blockchain validation
 
 ### Changed Files:
 ```
- CLAUDE.md             |  64 ++++--
- index.html            | 569 ++++++++++++++++++++++++++++++++++++++++++++++----
- test-apis.html        | 322 ++++++++++++++++++++++++++++
- test-solana-apis.html | 536 +++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 1423 insertions(+), 68 deletions(-)
+ CLAUDE.md  | 47 +++++++++++++++++----------------
+ index.html | 88 ++++++++++++++++++++++++++++++++++++++------------------------
+ 2 files changed, 79 insertions(+), 56 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c0fceab Add comprehensive Solana network support to BATS tool (0 seconds ago)
+- 6a50c49 Fix address finder API issues and add proper CSP headers (0 seconds ago)
+- c0fceab Add comprehensive Solana network support to BATS tool (6 minutes ago)
 - a8a484b Improve address search to handle partial addresses correctly (10 hours ago)
 - da2eaa1 Fix address search by using direct API calls without CORS proxies (10 hours ago)
 - b2d0e08 Fix variable shadowing issue preventing token data from being passed to parseResponse (10 hours ago)
@@ -37,7 +36,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 2cb002c Fix bulk upload token transfer detection for all EVM chains (10 hours ago)
 - ad194ac Fix bulk upload API calls and add error handling for extension interference (10 hours ago)
 - 140cd3f Add bulk upload test file and complete implementation (10 hours ago)
-- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (10 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
