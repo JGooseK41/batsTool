@@ -18084,6 +18084,7 @@ window.showWriteoffConfirmation = function() {
     // Create confirmation dialog
     const modal = document.createElement('div');
     modal.className = 'modal show';
+    modal.id = 'writeoffConfirmationModal';
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header" style="background: #ff9800; color: white;">
@@ -18129,7 +18130,7 @@ window.showWriteoffConfirmation = function() {
 
             <div class="modal-footer" style="display: flex; justify-content: space-between; padding: 15px;">
                 <button class="btn btn-secondary"
-                        onclick="this.closest('.modal').remove()">
+                        onclick="document.getElementById('writeoffConfirmationModal').remove()">
                     Cancel
                 </button>
                 <button class="btn btn-warning"
@@ -18145,6 +18146,14 @@ window.showWriteoffConfirmation = function() {
 }
 
 window.confirmWriteoff = function() {
+    // Check if wizard data exists
+    if (!window.hopWizardData) {
+        console.error('Wizard data lost - cannot confirm write-off');
+        // Remove all modals to clean up
+        document.querySelectorAll('.modal').forEach(m => m.remove());
+        return;
+    }
+
     // Get the write-off details from the confirmation dialog
     const category = document.getElementById('confirmWriteoffCategory').value;
     const notes = document.getElementById('confirmWriteoffNotes').value;
@@ -18154,8 +18163,18 @@ window.confirmWriteoff = function() {
     window.hopWizardData.writeoffCategory = category;
     window.hopWizardData.writeoffNotes = notes;
 
-    // Remove the confirmation modal
-    document.querySelector('.modal').remove();
+    // Remove ONLY the confirmation modal
+    const confirmModal = document.getElementById('writeoffConfirmationModal');
+    if (confirmModal) {
+        confirmModal.remove();
+    } else {
+        console.error('Confirmation modal not found - trying to clean up');
+        // Fallback: remove the last modal
+        const modals = document.querySelectorAll('.modal');
+        if (modals.length > 1) {
+            modals[modals.length - 1].remove();
+        }
+    }
 
     // Create the write-off entry
     createWriteoffEntryFromWizard();
