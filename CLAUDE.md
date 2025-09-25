@@ -3,20 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 16:59)
+## Latest Commit (Auto-updated: 2025-09-25 17:04)
 
-**Commit:** ab56a504eb8f80a33b9afa6aab2bd977bf31b54a
+**Commit:** cd0f8150bbce1a37762619a2ea17b23590f5f43e
 **Author:** Your Name
-**Message:** Clean up hop wizard buttons and fix Log Entry functionality
+**Message:** Fix hop wizard error by removing duplicate wizard creation code
 
-- Fixed Log Entry button by using hopWizardNext() instead of direct function call
-- Removed 'Skip This Time' button and related functionality
-- Simplified wizard footer to only show relevant buttons
-- Reorganized Step 3 buttons with proper spacing across footer
-- Changed write-off button color to gray (#9e9e9e) to match abandoned wallet theme
-- Properly restore standard buttons when navigating back from Step 3
-
-Button layout in Step 3: [Back] [Log Entry] [Log Write-off] evenly spaced
+- Removed old duplicate showHopEntryWizard implementation
+- Function now correctly redirects to openHopEntryWizard
+- Fixed 'Cannot set properties of null' error for wizardFooterButtons
+- Added null check for footerButtons element
+- Cleaned up legacy wizard HTML structure
 
 🤖 Generated with Claude Code
 https://claude.ai/code
@@ -25,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 45 +++++++++++++++++++++++++++----------------
- index.html | 64 ++++++++++++++++++++++++++------------------------------------
- 2 files changed, 56 insertions(+), 53 deletions(-)
+ CLAUDE.md  |  50 ++++++++++++--------------
+ index.html | 120 +++++--------------------------------------------------------
+ 2 files changed, 31 insertions(+), 139 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ab56a50 Clean up hop wizard buttons and fix Log Entry functionality (0 seconds ago)
+- cd0f815 Fix hop wizard error by removing duplicate wizard creation code (0 seconds ago)
+- ab56a50 Clean up hop wizard buttons and fix Log Entry functionality (5 minutes ago)
 - 5757439 Redesign write-off workflow with dedicated button and confirmation (2 hours ago)
 - 7ecf37b Add debug logging for write-off option visibility in hop wizard step 3 (2 hours ago)
 - ec03da5 Add write-off option to hop wizard for documenting small transactions (2 hours ago)
 - aed125f Complete chain tracking implementation for source threads (2 hours ago)
 - a156ab3 Store and use chain ID from source thread in hop wizard (2 hours ago)
-- 729ea7a Fix blockchain API config scope for hop wizard lookups (2 hours ago)
+- 729ea7a Fix blockchain API config scope for hop wizard lookups (3 hours ago)
 - f4250df Fix hop wizard EVM chain transaction lookups (3 hours ago)
 - 9b70d87 Auto-detect blockchain from source thread in hop wizard (3 hours ago)
-- 9001b5a Fix currency dropdown for victim transactions (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
