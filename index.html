@@ -24525,16 +24525,49 @@ function updateChainDisplay() {
 function openBlockchainLookup(hopNumber, entryId) {
     // Store context for applying data later
     targetEntryContext = { hopNumber, entryId };
-    
+
     // Clear previous data
     currentTxData = null;
     document.getElementById('txHashInput').value = '';
-    document.getElementById('chainSelector').value = '';
     document.getElementById('detectedBlockchain').innerHTML = '';
     document.getElementById('lookupResult').style.display = 'none';
     document.getElementById('lookupError').style.display = 'none';
     document.getElementById('applyTxDataBtn').style.display = 'none';
-    
+
+    // Try to detect chain from source thread
+    let detectedChain = '';
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+    const entry = hop?.entries.find(e => e.id === entryId);
+
+    if (entry?.sourceThreadId) {
+        // Parse the source thread notation to get victim and transaction IDs
+        const match = entry.sourceThreadId.match(/V(\d+)-T(\d+)/);
+        if (match) {
+            const victimId = parseInt(match[1]);
+            const transactionId = parseInt(match[2]);
+
+            // Find the victim transaction
+            const victim = investigation.victims.find(v => v.id === victimId);
+            const transaction = victim?.transactions.find(t => t.id === transactionId);
+
+            // Get the chain from the transaction
+            if (transaction?.chain) {
+                detectedChain = transaction.chain;
+                console.log(`Detected chain '${detectedChain}' from source thread ${entry.sourceThreadId}`);
+            }
+        }
+    }
+
+    // Set the chain selector if we detected a chain
+    document.getElementById('chainSelector').value = detectedChain;
+    if (detectedChain) {
+        const chainConfig = blockchainAPIs[detectedChain];
+        if (chainConfig) {
+            document.getElementById('detectedBlockchain').innerHTML =
+                `<span style="color: #27ae60;">✓ Auto-selected ${chainConfig.name} based on source thread</span>`;
+        }
+    }
+
     showModal('blockchainLookupModal');
 }
 
@@ -28274,11 +28307,14 @@ async function lookupVictimTransaction(victimId, transactionId) {
                 if (txData.multipleTransfers) {
                     console.log('Multiple transfers detected, showing selection modal with', txData.transfers.length, 'transfers');
                     // Store the callback with proper context
+                    // Add chain to each transfer
+                    const transfersWithChain = txData.transfers.map(t => ({...t, chain: detectedChain}));
+
                     window.pendingTransferContext = {
                         victimId: victimId,
                         transactionId: transactionId,
                         txHash: txHash,
-                        transfers: txData.transfers,
+                        transfers: transfersWithChain,
                         timestamp: txData.time,
                         hasRealTimestamp: txData.hasRealTimestamp
                     };
@@ -28334,6 +28370,14 @@ async function lookupVictimTransaction(victimId, transactionId) {
         // Update receiving wallet (the "to" address is the RED wallet)
         document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`).value = txData.to;
         transaction.receivingWallet = txData.to;
+
+        // Store the detected chain
+        const chainSelector = document.getElementById(`chain_victim_${victimId}_${transactionId}`);
+        if (chainSelector && detectedChain) {
+            chainSelector.value = detectedChain;
+            transaction.chain = detectedChain;
+            console.log(`Stored chain '${detectedChain}' for V${victimId}-T${transactionId}`);
+        }
         
         // Update datetime with validation
         if (txData.time && !isNaN(txData.time)) {
@@ -28642,6 +28686,16 @@ async function lookupVictimTransaction(victimId, transactionId) {
                 transaction.receivingWallet = transfer.to;
             } else {
                 console.error('Receiving wallet input not found');
+            }
+
+            // Store the detected chain if available
+            if (transfer.chain) {
+                const chainSelector = document.getElementById(`chain_victim_${victimId}_${transactionId}`);
+                if (chainSelector) {
+                    chainSelector.value = transfer.chain;
+                    transaction.chain = transfer.chain;
+                    console.log(`Stored chain '${transfer.chain}' for V${victimId}-T${transactionId} from transfer`);
+                }
             }
             
             // Update datetime with transaction timestamp if available
