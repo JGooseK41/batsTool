@@ -2425,6 +2425,10 @@
                         <option value="ADA">Cardano</option>
                         <option value="DAI">DAI</option>
                         <option value="BNB">BNB</option>
+                        <option value="MATIC">MATIC</option>
+                        <option value="AVAX">AVAX</option>
+                        <option value="HYPE">HYPE</option>
+                        <option value="MNT">MNT</option>
                         <option value="CUSTOM">Custom Currency</option>
                     </select>
                     <div style="font-size: 11px; color: #666; margin-top: 5px;">
@@ -2444,6 +2448,10 @@
                         <option value="ADA">Cardano</option>
                         <option value="DAI">DAI</option>
                         <option value="BNB">BNB</option>
+                        <option value="MATIC">MATIC</option>
+                        <option value="AVAX">AVAX</option>
+                        <option value="HYPE">HYPE</option>
+                        <option value="MNT">MNT</option>
                         <option value="CUSTOM">Custom Currency</option>
                     </select>
                 </div>
@@ -24923,6 +24931,14 @@ function applyTransactionData() {
     // Update currency dropdown
     const currencySelect = document.querySelector(`select[onchange*="updateEntry(${hopNumber}, ${entryId}, 'currency'"]`);
     if (currencySelect) {
+        // Check if the currency option exists, if not add it
+        const optionExists = Array.from(currencySelect.options).some(opt => opt.value === entry.currency);
+        if (!optionExists && entry.currency !== 'CUSTOM') {
+            const newOption = document.createElement('option');
+            newOption.value = entry.currency;
+            newOption.textContent = entry.currency;
+            currencySelect.appendChild(newOption);
+        }
         currencySelect.value = entry.currency;
     }
 
