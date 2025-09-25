@@ -25285,6 +25285,7 @@ async function searchBitcoinAddresses(searchType, pattern) {
         }
 
         // Strategy 2: Try WalletExplorer firstbits for partial address completion
+        // Note: This only returns the FIRST chronological match
         if (typeof pattern === 'string' && pattern.length >= 3 && pattern.length < 26) {
             try {
                 console.log(`Trying WalletExplorer firstbits for prefix: ${pattern}`);
@@ -25346,11 +25347,23 @@ async function searchBitcoinAddresses(searchType, pattern) {
                                   data.address.startsWith('3') ? 'P2SH' :
                                   data.address.startsWith('bc1') ? 'Bech32' : 'Bitcoin',
                             entity: entity,
-                            name: name,
+                            name: name || '⚠️ First chronological match only',
                             firstSeen: data.firstSeen || 'Unknown',
                             source: 'WalletExplorer Firstbits'
                         });
                         console.log(`WalletExplorer firstbits found address: ${data.address} for prefix: ${pattern}`);
+
+                        // Add guidance for more specific search
+                        if (pattern.length < 8) {
+                            addresses.push({
+                                address: 'Need more characters for additional matches',
+                                type: 'Info',
+                                entity: 'Search Tip',
+                                name: `Add ${8 - pattern.length} more characters for better results`,
+                                firstSeen: 'Or use first + last characters',
+                                source: 'Guidance'
+                            });
+                        }
                     }
                 }
             } catch (e) {
