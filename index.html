@@ -17676,22 +17676,23 @@ function showHopWizardStep(step) {
     }
 
     const progress = document.getElementById('wizardProgress');
+    const header = document.querySelector('#hopEntryWizard .modal-header h2');
+    const footerButtons = document.getElementById('wizardFooterButtons');
+
+    // Restore standard buttons for steps 1 and 2
+    if (step !== 3) {
+        footerButtons.innerHTML = `
+            <button class="btn btn-secondary" id="wizardBackBtn" onclick="hopWizardBack()" style="padding: 10px 20px;" ${step === 1 ? 'disabled' : ''}>← Back</button>
+            <button class="btn btn-primary" id="wizardNextBtn" onclick="hopWizardNext()" style="padding: 10px 20px;">Next →</button>
+        `;
+    }
+
+    // Get button references after recreating them
     const backBtn = document.getElementById('wizardBackBtn');
     const nextBtn = document.getElementById('wizardNextBtn');
-    const header = document.querySelector('#hopEntryWizard .modal-header h2');
-
-    // Clean up any custom buttons from Step 3
-    const existingButtons = document.getElementById('wizardActionButtons');
-    if (existingButtons) existingButtons.remove();
-
-    // Restore the Next button for steps 1 and 2
-    if (step !== 3) {
-        nextBtn.style.display = 'inline-block';
-    }
 
     // Update progress
     progress.style.width = `${step * 33}%`;
-    backBtn.style.display = step > 1 ? 'inline-block' : 'none';
     header.textContent = `🧙‍♂️ Hop Entry Wizard - Step ${step} of 3`;
 
     if (step === 1) {
@@ -18030,17 +18031,8 @@ function showHopWizardStep(step) {
             </div>
         `;
         
-        // Hide the single Next button and show dual action buttons
-        nextBtn.style.display = 'none';
-
-        // Add custom buttons for this step
-        const footerDiv = document.querySelector('.wizard-footer');
-        const existingButtons = document.getElementById('wizardActionButtons');
-        if (existingButtons) existingButtons.remove();
-
-        const actionButtons = document.createElement('div');
-        actionButtons.id = 'wizardActionButtons';
-        actionButtons.style.cssText = 'display: flex; gap: 10px;';
+        // Replace the footer buttons for Step 3
+        const footerButtons = document.getElementById('wizardFooterButtons');
 
         // Check if required data is available
         let hasRequiredData = false;
@@ -18050,24 +18042,27 @@ function showHopWizardStep(step) {
             hasRequiredData = wizardData.txHash;
         }
 
-        actionButtons.innerHTML = `
+        // Replace entire footer button content
+        footerButtons.innerHTML = `
+            <button class="btn btn-secondary"
+                    id="wizardBackBtn"
+                    onclick="hopWizardBack()"
+                    style="padding: 10px 20px;">
+                ← Back
+            </button>
             <button class="btn btn-primary"
-                    onclick="createHopEntryFromWizard()"
+                    onclick="hopWizardNext()"
                     ${!hasRequiredData ? 'disabled' : ''}
                     style="padding: 10px 20px;">
                 ✅ Log Entry
             </button>
-            <button class="btn btn-warning"
+            <button class="btn btn-secondary"
                     onclick="showWriteoffConfirmation()"
                     ${!hasRequiredData ? 'disabled' : ''}
-                    style="padding: 10px 20px; background: #ff9800; color: white; border: none;">
+                    style="padding: 10px 20px; background: #9e9e9e; color: white; border: none;">
                 🚫 Log Write-off
             </button>
         `;
-
-        // Insert after the back button
-        const backBtn = document.getElementById('wizardBackBtn');
-        backBtn.parentNode.insertBefore(actionButtons, backBtn.nextSibling);
     }
     
     wizardData.step = step;
@@ -19041,15 +19036,10 @@ function openHopEntryWizard(hopNumber) {
                     <!-- Content will be loaded here -->
                 </div>
                 
-                <div class="wizard-footer" style="display: flex; justify-content: space-between; padding: 20px; border-top: 1px solid #ddd;">
-                    <div>
-                        <input type="checkbox" id="disableWizardCheckbox" onchange="toggleWizardPreference(this.checked)">
-                        <label for="disableWizardCheckbox">Don't show wizard for trace entries</label>
-                    </div>
-                    <div>
-                        <button class="btn btn-secondary" id="wizardBackBtn" onclick="hopWizardBack()" disabled>Back</button>
-                        <button class="btn btn-primary" id="wizardNextBtn" onclick="hopWizardNext()">Next</button>
-                        <button class="btn btn-secondary" onclick="skipWizardThisTime()" title="Skip wizard for this entry only">Skip This Time</button>
+                <div class="wizard-footer" style="padding: 20px; border-top: 1px solid #ddd;">
+                    <div id="wizardFooterButtons" style="display: flex; justify-content: space-around; align-items: center;">
+                        <button class="btn btn-secondary" id="wizardBackBtn" onclick="hopWizardBack()" style="padding: 10px 20px;" disabled>← Back</button>
+                        <button class="btn btn-primary" id="wizardNextBtn" onclick="hopWizardNext()" style="padding: 10px 20px;">Next →</button>
                     </div>
                 </div>
             </div>
