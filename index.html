@@ -25148,7 +25148,7 @@ async function searchBitcoinAddresses(searchType, pattern) {
 
             // Return informative message for UI only if no Arkham API
             return [{
-                address: `Need ${26 - pattern.length} more characters`,
+                address: `Need ${26 - effectivePatternLength} more characters`,
                 type: 'Info',
                 entity: 'No Arkham API configured',
                 name: 'Configure Arkham API key in settings for partial search',
@@ -25224,7 +25224,7 @@ async function searchBitcoinAddresses(searchType, pattern) {
         }
 
         // Strategy 2: Try BlockCypher API for complete addresses
-        if (pattern.length >= 26 && pattern.length <= 35) {
+        if (typeof pattern === 'string' && pattern.length >= 26 && pattern.length <= 35) {
             try {
                 const blockcypherUrl = `https://api.blockcypher.com/v1/btc/main/addrs/${pattern}/balance`;
                 const response = await fetch(blockcypherUrl).catch(() => null);
@@ -25261,7 +25261,8 @@ async function searchBitcoinAddresses(searchType, pattern) {
         // (Arkham API already checked above as Strategy 1)
 
         // Strategy 2: For complete addresses (26+ chars), use blockchain.info
-        if (pattern.length >= 26 && !foundAddresses.has(pattern)) {
+        // Only check if pattern is a string (not an object) and is long enough
+        if (typeof pattern === 'string' && pattern.length >= 26 && !foundAddresses.has(pattern)) {
             try {
                 const checkUrl = `https://blockchain.info/rawaddr/${pattern}?limit=1`;
                 const response = await fetch(checkUrl, {
@@ -25295,7 +25296,7 @@ async function searchBitcoinAddresses(searchType, pattern) {
         }
 
         // Strategy 3: Try Mempool.space API (free, no auth required)
-        if (pattern.length >= 26) {
+        if (typeof pattern === 'string' && pattern.length >= 26) {
             try {
                 // Mempool.space API for complete addresses
                 const mempoolUrl = `https://mempool.space/api/address/${pattern}`;
@@ -25331,7 +25332,7 @@ async function searchBitcoinAddresses(searchType, pattern) {
 
         // Strategy 4: Only use blockchain.info for COMPLETE addresses
         // The addressfirstseen endpoint doesn't support partial addresses
-        if (pattern.length >= 26) { // Bitcoin addresses are at least 26 chars
+        if (typeof pattern === 'string' && pattern.length >= 26) { // Bitcoin addresses are at least 26 chars
             try {
                 // Only check if this looks like a complete address
                 const searchUrl = `https://blockchain.info/q/addressfirstseen/${pattern}`;
