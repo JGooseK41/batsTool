@@ -3948,7 +3948,34 @@
                     }
                 }
 
-                // Fallback to Blockchain.info labels
+                // Fallback to WalletExplorer API
+                if (!attribution) {
+                    try {
+                        const walletExplorerUrl = `https://www.walletexplorer.com/api/1/address-lookup?address=${address}`;
+                        const walletResponse = await fetch(walletExplorerUrl);
+
+                        if (walletResponse.ok) {
+                            const walletData = await walletResponse.json();
+                            if (walletData.found && walletData.wallet && walletData.wallet.name) {
+                                attribution = {
+                                    name: walletData.wallet.name,
+                                    label: walletData.wallet.category || 'Exchange/Service',
+                                    type: walletData.wallet.category || 'Service',
+                                    source: 'walletexplorer',
+                                    isExchange: walletData.wallet.category === 'Exchange' ||
+                                               walletData.wallet.name.toLowerCase().includes('exchange')
+                                };
+                                console.log(`WalletExplorer attribution found for ${address}:`, attribution);
+                                walletAttributionCache[address] = attribution;
+                                return attribution;
+                            }
+                        }
+                    } catch (e) {
+                        console.log('WalletExplorer API error:', e);
+                    }
+                }
+
+                // Fallback to Blockchain.info transaction analysis
                 if (!attribution) {
                     try {
                         // Check if address has known tags from blockchain.info
@@ -25257,7 +25284,81 @@ async function searchBitcoinAddresses(searchType, pattern) {
             }
         }
 
-        // Strategy 2: Try BlockCypher API for complete addresses AND get Arkham attribution
+        // Strategy 2: Try WalletExplorer firstbits for partial address completion
+        if (typeof pattern === 'string' && pattern.length >= 3 && pattern.length < 26) {
+            try {
+                console.log(`Trying WalletExplorer firstbits for prefix: ${pattern}`);
+                const firstbitsUrl = `https://www.walletexplorer.com/api/1/firstbits?prefix=${pattern}`;
+                const response = await fetch(firstbitsUrl);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.found && data.address && !foundAddresses.has(data.address)) {
+                        foundAddresses.add(data.address);
+
+                        // Get attribution from Arkham for the found address
+                        let entity = 'Unknown';
+                        let name = '';
+
+                        if (arkhamKey) {
+                            try {
+                                const arkhamUrl = `/.netlify/functions/arkham3?endpoint=/intelligence/address/${data.address}`;
+                                const arkhamResp = await fetch(arkhamUrl, {
+                                    headers: {
+                                        'X-Arkham-API-Key': arkhamKey
+                                    }
+                                });
+
+                                if (arkhamResp.ok) {
+                                    const arkhamData = await arkhamResp.json();
+                                    if (arkhamData.arkhamEntity) {
+                                        entity = arkhamData.arkhamEntity.name || entity;
+                                        name = arkhamData.arkhamEntity.name || '';
+                                        console.log(`Arkham attribution for ${data.address}: ${entity}`);
+                                    }
+                                }
+                            } catch (e) {
+                                console.log('Arkham attribution failed:', e);
+                            }
+                        }
+
+                        // If no Arkham attribution, try WalletExplorer as fallback
+                        if (entity === 'Unknown') {
+                            try {
+                                const walletLookupUrl = `https://www.walletexplorer.com/api/1/address-lookup?address=${data.address}`;
+                                const walletResp = await fetch(walletLookupUrl);
+                                if (walletResp.ok) {
+                                    const walletData = await walletResp.json();
+                                    if (walletData.found && walletData.wallet && walletData.wallet.name) {
+                                        entity = walletData.wallet.name;
+                                        name = walletData.wallet.name;
+                                        console.log(`WalletExplorer attribution for ${data.address}: ${entity}`);
+                                    }
+                                }
+                            } catch (e) {
+                                console.log('WalletExplorer attribution failed:', e);
+                            }
+                        }
+
+                        addresses.push({
+                            address: data.address,
+                            type: data.address.startsWith('1') ? 'P2PKH' :
+                                  data.address.startsWith('3') ? 'P2SH' :
+                                  data.address.startsWith('bc1') ? 'Bech32' : 'Bitcoin',
+                            entity: entity,
+                            name: name,
+                            firstSeen: data.firstSeen || 'Unknown',
+                            source: 'WalletExplorer Firstbits'
+                        });
+                        console.log(`WalletExplorer firstbits found address: ${data.address} for prefix: ${pattern}`);
+                    }
+                }
+            } catch (e) {
+                console.log('WalletExplorer firstbits search failed:', e);
+            }
+        }
+
+        // Strategy 3: Try BlockCypher API for complete addresses AND get Arkham attribution
         if (typeof pattern === 'string' && pattern.length >= 26 && pattern.length <= 35) {
             try {
                 // First get basic address info from BlockCypher
