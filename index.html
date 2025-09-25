@@ -3605,9 +3605,42 @@
             }
 
             try {
-                // Etherscan API for address info including labels
-                const apiKey = '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                // First try Arkham Intelligence API for better attribution
+                const arkhamApiKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
                 let attribution = null;
+
+                if (arkhamApiKey) {
+                    try {
+                        const arkhamUrl = `https://api.arkhamintelligence.com/intelligence/address/${address}`;
+                        const arkhamResponse = await fetch(arkhamUrl, {
+                            headers: {
+                                'API-Key': arkhamApiKey,
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (arkhamResponse.ok) {
+                            const arkhamData = await arkhamResponse.json();
+                            if (arkhamData && arkhamData.arkhamEntity) {
+                                attribution = {
+                                    name: arkhamData.arkhamEntity.name,
+                                    label: arkhamData.arkhamEntity.type || 'Exchange',
+                                    type: arkhamData.arkhamEntity.category || 'CEX',
+                                    source: 'arkham_intelligence',
+                                    isExchange: true
+                                };
+                                console.log(`Arkham attribution found for ${address}:`, attribution);
+                                walletAttributionCache[lowerAddress] = attribution;
+                                return attribution;
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Arkham API error:', e);
+                    }
+                }
+
+                // Fall back to Etherscan API for address info including labels
+                const apiKey = '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
 
                 // First try: Get address info with label data
                 // Using account balance endpoint which includes address tags
@@ -3873,12 +3906,12 @@
                 let attribution = null;
 
                 // Try Arkham Intelligence API first
-                // Note: Arkham requires API key - this is a placeholder implementation
-                // In production, you'd need to register at https://intel.arkham.io/
-                const arkhamApiKey = 'YOUR_ARKHAM_API_KEY'; // User should replace this
+                // Use the same key as in address search
+                const arkhamApiKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
 
-                if (arkhamApiKey && arkhamApiKey !== 'YOUR_ARKHAM_API_KEY') {
+                if (arkhamApiKey) {
                     try {
+                        // Use the correct Arkham endpoint for entity information
                         const arkhamUrl = `https://api.arkhamintelligence.com/intelligence/address/${address}`;
                         const arkhamResponse = await fetch(arkhamUrl, {
                             headers: {
