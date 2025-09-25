@@ -17555,6 +17555,28 @@ function showHopEntryWizard(hopNumber) {
         return;
     }
 
+    // Detect chain from source threads if possible
+    let detectedChain = null;
+    const availableThreads = getAvailableSourcesForHop(hopNumber, null);
+    if (availableThreads && availableThreads.length > 0) {
+        // Try to get chain from the first available thread
+        const firstThread = availableThreads[0];
+        if (firstThread.threadId) {
+            // Parse the thread ID to get victim and transaction
+            const match = firstThread.threadId.match(/V(\d+)-T(\d+)/);
+            if (match) {
+                const victimId = parseInt(match[1]);
+                const transactionId = parseInt(match[2]);
+                const victim = investigation.victims.find(v => v.id === victimId);
+                const transaction = victim?.transactions.find(t => t.id === transactionId);
+                if (transaction?.chain) {
+                    detectedChain = transaction.chain;
+                    console.log(`Detected chain '${detectedChain}' from available thread ${firstThread.threadId}`);
+                }
+            }
+        }
+    }
+
     // Initialize wizard data
     window.hopWizardData = {
         hopNumber: hop.hopNumber,
@@ -17568,7 +17590,8 @@ function showHopEntryWizard(hopNumber) {
             fromWallet: '',
             toWallet: '',
             timestamp: new Date().toISOString().slice(0, 16)
-        }
+        },
+        detectedChain: detectedChain // Store the detected chain
     };
     
     const wizardHTML = `
@@ -19284,10 +19307,24 @@ async function lookupWizardTransaction() {
     resultDiv.innerHTML = '<div style="text-align: center;">Looking up transaction...</div>';
 
     try {
-        const detectedChain = detectBlockchainFromHash(txHash);
+        // First check if chain was detected from source thread
+        let detectedChain = window.hopWizardData?.detectedChain;
+
+        // If no chain from source thread, check if chain selector exists (main lookup modal)
+        if (!detectedChain) {
+            detectedChain = document.getElementById('chainSelector')?.value;
+        }
+
+        // If still no chain, try to detect from hash
+        if (!detectedChain) {
+            detectedChain = detectBlockchainFromHash(txHash);
+        }
+
         if (!detectedChain) {
             throw new Error('Unable to detect blockchain from hash');
         }
+
+        console.log(`Using chain: ${detectedChain} for transaction lookup`);
 
         // Call the appropriate lookup function based on chain type
         let txData;
