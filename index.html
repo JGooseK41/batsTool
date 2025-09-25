@@ -25137,9 +25137,14 @@ async function searchBitcoinAddresses(searchType, pattern) {
         // Check if we have Arkham API key for partial searches
         const arkhamKey = localStorage.getItem('bats_arkham_api_key');
 
+        // Determine pattern length for validation
+        const effectivePatternLength = (typeof pattern === 'object' && pattern.prefix)
+            ? (pattern.prefix.length + pattern.suffix.length)
+            : (typeof pattern === 'string' ? pattern.length : 0);
+
         // Only show guidance if we don't have Arkham API and pattern is too short
-        if (!arkhamKey && pattern.length < 26) {
-            console.log(`Pattern too short without Arkham API. Bitcoin addresses are typically 26-35 characters. Current pattern: ${pattern.length} chars`);
+        if (!arkhamKey && effectivePatternLength < 26) {
+            console.log(`Pattern too short without Arkham API. Bitcoin addresses are typically 26-35 characters. Current pattern: ${effectivePatternLength} chars`);
 
             // Return informative message for UI only if no Arkham API
             return [{
@@ -25153,12 +25158,17 @@ async function searchBitcoinAddresses(searchType, pattern) {
         }
 
         // Strategy 1: Try Arkham Intelligence API FIRST (best for partial matches)
-        if (arkhamKey && pattern.length >= 3) {
+        // Handle both simple pattern string and {prefix, suffix} object
+        const arkhamSearchTerm = (typeof pattern === 'object' && pattern.prefix) ? pattern.prefix : pattern;
+        const patternLength = (typeof pattern === 'object' && pattern.prefix) ? pattern.prefix.length : (typeof pattern === 'string' ? pattern.length : 0);
+
+        if (arkhamKey && arkhamSearchTerm && patternLength >= 3) {
             try {
-                console.log(`Searching Arkham for pattern: ${pattern}`);
+                console.log(`Searching Arkham for pattern: ${arkhamSearchTerm} (type: ${searchType})`);
 
                 // Arkham supports partial address search and has excellent attribution
-                const arkhamUrl = `https://api.arkhamintelligence.com/addresses/search?q=${encodeURIComponent(pattern)}&chains=bitcoin`;
+                // For "both" search, we search by prefix and then filter by suffix
+                const arkhamUrl = `https://api.arkhamintelligence.com/addresses/search?q=${encodeURIComponent(arkhamSearchTerm)}&chains=bitcoin`;
                 const arkhamResponse = await fetch(arkhamUrl, {
                     method: 'GET',
                     headers: {
