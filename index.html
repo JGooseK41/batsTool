@@ -3615,7 +3615,7 @@
                 if (arkhamApiKey) {
                     try {
                         // Use Netlify Function proxy for Arkham API
-                        const proxyUrl = `/.netlify/functions/arkham2?endpoint=/intelligence/address/${address}`;
+                        const proxyUrl = `/.netlify/functions/arkham3?endpoint=/intelligence/address/${address}`;
                         const arkhamResponse = await fetch(proxyUrl, {
                             headers: {
                                 'X-Arkham-API-Key': arkhamApiKey,
@@ -3919,7 +3919,7 @@
                 if (arkhamApiKey) {
                     try {
                         // Use Netlify Function proxy for Arkham API
-                        const proxyUrl = `/.netlify/functions/arkham2?endpoint=/intelligence/address/${address}`;
+                        const proxyUrl = `/.netlify/functions/arkham3?endpoint=/intelligence/address/${address}`;
                         const arkhamResponse = await fetch(proxyUrl, {
                             headers: {
                                 'X-Arkham-API-Key': arkhamApiKey,
@@ -25210,20 +25210,9 @@ async function searchBitcoinAddresses(searchType, pattern) {
             try {
                 console.log(`Searching Arkham for pattern: ${arkhamSearchTerm} (type: ${searchType})`);
 
-                // Arkham supports partial address search and has excellent attribution
-                // For "both" search, we search by prefix and then filter by suffix
-                // Use Netlify Function proxy to avoid CORS issues
-                const proxyUrl = `/.netlify/functions/arkham2?endpoint=/addresses/search&q=${encodeURIComponent(arkhamSearchTerm)}&chains=bitcoin`;
-                const arkhamResponse = await fetch(proxyUrl, {
-                    method: 'GET',
-                    headers: {
-                        'X-Arkham-API-Key': arkhamKey,
-                        'Accept': 'application/json'
-                    }
-                }).catch(err => {
-                    console.log('Arkham API request failed:', err);
-                    return null;
-                });
+                // Note: Arkham's search endpoint appears to be unavailable (returns 405)
+                // Skip Arkham search for now - only use for attribution
+                const arkhamResponse = null; // Disabled until we find the correct search endpoint
 
                 if (arkhamResponse && arkhamResponse.ok) {
                     const arkhamData = await arkhamResponse.json();
@@ -25576,7 +25565,7 @@ async function searchEVMAddresses(chain, searchType, pattern) {
         if (arkhamKey) {
             try {
                 // Use Netlify Function proxy for Arkham API
-                const proxyUrl = `/.netlify/functions/arkham2?endpoint=/addresses/search&q=${pattern}&chains=${chain}`;
+                const proxyUrl = `/.netlify/functions/arkham3?endpoint=/addresses/search&q=${pattern}&chains=${chain}`;
                 const arkhamResponse = await fetch(proxyUrl, {
                     method: 'GET',
                     headers: {

@@ -86,18 +86,30 @@ exports.handler = async (event) => {
 
         // Return the result
         if (arkhamResult.success) {
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({
-                    arkhamStatus: arkhamResult.status,
-                    arkhamResponse: arkhamResult.data,
-                    debug: {
-                        requestedPath: arkhamPath,
-                        apiKeyUsed: apiKey ? 'yes' : 'no'
-                    }
-                })
-            };
+            // Parse the response if it's JSON
+            let parsedResponse;
+            try {
+                parsedResponse = JSON.parse(arkhamResult.data);
+            } catch {
+                parsedResponse = arkhamResult.data;
+            }
+
+            // If successful (200), return the data directly
+            if (arkhamResult.status === 200) {
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: typeof parsedResponse === 'object' ?
+                           JSON.stringify(parsedResponse) :
+                           arkhamResult.data
+                };
+            } else {
+                return {
+                    statusCode: arkhamResult.status,
+                    headers,
+                    body: arkhamResult.data
+                };
+            }
         } else {
             return {
                 statusCode: 200,
