@@ -25135,7 +25135,8 @@ async function searchBitcoinAddresses(searchType, pattern) {
 
     try {
         // Check if we have Arkham API key for partial searches
-        const arkhamKey = localStorage.getItem('bats_arkham_api_key');
+        // Use the same default key that's used elsewhere in the tool
+        const arkhamKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
 
         // Determine pattern length for validation
         const effectivePatternLength = (typeof pattern === 'object' && pattern.prefix)
