@@ -3,41 +3,43 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 14:35)
+## Latest Commit (Auto-updated: 2025-09-25 14:44)
 
-**Commit:** a156ab3633371020e4c1b5cf349510a2b935145e
+**Commit:** aed125f5b7e3095be446e083f1dd034157423db7
 **Author:** Your Name
-**Message:** Store and use chain ID from source thread in hop wizard
+**Message:** Complete chain tracking implementation for source threads
 
-- Store detected chain from source thread in hopWizardData
-- Use stored chain for transaction lookups in wizard
-- Fixes HyperEVM lookups using wrong chainId
+- Added chainId and chainName to thread data structure in buildAvailableThreadsIndex
+- Updated getAvailableSourcesForHop to include chain info in returned threads
+- Modified updateWizardThreadSelection to detect and store chain from selected threads
+- Enhanced reopenHopWizard to detect chain from existing entry data
+- Chain information now properly propagates through thread references
+- Hop wizard automatically detects correct blockchain for transaction lookups
 
-The wizard now properly inherits the blockchain type from the source thread.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
+🤖 Generated with Claude Code
+https://claude.ai/code
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 40 ++++++++++++++++++++--------------------
- index.html | 41 +++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 59 insertions(+), 22 deletions(-)
+ CLAUDE.md  | 40 ++++++++++++++--------------
+ index.html | 90 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 103 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a156ab3 Store and use chain ID from source thread in hop wizard (0 seconds ago)
-- 729ea7a Fix blockchain API config scope for hop wizard lookups (5 minutes ago)
-- f4250df Fix hop wizard EVM chain transaction lookups (9 minutes ago)
-- 9b70d87 Auto-detect blockchain from source thread in hop wizard (21 minutes ago)
-- 9001b5a Fix currency dropdown for victim transactions (33 minutes ago)
-- c95401b Fix HyperEVM currency display to show HYPE instead of HyperEVM (54 minutes ago)
-- 0d43ae3 Fix currency dropdown to properly show native currencies (62 minutes ago)
-- c3d4198 Enable multi-chain wallet attribution via Etherscan API v2 (79 minutes ago)
-- 10f9d12 Add comprehensive multi-chain token support (88 minutes ago)
-- b5efb85 Add native currency support for all EVM chains (2 hours ago)
+- aed125f Complete chain tracking implementation for source threads (0 seconds ago)
+- a156ab3 Store and use chain ID from source thread in hop wizard (9 minutes ago)
+- 729ea7a Fix blockchain API config scope for hop wizard lookups (14 minutes ago)
+- f4250df Fix hop wizard EVM chain transaction lookups (18 minutes ago)
+- 9b70d87 Auto-detect blockchain from source thread in hop wizard (30 minutes ago)
+- 9001b5a Fix currency dropdown for victim transactions (42 minutes ago)
+- c95401b Fix HyperEVM currency display to show HYPE instead of HyperEVM (63 minutes ago)
+- 0d43ae3 Fix currency dropdown to properly show native currencies (71 minutes ago)
+- c3d4198 Enable multi-chain wallet attribution via Etherscan API v2 (88 minutes ago)
+- 10f9d12 Add comprehensive multi-chain token support (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

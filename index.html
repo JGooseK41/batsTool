@@ -16783,8 +16783,8 @@ function getMaxAssignableAmount(sourceThreadIdentifier, currency, excludeEntryId
                 return; // Skip this entry
             }
 
-            // Check both trace and swap entries - swaps also consume source threads
-            if ((entry.entryType === 'trace' || entry.entryType === 'swap') && parseFloat(entry.amount) > 0) {
+            // Check trace, swap, and writeoff entries - all consume source threads
+            if ((entry.entryType === 'trace' || entry.entryType === 'swap' || entry.entryType === 'writeoff') && parseFloat(entry.amount) > 0) {
                 const entryCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
 
                 if (entryCurrency === actualCurrency) {
@@ -18012,7 +18012,56 @@ function showHopWizardStep(step) {
                 <div id="wizardTxResult" style="margin-top: 20px;">
                     <!-- Transaction details will appear here -->
                 </div>
-                
+
+                <!-- Write-off option -->
+                <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border: 2px solid #9e9e9e; border-radius: 8px;">
+                    <label style="display: flex; align-items: flex-start; cursor: pointer;">
+                        <input type="checkbox"
+                               id="wizardWriteoff"
+                               onchange="window.hopWizardData.isWriteoff = this.checked; updateWriteoffDisplay()"
+                               ${wizardData.isWriteoff ? 'checked' : ''}
+                               style="margin-right: 10px; margin-top: 2px;">
+                        <div>
+                            <strong>🚫 Mark as Write-off</strong>
+                            <p style="margin: 5px 0; font-size: 14px; color: #666;">
+                                Document this transaction but immediately write it off as unrecoverable.
+                                Perfect for small amounts not worth tracking further.
+                            </p>
+                            ${wizardData.isWriteoff ? `
+                                <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-top: 10px;">
+                                    <strong>Write-off Mode Active</strong><br>
+                                    <small>This entry will:</small>
+                                    <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px;">
+                                        <li>Record the transaction hash and amount</li>
+                                        <li>Reduce the source thread immediately</li>
+                                        <li>Not create a new thread for further tracking</li>
+                                        <li>Be marked with notation suffix "-WO"</li>
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </label>
+
+                    <div id="writeoffJustification" style="margin-top: 15px; display: ${wizardData.isWriteoff ? 'block' : 'none'};">
+                        <label style="font-weight: bold;">Write-off Justification:</label>
+                        <select id="wizardWriteoffCategory"
+                                onchange="window.hopWizardData.writeoffCategory = this.value"
+                                style="width: 100%; padding: 8px; margin-top: 5px;">
+                            <option value="minimal_amount" ${wizardData.writeoffCategory === 'minimal_amount' ? 'selected' : ''}>Minimal Amount - Not worth tracking</option>
+                            <option value="operational" ${wizardData.writeoffCategory === 'operational' ? 'selected' : ''}>Operational - Network fees/costs</option>
+                            <option value="untraceable" ${wizardData.writeoffCategory === 'untraceable' ? 'selected' : ''}>Untraceable - Lost trail</option>
+                            <option value="mixer" ${wizardData.writeoffCategory === 'mixer' ? 'selected' : ''}>Mixer/Obfuscation Service</option>
+                            <option value="scam_fee" ${wizardData.writeoffCategory === 'scam_fee' ? 'selected' : ''}>Scam Fee - Paid to accomplices</option>
+                            <option value="other" ${wizardData.writeoffCategory === 'other' ? 'selected' : ''}>Other - See notes</option>
+                        </select>
+                        <textarea id="wizardWriteoffNotes"
+                                  rows="2"
+                                  placeholder="Additional justification or notes..."
+                                  onchange="window.hopWizardData.writeoffNotes = this.value"
+                                  style="width: 100%; padding: 8px; margin-top: 10px;">${wizardData.writeoffNotes || ''}</textarea>
+                    </div>
+                </div>
+
                 <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
                     <h4 style="margin-top: 0;">Summary</h4>
                     <div style="font-size: 14px; line-height: 1.6;">
@@ -18079,6 +18128,19 @@ function hopWizardBack() {
     if (wizardData && wizardData.step > 1) {
         wizardData.step = wizardData.step - 1;
         showHopWizardStep(wizardData.step);
+    }
+}
+
+function updateWriteoffDisplay() {
+    const writeoffDiv = document.getElementById('writeoffJustification');
+    if (writeoffDiv) {
+        writeoffDiv.style.display = window.hopWizardData?.isWriteoff ? 'block' : 'none';
+    }
+
+    // Update the summary to reflect write-off status
+    const step = window.hopWizardData?.step;
+    if (step === 3) {
+        showHopWizardStep(3);  // Refresh step 3 to show write-off status
     }
 }
 
@@ -20491,11 +20553,140 @@ function validateThreadAllocation(threadId, requestedAmount, currency, excludeEn
     return { valid: true };
 }
 
+function createWriteoffEntryFromWizard() {
+    const wizardData = window.hopWizardData;
+    const hop = investigation.hops.find(h => h.hopNumber === wizardData.hopNumber);
+    if (!hop) {
+        console.error('Hop not found for write-off entry');
+        return;
+    }
+
+    saveUndoState(`Create write-off entry in Hop ${hop.hopNumber}`);
+
+    // Calculate total amount from allocations
+    const totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+
+    // Get currency from first thread
+    const threads = getAvailableSourcesForHop(hop.hopNumber, null);
+    const firstThreadId = wizardData.selectedThreads[0];
+    const thread = threads.find(t => t.threadId === firstThreadId);
+    const currency = thread ? thread.currency : 'USD';
+
+    // Create write-off entry
+    const writeoffEntry = {
+        id: Date.now(),
+        hopNumber: hop.hopNumber,
+        entryType: 'writeoff',
+        txHash: wizardData.txHash || '',
+        amount: totalAmount.toString(),
+        currency: currency === 'CUSTOM' ? 'CUSTOM' : currency,
+        customCurrency: currency === 'CUSTOM' ? currency : '',
+        category: wizardData.writeoffCategory || 'minimal_amount',
+        justification: wizardData.writeoffNotes || `Amount too small to track: ${totalAmount.toLocaleString()} ${currency}`,
+        notes: wizardData.manualData?.notes || '',
+
+        // Thread allocation data
+        sourceThreadId: wizardData.selectedThreads.length === 1 ? wizardData.selectedThreads[0] : '',
+        multipleSourceThreads: wizardData.selectedThreads.length > 1 ? wizardData.selectedThreads : null,
+        individualSourceAssignments: wizardData.allocations,
+
+        // Transaction details if available
+        fromWallet: '',
+        toWallet: wizardData.txData?.to || wizardData.manualData?.toWallet || '',
+        timestamp: wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) :
+                   wizardData.manualData?.timestamp || new Date().toISOString().slice(0, 16),
+
+        // Auto-calculate notation
+        victimNumbers: '',
+        transactionNumbers: '',
+        notation: '',
+
+        // Finalize immediately since it's a write-off
+        isFinalized: true
+    };
+
+    // Get from wallet from source threads
+    if (wizardData.selectedThreads.length === 1) {
+        const sourceThread = threads.find(t => t.threadId === wizardData.selectedThreads[0]);
+        writeoffEntry.fromWallet = sourceThread ? sourceThread.sourceWallet : '';
+    } else if (wizardData.selectedThreads.length > 1) {
+        writeoffEntry.fromWallet = 'Multiple Sources';
+    }
+
+    // Build source chain from selected threads
+    const sourceChain = wizardData.selectedThreads.map(threadId => {
+        const thread = threads.find(t => t.threadId === threadId);
+        return {
+            threadId: threadId,
+            amount: wizardData.allocations[threadId] || 0,
+            currency: thread ? thread.currency : currency
+        };
+    });
+    writeoffEntry.sourceChain = sourceChain;
+
+    // Calculate victim and transaction numbers
+    const victimNums = new Set();
+    const transNums = new Set();
+    wizardData.selectedThreads.forEach(threadId => {
+        const match = threadId.match(/V(\d+)-T(\d+)/);
+        if (match) {
+            victimNums.add(match[1]);
+            transNums.add(match[2]);
+        }
+    });
+    writeoffEntry.victimNumbers = Array.from(victimNums).join(',');
+    writeoffEntry.transactionNumbers = Array.from(transNums).join(',');
+
+    // Generate notation with WO suffix
+    writeoffEntry.notation = `V${writeoffEntry.victimNumbers}-T${writeoffEntry.transactionNumbers}-H${hop.hopNumber}-WO`;
+    writeoffEntry.generatedNotation = writeoffEntry.notation;
+
+    // Add entry to hop
+    hop.entries.push(writeoffEntry);
+
+    // Close wizard
+    closeHopWizard();
+
+    // Rebuild and render
+    buildAvailableThreadsIndex();
+    renderHops();
+    saveToStorage();
+
+    // Show confirmation
+    const confirmMsg = `✅ Write-off entry created:\n\n` +
+                       `Amount: ${totalAmount.toLocaleString()} ${currency}\n` +
+                       `Transaction: ${wizardData.txHash || 'Not provided'}\n` +
+                       `Category: ${wizardData.writeoffCategory || 'minimal_amount'}\n` +
+                       `\nThe source thread has been reduced by ${totalAmount.toLocaleString()} ${currency}.`;
+
+    alert(confirmMsg);
+
+    // Collapse the entry
+    setTimeout(() => {
+        const entryKey = `${hop.hopNumber}_${writeoffEntry.id}`;
+        window.entryCollapseState[entryKey] = true;
+        const entryElement = document.querySelector(`[id*="${entryKey}"]`);
+        if (entryElement) {
+            const content = entryElement.querySelector('.entry-content');
+            const summary = entryElement.querySelector('.entry-summary');
+            if (content) content.style.display = 'none';
+            if (summary) summary.style.display = 'block';
+        }
+    }, 100);
+}
+
 function createHopEntryFromWizard() {
     const wizardData = window.hopWizardData;
     const hop = investigation.hops.find(h => h.hopNumber === wizardData.hopNumber);
     if (!hop) {
         console.error('Hop not found for hopNumber:', wizardData.hopNumber);
+        return;
+    }
+
+    // Check if this is a write-off entry
+    if (wizardData.isWriteoff) {
+        console.log('Creating write-off entry from wizard');
+        createWriteoffEntryFromWizard();
         return;
     }
 
