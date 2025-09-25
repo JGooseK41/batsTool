@@ -18892,12 +18892,16 @@ function reopenHopWizard(hopNumber, entryId) {
 }
 
 function openHopEntryWizard(hopNumber) {
-    console.log('openHopEntryWizard called with hopNumber:', hopNumber);
+    console.log('openHopEntryWizard called with hopNumber:', hopNumber, 'type:', typeof hopNumber);
+
+    // Convert to number if it's a string
+    const numericHopNumber = typeof hopNumber === 'string' ? parseInt(hopNumber) : hopNumber;
 
     // Get hop data
-    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+    const hop = investigation.hops.find(h => h.hopNumber === numericHopNumber);
     if (!hop) {
-        console.error('Hop not found for hopNumber:', hopNumber);
+        console.error('Hop not found for hopNumber:', numericHopNumber);
+        console.error('Available hops:', investigation.hops.map(h => h.hopNumber));
         return;
     }
     console.log('Hop found:', hop);
@@ -18909,7 +18913,7 @@ function openHopEntryWizard(hopNumber) {
     // Initialize wizard data if not already editing
     if (!window.hopWizardData || !window.hopWizardData.isEditMode) {
         window.hopWizardData = {
-            hopNumber: hop.hopNumber,
+            hopNumber: numericHopNumber,
             selectedThreads: [],
             selectedInternalIds: [],  // Add for dual-layer support
             selectedNotations: [],    // Add for dual-layer support
@@ -18924,7 +18928,7 @@ function openHopEntryWizard(hopNumber) {
         <div id="hopEntryWizard" class="modal show">
             <div class="modal-content" style="max-width: 900px; width: 90%;">
                 <div class="modal-header">
-                    <h2>🔍 Add Trace Entry - Hop ${hop.hopNumber}</h2>
+                    <h2>🔍 Add Trace Entry - Hop ${numericHopNumber}</h2>
                     <span class="close" onclick="closeHopWizard()">&times;</span>
                 </div>
                 

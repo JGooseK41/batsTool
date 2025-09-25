@@ -3,18 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 17:09)
+## Latest Commit (Auto-updated: 2025-09-25 17:14)
 
-**Commit:** e6a973f7332787328929391ffe3d9d28787a1c4f
+**Commit:** d14dc14e43524595b2918d0fc828dcac22b14bed
 **Author:** Your Name
-**Message:** Clarify wizard creation - direct DOM insertion is correct approach
+**Message:** Add detailed debug logging for wizard creation issue
 
-The issue was caused by consolidating two wizard functions with different HTML structures:
-- Old showHopEntryWizard used class='modal' style='display:block'
-- New openHopEntryWizard used class='modal show'
-- createCenteredModal regex only matched the old format
-
-Direct DOM insertion is simpler and more reliable.
+- Added console logs to track wizard creation flow
+- Logging at each step: hop lookup, HTML insertion, element verification
+- This will help identify where the wizard creation is failing
 
 🤖 Generated with Claude Code
 https://claude.ai/code
@@ -23,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 29 ++++++++++++++---------------
- index.html |  2 +-
- 2 files changed, 15 insertions(+), 16 deletions(-)
+ CLAUDE.md  | 30 ++++++++++++++++--------------
+ index.html | 19 ++++++++++++++++++-
+ 2 files changed, 34 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e6a973f Clarify wizard creation - direct DOM insertion is correct approach (1 second ago)
-- 6917778 Fix wizard not appearing by directly inserting HTML to DOM (88 seconds ago)
-- cd0f815 Fix hop wizard error by removing duplicate wizard creation code (5 minutes ago)
-- ab56a50 Clean up hop wizard buttons and fix Log Entry functionality (10 minutes ago)
+- d14dc14 Add detailed debug logging for wizard creation issue (0 seconds ago)
+- e6a973f Clarify wizard creation - direct DOM insertion is correct approach (5 minutes ago)
+- 6917778 Fix wizard not appearing by directly inserting HTML to DOM (7 minutes ago)
+- cd0f815 Fix hop wizard error by removing duplicate wizard creation code (10 minutes ago)
+- ab56a50 Clean up hop wizard buttons and fix Log Entry functionality (15 minutes ago)
 - 5757439 Redesign write-off workflow with dedicated button and confirmation (2 hours ago)
 - 7ecf37b Add debug logging for write-off option visibility in hop wizard step 3 (2 hours ago)
 - ec03da5 Add write-off option to hop wizard for documenting small transactions (2 hours ago)
-- aed125f Complete chain tracking implementation for source threads (2 hours ago)
+- aed125f Complete chain tracking implementation for source threads (3 hours ago)
 - a156ab3 Store and use chain ID from source thread in hop wizard (3 hours ago)
-- 729ea7a Fix blockchain API config scope for hop wizard lookups (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
