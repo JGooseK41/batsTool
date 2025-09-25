@@ -6320,7 +6320,11 @@ function buildAvailableThreadsIndex() {
                     childThreads: [],
                     currency: currency,
                     victimId: victim.id,
-                    transactionId: transaction.id
+                    transactionId: transaction.id,
+
+                    // Chain tracking - store blockchain info internally
+                    chainId: transaction.chain || null,  // Store the blockchain type
+                    chainName: transaction.chain ? (window.blockchainAPIs?.[transaction.chain]?.name || transaction.chain) : null
                 };
             }
         });
@@ -6655,7 +6659,15 @@ function updateThreadAvailabilityFromSwap(entry) {
                     toAmount: outputPortion,
                     provider: entry.swapDetails?.providerName || 'Unknown',
                     isPartial: isPartialSwap
-                }
+                },
+
+                // Chain tracking for bridges/swaps
+                // If this is a bridge, the chain changes. Otherwise inherit from parent
+                chainId: entry.swapDetails?.toChain || entry.chain || item.chainId || null,
+                chainName: entry.swapDetails?.toChain ?
+                    (window.blockchainAPIs?.[entry.swapDetails.toChain]?.name || entry.swapDetails.toChain) :
+                    (entry.chain ? (window.blockchainAPIs?.[entry.chain]?.name || entry.chain) :
+                     (item.chainId ? (window.blockchainAPIs?.[item.chainId]?.name || item.chainId) : null))
             };
 
             console.log(`✅ Created swap output thread ${notation} in ${outputCurrency}: ${outputPortion} (ID: ${newInternalId})`);
@@ -6718,7 +6730,11 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
                     sourceType: thread.sourceType || 'hop_output',
                     hopLevel: thread.hopLevel || 0,
                     datetime: thread.createdAt || null,
-                    timezone: 'UTC'
+                    timezone: 'UTC',
+
+                    // Chain information for transaction lookups
+                    chainId: thread.chainId || null,
+                    chainName: thread.chainName || null
                 });
             }
         }
@@ -18827,7 +18843,7 @@ function reopenHopWizard(hopNumber, entryId) {
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop?.entries.find(e => e.id === entryId);
     if (!hop || !entry) return;
-    
+
     // Initialize wizard data with existing entry data
     window.hopWizardData = {
         entryId: entryId,  // Store the entry ID for updating
@@ -18844,12 +18860,26 @@ function reopenHopWizard(hopNumber, entryId) {
         },
         isEditMode: true  // Flag to indicate we're editing an existing entry
     };
-    
+
     // If entry has a single source thread and amount, set the allocation
     if (entry.sourceThreadId && !entry.multipleSourceThreads) {
         window.hopWizardData.allocations[entry.sourceThreadId] = parseFloat(entry.amount) || 0;
     }
-    
+
+    // Detect chain from selected threads
+    const selectedThreadIds = entry.multipleSourceThreads || (entry.sourceThreadId ? [entry.sourceThreadId] : []);
+    if (selectedThreadIds.length > 0) {
+        const availableThreads = getAvailableSourcesForHop(hopNumber, null);
+        for (const threadId of selectedThreadIds) {
+            const thread = availableThreads.find(t => t.threadId === threadId || t.internalId === threadId);
+            if (thread && thread.chainId) {
+                window.hopWizardData.detectedChain = thread.chainId;
+                console.log(`Detected chain ${thread.chainId} from thread ${threadId} when reopening wizard`);
+                break;
+            }
+        }
+    }
+
     openHopEntryWizard(hopNumber);
 }
 
@@ -19101,6 +19131,32 @@ function updateWizardThreadSelection(threadInfo) {
 
     // Keep backward compatibility
     wizardData.selectedThreads = wizardData.selectedNotations;
+
+    // Detect chain from selected threads
+    if (wizardData.selectedInternalIds.length > 0) {
+        const availableThreads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+        let detectedChain = null;
+
+        // Check all selected threads for chain information
+        for (const selectedId of wizardData.selectedInternalIds) {
+            const thread = availableThreads.find(t =>
+                t.internalId === selectedId || t.threadId === selectedId
+            );
+            if (thread && thread.chainId) {
+                detectedChain = thread.chainId;
+                console.log(`Detected chain ${detectedChain} from thread ${selectedId}`);
+                break;  // Use the first thread with chain info
+            }
+        }
+
+        if (detectedChain) {
+            wizardData.detectedChain = detectedChain;
+            console.log(`Wizard chain detection: Set detectedChain to ${detectedChain}`);
+        }
+    } else {
+        // Clear detected chain if no threads selected
+        wizardData.detectedChain = null;
+    }
 
     const nextBtn = document.getElementById('wizardNextBtn');
     nextBtn.disabled = wizardData.selectedInternalIds.length === 0;
@@ -20124,6 +20180,23 @@ function updateThreadsAfterSwap(hop, swapEntry) {
 
     if (!newThreadId) return;
 
+    // Get chain info from the swap entry or inherit from source thread
+    let chainId = swapEntry.chain || null;
+    let chainName = null;
+
+    // If this is a bridge, use the destination chain
+    if (swapDetails.toChain) {
+        chainId = swapDetails.toChain;
+        chainName = window.blockchainAPIs?.[swapDetails.toChain]?.name || swapDetails.toChain;
+    } else if (!chainId && swapEntry.sourceThreadId) {
+        // Try to inherit from source thread
+        const sourceThreadData = getThreadByNotation(swapEntry.sourceThreadId);
+        if (sourceThreadData) {
+            chainId = sourceThreadData.chainId || null;
+            chainName = sourceThreadData.chainName || null;
+        }
+    }
+
     // Create the thread with SAME ID in the output currency
     investigation.availableThreads[swapDetails.toCurrency][newThreadId] = {
         threadId: newThreadId,
@@ -20144,7 +20217,10 @@ function updateThreadsAfterSwap(hop, swapEntry) {
             toCurrency: swapDetails.toCurrency,
             toAmount: swapDetails.toAmount,
             provider: swapDetails.providerName || 'Unknown'
-        }
+        },
+        // Chain tracking
+        chainId: chainId,
+        chainName: chainName
     };
 
     console.log(`Created swap output thread ${newThreadId} with ${swapDetails.toAmount} ${swapDetails.toCurrency}`);
