@@ -3558,6 +3558,16 @@
             'ADA': { name: 'Cardano', symbol: 'ADA', decimals: 6 },
             'DAI': { name: 'DAI', symbol: 'DAI', decimals: 18 },
             'BNB': { name: 'BNB', symbol: 'BNB', decimals: 18 },
+            // Native currencies for newer chains
+            'HYPE': { name: 'HyperEVM', symbol: 'HYPE', decimals: 18 },
+            'AVAX': { name: 'Avalanche', symbol: 'AVAX', decimals: 18 },
+            'MNT': { name: 'Mantle', symbol: 'MNT', decimals: 18 },
+            'xDAI': { name: 'Gnosis', symbol: 'xDAI', decimals: 18 },
+            'CELO': { name: 'Celo', symbol: 'CELO', decimals: 18 },
+            'GLMR': { name: 'Moonbeam', symbol: 'GLMR', decimals: 18 },
+            'MOVR': { name: 'Moonriver', symbol: 'MOVR', decimals: 18 },
+            'frxETH': { name: 'Fraxtal', symbol: 'frxETH', decimals: 18 },
+            'BTT': { name: 'BitTorrent', symbol: 'BTT', decimals: 18 },
             'CUSTOM': { name: 'Custom', symbol: '', decimals: 8 }
         };
         let currentTxData = null;
@@ -28253,8 +28263,21 @@ async function lookupVictimTransaction(victimId, transactionId) {
         transaction.amount = txData.amount.toString();
         
         // Update currency
-        document.getElementById(`currency_victim_${victimId}_${transactionId}`).value = txData.currency;
-        transaction.currency = txData.currency;
+        const currencySelect = document.getElementById(`currency_victim_${victimId}_${transactionId}`);
+        if (currencySelect) {
+            // Check if the currency exists in the dropdown
+            const optionExists = Array.from(currencySelect.options).some(opt => opt.value === txData.currency);
+            if (!optionExists && txData.currency !== 'CUSTOM') {
+                // Add new currency option if it doesn't exist
+                const newOption = document.createElement('option');
+                newOption.value = txData.currency;
+                newOption.textContent = txData.currency;
+                currencySelect.appendChild(newOption);
+            }
+
+            currencySelect.value = txData.currency;
+            transaction.currency = txData.currency;
+        }
         
         // Update receiving wallet (the "to" address is the RED wallet)
         document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`).value = txData.to;
