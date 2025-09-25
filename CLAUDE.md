@@ -3,39 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 21:01)
+## Latest Commit (Auto-updated: 2025-09-24 21:02)
 
-**Commit:** e9738959d62bee3877a89574e1d5d31309eef409
+**Commit:** f62bd0b6dc1445aed54f4dfd46e039e58794e843
 **Author:** Your Name
-**Message:** Fix pattern type checking to prevent API errors
+**Message:** Use default Arkham API key for Bitcoin address search
 
-- Added type checks before accessing pattern.length to handle object patterns
-- Fixed all blockchain API calls to only run with string patterns
-- Prevents trying to validate informational messages as addresses
-- Fixed effectivePatternLength calculation in error messages
-- All complete address validators now check pattern is a string first
+- Bitcoin address finder now uses the same default Arkham API key that's already in the tool
+- No need to manually configure Arkham API - it works out of the box
+- Partial Bitcoin address searches (3+ characters) now work automatically
+- Uses fallback key: d377a526-c9ea-4cb6-a647-775559583ff6
 
-This prevents 404 errors when pattern is an object or informational message
+EVM addresses continue to use Etherscan API as intended
 
 ### Changed Files:
 ```
- CLAUDE.md  | 34 ++++++++++++++++------------------
- index.html | 11 ++++++-----
- 2 files changed, 22 insertions(+), 23 deletions(-)
+ CLAUDE.md  | 34 +++++++++++++++++-----------------
+ index.html |  3 ++-
+ 2 files changed, 19 insertions(+), 18 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e973895 Fix pattern type checking to prevent API errors (0 seconds ago)
-- 49da831 Fix 'First and Last characters' search for Bitcoin addresses (4 minutes ago)
-- 7635044 Optimize Bitcoin address search to prioritize Arkham API for partial matches (6 minutes ago)
-- 6a50c49 Fix address finder API issues and add proper CSP headers (18 minutes ago)
-- c0fceab Add comprehensive Solana network support to BATS tool (24 minutes ago)
+- f62bd0b Use default Arkham API key for Bitcoin address search (0 seconds ago)
+- e973895 Fix pattern type checking to prevent API errors (2 minutes ago)
+- 49da831 Fix 'First and Last characters' search for Bitcoin addresses (6 minutes ago)
+- 7635044 Optimize Bitcoin address search to prioritize Arkham API for partial matches (8 minutes ago)
+- 6a50c49 Fix address finder API issues and add proper CSP headers (20 minutes ago)
+- c0fceab Add comprehensive Solana network support to BATS tool (26 minutes ago)
 - a8a484b Improve address search to handle partial addresses correctly (10 hours ago)
 - da2eaa1 Fix address search by using direct API calls without CORS proxies (10 hours ago)
 - b2d0e08 Fix variable shadowing issue preventing token data from being passed to parseResponse (10 hours ago)
 - 3c26574 Improve parseEVMResponse logging format for better visibility (10 hours ago)
-- 33f6d1c Add detailed logging to debug token transfer parsing in bulk upload (10 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
