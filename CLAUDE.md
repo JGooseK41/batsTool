@@ -3,38 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 13:05)
+## Latest Commit (Auto-updated: 2025-09-25 13:07)
 
-**Commit:** b5efb85e66e2482441a46493f0bafe67654fdb04
+**Commit:** 10f9d1207ad34ad0756fcbf61507ee09d893f9fe
 **Author:** Your Name
-**Message:** Add native currency support for all EVM chains
+**Message:** Add comprehensive multi-chain token support
 
-- Added nativeCurrency field to all chain configurations
-- HyperEVM now correctly shows HYPE instead of ETH
-- Polygon shows MATIC, BSC shows BNB, Avalanche shows AVAX, etc.
-- parseEVMResponse now uses chain-specific native currency
+- Added token address mappings for USDT, USDC, DAI, WBTC, WETH across all major chains
+- Correct decimal handling: USDT/USDC (6), WBTC (8), most others (18)
+- Special case: BSC USDT uses 18 decimals instead of 6
+- Token symbols now display correctly on all supported chains
 
-Fixed issue where all EVM chains showed ETH as native currency
+Examples:
+- USDT on Ethereum: 0xdac17f958d2ee523a2206206994597c13d831ec7
+- USDT on BSC: 0x55d398326f99059ff775485246999027b3197955
+- USDC on Polygon: 0x3c499c542cef5e3811e1192ce70d8cc03d5c3359
+- All properly recognized with correct decimals
 
 ### Changed Files:
 ```
- CLAUDE.md  | 36 +++++++++++++++++++-----------------
- index.html | 42 ++++++++++++++++++++++++++++++++----------
- 2 files changed, 51 insertions(+), 27 deletions(-)
+ CLAUDE.md  |  32 +++++++--------
+ index.html | 130 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 135 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b5efb85 Add native currency support for all EVM chains (0 seconds ago)
-- 8c44044 Add chain selector dropdown for victim transaction lookups (7 minutes ago)
-- 784011c Fix EVM chain detection and remove problematic fallback URLs (26 minutes ago)
-- 977d9c5 Add support for 20+ EVM chains via Etherscan API v2 (32 minutes ago)
+- 10f9d12 Add comprehensive multi-chain token support (0 seconds ago)
+- b5efb85 Add native currency support for all EVM chains (3 minutes ago)
+- 8c44044 Add chain selector dropdown for victim transaction lookups (9 minutes ago)
+- 784011c Fix EVM chain detection and remove problematic fallback URLs (29 minutes ago)
+- 977d9c5 Add support for 20+ EVM chains via Etherscan API v2 (35 minutes ago)
 - cbfae51 Address finder improvements - API-based partial search and attribution (3 hours ago)
 - 4b5ee9b Add auto-detection of blockchain type from address pattern (7 hours ago)
 - f17f73d Add user guidance for Bitcoin address search limitations (7 hours ago)
 - 3ab4fc8 Fix CSP to allow www.walletexplorer.com domain (7 hours ago)
 - d676a69 Add WalletExplorer API integration for Bitcoin address search and attribution (7 hours ago)
-- 5b44bdd Add Arkham attribution to address finder for complete Bitcoin addresses (7 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

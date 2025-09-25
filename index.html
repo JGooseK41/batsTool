@@ -3596,7 +3596,7 @@
         }
 
         // Get wallet attribution from Etherscan API with enhanced label detection
-        async function getWalletAttribution(address) {
+        async function getWalletAttribution(address, chainId = null) {
             if (!address) return null;
 
             const lowerAddress = address.toLowerCase();
@@ -3649,12 +3649,14 @@
                 // Fall back to Etherscan API for address info including labels
                 const apiKey = '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
 
-                // First try: Get address info with label data
-                // Using account balance endpoint which includes address tags
-                const balanceUrl = `https://api.etherscan.io/api?module=account&action=balance&address=${address}&tag=latest&apikey=${apiKey}`;
+                // Use the chainId if provided, otherwise default to Ethereum (1)
+                const chainIdToUse = chainId || 1;
+
+                // Use Etherscan v2 API with chainid parameter for all chains
+                const balanceUrl = `https://api.etherscan.io/v2/api?chainid=${chainIdToUse}&module=account&action=balance&address=${address}&tag=latest&apikey=${apiKey}`;
 
                 // Also fetch transactions to check for labeled addresses
-                const txUrl = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`;
+                const txUrl = `https://api.etherscan.io/v2/api?chainid=${chainIdToUse}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`;
 
                 // Fetch both in parallel
                 const [balanceResponse, txResponse] = await Promise.all([
@@ -3734,7 +3736,7 @@
 
                 // Second try: Get token transfers which may have richer label data
                 if (!attribution) {
-                    const tokenUrl = `https://api.etherscan.io/api?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`;
+                    const tokenUrl = `https://api.etherscan.io/v2/api?chainid=${chainIdToUse}&module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`;
 
                     try {
                         const tokenResponse = await fetch(tokenUrl);
@@ -27741,11 +27743,13 @@ async function lookupEthereumTransaction(txHash) {
 
                 // Check if destination is an exchange/VASP
                 if (txData.to) {
-                    const attribution = await getWalletAttribution(txData.to);
+                    // Pass the chainId for proper multi-chain attribution
+                    const chainId = config.chainId || 1;
+                    const attribution = await getWalletAttribution(txData.to, chainId);
                     if (attribution) {
                         txData.toWalletAttribution = attribution;
                         txData.isTerminalWallet = true;
-                        console.log(`🟣 Terminal wallet detected: ${attribution.name}`);
+                        console.log(`🟣 Terminal wallet detected on chain ${chainId}: ${attribution.name}`);
                     }
                 }
 
