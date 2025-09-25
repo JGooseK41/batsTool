@@ -3619,10 +3619,14 @@
                             headers: {
                                 'API-Key': arkhamApiKey,
                                 'Accept': 'application/json'
-                            }
+                            },
+                            mode: 'cors'
+                        }).catch(err => {
+                            console.log('Main tool Arkham attribution API failed (CORS):', err);
+                            return null;
                         });
 
-                        if (arkhamResponse.ok) {
+                        if (arkhamResponse && arkhamResponse.ok) {
                             const arkhamData = await arkhamResponse.json();
                             if (arkhamData && arkhamData.arkhamEntity) {
                                 attribution = {
@@ -3920,10 +3924,14 @@
                             headers: {
                                 'API-Key': arkhamApiKey,
                                 'Accept': 'application/json'
-                            }
+                            },
+                            mode: 'cors'
+                        }).catch(err => {
+                            console.log('Main tool Arkham attribution API failed (CORS):', err);
+                            return null;
                         });
 
-                        if (arkhamResponse.ok) {
+                        if (arkhamResponse && arkhamResponse.ok) {
                             const arkhamData = await arkhamResponse.json();
                             if (arkhamData && arkhamData.arkhamEntity) {
                                 attribution = {
@@ -25211,7 +25219,8 @@ async function searchBitcoinAddresses(searchType, pattern) {
                     headers: {
                         'API-Key': arkhamKey,
                         'Accept': 'application/json'
-                    }
+                    },
+                    mode: 'cors'
                 }).catch(err => {
                     console.log('Arkham API request failed:', err);
                     return null;
