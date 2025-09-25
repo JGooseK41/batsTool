@@ -4433,11 +4433,7 @@
                 addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=',
                 labelApiUrl: 'https://api.etherscan.io/v2/api?chainid=1&module=account&action=addressinfo&address=',
                 apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
-                fallbackUrls: [
-                    'https://eth.blockscout.com/api/v2/transactions/',
-                    'https://api.blockcypher.com/v1/eth/main/txs/',
-                    'https://eth-mainnet.g.alchemy.com/v2/demo'
-                ],
+                fallbackUrls: [],
                 parseResponse: parseEVMResponse
             },
             base: {
@@ -24484,7 +24480,10 @@ async function lookupTransaction() {
             }
             
             // Parse the response (pass tokenData and blockTimestamp for EVM chains)
-            const isEVMChain = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc'].includes(detectedChain);
+            const isEVMChain = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc',
+                               'avalanche', 'hyperevm', 'linea', 'scroll', 'mantle', 'blast',
+                               'zksync', 'gnosis', 'celo', 'moonbeam', 'moonriver', 'fraxtal',
+                               'taiko', 'arbitrumnova', 'bittorrent', 'opbnb'].includes(detectedChain);
             currentTxData = isEVMChain ? 
                 config.parseResponse(data, tokenData, blockTimestamp) : 
                 config.parseResponse(data);
@@ -27939,7 +27938,10 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     if (!response.ok) throw new Error('Transaction not found');
                     data = await response.json();
                     
-                } else if (['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc'].includes(detectedChain)) {
+                } else if (['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc',
+                           'avalanche', 'hyperevm', 'linea', 'scroll', 'mantle', 'blast',
+                           'zksync', 'gnosis', 'celo', 'moonbeam', 'moonriver', 'fraxtal',
+                           'taiko', 'arbitrumnova', 'bittorrent', 'opbnb'].includes(detectedChain)) {
                     const apiKey = localStorage.getItem('bats_etherscan_api_key') || config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
                     
                     // First get the basic transaction
@@ -28033,7 +28035,10 @@ async function lookupVictimTransaction(victimId, transactionId) {
                 }
                 
                 // Parse the response (pass tokenData and blockTimestamp for EVM chains)
-                const isEVMChain = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc'].includes(detectedChain);
+                const isEVMChain = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc',
+                               'avalanche', 'hyperevm', 'linea', 'scroll', 'mantle', 'blast',
+                               'zksync', 'gnosis', 'celo', 'moonbeam', 'moonriver', 'fraxtal',
+                               'taiko', 'arbitrumnova', 'bittorrent', 'opbnb'].includes(detectedChain);
                 txData = isEVMChain ? 
                     config.parseResponse(data, tokenData, blockTimestamp) : 
                     config.parseResponse(data);
