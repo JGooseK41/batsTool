@@ -17961,19 +17961,29 @@ function showHopWizardStep(step) {
         logEntryBtn.disabled = !hasRequiredData;
         logEntryBtn.onclick = () => {
             console.log('Log Entry button clicked');
-            hopWizardNext();
+            console.log('Current wizard step:', wizardData.step);
+            console.log('Wizard data:', wizardData);
+            if (typeof hopWizardNext === 'function') {
+                hopWizardNext();
+            } else {
+                console.error('hopWizardNext function not found');
+            }
         };
         footerButtons.appendChild(logEntryBtn);
 
-        // Log Write-off button
+        // Log Write-off button (gray with red border)
         const writeoffBtn = document.createElement('button');
         writeoffBtn.className = 'btn btn-secondary';
         writeoffBtn.textContent = '🚫 Log Write-off';
-        writeoffBtn.style.cssText = 'padding: 10px 20px; background: #dc3545; color: white; border: 2px solid #dc3545;';
+        writeoffBtn.style.cssText = 'padding: 10px 20px; background: #9e9e9e; color: white; border: 2px solid #dc3545;';
         writeoffBtn.disabled = !hasRequiredData;
         writeoffBtn.onclick = () => {
             console.log('Write-off button clicked');
-            showWriteoffConfirmation();
+            if (typeof showWriteoffConfirmation === 'function') {
+                showWriteoffConfirmation();
+            } else {
+                console.error('showWriteoffConfirmation function not found');
+            }
         };
         footerButtons.appendChild(writeoffBtn);
     }
@@ -17981,10 +17991,14 @@ function showHopWizardStep(step) {
     wizardData.step = step;
 }
 
-function hopWizardNext() {
+window.hopWizardNext = function() {
+    console.log('hopWizardNext called');
     const wizardData = window.hopWizardData;
 
-    if (!wizardData) return;
+    if (!wizardData) {
+        console.error('No wizard data found');
+        return;
+    }
 
     // Normal progression through steps
     if (wizardData.step === 3) {
@@ -18007,7 +18021,8 @@ function hopWizardNext() {
     }
 }
 
-function hopWizardBack() {
+window.hopWizardBack = function() {
+    console.log('hopWizardBack called');
     const wizardData = window.hopWizardData;
     if (wizardData && wizardData.step > 1) {
         wizardData.step = wizardData.step - 1;
@@ -18015,7 +18030,8 @@ function hopWizardBack() {
     }
 }
 
-function showWriteoffConfirmation() {
+window.showWriteoffConfirmation = function() {
+    console.log('showWriteoffConfirmation called');
     const wizardData = window.hopWizardData;
 
     // Calculate total amount from allocations
@@ -18944,9 +18960,17 @@ function openHopEntryWizard(hopNumber) {
     const wizardHTML = `
         <div id="hopEntryWizard" class="modal show">
             <div class="modal-content" style="max-width: 900px; width: 90%;">
-                <div class="modal-header">
+                <div class="modal-header" style="position: relative;">
                     <h2>🔍 Add Trace Entry - Hop ${numericHopNumber}</h2>
-                    <span class="close" onclick="closeHopWizard()">&times;</span>
+                    <button class="close-btn" onclick="closeHopWizard()"
+                            style="position: absolute; right: 15px; top: 15px; width: 30px; height: 30px;
+                                   font-size: 24px; background: #e74c3c; color: white; border: none;
+                                   border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+                                   justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                                   transition: all 0.3s ease; font-weight: bold; line-height: 1;"
+                            onmouseover="this.style.background='#c0392b'; this.style.transform='scale(1.1)'"
+                            onmouseout="this.style.background='#e74c3c'; this.style.transform='scale(1)'"
+                            title="Close Wizard">×</button>
                 </div>
                 
                 <div class="wizard-progress" id="wizardProgress">
