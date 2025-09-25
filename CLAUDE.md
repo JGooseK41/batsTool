@@ -3,38 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 10:55)
+## Latest Commit (Auto-updated: 2025-09-24 10:58)
 
-**Commit:** da2eaa120e5bd71142161ba70c33e73e9a1f6588
+**Commit:** a8a484b44eb9391e714cdab2e617b90fc7eaf65a
 **Author:** Your Name
-**Message:** Fix address search by using direct API calls without CORS proxies
+**Message:** Improve address search to handle partial addresses correctly
 
-- Removed fetchWithCORS usage that was causing CSP violations
-- Use direct API calls like the main app does (corsEnabled = false)
-- Added Arkham Intelligence API integration for address search
-- Fixed blockchain.info API usage for Bitcoin address lookups
-- Fixed syntax errors in EVM address search
-- Added proper error handling with fallback to null
+- Fixed Bitcoin address search to check address length before API calls
+- Only use rawaddr endpoint for complete addresses (26+ chars)
+- Added multiaddr endpoint for partial address searches
+- Added BlockCypher API support as fallback
+- Improved user guidance for partial address searches
+- Better error handling for 404 responses from APIs
 
 ### Changed Files:
 ```
- CLAUDE.md  |  26 +++++----
- index.html | 175 +++++++++++++++++++++++++++++++++++++++++++++++--------------
- 2 files changed, 152 insertions(+), 49 deletions(-)
+ CLAUDE.md  |  39 ++++++++++---------
+ index.html | 125 +++++++++++++++++++++++++++++++++++++++++--------------------
+ 2 files changed, 106 insertions(+), 58 deletions(-)
 ```
 
 ## Recent Commits History
 
-- da2eaa1 Fix address search by using direct API calls without CORS proxies (0 seconds ago)
-- b2d0e08 Fix variable shadowing issue preventing token data from being passed to parseResponse (7 minutes ago)
-- 3c26574 Improve parseEVMResponse logging format for better visibility (8 minutes ago)
-- 33f6d1c Add detailed logging to debug token transfer parsing in bulk upload (10 minutes ago)
-- 2cb002c Fix bulk upload token transfer detection for all EVM chains (13 minutes ago)
-- ad194ac Fix bulk upload API calls and add error handling for extension interference (17 minutes ago)
-- 140cd3f Add bulk upload test file and complete implementation (23 minutes ago)
-- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (24 minutes ago)
-- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (39 minutes ago)
-- 4cde5fe Add unnecessary input heuristic - most reliable change detection method (2 hours ago)
+- a8a484b Improve address search to handle partial addresses correctly (0 seconds ago)
+- da2eaa1 Fix address search by using direct API calls without CORS proxies (3 minutes ago)
+- b2d0e08 Fix variable shadowing issue preventing token data from being passed to parseResponse (10 minutes ago)
+- 3c26574 Improve parseEVMResponse logging format for better visibility (10 minutes ago)
+- 33f6d1c Add detailed logging to debug token transfer parsing in bulk upload (13 minutes ago)
+- 2cb002c Fix bulk upload token transfer detection for all EVM chains (15 minutes ago)
+- ad194ac Fix bulk upload API calls and add error handling for extension interference (19 minutes ago)
+- 140cd3f Add bulk upload test file and complete implementation (26 minutes ago)
+- 66b6133 Fix bulk upload to use parseTransactionData and add multi-transfer selection modal (27 minutes ago)
+- cd72cb8 Fix PIFO allocation - replace proportional distribution with proper sequential allocation (41 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
@@ -58,10 +58,30 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - Includes embedded styles and scripts
 - Supports file operations through browser File API
 
+## API Integration Status
+
+### Available APIs
+- **Mempool.space** (FREE): Transaction lookups, address validation, fee estimates
+  - Note: Website has excellent autocomplete, API has backend support but endpoint not fully documented
+- **Blockchain.info** (FREE): Bitcoin addresses and transactions
+- **BlockCypher** (FREE limited): Multi-chain support with rate limits
+- **Arkham Intelligence** (API key): Best for Bitcoin attribution and entity identification
+- **Etherscan** (API key): EVM chains (Ethereum, BSC, Polygon, etc.)
+- **TronGrid** (API key): Tron blockchain
+
+### Address Search Strategy
+The address search tool uses multiple fallback strategies:
+1. Mempool.space (experimental endpoints for prefix search)
+2. Arkham Intelligence (best for attribution and partial matches)
+3. Complete address validation (Mempool, Blockchain.info)
+4. BlockCypher (if API key available)
+5. Known address database (major exchanges)
+
 ## Next Steps
 - Complete flow diagram visualization implementation
 - Enhance multi-transfer selection UI
 - Consider adding more blockchain support
+- Investigate Mempool.space undocumented search endpoints
 
 ## Implementation Plan - Core Behavior Fixes
 

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Solana Network API Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0e0e0e;
+            color: #14F195;
+            margin: 20px;
+            max-width: 1400px;
+        }
+        h1 {
+            color: #14F195;
+            background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 36px;
+        }
+        h2 { color: #9945FF; margin-top: 30px; }
+        .test-card {
+            background: #1a1a1a;
+            border: 1px solid #14F195;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-card h3 {
+            color: #9945FF;
+            margin-top: 0;
+        }
+        .status {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success { background: #004400; color: #14F195; }
+        .error { background: #440000; color: #ff4444; }
+        .pending { background: #443300; color: #ffaa00; }
+        .info { background: #002244; color: #00aaff; }
+        button {
+            background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #14F195 0%, #9945FF 100%);
+            transform: scale(1.05);
+        }
+        input, textarea {
+            background: #222;
+            color: #14F195;
+            border: 1px solid #9945FF;
+            padding: 10px;
+            margin: 5px;
+            width: 90%;
+            font-family: monospace;
+            border-radius: 4px;
+        }
+        pre {
+            background: #0a0a0a;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            border-radius: 4px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        .highlight {
+            background: #9945FF;
+            color: #000;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #1a1a1a;
+            color: #9945FF;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚡ Solana Network API Testing</h1>
+    <p style="color: #999;">Test various Solana RPC endpoints and API services for transaction lookup and address search capabilities</p>
+
+    <div class="test-card" style="background: #0a1929; border-color: #9945FF;">
+        <h3>📝 Solana Network Overview</h3>
+        <table>
+            <tr>
+                <th>Feature</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>Address Format</td>
+                <td>Base58, 32-44 characters (e.g., 11111111111111111111111111111111)</td>
+            </tr>
+            <tr>
+                <td>Transaction Hash</td>
+                <td>Base58, ~87-88 characters</td>
+            </tr>
+            <tr>
+                <td>Native Token</td>
+                <td>SOL (9 decimals, 1 SOL = 1,000,000,000 lamports)</td>
+            </tr>
+            <tr>
+                <td>SPL Tokens</td>
+                <td>USDC, USDT, and thousands of other tokens on Solana</td>
+            </tr>
+            <tr>
+                <td>Explorer</td>
+                <td><a href="https://solscan.io" target="_blank" style="color: #14F195;">Solscan.io</a>, <a href="https://explorer.solana.com" target="_blank" style="color: #14F195;">Explorer.solana.com</a></td>
+            </tr>
+        </table>
+    </div>
+
+    <h2>🌐 Available Solana RPC Endpoints</h2>
+
+    <div class="grid">
+        <div class="test-card">
+            <h3>Public RPC Endpoints (FREE)</h3>
+            <div class="status info">🔗 https://api.mainnet-beta.solana.com (Official)</div>
+            <div class="status info">🔗 https://rpc.ankr.com/solana</div>
+            <div class="status info">🔗 https://solana-mainnet.g.alchemy.com/v2/demo (Limited)</div>
+            <div class="status info">🔗 https://mainnet.helius-rpc.com/?api-key=demo</div>
+            <button onclick="testAllPublicRPCs()">Test All Public RPCs</button>
+        </div>
+
+        <div class="test-card">
+            <h3>API Services</h3>
+            <div class="status pending">📊 Solscan API (Limited free tier)</div>
+            <div class="status pending">🔮 Helius API (Enhanced features)</div>
+            <div class="status pending">⚗️ Alchemy Solana (With API key)</div>
+            <div class="status pending">🌊 QuickNode (Premium)</div>
+        </div>
+    </div>
+
+    <h2>🔍 Test Solana Functionality</h2>
+
+    <div class="test-card">
+        <h3>1. Transaction Lookup</h3>
+        <input type="text" id="solanaTxHash" placeholder="Solana transaction signature"
+               value="5JQ8Mhdc2A8BhaR4WvLWqtaHvB5T8Y5f8Xb9Uy3jhz5FdZqPmMgLrfP6dVpTfRwvwwt4Ju9nqcYgSm3FFwjJFRhW">
+        <br>
+        <button onclick="testTransactionLookup()">Lookup Transaction</button>
+        <div id="txResults" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>2. Address Balance & Info</h3>
+        <input type="text" id="solanaAddress" placeholder="Solana address"
+               value="11111111111111111111111111111111">
+        <br>
+        <button onclick="testAddressInfo()">Get Address Info</button>
+        <div id="addressResults" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>3. Search for Addresses (Pattern Matching)</h3>
+        <input type="text" id="addressPattern" placeholder="Address prefix (e.g., 'Trump', 'Biden', '777')"
+               value="Trump">
+        <br>
+        <button onclick="searchVanityAddresses()">Search Vanity Addresses</button>
+        <p style="color: #666; font-size: 12px;">Note: Searches known vanity addresses and token names</p>
+        <div id="searchResults" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>4. SPL Token Search</h3>
+        <input type="text" id="tokenSearch" placeholder="Token name or symbol (e.g., USDC, BONK)"
+               value="USDC">
+        <br>
+        <button onclick="searchSPLTokens()">Search Tokens</button>
+        <div id="tokenResults" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>5. Recent Blocks & Network Status</h3>
+        <button onclick="testNetworkStatus()">Check Network Status</button>
+        <div id="networkResults" style="margin-top: 10px;"></div>
+    </div>
+
+    <h2>📝 API Response Logs</h2>
+    <pre id="apiLogs">Ready to test Solana APIs...</pre>
+
+    <script>
+        function log(message, type = 'info') {
+            const logs = document.getElementById('apiLogs');
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const typeEmoji = {
+                'success': '✅',
+                'error': '❌',
+                'info': 'ℹ️',
+                'warning': '⚠️'
+            };
+            logs.textContent += `[${timestamp}] ${typeEmoji[type] || ''} ${message}\n`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        // Test all public RPC endpoints
+        async function testAllPublicRPCs() {
+            const rpcs = [
+                { name: 'Official Solana', url: 'https://api.mainnet-beta.solana.com' },
+                { name: 'Ankr', url: 'https://rpc.ankr.com/solana' },
+                { name: 'Alchemy Demo', url: 'https://solana-mainnet.g.alchemy.com/v2/demo' },
+                { name: 'Helius Demo', url: 'https://mainnet.helius-rpc.com/?api-key=demo' }
+            ];
+
+            log('Testing all public RPC endpoints...', 'info');
+
+            for (const rpc of rpcs) {
+                try {
+                    const response = await fetch(rpc.url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            id: 1,
+                            method: 'getHealth'
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.result === 'ok') {
+                            log(`${rpc.name}: ✅ Healthy`, 'success');
+                        } else {
+                            log(`${rpc.name}: ⚠️ Response: ${JSON.stringify(data)}`, 'warning');
+                        }
+                    } else {
+                        log(`${rpc.name}: ❌ HTTP ${response.status}`, 'error');
+                    }
+                } catch (e) {
+                    log(`${rpc.name}: ❌ ${e.message}`, 'error');
+                }
+            }
+        }
+
+        // Test transaction lookup
+        async function testTransactionLookup() {
+            const txHash = document.getElementById('solanaTxHash').value.trim();
+            const resultsDiv = document.getElementById('txResults');
+            resultsDiv.innerHTML = '<div class="status pending">Looking up transaction...</div>';
+
+            try {
+                log(`Looking up transaction: ${txHash.substring(0, 20)}...`, 'info');
+
+                const response = await fetch('https://api.mainnet-beta.solana.com', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getTransaction',
+                        params: [
+                            txHash,
+                            { encoding: 'jsonParsed', commitment: 'confirmed', maxSupportedTransactionVersion: 0 }
+                        ]
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.result) {
+                        const tx = data.result;
+                        let html = '<div class="status success">Transaction found!</div>';
+                        html += '<div style="margin-top: 10px; padding: 10px; background: #111; border-radius: 4px;">';
+                        html += `<strong>Slot:</strong> ${tx.slot}<br>`;
+                        html += `<strong>Block Time:</strong> ${new Date(tx.blockTime * 1000).toLocaleString()}<br>`;
+                        html += `<strong>Fee:</strong> ${tx.meta.fee / 1000000000} SOL<br>`;
+                        html += `<strong>Status:</strong> ${tx.meta.err ? 'Failed' : 'Success'}<br>`;
+                        html += '</div>';
+                        resultsDiv.innerHTML = html;
+                        log('Transaction retrieved successfully', 'success');
+                    } else if (data.error) {
+                        resultsDiv.innerHTML = `<div class="status error">Error: ${data.error.message}</div>`;
+                        log(`Transaction lookup failed: ${data.error.message}`, 'error');
+                    }
+                }
+            } catch (e) {
+                resultsDiv.innerHTML = `<div class="status error">Error: ${e.message}</div>`;
+                log(`Transaction lookup error: ${e.message}`, 'error');
+            }
+        }
+
+        // Test address info
+        async function testAddressInfo() {
+            const address = document.getElementById('solanaAddress').value.trim();
+            const resultsDiv = document.getElementById('addressResults');
+            resultsDiv.innerHTML = '<div class="status pending">Fetching address info...</div>';
+
+            try {
+                log(`Getting info for address: ${address}`, 'info');
+
+                // Get balance
+                const balanceResponse = await fetch('https://api.mainnet-beta.solana.com', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getBalance',
+                        params: [address]
+                    })
+                });
+
+                if (balanceResponse.ok) {
+                    const balanceData = await balanceResponse.json();
+                    let html = '<div class="status success">Address info retrieved!</div>';
+                    html += '<div style="margin-top: 10px; padding: 10px; background: #111; border-radius: 4px;">';
+
+                    if (balanceData.result) {
+                        const balanceSOL = balanceData.result.value / 1000000000;
+                        html += `<strong>Balance:</strong> ${balanceSOL} SOL<br>`;
+
+                        // Try to get account info
+                        const accountResponse = await fetch('https://api.mainnet-beta.solana.com', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                jsonrpc: '2.0',
+                                id: 1,
+                                method: 'getAccountInfo',
+                                params: [address, { encoding: 'jsonParsed' }]
+                            })
+                        });
+
+                        if (accountResponse.ok) {
+                            const accountData = await accountResponse.json();
+                            if (accountData.result && accountData.result.value) {
+                                html += `<strong>Owner:</strong> ${accountData.result.value.owner}<br>`;
+                                html += `<strong>Executable:</strong> ${accountData.result.value.executable}<br>`;
+                                html += `<strong>Rent Epoch:</strong> ${accountData.result.value.rentEpoch}<br>`;
+                            }
+                        }
+                    }
+
+                    html += '</div>';
+                    resultsDiv.innerHTML = html;
+                    log('Address info retrieved successfully', 'success');
+                }
+            } catch (e) {
+                resultsDiv.innerHTML = `<div class="status error">Error: ${e.message}</div>`;
+                log(`Address info error: ${e.message}`, 'error');
+            }
+        }
+
+        // Search for vanity addresses
+        async function searchVanityAddresses() {
+            const pattern = document.getElementById('addressPattern').value.trim().toLowerCase();
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '<div class="status pending">Searching for addresses...</div>';
+
+            log(`Searching for addresses with pattern: ${pattern}`, 'info');
+
+            // Known vanity addresses and popular addresses
+            const knownAddresses = [
+                { address: 'TrumpWifHatrz5knE7vwLVkiXJ2PL3ZCDke5945Rpump', name: 'TrumpWifHat Token', type: 'SPL Token' },
+                { address: 'BidenWifHatKzPubmZykH8vWXkQJpgFrTx2QbAjfpump', name: 'BidenWifHat Token', type: 'SPL Token' },
+                { address: '7777777777777777777777777777777777777777Eno', name: 'Lucky 7s Address', type: 'Vanity' },
+                { address: 'So11111111111111111111111111111111111111112', name: 'Wrapped SOL', type: 'System Program' },
+                { address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', name: 'USDC', type: 'SPL Token' },
+                { address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', name: 'USDT', type: 'SPL Token' },
+                { address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', name: 'BONK', type: 'SPL Token' },
+                { address: 'JUPyiwrYJFskUPiHa8hkeR8VUtAeFoSYbKedZNsDvCN', name: 'Jupiter', type: 'SPL Token' }
+            ];
+
+            const matches = knownAddresses.filter(addr =>
+                addr.address.toLowerCase().includes(pattern) ||
+                addr.name.toLowerCase().includes(pattern)
+            );
+
+            if (matches.length > 0) {
+                let html = `<div class="status success">Found ${matches.length} matching addresses</div>`;
+                html += '<div style="margin-top: 10px;">';
+                for (const match of matches) {
+                    html += `<div style="padding: 10px; background: #111; margin: 5px 0; border-radius: 4px;">`;
+                    html += `<strong>${match.name}</strong> (${match.type})<br>`;
+                    html += `<span style="font-family: monospace; color: #14F195;">${match.address}</span>`;
+                    html += `</div>`;
+                }
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+                log(`Found ${matches.length} matching addresses`, 'success');
+            } else {
+                resultsDiv.innerHTML = '<div class="status info">No matching addresses found in known database</div>';
+                log('No matches found in known addresses', 'info');
+            }
+
+            // Note about limitations
+            resultsDiv.innerHTML += '<div class="status info" style="margin-top: 10px;">Note: Full address search requires specialized indexing services like Solscan API or Helius</div>';
+        }
+
+        // Search SPL tokens
+        async function searchSPLTokens() {
+            const search = document.getElementById('tokenSearch').value.trim().toUpperCase();
+            const resultsDiv = document.getElementById('tokenResults');
+            resultsDiv.innerHTML = '<div class="status pending">Searching tokens...</div>';
+
+            log(`Searching for SPL tokens: ${search}`, 'info');
+
+            // Common SPL tokens
+            const tokens = [
+                { symbol: 'USDC', address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', name: 'USD Coin' },
+                { symbol: 'USDT', address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', name: 'Tether USD' },
+                { symbol: 'BONK', address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', name: 'Bonk' },
+                { symbol: 'WIF', address: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm', name: 'dogwifhat' },
+                { symbol: 'JUP', address: 'JUPyiwrYJFskUPiHa8hkeR8VUtAeFoSYbKedZNsDvCN', name: 'Jupiter' },
+                { symbol: 'RAY', address: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R', name: 'Raydium' },
+                { symbol: 'PYTH', address: 'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3', name: 'Pyth Network' }
+            ];
+
+            const matches = tokens.filter(t =>
+                t.symbol.includes(search) ||
+                t.name.toUpperCase().includes(search)
+            );
+
+            if (matches.length > 0) {
+                let html = `<div class="status success">Found ${matches.length} tokens</div>`;
+                html += '<div style="margin-top: 10px;">';
+                for (const token of matches) {
+                    html += `<div style="padding: 10px; background: #111; margin: 5px 0; border-radius: 4px;">`;
+                    html += `<strong>${token.symbol}</strong> - ${token.name}<br>`;
+                    html += `<span style="font-family: monospace; color: #9945FF;">${token.address}</span>`;
+                    html += `</div>`;
+                }
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+                log(`Found ${matches.length} matching tokens`, 'success');
+            } else {
+                resultsDiv.innerHTML = '<div class="status info">No matching tokens found</div>';
+            }
+        }
+
+        // Test network status
+        async function testNetworkStatus() {
+            const resultsDiv = document.getElementById('networkResults');
+            resultsDiv.innerHTML = '<div class="status pending">Checking network status...</div>';
+
+            try {
+                log('Checking Solana network status...', 'info');
+
+                // Get recent blockhash
+                const blockhashResponse = await fetch('https://api.mainnet-beta.solana.com', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getRecentBlockhash'
+                    })
+                });
+
+                // Get slot
+                const slotResponse = await fetch('https://api.mainnet-beta.solana.com', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getSlot'
+                    })
+                });
+
+                // Get version
+                const versionResponse = await fetch('https://api.mainnet-beta.solana.com', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getVersion'
+                    })
+                });
+
+                let html = '<div class="status success">Network status retrieved!</div>';
+                html += '<div style="margin-top: 10px; padding: 10px; background: #111; border-radius: 4px;">';
+
+                if (blockhashResponse.ok) {
+                    const bhData = await blockhashResponse.json();
+                    if (bhData.result) {
+                        html += `<strong>Recent Blockhash:</strong><br>${bhData.result.value.blockhash}<br><br>`;
+                    }
+                }
+
+                if (slotResponse.ok) {
+                    const slotData = await slotResponse.json();
+                    if (slotData.result) {
+                        html += `<strong>Current Slot:</strong> ${slotData.result.toLocaleString()}<br>`;
+                    }
+                }
+
+                if (versionResponse.ok) {
+                    const versionData = await versionResponse.json();
+                    if (versionData.result) {
+                        html += `<strong>Solana Version:</strong> ${versionData.result['solana-core']}<br>`;
+                    }
+                }
+
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+                log('Network status retrieved successfully', 'success');
+            } catch (e) {
+                resultsDiv.innerHTML = `<div class="status error">Error: ${e.message}</div>`;
+                log(`Network status error: ${e.message}`, 'error');
+            }
+        }
+
+        // Initial log
+        log('Solana API Test Suite initialized', 'success');
+        log('Public RPC endpoints are available for basic queries', 'info');
+        log('Advanced features like address search require specialized APIs', 'info');
+    </script>
+</body>
+</html>
