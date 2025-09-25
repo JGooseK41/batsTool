@@ -3,36 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-24 21:26)
+## Latest Commit (Auto-updated: 2025-09-24 21:29)
 
-**Commit:** d75e0a139aeaaee5a688419259458d53edad09ee
+**Commit:** bd8aff89d4140c5b19166762936d6c085200a09c
 **Author:** Your Name
-**Message:** Add CORS error handling to all Arkham API calls
+**Message:** Add Netlify Function proxy for Arkham API to avoid CORS issues
 
-- Add explicit CORS mode to fetch requests
-- Add error catching for CORS failures
-- Log specific errors to console for debugging
-- Handle null responses gracefully
+- Create arkham-proxy.js Netlify Function to handle API requests server-side
+- Update all Arkham API calls to use the proxy endpoint
+- Configure netlify.toml to include functions directory
+- Uses free Netlify Functions tier (125k requests/month)
+- Maintains API key security by passing via headers
 
 ### Changed Files:
 ```
- CLAUDE.md  | 42 ++++++++++++++++++++++--------------------
- index.html | 19 ++++++++++++++-----
- 2 files changed, 36 insertions(+), 25 deletions(-)
+ CLAUDE.md                         | 42 +++++++++++------------
+ index.html                        | 43 ++++++++++++-----------
+ netlify.toml                      |  1 +
+ netlify/functions/arkham-proxy.js | 72 +++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 114 insertions(+), 44 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d75e0a1 Add CORS error handling to all Arkham API calls (0 seconds ago)
-- ab6db58 Fix CSP headers blocking Arkham API calls (4 minutes ago)
-- e6958f1 Update CSP to include additional API endpoints (9 minutes ago)
-- 2292952 Add Arkham Intelligence API for wallet attribution in main tracing tool (11 minutes ago)
-- bb9f0fa Enhance EVM address search to display contract names for tokens (13 minutes ago)
-- 9bf6cc3 Display entity attribution from Arkham in address finder results (21 minutes ago)
-- f62bd0b Use default Arkham API key for Bitcoin address search (23 minutes ago)
-- e973895 Fix pattern type checking to prevent API errors (25 minutes ago)
-- 49da831 Fix 'First and Last characters' search for Bitcoin addresses (29 minutes ago)
-- 7635044 Optimize Bitcoin address search to prioritize Arkham API for partial matches (31 minutes ago)
+- bd8aff8 Add Netlify Function proxy for Arkham API to avoid CORS issues (0 seconds ago)
+- d75e0a1 Add CORS error handling to all Arkham API calls (4 minutes ago)
+- ab6db58 Fix CSP headers blocking Arkham API calls (7 minutes ago)
+- e6958f1 Update CSP to include additional API endpoints (12 minutes ago)
+- 2292952 Add Arkham Intelligence API for wallet attribution in main tracing tool (14 minutes ago)
+- bb9f0fa Enhance EVM address search to display contract names for tokens (16 minutes ago)
+- 9bf6cc3 Display entity attribution from Arkham in address finder results (25 minutes ago)
+- f62bd0b Use default Arkham API key for Bitcoin address search (27 minutes ago)
+- e973895 Fix pattern type checking to prevent API errors (29 minutes ago)
+- 49da831 Fix 'First and Last characters' search for Bitcoin addresses (32 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

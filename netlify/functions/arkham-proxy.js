@@ -2,13 +2,33 @@
 // This avoids CORS issues when calling from the browser
 
 exports.handler = async (event, context) => {
+    // Handle CORS preflight OPTIONS request
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type, X-Arkham-API-Key',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS'
+            },
+            body: ''
+        };
+    }
+
     // Only allow GET requests
     if (event.httpMethod !== 'GET') {
         return {
             statusCode: 405,
+            headers: {
+                'Access-Control-Allow-Origin': '*'
+            },
             body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
+
+    // Log the request for debugging
+    console.log('Request method:', event.httpMethod);
+    console.log('Query params:', event.queryStringParameters);
 
     // Get the endpoint and query parameters from the request
     const { endpoint, ...queryParams } = event.queryStringParameters || {};
@@ -16,6 +36,9 @@ exports.handler = async (event, context) => {
     if (!endpoint) {
         return {
             statusCode: 400,
+            headers: {
+                'Access-Control-Allow-Origin': '*'
+            },
             body: JSON.stringify({ error: 'Missing endpoint parameter' })
         };
     }
