@@ -17274,6 +17274,13 @@ function assignMaxAmountMultiple(hopNumber, entryId) {
 
 function showAddEntryWizard(hopNumber) {
     console.log('showAddEntryWizard called for hopNumber:', hopNumber);
+
+    // Prevent auto-reopening after write-off
+    if (window.justCreatedWriteoff) {
+        console.log('Preventing auto-reopen after write-off');
+        return;
+    }
+
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) {
         console.error('Hop not found:', hopNumber);
@@ -20754,6 +20761,9 @@ function createWriteoffEntryFromWizard() {
     renderHops();
     saveToStorage();
 
+    // Do NOT show remaining threads summary for write-offs - it can trigger reopening the wizard
+    // The alert below is sufficient
+
     // Calculate remaining balance in source thread
     let remainingBalance = 'N/A';
     if (wizardData.selectedThreads.length === 1) {
@@ -20772,20 +20782,29 @@ function createWriteoffEntryFromWizard() {
                        `\nThe source thread has been reduced by ${totalAmount.toLocaleString()} ${currency}.\n` +
                        `Remaining traceable amount: ${remainingBalance} ${currency}`;
 
+    // Collapse the entry BEFORE showing the alert
+    const entryKey = `${hop.hopNumber}_${writeoffEntry.id}`;
+    window.entryCollapseState = window.entryCollapseState || {};
+    window.entryCollapseState[entryKey] = true;
+
+    // Set a flag to prevent auto-reopening wizard after write-off
+    window.justCreatedWriteoff = true;
+    setTimeout(() => {
+        window.justCreatedWriteoff = false;
+    }, 1000);
+
+    // Show confirmation
     alert(confirmMsg);
 
-    // Collapse the entry
+    // Ensure the entry is shown as collapsed in the UI
     setTimeout(() => {
-        const entryKey = `${hop.hopNumber}_${writeoffEntry.id}`;
-        window.entryCollapseState[entryKey] = true;
-        const entryElement = document.querySelector(`[id*="${entryKey}"]`);
-        if (entryElement) {
-            const content = entryElement.querySelector('.entry-content');
-            const summary = entryElement.querySelector('.entry-summary');
-            if (content) content.style.display = 'none';
-            if (summary) summary.style.display = 'block';
+        const entryContent = document.getElementById(`entryContent_${entryKey}`);
+        const entrySummary = document.getElementById(`entrySummary_${entryKey}`);
+        if (entryContent && entrySummary) {
+            entryContent.style.display = 'none';
+            entrySummary.style.display = 'block';
         }
-    }, 100);
+    }, 50);
 }
 
 function createHopEntryFromWizard() {

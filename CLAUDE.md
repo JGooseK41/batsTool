@@ -3,31 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 19:19)
+## Latest Commit (Auto-updated: 2025-09-25 19:23)
 
-**Commit:** 1f0806586467bb0c39ef9ccb9375a17af12e0f5d
+**Commit:** 99db1b33c7f455734241f68bc8912ae61c188ddd
 **Author:** Your Name
-**Message:** Fix write-off process to use actual transaction amount
+**Message:** Fix write-off confirmation modal removing wrong modal
 
-Fixed two critical issues with write-off functionality:
+The confirm write-off button was removing the hop wizard instead of the confirmation modal, causing window.hopWizardData to become null.
 
-1. Write-off amount now uses actual transaction amount:
-   - Previously used entire thread balance (e.g., 150 HYPE)
-   - Now correctly uses transaction amount (e.g., 1 HYPE)
-   - Leaves remaining balance as traceable thread (e.g., 149 HYPE)
-   - Shows remaining balance in confirmation message
+Fixed by:
+- Added unique ID 'writeoffConfirmationModal' to confirmation dialog
+- Updated confirmWriteoff to remove specific modal by ID
+- Added null check for window.hopWizardData with error handling
+- Updated Cancel button to remove correct modal
+- Prevented the modal from reappearing after error
 
-2. Fixed 'Confirm Write-off' button error:
-   - Made confirmWriteoff function global (window.confirmWriteoff)
-   - Button was throwing 'Cannot set properties of null' error
-   - window.hopWizardData was null when button was clicked
-
-Changes:
-- Updated showWriteoffConfirmation to use txData.amount
-- Updated createWriteoffEntryFromWizard to use actual tx amount
-- Adjusted thread allocations based on transaction amount
-- Added remaining balance calculation to confirmation
-- Made confirmWriteoff globally accessible
+The issue was document.querySelector('.modal') was selecting the first modal (hop wizard) instead of the confirmation modal, causing the wizard data to be cleared.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -35,23 +26,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 52 +++++++++++++++++++++++++++++-----------------------
- index.html | 55 ++++++++++++++++++++++++++++++++++++++++++-------------
- 2 files changed, 71 insertions(+), 36 deletions(-)
+ CLAUDE.md  | 48 +++++++++++++++++++++++++++---------------------
+ index.html | 25 ++++++++++++++++++++++---
+ 2 files changed, 49 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1f08065 Fix write-off process to use actual transaction amount (0 seconds ago)
-- 67ed03d Fix hop wizard buttons not responding to clicks (16 minutes ago)
-- c783a6f Fix hop wizard buttons not working - enable after transaction lookup (85 minutes ago)
+- 99db1b3 Fix write-off confirmation modal removing wrong modal (0 seconds ago)
+- 1f08065 Fix write-off process to use actual transaction amount (4 minutes ago)
+- 67ed03d Fix hop wizard buttons not responding to clicks (20 minutes ago)
+- c783a6f Fix hop wizard buttons not working - enable after transaction lookup (89 minutes ago)
 - 25c4fc0 Debug Step 3 buttons with addEventListener and console logging (2 hours ago)
 - ed27959 Fix wizard buttons and styling issues (2 hours ago)
 - 5b7a40e Fix non-working buttons in hop wizard Step 3 (2 hours ago)
 - 0d8e8b5 Fix hop wizard not finding hop - string/number conversion issue (2 hours ago)
 - d14dc14 Add detailed debug logging for wizard creation issue (2 hours ago)
 - e6a973f Clarify wizard creation - direct DOM insertion is correct approach (2 hours ago)
-- 6917778 Fix wizard not appearing by directly inserting HTML to DOM (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
