@@ -2795,15 +2795,18 @@
                     </div>
                 </div>
                 
-                <div style="margin-bottom: 20px; padding: 15px; background: #fff3e0; border-radius: 6px; border: 2px solid #ff9800;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #e65100;">
-                        🔑 Solscan API Key (Enhanced Solana Attribution)
+                <div style="margin-bottom: 20px; padding: 15px; background: #e8f5e9; border-radius: 6px; border: 2px solid #4caf50;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #2e7d32;">
+                        🔑 Solscan Pro API (Attribution Enabled by Default)
                     </label>
-                    <input type="text" id="solscanApiKey" placeholder="Your Solscan API key for wallet attribution"
+                    <div style="background: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                        <strong style="color: #27ae60;">✓ Solana attribution is enabled for all users</strong><br>
+                        <span style="font-size: 12px; color: #555;">Solscan Pro API provides enhanced wallet attribution for Solana addresses</span>
+                    </div>
+                    <input type="text" id="solscanApiKey" placeholder="Optional: Override with your own API key"
                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
                     <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                        <strong>Provides:</strong> Exchange labels, wallet attribution, enhanced Solana data<br>
-                        Get your API key at: <a href="https://pro-api.solscan.io/pro-api-docs/v2.0" target="_blank" style="color: #3498db;">https://pro-api.solscan.io/</a>
+                        Advanced users can override with their own key. Get one at: <a href="https://pro-api.solscan.io/pro-api-docs/v2.0" target="_blank" style="color: #3498db;">https://pro-api.solscan.io/</a>
                     </div>
                 </div>
 
@@ -3678,8 +3681,8 @@
                 return attribution;
             }
 
-            // Try to use Solscan API with API key if available
-            const solscanApiKey = localStorage.getItem('bats_solscan_api_key');
+            // Try to use Solscan API with API key (default provided for all users)
+            const solscanApiKey = localStorage.getItem('bats_solscan_api_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3NTg4OTk1ODMyNTksImVtYWlsIjoiamVzc2VAdGhlYmxvY2thdWRpdC5jb20iLCJhY3Rpb24iOiJ0b2tlbi1hcGkiLCJhcGlWZXJzaW9uIjoidjIiLCJpYXQiOjE3NTg4OTk1ODN9.C3By0UPXwI5bmLrAl9o1U_SDnT7uQLoizbd8qr36GmQ';
 
             try {
                 let solscanUrl;

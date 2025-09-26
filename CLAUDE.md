@@ -3,41 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 11:07)
+## Latest Commit (Auto-updated: 2025-09-26 11:16)
 
-**Commit:** 2ce0373953d006bbd037e59ad62ade5e0c1c2c12
+**Commit:** a9d783df847dccb310a454590008fc15a2bfed22
 **Author:** Your Name
-**Message:** Fix 99% allocation issue and add Solana wallet attribution
+**Message:** Add Solscan API key configuration and Pro API support
 
-- Fixed rounding issue causing threads to show 99% instead of 100% allocation
-- Improved auto-adjustment algorithm to distribute remainder precisely
-- Added Solana wallet attribution with known exchange addresses
-- Integrated Solscan API as secondary source for Solana addresses
-- Restructured attribution to ALWAYS check Arkham first for ALL chains
-- Added chain-specific secondary sources after Arkham check
-- Added KuCoin, Binance, Coinbase, Kraken, OKX, Bybit, Gate.io Solana addresses
+- Added Solscan API key field in settings (highlighted with orange border)
+- Integrated Solscan Pro API v2.0 for enhanced attribution
+- Falls back to public API if no API key configured
+- Properly handles both Pro API and public API response structures
+- Uses 'token' header for Solscan Pro API authentication
+- Expanded exchange keyword detection
+- Shows API source in console for debugging
 
-This ensures proper terminal wallet detection for Solana transactions and exact allocation percentages.
+Users can now configure their Solscan API key in settings to get enhanced Solana wallet attribution beyond the hardcoded addresses.
 
 ### Changed Files:
 ```
- CLAUDE.md  |  36 +++++++-------
- index.html | 160 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
- 2 files changed, 169 insertions(+), 27 deletions(-)
+ CLAUDE.md  | 38 +++++++++++++--------------
+ index.html | 87 ++++++++++++++++++++++++++++++++++++++++++++++++++++----------
+ 2 files changed, 92 insertions(+), 33 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (0 seconds ago)
-- e38d1ae Fix hop finalization with unallocated bridge outputs (5 minutes ago)
-- 165ad53 Fix over-allocation blocking and wizard close button (14 minutes ago)
-- 244d6f0 Fix focusOnHop function error (27 minutes ago)
-- e87289f Fix wizard Step 3 duplicate thread display issue (31 minutes ago)
+- a9d783d Add Solscan API key configuration and Pro API support (0 seconds ago)
+- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (9 minutes ago)
+- e38d1ae Fix hop finalization with unallocated bridge outputs (15 minutes ago)
+- 165ad53 Fix over-allocation blocking and wizard close button (23 minutes ago)
+- 244d6f0 Fix focusOnHop function error (36 minutes ago)
+- e87289f Fix wizard Step 3 duplicate thread display issue (41 minutes ago)
 - 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (2 hours ago)
 - c39401d Add Solana proxy function to handle CORS issues (3 hours ago)
 - 2ba11de Revert Solana endpoints to original working configuration (3 hours ago)
 - d720583 Update Solana RPC endpoints to working public providers (3 hours ago)
-- 7a58a4d Add transaction hash uniqueness validation per hop (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
