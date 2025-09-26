@@ -3,41 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 11:16)
+## Latest Commit (Auto-updated: 2025-09-26 11:19)
 
-**Commit:** a9d783df847dccb310a454590008fc15a2bfed22
+**Commit:** 0abeafea59e83aa79fcf6e08546a5553312ddce0
 **Author:** Your Name
-**Message:** Add Solscan API key configuration and Pro API support
+**Message:** Add default Solscan Pro API key for all users
 
-- Added Solscan API key field in settings (highlighted with orange border)
-- Integrated Solscan Pro API v2.0 for enhanced attribution
-- Falls back to public API if no API key configured
-- Properly handles both Pro API and public API response structures
-- Uses 'token' header for Solscan Pro API authentication
-- Expanded exchange keyword detection
-- Shows API source in console for debugging
+- Added default Solscan Pro API key so attribution works for all users
+- Updated settings UI to show Solscan is enabled by default (green box)
+- Users can still override with their own API key if needed
+- Solscan Pro API now provides enhanced Solana wallet attribution automatically
 
-Users can now configure their Solscan API key in settings to get enhanced Solana wallet attribution beyond the hardcoded addresses.
+Attribution hierarchy:
+1. Arkham Intelligence (all chains)
+2. Solscan Pro API (Solana addresses)
+3. Etherscan (EVM chains)
+4. Hardcoded known addresses (fallback)
 
 ### Changed Files:
 ```
- CLAUDE.md  | 38 +++++++++++++--------------
- index.html | 87 ++++++++++++++++++++++++++++++++++++++++++++++++++++----------
- 2 files changed, 92 insertions(+), 33 deletions(-)
+ CLAUDE.md  | 40 ++++++++++++++++++++--------------------
+ index.html | 19 +++++++++++--------
+ 2 files changed, 31 insertions(+), 28 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a9d783d Add Solscan API key configuration and Pro API support (0 seconds ago)
-- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (9 minutes ago)
-- e38d1ae Fix hop finalization with unallocated bridge outputs (15 minutes ago)
-- 165ad53 Fix over-allocation blocking and wizard close button (23 minutes ago)
-- 244d6f0 Fix focusOnHop function error (36 minutes ago)
-- e87289f Fix wizard Step 3 duplicate thread display issue (41 minutes ago)
+- 0abeafe Add default Solscan Pro API key for all users (0 seconds ago)
+- a9d783d Add Solscan API key configuration and Pro API support (2 minutes ago)
+- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (12 minutes ago)
+- e38d1ae Fix hop finalization with unallocated bridge outputs (17 minutes ago)
+- 165ad53 Fix over-allocation blocking and wizard close button (26 minutes ago)
+- 244d6f0 Fix focusOnHop function error (39 minutes ago)
+- e87289f Fix wizard Step 3 duplicate thread display issue (43 minutes ago)
 - 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (2 hours ago)
 - c39401d Add Solana proxy function to handle CORS issues (3 hours ago)
 - 2ba11de Revert Solana endpoints to original working configuration (3 hours ago)
-- d720583 Update Solana RPC endpoints to working public providers (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

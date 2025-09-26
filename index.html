@@ -30104,39 +30104,55 @@ async function lookupTronTransaction(txHash) {
 async function lookupSolanaTransaction(txHash) {
     const config = window.blockchainAPIs.solana;
 
-    // Try using our Netlify proxy first to avoid CORS issues
-    try {
-        const response = await fetch('/.netlify/functions/solana-proxy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 1,
-                method: 'getTransaction',
-                params: [txHash, {
-                    encoding: 'jsonParsed',
-                    commitment: 'confirmed',
-                    maxSupportedTransactionVersion: 0
-                }]
-            })
-        });
+    // Check if we're on a deployed site (Netlify) or local development
+    const isNetlifyDeployed = window.location.hostname.includes('batstool.com') ||
+                             window.location.hostname.includes('netlify.app');
 
-        if (response.ok) {
-            const data = await response.json();
-            if (!data.error) {
-                const txData = config.parseResponse(data);
-                if (txData) {
-                    txData.blockchain = config.name;
-                    txData.rawHash = txHash;
-                    return txData;
+    // Try using our Netlify proxy first if on deployed site
+    if (isNetlifyDeployed) {
+        try {
+            console.log('Attempting Solana lookup via Netlify proxy...');
+            const response = await fetch('/.netlify/functions/solana-proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'getTransaction',
+                    params: [txHash, {
+                        encoding: 'jsonParsed',
+                        commitment: 'confirmed',
+                        maxSupportedTransactionVersion: 0
+                    }]
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (!data.error && data.result) {
+                    const txData = config.parseResponse(data);
+                    if (txData) {
+                        txData.blockchain = config.name;
+                        txData.rawHash = txHash;
+                        console.log('Successfully fetched Solana tx via proxy');
+                        return txData;
+                    }
+                } else if (data.error) {
+                    console.log('Solana RPC error:', data.error);
+                    throw new Error(data.error.message || 'Transaction not found');
                 }
+            } else {
+                console.log('Proxy response not ok:', response.status);
             }
+        } catch (error) {
+            console.log('Netlify proxy failed:', error);
+            // Don't fallback to direct calls - they'll fail with CORS
+            throw new Error(`Solana lookup failed: ${error.message}. Please check the transaction hash.`);
         }
-    } catch (error) {
-        console.log('Netlify proxy failed, trying direct connection:', error);
     }
 
-    // Fallback to direct API calls if proxy fails
+    // For local development, try direct API (will likely fail with CORS but worth trying)
+    console.warn('Local development mode - Solana API calls may fail due to CORS');
     const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
 
     for (let apiUrl of urlsToTry) {
