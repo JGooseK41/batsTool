@@ -3806,6 +3806,7 @@
                                 console.log(`  - Chain ${chain} data:`, chainData);
 
                                 if (chainData?.arkhamEntity) {
+                                    // arkhamEntity = actual exchange or service (terminal wallet)
                                     console.log(`    Found arkhamEntity on ${chain}:`, chainData.arkhamEntity);
                                     foundAttribution = {
                                         name: chainData.arkhamEntity.name || chainData.arkhamEntity.service,
@@ -3814,21 +3815,22 @@
                                         service: chainData.arkhamEntity.service,
                                         chain: chain,
                                         source: 'arkham_intelligence',
-                                        isExchange: true
+                                        isExchange: true,  // arkhamEntity = real exchange/service = terminal wallet
+                                        isPersonalLabel: false
                                     };
                                     break;
                                 } else if (chainData?.arkhamLabel) {
+                                    // arkhamLabel = personal label (NOT a terminal wallet, just informational)
                                     console.log(`    Found arkhamLabel on ${chain}:`, chainData.arkhamLabel);
                                     foundAttribution = {
                                         name: chainData.arkhamLabel.name,
                                         label: chainData.arkhamLabel.name,
-                                        type: 'Label',
+                                        type: 'Personal Label',
                                         chain: chain,
                                         source: 'arkham_intelligence',
-                                        isExchange: chainData.arkhamLabel.name.toLowerCase().includes('exchange') ||
-                                                     chainData.arkhamLabel.name.toLowerCase().includes('binance') ||
-                                                     chainData.arkhamLabel.name.toLowerCase().includes('coinbase') ||
-                                                     chainData.arkhamLabel.name.toLowerCase().includes('kucoin')
+                                        isExchange: false,  // arkhamLabel = personal label = NOT a terminal wallet
+                                        isPersonalLabel: true,
+                                        noteText: `Label: ${chainData.arkhamLabel.name}` // Include in notes instead
                                     };
                                     break;
                                 }
@@ -3843,26 +3845,31 @@
 
                             // Also check if it's a single chain response (not using /all endpoint)
                             if (arkhamData?.arkhamEntity) {
+                                // arkhamEntity = actual exchange or service (terminal wallet)
                                 attribution = {
                                     name: arkhamData.arkhamEntity.name || arkhamData.arkhamEntity.service,
                                     label: arkhamData.arkhamEntity.type || 'Exchange',
                                     type: arkhamData.arkhamEntity.type || 'CEX',
                                     service: arkhamData.arkhamEntity.service,
                                     source: 'arkham_intelligence',
-                                    isExchange: true
+                                    isExchange: true,  // arkhamEntity = real exchange/service = terminal wallet
+                                    isPersonalLabel: false
                                 };
                                 console.log(`✅ Arkham attribution found (single chain) for ${address}:`, attribution);
                                 walletAttributionCache[lowerAddress] = attribution;
                                 return attribution;
                             } else if (arkhamData?.arkhamLabel) {
+                                // arkhamLabel = personal label (NOT a terminal wallet, just informational)
                                 attribution = {
                                     name: arkhamData.arkhamLabel.name,
                                     label: arkhamData.arkhamLabel.name,
-                                    type: 'Label',
+                                    type: 'Personal Label',
                                     source: 'arkham_intelligence',
-                                    isExchange: arkhamData.arkhamLabel.name.toLowerCase().includes('exchange')
+                                    isExchange: false,  // arkhamLabel = personal label = NOT a terminal wallet
+                                    isPersonalLabel: true,
+                                    noteText: `Label: ${arkhamData.arkhamLabel.name}` // Include in notes instead
                                 };
-                                console.log(`✅ Arkham label found for ${address}:`, attribution);
+                                console.log(`✅ Arkham personal label found for ${address}:`, attribution);
                                 walletAttributionCache[lowerAddress] = attribution;
                                 return attribution;
                             }
@@ -4112,9 +4119,15 @@
                 walletAttributionCache[lowerAddress] = attribution;
 
                 if (attribution) {
-                    console.log(`🟣 Terminal wallet detected: ${attribution.name} (${address})`);
-                    console.log(`   Label: ${attribution.label || 'N/A'}`);
-                    console.log(`   Source: ${attribution.source}`);
+                    if (attribution.isPersonalLabel) {
+                        console.log(`🏷️ Personal label found: ${attribution.name} (${address})`);
+                        console.log(`   Source: ${attribution.source}`);
+                        console.log(`   Note: This is NOT a terminal wallet`);
+                    } else {
+                        console.log(`🟣 Terminal wallet detected: ${attribution.name} (${address})`);
+                        console.log(`   Label: ${attribution.label || 'N/A'}`);
+                        console.log(`   Source: ${attribution.source}`);
+                    }
                 }
 
                 return attribution;
@@ -20760,12 +20773,24 @@ async function lookupWizardTransaction() {
                                     const outputDiv = document.getElementById(`wizardOutput_${index}`);
                                     if (outputDiv) {
                                         // Add attribution badge
-                                        const badgeHtml = `
-                                            <div style="background: #e1bee7; border: 1px solid #9c27b0; border-radius: 4px; padding: 8px; margin-bottom: 10px;">
-                                                <strong style="color: #6a1b9a;">🟣 Terminal Wallet: ${attribution.name || attribution.label}</strong><br>
-                                                <small>Type: ${attribution.type} | This is likely an exchange or service</small>
-                                            </div>
-                                        `;
+                                        let badgeHtml;
+                                        if (attribution.isPersonalLabel) {
+                                            // Personal label - informational only
+                                            badgeHtml = `
+                                                <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 4px; padding: 8px; margin-bottom: 10px;">
+                                                    <strong style="color: #1565c0;">🏷️ Label: ${attribution.name || attribution.label}</strong><br>
+                                                    <small>Personal label | Not a terminal wallet</small>
+                                                </div>
+                                            `;
+                                        } else {
+                                            // Actual terminal wallet (exchange/service)
+                                            badgeHtml = `
+                                                <div style="background: #e1bee7; border: 1px solid #9c27b0; border-radius: 4px; padding: 8px; margin-bottom: 10px;">
+                                                    <strong style="color: #6a1b9a;">🟣 Terminal Wallet: ${attribution.name || attribution.label}</strong><br>
+                                                    <small>Type: ${attribution.type} | This is an exchange or service</small>
+                                                </div>
+                                            `;
+                                        }
                                         // Insert after the amount div
                                         const amountDiv = outputDiv.querySelector('div[style*="margin-bottom: 10px"]');
                                         if (amountDiv && !outputDiv.querySelector('div[style*="#e1bee7"]')) {
@@ -20944,38 +20969,63 @@ async function lookupWizardTransaction() {
     // Check the TO address for attribution
     attributionFunction(txData.to).then(attribution => {
         if (attribution) {
-            console.log('🟣 Terminal wallet detected in transaction lookup:', attribution);
+            if (attribution.isPersonalLabel) {
+                console.log('🏷️ Personal label found in transaction lookup:', attribution);
+            } else {
+                console.log('🟣 Terminal wallet detected in transaction lookup:', attribution);
+            }
 
             // Update the result div with attribution alert
             const alertDiv = document.createElement('div');
-            alertDiv.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; border-radius: 8px; padding: 15px; margin-top: 15px;';
-            alertDiv.innerHTML = `
-                <h4 style="margin: 0 0 10px 0; color: #6a1b9a;">🟣 Exchange Wallet Detected - MANDATORY Terminal Entry</h4>
-                <div style="font-size: 14px;">
-                    <strong>Exchange/Service:</strong> ${attribution.name || attribution.label}<br>
-                    <strong>Type:</strong> ${attribution.type}<br>
-                    <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span><br>
-                    <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
-                        <strong>⚠️ IMPORTANT:</strong><br>
-                        • Funds have arrived at a centralized exchange<br>
-                        • This MUST be marked as a terminal wallet (PURPLE)<br>
-                        • Further recovery requires legal process<br>
-                        • The trace ends here for this thread
-                    </div>
-                    <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border: 1px solid #9c27b0; border-radius: 4px;">
-                        <strong>🛑 Exchange Detected - Confirm Terminal Entry:</strong><br>
-                        <p style="margin: 10px 0; color: #6a1b9a; font-weight: bold;">
-                            You must confirm this terminal wallet to continue.
-                        </p>
-                        <button class="btn btn-warning" onclick="confirmTerminalWallet()" style="margin-top: 10px; background: #9c27b0; border-color: #9c27b0; font-size: 16px; padding: 10px 20px;">
-                            ✅ Confirm Terminal Wallet Entry
-                        </button>
-                        <div style="margin-top: 10px; font-size: 12px; color: #666;">
-                            ⚖️ Legal process (subpoena/court order) will be required to recover funds from ${attribution.name || 'this exchange'}
+
+            if (attribution.isPersonalLabel) {
+                // Personal label - just informational
+                alertDiv.style.cssText = 'background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 15px; margin-top: 15px;';
+                alertDiv.innerHTML = `
+                    <h4 style="margin: 0 0 10px 0; color: #1565c0;">🏷️ Personal Label Detected</h4>
+                    <div style="font-size: 14px;">
+                        <strong>Label:</strong> ${attribution.name || attribution.label}<br>
+                        <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span><br>
+                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+                            <strong>ℹ️ Note:</strong><br>
+                            • This is a personal label, not an exchange<br>
+                            • The wallet can still send funds elsewhere<br>
+                            • Continue tracing as normal<br>
+                            • The label will be added to your entry notes
                         </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else {
+                // Actual terminal wallet (exchange/service)
+                alertDiv.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; border-radius: 8px; padding: 15px; margin-top: 15px;';
+                alertDiv.innerHTML = `
+                    <h4 style="margin: 0 0 10px 0; color: #6a1b9a;">🟣 Exchange Wallet Detected - MANDATORY Terminal Entry</h4>
+                    <div style="font-size: 14px;">
+                        <strong>Exchange/Service:</strong> ${attribution.name || attribution.label}<br>
+                        <strong>Type:</strong> ${attribution.type}<br>
+                        <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span><br>
+                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+                            <strong>⚠️ IMPORTANT:</strong><br>
+                            • Funds have arrived at a centralized exchange<br>
+                            • This MUST be marked as a terminal wallet (PURPLE)<br>
+                            • Further recovery requires legal process<br>
+                            • The trace ends here for this thread
+                        </div>
+                        <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border: 1px solid #9c27b0; border-radius: 4px;">
+                            <strong>🛑 Exchange Detected - Confirm Terminal Entry:</strong><br>
+                            <p style="margin: 10px 0; color: #6a1b9a; font-weight: bold;">
+                                You must confirm this terminal wallet to continue.
+                            </p>
+                            <button class="btn btn-warning" onclick="confirmTerminalWallet()" style="margin-top: 10px; background: #9c27b0; border-color: #9c27b0; font-size: 16px; padding: 10px 20px;">
+                                ✅ Confirm Terminal Wallet Entry
+                            </button>
+                            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                                ⚖️ Legal process (subpoena/court order) will be required to recover funds from ${attribution.name || 'this exchange'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
 
             // Insert the alert after the transaction details
             const resultDiv = document.getElementById('wizardTxResult');
@@ -21506,7 +21556,11 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
         if (attribution) {
             exchangeAttribution = attribution;
             toWalletType = 'purple'; // PURPLE for exchanges/VASPs
-            console.log(`🟣 Terminal wallet detected: ${exchangeAttribution.name}`);
+            if (attribution.isPersonalLabel) {
+                console.log(`🏷️ Personal label found: ${attribution.name}`);
+            } else {
+                console.log(`🟣 Terminal wallet detected: ${exchangeAttribution.name}`);
+            }
         }
     }
 
@@ -22273,21 +22327,32 @@ function createHopEntryFromWizard() {
         toWalletType = 'purple';
     } else if (wizardData.detectedAttribution && toWallet &&
                toWallet.toLowerCase() === (wizardData.txData?.to || '').toLowerCase()) {
-        // Auto-detect terminal wallet
+        // Auto-detect terminal wallet (only for actual exchanges, not personal labels)
         const attribution = wizardData.detectedAttribution;
-        if (attribution) {
+        if (attribution && attribution.isExchange && !attribution.isPersonalLabel) {
+            // This is a real exchange/service - mark as terminal wallet
             isTerminalWallet = true;
             terminalAttribution = attribution;
             toWalletType = 'purple';
+        } else if (attribution && attribution.isPersonalLabel) {
+            // This is just a personal label - add to notes but don't mark as terminal
+            console.log('Personal label detected, not marking as terminal:', attribution.name);
+            // The label will be added to notes below
         }
     }
 
-    // Handle terminal wallet notes
+    // Handle terminal wallet and attribution notes
     let entryNotes = wizardData.manualData?.notes || '';
     if (isTerminalWallet && terminalAttribution) {
         const terminalNote = `Terminal wallet: ${terminalAttribution.name || terminalAttribution.label}\nType: ${terminalAttribution.type || 'CEX'}\nDetection source: ${terminalAttribution.source || 'detected'}`;
         entryNotes = terminalNote + (entryNotes ? '\n' + entryNotes : '');
-    } else if (isSwap) {
+    } else if (wizardData.detectedAttribution && wizardData.detectedAttribution.isPersonalLabel) {
+        // Add personal label to notes (not a terminal wallet)
+        const labelNote = wizardData.detectedAttribution.noteText || `Label: ${wizardData.detectedAttribution.name}`;
+        entryNotes = labelNote + (entryNotes ? '\n' + entryNotes : '');
+    }
+
+    if (isSwap) {
         entryNotes = `DEX Swap: ${swapDetails.fromCurrency} converted to ${swapDetails.toCurrency} at ${toWallet}` + (entryNotes ? '\n' + entryNotes : '');
     }
     if (partialTraceNote) {

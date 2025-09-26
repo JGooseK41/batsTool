@@ -3,23 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 12:43)
+## Latest Commit (Auto-updated: 2025-09-26 13:05)
 
-**Commit:** 39f47f8acc8ba7e0d60e28ac9400c6d0b29de3db
+**Commit:** 3802b4c3027c6edac8e1aca04ae03822f44c82c9
 **Author:** Your Name
-**Message:** Fix critical terminal wallet and hop management issues
+**Message:** Fix Arkham API URL and add helpful error messages for transaction lookup
 
-- Terminal wallets now use 100% of thread amounts (no more 99% remainders)
-- Threads going to terminal wallets are fully exhausted and unavailable for next hop
-- Store source thread internal IDs for proper terminal exhaustion tracking
-- Prevent creating new hops when all funds have reached terminal wallets
-- Show investigation complete message when all threads are terminal
-- Fix allocation precision for terminal wallet entries
-
-Addresses issues where:
-- Terminal wallet threads were showing as available in next hop
-- Small remainders (1%) were left on threads after terminal allocation
-- Users could create empty hops after investigation was complete
+- Fixed Arkham API URL from api.arkm.com to api.arkhamintelligence.com
+- Added detection for wallet addresses vs transaction hashes (42 vs 66 chars)
+- Added helpful EVM chain detection error message when lookup fails
+- Explains that all EVM chains use identical format, requiring manual chain selection
+- Provides clear guidance for users to select correct chain from dropdown
 
 🤖 Generated with Claude Code
 
@@ -27,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 44 +++++++++++++++++++-----------------
- index.html | 75 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 98 insertions(+), 21 deletions(-)
+ CLAUDE.md  | 49 ++++++++++++++++++++++++++-----------------------
+ index.html | 42 ++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 66 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 39f47f8 Fix critical terminal wallet and hop management issues (0 seconds ago)
-- 841a04a Add forensic precision with rounding remainder write-off feature (7 minutes ago)
-- ef1130a Fix hop completion detection for threads with rounding remainders (11 minutes ago)
-- d55b3ff Update CLAUDE.md with latest changes (19 minutes ago)
-- 6842c7a Fix Arkham API response parsing for multi-chain structure (20 minutes ago)
-- cc38541 Add API attribution test page and update to latest Arkham endpoints (20 minutes ago)
-- 48fb5cb Update Arkham API to use enhanced endpoint for better attribution (24 minutes ago)
-- fc0685e Fix Solscan API to use correct v2.0 metadata endpoint (26 minutes ago)
-- 4451929 Add Solscan proxy function to avoid CORS issues and enhance API logging (30 minutes ago)
-- 8dddc6b Remove hardcoded exchange addresses and add Arkham API debugging (53 minutes ago)
+- 3802b4c Fix Arkham API URL and add helpful error messages for transaction lookup (0 seconds ago)
+- 39f47f8 Fix critical terminal wallet and hop management issues (21 minutes ago)
+- 841a04a Add forensic precision with rounding remainder write-off feature (28 minutes ago)
+- ef1130a Fix hop completion detection for threads with rounding remainders (32 minutes ago)
+- d55b3ff Update CLAUDE.md with latest changes (40 minutes ago)
+- 6842c7a Fix Arkham API response parsing for multi-chain structure (41 minutes ago)
+- cc38541 Add API attribution test page and update to latest Arkham endpoints (42 minutes ago)
+- 48fb5cb Update Arkham API to use enhanced endpoint for better attribution (45 minutes ago)
+- fc0685e Fix Solscan API to use correct v2.0 metadata endpoint (47 minutes ago)
+- 4451929 Add Solscan proxy function to avoid CORS issues and enhance API logging (51 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
