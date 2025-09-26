@@ -29592,32 +29592,66 @@ async function lookupTronTransaction(txHash) {
 
 async function lookupSolanaTransaction(txHash) {
     const config = window.blockchainAPIs.solana;
-    // Disable CORS proxy to avoid CSP issues - APIs should handle CORS natively
-    const corsEnabled = false;
-    const corsProxyUrl = '';
-    
+
+    // Try using our Netlify proxy first to avoid CORS issues
+    try {
+        const response = await fetch('/.netlify/functions/solana-proxy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 1,
+                method: 'getTransaction',
+                params: [txHash, {
+                    encoding: 'jsonParsed',
+                    commitment: 'confirmed',
+                    maxSupportedTransactionVersion: 0
+                }]
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (!data.error) {
+                const txData = config.parseResponse(data);
+                if (txData) {
+                    txData.blockchain = config.name;
+                    txData.rawHash = txHash;
+                    return txData;
+                }
+            }
+        }
+    } catch (error) {
+        console.log('Netlify proxy failed, trying direct connection:', error);
+    }
+
+    // Fallback to direct API calls if proxy fails
     const urlsToTry = [config.apiUrl, ...(config.fallbackUrls || [])];
-    
+
     for (let apiUrl of urlsToTry) {
         try {
-            let url = apiUrl;
-            if (corsEnabled) url = corsProxyUrl + url;
-            
-            const response = await fetch(url, {
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     jsonrpc: '2.0',
                     id: 1,
                     method: 'getTransaction',
-                    params: [txHash, { encoding: 'jsonParsed', commitment: 'confirmed', maxSupportedTransactionVersion: 0 }]
+                    params: [txHash, {
+                        encoding: 'jsonParsed',
+                        commitment: 'confirmed',
+                        maxSupportedTransactionVersion: 0
+                    }]
                 })
             });
-            
+
             if (!response.ok) continue;
             const data = await response.json();
-            if (data.error) continue;
-            
+            if (data.error) {
+                console.log(`Solana RPC error from ${apiUrl}:`, data.error);
+                continue;
+            }
+
             const txData = config.parseResponse(data);
             if (txData) {
                 txData.blockchain = config.name;
@@ -29628,7 +29662,7 @@ async function lookupSolanaTransaction(txHash) {
             console.error(`Failed with ${apiUrl}:`, error);
         }
     }
-    
+
     throw new Error('Failed to fetch Solana transaction');
 }
 

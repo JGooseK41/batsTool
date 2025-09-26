@@ -3,16 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 08:09)
+## Latest Commit (Auto-updated: 2025-09-26 08:21)
 
-**Commit:** d7205834877c8e8dab86493efcd3c626e125c5e7
+**Commit:** 2ba11de8022c9f02a3ffa19ca8b40b3e1576178a
 **Author:** Your Name
-**Message:** Update Solana RPC endpoints to working public providers
+**Message:** Revert Solana endpoints to original working configuration
 
-- Use Helius RPC as primary endpoint with API key
-- Add PublicNode and Shyft as fallback options
-- Keep mainnet-beta as last resort fallback
-- Fixes CORS and 403 errors when looking up Solana transactions
+- Restore api.mainnet-beta.solana.com as primary
+- Keep original fallbacks: Alchemy demo and Ankr
+- Remove unauthorized API keys that were added without permission
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -20,23 +19,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 40 +++++++++++++++++++++-------------------
- index.html |  9 +++++----
- 2 files changed, 26 insertions(+), 23 deletions(-)
+ CLAUDE.md  | 35 +++++++++++++++++------------------
+ index.html |  9 ++++-----
+ 2 files changed, 21 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d720583 Update Solana RPC endpoints to working public providers (0 seconds ago)
-- 7a58a4d Add transaction hash uniqueness validation per hop (18 minutes ago)
-- b803481 Add deduplication check for bridge output threads (59 minutes ago)
-- 706010e Fix duplicate bridge output thread creation (80 minutes ago)
+- 2ba11de Revert Solana endpoints to original working configuration (0 seconds ago)
+- d720583 Update Solana RPC endpoints to working public providers (12 minutes ago)
+- 7a58a4d Add transaction hash uniqueness validation per hop (30 minutes ago)
+- b803481 Add deduplication check for bridge output threads (71 minutes ago)
+- 706010e Fix duplicate bridge output thread creation (2 hours ago)
 - cb1d480 Set hops and entries to collapsed by default when loading saved files (2 hours ago)
 - d2feb61 Add bridge badge and remove terminal status for converted wallets (2 hours ago)
 - 694e122 Fix wizard to show bridge/swap output threads in same hop (2 hours ago)
 - 3cb4098 Fix progress bars to show bridge-converted currencies at both levels (2 hours ago)
 - eb58fae Auto-convert purple terminal wallets to brown bridges when logging output (2 hours ago)
-- ec5dd65 Fix critical bugs in thread building and source tracking processes (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
