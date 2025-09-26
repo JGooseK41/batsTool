@@ -3,42 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 11:24)
+## Latest Commit (Auto-updated: 2025-09-26 11:40)
 
-**Commit:** 15d1a3454997568508bdd064ac623d5495868037
+**Commit:** d411103e6cdae3b3c6a7a39e8eaba7a3e38f07f5
 **Author:** Your Name
-**Message:** Fix Solana transaction lookup failures
+**Message:** Fix bridge output thread consolidation issue
 
-- Improved Netlify proxy with proper retry logic for multiple endpoints
-- Added timeout handling (10 seconds per endpoint)
-- Better error handling and status code checking
-- Fixed proxy to try api.mainnet-beta.solana.com first, then projectserum
-- Added proper error messages when all endpoints fail
-- Prevent fallback to direct API calls that will fail with CORS
-- Added console logging for debugging proxy issues
+- Each bridge conversion now creates a unique thread with unique internal ID
+- Removed deduplication check that merged threads with same tx hash
+- Using entry ID to ensure each bridge output is unique
+- Properly implements dual-layer system: same notation for display, unique internal IDs
+- Added entryId tracking to bridge output threads for debugging
 
-This should restore Solana transaction lookups for bridge destination detection.
+This ensures if you have 5 bridge conversions, you get 5 separate USDC threads, even if some share the same destination transaction or source notation.
 
 ### Changed Files:
 ```
- CLAUDE.md                         |  43 ++++++-------
- index.html                        |  70 ++++++++++++---------
- netlify/functions/solana-proxy.js | 124 ++++++++++++++++++++++++--------------
- 3 files changed, 145 insertions(+), 92 deletions(-)
+ CLAUDE.md  | 46 +++++++++++++++++++++++-----------------------
+ index.html | 28 ++++++++++------------------
+ 2 files changed, 33 insertions(+), 41 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 15d1a34 Fix Solana transaction lookup failures (0 seconds ago)
-- 0abeafe Add default Solscan Pro API key for all users (5 minutes ago)
-- a9d783d Add Solscan API key configuration and Pro API support (7 minutes ago)
-- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (17 minutes ago)
-- e38d1ae Fix hop finalization with unallocated bridge outputs (22 minutes ago)
-- 165ad53 Fix over-allocation blocking and wizard close button (31 minutes ago)
-- 244d6f0 Fix focusOnHop function error (43 minutes ago)
-- e87289f Fix wizard Step 3 duplicate thread display issue (48 minutes ago)
+- d411103 Fix bridge output thread consolidation issue (0 seconds ago)
+- 15d1a34 Fix Solana transaction lookup failures (16 minutes ago)
+- 0abeafe Add default Solscan Pro API key for all users (21 minutes ago)
+- a9d783d Add Solscan API key configuration and Pro API support (23 minutes ago)
+- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (33 minutes ago)
+- e38d1ae Fix hop finalization with unallocated bridge outputs (38 minutes ago)
+- 165ad53 Fix over-allocation blocking and wizard close button (47 minutes ago)
+- 244d6f0 Fix focusOnHop function error (59 minutes ago)
+- e87289f Fix wizard Step 3 duplicate thread display issue (64 minutes ago)
 - 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (2 hours ago)
-- c39401d Add Solana proxy function to handle CORS issues (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
