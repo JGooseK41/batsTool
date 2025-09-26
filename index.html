@@ -23704,12 +23704,31 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             
             // Set the global investigation object
             investigation = loadedData;
-            
+
             // Sort all hop entries chronologically after loading
             if (investigation.hops) {
                 investigation.hops.forEach(hop => {
                     if (hop.entries && hop.entries.length > 0) {
                         sortHopEntriesChronologically(hop);
+                    }
+                });
+            }
+
+            // Set all hops and entries to collapsed state when loading a saved file
+            // This keeps the interface clean when viewing large investigations
+            window.hopCollapseState = {};
+            window.entryCollapseState = {};
+            if (investigation.hops) {
+                investigation.hops.forEach(hop => {
+                    // Collapse the hop itself
+                    window.hopCollapseState[hop.hopNumber] = true; // Start collapsed
+
+                    // Collapse all entries within the hop
+                    if (hop.entries) {
+                        hop.entries.forEach(entry => {
+                            const entryKey = `${hop.hopNumber}_${entry.id}`;
+                            window.entryCollapseState[entryKey] = true; // Start collapsed
+                        });
                     }
                 });
             }

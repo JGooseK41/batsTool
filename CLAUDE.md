@@ -3,19 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 06:21)
+## Latest Commit (Auto-updated: 2025-09-26 06:30)
 
-**Commit:** 694e122a91dcaf76b3cebb21949da5884ffb4376
+**Commit:** d2feb617608b1df3215d4fdf2841e1670598062a
 **Author:** Your Name
-**Message:** Fix wizard to show bridge/swap output threads in same hop
+**Message:** Add bridge badge and remove terminal status for converted wallets
 
-- Updated source thread filtering for Hop 1 to include conversion outputs
-- Bridge outputs, swap outputs, and change outputs now appear in wizard
-- Added clear labels: '(Bridge Output - USDC)' etc for converted threads
-- Fixed hop level filtering to allow same-hop conversions
-- Wizard now properly shows USDC threads created from bridge conversions
+- Wallets converted from terminal to bridge no longer marked as terminal
+- Added explicit isTerminalWallet = false when logging bridge output
+- Bridge wallets now display '🌉 BRIDGE' badge instead of 'TERMINAL'
+- Log Bridge Output button hidden once output is logged
+- Bridge outputs properly create source threads for continued tracing
+- Visual distinction between terminal wallets and active bridges
 
-This allows investigators to continue tracing converted currencies within the same hop
+This ensures proper thread creation and visual feedback for bridge conversions
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -23,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 35 +++++++++++++++++------------------
- index.html | 22 ++++++++++++++++++++--
- 2 files changed, 37 insertions(+), 20 deletions(-)
+ CLAUDE.md  | 36 ++++++++++++++++++------------------
+ index.html | 15 ++++++++++++---
+ 2 files changed, 30 insertions(+), 21 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 694e122 Fix wizard to show bridge/swap output threads in same hop (0 seconds ago)
-- 3cb4098 Fix progress bars to show bridge-converted currencies at both levels (10 minutes ago)
-- eb58fae Auto-convert purple terminal wallets to brown bridges when logging output (24 minutes ago)
-- ec5dd65 Fix critical bugs in thread building and source tracking processes (32 minutes ago)
-- 3feb5d3 Refactor bridge outputs to work exactly like swaps (35 minutes ago)
+- d2feb61 Add bridge badge and remove terminal status for converted wallets (0 seconds ago)
+- 694e122 Fix wizard to show bridge/swap output threads in same hop (9 minutes ago)
+- 3cb4098 Fix progress bars to show bridge-converted currencies at both levels (19 minutes ago)
+- eb58fae Auto-convert purple terminal wallets to brown bridges when logging output (33 minutes ago)
+- ec5dd65 Fix critical bugs in thread building and source tracking processes (41 minutes ago)
+- 3feb5d3 Refactor bridge outputs to work exactly like swaps (44 minutes ago)
 - 136d8e5 Fix bridge output modal closing and ensure converted assets are added to ART (8 hours ago)
 - 3a8c296 Fix Solana showing duplicate transfers by combining paired debits/credits (8 hours ago)
-- 55e0e38 Fix bridge transfer selection to show proper modal like victim selector (8 hours ago)
+- 55e0e38 Fix bridge transfer selection to show proper modal like victim selector (9 hours ago)
 - 2102efd Add transfer selection and filtering for bridge output lookups (9 hours ago)
-- 0563b4b Add Ripple/XRP support for bridge output transactions (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
