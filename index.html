@@ -10758,7 +10758,11 @@ function addNewHop() {
                                             <span style="color: #7f8c8d; font-size: 12px;">
                                                 ${entryTypeLabel}
                                             </span>
-                                            ${entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE' ? `
+                                            ${entry.isBridge ? `
+                                                <span style="background: #8b4513; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                                                    🌉 BRIDGE
+                                                </span>
+                                            ` : (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged ? `
                                                 <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
                                                     TERMINAL
                                                 </span>
@@ -10793,7 +10797,7 @@ function addNewHop() {
                             </div>
                             <!-- Action buttons in collapsed view -->
                             <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-start;">
-                                ${(entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && entry.entryType === 'trace' && !entry.bridgeOutputLogged ? `
+                                ${(entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && entry.entryType === 'trace' && !entry.bridgeOutputLogged && !entry.isBridge ? `
                                     <button class="btn btn-sm" style="background: #27ae60; color: white; border: 1px solid #229954;"
                                             onclick="event.stopPropagation(); logBridgeOutput(${hop.hopNumber}, ${entry.id})"
                                             title="Log the output transaction from this terminal wallet (CEX or Bridge)">
@@ -10820,7 +10824,11 @@ function addNewHop() {
                                             <span style="color: #7f8c8d; font-size: 12px;">
                                                 ${entryTypeLabel}
                                             </span>
-                                            ${entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE' ? `
+                                            ${entry.isBridge ? `
+                                                <span style="background: #8b4513; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                                                    🌉 BRIDGE
+                                                </span>
+                                            ` : (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged ? `
                                                 <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
                                                     TERMINAL
                                                 </span>
@@ -22918,6 +22926,7 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             entry.toWalletType = 'brown'; // Brown for bridges/conversions
             entry.isBridge = true;
             entry.wasTerminalWallet = true; // Track that this was originally classified as terminal
+            entry.isTerminalWallet = false; // NO LONGER a terminal wallet - it's a bridge!
 
             const noteType = 'BRIDGE OUTPUT';
             const existingNotes = entry.notes || '';
