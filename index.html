@@ -6519,11 +6519,8 @@ function buildAvailableThreadsIndex() {
                     if (isTerminal) {
                         console.log(`Skipping thread creation for terminal wallet (${entry.toWalletType}): ${entry.notation}`);
                     } else {
+                        // updateThreadAvailabilityFromHop will handle bridge output check internally
                         updateThreadAvailabilityFromHop(entry);
-                        // If it's a bridge, log it
-                        if (entry.isBridge) {
-                            console.log(`Created bridge output thread: ${entry.notation} on chain ${entry.bridgeDetails?.destinationChain}`);
-                        }
                     }
                 } else {
                     console.log(`Skipping thread creation for swapped trace: ${entry.notation}`);
@@ -6537,7 +6534,14 @@ function buildAvailableThreadsIndex() {
 
 // 2.2 Update Thread Availability from Hop Entry
 function updateThreadAvailabilityFromHop(entry) {
-    // Skip terminal wallets - they don't create output threads (UNLESS they're bridges)
+    // CRITICAL FIX: Don't create threads for bridge entries that have already been logged
+    // Bridge outputs are created manually in confirmBridgeOutput with the converted currency
+    if (entry.isBridge && entry.bridgeOutputLogged && entry.bridgeDetails) {
+        console.log(`Skipping thread creation for logged bridge entry: ${entry.notation} (output thread already created in ${entry.bridgeDetails.destinationAsset})`);
+        return;
+    }
+
+    // Skip terminal wallets - they don't create output threads (UNLESS they're unlogged bridges)
     if ((entry.toWalletType === 'purple' && !entry.isBridge) ||
         entry.toWalletType === 'gray' ||
         entry.toWalletType === 'blue' ||
