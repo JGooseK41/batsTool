@@ -3,21 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 21:11)
+## Latest Commit (Auto-updated: 2025-09-25 21:23)
 
-**Commit:** 1e03ddb5e68f8c4d2dd11751dbe2a9e60dce62fe
+**Commit:** a809f6ec7f6a5e66840ee5ce2da34a0a7c1a3d67
 **Author:** Your Name
-**Message:** Add flexible bridge/CEX output logging feature for terminal wallets
+**Message:** Enhance bridge output modal with transaction details and auto-lookup
 
-- New 'Log Bridge Output' button on purple terminal wallet entries
-- Option to keep as CEX (purple) or convert to DeFi bridge (brown)
-- Improved modal with source transaction details and copy buttons
-- Better spacing and layout with 30px padding
-- Transaction hash and bridge address display with one-click copy
-- Helpful tips for using data in bridge explorers
-- Both CEX and bridge entries now create output threads
-- Chain information properly propagated to destination threads
-- Added TERMINAL badge to identify purple wallets in collapsed view
+- Added receiving wallet address, amount, and asset fields to destination section
+- Implemented auto-fill functionality with transaction lookup button
+- Added timestamp (UTC) display to source transaction details
+- Support for manual entry if auto-lookup fails
+- Store complete destination details in bridgeDetails object
+- Enhanced notes with full destination transaction information
+- Visual feedback for lookup success/failure states
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,23 +23,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  46 ++++----
- index.html | 365 +++++++++++++++++++++++++++++++++++++++++++++++++++++--------
- 2 files changed, 344 insertions(+), 67 deletions(-)
+ CLAUDE.md  |  61 ++++++++----------
+ index.html | 205 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 212 insertions(+), 54 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1e03ddb Add flexible bridge/CEX output logging feature for terminal wallets (0 seconds ago)
+- a809f6e Enhance bridge output modal with transaction details and auto-lookup (0 seconds ago)
+- 1e03ddb Add flexible bridge/CEX output logging feature for terminal wallets (12 minutes ago)
 - 5d4d4c9 Fix write-off wizard flow issues (2 hours ago)
 - 99db1b3 Fix write-off confirmation modal removing wrong modal (2 hours ago)
 - 1f08065 Fix write-off process to use actual transaction amount (2 hours ago)
 - 67ed03d Fix hop wizard buttons not responding to clicks (2 hours ago)
 - c783a6f Fix hop wizard buttons not working - enable after transaction lookup (3 hours ago)
-- 25c4fc0 Debug Step 3 buttons with addEventListener and console logging (3 hours ago)
+- 25c4fc0 Debug Step 3 buttons with addEventListener and console logging (4 hours ago)
 - ed27959 Fix wizard buttons and styling issues (4 hours ago)
 - 5b7a40e Fix non-working buttons in hop wizard Step 3 (4 hours ago)
-- 0d8e8b5 Fix hop wizard not finding hop - string/number conversion issue (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

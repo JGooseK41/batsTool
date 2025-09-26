@@ -5074,9 +5074,34 @@
                     }
                     return null;
                 }
+            },
+            ripple: {
+                name: 'Ripple (XRP)',
+                hashPattern: /^[A-F0-9]{64}$/i,
+                addressPattern: /^r[0-9a-zA-Z]{24,34}$/,
+                addressPrefixes: ['r'],
+                txPattern: /^[A-F0-9]{64}$/i,
+                apiUrl: 'https://api.xrpscan.com/api/v1/tx/',
+                apiKey: null,
+                parseResponse: (data) => {
+                    if (data) {
+                        return {
+                            time: data.date ? new Date(data.date * 1000).getTime() : Date.now(),
+                            amount: data.Amount ? (typeof data.Amount === 'string' ?
+                                parseInt(data.Amount) / 1000000 :
+                                parseFloat(data.Amount.value || 0)) : 0,
+                            currency: data.Amount?.currency || 'XRP',
+                            from: data.Account || '',
+                            to: data.Destination || '',
+                            fee: data.Fee ? parseInt(data.Fee) / 1000000 : 0,
+                            hasRealTimestamp: !!data.date
+                        };
+                    }
+                    return null;
+                }
             }
         };
-        
+
         // Currency decimal place configuration
         const currencyDecimals = {
             'USD': 2,
@@ -22306,6 +22331,10 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     txData = await lookupBitcoinTransaction(txHash);
                 } else if (destChain === 'tron') {
                     txData = await lookupTronTransaction(txHash);
+                } else if (destChain === 'solana') {
+                    txData = await lookupSolanaTransaction(txHash);
+                } else if (destChain === 'ripple' || destChain === 'xrp') {
+                    txData = await lookupRippleTransaction(txHash);
                 } else {
                     throw new Error(`Unsupported blockchain: ${destChain}`);
                 }
@@ -28959,6 +28988,79 @@ async function lookupHopTransaction(hopNumber, entryId) {
     } finally {
         button.textContent = originalText;
         button.disabled = false;
+    }
+}
+
+async function lookupRippleTransaction(txHash) {
+    try {
+        // Use XRPL public API
+        const url = `https://api.xrpscan.com/api/v1/tx/${txHash}`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            // Try alternative API
+            const altUrl = `https://data.ripple.com/v2/transactions/${txHash}`;
+            const altResponse = await fetch(altUrl);
+
+            if (!altResponse.ok) {
+                throw new Error('Transaction not found on Ripple network');
+            }
+
+            const altData = await altResponse.json();
+            if (altData.transaction) {
+                const tx = altData.transaction;
+                return {
+                    hash: txHash,
+                    blockchain: 'Ripple',
+                    from: tx.Account || '',
+                    to: tx.Destination || '',
+                    amount: tx.Amount ? (parseInt(tx.Amount) / 1000000) : 0, // Convert drops to XRP
+                    currency: 'XRP',
+                    time: tx.date ? new Date(tx.date).getTime() : Date.now(),
+                    fee: tx.Fee ? (parseInt(tx.Fee) / 1000000) : 0,
+                    rawData: altData
+                };
+            }
+        }
+
+        const data = await response.json();
+
+        // Parse XRPScan API response
+        if (data) {
+            // Extract payment details
+            let amount = 0;
+            let currency = 'XRP';
+            let toAddress = '';
+
+            if (data.Amount) {
+                if (typeof data.Amount === 'string') {
+                    amount = parseInt(data.Amount) / 1000000; // Convert drops to XRP
+                } else if (data.Amount.value) {
+                    amount = parseFloat(data.Amount.value);
+                    currency = data.Amount.currency || 'XRP';
+                }
+            }
+
+            // Get destination address
+            toAddress = data.Destination || data.Account || '';
+
+            return {
+                hash: txHash,
+                blockchain: 'Ripple',
+                from: data.Account || '',
+                to: toAddress,
+                amount: amount,
+                currency: currency,
+                time: data.date ? new Date(data.date * 1000).getTime() : Date.now(),
+                fee: data.Fee ? (parseInt(data.Fee) / 1000000) : 0,
+                rawData: data
+            };
+        }
+
+        throw new Error('Unable to parse Ripple transaction');
+    } catch (error) {
+        console.error('Ripple lookup error:', error);
+        throw error;
     }
 }
 
