@@ -4915,12 +4915,13 @@
                 addressPattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
                 addressPrefixes: ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
                 txPattern: /^[1-9A-HJ-NP-Za-km-z]{87,88}$/,
-                apiUrl: 'https://api.mainnet-beta.solana.com',
-                addressApiUrl: 'https://api.mainnet-beta.solana.com',
+                apiUrl: 'https://mainnet.helius-rpc.com/?api-key=9e9bbebe-c0dc-4008-a503-a11e68fc5e21',
+                addressApiUrl: 'https://mainnet.helius-rpc.com/?api-key=9e9bbebe-c0dc-4008-a503-a11e68fc5e21',
                 apiKey: null,
                 fallbackUrls: [
-                    'https://solana-mainnet.g.alchemy.com/v2/demo',
-                    'https://rpc.ankr.com/solana'
+                    'https://solana-rpc.publicnode.com',
+                    'https://rpc.shyft.to?api_key=UYRaB4O76ubIKchC',
+                    'https://api.mainnet-beta.solana.com'
                 ],
                 parseResponse: (data) => {
                     if (data.result) {
