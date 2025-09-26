@@ -22283,6 +22283,149 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             document.body.appendChild(modal);
         }
 
+        function showBridgeTransferSelection(transfers) {
+            const container = document.getElementById('bridgeLookupResult');
+            if (!container) return;
+
+            // Store all transfers for filtering
+            window.allBridgeTransfers = transfers;
+            window.filteredBridgeTransfers = transfers;
+
+            // Get unique assets for filter
+            const uniqueAssets = [...new Set(transfers.map(t => t.currency))].sort();
+
+            let selectionHTML = `
+                <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 15px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 15px 0; color: #856404;">Select the Bridge Output Transfer:</h4>
+
+                    <!-- Filters Section -->
+                    <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 12px; margin-bottom: 15px;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <div style="flex: 1;">
+                                <label style="font-size: 12px; font-weight: bold; color: #495057; display: block; margin-bottom: 4px;">Asset Type:</label>
+                                <select id="bridgeAssetFilter" onchange="filterBridgeTransfers()"
+                                        style="width: 100%; padding: 6px; border: 1px solid #ced4da; border-radius: 4px;">
+                                    <option value="">All Assets (${uniqueAssets.length})</option>
+                                    ${uniqueAssets.map(asset => {
+                                        const count = transfers.filter(t => t.currency === asset).length;
+                                        return `<option value="${asset}">${asset} (${count})</option>`;
+                                    }).join('')}
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="font-size: 12px; font-weight: bold; color: #495057; display: block; margin-bottom: 4px;">Min Amount:</label>
+                                <input type="number" id="bridgeAmountFilter" placeholder="e.g., 0.01" step="0.000001"
+                                       onkeyup="filterBridgeTransfers()"
+                                       style="width: 100%; padding: 6px; border: 1px solid #ced4da; border-radius: 4px;">
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span id="bridgeFilterInfo" style="font-size: 12px; color: #6c757d;">
+                                Showing ${transfers.length} of ${transfers.length} transfers
+                            </span>
+                            <button class="btn btn-sm" onclick="clearBridgeFilters()"
+                                    style="font-size: 12px; padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 4px;">
+                                Clear Filters
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Transfers List -->
+                    <div id="bridgeTransfersList" style="max-height: 300px; overflow-y: auto;">
+                        ${renderBridgeTransferCards(transfers)}
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = selectionHTML;
+            container.style.display = 'block';
+        }
+
+        function renderBridgeTransferCards(transfers) {
+            if (transfers.length === 0) {
+                return '<div style="text-align: center; padding: 20px; color: #666;">No transfers match your filters</div>';
+            }
+
+            return transfers.map((transfer, filteredIndex) => {
+                // Find original index
+                const originalIndex = window.allBridgeTransfers.indexOf(transfer);
+
+                return `
+                    <div style="background: white; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-bottom: 8px; cursor: pointer;"
+                         onclick="selectBridgeTransfer(${originalIndex})"
+                         onmouseover="this.style.backgroundColor='#e3f2fd'"
+                         onmouseout="this.style.backgroundColor='white'">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${transfer.amount} ${transfer.currency}</strong><br>
+                                <small style="color: #666;">
+                                    To: ${transfer.to ? transfer.to.substring(0, 20) + '...' : 'Unknown'}<br>
+                                    ${transfer.type ? `Type: ${transfer.type}` : ''}
+                                    ${transfer.from ? `From: ${transfer.from.substring(0, 20)}...` : ''}
+                                </small>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="selectBridgeTransfer(${originalIndex}); event.stopPropagation();">
+                                Select
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterBridgeTransfers() {
+            const assetFilter = document.getElementById('bridgeAssetFilter').value;
+            const amountFilter = parseFloat(document.getElementById('bridgeAmountFilter').value) || 0;
+
+            let filtered = window.allBridgeTransfers;
+
+            // Filter by asset
+            if (assetFilter) {
+                filtered = filtered.filter(t => t.currency === assetFilter);
+            }
+
+            // Filter by minimum amount
+            if (amountFilter > 0) {
+                filtered = filtered.filter(t => parseFloat(t.amount) >= amountFilter);
+            }
+
+            window.filteredBridgeTransfers = filtered;
+
+            // Update display
+            const listContainer = document.getElementById('bridgeTransfersList');
+            listContainer.innerHTML = renderBridgeTransferCards(filtered);
+
+            // Update filter info
+            document.getElementById('bridgeFilterInfo').textContent =
+                `Showing ${filtered.length} of ${window.allBridgeTransfers.length} transfers`;
+        }
+
+        function clearBridgeFilters() {
+            document.getElementById('bridgeAssetFilter').value = '';
+            document.getElementById('bridgeAmountFilter').value = '';
+            filterBridgeTransfers();
+        }
+
+        function selectBridgeTransfer(index) {
+            const transfers = window.bridgeDestTransfers;
+            if (!transfers || !transfers[index]) return;
+
+            const transfer = transfers[index];
+
+            // Auto-fill the fields with selected transfer
+            document.getElementById('bridgeDestWallet').value = transfer.to || '';
+            document.getElementById('bridgeDestAmount').value = transfer.amount || '';
+            document.getElementById('bridgeDestAsset').value = transfer.currency || '';
+
+            // Update result message
+            const container = document.getElementById('bridgeLookupResult');
+            container.innerHTML = `
+                <div style="background: #e8f5e9; border: 1px solid #4caf50; border-radius: 6px; padding: 10px; color: #2e7d32;">
+                    ✅ Transfer selected! Fields have been auto-filled with: ${transfer.amount} ${transfer.currency} to ${transfer.to ? transfer.to.substring(0, 20) + '...' : 'Unknown'}
+                </div>
+            `;
+        }
+
         async function lookupBridgeDestTransaction() {
             const txHash = document.getElementById('bridgeDestTxHash').value.trim();
             const destChain = document.getElementById('bridgeDestChain').value;
@@ -22340,17 +22483,37 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 }
 
                 if (txData) {
-                    // Auto-fill the fields
-                    document.getElementById('bridgeDestWallet').value = txData.to || '';
-                    document.getElementById('bridgeDestAmount').value = txData.amount || '';
-                    document.getElementById('bridgeDestAsset').value = txData.currency || '';
+                    console.log('Bridge destination txData:', txData);
 
-                    // Show success message
-                    resultDiv.innerHTML = `
-                        <div style="background: #e8f5e9; border: 1px solid #4caf50; border-radius: 6px; padding: 10px; color: #2e7d32;">
-                            ✅ Transaction found! Fields have been auto-filled.
-                        </div>
-                    `;
+                    // Check if we have multiple transfers (Solana often has these)
+                    if (txData.multipleTransfers && txData.transfers && txData.transfers.length > 0) {
+                        console.log('Multiple transfers detected:', txData.transfers);
+
+                        // Store transfers for selection and show selection modal
+                        window.bridgeDestTransfers = txData.transfers;
+
+                        // Show transfer selection interface
+                        showBridgeTransferSelection(txData.transfers);
+
+                        // Show message about multiple transfers
+                        resultDiv.innerHTML = `
+                            <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 10px; color: #856404;">
+                                ⚠️ ${txData.transfers.length} transfers detected. Please select the correct bridge output above.
+                            </div>
+                        `;
+                    } else {
+                        // Auto-fill the fields
+                        document.getElementById('bridgeDestWallet').value = txData.to || '';
+                        document.getElementById('bridgeDestAmount').value = txData.amount || '';
+                        document.getElementById('bridgeDestAsset').value = txData.currency || '';
+
+                        // Show success message
+                        resultDiv.innerHTML = `
+                            <div style="background: #e8f5e9; border: 1px solid #4caf50; border-radius: 6px; padding: 10px; color: #2e7d32;">
+                                ✅ Transaction found! Fields have been auto-filled.
+                            </div>
+                        `;
+                    }
 
                     // Store tx data for later use
                     window.bridgeDestTxData = txData;
@@ -31479,6 +31642,11 @@ To (RED Wallet): ${transfer.to}`;
         window.logBridgeOutput = logBridgeOutput;
         window.confirmBridgeOutput = confirmBridgeOutput;
         window.lookupBridgeDestTransaction = lookupBridgeDestTransaction;
+        window.showBridgeTransferSelection = showBridgeTransferSelection;
+        window.selectBridgeTransfer = selectBridgeTransfer;
+        window.filterBridgeTransfers = filterBridgeTransfers;
+        window.clearBridgeFilters = clearBridgeFilters;
+        window.renderBridgeTransferCards = renderBridgeTransferCards;
         window.removeHopEntry = removeHopEntry;
         window.addHop = addHop;
 
