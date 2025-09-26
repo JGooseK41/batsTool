@@ -22128,6 +22128,7 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
 
             // Show bridge output logging modal
             const modal = document.createElement('div');
+            modal.id = 'bridgeOutputModal';
             modal.className = 'modal show';
             modal.innerHTML = `
                 <div class="modal-content" style="max-width: 700px; padding: 30px;">
@@ -22307,7 +22308,7 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                                     style="padding: 12px 24px; font-size: 16px;">
                                 🌉 Log Output Transaction
                             </button>
-                            <button class="btn btn-secondary" onclick="this.closest('.modal').remove()"
+                            <button class="btn btn-secondary" onclick="document.getElementById('bridgeOutputModal').remove()"
                                     style="padding: 12px 24px; font-size: 16px;">
                                 Cancel
                             </button>
@@ -22825,8 +22826,51 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             // Mark that bridge output has been logged
             entry.bridgeOutputLogged = true;
 
-            // Close modal
-            document.querySelector('.modal').remove();
+            // Create a new thread for the bridge output (converted asset)
+            // This represents the funds now available on the destination chain
+            const outputCurrency = destAsset;
+            const outputAmount = parseFloat(destAmount);
+            const outputNotation = entry.notation; // Keep same notation to track the conversion
+            const outputInternalId = generateInternalThreadId(outputNotation, outputCurrency);
+
+            // Ensure the currency exists in available threads
+            if (!investigation.availableThreads[outputCurrency]) {
+                investigation.availableThreads[outputCurrency] = {};
+            }
+
+            // Create the bridge output thread
+            investigation.availableThreads[outputCurrency][outputInternalId] = {
+                notation: outputNotation,
+                internalId: outputInternalId,
+                totalAmount: outputAmount,
+                availableAmount: outputAmount,
+                assignments: [],
+                sourceWallet: destWallet, // The destination wallet becomes the source for next hop
+                sourceType: 'bridge_output',
+                hopLevel: hop.hopNumber,
+                createdAt: new Date().toISOString(),
+                isActive: true,
+                parentThreads: [entry.sourceThreadInternalId || entry.notation], // Link to original thread
+                childThreads: [],
+                currency: outputCurrency,
+                // Chain tracking - use destination chain
+                chainId: destChain,
+                chainName: window.blockchainAPIs?.[destChain]?.name || destChain,
+                // Bridge metadata
+                isBridgeOutput: true,
+                bridgeType: walletType === 'brown' ? 'defi' : 'cex',
+                sourceTxHash: entry.txHash,
+                destinationTxHash: txHash
+            };
+
+            console.log(`Created bridge output thread: ${outputNotation} with ${outputAmount} ${outputCurrency} on ${destChain}`);
+            showNotification(`✨ New thread created: ${outputAmount} ${outputCurrency} now available for tracing on ${destChain}`, 'info', 5000);
+
+            // Close modal - find the specific bridge output modal
+            const modal = document.getElementById('bridgeOutputModal') || document.querySelector('.modal');
+            if (modal) {
+                modal.remove();
+            }
 
             // Re-render
             buildAvailableThreadsIndex(); // Rebuild to create output threads
