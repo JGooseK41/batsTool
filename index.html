@@ -18118,9 +18118,11 @@ function showHopWizardStep(step) {
             ` : ''}
 
             <div style="margin-top: 20px;">
-                ${wizardData.selectedThreads.map(threadId => {
-                    const thread = getAvailableSourcesForHop(wizardData.hopNumber, null).find(t => t.threadId === threadId);
-                    const allocation = wizardData.allocations[threadId] || 0;
+                ${(wizardData.selectedInternalIds || wizardData.selectedThreads).map(id => {
+                    const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+                    // Try to find by internal ID first, then by notation
+                    const thread = threads.find(t => t.internalId === id) || threads.find(t => t.threadId === id);
+                    const allocation = wizardData.allocations[id] || wizardData.allocations[thread?.threadId] || 0;
 
                     return `
                         <div style="background: white; border: 2px solid #e8f0fe; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
@@ -18128,16 +18130,16 @@ function showHopWizardStep(step) {
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <label style="min-width: 80px;">Amount:</label>
                                 <input type="number"
-                                       id="wizardAllocation_${threadId}"
+                                       id="wizardAllocation_${id}"
                                        step="${getCurrencyStep(thread.currency)}"
                                        min="0"
                                        max="${thread.availableAmount}"
                                        value="${allocation}"
-                                       onchange="updateWizardAllocation('${threadId}', this.value)"
+                                       onchange="updateWizardAllocation('${id}', this.value)"
                                        style="width: 150px; padding: 8px;">
                                 <span>${thread.currency}</span>
                                 <button class="btn btn-sm btn-primary"
-                                        onclick="setWizardMaxAllocation('${threadId}', ${thread.availableAmount})">
+                                        onclick="setWizardMaxAllocation('${id}', ${thread.availableAmount})">
                                     Max (${thread.availableAmount.toLocaleString()})
                                 </button>
                             </div>
@@ -18323,10 +18325,12 @@ function showHopWizardStep(step) {
                 <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
                     <h4 style="margin-top: 0;">Summary</h4>
                     <div style="font-size: 14px; line-height: 1.6;">
-                        ${wizardData.selectedThreads.map(threadId => {
-                            const thread = getAvailableSourcesForHop(wizardData.hopNumber, null).find(t => t.threadId === threadId);
-                            const allocation = wizardData.allocations[threadId] || 0;
-                            return `<div><strong>${thread.displayText}:</strong> ${allocation.toLocaleString()} ${thread.currency}</div>`;
+                        ${(wizardData.selectedInternalIds || wizardData.selectedThreads).map(id => {
+                            const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+                            // Try to find by internal ID first, then by notation
+                            const thread = threads.find(t => t.internalId === id) || threads.find(t => t.threadId === id);
+                            const allocation = wizardData.allocations[id] || wizardData.allocations[thread?.threadId] || 0;
+                            return thread ? `<div><strong>${thread.displayText}:</strong> ${allocation.toLocaleString()} ${thread.currency}</div>` : '';
                         }).join('')}
                     </div>
                 </div>
