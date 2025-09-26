@@ -3634,55 +3634,7 @@
 
             console.log(`Checking Solana attribution for ${address}`);
 
-            // Known Solana exchange addresses (can be expanded)
-            const knownSolanaExchanges = {
-                // KuCoin Solana addresses
-                '2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S': { name: 'KuCoin', type: 'CEX' },
-                'GqjCvdLMK8nNaZzxQdRmu42P7f8YvdPnF5tyS2grUhHn': { name: 'KuCoin', type: 'CEX' },
-                '5WTw1ouRMU9BXJvvnBy1ywLwgBW1R3RKqC5bMcAGmXHH': { name: 'KuCoin Hot Wallet', type: 'CEX' },
-
-                // Binance Solana addresses
-                '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM': { name: 'Binance', type: 'CEX' },
-                '2ojvBkGXSxg2dhjEQE1UebK1vE7Um5MfVjJqvdcSGNfP': { name: 'Binance', type: 'CEX' },
-                'H616EYLS6qP9CtaVMBfpVQKpVrMNwipTRvybHWNBicDV': { name: 'Binance Hot Wallet', type: 'CEX' },
-
-                // Coinbase Solana addresses
-                'GJRs4FwHtemZ5ZE9x3FNvJ8TMwitKTh21yxdRPqn7npE': { name: 'Coinbase', type: 'CEX' },
-                'H8sMJSCQxfKiFTCfDR3DUMLPwcRbM61LGFJ8N4dK3WjS': { name: 'Coinbase', type: 'CEX' },
-                '2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSprPicm': { name: 'Coinbase', type: 'CEX' },
-
-                // Kraken Solana addresses
-                '6ry6b7No8GcXSJsUBKeJLqUmdKqJuLwVommVGKFju5t8': { name: 'Kraken', type: 'CEX' },
-                'CKZRS8Wt3jhKoLCTBiD6RzLqUYxVY6xqvG1SUN7hLUNr': { name: 'Kraken', type: 'CEX' },
-
-                // OKX Solana addresses
-                '5VCwKtCXgCJ6kit5FybXjvriW3xELsFDhYrPSqtJNmcD': { name: 'OKX', type: 'CEX' },
-                '7kgpPVqKbpsqKBHqfmhQvvmSxaFR8YsJrFJaCqr3J8zC': { name: 'OKX', type: 'CEX' },
-
-                // Bybit Solana addresses
-                'BBMbFwme5tc9mPu5RPvxpZ2nqHsKc4DPQ7a6L29xSvdP': { name: 'Bybit', type: 'CEX' },
-                'AC5RDfQFmDS1deWZos921JfqscXdByf8BKHs5ACWjtW2': { name: 'Bybit', type: 'CEX' },
-
-                // Gate.io Solana addresses
-                '6s9yBpHxANxWYKPsvB4KmBPuQGHz1NFsmgqKa5rz3HEF': { name: 'Gate.io', type: 'CEX' },
-                'u6PJ8DtQuPFnfmwHbGFULQ4u4EgjDiyYKjVEsynXq2w': { name: 'Gate.io', type: 'CEX' },
-
-                // Additional exchange addresses detected from user transactions
-                'DsyQiQneNnfE3BprqsvACA8HhNhreRbbTfLrqewTkcmv': { name: 'Exchange (Unidentified)', type: 'CEX' }
-            };
-
-            // Check if address is in known exchanges
-            if (knownSolanaExchanges[address]) {
-                const attribution = {
-                    name: knownSolanaExchanges[address].name,
-                    label: knownSolanaExchanges[address].name,
-                    type: knownSolanaExchanges[address].type,
-                    source: 'known_solana_addresses',
-                    isExchange: true
-                };
-                console.log(`Found known Solana exchange: ${attribution.name}`);
-                return attribution;
-            }
+            // NO HARDCODED ADDRESSES - Only use API calls for attribution
 
             // Try to use Solscan API with API key (default provided for all users)
             const solscanApiKey = localStorage.getItem('bats_solscan_api_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3NTg4OTk1ODMyNTksImVtYWlsIjoiamVzc2VAdGhlYmxvY2thdWRpdC5jb20iLCJhY3Rpb24iOiJ0b2tlbi1hcGkiLCJhcGlWZXJzaW9uIjoidjIiLCJpYXQiOjE3NTg4OTk1ODN9.C3By0UPXwI5bmLrAl9o1U_SDnT7uQLoizbd8qr36GmQ';
@@ -3783,25 +3735,32 @@
 
             try {
                 // ALWAYS CHECK ARKHAM FIRST - IT'S OUR PRIMARY SOURCE FOR ALL CHAINS
-                console.log('Checking Arkham Intelligence for attribution (primary source for all chains)');
+                console.log(`🔍 Checking Arkham Intelligence for address: ${address}`);
                 const arkhamApiKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
 
                 if (arkhamApiKey) {
                     try {
                         // Use Netlify Function proxy for Arkham API
                         const proxyUrl = `/.netlify/functions/arkham3?endpoint=/intelligence/address/${address}`;
+                        console.log(`📡 Arkham API URL: ${proxyUrl}`);
+                        console.log(`🔑 Using API key: ${arkhamApiKey.substring(0, 10)}...`);
+
                         const arkhamResponse = await fetch(proxyUrl, {
                             headers: {
                                 'X-Arkham-API-Key': arkhamApiKey,
                                 'Accept': 'application/json'
                             }
                         }).catch(err => {
-                            console.log('Main tool Arkham attribution API failed:', err);
+                            console.error('❌ Arkham API fetch failed:', err);
                             return null;
                         });
 
+                        console.log(`📊 Arkham response status: ${arkhamResponse?.status}`);
+
                         if (arkhamResponse && arkhamResponse.ok) {
                             const arkhamData = await arkhamResponse.json();
+                            console.log('📦 Arkham API response data:', arkhamData);
+
                             if (arkhamData && arkhamData.arkhamEntity) {
                                 attribution = {
                                     name: arkhamData.arkhamEntity.name,
@@ -3810,14 +3769,21 @@
                                     source: 'arkham_intelligence',
                                     isExchange: true
                                 };
-                                console.log(`Arkham attribution found for ${address}:`, attribution);
+                                console.log(`✅ Arkham attribution found for ${address}:`, attribution);
                                 walletAttributionCache[lowerAddress] = attribution;
                                 return attribution;
+                            } else {
+                                console.log('⚠️ Arkham response has no entity data:', arkhamData);
                             }
+                        } else {
+                            const errorText = arkhamResponse ? await arkhamResponse.text() : 'No response';
+                            console.log(`⚠️ Arkham API returned non-OK status. Response:`, errorText);
                         }
                     } catch (e) {
-                        console.log('Arkham API error:', e);
+                        console.error('❌ Arkham API error:', e);
                     }
+                } else {
+                    console.log('⚠️ No Arkham API key configured');
                 }
 
                 // If Arkham didn't find attribution, check chain-specific secondary sources

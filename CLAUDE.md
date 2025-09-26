@@ -3,39 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 11:40)
+## Latest Commit (Auto-updated: 2025-09-26 11:47)
 
-**Commit:** d411103e6cdae3b3c6a7a39e8eaba7a3e38f07f5
+**Commit:** a9b0ab28d81fd0a3252144e4cb4fbc9d1543122f
 **Author:** Your Name
-**Message:** Fix bridge output thread consolidation issue
+**Message:** Fix Solscan API CSP blocking and add unidentified exchange address
 
-- Each bridge conversion now creates a unique thread with unique internal ID
-- Removed deduplication check that merged threads with same tx hash
-- Using entry ID to ensure each bridge output is unique
-- Properly implements dual-layer system: same notation for display, unique internal IDs
-- Added entryId tracking to bridge output threads for debugging
+- Added pro-api.solscan.io and public-api.solscan.io to Content Security Policy
+- This fixes the CSP violation that was blocking Solscan API calls
+- Added DsyQiQneNnfE3BprqsvACA8HhNhreRbbTfLrqewTkcmv as known exchange address
+- Arkham is still checked first (working correctly), but didn't have this address
+- Now attribution will work via: Arkham → Solscan API → Hardcoded addresses
 
-This ensures if you have 5 bridge conversions, you get 5 separate USDC threads, even if some share the same destination transaction or source notation.
+The terminal wallet detection should now work properly for this address.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 46 +++++++++++++++++++++++-----------------------
- index.html | 28 ++++++++++------------------
- 2 files changed, 33 insertions(+), 41 deletions(-)
+ CLAUDE.md  | 45 +++++++++++++++++++++------------------------
+ index.html |  7 +++++--
+ 2 files changed, 26 insertions(+), 26 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d411103 Fix bridge output thread consolidation issue (0 seconds ago)
-- 15d1a34 Fix Solana transaction lookup failures (16 minutes ago)
-- 0abeafe Add default Solscan Pro API key for all users (21 minutes ago)
-- a9d783d Add Solscan API key configuration and Pro API support (23 minutes ago)
-- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (33 minutes ago)
-- e38d1ae Fix hop finalization with unallocated bridge outputs (38 minutes ago)
-- 165ad53 Fix over-allocation blocking and wizard close button (47 minutes ago)
-- 244d6f0 Fix focusOnHop function error (59 minutes ago)
-- e87289f Fix wizard Step 3 duplicate thread display issue (64 minutes ago)
-- 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (2 hours ago)
+- a9b0ab2 Fix Solscan API CSP blocking and add unidentified exchange address (0 seconds ago)
+- d411103 Fix bridge output thread consolidation issue (8 minutes ago)
+- 15d1a34 Fix Solana transaction lookup failures (23 minutes ago)
+- 0abeafe Add default Solscan Pro API key for all users (28 minutes ago)
+- a9d783d Add Solscan API key configuration and Pro API support (31 minutes ago)
+- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (40 minutes ago)
+- e38d1ae Fix hop finalization with unallocated bridge outputs (45 minutes ago)
+- 165ad53 Fix over-allocation blocking and wizard close button (54 minutes ago)
+- 244d6f0 Fix focusOnHop function error (67 minutes ago)
+- e87289f Fix wizard Step 3 duplicate thread display issue (71 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
