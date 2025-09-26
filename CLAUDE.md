@@ -3,16 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 22:10)
+## Latest Commit (Auto-updated: 2025-09-25 22:14)
 
-**Commit:** 3a8c2966fdc0dc410bd933277bb55a70ee89a991
+**Commit:** 136d8e546c37bc0465c8db4de6071e7ce9f1da15
 **Author:** Your Name
-**Message:** Fix Solana showing duplicate transfers by combining paired debits/credits
+**Message:** Fix bridge output modal closing and ensure converted assets are added to ART
 
-- Modified Solana parser to group transfers by mint address
-- Combines matching debit and credit pairs into single transfers
-- Prevents showing both sides of same SPL token transfer
-- Improves transfer selection modal accuracy
+- Fixed modal closing by using specific modal ID instead of generic selector
+- Added creation of new thread for bridge output with converted asset
+- Bridge outputs now properly create threads in the destination currency
+- New threads are added to Available Running Total for continued tracing
+- Added confirmation notifications when new threads are created
+- Threads maintain proper chain tracking for destination blockchain
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -20,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 45 ++++++++++++++++++++--------------------
- index.html | 69 ++++++++++++++++++++++++++++++++++++++++++++++----------------
- 2 files changed, 75 insertions(+), 39 deletions(-)
+ CLAUDE.md  | 41 ++++++++++++++++++-----------------------
+ index.html | 50 +++++++++++++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 65 insertions(+), 26 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3a8c296 Fix Solana showing duplicate transfers by combining paired debits/credits (0 seconds ago)
-- 55e0e38 Fix bridge transfer selection to show proper modal like victim selector (18 minutes ago)
-- 2102efd Add transfer selection and filtering for bridge output lookups (23 minutes ago)
-- 0563b4b Add Ripple/XRP support for bridge output transactions (33 minutes ago)
-- a809f6e Enhance bridge output modal with transaction details and auto-lookup (47 minutes ago)
-- 1e03ddb Add flexible bridge/CEX output logging feature for terminal wallets (59 minutes ago)
+- 136d8e5 Fix bridge output modal closing and ensure converted assets are added to ART (1 second ago)
+- 3a8c296 Fix Solana showing duplicate transfers by combining paired debits/credits (4 minutes ago)
+- 55e0e38 Fix bridge transfer selection to show proper modal like victim selector (21 minutes ago)
+- 2102efd Add transfer selection and filtering for bridge output lookups (27 minutes ago)
+- 0563b4b Add Ripple/XRP support for bridge output transactions (36 minutes ago)
+- a809f6e Enhance bridge output modal with transaction details and auto-lookup (51 minutes ago)
+- 1e03ddb Add flexible bridge/CEX output logging feature for terminal wallets (63 minutes ago)
 - 5d4d4c9 Fix write-off wizard flow issues (3 hours ago)
 - 99db1b3 Fix write-off confirmation modal removing wrong modal (3 hours ago)
 - 1f08065 Fix write-off process to use actual transaction amount (3 hours ago)
-- 67ed03d Fix hop wizard buttons not responding to clicks (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
