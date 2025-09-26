@@ -3,20 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 05:46)
+## Latest Commit (Auto-updated: 2025-09-26 05:49)
 
-**Commit:** 3feb5d34b91e5ddf557b2bd8c7939b8ad426b1b6
+**Commit:** ec5dd656712d50fd187b26fe0f5bf3c3f84b200e
 **Author:** Your Name
-**Message:** Refactor bridge outputs to work exactly like swaps
+**Message:** Fix critical bugs in thread building and source tracking processes
 
-- Bridge conversions now replace threads in the SAME hop (not advance)
-- Consumes input currency thread and creates output currency thread
-- Maintains original notation for audit trail continuity
-- Bridge output threads available immediately in current hop
-- Progress bars automatically show new currency from bridge
-- Removed auto-creation of next hop after bridge logging
-- Bridge metadata preserved for full audit trail
-- Works identically to swap logic for consistency
+- Fixed bridge output threads not being preserved during rebuild
+- Fixed chain ID inheritance for change entries from parent threads
+- Fixed swap thread chain tracking (item.chainId -> item.thread.chainId)
+- Fixed hop level filtering in getAvailableSourcesForHop
+- Improved handling of same-hop conversions (swaps/bridges/changes)
+- Enhanced thread preservation for both swap and bridge outputs
+
+Bug fixes ensure proper thread continuity and chain tracking across all conversion types
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -24,14 +24,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 36 +++++++++++++------------
- index.html | 90 ++++++++++++++++++++++++++++++++++++++++++++++----------------
- 2 files changed, 86 insertions(+), 40 deletions(-)
+ CLAUDE.md  | 46 +++++++++++++++++++++++---------------------
+ index.html | 64 ++++++++++++++++++++++++++++++++++++++++++++++++++------------
+ 2 files changed, 76 insertions(+), 34 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3feb5d3 Refactor bridge outputs to work exactly like swaps (0 seconds ago)
+- ec5dd65 Fix critical bugs in thread building and source tracking processes (0 seconds ago)
+- 3feb5d3 Refactor bridge outputs to work exactly like swaps (3 minutes ago)
 - 136d8e5 Fix bridge output modal closing and ensure converted assets are added to ART (8 hours ago)
 - 3a8c296 Fix Solana showing duplicate transfers by combining paired debits/credits (8 hours ago)
 - 55e0e38 Fix bridge transfer selection to show proper modal like victim selector (8 hours ago)
@@ -40,7 +41,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - a809f6e Enhance bridge output modal with transaction details and auto-lookup (8 hours ago)
 - 1e03ddb Add flexible bridge/CEX output logging feature for terminal wallets (9 hours ago)
 - 5d4d4c9 Fix write-off wizard flow issues (10 hours ago)
-- 99db1b3 Fix write-off confirmation modal removing wrong modal (10 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

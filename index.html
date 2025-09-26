@@ -22234,31 +22234,15 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                         <strong>💡 Tip:</strong> Use the transaction hash and address above to search in bridge explorers, CEX records, or the destination chain explorer to find the output transaction.
                     </p>
 
-                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                        <h3 style="margin-top: 0; font-size: 16px;">Wallet Type Selection:</h3>
-                        <div style="margin: 15px 0;">
-                            <label style="display: block; margin-bottom: 15px; padding: 15px; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.3s;"
-                                   onmouseover="this.style.borderColor='#9b59b6'; this.style.background='#f9f4ff';"
-                                   onmouseout="this.style.borderColor='#ddd'; this.style.background='transparent';">
-                                <input type="radio" name="walletType" value="purple" checked style="margin-right: 10px;">
-                                <strong>Keep as CEX/VASP (Purple)</strong>
-                                <div style="margin-left: 25px; margin-top: 5px; color: #666; font-size: 14px;">
-                                    Use this for centralized exchanges when you have records showing the output transaction.
-                                    The wallet remains purple but creates an output thread.
-                                </div>
-                            </label>
-
-                            <label style="display: block; margin-bottom: 10px; padding: 15px; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.3s;"
-                                   onmouseover="this.style.borderColor='#8b4513'; this.style.background='#fff8f4';"
-                                   onmouseout="this.style.borderColor='#ddd'; this.style.background='transparent';">
-                                <input type="radio" name="walletType" value="brown" style="margin-right: 10px;">
-                                <strong>Convert to DeFi Bridge (Brown)</strong>
-                                <div style="margin-left: 25px; margin-top: 5px; color: #666; font-size: 14px;">
-                                    Use this for decentralized bridges and cross-chain protocols.
-                                    Changes the wallet color to brown to indicate a bridge/conversion.
-                                </div>
-                            </label>
-                        </div>
+                    <div style="background: #fff8f4; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #8b4513;">
+                        <h3 style="margin-top: 0; font-size: 16px; color: #8b4513;">🌉 Wallet Classification Update</h3>
+                        <p style="margin: 10px 0; color: #6b3410;">
+                            <strong>This terminal wallet will be automatically converted to a DeFi Bridge (Brown)</strong>
+                        </p>
+                        <p style="margin: 0; color: #666; font-size: 14px;">
+                            Logging a bridge output indicates this wallet is a bridge/conversion service, not a terminal wallet.
+                            The wallet color will change from purple to brown to reflect its true nature as a bridge.
+                        </p>
                     </div>
 
                     <div style="border-top: 2px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
@@ -22808,8 +22792,8 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             const destWallet = document.getElementById('bridgeDestWallet').value.trim();
             const destAmount = document.getElementById('bridgeDestAmount').value;
             const destAsset = document.getElementById('bridgeDestAsset').value.trim();
-            const walletTypeRadio = document.querySelector('input[name="walletType"]:checked');
-            const walletType = walletTypeRadio ? walletTypeRadio.value : 'purple';
+            // Always use brown wallet type for bridges
+            const walletType = 'brown';
 
             if (!txHash || !destChain || !destWallet || !destAmount || !destAsset) {
                 showNotification('❌ Please fill in all destination transaction details', 'error');
@@ -22827,29 +22811,20 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             // Save undo state
             saveUndoState(`Log bridge output from terminal wallet in Hop ${hop.hopNumber}`);
 
-            // Update entry based on wallet type selection
-            if (walletType === 'brown') {
-                // Convert to DeFi bridge
-                entry.toWalletType = 'brown'; // Brown for bridges/conversions
-                entry.isBridge = true;
-                const noteType = 'DEFI BRIDGE';
-                entry.notes = (entry.notes || '') + `\n[${noteType}] Output logged:\n` +
-                    `  Chain: ${destChain}\n` +
-                    `  Tx: ${txHash}\n` +
-                    `  To: ${destWallet}\n` +
-                    `  Amount: ${destAmount} ${destAsset}`;
-            } else {
-                // Keep as CEX but mark that it has a bridge output
-                entry.toWalletType = 'purple'; // Keep as purple for CEX
-                entry.isBridge = true; // Still mark as bridge to create output threads
-                entry.isCEXBridge = true; // Special flag for CEX bridges
-                const noteType = 'CEX OUTPUT';
-                entry.notes = (entry.notes || '') + `\n[${noteType}] Output transaction logged:\n` +
-                    `  Chain: ${destChain}\n` +
-                    `  Tx: ${txHash}\n` +
-                    `  To: ${destWallet}\n` +
-                    `  Amount: ${destAmount} ${destAsset}`;
-            }
+            // Always convert to DeFi bridge when logging bridge output
+            // This overwrites the previous purple (terminal) classification
+            entry.toWalletType = 'brown'; // Brown for bridges/conversions
+            entry.isBridge = true;
+            entry.wasTerminalWallet = true; // Track that this was originally classified as terminal
+
+            const noteType = 'BRIDGE OUTPUT';
+            const existingNotes = entry.notes || '';
+            entry.notes = existingNotes + `\n[${noteType}] Wallet reclassified from terminal to bridge:\n` +
+                `  Output Chain: ${destChain}\n` +
+                `  Output Tx: ${txHash}\n` +
+                `  Output Wallet: ${destWallet}\n` +
+                `  Output Amount: ${destAmount} ${destAsset}\n` +
+                `  Reclassified: ${new Date().toISOString()}`;
 
             // Store bridge details for both types
             entry.bridgeDetails = {
@@ -22967,8 +22942,8 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             renderHops();
             saveToStorage();
 
-            const walletTypeText = walletType === 'brown' ? 'DeFi bridge' : 'CEX';
-            showNotification(`✅ Bridge output logged! Thread ${entry.notation} converted to ${outputAmount} ${outputCurrency} on ${destChain}. Continue tracing in Hop ${hop.hopNumber}.`, 'success', 8000);
+            // Always shows as bridge since we force brown wallet type
+            showNotification(`✅ Bridge output logged! Wallet reclassified to bridge (brown). Thread ${entry.notation} converted to ${outputAmount} ${outputCurrency} on ${destChain}. Continue tracing in Hop ${hop.hopNumber}.`, 'success', 8000);
         }
 
         function validateTransactionChronology(victim) {
