@@ -22105,10 +22105,26 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                             </div>
                         </div>
 
-                        <div>
+                        <div style="margin-bottom: 15px;">
                             <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">Amount:</label>
                             <div style="padding: 8px; background: white; border: 1px solid #ddd; border-radius: 4px;">
                                 ${entry.amount} ${entry.currency || 'Unknown'}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">Timestamp (UTC):</label>
+                            <div style="padding: 8px; background: white; border: 1px solid #ddd; border-radius: 4px;">
+                                ${entry.timestamp ? new Date(entry.timestamp).toLocaleString('en-US', {
+                                    timeZone: 'UTC',
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    hour12: false
+                                }) + ' UTC' : 'Not available'}
                             </div>
                         </div>
                     </div>
@@ -22145,29 +22161,85 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     </div>
 
                     <div style="border-top: 2px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
-                        <div style="margin-bottom: 20px;">
-                            <label style="font-weight: bold; display: block; margin-bottom: 10px; color: #2c3e50;">
-                                Destination Chain Transaction Hash:
-                            </label>
-                            <input type="text"
-                                   id="bridgeDestTxHash"
-                                   placeholder="Paste the transaction hash from the destination chain"
-                                   style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px;">
-                            <small style="color: #666; display: block; margin-top: 5px;">
-                                This is the hash of the transaction that received funds on the destination chain after bridging
-                            </small>
-                        </div>
+                        <h3 style="font-size: 16px; margin-bottom: 15px; color: #2c3e50;">Destination Transaction Details</h3>
 
-                        <div style="margin-bottom: 25px;">
+                        <div style="margin-bottom: 20px;">
                             <label style="font-weight: bold; display: block; margin-bottom: 10px; color: #2c3e50;">
                                 Select Destination Chain:
                             </label>
-                            <select id="bridgeDestChain" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px;">
+                            <select id="bridgeDestChain" onchange="window.bridgeDestChain = this.value"
+                                    style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px;">
                                 <option value="">Select blockchain...</option>
                                 ${Object.entries(window.blockchainAPIs || {}).map(([key, chain]) =>
                                     `<option value="${key}">${chain.name}</option>`
                                 ).join('')}
                             </select>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-weight: bold; display: block; margin-bottom: 10px; color: #2c3e50;">
+                                Destination Transaction Hash:
+                            </label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text"
+                                       id="bridgeDestTxHash"
+                                       placeholder="Paste the transaction hash from the destination chain"
+                                       style="flex: 1; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px;">
+                                <button class="btn btn-primary" onclick="lookupBridgeDestTransaction()"
+                                        style="padding: 12px 20px; font-size: 14px;">
+                                    🔍 Auto-fill
+                                </button>
+                            </div>
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                Enter the hash and click Auto-fill to populate the fields below
+                            </small>
+                        </div>
+
+                        <!-- Lookup result area -->
+                        <div id="bridgeLookupResult" style="display: none; margin-bottom: 20px;">
+                            <div style="background: #e8f5e9; border: 1px solid #4caf50; border-radius: 6px; padding: 10px; color: #2e7d32;">
+                                ✅ Transaction found! Fields have been auto-filled.
+                            </div>
+                        </div>
+
+                        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="margin-bottom: 15px;">
+                                <label style="font-weight: bold; display: block; margin-bottom: 8px; color: #555;">
+                                    Receiving Wallet Address:
+                                </label>
+                                <input type="text"
+                                       id="bridgeDestWallet"
+                                       placeholder="Enter or auto-fill the receiving wallet address"
+                                       style="width: 100%; padding: 10px; font-family: monospace; font-size: 13px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+
+                            <div style="display: flex; gap: 15px;">
+                                <div style="flex: 2;">
+                                    <label style="font-weight: bold; display: block; margin-bottom: 8px; color: #555;">
+                                        Amount Received:
+                                    </label>
+                                    <input type="number"
+                                           id="bridgeDestAmount"
+                                           placeholder="0.00"
+                                           step="0.000001"
+                                           style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+
+                                <div style="flex: 1;">
+                                    <label style="font-weight: bold; display: block; margin-bottom: 8px; color: #555;">
+                                        Asset/Currency:
+                                    </label>
+                                    <input type="text"
+                                           id="bridgeDestAsset"
+                                           placeholder="e.g., ETH, USDT"
+                                           value="${entry.currency || ''}"
+                                           style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+                            </div>
+
+                            <small style="color: #666; display: block; margin-top: 10px;">
+                                These fields will be auto-filled when you lookup the transaction, or you can enter them manually
+                            </small>
                         </div>
 
                         <div style="display: flex; justify-content: center; gap: 10px;">
@@ -22186,14 +22258,97 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             document.body.appendChild(modal);
         }
 
+        async function lookupBridgeDestTransaction() {
+            const txHash = document.getElementById('bridgeDestTxHash').value.trim();
+            const destChain = document.getElementById('bridgeDestChain').value;
+
+            if (!txHash) {
+                showNotification('❌ Please enter a transaction hash', 'error');
+                return;
+            }
+
+            if (!destChain) {
+                showNotification('❌ Please select the destination blockchain first', 'error');
+                return;
+            }
+
+            // Show loading state
+            const resultDiv = document.getElementById('bridgeLookupResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 10px; color: #856404;">
+                    🔍 Looking up transaction...
+                </div>
+            `;
+
+            try {
+                // Use existing transaction lookup logic
+                let txData;
+                const evmChains = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc',
+                                  'avalanche', 'hyperevm', 'linea', 'scroll', 'mantle', 'blast',
+                                  'zksync', 'gnosis', 'celo', 'moonbeam', 'moonriver', 'fraxtal',
+                                  'taiko', 'arbitrumnova', 'bittorrent', 'opbnb'];
+
+                if (evmChains.includes(destChain)) {
+                    // Temporarily set chain selector for lookup
+                    const originalChain = document.getElementById('chainSelector')?.value;
+                    if (document.getElementById('chainSelector')) {
+                        document.getElementById('chainSelector').value = destChain;
+                    }
+
+                    txData = await lookupEthereumTransaction(txHash, destChain);
+
+                    // Restore original chain
+                    if (document.getElementById('chainSelector') && originalChain) {
+                        document.getElementById('chainSelector').value = originalChain;
+                    }
+                } else if (destChain === 'bitcoin') {
+                    txData = await lookupBitcoinTransaction(txHash);
+                } else if (destChain === 'tron') {
+                    txData = await lookupTronTransaction(txHash);
+                } else {
+                    throw new Error(`Unsupported blockchain: ${destChain}`);
+                }
+
+                if (txData) {
+                    // Auto-fill the fields
+                    document.getElementById('bridgeDestWallet').value = txData.to || '';
+                    document.getElementById('bridgeDestAmount').value = txData.amount || '';
+                    document.getElementById('bridgeDestAsset').value = txData.currency || '';
+
+                    // Show success message
+                    resultDiv.innerHTML = `
+                        <div style="background: #e8f5e9; border: 1px solid #4caf50; border-radius: 6px; padding: 10px; color: #2e7d32;">
+                            ✅ Transaction found! Fields have been auto-filled.
+                        </div>
+                    `;
+
+                    // Store tx data for later use
+                    window.bridgeDestTxData = txData;
+                } else {
+                    throw new Error('Transaction not found');
+                }
+            } catch (error) {
+                console.error('Bridge destination lookup error:', error);
+                resultDiv.innerHTML = `
+                    <div style="background: #ffebee; border: 1px solid #f44336; border-radius: 6px; padding: 10px; color: #c62828;">
+                        ❌ Failed to lookup transaction: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
         async function confirmBridgeOutput(hopNumber, entryId) {
             const txHash = document.getElementById('bridgeDestTxHash').value.trim();
             const destChain = document.getElementById('bridgeDestChain').value;
+            const destWallet = document.getElementById('bridgeDestWallet').value.trim();
+            const destAmount = document.getElementById('bridgeDestAmount').value;
+            const destAsset = document.getElementById('bridgeDestAsset').value.trim();
             const walletTypeRadio = document.querySelector('input[name="walletType"]:checked');
             const walletType = walletTypeRadio ? walletTypeRadio.value : 'purple';
 
-            if (!txHash || !destChain) {
-                showNotification('❌ Please provide both destination transaction hash and chain', 'error');
+            if (!txHash || !destChain || !destWallet || !destAmount || !destAsset) {
+                showNotification('❌ Please fill in all destination transaction details', 'error');
                 return;
             }
 
@@ -22214,14 +22369,22 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 entry.toWalletType = 'brown'; // Brown for bridges/conversions
                 entry.isBridge = true;
                 const noteType = 'DEFI BRIDGE';
-                entry.notes = (entry.notes || '') + `\n[${noteType}] Output logged. Destination: ${destChain}, Tx: ${txHash}`;
+                entry.notes = (entry.notes || '') + `\n[${noteType}] Output logged:\n` +
+                    `  Chain: ${destChain}\n` +
+                    `  Tx: ${txHash}\n` +
+                    `  To: ${destWallet}\n` +
+                    `  Amount: ${destAmount} ${destAsset}`;
             } else {
                 // Keep as CEX but mark that it has a bridge output
                 entry.toWalletType = 'purple'; // Keep as purple for CEX
                 entry.isBridge = true; // Still mark as bridge to create output threads
                 entry.isCEXBridge = true; // Special flag for CEX bridges
                 const noteType = 'CEX OUTPUT';
-                entry.notes = (entry.notes || '') + `\n[${noteType}] Output transaction logged. Destination: ${destChain}, Tx: ${txHash}`;
+                entry.notes = (entry.notes || '') + `\n[${noteType}] Output transaction logged:\n` +
+                    `  Chain: ${destChain}\n` +
+                    `  Tx: ${txHash}\n` +
+                    `  To: ${destWallet}\n` +
+                    `  Amount: ${destAmount} ${destAsset}`;
             }
 
             // Store bridge details for both types
@@ -22229,6 +22392,9 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 sourceChain: entry.chain || 'unknown',
                 destinationChain: destChain,
                 destinationTxHash: txHash,
+                destinationWallet: destWallet,
+                destinationAmount: parseFloat(destAmount),
+                destinationAsset: destAsset,
                 bridgeAddress: entry.toWallet,
                 walletType: walletType
             };
@@ -31210,6 +31376,7 @@ To (RED Wallet): ${transfer.to}`;
         window.showNotification = showNotification;
         window.logBridgeOutput = logBridgeOutput;
         window.confirmBridgeOutput = confirmBridgeOutput;
+        window.lookupBridgeDestTransaction = lookupBridgeDestTransaction;
         window.removeHopEntry = removeHopEntry;
         window.addHop = addHop;
 

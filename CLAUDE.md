@@ -3,30 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 19:33)
+## Latest Commit (Auto-updated: 2025-09-25 21:11)
 
-**Commit:** 5d4d4c964812d55d6ccccd3ba04656a6fa07e077
+**Commit:** 1e03ddb5e68f8c4d2dd11751dbe2a9e60dce62fe
 **Author:** Your Name
-**Message:** Fix write-off wizard flow issues
+**Message:** Add flexible bridge/CEX output logging feature for terminal wallets
 
-Fixed multiple issues with the write-off wizard process:
-
-1. Removed automatic wizard reopening after write-off:
-   - Added flag to prevent showAddEntryWizard from reopening after write-off
-   - Removed showRemainingThreadsSummary call for write-offs
-   - The wizard was automatically reopening after write-off completion
-
-2. Improved entry collapse after write-off:
-   - Entry is now collapsed before showing confirmation alert
-   - Collapse state is set immediately, not after timeout
-   - Entry displays correctly as collapsed in the UI
-
-3. Streamlined the write-off flow:
-   - After confirming write-off, it creates entry and closes wizard
-   - No manual form appears after wizard completion
-   - Entry is properly collapsed and displayed
-
-The write-off process now completes cleanly without reopening wizards or showing manual forms.
+- New 'Log Bridge Output' button on purple terminal wallet entries
+- Option to keep as CEX (purple) or convert to DeFi bridge (brown)
+- Improved modal with source transaction details and copy buttons
+- Better spacing and layout with 30px padding
+- Transaction hash and bridge address display with one-click copy
+- Helpful tips for using data in bridge explorers
+- Both CEX and bridge entries now create output threads
+- Chain information properly propagated to destination threads
+- Added TERMINAL badge to identify purple wallets in collapsed view
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -34,23 +25,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 45 ++++++++++++++++++---------------------------
- index.html | 39 +++++++++++++++++++++++++++++----------
- 2 files changed, 47 insertions(+), 37 deletions(-)
+ CLAUDE.md  |  46 ++++----
+ index.html | 365 +++++++++++++++++++++++++++++++++++++++++++++++++++++--------
+ 2 files changed, 344 insertions(+), 67 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5d4d4c9 Fix write-off wizard flow issues (0 seconds ago)
-- 99db1b3 Fix write-off confirmation modal removing wrong modal (10 minutes ago)
-- 1f08065 Fix write-off process to use actual transaction amount (14 minutes ago)
-- 67ed03d Fix hop wizard buttons not responding to clicks (30 minutes ago)
-- c783a6f Fix hop wizard buttons not working - enable after transaction lookup (2 hours ago)
-- 25c4fc0 Debug Step 3 buttons with addEventListener and console logging (2 hours ago)
-- ed27959 Fix wizard buttons and styling issues (2 hours ago)
-- 5b7a40e Fix non-working buttons in hop wizard Step 3 (2 hours ago)
-- 0d8e8b5 Fix hop wizard not finding hop - string/number conversion issue (2 hours ago)
-- d14dc14 Add detailed debug logging for wizard creation issue (2 hours ago)
+- 1e03ddb Add flexible bridge/CEX output logging feature for terminal wallets (0 seconds ago)
+- 5d4d4c9 Fix write-off wizard flow issues (2 hours ago)
+- 99db1b3 Fix write-off confirmation modal removing wrong modal (2 hours ago)
+- 1f08065 Fix write-off process to use actual transaction amount (2 hours ago)
+- 67ed03d Fix hop wizard buttons not responding to clicks (2 hours ago)
+- c783a6f Fix hop wizard buttons not working - enable after transaction lookup (3 hours ago)
+- 25c4fc0 Debug Step 3 buttons with addEventListener and console logging (3 hours ago)
+- ed27959 Fix wizard buttons and styling issues (4 hours ago)
+- 5b7a40e Fix non-working buttons in hop wizard Step 3 (4 hours ago)
+- 0d8e8b5 Fix hop wizard not finding hop - string/number conversion issue (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
