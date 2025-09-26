@@ -3,16 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 12:19)
+## Latest Commit (Auto-updated: 2025-09-26 12:23)
 
-**Commit:** 48fb5cb2ce4030537185e59386f7fedbc2aba608
+**Commit:** cc385419d5fea56511b6f50e6aef0b592269c1ec
 **Author:** Your Name
-**Message:** Update Arkham API to use enhanced endpoint for better attribution
+**Message:** Add API attribution test page and update to latest Arkham endpoints
 
-- Switch to /intelligence/address_with_extra_enrichment/{address}/all endpoint
-- Add support for multiple response structures (entities, labels arrays)
-- Enhance logging to show all possible response fields
-- Based on Arkham's latest API improvements
+- Created test-apis.html for debugging attribution issues
+- Tests all Arkham endpoints to see which returns data
+- Tests Solscan metadata endpoint
+- Shows full API responses for debugging
 
 🤖 Generated with Claude Code
 
@@ -20,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 44 +++++++++++++++++++++++---------------------
- index.html | 42 ++++++++++++++++++++++++++++++++++++------
- 2 files changed, 59 insertions(+), 27 deletions(-)
+ CLAUDE.md      |  43 +++----
+ test-apis.html | 386 +++++++++++++++------------------------------------------
+ 2 files changed, 117 insertions(+), 312 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 48fb5cb Update Arkham API to use enhanced endpoint for better attribution (1 second ago)
-- fc0685e Fix Solscan API to use correct v2.0 metadata endpoint (2 minutes ago)
-- 4451929 Add Solscan proxy function to avoid CORS issues and enhance API logging (6 minutes ago)
-- 8dddc6b Remove hardcoded exchange addresses and add Arkham API debugging (29 minutes ago)
-- a9b0ab2 Fix Solscan API CSP blocking and add unidentified exchange address (32 minutes ago)
-- d411103 Fix bridge output thread consolidation issue (40 minutes ago)
-- 15d1a34 Fix Solana transaction lookup failures (56 minutes ago)
-- 0abeafe Add default Solscan Pro API key for all users (61 minutes ago)
-- a9d783d Add Solscan API key configuration and Pro API support (63 minutes ago)
-- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (72 minutes ago)
+- cc38541 Add API attribution test page and update to latest Arkham endpoints (0 seconds ago)
+- 48fb5cb Update Arkham API to use enhanced endpoint for better attribution (3 minutes ago)
+- fc0685e Fix Solscan API to use correct v2.0 metadata endpoint (6 minutes ago)
+- 4451929 Add Solscan proxy function to avoid CORS issues and enhance API logging (9 minutes ago)
+- 8dddc6b Remove hardcoded exchange addresses and add Arkham API debugging (33 minutes ago)
+- a9b0ab2 Fix Solscan API CSP blocking and add unidentified exchange address (36 minutes ago)
+- d411103 Fix bridge output thread consolidation issue (43 minutes ago)
+- 15d1a34 Fix Solana transaction lookup failures (59 minutes ago)
+- 0abeafe Add default Solscan Pro API key for all users (64 minutes ago)
+- a9d783d Add Solscan API key configuration and Pro API support (66 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

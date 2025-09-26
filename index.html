@@ -3790,74 +3790,84 @@
                             const arkhamData = await arkhamResponse.json();
                             console.log('📦 Arkham API full response:', JSON.stringify(arkhamData, null, 2));
 
-                            // Log all fields to understand the enhanced response structure
-                            console.log('🔍 Arkham enhanced response fields:');
-                            console.log('  - arkhamData.arkhamEntity:', arkhamData?.arkhamEntity);
-                            console.log('  - arkhamData.entity:', arkhamData?.entity);
-                            console.log('  - arkhamData.entities:', arkhamData?.entities);
-                            console.log('  - arkhamData.data:', arkhamData?.data);
-                            console.log('  - arkhamData.name:', arkhamData?.name);
-                            console.log('  - arkhamData.label:', arkhamData?.label);
-                            console.log('  - arkhamData.labels:', arkhamData?.labels);
-                            console.log('  - arkhamData.address:', arkhamData?.address);
-                            console.log('  - arkhamData.enrichment:', arkhamData?.enrichment);
+                            // The /all endpoints return an object with chain names as keys
+                            // Each chain can have arkhamEntity or arkhamLabel
+                            console.log('🔍 Arkham response structure:');
+                            console.log('  - Response type:', typeof arkhamData);
+                            console.log('  - Keys:', Object.keys(arkhamData || {}));
 
-                            // Check multiple possible response structures from the enhanced endpoint
-                            if (arkhamData && arkhamData.arkhamEntity) {
-                                attribution = {
-                                    name: arkhamData.arkhamEntity.name,
-                                    label: arkhamData.arkhamEntity.type || 'Exchange',
-                                    type: arkhamData.arkhamEntity.category || 'CEX',
-                                    source: 'arkham_intelligence',
-                                    isExchange: true
-                                };
-                                console.log(`✅ Arkham attribution found for ${address}:`, attribution);
-                                walletAttributionCache[lowerAddress] = attribution;
-                                return attribution;
-                            } else if (arkhamData?.entities && arkhamData.entities.length > 0) {
-                                // Enhanced endpoint might return entities array
-                                const entity = arkhamData.entities[0];
-                                attribution = {
-                                    name: entity.name || entity.label || 'Unknown',
-                                    label: entity.type || entity.label || 'Exchange',
-                                    type: entity.category || 'CEX',
-                                    source: 'arkham_intelligence_enhanced',
-                                    isExchange: true
-                                };
-                                console.log(`✅ Arkham enhanced attribution found for ${address}:`, attribution);
-                                walletAttributionCache[lowerAddress] = attribution;
-                                return attribution;
-                            } else if (arkhamData?.labels && arkhamData.labels.length > 0) {
-                                // Some endpoints return labels array
-                                const label = arkhamData.labels[0];
-                                attribution = {
-                                    name: label.name || label.label || label,
-                                    label: label.type || 'Exchange',
-                                    type: 'CEX',
-                                    source: 'arkham_intelligence_labels',
-                                    isExchange: true
-                                };
-                                console.log(`✅ Arkham labels found for ${address}:`, attribution);
-                                walletAttributionCache[lowerAddress] = attribution;
-                                return attribution;
-                            } else {
-                                console.log('⚠️ No entity data in standard fields. Checking alternative structures...');
-                                // Try other possible field names
-                                if (arkhamData?.data?.entity || arkhamData?.entity || arkhamData?.name) {
-                                    const entityInfo = arkhamData?.data?.entity || arkhamData?.entity || arkhamData?.name;
-                                    attribution = {
-                                        name: typeof entityInfo === 'string' ? entityInfo : (entityInfo?.name || 'Unknown'),
-                                        label: typeof entityInfo === 'string' ? 'Exchange' : (entityInfo?.type || 'Exchange'),
-                                        type: 'CEX',
+                            // Check if this is a multi-chain response (object with chain keys)
+                            const chains = Object.keys(arkhamData || {});
+                            let foundAttribution = null;
+
+                            // Look through all chains for attribution
+                            for (const chain of chains) {
+                                const chainData = arkhamData[chain];
+                                console.log(`  - Chain ${chain} data:`, chainData);
+
+                                if (chainData?.arkhamEntity) {
+                                    console.log(`    Found arkhamEntity on ${chain}:`, chainData.arkhamEntity);
+                                    foundAttribution = {
+                                        name: chainData.arkhamEntity.name || chainData.arkhamEntity.service,
+                                        label: chainData.arkhamEntity.type || 'Exchange',
+                                        type: chainData.arkhamEntity.type || 'CEX',
+                                        service: chainData.arkhamEntity.service,
+                                        chain: chain,
                                         source: 'arkham_intelligence',
                                         isExchange: true
                                     };
-                                    console.log(`✅ Arkham attribution found (alternative fields) for ${address}:`, attribution);
-                                    walletAttributionCache[lowerAddress] = attribution;
-                                    return attribution;
+                                    break;
+                                } else if (chainData?.arkhamLabel) {
+                                    console.log(`    Found arkhamLabel on ${chain}:`, chainData.arkhamLabel);
+                                    foundAttribution = {
+                                        name: chainData.arkhamLabel.name,
+                                        label: chainData.arkhamLabel.name,
+                                        type: 'Label',
+                                        chain: chain,
+                                        source: 'arkham_intelligence',
+                                        isExchange: chainData.arkhamLabel.name.toLowerCase().includes('exchange') ||
+                                                     chainData.arkhamLabel.name.toLowerCase().includes('binance') ||
+                                                     chainData.arkhamLabel.name.toLowerCase().includes('coinbase') ||
+                                                     chainData.arkhamLabel.name.toLowerCase().includes('kucoin')
+                                    };
+                                    break;
                                 }
-                                console.log('⚠️ No entity data found in any expected fields');
                             }
+
+                            // If we found attribution on any chain, return it
+                            if (foundAttribution) {
+                                console.log(`✅ Arkham attribution found for ${address}:`, foundAttribution);
+                                walletAttributionCache[lowerAddress] = foundAttribution;
+                                return foundAttribution;
+                            }
+
+                            // Also check if it's a single chain response (not using /all endpoint)
+                            if (arkhamData?.arkhamEntity) {
+                                attribution = {
+                                    name: arkhamData.arkhamEntity.name || arkhamData.arkhamEntity.service,
+                                    label: arkhamData.arkhamEntity.type || 'Exchange',
+                                    type: arkhamData.arkhamEntity.type || 'CEX',
+                                    service: arkhamData.arkhamEntity.service,
+                                    source: 'arkham_intelligence',
+                                    isExchange: true
+                                };
+                                console.log(`✅ Arkham attribution found (single chain) for ${address}:`, attribution);
+                                walletAttributionCache[lowerAddress] = attribution;
+                                return attribution;
+                            } else if (arkhamData?.arkhamLabel) {
+                                attribution = {
+                                    name: arkhamData.arkhamLabel.name,
+                                    label: arkhamData.arkhamLabel.name,
+                                    type: 'Label',
+                                    source: 'arkham_intelligence',
+                                    isExchange: arkhamData.arkhamLabel.name.toLowerCase().includes('exchange')
+                                };
+                                console.log(`✅ Arkham label found for ${address}:`, attribution);
+                                walletAttributionCache[lowerAddress] = attribution;
+                                return attribution;
+                            }
+
+                            console.log('⚠️ No Arkham entity or label found in response');
                         } else {
                             const errorText = arkhamResponse ? await arkhamResponse.text() : 'No response';
                             console.log(`⚠️ Arkham API returned non-OK status. Response:`, errorText);
