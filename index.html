@@ -4973,28 +4973,63 @@
                             });
 
                             // Create transfer objects for significant changes
+                            // Group by mint to find paired transfers
+                            const transfersByMint = {};
                             Object.values(tokenBalanceChanges).forEach(change => {
                                 const amount = Math.abs(change.postBalance - change.preBalance);
                                 if (amount > 0.0000001) { // Filter tiny amounts
-                                    // Map known SPL token mints to symbols
-                                    const tokenSymbols = {
-                                        'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 'USDC',
-                                        'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': 'USDT',
-                                        'So11111111111111111111111111111111111111112': 'SOL',
-                                        'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': 'BONK',
-                                        'JUPyiwrYJFskUPiHa8hkeR8VUtAeFoSYbKedZNsDvCN': 'JUP'
-                                    };
-
-                                    const symbol = tokenSymbols[change.mint] || 'Unknown Token';
-                                    const isSender = change.postBalance < change.preBalance;
-
-                                    transfers.push({
-                                        from: isSender ? change.owner : 'Unknown',
-                                        to: !isSender ? change.owner : 'Unknown',
+                                    if (!transfersByMint[change.mint]) {
+                                        transfersByMint[change.mint] = [];
+                                    }
+                                    transfersByMint[change.mint].push({
+                                        owner: change.owner,
                                         amount: amount,
-                                        currency: symbol,
+                                        isSender: change.postBalance < change.preBalance,
                                         mint: change.mint,
-                                        type: 'SPL Token'
+                                        decimals: change.decimals
+                                    });
+                                }
+                            });
+
+                            // Map known SPL token mints to symbols
+                            const tokenSymbols = {
+                                'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 'USDC',
+                                'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': 'USDT',
+                                'So11111111111111111111111111111111111111112': 'SOL',
+                                'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': 'BONK',
+                                'JUPyiwrYJFskUPiHa8hkeR8VUtAeFoSYbKedZNsDvCN': 'JUP'
+                            };
+
+                            // Create single transfers from paired debits/credits
+                            Object.entries(transfersByMint).forEach(([mint, changes]) => {
+                                const symbol = tokenSymbols[mint] || 'Unknown Token';
+
+                                if (changes.length === 2) {
+                                    // Paired transfer - combine into single entry
+                                    const sender = changes.find(c => c.isSender);
+                                    const receiver = changes.find(c => !c.isSender);
+
+                                    if (sender && receiver) {
+                                        transfers.push({
+                                            from: sender.owner,
+                                            to: receiver.owner,
+                                            amount: Math.max(sender.amount, receiver.amount), // Use max in case of rounding
+                                            currency: symbol,
+                                            mint: mint,
+                                            type: 'SPL Token'
+                                        });
+                                    }
+                                } else {
+                                    // Unpaired transfers - show each separately (might be mint/burn)
+                                    changes.forEach(change => {
+                                        transfers.push({
+                                            from: change.isSender ? change.owner : 'Unknown',
+                                            to: !change.isSender ? change.owner : 'Unknown',
+                                            amount: change.amount,
+                                            currency: symbol,
+                                            mint: mint,
+                                            type: 'SPL Token'
+                                        });
                                     });
                                 }
                             });

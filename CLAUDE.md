@@ -3,20 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 21:47)
+## Latest Commit (Auto-updated: 2025-09-25 21:53)
 
-**Commit:** 2102efdeb18191a23fbc37b2b3d5d2dc1e995ac1
+**Commit:** 55e0e38f4e2da6359b22a44253f37b20b96d8766
 **Author:** Your Name
-**Message:** Add transfer selection and filtering for bridge output lookups
+**Message:** Fix bridge transfer selection to show proper modal like victim selector
 
-- Show transfer selection UI when multiple outputs detected in bridge transactions
-- Add asset type filter dropdown with transfer counts
-- Add minimum amount filter to exclude dust transfers
-- Display both From and To addresses in transfer cards
-- Real-time filtering with clear filters button
-- Preserve original index when filtering for correct selection
-- Handle complex Solana transactions with multiple token transfers
-- Let investigators choose correct output instead of assuming largest
+- Create full modal window for multiple transfer selection
+- Display each transfer in formatted cards with From/To addresses
+- Add complete filtering: asset type, minimum amount, address search
+- Show transfer counts in asset filter dropdown
+- Display 'Showing X of Y transfers' counter
+- Full address display with word-wrap instead of truncation
+- Hover effects and visual feedback on cards
+- Auto-fill bridge output fields upon selection
+- Match the beautiful UX of victim transaction selector
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -24,23 +25,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  38 +++++++------
- index.html | 190 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
- 2 files changed, 199 insertions(+), 29 deletions(-)
+ CLAUDE.md  |  37 ++++++-----
+ index.html | 211 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 224 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2102efd Add transfer selection and filtering for bridge output lookups (0 seconds ago)
-- 0563b4b Add Ripple/XRP support for bridge output transactions (10 minutes ago)
-- a809f6e Enhance bridge output modal with transaction details and auto-lookup (24 minutes ago)
-- 1e03ddb Add flexible bridge/CEX output logging feature for terminal wallets (36 minutes ago)
+- 55e0e38 Fix bridge transfer selection to show proper modal like victim selector (0 seconds ago)
+- 2102efd Add transfer selection and filtering for bridge output lookups (6 minutes ago)
+- 0563b4b Add Ripple/XRP support for bridge output transactions (15 minutes ago)
+- a809f6e Enhance bridge output modal with transaction details and auto-lookup (30 minutes ago)
+- 1e03ddb Add flexible bridge/CEX output logging feature for terminal wallets (42 minutes ago)
 - 5d4d4c9 Fix write-off wizard flow issues (2 hours ago)
-- 99db1b3 Fix write-off confirmation modal removing wrong modal (2 hours ago)
-- 1f08065 Fix write-off process to use actual transaction amount (2 hours ago)
+- 99db1b3 Fix write-off confirmation modal removing wrong modal (3 hours ago)
+- 1f08065 Fix write-off process to use actual transaction amount (3 hours ago)
 - 67ed03d Fix hop wizard buttons not responding to clicks (3 hours ago)
 - c783a6f Fix hop wizard buttons not working - enable after transaction lookup (4 hours ago)
-- 25c4fc0 Debug Step 3 buttons with addEventListener and console logging (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
