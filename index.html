@@ -12430,18 +12430,7 @@ function addNewHop() {
                                         const currentHopThreads = getAvailableSourcesForHop(hop.hopNumber, null);
 
                                         // Add total amount information to each thread
-                                        const unallocatedInCurrentHop = currentHopThreads.filter(t => {
-                                            // Ignore threads with negligible amounts (less than 0.01)
-                                            if (t.availableAmount <= 0.01) return false;
-
-                                            // Also ignore if remaining is less than 0.5% of original (rounding tolerance)
-                                            const original = t.totalAmount || t.originalAmount || t.availableAmount;
-                                            if (t.totalAmount && t.availableAmount < (original * 0.005)) {
-                                                return false;
-                                            }
-
-                                            return true;
-                                        }).map(thread => {
+                                        const unallocatedInCurrentHop = currentHopThreads.filter(t => t.availableAmount > 0.01).map(thread => {
                                             // Find the original thread to get total amount
                                             let totalAmount = thread.availableAmount;
 
@@ -12482,25 +12471,28 @@ function addNewHop() {
                                                             const original = thread.totalAmount || thread.availableAmount;
                                                             const assigned = original - remaining;
                                                             let percentAssigned = original > 0 ? Math.round((assigned / original) * 100) : 0;
-
-                                                            // If we're at 99% but the remaining is less than 1% of original, show 100%
-                                                            // This handles rounding issues where tiny amounts remain
-                                                            if (percentAssigned === 99 && remaining < (original * 0.01)) {
-                                                                percentAssigned = 100;
-                                                            }
+                                                            const isRoundingRemainder = percentAssigned >= 99 && remaining < (original * 0.01);
 
                                                             return `
-                                                                <div style="padding: 8px; background: white; border-radius: 4px;">
+                                                                <div style="padding: 8px; background: ${isRoundingRemainder ? '#fff3e0' : 'white'}; border-radius: 4px;">
                                                                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                                                                        <span style="font-weight: bold; color: #2c3e50;">${thread.threadId}</span>
-                                                                        <span style="color: #e67e22; font-weight: 600;">${remaining.toLocaleString()} ${thread.currency}</span>
+                                                                        <span style="font-weight: bold; color: #2c3e50;">
+                                                                            ${thread.threadId}
+                                                                            ${isRoundingRemainder ? '<span style="color: #ff6b6b; font-size: 10px; margin-left: 5px;">(rounding)</span>' : ''}
+                                                                        </span>
+                                                                        <span style="color: ${isRoundingRemainder ? '#ff6b6b' : '#e67e22'}; font-weight: 600;">
+                                                                            ${remaining.toLocaleString()} ${thread.currency}
+                                                                        </span>
                                                                     </div>
                                                                     ${assigned > 0 ? `
                                                                         <div style="margin-top: 5px;">
                                                                             <div style="background: #f0f0f0; height: 6px; border-radius: 3px; overflow: hidden;">
-                                                                                <div style="background: #ff9800; height: 100%; width: ${percentAssigned}%;"></div>
+                                                                                <div style="background: ${isRoundingRemainder ? '#4caf50' : '#ff9800'}; height: 100%; width: ${percentAssigned}%;"></div>
                                                                             </div>
-                                                                            <small style="color: #999; font-size: 11px;">${percentAssigned}% assigned</small>
+                                                                            <small style="color: #999; font-size: 11px;">
+                                                                                ${percentAssigned}% assigned
+                                                                                ${isRoundingRemainder ? '(~' + ((remaining/original * 100).toFixed(2)) + '% remainder)' : ''}
+                                                                            </small>
                                                                         </div>
                                                                     ` : ''}
                                                                 </div>
@@ -12508,7 +12500,43 @@ function addNewHop() {
                                                         }).join('')}
                                                     </div>
                                                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffcc80;">
-                                                        <small style="color: #bf6000;">💡 Continue adding entries to trace these funds</small>
+                                                        ${(() => {
+                                                            // Check if all remaining threads are rounding remainders
+                                                            const allRounding = unallocatedInCurrentHop.every(thread => {
+                                                                const remaining = thread.availableAmount;
+                                                                const original = thread.totalAmount || thread.availableAmount;
+                                                                const assigned = original - remaining;
+                                                                const percentAssigned = original > 0 ? Math.round((assigned / original) * 100) : 0;
+                                                                return percentAssigned >= 99 && remaining < (original * 0.01);
+                                                            });
+
+                                                            if (allRounding && unallocatedInCurrentHop.length > 0) {
+                                                                const totalRounding = unallocatedInCurrentHop.reduce((sum, t) => sum + t.availableAmount, 0);
+                                                                const currency = unallocatedInCurrentHop[0].currency;
+                                                                return `
+                                                                    <div style="background: #e8f5e9; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                                                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                                            <div>
+                                                                                <strong style="color: #2e7d32;">✅ Hop Complete (Rounding Remainders Only)</strong>
+                                                                                <div style="margin-top: 5px; font-size: 12px; color: #1b5e20;">
+                                                                                    Total rounding remainder: ${totalRounding.toFixed(6)} ${currency}
+                                                                                    <br>From ${unallocatedInCurrentHop.length} threads (< 1% each)
+                                                                                </div>
+                                                                            </div>
+                                                                            <button onclick="writeOffAllRoundingRemainders(${hop.hopNumber})"
+                                                                                    class="btn btn-warning"
+                                                                                    style="font-size: 12px; padding: 5px 10px;">
+                                                                                📝 Write Off All Rounding
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                `;
+                                                            } else if (unallocatedInCurrentHop.length > 0) {
+                                                                return '<small style="color: #bf6000;">💡 Continue adding entries to trace these funds</small>';
+                                                            } else {
+                                                                return '<small style="color: #4caf50;">✅ All threads fully allocated</small>';
+                                                            }
+                                                        })()}
                                                     </div>
                                                 </div>
                                             `;
@@ -21530,6 +21558,85 @@ function validateThreadAllocation(threadId, requestedAmount, currency, excludeEn
     }
 
     return { valid: true };
+}
+
+// Function to write off all rounding remainders at once
+function writeOffAllRoundingRemainders(hopNumber) {
+    if (!hopNumber) {
+        showNotification('Error: No hop number specified', 'error');
+        return;
+    }
+
+    // Get all available threads for this hop
+    const currentHopThreads = getAvailableSourcesForHop(hopNumber, null);
+
+    // Filter to only rounding remainders
+    const roundingThreads = currentHopThreads.filter(thread => {
+        if (thread.availableAmount <= 0.01) return false;
+
+        const original = thread.totalAmount || thread.availableAmount;
+        const assigned = original - thread.availableAmount;
+        const percentAssigned = original > 0 ? Math.round((assigned / original) * 100) : 0;
+
+        return percentAssigned >= 99 && thread.availableAmount < (original * 0.01);
+    });
+
+    if (roundingThreads.length === 0) {
+        showNotification('No rounding remainders to write off', 'warning');
+        return;
+    }
+
+    // Group by currency
+    const byCurrency = {};
+    roundingThreads.forEach(thread => {
+        if (!byCurrency[thread.currency]) {
+            byCurrency[thread.currency] = [];
+        }
+        byCurrency[thread.currency].push(thread);
+    });
+
+    // Create a write-off entry for each currency
+    Object.entries(byCurrency).forEach(([currency, threads]) => {
+        const totalAmount = threads.reduce((sum, t) => sum + t.availableAmount, 0);
+        const threadIds = threads.map(t => t.threadId).join(', ');
+
+        // Create the write-off entry
+        const entry = {
+            id: Date.now() + '_' + Math.random().toString(36).substring(2, 9),
+            type: 'writeoff',
+            hopNumber: hopNumber,
+            amount: totalAmount,
+            currency: currency,
+            sourceThreadIds: threads.map(t => t.internalId || t.threadId),
+            sourceThreadNotations: threadIds,
+            notes: `Rounding remainder write-off from ${threads.length} threads (each < 1% of original): ${threadIds}`,
+            timestamp: new Date().toISOString(),
+            isTerminal: true
+        };
+
+        // Add to hop entries
+        const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+        if (hop) {
+            if (!hop.entries) hop.entries = [];
+            hop.entries.push(entry);
+
+            // Update thread allocations
+            threads.forEach(thread => {
+                updateThreadAllocation(thread.internalId || thread.threadId, thread.availableAmount, currency);
+            });
+
+            console.log(`Created rounding write-off for ${totalAmount.toFixed(6)} ${currency} from ${threads.length} threads`);
+        }
+    });
+
+    // Save and update UI
+    saveToStorage();
+    pushToUndoStack('Write off rounding remainders');
+    updateUI();
+
+    const totalThreads = roundingThreads.length;
+    const currencies = Object.keys(byCurrency).join(', ');
+    showNotification(`✅ Written off rounding remainders from ${totalThreads} threads (${currencies})`, 'success', 5000);
 }
 
 function createWriteoffEntryFromWizard() {
