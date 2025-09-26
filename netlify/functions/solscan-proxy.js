@@ -32,14 +32,14 @@ exports.handler = async (event) => {
         let hostname, path, requestHeaders;
 
         if (apiKey) {
-            // Use Pro API with API key
+            // Use Pro API v2.0 metadata endpoint for attribution
             hostname = 'pro-api.solscan.io';
-            path = `/v2.0/account/info/${address}`;
+            path = `/v2.0/account/metadata?address=${address}`;
             requestHeaders = {
                 'Accept': 'application/json',
                 'token': apiKey
             };
-            console.log('Using Solscan Pro API for address:', address);
+            console.log('Using Solscan Pro API v2.0 metadata endpoint for address:', address);
         } else {
             // Use public API
             hostname = 'public-api.solscan.io';

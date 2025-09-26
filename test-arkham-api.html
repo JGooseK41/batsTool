@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Arkham API Endpoints</title>
+</head>
+<body>
+    <h1>Testing Arkham API Endpoints</h1>
+    <p>Testing address: DsyQiQneNnfE3BprqsvACA8HhNhreRbbTfLrqewTkcmv</p>
+    <div id="results"></div>
+
+    <script>
+        const testAddress = 'DsyQiQneNnfE3BprqsvACA8HhNhreRbbTfLrqewTkcmv';
+        const apiKey = 'd377a526-c9ea-4cb6-a647-775559583ff6';
+
+        // Different possible Arkham endpoints to try
+        const endpoints = [
+            '/intelligence/address/',
+            '/v1/intel/address/',
+            '/entity/address/',
+            '/api/intelligence/address/',
+            '/api/v1/address/',
+            '/labels/address/',
+            '/portfolio/address/',
+            '/tag/address/'
+        ];
+
+        async function testEndpoints() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h2>Testing endpoints...</h2>';
+
+            for (const endpoint of endpoints) {
+                const fullEndpoint = endpoint + testAddress;
+                resultsDiv.innerHTML += `<h3>Testing: ${fullEndpoint}</h3>`;
+
+                try {
+                    const response = await fetch(`/.netlify/functions/arkham3?endpoint=${encodeURIComponent(fullEndpoint)}`, {
+                        headers: {
+                            'X-Arkham-API-Key': apiKey
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    resultsDiv.innerHTML += `
+                        <div style="background: #f0f0f0; padding: 10px; margin: 10px 0;">
+                            <strong>Status:</strong> ${response.status}<br>
+                            <strong>Response:</strong>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+
+                    // Check if this endpoint returned attribution
+                    if (data && (data.arkhamEntity || data.entity || data.label || data.tag || data.name)) {
+                        resultsDiv.innerHTML += '<div style="color: green; font-weight: bold;">✓ FOUND ATTRIBUTION!</div>';
+                    }
+
+                } catch (error) {
+                    resultsDiv.innerHTML += `
+                        <div style="background: #ffeeee; padding: 10px; margin: 10px 0;">
+                            <strong>Error:</strong> ${error.message}
+                        </div>
+                    `;
+                }
+            }
+
+            // Also try direct HTTPS request to see what the website might be using
+            resultsDiv.innerHTML += '<h2>Checking what Arkham website shows for this address...</h2>';
+            resultsDiv.innerHTML += `<p>Visit: <a href="https://platform.arkhamintelligence.com/explorer/address/${testAddress}" target="_blank">
+                https://platform.arkhamintelligence.com/explorer/address/${testAddress}
+            </a></p>`;
+        }
+
+        // Run tests
+        testEndpoints();
+    </script>
+</body>
+</html>

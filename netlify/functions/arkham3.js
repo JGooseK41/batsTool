@@ -94,6 +94,13 @@ exports.handler = async (event) => {
                 parsedResponse = arkhamResult.data;
             }
 
+            // Log what we're getting from Arkham
+            console.log('Arkham API Response:');
+            console.log('  Status:', arkhamResult.status);
+            console.log('  Path requested:', arkhamPath);
+            console.log('  Raw response:', arkhamResult.data);
+            console.log('  Parsed response:', JSON.stringify(parsedResponse, null, 2));
+
             // If successful (200), return the data directly
             if (arkhamResult.status === 200) {
                 return {

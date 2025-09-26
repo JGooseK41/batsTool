@@ -3668,34 +3668,36 @@
                     const data = await response.json();
                     console.log('📦 Solscan API response data:', JSON.stringify(data, null, 2));
 
-                    // Handle Pro API response structure (v2.0)
-                    if (solscanApiKey && data.data) {
-                        // Pro API response
-                        const accountInfo = data.data;
-                        console.log('🔍 Solscan Pro API account info:');
-                        console.log('  - tag:', accountInfo.tag);
-                        console.log('  - tags:', accountInfo.tags);
-                        console.log('  - accountTag:', accountInfo.accountTag);
-                        console.log('  - addressTag:', accountInfo.addressTag);
-                        console.log('  - Full accountInfo:', JSON.stringify(accountInfo, null, 2));
+                    // Handle Pro API v2.0 metadata response
+                    if (solscanApiKey && data.success && data.data) {
+                        // Pro API metadata response
+                        const metadata = data.data;
+                        console.log('🔍 Solscan Pro API v2.0 metadata:');
+                        console.log('  - account_label:', metadata.account_label);
+                        console.log('  - account_tags:', metadata.account_tags);
+                        console.log('  - account_type:', metadata.account_type);
+                        console.log('  - Full metadata:', JSON.stringify(metadata, null, 2));
 
-                        // Check for tags in the Pro API response
-                        if (accountInfo.tag || accountInfo.tags || accountInfo.accountTag || accountInfo.addressTag) {
-                            const tag = accountInfo.tag || accountInfo.tags?.[0] || accountInfo.accountTag || accountInfo.addressTag;
+                        // Check for label or tags in the metadata response
+                        if (metadata.account_label || metadata.account_tags?.length > 0) {
+                            const label = metadata.account_label || metadata.account_tags?.[0];
 
-                            // Check if it's an exchange
+                            // Check if it's an exchange based on label or tags
                             const exchangeKeywords = ['exchange', 'cex', 'dex', 'binance', 'coinbase', 'kraken', 'kucoin', 'okx', 'bybit', 'gate', 'huobi', 'ftx', 'bitfinex', 'bitmex'];
-                            const isExchange = exchangeKeywords.some(keyword => tag.toLowerCase().includes(keyword));
+                            const labelLower = label.toLowerCase();
+                            const isExchange = exchangeKeywords.some(keyword => labelLower.includes(keyword)) ||
+                                             metadata.account_tags?.some(tag => exchangeKeywords.some(kw => tag.toLowerCase().includes(kw)));
 
-                            if (isExchange || tag) {
+                            if (label) {
                                 const attribution = {
-                                    name: tag,
-                                    label: tag,
-                                    type: isExchange ? 'CEX' : 'Service',
+                                    name: metadata.account_label || label,
+                                    label: metadata.account_label || label,
+                                    type: isExchange ? 'CEX' : (metadata.account_type || 'Service'),
+                                    tags: metadata.account_tags || [],
                                     source: 'solscan_pro_api',
                                     isExchange: isExchange
                                 };
-                                console.log(`Solscan Pro API attribution found: ${attribution.name}`);
+                                console.log(`✅ Solscan Pro API attribution found: ${attribution.name}`);
                                 return attribution;
                             }
                         }
