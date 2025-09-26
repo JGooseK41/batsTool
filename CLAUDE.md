@@ -3,16 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 06:49)
+## Latest Commit (Auto-updated: 2025-09-26 07:10)
 
-**Commit:** 706010eb0ba68851edaaf1c92de5d02da5aa0e76
+**Commit:** b803481099fb56023487513c6c732de10898f35f
 **Author:** Your Name
-**Message:** Fix duplicate bridge output thread creation
+**Message:** Add deduplication check for bridge output threads
 
-- Bridge entries marked with isBridge=true and bridgeOutputLogged=true no longer create duplicate threads
-- updateThreadAvailabilityFromHop now skips logged bridge entries entirely
-- Bridge output threads are only created once in confirmBridgeOutput with the converted currency
-- Prevents duplicate USDC threads when buildAvailableThreadsIndex runs after bridge logging
+- Check if bridge output thread already exists before creating new one
+- Update existing thread if found instead of creating duplicate
+- Prevents duplicate USDC threads when logging multiple bridge outputs with same notation
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -20,23 +19,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 39 +++++++++++++++++++--------------------
- index.html | 14 +++++++++-----
- 2 files changed, 28 insertions(+), 25 deletions(-)
+ CLAUDE.md  |  43 ++++++++++++-------------
+ index.html | 105 +++++++++++++++++++++++++++++++++++--------------------------
+ 2 files changed, 80 insertions(+), 68 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 706010e Fix duplicate bridge output thread creation (1 second ago)
-- cb1d480 Set hops and entries to collapsed by default when loading saved files (16 minutes ago)
-- d2feb61 Add bridge badge and remove terminal status for converted wallets (19 minutes ago)
-- 694e122 Fix wizard to show bridge/swap output threads in same hop (28 minutes ago)
-- 3cb4098 Fix progress bars to show bridge-converted currencies at both levels (38 minutes ago)
-- eb58fae Auto-convert purple terminal wallets to brown bridges when logging output (52 minutes ago)
-- ec5dd65 Fix critical bugs in thread building and source tracking processes (60 minutes ago)
-- 3feb5d3 Refactor bridge outputs to work exactly like swaps (63 minutes ago)
+- b803481 Add deduplication check for bridge output threads (0 seconds ago)
+- 706010e Fix duplicate bridge output thread creation (21 minutes ago)
+- cb1d480 Set hops and entries to collapsed by default when loading saved files (38 minutes ago)
+- d2feb61 Add bridge badge and remove terminal status for converted wallets (41 minutes ago)
+- 694e122 Fix wizard to show bridge/swap output threads in same hop (49 minutes ago)
+- 3cb4098 Fix progress bars to show bridge-converted currencies at both levels (60 minutes ago)
+- eb58fae Auto-convert purple terminal wallets to brown bridges when logging output (73 minutes ago)
+- ec5dd65 Fix critical bugs in thread building and source tracking processes (82 minutes ago)
+- 3feb5d3 Refactor bridge outputs to work exactly like swaps (84 minutes ago)
 - 136d8e5 Fix bridge output modal closing and ensure converted assets are added to ART (9 hours ago)
-- 3a8c296 Fix Solana showing duplicate transfers by combining paired debits/credits (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

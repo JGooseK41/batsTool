@@ -11789,14 +11789,41 @@ function addNewHop() {
             renderHops();
         }
 
+        function validateHopTransactionHashes(hop) {
+            // Check for duplicate transaction hashes within the hop
+            const txHashes = new Map();
+            const duplicates = [];
+
+            hop.entries.forEach(entry => {
+                if (entry.txHash && entry.entryType !== 'writeoff') {
+                    const hashLower = entry.txHash.toLowerCase();
+                    if (txHashes.has(hashLower)) {
+                        // Found duplicate
+                        const existingEntry = txHashes.get(hashLower);
+                        if (!duplicates.some(d => d.hash.toLowerCase() === hashLower)) {
+                            duplicates.push({
+                                hash: entry.txHash,
+                                entries: [existingEntry.id, entry.id],
+                                notations: [existingEntry.notation || 'Entry ' + existingEntry.id, entry.notation || 'Entry ' + entry.id]
+                            });
+                        }
+                    } else {
+                        txHashes.set(hashLower, entry);
+                    }
+                }
+            });
+
+            return duplicates;
+        }
+
         function renderHops() {
             // Initialize collapse state tracking
             window.hopCollapseState = window.hopCollapseState || {};
             window.entryCollapseState = window.entryCollapseState || {};
-            
+
             // Update dashboard
             updateDashboard();
-            
+
             const container = document.getElementById('hopsList');
             container.innerHTML = '';
 
@@ -11993,10 +12020,14 @@ function addNewHop() {
                 const totalAccountedDisplay = Object.entries(entryTotalsByCurrency)
                     .map(([curr, amt]) => `${amt.toLocaleString()} ${curr}`)
                     .join(' | ');
-                
+
+                // Check for duplicate transaction hashes
+                const duplicateHashes = validateHopTransactionHashes(hop);
+                const hasDuplicates = duplicateHashes.length > 0;
+
                 hopDiv.innerHTML = `
                     <div class="hop-container" data-hop-id="${hop.hopNumber}" style="background: ${hopBgColor}; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
-                        <div class="hop-header" style="background: ${isComplete ? '#27ae60' : '#e67e22'}; color: white; padding: ${isCollapsed ? '12px 20px' : '20px'}; cursor: pointer;" 
+                        <div class="hop-header" style="background: ${isComplete ? '#27ae60' : hasDuplicates ? '#d32f2f' : '#e67e22'}; color: white; padding: ${isCollapsed ? '12px 20px' : '20px'}; cursor: pointer;"
                              onclick="toggleHopCollapse(${hop.hopNumber})">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
@@ -12008,6 +12039,19 @@ function addNewHop() {
                                         <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">
                                             ${isCollapsed ? `${tracesCount} traces, ${writeoffsCount} writeoffs | Total: ${totalAccountedDisplay || '0'}` : `Starting ART: ${artStartDisplay}`}
                                         </div>
+                                        ${hasDuplicates ? `
+                                            <div style="background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 6px; margin-top: 10px; border: 2px solid #fff;">
+                                                <strong>⚠️ DUPLICATE TRANSACTION HASH DETECTED!</strong><br>
+                                                ${duplicateHashes.map(dup =>
+                                                    `<div style="margin-top: 5px; font-size: 12px;">
+                                                        • TX ${dup.hash.substring(0, 10)}... used in: ${dup.notations.join(' & ')}
+                                                    </div>`
+                                                ).join('')}
+                                                <div style="margin-top: 8px; font-size: 11px; font-style: italic;">
+                                                    Multiple threads in the same transaction must be logged in a single entry
+                                                </div>
+                                            </div>
+                                        ` : ''}
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
@@ -19094,6 +19138,20 @@ function createSwapEntry() {
         return;
     }
 
+    // CRITICAL VALIDATION: Check for duplicate transaction hash in the same hop
+    if (wizardData.txHash) {
+        const duplicateEntry = hop.entries.find(entry =>
+            entry.txHash &&
+            entry.txHash.toLowerCase() === wizardData.txHash.toLowerCase() &&
+            entry.entryType !== 'writeoff'
+        );
+
+        if (duplicateEntry) {
+            alert(`❌ Transaction hash already used in this hop!\n\nTransaction ${wizardData.txHash} is already logged in entry ${duplicateEntry.id} (${duplicateEntry.notation || 'unnamed'}).\n\nSwap transactions must use unique transaction hashes.`);
+            return;
+        }
+    }
+
     // Get selected thread details
     const threads = getAvailableSourcesForHop(hop.hopNumber, null);
     const selectedThreadData = wizardData.selectedThreads.map(id => threads.find(t => t.threadId === id));
@@ -21096,6 +21154,20 @@ function createHopEntryFromWizard() {
         return;
     }
 
+    // CRITICAL VALIDATION: Check for duplicate transaction hash in the same hop
+    if (wizardData.txHash && !wizardData.isWriteoff) {
+        const duplicateEntry = hop.entries.find(entry =>
+            entry.txHash &&
+            entry.txHash.toLowerCase() === wizardData.txHash.toLowerCase() &&
+            entry.entryType !== 'writeoff'
+        );
+
+        if (duplicateEntry) {
+            alert(`❌ Transaction hash already used in this hop!\n\nTransaction ${wizardData.txHash} is already logged in entry ${duplicateEntry.id} (${duplicateEntry.notation || 'unnamed'}).\n\nIf multiple threads move in the same transaction, they must all be logged in the same entry using multiple source thread selection.`);
+            return;
+        }
+    }
+
     // Check if this is a write-off entry
     if (wizardData.isWriteoff) {
         console.log('Creating write-off entry from wizard');
@@ -21825,13 +21897,34 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
         function updateHopEntry(hopNumber, entryId, field, value) {
             const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             const entry = hop.entries.find(e => e.id === entryId);
+
+            // CRITICAL VALIDATION: Check for duplicate transaction hash
+            if (field === 'txHash' && value && entry.entryType !== 'writeoff') {
+                const duplicateEntry = hop.entries.find(e =>
+                    e.id !== entryId &&  // Not the same entry
+                    e.txHash &&
+                    e.txHash.toLowerCase() === value.toLowerCase() &&
+                    e.entryType !== 'writeoff'
+                );
+
+                if (duplicateEntry) {
+                    alert(`❌ Transaction hash already used in this hop!\n\nTransaction ${value} is already logged in entry ${duplicateEntry.id} (${duplicateEntry.notation || 'unnamed'}).\n\nIf multiple threads move in the same transaction, they must all be logged in the same entry using multiple source thread selection.`);
+                    // Reset the input field
+                    const inputField = document.getElementById(`txHash_${hopNumber}_${entryId}`);
+                    if (inputField) {
+                        inputField.value = entry.txHash || '';
+                    }
+                    return;
+                }
+            }
+
             entry[field] = value;
-            
+
             // If timestamp changed, re-sort entries chronologically
             if (field === 'timestamp') {
                 sortHopEntriesChronologically(hop);
             }
-            
+
             if (field === 'entryType') {
                 // Regenerate notation if victim and transaction numbers exist
                 if (entry.victimNumbers && entry.transactionNumbers) {
