@@ -3,39 +3,36 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 10:36)
+## Latest Commit (Auto-updated: 2025-09-26 10:40)
 
-**Commit:** e87289f04d4db9913822112121094d4e758f9ea3
+**Commit:** 244d6f02412c25d883fd03974244638d031df9ec
 **Author:** Your Name
-**Message:** Fix wizard Step 3 duplicate thread display issue
+**Message:** Fix focusOnHop function error
 
-- Fixed Step 3 to use internal IDs instead of notations for thread display
-- Updated allocation inputs to use internal IDs for unique identification
-- Fixed summary section to properly display threads with same notation
-- Updated onchange handlers and Max buttons to use internal IDs
-- Ensures threads with same notation (like multiple V1-T2-H1) display correctly
-
-This fixes the issue where Step 3 was showing duplicate entries for threads with the same notation by using the dual-layer tracking system properly.
+- Fixed TypeError when clicking focus on hop button
+- Changed from getElementById('hopsTab').click() to switchTab('hops')
+- The hopsTab element doesn't exist, causing null reference error
+- Now properly switches to hops tab using existing switchTab function
 
 ### Changed Files:
 ```
- CLAUDE.md  | 53 +++++++++++++++++++++++++++++------------------------
- index.html | 24 ++++++++++++++----------
- 2 files changed, 43 insertions(+), 34 deletions(-)
+ CLAUDE.md  | 51 ++++++++++++++++++++++-----------------------------
+ index.html |  2 +-
+ 2 files changed, 23 insertions(+), 30 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e87289f Fix wizard Step 3 duplicate thread display issue (0 seconds ago)
-- 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (72 minutes ago)
+- 244d6f0 Fix focusOnHop function error (0 seconds ago)
+- e87289f Fix wizard Step 3 duplicate thread display issue (4 minutes ago)
+- 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (77 minutes ago)
 - c39401d Add Solana proxy function to handle CORS issues (2 hours ago)
 - 2ba11de Revert Solana endpoints to original working configuration (2 hours ago)
-- d720583 Update Solana RPC endpoints to working public providers (2 hours ago)
+- d720583 Update Solana RPC endpoints to working public providers (3 hours ago)
 - 7a58a4d Add transaction hash uniqueness validation per hop (3 hours ago)
-- b803481 Add deduplication check for bridge output threads (3 hours ago)
+- b803481 Add deduplication check for bridge output threads (4 hours ago)
 - 706010e Fix duplicate bridge output thread creation (4 hours ago)
 - cb1d480 Set hops and entries to collapsed by default when loading saved files (4 hours ago)
-- d2feb61 Add bridge badge and remove terminal status for converted wallets (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

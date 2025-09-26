@@ -18591,10 +18591,33 @@ window.confirmWriteoff = function() {
 }
 
 function closeHopWizard() {
+    console.log('closeHopWizard called');
     const wizard = document.getElementById('hopEntryWizard');
-    if (wizard) wizard.remove();
+    if (wizard) {
+        console.log('Removing wizard element');
+        wizard.remove();
+    } else {
+        console.log('Wizard element not found');
+        // Try alternative removal methods
+        const wizardAlt = document.querySelector('#hopEntryWizard');
+        if (wizardAlt) {
+            console.log('Found wizard via querySelector, removing');
+            wizardAlt.remove();
+        }
+        // Also try to hide any modal overlays
+        const modals = document.querySelectorAll('.modal.show');
+        modals.forEach(modal => {
+            if (modal.id && modal.id.includes('Wizard')) {
+                console.log('Hiding modal:', modal.id);
+                modal.style.display = 'none';
+                modal.remove();
+            }
+        });
+    }
     window.hopWizardData = null;
     window.expectingSwapEntry = false;  // Clear swap flag
+    window.currentWizardData = null;  // Also clear current wizard data
+    window.swapWizardData = null;  // Clear swap wizard data
 }
 
 // Dedicated swap wizard for more flexibility
@@ -19035,8 +19058,20 @@ function swapWizardBack() {
 }
 
 function closeSwapWizard() {
+    console.log('closeSwapWizard called');
     const wizard = document.getElementById('swapWizard');
-    if (wizard) wizard.remove();
+    if (wizard) {
+        console.log('Removing swap wizard element');
+        wizard.remove();
+    } else {
+        console.log('Swap wizard element not found');
+        // Try alternative removal methods
+        const wizardAlt = document.querySelector('#swapWizard');
+        if (wizardAlt) {
+            console.log('Found swap wizard via querySelector, removing');
+            wizardAlt.remove();
+        }
+    }
     window.swapWizardData = null;
 }
 
@@ -21379,10 +21414,39 @@ function createHopEntryFromWizard() {
         }
     });
 
-    // Hard block if trying to allocate more than total available
+    // Allow partial allocation - cap at the available amount
     if (totalAmount > totalAvailable) {
-        alert(`⚠️ Over-Allocation Blocked!\n\nYou're trying to allocate ${totalAmount} but only ${totalAvailable} is available across all selected threads.\n\nIf you believe there are additional funds:\n1. Add missing victims to create new source threads\n2. Check if you've selected all relevant source threads\n\nTotal available: ${totalAvailable}\nRequested: ${totalAmount}\nShortage: ${totalAmount - totalAvailable}`);
-        return; // Hard block - don't create the entry
+        console.log(`Allocation exceeds available: Requested ${totalAmount}, Available ${totalAvailable}`);
+
+        // Automatically adjust allocation to use all available funds
+        const adjustmentRatio = totalAvailable / totalAmount;
+
+        // Adjust each thread's allocation proportionally
+        Object.keys(wizardData.allocations).forEach(threadId => {
+            const originalAmount = wizardData.allocations[threadId];
+            wizardData.allocations[threadId] = Math.floor(originalAmount * adjustmentRatio * 100) / 100; // Round down to 2 decimals
+        });
+
+        // Recalculate to ensure we don't exceed available due to rounding
+        const adjustedTotal = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+
+        // If still slightly over due to rounding, subtract from the largest allocation
+        if (adjustedTotal > totalAvailable) {
+            const largestThread = Object.keys(wizardData.allocations).reduce((max, threadId) =>
+                wizardData.allocations[threadId] > wizardData.allocations[max] ? threadId : max
+            );
+            wizardData.allocations[largestThread] -= (adjustedTotal - totalAvailable);
+        }
+
+        console.log(`Auto-adjusted allocations to ${totalAvailable} (from ${totalAmount})`);
+        console.log('Adjusted allocations:', wizardData.allocations);
+
+        // Update totalAmount to reflect the adjustment
+        totalAmount = totalAvailable;
+
+        // Note this partial allocation in the entry
+        if (!wizardData.notes) wizardData.notes = '';
+        wizardData.notes += `\n[Auto-adjusted: Allocated ${totalAvailable} of ${wizardData.txData?.amount || totalAmount} ${Array.from(currencies)[0]}]`;
     }
 
     // Check if mixing currencies (which shouldn't be allowed)
