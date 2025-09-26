@@ -14179,7 +14179,7 @@ function focusOnVictims() {
 }
 
 function focusOnHop(hopNumber) {
-    document.getElementById('hopsTab').click();
+    switchTab('hops');
     setTimeout(() => {
         const hopElement = document.querySelector(`#hop_${hopNumber}`);
         if (hopElement) {

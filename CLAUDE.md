@@ -3,46 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 09:23)
+## Latest Commit (Auto-updated: 2025-09-26 10:36)
 
-**Commit:** 83abeea5d5f748cd9939629ba64f9c913ddbbed1
+**Commit:** e87289f04d4db9913822112121094d4e758f9ea3
 **Author:** Your Name
-**Message:** Fix dual-layer thread tracking system for multiple threads with same notation
+**Message:** Fix wizard Step 3 duplicate thread display issue
 
-- Updated generateInternalThreadId to support deterministic IDs for bridge outputs
-- Fixed bridge output creation to allow multiple outputs from same source notation
-- Each bridge output now gets unique internal ID based on transaction hash
-- Updated hop entry wizard to use internal IDs for thread selection
-- Updated swap wizard to track selections using internal IDs
-- Fixed thread selection checkboxes to pass both notation and internal ID
-- Removed incorrect thread consolidation that was deleting valid threads
-- Added comprehensive test script to verify wizard internal ID handling
-- Ensures threads like multiple V1-T2-H1 entries are handled correctly
+- Fixed Step 3 to use internal IDs instead of notations for thread display
+- Updated allocation inputs to use internal IDs for unique identification
+- Fixed summary section to properly display threads with same notation
+- Updated onchange handlers and Max buttons to use internal IDs
+- Ensures threads with same notation (like multiple V1-T2-H1) display correctly
 
-This fixes the issue where multiple bridge outputs from the same source (e.g., three V1-T2-H1 threads) were being incorrectly consolidated or not selectable independently in wizards.
+This fixes the issue where Step 3 was showing duplicate entries for threads with the same notation by using the dual-layer tracking system properly.
 
 ### Changed Files:
 ```
- CLAUDE.md                  |  30 ++++---
- fix-duplicates.js          |  89 +++++++++++++++++++
- fix-wizard-internal-ids.js | 113 ++++++++++++++++++++++++
- index.html                 | 215 +++++++++++++++++++++++++++++++++++++--------
- test-wizards.js            | 123 ++++++++++++++++++++++++++
- 5 files changed, 519 insertions(+), 51 deletions(-)
+ CLAUDE.md  | 53 +++++++++++++++++++++++++++++------------------------
+ index.html | 24 ++++++++++++++----------
+ 2 files changed, 43 insertions(+), 34 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (0 seconds ago)
-- c39401d Add Solana proxy function to handle CORS issues (60 minutes ago)
-- 2ba11de Revert Solana endpoints to original working configuration (63 minutes ago)
-- d720583 Update Solana RPC endpoints to working public providers (75 minutes ago)
-- 7a58a4d Add transaction hash uniqueness validation per hop (2 hours ago)
-- b803481 Add deduplication check for bridge output threads (2 hours ago)
-- 706010e Fix duplicate bridge output thread creation (3 hours ago)
-- cb1d480 Set hops and entries to collapsed by default when loading saved files (3 hours ago)
-- d2feb61 Add bridge badge and remove terminal status for converted wallets (3 hours ago)
-- 694e122 Fix wizard to show bridge/swap output threads in same hop (3 hours ago)
+- e87289f Fix wizard Step 3 duplicate thread display issue (0 seconds ago)
+- 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (72 minutes ago)
+- c39401d Add Solana proxy function to handle CORS issues (2 hours ago)
+- 2ba11de Revert Solana endpoints to original working configuration (2 hours ago)
+- d720583 Update Solana RPC endpoints to working public providers (2 hours ago)
+- 7a58a4d Add transaction hash uniqueness validation per hop (3 hours ago)
+- b803481 Add deduplication check for bridge output threads (3 hours ago)
+- 706010e Fix duplicate bridge output thread creation (4 hours ago)
+- cb1d480 Set hops and entries to collapsed by default when loading saved files (4 hours ago)
+- d2feb61 Add bridge badge and remove terminal status for converted wallets (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
