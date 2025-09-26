@@ -10989,14 +10989,16 @@ function addNewHop() {
         function updateARTProgressBars() {
             const container = document.getElementById('artProgressBars');
             container.innerHTML = '';
-            
+
             if (!investigation.rootTotalConfirmed) {
                 container.innerHTML = '<p style="color: #7f8c8d;">Confirm root total to see ART progress</p>';
                 return;
             }
-            
-            // Get current ART by currency
-            const currentART = getCurrentART();
+
+            // Get ALL available currencies from threads (includes converted currencies)
+            const allCurrencies = {};
+
+            // Start with root total from victim transactions
             const rootTotal = investigation.victims.reduce((acc, victim) => {
                 victim.transactions.forEach(t => {
                     const currency = t.currency === 'CUSTOM' ? t.customCurrency : t.currency;
@@ -11007,26 +11009,80 @@ function addNewHop() {
                 });
                 return acc;
             }, {});
-            
+
+            // Add currencies from available threads (includes swap/bridge outputs)
+            if (investigation.availableThreads) {
+                for (const currency in investigation.availableThreads) {
+                    if (!allCurrencies[currency]) {
+                        allCurrencies[currency] = { total: 0, available: 0, isConverted: !rootTotal[currency] };
+                    }
+
+                    // Sum up total amounts in this currency
+                    for (const threadKey in investigation.availableThreads[currency]) {
+                        const thread = investigation.availableThreads[currency][threadKey];
+                        allCurrencies[currency].total += thread.totalAmount || 0;
+                        allCurrencies[currency].available += thread.availableAmount || 0;
+                    }
+                }
+            }
+
+            // Merge root totals into allCurrencies
+            for (const currency in rootTotal) {
+                if (!allCurrencies[currency]) {
+                    allCurrencies[currency] = { total: 0, available: 0, isConverted: false };
+                }
+                allCurrencies[currency].rootAmount = rootTotal[currency];
+            }
+
+            // Get current ART by currency
+            const currentART = getCurrentART();
+
             // Create progress bars for each currency
-            Object.entries(rootTotal).forEach(([currency, total]) => {
-                const current = currentART[currency] || 0;
-                const traced = total - current;
-                const percentage = total > 0 ? (traced / total * 100).toFixed(1) : 0;
-                
-                const progressBar = `
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-label">
-                            <span><strong>${currency}</strong></span>
-                            <span>${traced.toLocaleString()} / ${total.toLocaleString()} (${percentage}%)</span>
+            Object.entries(allCurrencies).forEach(([currency, data]) => {
+                // For root currencies, show traditional progress
+                if (data.rootAmount) {
+                    const total = data.rootAmount;
+                    const current = currentART[currency] || 0;
+                    const traced = total - current;
+                    const percentage = total > 0 ? (traced / total * 100).toFixed(1) : 0;
+
+                    const progressBar = `
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-label">
+                                <span><strong>${currency}</strong></span>
+                                <span>${traced.toLocaleString()} / ${total.toLocaleString()} (${percentage}%)</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: ${percentage}%"></div>
+                            </div>
                         </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: ${percentage}%"></div>
+                    `;
+                    container.innerHTML += progressBar;
+                } else if (data.total > 0) {
+                    // For converted currencies (from swaps/bridges), show what needs to be traced
+                    const total = data.total;
+                    const traced = total - data.available;
+                    const percentage = total > 0 ? (traced / total * 100).toFixed(1) : 0;
+
+                    const progressBar = `
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-label">
+                                <span><strong>${currency}</strong> <em style="color: #8b4513; font-size: 0.9em;">(converted)</em></span>
+                                <span>${traced.toLocaleString()} / ${total.toLocaleString()} (${percentage}%)</span>
+                            </div>
+                            <div class="progress-bar-bg" style="background: #fff8f4;">
+                                <div class="progress-bar-fill" style="width: ${percentage}%; background: #8b4513;"></div>
+                            </div>
                         </div>
-                    </div>
-                `;
-                container.innerHTML += progressBar;
+                    `;
+                    container.innerHTML += progressBar;
+                }
             });
+
+            // If no currencies to display
+            if (Object.keys(allCurrencies).length === 0) {
+                container.innerHTML = '<p style="color: #7f8c8d;">No ART data to display</p>';
+            }
         }
         
         function updateHopJumpMenu() {
@@ -12222,13 +12278,41 @@ function renderARTProgressBars(hop) {
 
                 switch (entry.entryType) {
                     case 'trace':
-                        // Check if this trace goes to a VASP/exchange (purple wallet)
-                        if (entry.toWalletType === 'purple' || entry.isTerminalWallet) {
-                            breakdown[currency].vasp += amount;
-                        } else {
-                            breakdown[currency].traced += amount;
+                        // Check if this is a bridge with output
+                        if (entry.isBridge && entry.bridgeDetails) {
+                            // Mark input currency as bridged
+                            breakdown[currency].swapped += amount; // Treat bridges like swaps
+                            breakdown[currency].remaining -= amount;
+
+                            // Add output currency
+                            const outputCurrency = entry.bridgeDetails.destinationAsset;
+                            const outputAmount = entry.bridgeDetails.destinationAmount || 0;
+
+                            if (outputCurrency && outputAmount > 0) {
+                                if (!breakdown[outputCurrency]) {
+                                    breakdown[outputCurrency] = {
+                                        total: 0,
+                                        traced: 0,
+                                        writeoff: 0,
+                                        coldStorage: 0,
+                                        vasp: 0,
+                                        swapped: 0,
+                                        remaining: 0,
+                                        isBridgeOutput: true
+                                    };
+                                }
+                                breakdown[outputCurrency].total += outputAmount;
+                                breakdown[outputCurrency].remaining += outputAmount;
+                            }
                         }
-                        breakdown[currency].remaining -= amount;
+                        // Check if this trace goes to a VASP/exchange (purple wallet) without bridge
+                        else if ((entry.toWalletType === 'purple' || entry.isTerminalWallet) && !entry.isBridge) {
+                            breakdown[currency].vasp += amount;
+                            breakdown[currency].remaining -= amount;
+                        } else if (!entry.isBridge) {
+                            breakdown[currency].traced += amount;
+                            breakdown[currency].remaining -= amount;
+                        }
                         break;
                     case 'writeoff':
                         breakdown[currency].writeoff += amount;
@@ -12261,10 +12345,10 @@ function renderARTProgressBars(hop) {
         html += `
             <div style="margin-bottom: 15px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <strong>${currency} ${data.isSwapOutput ? '(from swap)' : ''}</strong>
+                    <strong>${currency} ${data.isSwapOutput ? '(from swap)' : data.isBridgeOutput ? '(from bridge)' : ''}</strong>
                     <span style="font-size: 12px; color: #666;">
                         ${data.total.toLocaleString()} total
-                        ${data.swapped > 0 ? ` (${data.swapped.toLocaleString()} swapped to other currency)` : ''}
+                        ${data.swapped > 0 ? ` (${data.swapped.toLocaleString()} converted to other currency)` : ''}
                     </span>
                 </div>
                 
