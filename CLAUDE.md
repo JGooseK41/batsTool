@@ -3,17 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 07:50)
+## Latest Commit (Auto-updated: 2025-09-26 08:09)
 
-**Commit:** 7a58a4d3fcf46f7accd706dc25a5c7703418b9db
+**Commit:** d7205834877c8e8dab86493efcd3c626e125c5e7
 **Author:** Your Name
-**Message:** Add transaction hash uniqueness validation per hop
+**Message:** Update Solana RPC endpoints to working public providers
 
-- Prevent duplicate transaction hashes within the same hop
-- Add validation in createHopEntryFromWizard, createSwapEntry, and updateHopEntry
-- Show visual warning in hop header when duplicates are detected
-- Display error message explaining that multiple threads in same transaction must be in one entry
-- Red background for hops with duplicate transaction hashes
+- Use Helius RPC as primary endpoint with API key
+- Add PublicNode and Shyft as fallback options
+- Keep mainnet-beta as last resort fallback
+- Fixes CORS and 403 errors when looking up Solana transactions
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -21,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  37 +++++++++++-----------
- index.html | 105 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
- 2 files changed, 117 insertions(+), 25 deletions(-)
+ CLAUDE.md  | 40 +++++++++++++++++++++-------------------
+ index.html |  9 +++++----
+ 2 files changed, 26 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7a58a4d Add transaction hash uniqueness validation per hop (0 seconds ago)
-- b803481 Add deduplication check for bridge output threads (40 minutes ago)
-- 706010e Fix duplicate bridge output thread creation (61 minutes ago)
-- cb1d480 Set hops and entries to collapsed by default when loading saved files (78 minutes ago)
-- d2feb61 Add bridge badge and remove terminal status for converted wallets (81 minutes ago)
-- 694e122 Fix wizard to show bridge/swap output threads in same hop (89 minutes ago)
+- d720583 Update Solana RPC endpoints to working public providers (0 seconds ago)
+- 7a58a4d Add transaction hash uniqueness validation per hop (18 minutes ago)
+- b803481 Add deduplication check for bridge output threads (59 minutes ago)
+- 706010e Fix duplicate bridge output thread creation (80 minutes ago)
+- cb1d480 Set hops and entries to collapsed by default when loading saved files (2 hours ago)
+- d2feb61 Add bridge badge and remove terminal status for converted wallets (2 hours ago)
+- 694e122 Fix wizard to show bridge/swap output threads in same hop (2 hours ago)
 - 3cb4098 Fix progress bars to show bridge-converted currencies at both levels (2 hours ago)
 - eb58fae Auto-convert purple terminal wallets to brown bridges when logging output (2 hours ago)
 - ec5dd65 Fix critical bugs in thread building and source tracking processes (2 hours ago)
-- 3feb5d3 Refactor bridge outputs to work exactly like swaps (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
