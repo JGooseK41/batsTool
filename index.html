@@ -12430,7 +12430,18 @@ function addNewHop() {
                                         const currentHopThreads = getAvailableSourcesForHop(hop.hopNumber, null);
 
                                         // Add total amount information to each thread
-                                        const unallocatedInCurrentHop = currentHopThreads.filter(t => t.availableAmount > 0).map(thread => {
+                                        const unallocatedInCurrentHop = currentHopThreads.filter(t => {
+                                            // Ignore threads with negligible amounts (less than 0.01)
+                                            if (t.availableAmount <= 0.01) return false;
+
+                                            // Also ignore if remaining is less than 0.5% of original (rounding tolerance)
+                                            const original = t.totalAmount || t.originalAmount || t.availableAmount;
+                                            if (t.totalAmount && t.availableAmount < (original * 0.005)) {
+                                                return false;
+                                            }
+
+                                            return true;
+                                        }).map(thread => {
                                             // Find the original thread to get total amount
                                             let totalAmount = thread.availableAmount;
 
@@ -12470,7 +12481,13 @@ function addNewHop() {
                                                             const remaining = thread.availableAmount;
                                                             const original = thread.totalAmount || thread.availableAmount;
                                                             const assigned = original - remaining;
-                                                            const percentAssigned = original > 0 ? Math.round((assigned / original) * 100) : 0;
+                                                            let percentAssigned = original > 0 ? Math.round((assigned / original) * 100) : 0;
+
+                                                            // If we're at 99% but the remaining is less than 1% of original, show 100%
+                                                            // This handles rounding issues where tiny amounts remain
+                                                            if (percentAssigned === 99 && remaining < (original * 0.01)) {
+                                                                percentAssigned = 100;
+                                                            }
 
                                                             return `
                                                                 <div style="padding: 8px; background: white; border-radius: 4px;">
