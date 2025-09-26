@@ -3,20 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 12:37)
+## Latest Commit (Auto-updated: 2025-09-26 12:43)
 
-**Commit:** 841a04a3fd1bf50e215a4610e6b75986f5cd775a
+**Commit:** 39f47f8acc8ba7e0d60e28ac9400c6d0b29de3db
 **Author:** Your Name
-**Message:** Add forensic precision with rounding remainder write-off feature
+**Message:** Fix critical terminal wallet and hop management issues
 
-- Keep precise tracking - show exact amounts even for tiny remainders
-- Identify rounding remainders (< 1% of original) with visual indicators
-- Add 'Write Off All Rounding' button when only rounding remainders remain
-- Track source threads in write-off notes for forensic documentation
-- Show hop as complete when only rounding remainders exist
-- Maintains accuracy while providing clean completion path
+- Terminal wallets now use 100% of thread amounts (no more 99% remainders)
+- Threads going to terminal wallets are fully exhausted and unavailable for next hop
+- Store source thread internal IDs for proper terminal exhaustion tracking
+- Prevent creating new hops when all funds have reached terminal wallets
+- Show investigation complete message when all threads are terminal
+- Fix allocation precision for terminal wallet entries
 
-Addresses user need for forensic precision with proper documentation
+Addresses issues where:
+- Terminal wallet threads were showing as available in next hop
+- Small remainders (1%) were left on threads after terminal allocation
+- Users could create empty hops after investigation was complete
 
 🤖 Generated with Claude Code
 
@@ -24,23 +27,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  36 ++++++++------
- index.html | 155 +++++++++++++++++++++++++++++++++++++++++++++++++++----------
- 2 files changed, 152 insertions(+), 39 deletions(-)
+ CLAUDE.md  | 44 +++++++++++++++++++-----------------
+ index.html | 75 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 98 insertions(+), 21 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 841a04a Add forensic precision with rounding remainder write-off feature (0 seconds ago)
-- ef1130a Fix hop completion detection for threads with rounding remainders (4 minutes ago)
-- d55b3ff Update CLAUDE.md with latest changes (12 minutes ago)
-- 6842c7a Fix Arkham API response parsing for multi-chain structure (13 minutes ago)
-- cc38541 Add API attribution test page and update to latest Arkham endpoints (14 minutes ago)
-- 48fb5cb Update Arkham API to use enhanced endpoint for better attribution (17 minutes ago)
-- fc0685e Fix Solscan API to use correct v2.0 metadata endpoint (19 minutes ago)
-- 4451929 Add Solscan proxy function to avoid CORS issues and enhance API logging (23 minutes ago)
-- 8dddc6b Remove hardcoded exchange addresses and add Arkham API debugging (46 minutes ago)
-- a9b0ab2 Fix Solscan API CSP blocking and add unidentified exchange address (49 minutes ago)
+- 39f47f8 Fix critical terminal wallet and hop management issues (0 seconds ago)
+- 841a04a Add forensic precision with rounding remainder write-off feature (7 minutes ago)
+- ef1130a Fix hop completion detection for threads with rounding remainders (11 minutes ago)
+- d55b3ff Update CLAUDE.md with latest changes (19 minutes ago)
+- 6842c7a Fix Arkham API response parsing for multi-chain structure (20 minutes ago)
+- cc38541 Add API attribution test page and update to latest Arkham endpoints (20 minutes ago)
+- 48fb5cb Update Arkham API to use enhanced endpoint for better attribution (24 minutes ago)
+- fc0685e Fix Solscan API to use correct v2.0 metadata endpoint (26 minutes ago)
+- 4451929 Add Solscan proxy function to avoid CORS issues and enhance API logging (30 minutes ago)
+- 8dddc6b Remove hardcoded exchange addresses and add Arkham API debugging (53 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

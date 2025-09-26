@@ -29398,7 +29398,7 @@ async function checkArkhamAttribution(address) {
         const corsEnabled = localStorage.getItem('bats_cors_proxy_enabled') === 'true';
         const corsProxyUrl = localStorage.getItem('bats_cors_proxy_url') || 'https://cors-anywhere.herokuapp.com/';
         
-        let url = `https://api.arkm.com/intelligence/address/${address}/all`;
+        let url = `https://api.arkhamintelligence.com/intelligence/address/${address}/all`;
         if (corsEnabled) {
             url = corsProxyUrl + url;
         }
@@ -31024,7 +31024,45 @@ async function lookupVictimTransaction(victimId, transactionId) {
     } catch (error) {
         console.error('Lookup error:', error);
         const errorMsg = error.message || 'Failed to fetch transaction';
-        if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
+
+        // Check if user entered an address instead of a transaction hash
+        if (txHash.startsWith('0x') && txHash.length === 42) {
+            alert(`❌ Invalid Input: Wallet Address Detected\n\n` +
+                  `You entered a wallet address, not a transaction hash.\n\n` +
+                  `What you entered: ${txHash}\n` +
+                  `This is a wallet address (42 characters)\n\n` +
+                  `What's needed: A transaction hash (66 characters)\n` +
+                  `Example: 0x1234...abcd (64 hex characters after 0x)\n\n` +
+                  `Please paste the transaction hash, not the wallet address.`);
+        }
+        // Check if this looks like an EVM transaction hash that failed
+        else if (txHash.startsWith('0x') && txHash.length === 66) {
+            // This is likely an EVM transaction hash
+            const selectedChain = chainSelector && chainSelector.value ? chainSelector.value : null;
+
+            if (!selectedChain || selectedChain === 'ethereum') {
+                // User didn't manually select a chain or it defaulted to Ethereum
+                alert(`❌ Transaction not found on Ethereum\n\n` +
+                      `The transaction hash appears to be from an EVM-compatible blockchain.\n\n` +
+                      `⚠️ IMPORTANT: All EVM chains use the same transaction format (0x followed by 64 characters), ` +
+                      `so automatic chain detection cannot determine which specific EVM network to search.\n\n` +
+                      `The system searched Ethereum by default. If your transaction is on a different EVM chain ` +
+                      `(BSC, Polygon, Arbitrum, Base, etc.), please:\n\n` +
+                      `1. Select the correct chain from the dropdown menu\n` +
+                      `2. Try the lookup again\n\n` +
+                      `Common EVM chains: Ethereum, BSC, Polygon, Arbitrum, Optimism, Base, Avalanche`);
+            } else {
+                // User selected a specific chain but it still failed
+                alert(`❌ Transaction not found on ${selectedChain}\n\n` +
+                      `The transaction was not found on the selected chain.\n\n` +
+                      `Please verify:\n` +
+                      `1. The transaction hash is correct\n` +
+                      `2. You've selected the right EVM chain\n` +
+                      `3. The transaction has been confirmed on-chain\n\n` +
+                      `If unsure, check the source where you obtained this transaction hash ` +
+                      `to confirm which blockchain network it's on.`);
+            }
+        } else if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
             alert(`ERROR:  ${errorMsg}\n\nThe app will retry automatically with different methods.`);
         } else {
             alert(`ERROR:  Failed to fetch transaction: ${errorMsg}`);
