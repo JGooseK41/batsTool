@@ -12848,6 +12848,82 @@ function analyzeUntracedBalances(hop) {
 
 // New function to show comprehensive hop finalization summary
 function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemainingFunds) {
+    // Check for unallocated bridge/swap outputs FIRST
+    const availableThreadsForNextHop = getAvailableSourcesForHop(hop.hopNumber + 1, null);
+    const unallocatedBridgeOutputs = [];
+    const unallocatedSwapOutputs = [];
+
+    availableThreadsForNextHop.forEach(thread => {
+        // Check if this is a same-hop conversion output that needs allocation
+        if (thread.hopLevel === hop.hopNumber && thread.availableAmount > 0) {
+            if (thread.sourceType === 'bridge_output') {
+                unallocatedBridgeOutputs.push(thread);
+            } else if (thread.sourceType === 'swap_output') {
+                unallocatedSwapOutputs.push(thread);
+            }
+        }
+    });
+
+    // If there are unallocated bridge/swap outputs, show warning and prevent finalization
+    if (unallocatedBridgeOutputs.length > 0 || unallocatedSwapOutputs.length > 0) {
+        const modalHTML = `
+            <div id="hopFinalizationModal" class="modal" style="display: block;">
+                <div class="modal-content" style="max-width: 800px;">
+                    <div class="modal-header" style="background: #f8d7da; border-bottom: 2px solid #f5c6cb;">
+                        <h2>❌ Cannot Finalize Hop ${hop.hopNumber}</h2>
+                        <p style="color: #721c24;">Unallocated bridge/swap outputs must be traced first</p>
+                    </div>
+
+                    <div style="padding: 20px;">
+                        ${unallocatedBridgeOutputs.length > 0 ? `
+                            <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                                <h3 style="margin-top: 0; color: #856404;">🌉 Unallocated Bridge Outputs (${unallocatedBridgeOutputs.length})</h3>
+                                <p>These bridge outputs were created when you logged bridge destinations. They must be allocated before finalizing:</p>
+                                <ul style="margin: 10px 0;">
+                                    ${unallocatedBridgeOutputs.map(thread => `
+                                        <li><strong>${thread.threadId}</strong>: ${thread.availableAmount.toLocaleString()} ${thread.currency}
+                                            <small>(from ${thread.sourceWallet ? thread.sourceWallet.substring(0, 16) + '...' : 'bridge'})</small></li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        ${unallocatedSwapOutputs.length > 0 ? `
+                            <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                                <h3 style="margin-top: 0; color: #0d47a1;">🔄 Unallocated Swap Outputs (${unallocatedSwapOutputs.length})</h3>
+                                <p>These swap outputs need to be traced:</p>
+                                <ul style="margin: 10px 0;">
+                                    ${unallocatedSwapOutputs.map(thread => `
+                                        <li><strong>${thread.threadId}</strong>: ${thread.availableAmount.toLocaleString()} ${thread.currency}</li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        <div style="background: #d4edda; border: 2px solid #c3e6cb; border-radius: 8px; padding: 15px;">
+                            <h4 style="margin-top: 0; color: #155724;">What to do:</h4>
+                            <ol style="margin: 10px 0; padding-left: 20px;">
+                                <li>Click "Add Entry" to create trace entries for each unallocated output</li>
+                                <li>Select the bridge/swap output threads as sources</li>
+                                <li>Enter the transaction details for where these funds went</li>
+                                <li>Once all outputs are allocated, you can finalize the hop</li>
+                            </ol>
+                        </div>
+
+                        <div style="margin-top: 20px; text-align: center;">
+                            <button class="btn btn-primary" onclick="closeFinalizationModal(); scrollToHop(${hop.hopNumber});">
+                                Return to Hop ${hop.hopNumber}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        return; // Don't show the normal finalization modal
+    }
+
     // Calculate threads created in this hop
     const threadsCreated = [];
     let allThreadsTerminal = true;
@@ -12855,7 +12931,8 @@ function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemaini
         if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
             const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
             // Check if terminal - wallet type is stored as lowercase
-            const isTerminal = entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE' || entry.isTerminal === true;
+            // Note: Bridge outputs are NOT terminal even though they were converted from purple wallets
+            const isTerminal = (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE' || entry.isTerminal === true) && !entry.isBridge;
             if (!isTerminal) {
                 allThreadsTerminal = false;
             }
@@ -12865,7 +12942,8 @@ function showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemaini
                 currency: currency,
                 toWallet: entry.toWallet,
                 toWalletType: entry.toWalletType,
-                isTerminal: isTerminal
+                isTerminal: isTerminal,
+                isBridge: entry.isBridge
             });
         }
     });
@@ -14195,6 +14273,11 @@ function focusOnHop(hopNumber) {
     }, 100);
 }
 
+// Alias for focusOnHop for consistency
+function scrollToHop(hopNumber) {
+    focusOnHop(hopNumber);
+}
+
 function focusOnAnalysis() {
     document.getElementById('analysisTab').click();
 }
@@ -14266,12 +14349,29 @@ function checkHopCompletionStatus(hop) {
 
     // NEW APPROACH: Check if there are any available threads remaining
     // This properly handles swaps where the currency changes
-    const availableThreads = getAvailableSourcesForHop(hop.hopNumber + 1, null);
+    // IMPORTANT: We need to check threads for NEXT hop (hop + 1)
+    // BUT also check same-hop conversion outputs (bridges/swaps) that haven't been allocated yet
+    const nextHopThreads = getAvailableSourcesForHop(hop.hopNumber + 1, null);
+
+    // Also check for unallocated same-hop conversion outputs
+    // These are bridge/swap outputs created in the current hop that need to be traced
+    const allAvailableThreads = [];
+
+    // Add all threads that would be available for the next hop
+    nextHopThreads.forEach(thread => {
+        // Check if this is a same-hop conversion output from the CURRENT hop
+        // These need to be allocated before the hop can be finalized
+        if ((thread.sourceType === 'bridge_output' || thread.sourceType === 'swap_output') &&
+            thread.hopLevel === hop.hopNumber) {
+            console.log(`Found unallocated ${thread.sourceType} in current hop: ${thread.threadId} - ${thread.availableAmount} ${thread.currency}`);
+        }
+        allAvailableThreads.push(thread);
+    });
 
     // Calculate total available across all currencies
     let totalAvailable = 0;
     const availableByCurrency = {};
-    availableThreads.forEach(thread => {
+    allAvailableThreads.forEach(thread => {
         if (thread.availableAmount > 0) {
             totalAvailable += thread.availableAmount;
             if (!availableByCurrency[thread.currency]) {

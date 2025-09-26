@@ -3,36 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 10:40)
+## Latest Commit (Auto-updated: 2025-09-26 10:53)
 
-**Commit:** 244d6f02412c25d883fd03974244638d031df9ec
+**Commit:** 165ad53598ab5aa20022f6492e831d4ee5e75477
 **Author:** Your Name
-**Message:** Fix focusOnHop function error
+**Message:** Fix over-allocation blocking and wizard close button
 
-- Fixed TypeError when clicking focus on hop button
-- Changed from getElementById('hopsTab').click() to switchTab('hops')
-- The hopsTab element doesn't exist, causing null reference error
-- Now properly switches to hops tab using existing switchTab function
+- Changed over-allocation from hard block to auto-adjustment
+- Now automatically adjusts allocations proportionally to fit available funds
+- Adds note about partial allocation to entry
+- Fixed closeHopWizard and closeSwapWizard to handle edge cases
+- Added better logging for debugging wizard close issues
+
+The terminal wallet detection relies on external API attribution (Arkham/Etherscan) which may not identify all exchanges. Users can manually set wallet type to purple if needed.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 51 ++++++++++++++++++++++-----------------------------
- index.html |  2 +-
- 2 files changed, 23 insertions(+), 30 deletions(-)
+ CLAUDE.md  | 33 +++++++++++++---------------
+ index.html | 74 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 84 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 244d6f0 Fix focusOnHop function error (0 seconds ago)
-- e87289f Fix wizard Step 3 duplicate thread display issue (4 minutes ago)
-- 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (77 minutes ago)
+- 165ad53 Fix over-allocation blocking and wizard close button (0 seconds ago)
+- 244d6f0 Fix focusOnHop function error (13 minutes ago)
+- e87289f Fix wizard Step 3 duplicate thread display issue (17 minutes ago)
+- 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (2 hours ago)
 - c39401d Add Solana proxy function to handle CORS issues (2 hours ago)
-- 2ba11de Revert Solana endpoints to original working configuration (2 hours ago)
+- 2ba11de Revert Solana endpoints to original working configuration (3 hours ago)
 - d720583 Update Solana RPC endpoints to working public providers (3 hours ago)
 - 7a58a4d Add transaction hash uniqueness validation per hop (3 hours ago)
 - b803481 Add deduplication check for bridge output threads (4 hours ago)
 - 706010e Fix duplicate bridge output thread creation (4 hours ago)
-- cb1d480 Set hops and entries to collapsed by default when loading saved files (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
