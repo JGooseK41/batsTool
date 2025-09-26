@@ -3,15 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 08:21)
+## Latest Commit (Auto-updated: 2025-09-26 08:24)
 
-**Commit:** 2ba11de8022c9f02a3ffa19ca8b40b3e1576178a
+**Commit:** c39401d9840e248b640689a40b152c736369cf66
 **Author:** Your Name
-**Message:** Revert Solana endpoints to original working configuration
+**Message:** Add Solana proxy function to handle CORS issues
 
-- Restore api.mainnet-beta.solana.com as primary
-- Keep original fallbacks: Alchemy demo and Ankr
-- Remove unauthorized API keys that were added without permission
+- Create Netlify function to proxy Solana RPC requests
+- Avoids CORS errors when calling Solana mainnet directly from browser
+- Update lookupSolanaTransaction to use proxy first, then fallback to direct calls
+- Properly format RPC requests according to Solana JSON-RPC 2.0 spec
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -19,23 +20,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 35 +++++++++++++++++------------------
- index.html |  9 ++++-----
- 2 files changed, 21 insertions(+), 23 deletions(-)
+ CLAUDE.md                         | 29 ++++++------
+ index.html                        | 62 ++++++++++++++++++++------
+ netlify/functions/solana-proxy.js | 94 +++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 156 insertions(+), 29 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2ba11de Revert Solana endpoints to original working configuration (0 seconds ago)
-- d720583 Update Solana RPC endpoints to working public providers (12 minutes ago)
-- 7a58a4d Add transaction hash uniqueness validation per hop (30 minutes ago)
-- b803481 Add deduplication check for bridge output threads (71 minutes ago)
+- c39401d Add Solana proxy function to handle CORS issues (0 seconds ago)
+- 2ba11de Revert Solana endpoints to original working configuration (3 minutes ago)
+- d720583 Update Solana RPC endpoints to working public providers (15 minutes ago)
+- 7a58a4d Add transaction hash uniqueness validation per hop (33 minutes ago)
+- b803481 Add deduplication check for bridge output threads (73 minutes ago)
 - 706010e Fix duplicate bridge output thread creation (2 hours ago)
 - cb1d480 Set hops and entries to collapsed by default when loading saved files (2 hours ago)
 - d2feb61 Add bridge badge and remove terminal status for converted wallets (2 hours ago)
 - 694e122 Fix wizard to show bridge/swap output threads in same hop (2 hours ago)
 - 3cb4098 Fix progress bars to show bridge-converted currencies at both levels (2 hours ago)
-- eb58fae Auto-convert purple terminal wallets to brown bridges when logging output (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

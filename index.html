@@ -6237,12 +6237,19 @@ function migrateToEnhancedStructure() {
 // =================================
 
 // Generate unique internal ID for threads
-function generateInternalThreadId(notation, currency) {
-    // Format: notation_currency_timestamp_random
-    // This ensures uniqueness even for same notation in same currency
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 8);
-    return `${notation}_${currency}_${timestamp}_${random}`;
+function generateInternalThreadId(notation, currency, forceUnique = false) {
+    // For bridge outputs and swaps, we want deterministic IDs based on notation
+    // so that multiple bridge outputs with same notation update the same thread
+    if (forceUnique) {
+        // Original behavior for when we truly need unique IDs
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 8);
+        return `${notation}_${currency}_${timestamp}_${random}`;
+    } else {
+        // Deterministic ID based on notation and currency only
+        // This allows bridge outputs to find and update existing threads
+        return `${notation}_${currency}`;
+    }
 }
 
 // Check if we're using the legacy system (threads indexed by notation)
@@ -6289,6 +6296,71 @@ function migrateThreadsToDualLayer() {
 
     investigation.availableThreads = newThreads;
     console.log('Thread migration complete');
+}
+
+// Consolidate duplicate threads with the same notation
+function consolidateDuplicateThreads() {
+    if (!investigation.availableThreads) return 0;
+
+    console.log('Consolidating duplicate threads...');
+    let duplicatesFound = 0;
+
+    for (const currency in investigation.availableThreads) {
+        const threads = investigation.availableThreads[currency];
+        const threadsByNotation = {};
+        const threadsToDelete = [];
+
+        // Group threads by notation
+        for (const threadId in threads) {
+            const thread = threads[threadId];
+            if (!thread.notation) continue;
+
+            if (!threadsByNotation[thread.notation]) {
+                threadsByNotation[thread.notation] = [];
+            }
+            threadsByNotation[thread.notation].push({ id: threadId, thread });
+        }
+
+        // Consolidate duplicates
+        for (const notation in threadsByNotation) {
+            const duplicates = threadsByNotation[notation];
+            if (duplicates.length > 1) {
+                console.log(`Found ${duplicates.length} threads with notation ${notation} in ${currency}`);
+                duplicatesFound += duplicates.length - 1;
+
+                // Keep the thread with highest amount or most recent
+                let keepThread = duplicates[0];
+                for (let i = 1; i < duplicates.length; i++) {
+                    if (duplicates[i].thread.totalAmount > keepThread.thread.totalAmount) {
+                        threadsToDelete.push(keepThread.id);
+                        keepThread = duplicates[i];
+                    } else {
+                        threadsToDelete.push(duplicates[i].id);
+                    }
+                }
+
+                // Update the kept thread to use deterministic ID
+                const deterministicId = generateInternalThreadId(notation, currency, false);
+                if (keepThread.id !== deterministicId) {
+                    threads[deterministicId] = keepThread.thread;
+                    keepThread.thread.internalId = deterministicId;
+                    threadsToDelete.push(keepThread.id);
+                }
+            }
+        }
+
+        // Delete duplicate threads
+        for (const threadId of threadsToDelete) {
+            delete threads[threadId];
+        }
+    }
+
+    if (duplicatesFound > 0) {
+        console.log(`Consolidated ${duplicatesFound} duplicate threads`);
+        showNotification(`✅ Consolidated ${duplicatesFound} duplicate threads`, 'success', 3000);
+    }
+
+    return duplicatesFound;
 }
 
 // Helper function to get thread by notation
@@ -6528,8 +6600,10 @@ function buildAvailableThreadsIndex() {
             }
         });
     });
-    
+
     console.log('Available threads index built for ALL victims:', investigation.availableThreads);
+
+    // Note: We don't consolidate threads anymore as bridge outputs can have same notation
 }
 
 // 2.2 Update Thread Availability from Hop Entry
@@ -17946,10 +18020,12 @@ function showHopWizardStep(step) {
                     ${availableThreads.map(thread => `
                         <div style="background: white; border: 2px solid #e8f0fe; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
                             <label style="display: flex; align-items: center; cursor: pointer;">
-                                <input type="checkbox" 
-                                       value="${thread.threadId}" 
-                                       onchange="updateWizardThreadSelection('${thread.threadId}')"
-                                       ${wizardData.selectedThreads.includes(thread.threadId) ? 'checked' : ''}
+                                <input type="checkbox"
+                                       value="${thread.internalId || thread.threadId}"
+                                       data-notation="${thread.threadId}"
+                                       data-internal-id="${thread.internalId || thread.threadId}"
+                                       onchange="updateWizardThreadSelection({notation: '${thread.threadId}', internalId: '${thread.internalId || thread.threadId}'})"
+                                       ${(wizardData.selectedInternalIds || wizardData.selectedThreads || []).includes(thread.internalId || thread.threadId) ? 'checked' : ''}
                                        style="margin-right: 10px;">
                                 <div>
                                     <strong>${thread.displayText}</strong><br>
@@ -18558,6 +18634,7 @@ function showSwapWizard(hopNumber) {
         hop: hop,  // Store the whole hop object instead of just ID
         hopNumber: hop.hopNumber,
         selectedThreads: [],
+        selectedInternalIds: [],  // Track internal IDs for dual-layer support
         threadAmounts: {}, // Track partial amounts for each thread
         inputAmount: 0,
         inputCurrency: '',
@@ -18647,15 +18724,18 @@ function showSwapWizardStep(step) {
             ` : `
             <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin: 20px 0;">
                 ${availableThreads.map(thread => {
-                    const isSelected = wizardData.selectedThreads.includes(thread.threadId);
-                    const threadAmount = wizardData.threadAmounts[thread.threadId] || thread.availableAmount;
+                    const internalId = thread.internalId || thread.threadId;
+                    const isSelected = (wizardData.selectedInternalIds || wizardData.selectedThreads || []).includes(internalId);
+                    const threadAmount = wizardData.threadAmounts[internalId] || thread.availableAmount;
                     return `
                     <div style="padding: 12px; margin: 8px 0; background: white; border: 2px solid ${isSelected ? '#4caf50' : '#e0e0e0'}; border-radius: 8px; transition: all 0.3s;">
                         <div style="display: flex; align-items: center; gap: 15px;">
                             <input type="checkbox"
-                                   id="swap_thread_${thread.threadId}"
+                                   id="swap_thread_${thread.internalId || thread.threadId}"
+                                   data-internal-id="${thread.internalId || thread.threadId}"
+                                   data-notation="${thread.threadId}"
                                    ${isSelected ? 'checked' : ''}
-                                   onchange="toggleSwapThread('${thread.threadId}')"
+                                   onchange="toggleSwapThread({notation: '${thread.threadId}', internalId: '${thread.internalId || thread.threadId}'})"
                                    style="width: 20px; height: 20px; cursor: pointer;">
 
                             <div style="flex: 1;">
@@ -18834,11 +18914,34 @@ function showSwapWizardStep(step) {
     wizardData.step = step;
 }
 
-function toggleSwapThread(threadId) {
+function toggleSwapThread(threadInfo) {
     const wizardData = window.swapWizardData;
-    const index = wizardData.selectedThreads.indexOf(threadId);
+
+    // Support both string (legacy) and object (dual-layer) inputs
+    let notation, internalId;
+    if (typeof threadInfo === 'string') {
+        // Legacy - find the thread to get internal ID
+        const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+        const thread = threads.find(t => t.threadId === threadInfo || t.internalId === threadInfo);
+        if (thread) {
+            notation = thread.threadId;
+            internalId = thread.internalId || thread.threadId;
+        } else {
+            notation = threadInfo;
+            internalId = threadInfo;
+        }
+    } else {
+        notation = threadInfo.notation || threadInfo.threadId;
+        internalId = threadInfo.internalId || notation;
+    }
+
+    // Initialize arrays if needed
+    if (!wizardData.selectedInternalIds) wizardData.selectedInternalIds = [];
+    if (!wizardData.selectedThreads) wizardData.selectedThreads = [];
+
+    const index = wizardData.selectedInternalIds.indexOf(internalId);
     const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
-    const thread = threads.find(t => t.threadId === threadId);
+    const thread = threads.find(t => t.internalId === internalId || t.threadId === internalId);
 
     if (!thread) {
         alert('Error: Thread not found');
@@ -18856,12 +18959,19 @@ function toggleSwapThread(threadId) {
 
     if (index > -1) {
         // Remove thread and clear amount
-        wizardData.selectedThreads.splice(index, 1);
-        delete wizardData.threadAmounts[threadId];
+        wizardData.selectedInternalIds.splice(index, 1);
+        const notationIndex = wizardData.selectedThreads.indexOf(notation);
+        if (notationIndex > -1) {
+            wizardData.selectedThreads.splice(notationIndex, 1);
+        }
+        delete wizardData.threadAmounts[internalId];
     } else {
         // Add thread and set default amount to full amount
-        wizardData.selectedThreads.push(threadId);
-        wizardData.threadAmounts[threadId] = thread.availableAmount;
+        wizardData.selectedInternalIds.push(internalId);
+        if (!wizardData.selectedThreads.includes(notation)) {
+            wizardData.selectedThreads.push(notation);
+        }
+        wizardData.threadAmounts[internalId] = thread.availableAmount;
     }
 
     showSwapWizardStep(wizardData.step); // Refresh display
@@ -23086,21 +23196,52 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 investigation.availableThreads[outputCurrency] = {};
             }
 
-            // CRITICAL: Keep the SAME notation and internal ID structure (like swaps)
-            // This maintains the audit trail and allows the thread to be traced in the same hop
-            const outputInternalId = generateInternalThreadId(sourceNotation, outputCurrency);
+            // For bridge outputs, we need unique IDs when there are multiple outputs from same source
+            // Each bridge output is a separate thread, even if from the same source notation
+            // Use the destination tx hash to make it unique
+            const bridgeUniqueKey = `${sourceNotation}_bridge_${txHash.substring(0, 8)}`;
+            const outputInternalId = generateInternalThreadId(bridgeUniqueKey, outputCurrency, true);
 
-            // Check if a bridge output thread already exists with this notation
-            const existingBridgeOutput = investigation.availableThreads[outputCurrency][outputInternalId];
-            if (existingBridgeOutput && existingBridgeOutput.sourceType === 'bridge_output') {
-                console.log(`Bridge output thread already exists for ${sourceNotation} in ${outputCurrency}, updating amount from ${existingBridgeOutput.totalAmount} to ${outputAmount}`);
-                // Update the existing thread instead of creating a duplicate
-                existingBridgeOutput.totalAmount = outputAmount;
-                existingBridgeOutput.availableAmount = outputAmount;
-                existingBridgeOutput.destinationTxHash = txHash;
-                existingBridgeOutput.sourceWallet = destWallet;
-                existingBridgeOutput.chainId = destChain;
-                existingBridgeOutput.chainName = window.blockchainAPIs?.[destChain]?.name || destChain;
+            // For bridge outputs, check if this exact bridge output already exists (same tx hash)
+            // Multiple bridge outputs from the same source notation are allowed
+            let existingThread = null;
+            let existingThreadKey = null;
+
+            // Check if this exact bridge output already exists
+            if (investigation.availableThreads[outputCurrency][outputInternalId]) {
+                existingThread = investigation.availableThreads[outputCurrency][outputInternalId];
+                existingThreadKey = outputInternalId;
+            } else {
+                // For bridge outputs, also check if there's a thread with the same destination tx hash
+                // This prevents duplicate threads for the same bridge transaction
+                for (const threadId in investigation.availableThreads[outputCurrency]) {
+                    const thread = investigation.availableThreads[outputCurrency][threadId];
+                    if (thread.destinationTxHash === txHash && thread.sourceType === 'bridge_output') {
+                        existingThread = thread;
+                        existingThreadKey = threadId;
+                        console.log(`Found existing bridge output with same tx hash ${txHash}`);
+                        break;
+                    }
+                }
+            }
+
+            if (existingThread) {
+                console.log(`Updating existing thread for ${sourceNotation} in ${outputCurrency}, amount from ${existingThread.totalAmount} to ${outputAmount}`);
+                // Update the existing thread
+                existingThread.totalAmount = outputAmount;
+                existingThread.availableAmount = outputAmount;
+                existingThread.destinationTxHash = txHash;
+                existingThread.sourceWallet = destWallet;
+                existingThread.chainId = destChain;
+                existingThread.chainName = window.blockchainAPIs?.[destChain]?.name || destChain;
+                existingThread.sourceType = 'bridge_output';
+
+                // If the thread has a different key, delete it and re-add with correct key
+                if (existingThreadKey !== outputInternalId) {
+                    delete investigation.availableThreads[outputCurrency][existingThreadKey];
+                    investigation.availableThreads[outputCurrency][outputInternalId] = existingThread;
+                    existingThread.internalId = outputInternalId;
+                }
 
                 showNotification(`✅ Bridge output updated! Thread ${sourceNotation} updated to ${outputAmount} ${outputCurrency} on ${destChain}.`, 'success', 8000);
             } else {
