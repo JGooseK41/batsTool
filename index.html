@@ -6837,18 +6837,28 @@ function buildAvailableThreadsIndex() {
                     if (isTerminal) {
                         console.log(`Skipping thread creation for terminal wallet (${entry.toWalletType}): ${entry.notation}`);
 
-                        // For terminal wallets, ensure the source threads are marked as fully exhausted
-                        // This prevents them from appearing as "available" with small remainders
-                        if (entry.sourceThreadIds && Array.isArray(entry.sourceThreadIds)) {
-                            entry.sourceThreadIds.forEach(threadId => {
-                                // Find and fully exhaust this thread
+                        // For terminal wallets, deduct the allocated amounts from source threads
+                        // Only mark as fully exhausted if the entire thread was actually used
+                        if (entry.individualSourceAssignments && typeof entry.individualSourceAssignments === 'object') {
+                            Object.entries(entry.individualSourceAssignments).forEach(([threadId, allocatedAmount]) => {
+                                // Find the thread and deduct the allocated amount
                                 for (const currency in investigation.availableThreads) {
                                     const thread = investigation.availableThreads[currency][threadId];
                                     if (thread) {
-                                        console.log(`Fully exhausting thread ${threadId} (terminal wallet destination)`);
-                                        thread.availableAmount = 0;
-                                        thread.fullyExhausted = true;
-                                        thread.exhaustedByTerminal = entry.notation;
+                                        const amountUsed = parseFloat(allocatedAmount) || 0;
+                                        console.log(`Terminal wallet: Deducting ${amountUsed} from thread ${threadId} (had ${thread.availableAmount} available)`);
+
+                                        thread.availableAmount = Math.max(0, thread.availableAmount - amountUsed);
+
+                                        // Only mark as fully exhausted if less than 0.01 remains
+                                        if (thread.availableAmount < 0.01) {
+                                            thread.availableAmount = 0;
+                                            thread.fullyExhausted = true;
+                                            thread.exhaustedByTerminal = entry.notation;
+                                            console.log(`Thread ${threadId} fully exhausted by terminal wallet`);
+                                        } else {
+                                            console.log(`Thread ${threadId} has ${thread.availableAmount} remaining after terminal wallet`);
+                                        }
                                     }
                                 }
                             });
@@ -22412,28 +22422,15 @@ function createHopEntryFromWizard() {
         entry.exchangeAttribution = terminalAttribution;
         entry.isTerminalWallet = true;
 
-        // CRITICAL: For terminal wallets, ensure we use 100% of available amounts
-        // Not the rounded allocations which leave small remainders
-        if (entry.individualSourceAssignments && Object.keys(entry.individualSourceAssignments).length > 0) {
-            const availableThreads = getAvailableSourcesForHop(hop.hopNumber, null);
-            let correctedTotal = 0;
+        // For terminal wallets, we use the allocated amounts (not the full thread amounts)
+        // The allocations already respect the transaction amount limits
+        console.log(`Terminal wallet entry created with allocated amounts:`, entry.individualSourceAssignments);
 
-            // Update each allocation to use the FULL available amount
-            Object.keys(entry.individualSourceAssignments).forEach(threadId => {
-                const thread = availableThreads.find(t => t.threadId === threadId || t.internalId === threadId);
-                if (thread && thread.availableAmount > 0) {
-                    // Use the FULL available amount, not the rounded allocation
-                    entry.individualSourceAssignments[threadId] = thread.availableAmount;
-                    correctedTotal += thread.availableAmount;
-                    console.log(`Terminal wallet: Using full amount ${thread.availableAmount} from thread ${threadId}`);
-                }
+        // Just log what we're using - don't modify the allocations
+        if (entry.individualSourceAssignments) {
+            Object.entries(entry.individualSourceAssignments).forEach(([threadId, amount]) => {
+                console.log(`Terminal wallet: Using allocated amount ${amount} from thread ${threadId}`);
             });
-
-            // Update the total amount to reflect the corrected allocations
-            if (correctedTotal > 0) {
-                entry.amount = correctedTotal.toString();
-                console.log(`Terminal wallet: Corrected total amount to ${correctedTotal} ${entry.currency}`);
-            }
         }
     }
 

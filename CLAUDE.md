@@ -3,22 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 13:14)
+## Latest Commit (Auto-updated: 2025-09-26 14:32)
 
-**Commit:** d615be9cc91fe933334f6bc48ebc80d705dba0cb
+**Commit:** 79690c2f35b9b8715ce336582a7da6dd8c84b957
 **Author:** Your Name
-**Message:** Fix terminal wallet detection to distinguish personal labels from exchanges
+**Message:** Fix critical JavaScript error preventing hop wizard from opening
 
-- Only treat arkhamEntity as terminal wallets (real exchanges/services)
-- Treat arkhamLabel as personal labels (informational only, not terminal)
-- Added isPersonalLabel flag to attribution objects
-- Updated UI to show different badges for labels vs exchanges
-- Personal labels now added to notes instead of marking as terminal
-- Fixed console logging to differentiate between labels and exchanges
-- Updated warning messages to clearly explain the difference
-
-This prevents the system from incorrectly treating personal wallet labels
-as terminal exchange wallets, allowing proper fund tracing to continue.
+- Fixed undefined function reference: changed window.addHop to window.addNewHop
+- This error was preventing the hop wizard from opening for some users
+- The function addHop doesn't exist, it should be addNewHop
 
 🤖 Generated with Claude Code
 
@@ -26,23 +19,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  48 ++++++++----------
- index.html | 165 ++++++++++++++++++++++++++++++++++++++++++-------------------
- 2 files changed, 136 insertions(+), 77 deletions(-)
+ CLAUDE.md  | 47 ++++++++++++++++++++++++++---------------------
+ index.html |  2 +-
+ 2 files changed, 27 insertions(+), 22 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d615be9 Fix terminal wallet detection to distinguish personal labels from exchanges (0 seconds ago)
-- 3802b4c Fix Arkham API URL and add helpful error messages for transaction lookup (9 minutes ago)
-- 39f47f8 Fix critical terminal wallet and hop management issues (30 minutes ago)
-- 841a04a Add forensic precision with rounding remainder write-off feature (37 minutes ago)
-- ef1130a Fix hop completion detection for threads with rounding remainders (41 minutes ago)
-- d55b3ff Update CLAUDE.md with latest changes (49 minutes ago)
-- 6842c7a Fix Arkham API response parsing for multi-chain structure (50 minutes ago)
-- cc38541 Add API attribution test page and update to latest Arkham endpoints (51 minutes ago)
-- 48fb5cb Update Arkham API to use enhanced endpoint for better attribution (54 minutes ago)
-- fc0685e Fix Solscan API to use correct v2.0 metadata endpoint (56 minutes ago)
+- 79690c2 Fix critical JavaScript error preventing hop wizard from opening (0 seconds ago)
+- d615be9 Fix terminal wallet detection to distinguish personal labels from exchanges (78 minutes ago)
+- 3802b4c Fix Arkham API URL and add helpful error messages for transaction lookup (87 minutes ago)
+- 39f47f8 Fix critical terminal wallet and hop management issues (2 hours ago)
+- 841a04a Add forensic precision with rounding remainder write-off feature (2 hours ago)
+- ef1130a Fix hop completion detection for threads with rounding remainders (2 hours ago)
+- d55b3ff Update CLAUDE.md with latest changes (2 hours ago)
+- 6842c7a Fix Arkham API response parsing for multi-chain structure (2 hours ago)
+- cc38541 Add API attribution test page and update to latest Arkham endpoints (2 hours ago)
+- 48fb5cb Update Arkham API to use enhanced endpoint for better attribution (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
