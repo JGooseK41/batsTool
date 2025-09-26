@@ -3,16 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 12:32)
+## Latest Commit (Auto-updated: 2025-09-26 12:37)
 
-**Commit:** ef1130a95ecec81eb3f210cffae9592cbd65d6a3
+**Commit:** 841a04a3fd1bf50e215a4610e6b75986f5cd775a
 **Author:** Your Name
-**Message:** Fix hop completion detection for threads with rounding remainders
+**Message:** Add forensic precision with rounding remainder write-off feature
 
-- Show 100% when less than 1% remains due to rounding
-- Consider hop complete when all threads have less than 0.5% remaining
-- Ignore threads with negligible amounts (< 0.01 or < 0.5% of original)
-- Fixes issue where hop shows incomplete with 278.56 USDC in tiny remainders
+- Keep precise tracking - show exact amounts even for tiny remainders
+- Identify rounding remainders (< 1% of original) with visual indicators
+- Add 'Write Off All Rounding' button when only rounding remainders remain
+- Track source threads in write-off notes for forensic documentation
+- Show hop as complete when only rounding remainders exist
+- Maintains accuracy while providing clean completion path
+
+Addresses user need for forensic precision with proper documentation
 
 🤖 Generated with Claude Code
 
@@ -20,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 38 +++++++++++++++-----------------------
- index.html | 21 +++++++++++++++++++--
- 2 files changed, 34 insertions(+), 25 deletions(-)
+ CLAUDE.md  |  36 ++++++++------
+ index.html | 155 +++++++++++++++++++++++++++++++++++++++++++++++++++----------
+ 2 files changed, 152 insertions(+), 39 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ef1130a Fix hop completion detection for threads with rounding remainders (0 seconds ago)
-- d55b3ff Update CLAUDE.md with latest changes (8 minutes ago)
-- 6842c7a Fix Arkham API response parsing for multi-chain structure (9 minutes ago)
-- cc38541 Add API attribution test page and update to latest Arkham endpoints (9 minutes ago)
-- 48fb5cb Update Arkham API to use enhanced endpoint for better attribution (13 minutes ago)
-- fc0685e Fix Solscan API to use correct v2.0 metadata endpoint (15 minutes ago)
-- 4451929 Add Solscan proxy function to avoid CORS issues and enhance API logging (19 minutes ago)
-- 8dddc6b Remove hardcoded exchange addresses and add Arkham API debugging (42 minutes ago)
-- a9b0ab2 Fix Solscan API CSP blocking and add unidentified exchange address (45 minutes ago)
-- d411103 Fix bridge output thread consolidation issue (53 minutes ago)
+- 841a04a Add forensic precision with rounding remainder write-off feature (0 seconds ago)
+- ef1130a Fix hop completion detection for threads with rounding remainders (4 minutes ago)
+- d55b3ff Update CLAUDE.md with latest changes (12 minutes ago)
+- 6842c7a Fix Arkham API response parsing for multi-chain structure (13 minutes ago)
+- cc38541 Add API attribution test page and update to latest Arkham endpoints (14 minutes ago)
+- 48fb5cb Update Arkham API to use enhanced endpoint for better attribution (17 minutes ago)
+- fc0685e Fix Solscan API to use correct v2.0 metadata endpoint (19 minutes ago)
+- 4451929 Add Solscan proxy function to avoid CORS issues and enhance API logging (23 minutes ago)
+- 8dddc6b Remove hardcoded exchange addresses and add Arkham API debugging (46 minutes ago)
+- a9b0ab2 Fix Solscan API CSP blocking and add unidentified exchange address (49 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

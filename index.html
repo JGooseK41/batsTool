@@ -6823,6 +6823,23 @@ function buildAvailableThreadsIndex() {
 
                     if (isTerminal) {
                         console.log(`Skipping thread creation for terminal wallet (${entry.toWalletType}): ${entry.notation}`);
+
+                        // For terminal wallets, ensure the source threads are marked as fully exhausted
+                        // This prevents them from appearing as "available" with small remainders
+                        if (entry.sourceThreadIds && Array.isArray(entry.sourceThreadIds)) {
+                            entry.sourceThreadIds.forEach(threadId => {
+                                // Find and fully exhaust this thread
+                                for (const currency in investigation.availableThreads) {
+                                    const thread = investigation.availableThreads[currency][threadId];
+                                    if (thread) {
+                                        console.log(`Fully exhausting thread ${threadId} (terminal wallet destination)`);
+                                        thread.availableAmount = 0;
+                                        thread.fullyExhausted = true;
+                                        thread.exhaustedByTerminal = entry.notation;
+                                    }
+                                }
+                            });
+                        }
                     } else {
                         // updateThreadAvailabilityFromHop will handle bridge output check internally
                         updateThreadAvailabilityFromHop(entry);
@@ -10824,9 +10841,32 @@ function exportRedWalletIndexCSV() {
 // ADD THIS FUNCTION RIGHT AFTER getNextHopNumber():
 function addNewHop() {
     console.log(' Adding new hop...');
-    
+
     if (!investigation.rootTotalConfirmed) {
         alert('Please confirm your root total before adding hops.');
+        return;
+    }
+
+    // Check if there are any active threads to trace
+    const availableThreads = getAvailableSourcesForHop(getNextHopNumber(), null);
+    const activeThreads = availableThreads.filter(t => t.availableAmount > 0.01); // Ignore tiny remainders
+
+    if (activeThreads.length === 0) {
+        // Check if all funds went to terminal wallets
+        const lastHop = investigation.hops[investigation.hops.length - 1];
+        if (lastHop) {
+            const terminalEntries = lastHop.entries.filter(e => e.isTerminalWallet || e.toWalletType === 'purple' || e.toWalletType === 'gray');
+            if (terminalEntries.length > 0) {
+                alert('All funds have reached terminal wallets. The investigation is complete.\n\nNo new hop can be created as there are no active threads to trace.');
+
+                // Show completion section
+                document.getElementById('completeInvestigationSection').style.display = 'block';
+                document.getElementById('addHopBtn').style.display = 'none';
+                return;
+            }
+        }
+
+        alert('No available threads to trace. Please check your previous hop entries.');
         return;
     }
     
@@ -22306,6 +22346,39 @@ function createHopEntryFromWizard() {
     if (isTerminalWallet && terminalAttribution) {
         entry.exchangeAttribution = terminalAttribution;
         entry.isTerminalWallet = true;
+
+        // CRITICAL: For terminal wallets, ensure we use 100% of available amounts
+        // Not the rounded allocations which leave small remainders
+        if (entry.individualSourceAssignments && Object.keys(entry.individualSourceAssignments).length > 0) {
+            const availableThreads = getAvailableSourcesForHop(hop.hopNumber, null);
+            let correctedTotal = 0;
+
+            // Update each allocation to use the FULL available amount
+            Object.keys(entry.individualSourceAssignments).forEach(threadId => {
+                const thread = availableThreads.find(t => t.threadId === threadId || t.internalId === threadId);
+                if (thread && thread.availableAmount > 0) {
+                    // Use the FULL available amount, not the rounded allocation
+                    entry.individualSourceAssignments[threadId] = thread.availableAmount;
+                    correctedTotal += thread.availableAmount;
+                    console.log(`Terminal wallet: Using full amount ${thread.availableAmount} from thread ${threadId}`);
+                }
+            });
+
+            // Update the total amount to reflect the corrected allocations
+            if (correctedTotal > 0) {
+                entry.amount = correctedTotal.toString();
+                console.log(`Terminal wallet: Corrected total amount to ${correctedTotal} ${entry.currency}`);
+            }
+        }
+    }
+
+    // Store internal IDs for proper thread tracking (especially for terminal exhaustion)
+    if (wizardData.selectedInternalIds && wizardData.selectedInternalIds.length > 0) {
+        entry.sourceThreadIds = wizardData.selectedInternalIds;
+        entry.multipleSourceInternalIds = wizardData.selectedInternalIds;
+    } else {
+        // Fallback to thread notations if internal IDs not available
+        entry.sourceThreadIds = wizardData.selectedThreads || [];
     }
 
     // Save undo state
