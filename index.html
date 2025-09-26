@@ -3769,9 +3769,9 @@
 
                 if (arkhamApiKey) {
                     try {
-                        // Use Netlify Function proxy for Arkham API
-                        const proxyUrl = `/.netlify/functions/arkham3?endpoint=/intelligence/address/${address}`;
-                        console.log(`📡 Arkham API URL: ${proxyUrl}`);
+                        // Use the new enhanced Arkham endpoint for better attribution data
+                        const proxyUrl = `/.netlify/functions/arkham3?endpoint=/intelligence/address_with_extra_enrichment/${address}/all`;
+                        console.log(`📡 Arkham API URL (enhanced endpoint): ${proxyUrl}`);
                         console.log(`🔑 Using API key: ${arkhamApiKey.substring(0, 10)}...`);
 
                         const arkhamResponse = await fetch(proxyUrl, {
@@ -3790,15 +3790,19 @@
                             const arkhamData = await arkhamResponse.json();
                             console.log('📦 Arkham API full response:', JSON.stringify(arkhamData, null, 2));
 
-                            // Log all fields to understand the response structure
-                            console.log('🔍 Arkham response fields:');
+                            // Log all fields to understand the enhanced response structure
+                            console.log('🔍 Arkham enhanced response fields:');
                             console.log('  - arkhamData.arkhamEntity:', arkhamData?.arkhamEntity);
                             console.log('  - arkhamData.entity:', arkhamData?.entity);
+                            console.log('  - arkhamData.entities:', arkhamData?.entities);
                             console.log('  - arkhamData.data:', arkhamData?.data);
                             console.log('  - arkhamData.name:', arkhamData?.name);
                             console.log('  - arkhamData.label:', arkhamData?.label);
+                            console.log('  - arkhamData.labels:', arkhamData?.labels);
                             console.log('  - arkhamData.address:', arkhamData?.address);
+                            console.log('  - arkhamData.enrichment:', arkhamData?.enrichment);
 
+                            // Check multiple possible response structures from the enhanced endpoint
                             if (arkhamData && arkhamData.arkhamEntity) {
                                 attribution = {
                                     name: arkhamData.arkhamEntity.name,
@@ -3810,8 +3814,34 @@
                                 console.log(`✅ Arkham attribution found for ${address}:`, attribution);
                                 walletAttributionCache[lowerAddress] = attribution;
                                 return attribution;
+                            } else if (arkhamData?.entities && arkhamData.entities.length > 0) {
+                                // Enhanced endpoint might return entities array
+                                const entity = arkhamData.entities[0];
+                                attribution = {
+                                    name: entity.name || entity.label || 'Unknown',
+                                    label: entity.type || entity.label || 'Exchange',
+                                    type: entity.category || 'CEX',
+                                    source: 'arkham_intelligence_enhanced',
+                                    isExchange: true
+                                };
+                                console.log(`✅ Arkham enhanced attribution found for ${address}:`, attribution);
+                                walletAttributionCache[lowerAddress] = attribution;
+                                return attribution;
+                            } else if (arkhamData?.labels && arkhamData.labels.length > 0) {
+                                // Some endpoints return labels array
+                                const label = arkhamData.labels[0];
+                                attribution = {
+                                    name: label.name || label.label || label,
+                                    label: label.type || 'Exchange',
+                                    type: 'CEX',
+                                    source: 'arkham_intelligence_labels',
+                                    isExchange: true
+                                };
+                                console.log(`✅ Arkham labels found for ${address}:`, attribution);
+                                walletAttributionCache[lowerAddress] = attribution;
+                                return attribution;
                             } else {
-                                console.log('⚠️ No arkhamEntity field in response. Looking for other fields...');
+                                console.log('⚠️ No entity data in standard fields. Checking alternative structures...');
                                 // Try other possible field names
                                 if (arkhamData?.data?.entity || arkhamData?.entity || arkhamData?.name) {
                                     const entityInfo = arkhamData?.data?.entity || arkhamData?.entity || arkhamData?.name;

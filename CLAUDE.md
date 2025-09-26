@@ -3,16 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 12:14)
+## Latest Commit (Auto-updated: 2025-09-26 12:17)
 
-**Commit:** 445192901cd4de34354f18ac572faf427f54eb91
+**Commit:** fc0685e5ec890036ea7f287ba15a38d826657741
 **Author:** Your Name
-**Message:** Add Solscan proxy function to avoid CORS issues and enhance API logging
+**Message:** Fix Solscan API to use correct v2.0 metadata endpoint
 
-- Created Netlify function to proxy Solscan API calls
-- Updated getSolanaWalletAttribution to use proxy instead of direct calls
-- Enhanced logging for both Arkham and Solscan API responses
-- Fixed CSP issues by using server-side proxy
+- Updated Solscan proxy to use /v2.0/account/metadata endpoint
+- Fixed response parsing for new metadata structure
+- Added proper handling of account_label and account_tags fields
+- Enhanced logging to show full metadata response
 
 🤖 Generated with Claude Code
 
@@ -20,24 +20,26 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                          |  44 ++++-----
- index.html                         | 188 ++++++++++++++++++++++++++++---------
- netlify/functions/solscan-proxy.js | 109 +++++++++++++++++++++
- 3 files changed, 275 insertions(+), 66 deletions(-)
+ CLAUDE.md                          | 46 ++++++++++++-----------
+ index.html                         | 46 ++++++++++++-----------
+ netlify/functions/arkham3.js       |  7 ++++
+ netlify/functions/solscan-proxy.js |  6 +--
+ test-arkham-api.html               | 77 ++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 135 insertions(+), 47 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4451929 Add Solscan proxy function to avoid CORS issues and enhance API logging (0 seconds ago)
-- 8dddc6b Remove hardcoded exchange addresses and add Arkham API debugging (23 minutes ago)
-- a9b0ab2 Fix Solscan API CSP blocking and add unidentified exchange address (26 minutes ago)
-- d411103 Fix bridge output thread consolidation issue (34 minutes ago)
-- 15d1a34 Fix Solana transaction lookup failures (50 minutes ago)
-- 0abeafe Add default Solscan Pro API key for all users (55 minutes ago)
-- a9d783d Add Solscan API key configuration and Pro API support (57 minutes ago)
-- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (66 minutes ago)
-- e38d1ae Fix hop finalization with unallocated bridge outputs (72 minutes ago)
-- 165ad53 Fix over-allocation blocking and wizard close button (81 minutes ago)
+- fc0685e Fix Solscan API to use correct v2.0 metadata endpoint (0 seconds ago)
+- 4451929 Add Solscan proxy function to avoid CORS issues and enhance API logging (4 minutes ago)
+- 8dddc6b Remove hardcoded exchange addresses and add Arkham API debugging (27 minutes ago)
+- a9b0ab2 Fix Solscan API CSP blocking and add unidentified exchange address (30 minutes ago)
+- d411103 Fix bridge output thread consolidation issue (38 minutes ago)
+- 15d1a34 Fix Solana transaction lookup failures (54 minutes ago)
+- 0abeafe Add default Solscan Pro API key for all users (58 minutes ago)
+- a9d783d Add Solscan API key configuration and Pro API support (61 minutes ago)
+- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (70 minutes ago)
+- e38d1ae Fix hop finalization with unallocated bridge outputs (75 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
