@@ -22283,6 +22283,202 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             document.body.appendChild(modal);
         }
 
+        function showBridgeTransferSelectionModal(transfers) {
+            // Store transfers globally
+            window.allBridgeTransfers = transfers;
+            window.filteredBridgeTransfers = transfers;
+
+            // Get unique assets for filter
+            const uniqueAssets = [...new Set(transfers.map(t => t.currency))].sort();
+
+            // Create modal HTML (similar to victim transaction selector)
+            const modalHTML = `
+                <div id="bridgeTransferModal" class="modal show">
+                    <div class="modal-content" style="max-width: 900px;">
+                        <div class="modal-header">
+                            <h2>Select Bridge Output Transfer</h2>
+                            <button class="close" onclick="document.getElementById('bridgeTransferModal').remove()">&times;</button>
+                        </div>
+
+                        <p style="margin: 15px 0;">This transaction contains ${transfers.length} transfers. Please select the bridge output:</p>
+
+                        <!-- Filter Section -->
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Filter by Asset:</label>
+                                    <select id="bridgeTransferAssetFilter"
+                                           style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px;"
+                                           onchange="filterBridgeTransfersModal()">
+                                        <option value="">All Assets (${uniqueAssets.length})</option>
+                                        ${uniqueAssets.map(asset => {
+                                            const count = transfers.filter(t => t.currency === asset).length;
+                                            return `<option value="${asset}">${asset} (${count})</option>`;
+                                        }).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Min Amount:</label>
+                                    <input type="number" id="bridgeTransferAmountFilter" placeholder="e.g., 0.01" step="0.000001"
+                                           style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px;"
+                                           oninput="filterBridgeTransfersModal()">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Filter by Address:</label>
+                                    <input type="text" id="bridgeTransferAddressFilter" placeholder="To or From address"
+                                           style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px;"
+                                           oninput="filterBridgeTransfersModal()">
+                                </div>
+                                <button class="btn btn-secondary" onclick="clearBridgeTransferFilters()" style="padding: 8px 15px;">
+                                    Clear Filters
+                                </button>
+                            </div>
+
+                            <div style="margin-top: 10px; font-size: 14px; color: #666;">
+                                <span id="bridgeTransferFilterInfo">Showing ${transfers.length} of ${transfers.length} transfers</span>
+                            </div>
+                        </div>
+
+                        <!-- Transfers List -->
+                        <div id="bridgeTransfersList" style="max-height: 400px; overflow-y: auto;">
+                            ${renderBridgeTransferModalCards(transfers)}
+                        </div>
+
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="btn btn-secondary" onclick="document.getElementById('bridgeTransferModal').remove()">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function renderBridgeTransferModalCards(transfers) {
+            if (transfers.length === 0) {
+                return '<div style="text-align: center; padding: 40px; color: #666;">No transfers match your filters</div>';
+            }
+
+            return transfers.map((transfer, filteredIndex) => {
+                // Find original index
+                const originalIndex = window.allBridgeTransfers.indexOf(transfer);
+
+                return `
+                    <div class="transfer-card" style="background: white; border: 2px solid #e8f0fe; border-radius: 8px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;"
+                         onmouseover="this.style.borderColor='#3498db'; this.style.transform='translateY(-2px)'"
+                         onmouseout="this.style.borderColor='#e8f0fe'; this.style.transform='translateY(0)'"
+                         onclick="selectBridgeTransferFromModal(${originalIndex})">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">From:</div>
+                                <div style="font-family: monospace; font-size: 13px; word-break: break-all;">
+                                    ${transfer.from || 'Unknown'}
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">To:</div>
+                                <div style="font-family: monospace; font-size: 13px; word-break: break-all;">
+                                    ${transfer.to || 'Unknown'}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 20px; font-weight: bold; color: #2c3e50;">
+                                        ${transfer.amount} ${transfer.currency}
+                                    </span>
+                                    ${transfer.type ? `<span style="margin-left: 10px; font-size: 12px; color: #666;">(${transfer.type})</span>` : ''}
+                                </div>
+                                <button class="btn btn-primary" onclick="event.stopPropagation(); selectBridgeTransferFromModal(${originalIndex})">
+                                    Select This Transfer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterBridgeTransfersModal() {
+            const assetFilter = document.getElementById('bridgeTransferAssetFilter')?.value || '';
+            const amountFilter = parseFloat(document.getElementById('bridgeTransferAmountFilter')?.value) || 0;
+            const addressFilter = document.getElementById('bridgeTransferAddressFilter')?.value?.toLowerCase() || '';
+
+            let filtered = window.allBridgeTransfers;
+
+            // Filter by asset
+            if (assetFilter) {
+                filtered = filtered.filter(t => t.currency === assetFilter);
+            }
+
+            // Filter by minimum amount
+            if (amountFilter > 0) {
+                filtered = filtered.filter(t => parseFloat(t.amount) >= amountFilter);
+            }
+
+            // Filter by address (to or from)
+            if (addressFilter) {
+                filtered = filtered.filter(t =>
+                    (t.to && t.to.toLowerCase().includes(addressFilter)) ||
+                    (t.from && t.from.toLowerCase().includes(addressFilter))
+                );
+            }
+
+            window.filteredBridgeTransfers = filtered;
+
+            // Update display
+            const listContainer = document.getElementById('bridgeTransfersList');
+            if (listContainer) {
+                listContainer.innerHTML = renderBridgeTransferModalCards(filtered);
+            }
+
+            // Update filter info
+            const filterInfo = document.getElementById('bridgeTransferFilterInfo');
+            if (filterInfo) {
+                filterInfo.textContent = `Showing ${filtered.length} of ${window.allBridgeTransfers.length} transfers`;
+            }
+        }
+
+        function clearBridgeTransferFilters() {
+            document.getElementById('bridgeTransferAssetFilter').value = '';
+            document.getElementById('bridgeTransferAmountFilter').value = '';
+            document.getElementById('bridgeTransferAddressFilter').value = '';
+            filterBridgeTransfersModal();
+        }
+
+        function selectBridgeTransferFromModal(index) {
+            const transfers = window.allBridgeTransfers;
+            if (!transfers || !transfers[index]) return;
+
+            const transfer = transfers[index];
+
+            // Auto-fill the fields with selected transfer
+            document.getElementById('bridgeDestWallet').value = transfer.to || '';
+            document.getElementById('bridgeDestAmount').value = transfer.amount || '';
+            document.getElementById('bridgeDestAsset').value = transfer.currency || '';
+
+            // Update result message
+            const resultDiv = document.getElementById('bridgeLookupResult');
+            if (resultDiv) {
+                resultDiv.innerHTML = `
+                    <div style="background: #e8f5e9; border: 1px solid #4caf50; border-radius: 6px; padding: 10px; color: #2e7d32;">
+                        ✅ Transfer selected: ${transfer.amount} ${transfer.currency} to ${transfer.to ? transfer.to.substring(0, 30) + '...' : 'Unknown'}
+                    </div>
+                `;
+            }
+
+            // Close the modal
+            const modal = document.getElementById('bridgeTransferModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Keep the old function for backward compatibility but have it call the modal version
         function showBridgeTransferSelection(transfers) {
             const container = document.getElementById('bridgeLookupResult');
             if (!container) return;
@@ -22489,18 +22685,18 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     if (txData.multipleTransfers && txData.transfers && txData.transfers.length > 0) {
                         console.log('Multiple transfers detected:', txData.transfers);
 
-                        // Store transfers for selection and show selection modal
+                        // Store transfers for selection
                         window.bridgeDestTransfers = txData.transfers;
-
-                        // Show transfer selection interface
-                        showBridgeTransferSelection(txData.transfers);
 
                         // Show message about multiple transfers
                         resultDiv.innerHTML = `
                             <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 10px; color: #856404;">
-                                ⚠️ ${txData.transfers.length} transfers detected. Please select the correct bridge output above.
+                                ⚠️ ${txData.transfers.length} transfers detected. Opening selection window...
                             </div>
                         `;
+
+                        // Show transfer selection modal (like victim transaction selector)
+                        showBridgeTransferSelectionModal(txData.transfers);
                     } else {
                         // Auto-fill the fields
                         document.getElementById('bridgeDestWallet').value = txData.to || '';
@@ -31643,10 +31839,15 @@ To (RED Wallet): ${transfer.to}`;
         window.confirmBridgeOutput = confirmBridgeOutput;
         window.lookupBridgeDestTransaction = lookupBridgeDestTransaction;
         window.showBridgeTransferSelection = showBridgeTransferSelection;
+        window.showBridgeTransferSelectionModal = showBridgeTransferSelectionModal;
         window.selectBridgeTransfer = selectBridgeTransfer;
+        window.selectBridgeTransferFromModal = selectBridgeTransferFromModal;
         window.filterBridgeTransfers = filterBridgeTransfers;
+        window.filterBridgeTransfersModal = filterBridgeTransfersModal;
         window.clearBridgeFilters = clearBridgeFilters;
+        window.clearBridgeTransferFilters = clearBridgeTransferFilters;
         window.renderBridgeTransferCards = renderBridgeTransferCards;
+        window.renderBridgeTransferModalCards = renderBridgeTransferModalCards;
         window.removeHopEntry = removeHopEntry;
         window.addHop = addHop;
 
