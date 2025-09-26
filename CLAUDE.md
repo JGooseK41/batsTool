@@ -3,41 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 11:02)
+## Latest Commit (Auto-updated: 2025-09-26 11:07)
 
-**Commit:** e38d1aeb5c8d1af58ec74d65f0b9e08105f33e9d
+**Commit:** 2ce0373953d006bbd037e59ad62ade5e0c1c2c12
 **Author:** Your Name
-**Message:** Fix hop finalization with unallocated bridge outputs
+**Message:** Fix 99% allocation issue and add Solana wallet attribution
 
-- Added detection of unallocated bridge/swap outputs in hop completion check
-- Shows clear warning modal when trying to finalize hop with unallocated outputs
-- Lists all unallocated bridge and swap outputs that need tracing
-- Provides instructions on how to allocate the outputs
-- Prevents hop finalization until all bridge outputs are traced
-- Fixed thread detection to properly identify same-hop conversion outputs
-- Added scrollToHop alias for consistency
+- Fixed rounding issue causing threads to show 99% instead of 100% allocation
+- Improved auto-adjustment algorithm to distribute remainder precisely
+- Added Solana wallet attribution with known exchange addresses
+- Integrated Solscan API as secondary source for Solana addresses
+- Restructured attribution to ALWAYS check Arkham first for ALL chains
+- Added chain-specific secondary sources after Arkham check
+- Added KuCoin, Binance, Coinbase, Kraken, OKX, Bybit, Gate.io Solana addresses
 
-This ensures bridge outputs created from terminal wallet conversions are properly traced before the hop can be completed.
+This ensures proper terminal wallet detection for Solana transactions and exact allocation percentages.
 
 ### Changed Files:
 ```
- CLAUDE.md  |  33 ++++++++++---------
- index.html | 108 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
- 2 files changed, 122 insertions(+), 19 deletions(-)
+ CLAUDE.md  |  36 +++++++-------
+ index.html | 160 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 169 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e38d1ae Fix hop finalization with unallocated bridge outputs (0 seconds ago)
-- 165ad53 Fix over-allocation blocking and wizard close button (9 minutes ago)
-- 244d6f0 Fix focusOnHop function error (22 minutes ago)
-- e87289f Fix wizard Step 3 duplicate thread display issue (26 minutes ago)
+- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (0 seconds ago)
+- e38d1ae Fix hop finalization with unallocated bridge outputs (5 minutes ago)
+- 165ad53 Fix over-allocation blocking and wizard close button (14 minutes ago)
+- 244d6f0 Fix focusOnHop function error (27 minutes ago)
+- e87289f Fix wizard Step 3 duplicate thread display issue (31 minutes ago)
 - 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (2 hours ago)
 - c39401d Add Solana proxy function to handle CORS issues (3 hours ago)
 - 2ba11de Revert Solana endpoints to original working configuration (3 hours ago)
 - d720583 Update Solana RPC endpoints to working public providers (3 hours ago)
 - 7a58a4d Add transaction hash uniqueness validation per hop (3 hours ago)
-- b803481 Add deduplication check for bridge output threads (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
