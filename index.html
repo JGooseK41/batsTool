@@ -6318,15 +6318,16 @@ function buildAvailableThreadsIndex() {
         return;
     }
 
-    // CRITICAL FIX: Preserve manually created swap output threads
-    // Store existing swap output threads before rebuilding
+    // CRITICAL FIX: Preserve manually created swap and bridge output threads
+    // Store existing swap/bridge output threads before rebuilding
     const existingSwapOutputs = {};
     if (investigation.availableThreads) {
         for (const currency in investigation.availableThreads) {
             for (const threadKey in investigation.availableThreads[currency]) {
                 const thread = investigation.availableThreads[currency][threadKey];
-                // Preserve swap output threads that were manually created
-                if (thread.sourceType === 'swap_output' || thread.swapConverted) {
+                // Preserve swap output threads and bridge output threads that were manually created
+                if (thread.sourceType === 'swap_output' || thread.swapConverted ||
+                    thread.sourceType === 'bridge_output' || thread.bridgeConverted) {
                     if (!existingSwapOutputs[currency]) {
                         existingSwapOutputs[currency] = {};
                     }
@@ -6459,6 +6460,28 @@ function buildAvailableThreadsIndex() {
                 // Generate internal ID for the change thread
                 const newInternalId = generateInternalThreadId(entry.notation, currency);
 
+                // Inherit chain from parent threads if not set on entry
+                let chainId = entry.chain || null;
+                let chainName = entry.chain ? (window.blockchainAPIs?.[entry.chain]?.name || entry.chain) : null;
+
+                if (!chainId) {
+                    // Try to inherit from parent threads
+                    const parentIds = entry.multipleSourceInternalIds || [entry.sourceThreadInternalId];
+                    for (const parentId of parentIds) {
+                        // Look through all currencies for parent thread
+                        for (const curr in investigation.availableThreads) {
+                            const parentThread = investigation.availableThreads[curr]?.[parentId];
+                            if (parentThread && parentThread.chainId) {
+                                chainId = parentThread.chainId;
+                                chainName = parentThread.chainName;
+                                console.log(`Change entry inherited chain ${chainId} from parent thread`);
+                                break;
+                            }
+                        }
+                        if (chainId) break;
+                    }
+                }
+
                 // Create the change thread at the same hop level
                 investigation.availableThreads[currency][newInternalId] = {
                     notation: entry.notation,
@@ -6476,9 +6499,9 @@ function buildAvailableThreadsIndex() {
                     parentInternalIds: entry.multipleSourceInternalIds || [entry.sourceThreadInternalId],
                     parentNotations: entry.multipleSourceThreads || [entry.sourceThreadId],
 
-                    // Chain tracking - inherit from entry
-                    chainId: entry.chain || null,
-                    chainName: entry.chain ? (window.blockchainAPIs?.[entry.chain]?.name || entry.chain) : null
+                    // Chain tracking - inherit from entry or parent
+                    chainId: chainId,
+                    chainName: chainName
                 };
 
                 console.log(`Created change thread ${entry.notation} in ${currency} with ${entry.amount} at hop level ${hop.hopNumber - 1}`);
@@ -6765,11 +6788,11 @@ function updateThreadAvailabilityFromSwap(entry) {
 
                 // Chain tracking for bridges/swaps
                 // If this is a bridge, the chain changes. Otherwise inherit from parent
-                chainId: entry.swapDetails?.toChain || entry.chain || item.chainId || null,
+                chainId: entry.swapDetails?.toChain || entry.chain || item.thread.chainId || null,
                 chainName: entry.swapDetails?.toChain ?
                     (window.blockchainAPIs?.[entry.swapDetails.toChain]?.name || entry.swapDetails.toChain) :
                     (entry.chain ? (window.blockchainAPIs?.[entry.chain]?.name || entry.chain) :
-                     (item.chainId ? (window.blockchainAPIs?.[item.chainId]?.name || item.chainId) : null))
+                     (item.thread.chainId ? (window.blockchainAPIs?.[item.thread.chainId]?.name || item.thread.chainId) : null))
             };
 
             console.log(`✅ Created swap output thread ${notation} in ${outputCurrency}: ${outputPortion} (ID: ${newInternalId})`);
@@ -6800,9 +6823,26 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
         for (const threadKey in investigation.availableThreads[currency]) {
             const thread = investigation.availableThreads[currency][threadKey];
 
-            // For hop 1, only show victim threads; for other hops, show appropriate threads
-            if (hopNumber === 1 && thread.sourceType !== 'victim_transaction') continue;
-            if (hopNumber > 1 && thread.sourceType === 'victim_transaction') continue;
+            // Filter by hop level appropriately
+            if (hopNumber === 1) {
+                // Hop 1: Only show victim threads
+                if (thread.sourceType !== 'victim_transaction') continue;
+            } else {
+                // Other hops: Show threads from previous hop or same-hop conversions
+                // Exclude victim threads
+                if (thread.sourceType === 'victim_transaction') continue;
+
+                // Check hop level - should be from previous hop or same hop (for swaps/bridges)
+                const expectedHopLevel = hopNumber - 1;
+                if (thread.hopLevel !== expectedHopLevel && thread.hopLevel !== hopNumber) {
+                    // Skip unless it's a same-hop conversion (swap/bridge/change)
+                    if (thread.sourceType !== 'swap_output' &&
+                        thread.sourceType !== 'bridge_output' &&
+                        thread.sourceType !== 'change_output') {
+                        continue;
+                    }
+                }
+            }
 
             // Calculate available amount using internal ID or notation
             const availableAmount = getMaxAssignableAmount(
