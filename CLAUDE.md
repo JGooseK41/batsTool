@@ -3,22 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-25 19:23)
+## Latest Commit (Auto-updated: 2025-09-25 19:33)
 
-**Commit:** 99db1b33c7f455734241f68bc8912ae61c188ddd
+**Commit:** 5d4d4c964812d55d6ccccd3ba04656a6fa07e077
 **Author:** Your Name
-**Message:** Fix write-off confirmation modal removing wrong modal
+**Message:** Fix write-off wizard flow issues
 
-The confirm write-off button was removing the hop wizard instead of the confirmation modal, causing window.hopWizardData to become null.
+Fixed multiple issues with the write-off wizard process:
 
-Fixed by:
-- Added unique ID 'writeoffConfirmationModal' to confirmation dialog
-- Updated confirmWriteoff to remove specific modal by ID
-- Added null check for window.hopWizardData with error handling
-- Updated Cancel button to remove correct modal
-- Prevented the modal from reappearing after error
+1. Removed automatic wizard reopening after write-off:
+   - Added flag to prevent showAddEntryWizard from reopening after write-off
+   - Removed showRemainingThreadsSummary call for write-offs
+   - The wizard was automatically reopening after write-off completion
 
-The issue was document.querySelector('.modal') was selecting the first modal (hop wizard) instead of the confirmation modal, causing the wizard data to be cleared.
+2. Improved entry collapse after write-off:
+   - Entry is now collapsed before showing confirmation alert
+   - Collapse state is set immediately, not after timeout
+   - Entry displays correctly as collapsed in the UI
+
+3. Streamlined the write-off flow:
+   - After confirming write-off, it creates entry and closes wizard
+   - No manual form appears after wizard completion
+   - Entry is properly collapsed and displayed
+
+The write-off process now completes cleanly without reopening wizards or showing manual forms.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -26,23 +34,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 48 +++++++++++++++++++++++++++---------------------
- index.html | 25 ++++++++++++++++++++++---
- 2 files changed, 49 insertions(+), 24 deletions(-)
+ CLAUDE.md  | 45 ++++++++++++++++++---------------------------
+ index.html | 39 +++++++++++++++++++++++++++++----------
+ 2 files changed, 47 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 99db1b3 Fix write-off confirmation modal removing wrong modal (0 seconds ago)
-- 1f08065 Fix write-off process to use actual transaction amount (4 minutes ago)
-- 67ed03d Fix hop wizard buttons not responding to clicks (20 minutes ago)
-- c783a6f Fix hop wizard buttons not working - enable after transaction lookup (89 minutes ago)
+- 5d4d4c9 Fix write-off wizard flow issues (0 seconds ago)
+- 99db1b3 Fix write-off confirmation modal removing wrong modal (10 minutes ago)
+- 1f08065 Fix write-off process to use actual transaction amount (14 minutes ago)
+- 67ed03d Fix hop wizard buttons not responding to clicks (30 minutes ago)
+- c783a6f Fix hop wizard buttons not working - enable after transaction lookup (2 hours ago)
 - 25c4fc0 Debug Step 3 buttons with addEventListener and console logging (2 hours ago)
 - ed27959 Fix wizard buttons and styling issues (2 hours ago)
 - 5b7a40e Fix non-working buttons in hop wizard Step 3 (2 hours ago)
 - 0d8e8b5 Fix hop wizard not finding hop - string/number conversion issue (2 hours ago)
 - d14dc14 Add detailed debug logging for wizard creation issue (2 hours ago)
-- e6a973f Clarify wizard creation - direct DOM insertion is correct approach (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

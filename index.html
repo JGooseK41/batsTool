@@ -6414,7 +6414,11 @@ function buildAvailableThreadsIndex() {
                     currency: currency,
                     isChange: true,
                     parentInternalIds: entry.multipleSourceInternalIds || [entry.sourceThreadInternalId],
-                    parentNotations: entry.multipleSourceThreads || [entry.sourceThreadId]
+                    parentNotations: entry.multipleSourceThreads || [entry.sourceThreadId],
+
+                    // Chain tracking - inherit from entry
+                    chainId: entry.chain || null,
+                    chainName: entry.chain ? (window.blockchainAPIs?.[entry.chain]?.name || entry.chain) : null
                 };
 
                 console.log(`Created change thread ${entry.notation} in ${currency} with ${entry.amount} at hop level ${hop.hopNumber - 1}`);
@@ -6423,16 +6427,20 @@ function buildAvailableThreadsIndex() {
             else if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
                 // Don't create thread if this trace has been swapped (check both local and global)
                 if (!swappedThreadIds.has(entry.notation) && !globalSwappedThreadIds.has(entry.notation)) {
-                    // Don't create output threads for terminal wallets (purple, gray, blue)
-                    const isTerminal = entry.toWalletType === 'purple' ||
+                    // Don't create output threads for terminal wallets (purple, gray, blue) UNLESS they're bridges
+                    const isTerminal = (entry.toWalletType === 'purple' && !entry.isBridge) ||
                                      entry.toWalletType === 'gray' ||
                                      entry.toWalletType === 'blue' ||
-                                     entry.isTerminalWallet === true;
+                                     (entry.isTerminalWallet === true && !entry.isBridge);
 
                     if (isTerminal) {
                         console.log(`Skipping thread creation for terminal wallet (${entry.toWalletType}): ${entry.notation}`);
                     } else {
                         updateThreadAvailabilityFromHop(entry);
+                        // If it's a bridge, log it
+                        if (entry.isBridge) {
+                            console.log(`Created bridge output thread: ${entry.notation} on chain ${entry.bridgeDetails?.destinationChain}`);
+                        }
                     }
                 } else {
                     console.log(`Skipping thread creation for swapped trace: ${entry.notation}`);
@@ -6446,9 +6454,11 @@ function buildAvailableThreadsIndex() {
 
 // 2.2 Update Thread Availability from Hop Entry
 function updateThreadAvailabilityFromHop(entry) {
-    // Skip terminal wallets - they don't create output threads
-    if (entry.toWalletType === 'purple' || entry.toWalletType === 'gray' ||
-        entry.toWalletType === 'blue' || entry.isTerminalWallet) {
+    // Skip terminal wallets - they don't create output threads (UNLESS they're bridges)
+    if ((entry.toWalletType === 'purple' && !entry.isBridge) ||
+        entry.toWalletType === 'gray' ||
+        entry.toWalletType === 'blue' ||
+        (entry.isTerminalWallet && !entry.isBridge)) {
         console.log(`Not creating output thread for terminal wallet entry: ${entry.notation}`);
         return;
     }
@@ -6463,6 +6473,34 @@ function updateThreadAvailabilityFromHop(entry) {
     // Create internal ID for this new thread
     const notation = entry.notation;
     const internalId = generateInternalThreadId(notation, currency);
+
+    // Try to get chain info - for bridges use destination chain, otherwise use entry chain or inherit
+    let chainId = entry.chain || null;
+    let chainName = entry.chain ? (window.blockchainAPIs?.[entry.chain]?.name || entry.chain) : null;
+
+    // If this is a bridge entry, use the destination chain
+    if (entry.isBridge && entry.bridgeDetails?.destinationChain) {
+        chainId = entry.bridgeDetails.destinationChain;
+        chainName = window.blockchainAPIs?.[chainId]?.name || chainId;
+        console.log(`Using bridge destination chain: ${chainId}`);
+    } else if (!chainId) {
+        // Try to inherit from parent threads
+        const parentIds = entry.sourceThreadInternalId ? [entry.sourceThreadInternalId] :
+                         (entry.multipleSourceInternalIds || []);
+        for (const parentId of parentIds) {
+            // Look through all currencies for parent thread
+            for (const curr in investigation.availableThreads) {
+                const parentThread = investigation.availableThreads[curr]?.[parentId];
+                if (parentThread && parentThread.chainId) {
+                    chainId = parentThread.chainId;
+                    chainName = parentThread.chainName;
+                    console.log(`Inherited chain ${chainId} from parent thread ${parentId}`);
+                    break;
+                }
+            }
+            if (chainId) break;
+        }
+    }
 
     investigation.availableThreads[currency][internalId] = {
         // Dual-layer tracking
@@ -6481,7 +6519,11 @@ function updateThreadAvailabilityFromHop(entry) {
         parentInternalIds: entry.sourceThreadInternalId ? [entry.sourceThreadInternalId] :
                           (entry.multipleSourceInternalIds || []),
         childThreads: [],
-        currency: currency
+        currency: currency,
+
+        // Chain tracking - inherit from entry or parent
+        chainId: chainId,
+        chainName: chainName
     };
 
     // Don't modify availableAmount - getMaxAssignableAmount calculates it dynamically based on assignments
@@ -10586,46 +10628,64 @@ function addNewHop() {
                 <div id="entry_${hop.hopNumber}_${entry.id}" style="background: ${entryBgColor}; border: 2px solid ${entryBorderColor}; border-radius: 8px; margin-bottom: 10px; overflow: hidden;">
                     <div style="padding: ${isCollapsed ? '8px' : '15px'};">
                         <!-- Collapsed state header -->
-                        <div id="entrySummary_${entryKey}" style="display: ${isCollapsed ? 'block' : 'none'}; cursor: pointer; background: rgba(255,255,255,0.7); padding: 6px 10px; border-radius: 6px;" onclick="toggleEntryCollapse('${entryKey}')">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <span style="transform: rotate(0deg); transition: transform 0.3s; display: inline-block; font-size: 16px;">▶</span>
-                                        <span style="font-weight: bold; color: #2c3e50;">
-                                            Hop ${hopNumber} Entry ${entry.id}${threadNumber ? ` (Thread ${threadNumber})` : ''}
-                                        </span>
-                                        <span style="color: #7f8c8d; font-size: 12px;">
-                                            ${entryTypeLabel}
-                                        </span>
-                                    </div>
-                                    ${sourceThreadsInfo ? `
-                                        <div style="margin-left: 26px; margin-top: 4px;">
-                                            <span style="color: #666; font-size: 11px; font-style: italic;">
-                                                ${sourceThreadsInfo}
+                        <div id="entrySummary_${entryKey}" style="display: ${isCollapsed ? 'block' : 'none'}; background: rgba(255,255,255,0.7); padding: 6px 10px; border-radius: 6px;">
+                            <div style="cursor: pointer;" onclick="toggleEntryCollapse('${entryKey}')">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="transform: rotate(0deg); transition: transform 0.3s; display: inline-block; font-size: 16px;">▶</span>
+                                            <span style="font-weight: bold; color: #2c3e50;">
+                                                Hop ${hopNumber} Entry ${entry.id}${threadNumber ? ` (Thread ${threadNumber})` : ''}
                                             </span>
+                                            <span style="color: #7f8c8d; font-size: 12px;">
+                                                ${entryTypeLabel}
+                                            </span>
+                                            ${entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE' ? `
+                                                <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                                                    TERMINAL
+                                                </span>
+                                            ` : ''}
                                         </div>
-                                    ` : ''}
-                                </div>
-                                <div style="text-align: right;">
-                                    ${amount > 0 ? (
-                                        entry.entryType === 'swap' && entry.swapDetails ? `
-                                            <span style="font-weight: bold; color: #27ae60;">
-                                                ${amount.toLocaleString()} ${displayCurrency} → ${parseFloat(entry.outputAmount || 0).toLocaleString()} ${entry.outputCurrency || ''}
+                                        ${sourceThreadsInfo ? `
+                                            <div style="margin-left: 26px; margin-top: 4px;">
+                                                <span style="color: #666; font-size: 11px; font-style: italic;">
+                                                    ${sourceThreadsInfo}
+                                                </span>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                    <div style="text-align: right;">
+                                        ${amount > 0 ? (
+                                            entry.entryType === 'swap' && entry.swapDetails ? `
+                                                <span style="font-weight: bold; color: #27ae60;">
+                                                    ${amount.toLocaleString()} ${displayCurrency} → ${parseFloat(entry.outputAmount || 0).toLocaleString()} ${entry.outputCurrency || ''}
+                                                </span>
+                                            ` : `
+                                                <span style="font-weight: bold; color: #27ae60;">
+                                                    ${amount.toLocaleString()} ${currency} / ${artAmount.toLocaleString()} ${currency}
+                                                </span>
+                                            `
+                                        ) : `
+                                            <span style="color: #e74c3c; font-size: 12px;">
+                                                Not logged
                                             </span>
-                                        ` : `
-                                            <span style="font-weight: bold; color: #27ae60;">
-                                                ${amount.toLocaleString()} ${currency} / ${artAmount.toLocaleString()} ${currency}
-                                            </span>
-                                        `
-                                    ) : `
-                                        <span style="color: #e74c3c; font-size: 12px;">
-                                            Not logged
-                                        </span>
-                                    `}
+                                        `}
+                                    </div>
                                 </div>
                             </div>
-                            <!-- Add delete button in collapsed view -->
-                            ${!isCollapsed ? `<button class="btn btn-sm btn-danger" style="margin-left: 10px;" onclick="event.stopPropagation(); removeHopEntry(${hop.hopNumber}, ${entry.id})">Delete</button>` : ''}
+                            <!-- Action buttons in collapsed view -->
+                            <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-start;">
+                                ${(entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && entry.entryType === 'trace' && !entry.bridgeOutputLogged ? `
+                                    <button class="btn btn-sm" style="background: #27ae60; color: white; border: 1px solid #229954;"
+                                            onclick="event.stopPropagation(); logBridgeOutput(${hop.hopNumber}, ${entry.id})"
+                                            title="Log the output transaction from this terminal wallet (CEX or Bridge)">
+                                        🌉 Log Bridge Output
+                                    </button>
+                                ` : ''}
+                                <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); removeHopEntry(${hop.hopNumber}, ${entry.id})">
+                                    🗑️ Delete
+                                </button>
+                            </div>
                         </div>
                         
                         <!-- Expanded state -->
@@ -10642,6 +10702,11 @@ function addNewHop() {
                                             <span style="color: #7f8c8d; font-size: 12px;">
                                                 ${entryTypeLabel}
                                             </span>
+                                            ${entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE' ? `
+                                                <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                                                    TERMINAL
+                                                </span>
+                                            ` : ''}
                                             <span style="color: #666; font-size: 11px;">
                                                 (Click to collapse)
                                             </span>
@@ -20458,7 +20523,8 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
             notes: `Change output: ${output.amount} ${output.currency} sent to ${output.to}\nFunds remain trackable at same hop level (${changeNotation})`,
             notation: changeNotation,
             isChange: true,
-            createsSameHopThread: true // Flag to indicate this creates a same-hop thread
+            createsSameHopThread: true, // Flag to indicate this creates a same-hop thread
+            chain: wizardData.detectedChain || wizardData.txData?.blockchain || null // Store chain info
         };
 
         // Add to hop entries
@@ -20595,6 +20661,7 @@ function createSingleHopEntry(hop, wizardData, output, outputIndex) {
         txHash: wizardData.txHash,
         timestamp: wizardData.txData ? new Date(wizardData.txData.time).toISOString().slice(0, 16) : '',
         timezone: 'UTC',
+        chain: wizardData.detectedChain || wizardData.txData?.blockchain || null, // Store the chain!
         notes: exchangeAttribution ?
             `Terminal wallet: ${exchangeAttribution.name || exchangeAttribution.label}\nType: ${exchangeAttribution.type}\nAddress: ${output.to}${exchangeAttribution.source ? '\nDetection source: ' + exchangeAttribution.source : ''}` :
             isSwap ?
@@ -21976,17 +22043,215 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
         function removeHopEntry(hopNumber, entryId) {
             const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             const entry = hop.entries.find(e => e.id === entryId);
-            
+
             saveUndoState(`Remove entry ${entry.notation || `Entry ${entry.id}`} from Hop ${hop.hopNumber}`);
-            
+
             hop.entries = hop.entries.filter(e => e.id !== entryId);
-            
+
             // Mark downstream hops for validation since an entry was removed
             markDownstreamHopsForValidation(hop.hopNumber);
-            
+
             renderHops();
             saveToStorage();
             updateValidationStatus();
+        }
+
+        // Log bridge output from terminal wallet (can keep as CEX or convert to DeFi bridge)
+        function logBridgeOutput(hopNumber, entryId) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            const entry = hop.entries.find(e => e.id === entryId);
+
+            if (!entry || entry.toWalletType !== 'purple') {
+                showNotification('❌ Only purple terminal wallets can log bridge outputs', 'error');
+                return;
+            }
+
+            // Show bridge output logging modal
+            const modal = document.createElement('div');
+            modal.className = 'modal show';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 700px; padding: 30px;">
+                    <h2 style="margin-bottom: 20px;">🌉 Log Bridge/CEX Output Transaction</h2>
+
+                    <!-- Transaction Details Section -->
+                    <div style="background: #f0f7ff; border: 2px solid #2196f3; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <h3 style="margin-top: 0; color: #0d47a1; font-size: 16px;">Source Transaction Details</h3>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">Transaction Hash:</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text"
+                                       value="${entry.txHash || 'Not available'}"
+                                       readonly
+                                       style="flex: 1; padding: 8px; font-family: monospace; font-size: 12px; background: white; border: 1px solid #ddd; border-radius: 4px;">
+                                <button onclick="navigator.clipboard.writeText('${entry.txHash || ''}'); this.textContent = '✓ Copied!'; setTimeout(() => this.textContent = '📋 Copy', 2000);"
+                                        style="padding: 8px 12px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                    📋 Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">Bridge Address (Receiving Wallet):</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text"
+                                       value="${entry.toWallet}"
+                                       readonly
+                                       style="flex: 1; padding: 8px; font-family: monospace; font-size: 12px; background: white; border: 1px solid #ddd; border-radius: 4px;">
+                                <button onclick="navigator.clipboard.writeText('${entry.toWallet}'); this.textContent = '✓ Copied!'; setTimeout(() => this.textContent = '📋 Copy', 2000);"
+                                        style="padding: 8px 12px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                    📋 Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">Amount:</label>
+                            <div style="padding: 8px; background: white; border: 1px solid #ddd; border-radius: 4px;">
+                                ${entry.amount} ${entry.currency || 'Unknown'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="margin: 20px 0; color: #666; background: #fff9e6; padding: 15px; border-radius: 6px; border: 1px solid #ffd666;">
+                        <strong>💡 Tip:</strong> Use the transaction hash and address above to search in bridge explorers, CEX records, or the destination chain explorer to find the output transaction.
+                    </p>
+
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 style="margin-top: 0; font-size: 16px;">Wallet Type Selection:</h3>
+                        <div style="margin: 15px 0;">
+                            <label style="display: block; margin-bottom: 15px; padding: 15px; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.3s;"
+                                   onmouseover="this.style.borderColor='#9b59b6'; this.style.background='#f9f4ff';"
+                                   onmouseout="this.style.borderColor='#ddd'; this.style.background='transparent';">
+                                <input type="radio" name="walletType" value="purple" checked style="margin-right: 10px;">
+                                <strong>Keep as CEX/VASP (Purple)</strong>
+                                <div style="margin-left: 25px; margin-top: 5px; color: #666; font-size: 14px;">
+                                    Use this for centralized exchanges when you have records showing the output transaction.
+                                    The wallet remains purple but creates an output thread.
+                                </div>
+                            </label>
+
+                            <label style="display: block; margin-bottom: 10px; padding: 15px; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.3s;"
+                                   onmouseover="this.style.borderColor='#8b4513'; this.style.background='#fff8f4';"
+                                   onmouseout="this.style.borderColor='#ddd'; this.style.background='transparent';">
+                                <input type="radio" name="walletType" value="brown" style="margin-right: 10px;">
+                                <strong>Convert to DeFi Bridge (Brown)</strong>
+                                <div style="margin-left: 25px; margin-top: 5px; color: #666; font-size: 14px;">
+                                    Use this for decentralized bridges and cross-chain protocols.
+                                    Changes the wallet color to brown to indicate a bridge/conversion.
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 2px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-weight: bold; display: block; margin-bottom: 10px; color: #2c3e50;">
+                                Destination Chain Transaction Hash:
+                            </label>
+                            <input type="text"
+                                   id="bridgeDestTxHash"
+                                   placeholder="Paste the transaction hash from the destination chain"
+                                   style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px;">
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                This is the hash of the transaction that received funds on the destination chain after bridging
+                            </small>
+                        </div>
+
+                        <div style="margin-bottom: 25px;">
+                            <label style="font-weight: bold; display: block; margin-bottom: 10px; color: #2c3e50;">
+                                Select Destination Chain:
+                            </label>
+                            <select id="bridgeDestChain" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px;">
+                                <option value="">Select blockchain...</option>
+                                ${Object.entries(window.blockchainAPIs || {}).map(([key, chain]) =>
+                                    `<option value="${key}">${chain.name}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+
+                        <div style="display: flex; justify-content: center; gap: 10px;">
+                            <button class="btn btn-primary" onclick="confirmBridgeOutput(${hopNumber}, ${entryId})"
+                                    style="padding: 12px 24px; font-size: 16px;">
+                                🌉 Log Output Transaction
+                            </button>
+                            <button class="btn btn-secondary" onclick="this.closest('.modal').remove()"
+                                    style="padding: 12px 24px; font-size: 16px;">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        async function confirmBridgeOutput(hopNumber, entryId) {
+            const txHash = document.getElementById('bridgeDestTxHash').value.trim();
+            const destChain = document.getElementById('bridgeDestChain').value;
+            const walletTypeRadio = document.querySelector('input[name="walletType"]:checked');
+            const walletType = walletTypeRadio ? walletTypeRadio.value : 'purple';
+
+            if (!txHash || !destChain) {
+                showNotification('❌ Please provide both destination transaction hash and chain', 'error');
+                return;
+            }
+
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            const entry = hop.entries.find(e => e.id === entryId);
+
+            if (!entry) {
+                showNotification('❌ Entry not found', 'error');
+                return;
+            }
+
+            // Save undo state
+            saveUndoState(`Log bridge output from terminal wallet in Hop ${hop.hopNumber}`);
+
+            // Update entry based on wallet type selection
+            if (walletType === 'brown') {
+                // Convert to DeFi bridge
+                entry.toWalletType = 'brown'; // Brown for bridges/conversions
+                entry.isBridge = true;
+                const noteType = 'DEFI BRIDGE';
+                entry.notes = (entry.notes || '') + `\n[${noteType}] Output logged. Destination: ${destChain}, Tx: ${txHash}`;
+            } else {
+                // Keep as CEX but mark that it has a bridge output
+                entry.toWalletType = 'purple'; // Keep as purple for CEX
+                entry.isBridge = true; // Still mark as bridge to create output threads
+                entry.isCEXBridge = true; // Special flag for CEX bridges
+                const noteType = 'CEX OUTPUT';
+                entry.notes = (entry.notes || '') + `\n[${noteType}] Output transaction logged. Destination: ${destChain}, Tx: ${txHash}`;
+            }
+
+            // Store bridge details for both types
+            entry.bridgeDetails = {
+                sourceChain: entry.chain || 'unknown',
+                destinationChain: destChain,
+                destinationTxHash: txHash,
+                bridgeAddress: entry.toWallet,
+                walletType: walletType
+            };
+
+            // Mark that bridge output has been logged
+            entry.bridgeOutputLogged = true;
+
+            // Close modal
+            document.querySelector('.modal').remove();
+
+            // Re-render
+            buildAvailableThreadsIndex(); // Rebuild to create output threads
+            renderHops();
+            saveToStorage();
+
+            const walletTypeText = walletType === 'brown' ? 'DeFi bridge' : 'CEX';
+            showNotification(`✅ Output logged! Thread ${entry.notation} continues on ${destChain} from ${walletTypeText}. Add the destination transaction in Hop ${hop.hopNumber + 1}.`, 'success', 8000);
+
+            // Optionally open the next hop to add the bridge output
+            if (!investigation.hops.find(h => h.hopNumber === hop.hopNumber + 1)) {
+                // Create next hop if it doesn't exist
+                addHop();
+            }
         }
 
         function validateTransactionChronology(victim) {
@@ -30943,6 +31208,10 @@ To (RED Wallet): ${transfer.to}`;
         window.proceedToNextHop = proceedToNextHop;
         window.showThreadReviewModal = showThreadReviewModal;
         window.showNotification = showNotification;
+        window.logBridgeOutput = logBridgeOutput;
+        window.confirmBridgeOutput = confirmBridgeOutput;
+        window.removeHopEntry = removeHopEntry;
+        window.addHop = addHop;
 
         // Add event listeners to setup fields
         document.addEventListener('DOMContentLoaded', function() {
