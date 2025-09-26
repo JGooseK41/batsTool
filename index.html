@@ -23558,34 +23558,25 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 investigation.availableThreads[outputCurrency] = {};
             }
 
-            // For bridge outputs, we need unique IDs when there are multiple outputs from same source
-            // Each bridge output is a separate thread, even if from the same source notation
-            // Use the destination tx hash to make it unique
-            const bridgeUniqueKey = `${sourceNotation}_bridge_${txHash.substring(0, 8)}`;
-            const outputInternalId = generateInternalThreadId(bridgeUniqueKey, outputCurrency, true);
+            // For bridge outputs, we need TRULY unique IDs for the dual-layer system
+            // Each bridge output is a separate thread with its own unique internal ID
+            // The notation stays the same for display, but internal ID must be unique
+            // Force unique ID generation for every bridge output
+            const outputInternalId = generateInternalThreadId(`bridge_${entryId}`, outputCurrency, true); // Force unique with timestamp
 
             // For bridge outputs, check if this exact bridge output already exists (same tx hash)
             // Multiple bridge outputs from the same source notation are allowed
             let existingThread = null;
             let existingThreadKey = null;
 
-            // Check if this exact bridge output already exists
+            // Check if this exact bridge output already exists (using the unique key that includes entry ID)
             if (investigation.availableThreads[outputCurrency][outputInternalId]) {
                 existingThread = investigation.availableThreads[outputCurrency][outputInternalId];
                 existingThreadKey = outputInternalId;
-            } else {
-                // For bridge outputs, also check if there's a thread with the same destination tx hash
-                // This prevents duplicate threads for the same bridge transaction
-                for (const threadId in investigation.availableThreads[outputCurrency]) {
-                    const thread = investigation.availableThreads[outputCurrency][threadId];
-                    if (thread.destinationTxHash === txHash && thread.sourceType === 'bridge_output') {
-                        existingThread = thread;
-                        existingThreadKey = threadId;
-                        console.log(`Found existing bridge output with same tx hash ${txHash}`);
-                        break;
-                    }
-                }
+                console.log(`Found existing bridge output for entry ${entryId}, will update it`);
             }
+            // REMOVED: We no longer check for same tx hash across different entries
+            // Each bridge conversion entry should create its own thread
 
             if (existingThread) {
                 console.log(`Updating existing thread for ${sourceNotation} in ${outputCurrency}, amount from ${existingThread.totalAmount} to ${outputAmount}`);
@@ -23612,6 +23603,7 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     // Dual-layer tracking (same as swap outputs)
                     notation: sourceNotation,  // KEEP ORIGINAL NOTATION for audit trail
                     internalId: outputInternalId,
+                    entryId: entryId,  // Track which entry created this bridge output
 
                     // Thread amounts
                     totalAmount: outputAmount,

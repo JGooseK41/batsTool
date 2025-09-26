@@ -3,42 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 11:19)
+## Latest Commit (Auto-updated: 2025-09-26 11:24)
 
-**Commit:** 0abeafea59e83aa79fcf6e08546a5553312ddce0
+**Commit:** 15d1a3454997568508bdd064ac623d5495868037
 **Author:** Your Name
-**Message:** Add default Solscan Pro API key for all users
+**Message:** Fix Solana transaction lookup failures
 
-- Added default Solscan Pro API key so attribution works for all users
-- Updated settings UI to show Solscan is enabled by default (green box)
-- Users can still override with their own API key if needed
-- Solscan Pro API now provides enhanced Solana wallet attribution automatically
+- Improved Netlify proxy with proper retry logic for multiple endpoints
+- Added timeout handling (10 seconds per endpoint)
+- Better error handling and status code checking
+- Fixed proxy to try api.mainnet-beta.solana.com first, then projectserum
+- Added proper error messages when all endpoints fail
+- Prevent fallback to direct API calls that will fail with CORS
+- Added console logging for debugging proxy issues
 
-Attribution hierarchy:
-1. Arkham Intelligence (all chains)
-2. Solscan Pro API (Solana addresses)
-3. Etherscan (EVM chains)
-4. Hardcoded known addresses (fallback)
+This should restore Solana transaction lookups for bridge destination detection.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 40 ++++++++++++++++++++--------------------
- index.html | 19 +++++++++++--------
- 2 files changed, 31 insertions(+), 28 deletions(-)
+ CLAUDE.md                         |  43 ++++++-------
+ index.html                        |  70 ++++++++++++---------
+ netlify/functions/solana-proxy.js | 124 ++++++++++++++++++++++++--------------
+ 3 files changed, 145 insertions(+), 92 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0abeafe Add default Solscan Pro API key for all users (0 seconds ago)
-- a9d783d Add Solscan API key configuration and Pro API support (2 minutes ago)
-- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (12 minutes ago)
-- e38d1ae Fix hop finalization with unallocated bridge outputs (17 minutes ago)
-- 165ad53 Fix over-allocation blocking and wizard close button (26 minutes ago)
-- 244d6f0 Fix focusOnHop function error (39 minutes ago)
-- e87289f Fix wizard Step 3 duplicate thread display issue (43 minutes ago)
+- 15d1a34 Fix Solana transaction lookup failures (0 seconds ago)
+- 0abeafe Add default Solscan Pro API key for all users (5 minutes ago)
+- a9d783d Add Solscan API key configuration and Pro API support (7 minutes ago)
+- 2ce0373 Fix 99% allocation issue and add Solana wallet attribution (17 minutes ago)
+- e38d1ae Fix hop finalization with unallocated bridge outputs (22 minutes ago)
+- 165ad53 Fix over-allocation blocking and wizard close button (31 minutes ago)
+- 244d6f0 Fix focusOnHop function error (43 minutes ago)
+- e87289f Fix wizard Step 3 duplicate thread display issue (48 minutes ago)
 - 83abeea Fix dual-layer thread tracking system for multiple threads with same notation (2 hours ago)
 - c39401d Add Solana proxy function to handle CORS issues (3 hours ago)
-- 2ba11de Revert Solana endpoints to original working configuration (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
