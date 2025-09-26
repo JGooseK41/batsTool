@@ -3613,7 +3613,104 @@
             saveToStorage();
         }
 
-        // Get wallet attribution from Etherscan API with enhanced label detection
+        // Get Solana wallet attribution from known addresses and patterns
+        async function getSolanaWalletAttribution(address) {
+            if (!address) return null;
+
+            console.log(`Checking Solana attribution for ${address}`);
+
+            // Known Solana exchange addresses (can be expanded)
+            const knownSolanaExchanges = {
+                // KuCoin Solana addresses
+                '2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S': { name: 'KuCoin', type: 'CEX' },
+                'GqjCvdLMK8nNaZzxQdRmu42P7f8YvdPnF5tyS2grUhHn': { name: 'KuCoin', type: 'CEX' },
+                '5WTw1ouRMU9BXJvvnBy1ywLwgBW1R3RKqC5bMcAGmXHH': { name: 'KuCoin Hot Wallet', type: 'CEX' },
+
+                // Binance Solana addresses
+                '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM': { name: 'Binance', type: 'CEX' },
+                '2ojvBkGXSxg2dhjEQE1UebK1vE7Um5MfVjJqvdcSGNfP': { name: 'Binance', type: 'CEX' },
+                'H616EYLS6qP9CtaVMBfpVQKpVrMNwipTRvybHWNBicDV': { name: 'Binance Hot Wallet', type: 'CEX' },
+
+                // Coinbase Solana addresses
+                'GJRs4FwHtemZ5ZE9x3FNvJ8TMwitKTh21yxdRPqn7npE': { name: 'Coinbase', type: 'CEX' },
+                'H8sMJSCQxfKiFTCfDR3DUMLPwcRbM61LGFJ8N4dK3WjS': { name: 'Coinbase', type: 'CEX' },
+                '2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSprPicm': { name: 'Coinbase', type: 'CEX' },
+
+                // Kraken Solana addresses
+                '6ry6b7No8GcXSJsUBKeJLqUmdKqJuLwVommVGKFju5t8': { name: 'Kraken', type: 'CEX' },
+                'CKZRS8Wt3jhKoLCTBiD6RzLqUYxVY6xqvG1SUN7hLUNr': { name: 'Kraken', type: 'CEX' },
+
+                // OKX Solana addresses
+                '5VCwKtCXgCJ6kit5FybXjvriW3xELsFDhYrPSqtJNmcD': { name: 'OKX', type: 'CEX' },
+                '7kgpPVqKbpsqKBHqfmhQvvmSxaFR8YsJrFJaCqr3J8zC': { name: 'OKX', type: 'CEX' },
+
+                // Bybit Solana addresses
+                'BBMbFwme5tc9mPu5RPvxpZ2nqHsKc4DPQ7a6L29xSvdP': { name: 'Bybit', type: 'CEX' },
+                'AC5RDfQFmDS1deWZos921JfqscXdByf8BKHs5ACWjtW2': { name: 'Bybit', type: 'CEX' },
+
+                // Gate.io Solana addresses
+                '6s9yBpHxANxWYKPsvB4KmBPuQGHz1NFsmgqKa5rz3HEF': { name: 'Gate.io', type: 'CEX' },
+                'u6PJ8DtQuPFnfmwHbGFULQ4u4EgjDiyYKjVEsynXq2w': { name: 'Gate.io', type: 'CEX' }
+            };
+
+            // Check if address is in known exchanges
+            if (knownSolanaExchanges[address]) {
+                const attribution = {
+                    name: knownSolanaExchanges[address].name,
+                    label: knownSolanaExchanges[address].name,
+                    type: knownSolanaExchanges[address].type,
+                    source: 'known_solana_addresses',
+                    isExchange: true
+                };
+                console.log(`Found known Solana exchange: ${attribution.name}`);
+                return attribution;
+            }
+
+            // Try to use Solscan API if available (note: may require API key)
+            try {
+                // Solscan has a public API but with rate limits
+                // Using a simple fetch to check account info
+                const response = await fetch(`https://public-api.solscan.io/account/${address}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).catch(err => {
+                    console.log('Solscan API call failed:', err);
+                    return null;
+                });
+
+                if (response && response.ok) {
+                    const data = await response.json();
+
+                    // Check if the response has tags or labels
+                    if (data.tag || data.tags || data.label) {
+                        const tag = data.tag || data.tags?.[0] || data.label;
+
+                        // Check if it's an exchange based on the tag
+                        const exchangeKeywords = ['exchange', 'cex', 'binance', 'coinbase', 'kraken', 'kucoin', 'okx', 'bybit', 'gate'];
+                        const isExchange = exchangeKeywords.some(keyword => tag.toLowerCase().includes(keyword));
+
+                        if (isExchange) {
+                            const attribution = {
+                                name: tag,
+                                label: tag,
+                                type: 'CEX',
+                                source: 'solscan_api',
+                                isExchange: true
+                            };
+                            console.log(`Solscan attribution found: ${attribution.name}`);
+                            return attribution;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('Error checking Solscan:', error);
+            }
+
+            return null;
+        }
+
+        // Get wallet attribution - checks multiple sources with Arkham as primary
         async function getWalletAttribution(address, chainId = null) {
             if (!address) return null;
 
@@ -3625,10 +3722,12 @@
                 return walletAttributionCache[lowerAddress];
             }
 
+            let attribution = null;
+
             try {
-                // First try Arkham Intelligence API for better attribution
+                // ALWAYS CHECK ARKHAM FIRST - IT'S OUR PRIMARY SOURCE FOR ALL CHAINS
+                console.log('Checking Arkham Intelligence for attribution (primary source for all chains)');
                 const arkhamApiKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
-                let attribution = null;
 
                 if (arkhamApiKey) {
                     try {
@@ -3664,7 +3763,25 @@
                     }
                 }
 
-                // Fall back to Etherscan API for address info including labels
+                // If Arkham didn't find attribution, check chain-specific secondary sources
+                if (!attribution) {
+                    console.log('Arkham did not find attribution, checking secondary chain-specific sources');
+
+                    // Check if this looks like a Solana address (base58, typically 32-44 chars)
+                    const isSolanaAddress = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
+                    if (isSolanaAddress) {
+                        console.log('Detected Solana address format, checking Solana-specific sources');
+                        const solanaAttribution = await getSolanaWalletAttribution(address);
+                        if (solanaAttribution) {
+                            attribution = solanaAttribution;
+                            walletAttributionCache[lowerAddress] = attribution;
+                            console.log('Found Solana attribution:', attribution);
+                            return attribution;
+                        }
+                    }
+                }
+
+                // For EVM chains, check Etherscan as secondary source
                 const apiKey = '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
 
                 // Use the chainId if provided, otherwise default to Ethereum (1)
@@ -21521,21 +21638,44 @@ function createHopEntryFromWizard() {
         // Automatically adjust allocation to use all available funds
         const adjustmentRatio = totalAvailable / totalAmount;
 
-        // Adjust each thread's allocation proportionally
+        // First pass: Adjust each thread's allocation proportionally
         Object.keys(wizardData.allocations).forEach(threadId => {
             const originalAmount = wizardData.allocations[threadId];
             wizardData.allocations[threadId] = Math.floor(originalAmount * adjustmentRatio * 100) / 100; // Round down to 2 decimals
         });
 
-        // Recalculate to ensure we don't exceed available due to rounding
-        const adjustedTotal = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+        // Recalculate to see how much is left due to rounding
+        let adjustedTotal = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+        let remainder = totalAvailable - adjustedTotal;
 
-        // If still slightly over due to rounding, subtract from the largest allocation
-        if (adjustedTotal > totalAvailable) {
+        // Second pass: Distribute the remainder to ensure we use EXACTLY the available amount
+        // Add the remainder to threads one by one until it's fully distributed
+        if (remainder > 0.001) { // Only adjust if remainder is significant
+            const threadIds = Object.keys(wizardData.allocations);
+            let i = 0;
+            while (remainder > 0.001 && i < threadIds.length) {
+                const threadId = threadIds[i];
+                const thread = threads.find(t => t.threadId === threadId || t.internalId === threadId);
+                if (thread) {
+                    // Add as much of the remainder as this thread can handle
+                    const maxAddition = Math.min(remainder, thread.availableAmount - wizardData.allocations[threadId]);
+                    if (maxAddition > 0) {
+                        wizardData.allocations[threadId] = Math.round((wizardData.allocations[threadId] + maxAddition) * 100) / 100;
+                        remainder -= maxAddition;
+                    }
+                }
+                i++;
+            }
+        }
+
+        // Final adjustment to ensure exact match (handle tiny rounding errors)
+        adjustedTotal = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+        if (Math.abs(adjustedTotal - totalAvailable) < 0.01 && adjustedTotal !== totalAvailable) {
+            // Find the largest allocation and adjust it by the tiny difference
             const largestThread = Object.keys(wizardData.allocations).reduce((max, threadId) =>
                 wizardData.allocations[threadId] > wizardData.allocations[max] ? threadId : max
             );
-            wizardData.allocations[largestThread] -= (adjustedTotal - totalAvailable);
+            wizardData.allocations[largestThread] = Math.round((wizardData.allocations[largestThread] + (totalAvailable - adjustedTotal)) * 100) / 100;
         }
 
         console.log(`Auto-adjusted allocations to ${totalAvailable} (from ${totalAmount})`);
