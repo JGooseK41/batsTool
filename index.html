@@ -22997,54 +22997,69 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             // This maintains the audit trail and allows the thread to be traced in the same hop
             const outputInternalId = generateInternalThreadId(sourceNotation, outputCurrency);
 
-            // Create the bridge output thread (mirrors swap output structure)
-            investigation.availableThreads[outputCurrency][outputInternalId] = {
-                // Dual-layer tracking (same as swap outputs)
-                notation: sourceNotation,  // KEEP ORIGINAL NOTATION for audit trail
-                internalId: outputInternalId,
+            // Check if a bridge output thread already exists with this notation
+            const existingBridgeOutput = investigation.availableThreads[outputCurrency][outputInternalId];
+            if (existingBridgeOutput && existingBridgeOutput.sourceType === 'bridge_output') {
+                console.log(`Bridge output thread already exists for ${sourceNotation} in ${outputCurrency}, updating amount from ${existingBridgeOutput.totalAmount} to ${outputAmount}`);
+                // Update the existing thread instead of creating a duplicate
+                existingBridgeOutput.totalAmount = outputAmount;
+                existingBridgeOutput.availableAmount = outputAmount;
+                existingBridgeOutput.destinationTxHash = txHash;
+                existingBridgeOutput.sourceWallet = destWallet;
+                existingBridgeOutput.chainId = destChain;
+                existingBridgeOutput.chainName = window.blockchainAPIs?.[destChain]?.name || destChain;
 
-                // Thread amounts
-                totalAmount: outputAmount,
-                availableAmount: outputAmount,
-                assignments: [],
+                showNotification(`✅ Bridge output updated! Thread ${sourceNotation} updated to ${outputAmount} ${outputCurrency} on ${destChain}.`, 'success', 8000);
+            } else {
+                // Create the bridge output thread (mirrors swap output structure)
+                investigation.availableThreads[outputCurrency][outputInternalId] = {
+                    // Dual-layer tracking (same as swap outputs)
+                    notation: sourceNotation,  // KEEP ORIGINAL NOTATION for audit trail
+                    internalId: outputInternalId,
 
-                // Source information
-                sourceWallet: destWallet,  // Bridge destination becomes the source
-                sourceType: 'bridge_output',  // Mark as bridge output (like swap_output)
-                hopLevel: hop.hopNumber,  // SAME HOP LEVEL (critical!)
+                    // Thread amounts
+                    totalAmount: outputAmount,
+                    availableAmount: outputAmount,
+                    assignments: [],
 
-                // Tracking information
-                createdAt: new Date().toISOString(),
-                isActive: true,
-                parentThreads: [sourceInternalId || sourceNotation],
-                childThreads: [],
-                currency: outputCurrency,
+                    // Source information
+                    sourceWallet: destWallet,  // Bridge destination becomes the source
+                    sourceType: 'bridge_output',  // Mark as bridge output (like swap_output)
+                    hopLevel: hop.hopNumber,  // SAME HOP LEVEL (critical!)
 
-                // Chain tracking - use destination chain
-                chainId: destChain,
-                chainName: window.blockchainAPIs?.[destChain]?.name || destChain,
+                    // Tracking information
+                    createdAt: new Date().toISOString(),
+                    isActive: true,
+                    parentThreads: [sourceInternalId || sourceNotation],
+                    childThreads: [],
+                    currency: outputCurrency,
 
-                // Bridge-specific metadata (like swap metadata)
-                bridgeConverted: true,  // Like swapConverted flag
-                originalCurrency: inputCurrency,
-                bridgeType: walletType === 'brown' ? 'defi' : 'cex',
-                sourceTxHash: entry.txHash,
-                destinationTxHash: txHash,
+                    // Chain tracking - use destination chain
+                    chainId: destChain,
+                    chainName: window.blockchainAPIs?.[destChain]?.name || destChain,
 
-                // Bridge details for audit
-                bridgeDetails: {
-                    fromChain: entry.chain || 'unknown',
-                    toChain: destChain,
-                    fromAmount: inputAmount,
-                    toAmount: outputAmount,
-                    fromCurrency: inputCurrency,
-                    toCurrency: outputCurrency,
-                    bridgeAddress: entry.toWallet
-                }
-            };
+                    // Bridge-specific metadata (like swap metadata)
+                    bridgeConverted: true,  // Like swapConverted flag
+                    originalCurrency: inputCurrency,
+                    bridgeType: walletType === 'brown' ? 'defi' : 'cex',
+                    sourceTxHash: entry.txHash,
+                    destinationTxHash: txHash,
 
-            console.log(`Created bridge output thread: ${sourceNotation} with ${outputAmount} ${outputCurrency} on ${destChain} at hop ${hop.hopNumber}`);
-            showNotification(`✨ Bridge conversion complete: ${inputAmount} ${inputCurrency} → ${outputAmount} ${outputCurrency} (available in Hop ${hop.hopNumber})`, 'info', 5000);
+                    // Bridge details for audit
+                    bridgeDetails: {
+                        fromChain: entry.chain || 'unknown',
+                        toChain: destChain,
+                        fromAmount: inputAmount,
+                        toAmount: outputAmount,
+                        fromCurrency: inputCurrency,
+                        toCurrency: outputCurrency,
+                        bridgeAddress: entry.toWallet
+                    }
+                };
+
+                console.log(`Created bridge output thread: ${sourceNotation} with ${outputAmount} ${outputCurrency} on ${destChain} at hop ${hop.hopNumber}`);
+                showNotification(`✨ Bridge conversion complete: ${inputAmount} ${inputCurrency} → ${outputAmount} ${outputCurrency} (available in Hop ${hop.hopNumber})`, 'info', 5000);
+            }
 
             // Close modal - find the specific bridge output modal
             const modal = document.getElementById('bridgeOutputModal') || document.querySelector('.modal');

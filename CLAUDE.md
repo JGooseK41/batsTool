@@ -3,19 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 06:33)
+## Latest Commit (Auto-updated: 2025-09-26 06:49)
 
-**Commit:** cb1d480bbed00232164b535fa759b8b1a10255d0
+**Commit:** 706010eb0ba68851edaaf1c92de5d02da5aa0e76
 **Author:** Your Name
-**Message:** Set hops and entries to collapsed by default when loading saved files
+**Message:** Fix duplicate bridge output thread creation
 
-- All hops now start collapsed when loading a saved investigation
-- All hop entries within each hop also start collapsed
-- Provides cleaner initial view for large investigations
-- Users can expand specific hops/entries as needed
-- Reduces visual clutter when reviewing saved cases
-
-This improves usability when loading investigations with many hops and entries
+- Bridge entries marked with isBridge=true and bridgeOutputLogged=true no longer create duplicate threads
+- updateThreadAvailabilityFromHop now skips logged bridge entries entirely
+- Bridge output threads are only created once in confirmBridgeOutput with the converted currency
+- Prevents duplicate USDC threads when buildAvailableThreadsIndex runs after bridge logging
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -23,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 39 ++++++++++++++++++++-------------------
- index.html | 21 ++++++++++++++++++++-
- 2 files changed, 40 insertions(+), 20 deletions(-)
+ CLAUDE.md  | 39 +++++++++++++++++++--------------------
+ index.html | 14 +++++++++-----
+ 2 files changed, 28 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- cb1d480 Set hops and entries to collapsed by default when loading saved files (0 seconds ago)
-- d2feb61 Add bridge badge and remove terminal status for converted wallets (3 minutes ago)
-- 694e122 Fix wizard to show bridge/swap output threads in same hop (12 minutes ago)
-- 3cb4098 Fix progress bars to show bridge-converted currencies at both levels (22 minutes ago)
-- eb58fae Auto-convert purple terminal wallets to brown bridges when logging output (36 minutes ago)
-- ec5dd65 Fix critical bugs in thread building and source tracking processes (44 minutes ago)
-- 3feb5d3 Refactor bridge outputs to work exactly like swaps (47 minutes ago)
-- 136d8e5 Fix bridge output modal closing and ensure converted assets are added to ART (8 hours ago)
-- 3a8c296 Fix Solana showing duplicate transfers by combining paired debits/credits (8 hours ago)
-- 55e0e38 Fix bridge transfer selection to show proper modal like victim selector (9 hours ago)
+- 706010e Fix duplicate bridge output thread creation (1 second ago)
+- cb1d480 Set hops and entries to collapsed by default when loading saved files (16 minutes ago)
+- d2feb61 Add bridge badge and remove terminal status for converted wallets (19 minutes ago)
+- 694e122 Fix wizard to show bridge/swap output threads in same hop (28 minutes ago)
+- 3cb4098 Fix progress bars to show bridge-converted currencies at both levels (38 minutes ago)
+- eb58fae Auto-convert purple terminal wallets to brown bridges when logging output (52 minutes ago)
+- ec5dd65 Fix critical bugs in thread building and source tracking processes (60 minutes ago)
+- 3feb5d3 Refactor bridge outputs to work exactly like swaps (63 minutes ago)
+- 136d8e5 Fix bridge output modal closing and ensure converted assets are added to ART (9 hours ago)
+- 3a8c296 Fix Solana showing duplicate transfers by combining paired debits/credits (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
