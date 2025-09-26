@@ -6825,8 +6825,20 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
 
             // Filter by hop level appropriately
             if (hopNumber === 1) {
-                // Hop 1: Only show victim threads
-                if (thread.sourceType !== 'victim_transaction') continue;
+                // Hop 1: Show victim threads AND same-hop conversions (swap/bridge outputs)
+                if (thread.sourceType !== 'victim_transaction' &&
+                    thread.sourceType !== 'swap_output' &&
+                    thread.sourceType !== 'bridge_output' &&
+                    thread.sourceType !== 'change_output') {
+                    continue;
+                }
+                // For conversion outputs, only show if they're from hop 1
+                if ((thread.sourceType === 'swap_output' ||
+                     thread.sourceType === 'bridge_output' ||
+                     thread.sourceType === 'change_output') &&
+                    thread.hopLevel !== 1 && thread.hopLevel !== 0) {
+                    continue;
+                }
             } else {
                 // Other hops: Show threads from previous hop or same-hop conversions
                 // Exclude victim threads
@@ -6857,6 +6869,12 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
                 let displayText = notation;
                 if (thread.sourceType === 'victim_transaction') {
                     displayText = `${notation} (RED Wallet)`;
+                } else if (thread.sourceType === 'bridge_output') {
+                    displayText = `${notation} (Bridge Output - ${currency})`;
+                } else if (thread.sourceType === 'swap_output') {
+                    displayText = `${notation} (Swap Output - ${currency})`;
+                } else if (thread.sourceType === 'change_output') {
+                    displayText = `${notation} (Change - ${currency})`;
                 }
 
                 availableSources.push({
