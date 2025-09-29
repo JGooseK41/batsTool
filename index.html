@@ -28513,6 +28513,7 @@ window.searchAddresses = async function() {
 }
 
 async function findAddressesByPattern(chain, searchType, pattern, activeOnly) {
+    console.log('findAddressesByPattern called with:', { chain, searchType, pattern, activeOnly });
     const results = [];
 
     // For demonstration, we'll use different strategies based on blockchain
@@ -28520,10 +28521,12 @@ async function findAddressesByPattern(chain, searchType, pattern, activeOnly) {
 
     try {
         if (chain === 'bitcoin') {
+            console.log('Calling searchBitcoinAddresses...');
             // For Bitcoin, we can use blockchain.info's search functionality
             // Note: This is a simplified approach. In production, use specialized services
             results.push(...await searchBitcoinAddresses(searchType, pattern));
         } else if (chain === 'ethereum' || chain === 'bsc' || chain === 'polygon') {
+            console.log('Calling searchEVMAddresses...');
             // For EVM chains, use Etherscan-like APIs
             results.push(...await searchEVMAddresses(chain, searchType, pattern));
         } else if (chain === 'tron') {
@@ -29080,6 +29083,7 @@ function generateBitcoinAddressPatterns(prefix) {
 }
 
 async function searchEVMAddresses(chain, searchType, pattern) {
+    console.log('searchEVMAddresses called with:', { chain, searchType, pattern });
     const addresses = [];
     const apiKey = localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
 
