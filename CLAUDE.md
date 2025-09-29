@@ -3,43 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 11:40)
+## Latest Commit (Auto-updated: 2025-09-29 11:50)
 
-**Commit:** 0a18141baed600e1247d083433ca425998058da7
+**Commit:** cc956d9f1ffa4ea9ecf7419b3520da2f8585a6b7
 **Author:** Your Name
-**Message:** Fix bridge/swap fee handling with automatic write-offs
-
-- Add automatic write-off for bridge/swap output remainders
-- These remainders represent fees, slippage, or MEV extraction
-- Auto-create write-off entries when terminal wallets don't fully consume threads
-- Auto-write-off any remaining bridge/swap outputs during hop finalization
-- Properly round all thread amounts to avoid floating point artifacts
-- Fix proportional attribution calculation to use proper rounding
-- Each auto-write-off is clearly labeled (e.g. V1-T1-H1-FEE)
-- Includes descriptive notes explaining the fee type (bridge vs DEX)
-
-This ensures every cent is accounted for and eliminates mysterious remainders
-from bridge conversions that were showing up as unallocated threads.
+**Message:** Fix syntax error - remove extra closing brace on line 7230
 
 ### Changed Files:
 ```
- CLAUDE.md  |  36 ++++++++++----------
- index.html | 113 ++++++++++++++++++++++++++++++++++++++++++++++++++++++-------
- 2 files changed, 119 insertions(+), 30 deletions(-)
+ CLAUDE.md  | 47 +++++++++++++++++++++++++----------------------
+ index.html |  4 ++--
+ 2 files changed, 27 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0a18141 Fix bridge/swap fee handling with automatic write-offs (1 second ago)
-- c414503 Fix personal label entries being incorrectly marked as terminal (18 minutes ago)
-- 0e45136 Fix undefined currency variable in write-off handling (34 minutes ago)
-- 9d6011c Update CLAUDE.md with latest auto-commit information (42 minutes ago)
-- a8a10c0 Debug: Thread currency confusion in Hop 2 (47 minutes ago)
-- 93808df Fix write-off entries not properly consuming source threads (55 minutes ago)
-- cc8e418 Improve personal label to terminal/conversion wallet conversion UX (64 minutes ago)
-- 4e409fc Fix terminal wallet detection and thread availability for subsequent hops (69 minutes ago)
-- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (77 minutes ago)
-- d47cba3 Fix Address Finder filtering out attributed addresses when 'Active Only' is checked (3 hours ago)
+- cc956d9 Fix syntax error - remove extra closing brace on line 7230 (1 second ago)
+- 0a18141 Fix bridge/swap fee handling with automatic write-offs (10 minutes ago)
+- c414503 Fix personal label entries being incorrectly marked as terminal (28 minutes ago)
+- 0e45136 Fix undefined currency variable in write-off handling (44 minutes ago)
+- 9d6011c Update CLAUDE.md with latest auto-commit information (53 minutes ago)
+- a8a10c0 Debug: Thread currency confusion in Hop 2 (57 minutes ago)
+- 93808df Fix write-off entries not properly consuming source threads (66 minutes ago)
+- cc8e418 Improve personal label to terminal/conversion wallet conversion UX (74 minutes ago)
+- 4e409fc Fix terminal wallet detection and thread availability for subsequent hops (79 minutes ago)
+- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (87 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
