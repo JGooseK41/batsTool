@@ -3822,33 +3822,25 @@
                                 } else if (chainData?.arkhamLabel) {
                                     console.log(`    Found arkhamLabel on ${chain}:`, chainData.arkhamLabel);
 
-                                    // Check if this label indicates an exchange/service
                                     const labelName = chainData.arkhamLabel.name || '';
-                                    const exchangeKeywords = [
-                                        'deposit', 'exchange', 'hot wallet', 'cold wallet',
-                                        'binance', 'coinbase', 'kraken', 'crypto.com', 'kucoin',
-                                        'okx', 'huobi', 'bitfinex', 'bitstamp', 'gemini',
-                                        'ftx', 'gate.io', 'mexc', 'bybit', 'bitget'
-                                    ];
+                                    const indicators = checkExchangeIndicators(labelName);
 
-                                    const isExchangeLabel = exchangeKeywords.some(keyword =>
-                                        labelName.toLowerCase().includes(keyword.toLowerCase())
-                                    );
-
-                                    if (isExchangeLabel) {
-                                        // This is an exchange despite being an arkhamLabel
-                                        console.log(`    Detected exchange from label: ${labelName}`);
+                                    if (indicators.isLikely) {
+                                        // Likely an exchange/service - mark appropriately
+                                        console.log(`    High confidence (${indicators.confidence}%) exchange detected: ${labelName}`);
                                         foundAttribution = {
                                             name: chainData.arkhamLabel.name,
                                             label: chainData.arkhamLabel.name,
-                                            type: 'CEX',
+                                            type: indicators.suggestedType === 'DEX/Bridge' ? 'Bridge/DEX' : 'CEX',
                                             chain: chain,
                                             source: 'arkham_intelligence',
-                                            isExchange: true,  // Exchange detected from label
-                                            isPersonalLabel: false
+                                            isExchange: true,
+                                            isPersonalLabel: false,
+                                            detectionConfidence: indicators.confidence,
+                                            detectionMatches: indicators.matches
                                         };
                                     } else {
-                                        // Regular personal label
+                                        // Treat as personal label but track any weak indicators
                                         foundAttribution = {
                                             name: chainData.arkhamLabel.name,
                                             label: chainData.arkhamLabel.name,
@@ -3857,7 +3849,10 @@
                                             source: 'arkham_intelligence',
                                             isExchange: false,
                                             isPersonalLabel: true,
-                                            noteText: `Label: ${chainData.arkhamLabel.name}` // Include in notes instead
+                                            noteText: `Label: ${chainData.arkhamLabel.name}`,
+                                            suspectedExchange: indicators.confidence > 0,
+                                            detectionConfidence: indicators.confidence,
+                                            detectionMatches: indicators.matches
                                         };
                                     }
                                     break;
@@ -3887,32 +3882,24 @@
                                 walletAttributionCache[lowerAddress] = attribution;
                                 return attribution;
                             } else if (arkhamData?.arkhamLabel) {
-                                // Check if this label indicates an exchange/service
                                 const labelName = arkhamData.arkhamLabel.name || '';
-                                const exchangeKeywords = [
-                                    'deposit', 'exchange', 'hot wallet', 'cold wallet',
-                                    'binance', 'coinbase', 'kraken', 'crypto.com', 'kucoin',
-                                    'okx', 'huobi', 'bitfinex', 'bitstamp', 'gemini',
-                                    'ftx', 'gate.io', 'mexc', 'bybit', 'bitget'
-                                ];
+                                const indicators = checkExchangeIndicators(labelName);
 
-                                const isExchangeLabel = exchangeKeywords.some(keyword =>
-                                    labelName.toLowerCase().includes(keyword.toLowerCase())
-                                );
-
-                                if (isExchangeLabel) {
-                                    // This is an exchange despite being an arkhamLabel
-                                    console.log(`    Detected exchange from label: ${labelName}`);
+                                if (indicators.isLikely) {
+                                    // Likely an exchange/service - mark appropriately
+                                    console.log(`    High confidence (${indicators.confidence}%) exchange detected: ${labelName}`);
                                     attribution = {
                                         name: arkhamData.arkhamLabel.name,
                                         label: arkhamData.arkhamLabel.name,
-                                        type: 'CEX',
+                                        type: indicators.suggestedType === 'DEX/Bridge' ? 'Bridge/DEX' : 'CEX',
                                         source: 'arkham_intelligence',
-                                        isExchange: true,  // Exchange detected from label
-                                        isPersonalLabel: false
+                                        isExchange: true,
+                                        isPersonalLabel: false,
+                                        detectionConfidence: indicators.confidence,
+                                        detectionMatches: indicators.matches
                                     };
                                 } else {
-                                    // Regular personal label
+                                    // Treat as personal label but track any weak indicators
                                     attribution = {
                                         name: arkhamData.arkhamLabel.name,
                                         label: arkhamData.arkhamLabel.name,
@@ -3920,7 +3907,10 @@
                                         source: 'arkham_intelligence',
                                         isExchange: false,
                                         isPersonalLabel: true,
-                                        noteText: `Label: ${arkhamData.arkhamLabel.name}` // Include in notes instead
+                                        noteText: `Label: ${arkhamData.arkhamLabel.name}`,
+                                        suspectedExchange: indicators.confidence > 0,
+                                        detectionConfidence: indicators.confidence,
+                                        detectionMatches: indicators.matches
                                     };
                                 }
                                 console.log(`✅ Arkham personal label found for ${address}:`, attribution);
@@ -4462,6 +4452,51 @@
                 nextBtn.textContent = 'Create Terminal Entry';
                 nextBtn.style.background = '#9c27b0';
             }
+        }
+
+        // Keep as personal label (user chose to ignore exchange indicators)
+        window.keepAsPersonalLabel = function() {
+            if (!window.hopWizardData || !window.hopWizardData.detectedAttribution) {
+                return;
+            }
+
+            const attribution = window.hopWizardData.detectedAttribution;
+
+            // Ensure it stays as personal label
+            attribution.isPersonalLabel = true;
+            attribution.isExchange = false;
+            attribution.userConfirmedPersonal = true; // Track that user explicitly chose this
+
+            // Update the UI to show confirmation
+            const resultDiv = document.getElementById('wizardTxResult');
+            const alertDiv = resultDiv.querySelector('div[style*="#fff3cd"], div[style*="#e3f2fd"]');
+
+            if (alertDiv) {
+                alertDiv.style.cssText = 'background: #d4edda; border: 2px solid #27ae60; border-radius: 8px; padding: 15px; margin-top: 15px;';
+                alertDiv.innerHTML = `
+                    <h4 style="margin: 0 0 10px 0; color: #1e7e34;">✅ Confirmed as Personal Label</h4>
+                    <div style="font-size: 14px;">
+                        <strong>Label:</strong> ${attribution.name || attribution.label}<br>
+                        <strong>Status:</strong> Will be treated as a personal label (not a terminal wallet)<br>
+                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+                            <strong>Next steps:</strong><br>
+                            • Continue tracing funds through this wallet<br>
+                            • The label will be added to your entry notes<br>
+                            • No thread exhaustion will occur
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Continue button remains enabled for normal tracing
+            const nextBtn = document.getElementById('wizardNextBtn');
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Continue to Next Step';
+                nextBtn.style.background = '';
+            }
+
+            showNotification('Label confirmed as personal (not an exchange). Continue tracing normally.', 'success');
         }
 
         // Convert personal label to conversion wallet (brown)
@@ -21192,34 +21227,100 @@ async function lookupWizardTransaction() {
             const alertDiv = document.createElement('div');
 
             if (attribution.isPersonalLabel) {
-                // Personal label - just informational
-                alertDiv.style.cssText = 'background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 15px; margin-top: 15px;';
-                alertDiv.innerHTML = `
-                    <h4 style="margin: 0 0 10px 0; color: #1565c0;">🏷️ Personal Label Detected</h4>
-                    <div style="font-size: 14px;">
-                        <strong>Label:</strong> ${attribution.name || attribution.label}<br>
-                        <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span><br>
-                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
-                            <strong>ℹ️ Note:</strong><br>
-                            • This is a personal label, not an exchange<br>
-                            • The wallet can still send funds elsewhere<br>
-                            • Continue tracing as normal<br>
-                            • The label will be added to your entry notes
-                        </div>
-                        <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ff9800; border-radius: 4px;">
-                            <strong>❓ Is this actually an exchange or conversion service?</strong><br>
-                            <p style="margin: 8px 0; font-size: 13px;">If this label indicates a centralized exchange or DEX/Bridge, convert it to the appropriate wallet type:</p>
-                            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                                <button class="btn btn-warning" onclick="convertToTerminalWallet()" style="background: #9c27b0; border-color: #9c27b0;">
-                                    🟣 Convert to Terminal Wallet
-                                </button>
-                                <button class="btn btn-secondary" onclick="convertToConversionWallet()" style="background: #8B4513; border-color: #8B4513;">
-                                    🟤 Convert to Conversion Wallet
-                                </button>
+                // Check if this might be a misidentified exchange
+                const suspectedType = attribution.suspectedExchange && attribution.detectionMatches?.length > 0;
+
+                if (suspectedType && attribution.detectionConfidence >= 50) {
+                    // Show intelligent detection popup
+                    alertDiv.style.cssText = 'background: #fff3cd; border: 2px solid #ff9800; border-radius: 8px; padding: 15px; margin-top: 15px;';
+                    alertDiv.innerHTML = `
+                        <h4 style="margin: 0 0 10px 0; color: #e65100;">⚠️ Suspected Exchange/Service Detected</h4>
+                        <div style="font-size: 14px;">
+                            <strong>Label:</strong> ${attribution.name || attribution.label}<br>
+                            <strong>Confidence:</strong> <span style="color: ${attribution.detectionConfidence >= 70 ? '#27ae60' : '#e67e22'}; font-weight: bold;">${attribution.detectionConfidence}%</span><br>
+                            <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span><br>
+
+                            <div style="margin-top: 15px; padding: 12px; background: white; border-radius: 4px; border-left: 4px solid #ff9800;">
+                                <strong>🔍 Detection Analysis:</strong><br>
+                                <div style="margin-top: 8px;">
+                                    ${attribution.detectionMatches.map(match => `
+                                        <div style="margin: 4px 0; padding: 4px 8px; background: #f5f5f5; border-radius: 3px;">
+                                            • Found <strong>${match.type}</strong> indicator: <code>${match.name}</code>
+                                            <span style="color: #666; font-size: 12px;">(${match.confidence}% confidence)</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 15px; padding: 12px; background: #e8f4fd; border-radius: 4px;">
+                                <strong>📊 Recommendation:</strong><br>
+                                <p style="margin: 8px 0;">
+                                    ${attribution.detectionConfidence >= 85 ?
+                                        'This appears to be a known exchange or service. Consider marking it as a terminal wallet.' :
+                                        attribution.detectionConfidence >= 70 ?
+                                        'This likely represents an exchange or service. Review carefully before proceeding.' :
+                                        'Some indicators suggest this might be an exchange. Use your judgment based on investigation context.'}
+                                </p>
+                            </div>
+
+                            <div style="margin-top: 15px;">
+                                <strong>Choose an action:</strong>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                                    <button class="btn btn-warning" onclick="convertToTerminalWallet()"
+                                            style="background: #9c27b0; border-color: #9c27b0; padding: 10px;">
+                                        🟣 Mark as Terminal Wallet<br>
+                                        <small style="opacity: 0.8;">Funds arrived at exchange</small>
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="convertToConversionWallet()"
+                                            style="background: #8B4513; border-color: #8B4513; padding: 10px;">
+                                        🟤 Mark as Bridge/DEX<br>
+                                        <small style="opacity: 0.8;">Currency conversion service</small>
+                                    </button>
+                                    <button class="btn btn-info" onclick="keepAsPersonalLabel()"
+                                            style="background: #3498db; border-color: #3498db; padding: 10px; grid-column: span 2;">
+                                        🏷️ Keep as Personal Label<br>
+                                        <small style="opacity: 0.8;">Not an exchange - just a labeled wallet</small>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                } else {
+                    // Regular personal label with low/no exchange indicators
+                    alertDiv.style.cssText = 'background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 15px; margin-top: 15px;';
+                    alertDiv.innerHTML = `
+                        <h4 style="margin: 0 0 10px 0; color: #1565c0;">🏷️ Personal Label Detected</h4>
+                        <div style="font-size: 14px;">
+                            <strong>Label:</strong> ${attribution.name || attribution.label}<br>
+                            <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span><br>
+                            <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+                                <strong>ℹ️ Note:</strong><br>
+                                • This is a personal label, not an exchange<br>
+                                • The wallet can still send funds elsewhere<br>
+                                • Continue tracing as normal<br>
+                                • The label will be added to your entry notes
+                            </div>
+                            ${attribution.detectionConfidence > 0 ? `
+                                <div style="margin-top: 10px; padding: 8px; background: #f0f0f0; border-radius: 4px; font-size: 12px;">
+                                    <em>Low confidence (${attribution.detectionConfidence}%) exchange indicators detected.
+                                    If you believe this is an exchange, use the buttons below to convert.</em>
+                                </div>
+                            ` : ''}
+                            <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ff9800; border-radius: 4px;">
+                                <strong>❓ Is this actually an exchange or conversion service?</strong><br>
+                                <p style="margin: 8px 0; font-size: 13px;">If this label indicates a centralized exchange or DEX/Bridge, convert it to the appropriate wallet type:</p>
+                                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                    <button class="btn btn-warning" onclick="convertToTerminalWallet()" style="background: #9c27b0; border-color: #9c27b0;">
+                                        🟣 Convert to Terminal Wallet
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="convertToConversionWallet()" style="background: #8B4513; border-color: #8B4513;">
+                                        🟤 Convert to Conversion Wallet
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
             } else {
                 // Actual terminal wallet (exchange/service)
                 alertDiv.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; border-radius: 8px; padding: 15px; margin-top: 15px;';
@@ -32099,6 +32200,119 @@ To (RED Wallet): ${transfer.to}`;
             // where even small decimals can represent significant value
             const factor = Math.pow(10, decimals);
             return Math.round((amount + Number.EPSILON) * factor) / factor;
+        }
+
+        // Comprehensive list of known exchange and service indicators
+        function getExchangeIndicators() {
+            return {
+                exchanges: [
+                    // Major CEXs
+                    'binance', 'coinbase', 'kraken', 'crypto.com', 'kucoin', 'okx', 'okex',
+                    'huobi', 'bitfinex', 'bitstamp', 'gemini', 'ftx', 'gate.io', 'mexc',
+                    'bybit', 'bitget', 'bitmart', 'probit', 'lbank', 'xt.com', 'bingx',
+                    'poloniex', 'upbit', 'bithumb', 'coinone', 'korbit', 'bitflyer',
+                    'liquid', 'bitbank', 'zaif', 'btcbox', 'hotbit', 'ascendex', 'bitmax',
+                    'phemex', 'deribit', 'bitmex', 'bittrex', 'hitbtc', 'whitebit',
+                    'coinsbit', 'p2pb2b', 'latoken', 'vindax', 'digifinex', 'bigone',
+                    'indodax', 'wazirx', 'coindcx', 'zebpay', 'btc-alpha', 'cex.io',
+                    'exmo', 'yobit', 'cryptopia', 'mercatox', 'bleutrade', 'c-cex',
+                    'nova exchange', 'trade satoshi', 'stocks.exchange', 'crex24',
+                    'stex', 'finexbox', 'graviex', 'coineal', 'biki', 'mxc', 'bhex',
+                    'hoo', 'bibox', 'bit-z', 'coinbene', 'zbg', 'coinw', 'bw.com',
+                    'oceanex', 'vcc', 'coinex', 'catex', 'bitforex', 'fcoin', 'coinall',
+                    'b2bx', 'rightbtc', 'cobinhood', 'kuna', 'tidex', 'blokmy',
+                    'tokenomy', 'bitso', 'volabit', 'bitflip', 'kriptomat', 'paymium',
+                    'therocktrading', 'bit2me', 'bitvavo', 'bl3p', 'btcdirect', 'litebit',
+                    'anycoin', 'coinmama', 'coinhouse', 'paybis', 'bitpanda', 'bitbay',
+                    'zonda', 'coinfinity', 'coinfinity', 'bitcoin.de', 'bitkub', 'satang',
+                    'zipmex', 'tokocrypto', 'pintu', 'rekeningku', 'triv', 'uphold',
+                    'voyager', 'blockfi', 'celsius', 'nexo', 'crypto.com app', 'swissborg',
+                    'youhodler', 'blockchain.com', 'exodus', 'atomic wallet', 'trust wallet',
+                    'abra', 'edge', 'breadwallet', 'bitcoin.com', 'paxful', 'localbitcoins',
+                    'bisq', 'hodlhodl', 'agoradesk', 'robosats', 'peachbitcoin'
+                ],
+                dexBridges: [
+                    // DEXs and Bridges
+                    'uniswap', 'sushiswap', 'pancakeswap', '1inch', 'curve', 'balancer',
+                    'quickswap', 'spookyswap', 'spiritswap', 'traderjoe', 'raydium',
+                    'orca', 'serum', 'osmosis', 'thorchain', 'anyswap', 'multichain',
+                    'synapse', 'stargate', 'hop protocol', 'across', 'celer', 'connext',
+                    'nomad', 'wormhole', 'portal', 'allbridge', 'chainport', 'poly network',
+                    'ren', 'badger', 'thorswap', 'maya protocol', 'chainflip', 'squid',
+                    'axelar', 'layerzero', 'debridge', 'li.fi', 'socket', 'bungee',
+                    'rango', 'xy finance', 'o3swap', 'rubic', 'paraswap', 'matcha',
+                    'cowswap', 'kyberswap', '0x', 'airswap', 'tokenlon', 'dodo',
+                    'bancor', 'kyber', 'loopring', 'idex', 'ddex', 'radar relay',
+                    'paradex', 'etherdelta', 'forkdelta', 'token store', 'oasis',
+                    'deversifi', 'nash', 'dydx', 'perpetual protocol', 'gmx', 'gains',
+                    'kwenta', 'polynomial', 'lyra', 'hegic', 'opyn', 'ribbon',
+                    'friktion', 'katana', 'zeta', 'drift', 'mango', 'jupiter'
+                ],
+                keywords: [
+                    // General keywords
+                    'deposit', 'withdrawal', 'hot wallet', 'cold wallet', 'cold storage',
+                    'exchange', 'cex', 'dex', 'swap', 'bridge', 'cross-chain',
+                    'liquidity pool', 'lp', 'amm', 'automated market maker',
+                    'treasury', 'reserve', 'custodial', 'custody', 'escrow',
+                    'otc', 'over the counter', 'desk', 'market maker', 'mm'
+                ],
+                services: [
+                    // Other services
+                    'tornado cash', 'tornado', 'mixer', 'tumbler', 'coinjoin',
+                    'wasabi', 'samourai', 'blender', 'bitcoinfog', 'helix',
+                    'chipmixer', 'bitcoin laundry', 'bitmix', 'cryptomixer',
+                    'coinomize', 'anonymix', 'privcoin', 'bitcoin blender'
+                ]
+            };
+        }
+
+        // Check if a label suggests it might be an exchange/service
+        function checkExchangeIndicators(labelName) {
+            if (!labelName) return { isLikely: false, confidence: 0, matches: [] };
+
+            const indicators = getExchangeIndicators();
+            const labelLower = labelName.toLowerCase();
+            const matches = [];
+            let confidence = 0;
+
+            // Check exact exchange matches
+            for (const exchange of indicators.exchanges) {
+                if (labelLower.includes(exchange)) {
+                    matches.push({ type: 'CEX', name: exchange, confidence: 90 });
+                    confidence = Math.max(confidence, 90);
+                }
+            }
+
+            // Check DEX/Bridge matches
+            for (const dex of indicators.dexBridges) {
+                if (labelLower.includes(dex)) {
+                    matches.push({ type: 'DEX/Bridge', name: dex, confidence: 85 });
+                    confidence = Math.max(confidence, 85);
+                }
+            }
+
+            // Check keyword matches
+            for (const keyword of indicators.keywords) {
+                if (labelLower.includes(keyword)) {
+                    matches.push({ type: 'Keyword', name: keyword, confidence: 70 });
+                    confidence = Math.max(confidence, 70);
+                }
+            }
+
+            // Check mixer/tumbler services
+            for (const service of indicators.services) {
+                if (labelLower.includes(service)) {
+                    matches.push({ type: 'Mixer', name: service, confidence: 95 });
+                    confidence = Math.max(confidence, 95);
+                }
+            }
+
+            return {
+                isLikely: confidence >= 70,
+                confidence: confidence,
+                matches: matches,
+                suggestedType: matches.length > 0 ? matches[0].type : null
+            };
         }
 
         // General notification function
