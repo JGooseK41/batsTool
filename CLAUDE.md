@@ -3,40 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-28 21:49)
+## Latest Commit (Auto-updated: 2025-09-28 21:55)
 
-**Commit:** add0764cdb17c373d767ed2b7073947c48e86dc3
+**Commit:** e7be07944d578f885def08095f168d32fffbee54
 **Author:** Your Name
-**Message:** Add intelligent exchange detection with user choice
+**Message:** Add full attribution capabilities to Address Finder
 
-- Added comprehensive exchange detection with 100+ known exchanges, DEXs, bridges, and mixers
-- Implemented confidence-based detection (50-95% confidence levels)
-- Shows intelligent popup when suspected exchange is detected with:
-  - Detection analysis showing what indicators were found
-  - Confidence percentage and recommendation
-  - Three choices: Terminal Wallet, Bridge/DEX, or Keep as Personal Label
-- User can now override detection and explicitly choose how to treat labels
-- 'Crypto.com Deposit' and similar will now be properly detected with high confidence
+- Address Finder now checks attribution for all found addresses
+- Shows exchange confidence badges (85%+, 70%+, 50%+)
+- Displays detection analysis showing what indicators were found
+- Color-coded cards: Purple for exchanges, Orange for likely exchanges, Blue for personal labels
+- Enhanced visual indicators with left border for high-confidence exchanges
+- Shows entity type and detection matches inline
+- Async attribution lookup for addresses without initial entity data
+- Uses same comprehensive exchange database as main tool
+- Supports both Bitcoin and EVM chain attribution checks
 
 ### Changed Files:
 ```
- CLAUDE.md  |  27 +++--
- index.html | 340 +++++++++++++++++++++++++++++++++++++++++++++++++------------
- 2 files changed, 289 insertions(+), 78 deletions(-)
+ CLAUDE.md  | 30 ++++++++++---------
+ index.html | 98 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 112 insertions(+), 16 deletions(-)
 ```
 
 ## Recent Commits History
 
-- add0764 Add intelligent exchange detection with user choice (0 seconds ago)
-- 5f30b0e Fix exchange detection and button functionality (5 minutes ago)
-- a54cd19 Fix all requested issues: terminal wallet display, rounding errors, and ART display (12 minutes ago)
+- e7be079 Add full attribution capabilities to Address Finder (1 second ago)
+- add0764 Add intelligent exchange detection with user choice (6 minutes ago)
+- 5f30b0e Fix exchange detection and button functionality (11 minutes ago)
+- a54cd19 Fix all requested issues: terminal wallet display, rounding errors, and ART display (18 minutes ago)
 - 428461c Fix terminal wallet thread exhaustion bug (2 days ago)
 - 79690c2 Fix critical JavaScript error preventing hop wizard from opening (2 days ago)
 - d615be9 Fix terminal wallet detection to distinguish personal labels from exchanges (2 days ago)
 - 3802b4c Fix Arkham API URL and add helpful error messages for transaction lookup (2 days ago)
 - 39f47f8 Fix critical terminal wallet and hop management issues (2 days ago)
 - 841a04a Add forensic precision with rounding remainder write-off feature (2 days ago)
-- ef1130a Fix hop completion detection for threads with rounding remainders (2 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

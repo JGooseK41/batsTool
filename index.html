@@ -29546,7 +29546,11 @@ async function displayAddressFinderResults(addresses, chain) {
                 let attribution = null;
                 if (chain === 'bitcoin') {
                     attribution = await getBitcoinWalletAttribution(addr.address);
+                } else if (chain === 'solana') {
+                    // Explicitly use Solana attribution for Solana chain
+                    attribution = await getSolanaWalletAttribution(addr.address);
                 } else {
+                    // For other chains, use general attribution (which also detects Solana)
                     attribution = await getWalletAttribution(addr.address);
                 }
 
