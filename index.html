@@ -4475,6 +4475,19 @@
             }
 
             const attribution = window.hopWizardData.detectedAttribution;
+            const walletName = attribution.name || attribution.label || 'Unknown';
+            const walletAddress = window.hopWizardData.txData?.to || '';
+
+            // Show confirmation dialog
+            const confirmMessage = `Convert "${walletName}" to Terminal Wallet?\n\n` +
+                `This will mark the wallet as a terminal destination (exchange/service).\n` +
+                `Funds arriving here will be considered as having reached their final destination.\n\n` +
+                `Wallet: ${walletAddress.substring(0, 10)}...${walletAddress.substring(walletAddress.length - 8)}\n\n` +
+                `Do you want to proceed?`;
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
 
             // Override the personal label flag and mark as terminal
             attribution.isPersonalLabel = false;
@@ -4485,36 +4498,53 @@
             window.hopWizardData.isTerminalWallet = true;
             window.hopWizardData.terminalWalletType = 'purple';
 
-            // Update the UI
-            const resultDiv = document.getElementById('wizardTxResult');
-            const alertDiv = resultDiv.querySelector('div[style*="#e3f2fd"]');
+            // Show brief notification
+            showNotification(`🟣 Converting "${walletName}" to terminal wallet...`, 'info', 2000);
 
-            if (alertDiv) {
-                // Replace the personal label UI with terminal wallet UI
-                alertDiv.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; border-radius: 8px; padding: 15px; margin-top: 15px;';
-                alertDiv.innerHTML = `
-                    <h4 style="margin: 0 0 10px 0; color: #6a1b9a;">🟣 Converted to Terminal Wallet</h4>
-                    <div style="font-size: 14px;">
-                        <strong>Exchange/Service:</strong> ${attribution.name || attribution.label}<br>
-                        <strong>Type:</strong> Terminal Wallet (CEX)<br>
-                        <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${window.hopWizardData.txData?.to || ''}</span><br>
-                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
-                            <strong>✅ Conversion Complete:</strong><br>
-                            • This will now be treated as a terminal wallet<br>
-                            • Thread will be marked as exhausted<br>
-                            • Legal process required for fund recovery
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Update button
-            const nextBtn = document.getElementById('wizardNextBtn');
-            if (nextBtn) {
-                nextBtn.disabled = false;
-                nextBtn.textContent = 'Create Terminal Entry';
-                nextBtn.style.background = '#9c27b0';
-            }
+            // Automatically create the terminal entry after a brief delay
+            setTimeout(() => {
+                console.log('Auto-creating terminal entry after conversion');
+                // Check if we're on step 3 and can proceed
+                const currentStep = window.hopWizardData?.step || 3;
+                if (currentStep === 3) {
+                    // Call hopWizardNext to create the entry
+                    if (typeof hopWizardNext === 'function') {
+                        hopWizardNext();
+                    } else {
+                        console.error('hopWizardNext not found, trying direct entry creation');
+                        // Fallback: simulate button click
+                        const nextBtn = document.getElementById('wizardNextBtn');
+                        if (nextBtn && !nextBtn.disabled) {
+                            nextBtn.click();
+                        }
+                    }
+                } else {
+                    // Update UI to show conversion complete
+                    const resultDiv = document.getElementById('wizardTxResult');
+                    const alertDiv = resultDiv?.querySelector('div[style*="#e3f2fd"]');
+                    if (alertDiv) {
+                        alertDiv.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; border-radius: 8px; padding: 15px; margin-top: 15px;';
+                        alertDiv.innerHTML = `
+                            <h4 style="margin: 0 0 10px 0; color: #6a1b9a;">🟣 Terminal Wallet Ready</h4>
+                            <div style="font-size: 14px;">
+                                <strong>Exchange/Service:</strong> ${walletName}<br>
+                                <strong>Type:</strong> Terminal Wallet (CEX)<br>
+                                <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+                                    <strong>✅ Ready to create terminal entry</strong><br>
+                                    Click "Create Terminal Entry" below
+                                </div>
+                            </div>
+                        `;
+                    }
+                    // Update button
+                    const nextBtn = document.getElementById('wizardNextBtn');
+                    if (nextBtn) {
+                        nextBtn.disabled = false;
+                        nextBtn.textContent = 'Create Terminal Entry';
+                        nextBtn.style.background = '#9c27b0';
+                    }
+                }
+            }, 500);
         }
 
         // Keep as personal label (user chose to ignore exchange indicators)
@@ -4570,6 +4600,19 @@
             }
 
             const attribution = window.hopWizardData.detectedAttribution;
+            const walletName = attribution.name || attribution.label || 'Unknown';
+            const walletAddress = window.hopWizardData.txData?.to || '';
+
+            // Show confirmation dialog
+            const confirmMessage = `Convert "${walletName}" to Conversion Wallet (Bridge/DEX)?\n\n` +
+                `This will mark the wallet as a bridge or DEX for asset conversion.\n` +
+                `You'll need to specify the output currency and amount in the next step.\n\n` +
+                `Wallet: ${walletAddress.substring(0, 10)}...${walletAddress.substring(walletAddress.length - 8)}\n\n` +
+                `Do you want to proceed?`;
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
 
             // Mark as conversion/bridge
             attribution.isPersonalLabel = false;
@@ -4579,37 +4622,43 @@
             // Mark wizard data for conversion wallet
             window.hopWizardData.isConversionWallet = true;
             window.hopWizardData.terminalWalletType = 'brown';
+            window.hopWizardData.isSwap = true; // Mark as swap to trigger swap wizard
 
-            // Update the UI
-            const resultDiv = document.getElementById('wizardTxResult');
-            const alertDiv = resultDiv.querySelector('div[style*="#e3f2fd"]');
+            // Show brief notification
+            showNotification(`🟤 Converting "${walletName}" to conversion wallet...`, 'info', 2000);
 
-            if (alertDiv) {
-                // Replace the personal label UI with conversion wallet UI
-                alertDiv.style.cssText = 'background: #d7ccc8; border: 2px solid #8B4513; border-radius: 8px; padding: 15px; margin-top: 15px;';
-                alertDiv.innerHTML = `
-                    <h4 style="margin: 0 0 10px 0; color: #5d4037;">🟤 Converted to Conversion Wallet</h4>
-                    <div style="font-size: 14px;">
-                        <strong>Bridge/DEX:</strong> ${attribution.name || attribution.label}<br>
-                        <strong>Type:</strong> Conversion Service<br>
-                        <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${window.hopWizardData.txData?.to || ''}</span><br>
-                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
-                            <strong>✅ Conversion Complete:</strong><br>
-                            • This will be treated as a bridge/swap<br>
-                            • Use the 🌉 Log Bridge/Swap button<br>
-                            • Track the converted currency output
-                        </div>
-                    </div>
-                `;
-            }
+            // Close current wizard and open swap wizard
+            setTimeout(() => {
+                console.log('Auto-opening swap wizard after conversion wallet designation');
 
-            // Update button
-            const nextBtn = document.getElementById('wizardNextBtn');
-            if (nextBtn) {
-                nextBtn.disabled = false;
-                nextBtn.textContent = 'Continue to Next Step';
-                nextBtn.style.background = '#8B4513';
-            }
+                // Close the current wizard
+                closeHopWizard();
+
+                // Open swap wizard with pre-filled data
+                setTimeout(() => {
+                    const hopNumber = window.hopWizardData?.hopNumber;
+                    if (hopNumber) {
+                        // Find the hop
+                        const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+                        if (hop) {
+                            // Open swap wizard
+                            openSwapWizard(hop);
+
+                            // Pre-fill the swap service with the detected wallet
+                            setTimeout(() => {
+                                const swapServiceInput = document.getElementById('swapService');
+                                if (swapServiceInput) {
+                                    swapServiceInput.value = walletAddress;
+                                }
+                                const providerInput = document.getElementById('providerName');
+                                if (providerInput) {
+                                    providerInput.value = walletName;
+                                }
+                            }, 100);
+                        }
+                    }
+                }, 500);
+            }, 500);
         }
 
         // REMOVED: continueTraceFromTerminal function

@@ -3,19 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 10:23)
+## Latest Commit (Auto-updated: 2025-09-29 10:31)
 
-**Commit:** 0e9ce2d3941fb885d09ee695242d46f07b938fcd
+**Commit:** 4e409fccfa45270efbc2ae3de9e01aafe40047eb
 **Author:** Your Name
-**Message:** Fix swap/bridge output thread creation and rounding precision issues
+**Message:** Fix terminal wallet detection and thread availability for subsequent hops
 
-- Fix major issue where swap outputs were incorrectly split proportionally among source threads
-- When multiple threads are swapped together (commingling), create a single consolidated output thread
-- This prevents large discrepancies (0-50) in allocations after bridge conversions
-- Add roundToCurrencyPrecision() function using currency-specific precision (6 decimals for USDC/USDT/HYPE)
-- Fix constant assignment error on line 22491 (changed const to let for totalAmount)
-- Apply proper rounding throughout allocation calculations to prevent floating-point errors
-- Ensure bridge/swap outputs maintain full amounts instead of proportional splits
+- Fix incorrect 'all funds reached terminal wallets' message when only partial funds are terminal
+- Now properly checks if ALL funds (not just some) have reached terminal wallets
+- Allow victim threads with remaining funds to be available in subsequent hops
+- Previously, victim threads were incorrectly excluded from hop 2+ even if they had untraced funds
+- This fixes the issue where sending 300 of 450 HYPE to a terminal wallet would incorrectly prevent tracing the remaining 150 HYPE
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -23,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  34 ++++++-------
- index.html | 167 ++++++++++++++++++++++++++++++++++++++++++++++++++-----------
- 2 files changed, 154 insertions(+), 47 deletions(-)
+ CLAUDE.md  | 47 +++++++++++++++++++++-----------------
+ index.html | 76 +++++++++++++++++++++++++++++++++++++++++++++-----------------
+ 2 files changed, 82 insertions(+), 41 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (0 seconds ago)
+- 4e409fc Fix terminal wallet detection and thread availability for subsequent hops (0 seconds ago)
+- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (8 minutes ago)
 - d47cba3 Fix Address Finder filtering out attributed addresses when 'Active Only' is checked (2 hours ago)
 - 03ef779 Add proportional attribution calculator for commingled fund conversions (2 hours ago)
-- 619ae29 Integrate Arkham API enhancements for attribution and swap detection (3 hours ago)
+- 619ae29 Integrate Arkham API enhancements for attribution and swap detection (4 hours ago)
 - 098cfb7 Implement smart contract detection as conversion wallets (4 hours ago)
 - 1e147b3 Integrate Etherscan V2 nametag API for better address attribution (4 hours ago)
 - c5f02ef Implement Arkham-first search strategy for Address Finder (4 hours ago)
 - 23a71c2 Add extensive debug logging to trace Address Finder empty array issue (12 hours ago)
 - 9753ad1 Fix Address Finder search and add Arkham attribution (12 hours ago)
-- 1b58dbc Add more detailed logging to identify why addresses aren't being added (12 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
