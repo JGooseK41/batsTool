@@ -7125,6 +7125,37 @@ function buildAvailableThreadsIndex() {
 
                 console.log(`Created change thread ${entry.notation} in ${currency} with ${entry.amount} at hop level ${hop.hopNumber - 1}`);
             }
+            // Handle write-off entries - they consume threads but don't create new ones
+            else if (entry.entryType === 'writeoff' && parseFloat(entry.amount) > 0) {
+                console.log(`Processing write-off entry: ${entry.notation} for ${entry.amount} ${currency}`);
+
+                // Write-offs consume source threads just like terminal entries
+                if (entry.individualSourceAssignments && typeof entry.individualSourceAssignments === 'object') {
+                    Object.entries(entry.individualSourceAssignments).forEach(([threadId, allocatedAmount]) => {
+                        // Find the thread and deduct the allocated amount
+                        for (const curr in investigation.availableThreads) {
+                            const thread = investigation.availableThreads[curr][threadId];
+                            if (thread) {
+                                const amountUsed = parseFloat(allocatedAmount) || 0;
+                                console.log(`Write-off: Deducting ${amountUsed} from thread ${threadId} (had ${thread.availableAmount} available)`);
+
+                                // Use proper rounding to avoid floating point errors
+                                thread.availableAmount = roundAmount(Math.max(0, thread.availableAmount - amountUsed));
+
+                                // Mark as exhausted if less than 0.01 remains
+                                if (thread.availableAmount < 0.01) {
+                                    thread.availableAmount = 0;
+                                    thread.fullyExhausted = true;
+                                    thread.exhaustedByWriteoff = entry.notation;
+                                    console.log(`Thread ${threadId} fully exhausted by write-off`);
+                                } else {
+                                    console.log(`Thread ${threadId} has ${thread.availableAmount} remaining after write-off`);
+                                }
+                            }
+                        }
+                    });
+                }
+            }
             // Handle regular trace entries
             else if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
                 // Don't create thread if this trace has been swapped (check both local and global)
