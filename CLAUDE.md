@@ -3,40 +3,43 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 11:22)
+## Latest Commit (Auto-updated: 2025-09-29 11:40)
 
-**Commit:** c414503b8e767d37e13e83c3722d8b86aac5a452
+**Commit:** 0a18141baed600e1247d083433ca425998058da7
 **Author:** Your Name
-**Message:** Fix personal label entries being incorrectly marked as terminal
+**Message:** Fix bridge/swap fee handling with automatic write-offs
 
-- Personal label entries were being marked as isTerminalWallet=true
-- This prevented them from creating output threads for next hop
-- Now explicitly sets isTerminalWallet=false for personal labels
-- Ensures 300 HYPE sent to personal label wallet creates thread for Hop 2
+- Add automatic write-off for bridge/swap output remainders
+- These remainders represent fees, slippage, or MEV extraction
+- Auto-create write-off entries when terminal wallets don't fully consume threads
+- Auto-write-off any remaining bridge/swap outputs during hop finalization
+- Properly round all thread amounts to avoid floating point artifacts
+- Fix proportional attribution calculation to use proper rounding
+- Each auto-write-off is clearly labeled (e.g. V1-T1-H1-FEE)
+- Includes descriptive notes explaining the fee type (bridge vs DEX)
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+This ensures every cent is accounted for and eliminates mysterious remainders
+from bridge conversions that were showing up as unallocated threads.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 34 +++++++++++++++++++++-------------
- index.html | 21 +++++++++++++++++++--
- 2 files changed, 40 insertions(+), 15 deletions(-)
+ CLAUDE.md  |  36 ++++++++++----------
+ index.html | 113 ++++++++++++++++++++++++++++++++++++++++++++++++++++++-------
+ 2 files changed, 119 insertions(+), 30 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c414503 Fix personal label entries being incorrectly marked as terminal (0 seconds ago)
-- 0e45136 Fix undefined currency variable in write-off handling (16 minutes ago)
-- 9d6011c Update CLAUDE.md with latest auto-commit information (25 minutes ago)
-- a8a10c0 Debug: Thread currency confusion in Hop 2 (29 minutes ago)
-- 93808df Fix write-off entries not properly consuming source threads (37 minutes ago)
-- cc8e418 Improve personal label to terminal/conversion wallet conversion UX (46 minutes ago)
-- 4e409fc Fix terminal wallet detection and thread availability for subsequent hops (51 minutes ago)
-- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (59 minutes ago)
+- 0a18141 Fix bridge/swap fee handling with automatic write-offs (1 second ago)
+- c414503 Fix personal label entries being incorrectly marked as terminal (18 minutes ago)
+- 0e45136 Fix undefined currency variable in write-off handling (34 minutes ago)
+- 9d6011c Update CLAUDE.md with latest auto-commit information (42 minutes ago)
+- a8a10c0 Debug: Thread currency confusion in Hop 2 (47 minutes ago)
+- 93808df Fix write-off entries not properly consuming source threads (55 minutes ago)
+- cc8e418 Improve personal label to terminal/conversion wallet conversion UX (64 minutes ago)
+- 4e409fc Fix terminal wallet detection and thread availability for subsequent hops (69 minutes ago)
+- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (77 minutes ago)
 - d47cba3 Fix Address Finder filtering out attributed addresses when 'Active Only' is checked (3 hours ago)
-- 03ef779 Add proportional attribution calculator for commingled fund conversions (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
