@@ -22968,6 +22968,13 @@ function createHopEntryFromWizard() {
         } else if (attribution && attribution.isPersonalLabel) {
             // This is just a personal label - add to notes but don't mark as terminal
             console.log('Personal label detected, not marking as terminal:', attribution.name);
+            // Explicitly ensure it's not marked as terminal
+            isTerminalWallet = false;
+            terminalAttribution = null;
+            // Reset wallet type to regular yellow if it was set to purple
+            if (toWalletType === 'purple') {
+                toWalletType = 'yellow';
+            }
             // The label will be added to notes below
         }
     }
@@ -23049,6 +23056,10 @@ function createHopEntryFromWizard() {
         // For terminal wallets, we use the allocated amounts (not the full thread amounts)
         // The allocations already respect the transaction amount limits
         console.log(`Terminal wallet entry created with allocated amounts:`, entry.individualSourceAssignments);
+    } else if (wizardData.detectedAttribution && wizardData.detectedAttribution.isPersonalLabel) {
+        // Explicitly mark personal label entries as NOT terminal
+        entry.isTerminalWallet = false;
+        console.log(`Entry marked as non-terminal due to personal label: ${wizardData.detectedAttribution.name}`);
     } else if (isSmartContract && wizardData.detectedAttribution) {
         // Smart contract - save attribution and mark as conversion wallet
         entry.exchangeAttribution = wizardData.detectedAttribution;
@@ -31507,8 +31518,14 @@ async function lookupEthereumTransaction(txHash, chainName = null) {
                     const attribution = await getWalletAttribution(txData.to, chainId);
                     if (attribution) {
                         txData.toWalletAttribution = attribution;
-                        txData.isTerminalWallet = true;
-                        console.log(`🟣 Terminal wallet detected on chain ${chainId}: ${attribution.name}`);
+                        // Only mark as terminal if it's an exchange, not a personal label
+                        if (attribution.isExchange && !attribution.isPersonalLabel) {
+                            txData.isTerminalWallet = true;
+                            console.log(`🟣 Terminal wallet detected on chain ${chainId}: ${attribution.name}`);
+                        } else if (attribution.isPersonalLabel) {
+                            txData.isTerminalWallet = false;
+                            console.log(`🏷️ Personal label detected on chain ${chainId}: ${attribution.name}`);
+                        }
                     }
                 }
 
