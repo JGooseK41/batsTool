@@ -3,40 +3,36 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 08:37)
+## Latest Commit (Auto-updated: 2025-09-29 08:46)
 
-**Commit:** 03ef779736ea31c36e25343bef02f632ea5a4351
+**Commit:** d47cba3b82581c360f5d14989bb8265db104aa0e
 **Author:** Your Name
-**Message:** Add proportional attribution calculator for commingled fund conversions
+**Message:** Fix Address Finder filtering out attributed addresses when 'Active Only' is checked
 
-- Detect when funds are commingled before conversion/swap
-- Calculate ownership percentage based on traced amount vs total in wallet
-- Show proportional attribution calculator with suggested amount
-- Allow user to accept suggested attribution or override with full amount
-- Display calculation breakdown with formula and percentages
-- Document proportional attribution in entry notes
-- Clean up commingling data after use
-- Support both automatic calculation and manual adjustment
+- Always include addresses with entity attribution (exchanges, services, etc.)
+- Only apply activity filter to non-attributed addresses
+- Add logging to track which addresses are included/excluded
+- Prevents important exchange addresses from being filtered out
 
 ### Changed Files:
 ```
- CLAUDE.md  |  38 +++++++-------
- index.html | 163 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 181 insertions(+), 20 deletions(-)
+ CLAUDE.md  | 47 ++++++++++++++++++++++++-----------------------
+ index.html | 13 +++++++++++--
+ 2 files changed, 35 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 03ef779 Add proportional attribution calculator for commingled fund conversions (0 seconds ago)
+- d47cba3 Fix Address Finder filtering out attributed addresses when 'Active Only' is checked (0 seconds ago)
+- 03ef779 Add proportional attribution calculator for commingled fund conversions (9 minutes ago)
 - 619ae29 Integrate Arkham API enhancements for attribution and swap detection (2 hours ago)
 - 098cfb7 Implement smart contract detection as conversion wallets (2 hours ago)
 - 1e147b3 Integrate Etherscan V2 nametag API for better address attribution (2 hours ago)
 - c5f02ef Implement Arkham-first search strategy for Address Finder (2 hours ago)
 - 23a71c2 Add extensive debug logging to trace Address Finder empty array issue (10 hours ago)
-- 9753ad1 Fix Address Finder search and add Arkham attribution (10 hours ago)
-- 1b58dbc Add more detailed logging to identify why addresses aren't being added (10 hours ago)
-- 187ebec Add extensive logging to debug Address Finder search (10 hours ago)
-- 92778d3 Fix Address Finder to show addresses with zero balance (10 hours ago)
+- 9753ad1 Fix Address Finder search and add Arkham attribution (11 hours ago)
+- 1b58dbc Add more detailed logging to identify why addresses aren't being added (11 hours ago)
+- 187ebec Add extensive logging to debug Address Finder search (11 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

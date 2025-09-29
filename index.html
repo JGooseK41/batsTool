@@ -3305,6 +3305,13 @@
             const factor = Math.pow(10, precision);
             return Math.round((amount1 * factor) + (amount2 * factor)) / factor;
         }
+
+        // Round amount to proper precision for currency
+        function roundToCurrencyPrecision(amount, currency) {
+            const precision = getCurrencyPrecision(currency);
+            const factor = Math.pow(10, Math.min(precision, 6)); // Cap at 6 decimals for display
+            return Math.round(amount * factor) / factor;
+        }
         
         // Safe subtraction for currency amounts
         function subtractCurrencyAmounts(amount1, amount2, currency) {
@@ -7325,8 +7332,77 @@ function updateThreadAvailabilityFromSwap(entry) {
             investigation.availableThreads[outputCurrency] = {};
         }
 
-        // Create output threads with same notation
-        threadsToProcess.forEach(item => {
+        // Check if we should create a single consolidated output thread
+        // This happens when swapping commingled funds (multiple source threads)
+        const shouldConsolidate = threadsToProcess.length > 1;
+
+        if (shouldConsolidate) {
+            // Create a single consolidated output thread for commingled swaps
+            const consolidatedNotations = threadsToProcess.map(item => item.notation);
+            const consolidatedNotation = consolidatedNotations.join(' ');
+            const newInternalId = generateInternalThreadId(consolidatedNotation, outputCurrency);
+
+            // Check if this consolidated thread already exists
+            let exists = false;
+            for (const key in investigation.availableThreads[outputCurrency]) {
+                const thread = investigation.availableThreads[outputCurrency][key];
+                if (thread.notation === consolidatedNotation && thread.sourceType === 'swap_output') {
+                    console.log(`Consolidated swap output thread already exists, skipping`);
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (!exists) {
+                investigation.availableThreads[outputCurrency][newInternalId] = {
+                    // Dual-layer identifiers
+                    notation: consolidatedNotation,
+                    internalId: newInternalId,
+
+                    // Full output amount - NOT proportionally split
+                    totalAmount: roundAmount(outputAmount),
+                    availableAmount: roundAmount(outputAmount),
+
+                    // Tracking
+                    assignments: [],
+                    sourceWallet: entry.toWallet || entry.swapDetails?.dexAddress || '',
+                    sourceType: 'swap_output',
+                    hopLevel: entry.hopNumber || 1,
+                    createdAt: entry.timestamp || new Date().toISOString(),
+                    isActive: true,
+                    isConsolidated: true,
+
+                    // Parent tracking - all source threads
+                    parentInternalIds: threadsToProcess.map(item => item.internalId),
+                    parentNotations: threadsToProcess.map(item => item.notation),
+
+                    // Currency and swap details
+                    currency: outputCurrency,
+                    swapDetails: {
+                        fromCurrency: inputCurrency,
+                        fromAmount: inputAmount,
+                        toCurrency: outputCurrency,
+                        toAmount: outputAmount,
+                        provider: entry.swapDetails?.providerName || 'Unknown',
+                        isPartial: isPartialSwap,
+                        isConsolidated: true,
+                        sourceThreadCount: threadsToProcess.length
+                    },
+
+                    // Chain tracking
+                    chainId: entry.swapDetails?.toChain || entry.chain || threadsToProcess[0].thread.chainId || null,
+                    chainName: entry.swapDetails?.toChain ?
+                        (window.blockchainAPIs?.[entry.swapDetails.toChain]?.name || entry.swapDetails.toChain) :
+                        (entry.chain ? (window.blockchainAPIs?.[entry.chain]?.name || entry.chain) :
+                         (threadsToProcess[0].thread.chainId ?
+                          (window.blockchainAPIs?.[threadsToProcess[0].thread.chainId]?.name || threadsToProcess[0].thread.chainId) : null))
+                };
+
+                console.log(`Created consolidated swap output thread: ${consolidatedNotation} with ${outputAmount} ${outputCurrency}`);
+            }
+        } else {
+            // Single source thread - create individual output thread
+            threadsToProcess.forEach(item => {
             const notation = item.notation;
 
             // Check if this swap output already exists (prevent duplicates)
@@ -7348,8 +7424,10 @@ function updateThreadAvailabilityFromSwap(entry) {
 
             const newInternalId = generateInternalThreadId(notation, outputCurrency);
 
-            // Calculate proportional output for this thread
-            const outputPortion = outputAmount * (item.available / totalAvailableInput);
+            // For single source thread, use full output amount
+            // Only use proportional split if there were originally multiple threads
+            const outputPortion = threadsToProcess.length === 1 ? outputAmount :
+                                 (outputAmount * (item.available / totalAvailableInput));
 
             investigation.availableThreads[outputCurrency][newInternalId] = {
                 // Dual-layer identifiers
@@ -7395,6 +7473,7 @@ function updateThreadAvailabilityFromSwap(entry) {
             console.log(`✅ Created swap output thread ${notation} in ${outputCurrency}: ${outputPortion} (ID: ${newInternalId})`);
             console.log(`Thread details:`, investigation.availableThreads[outputCurrency][newInternalId]);
         });
+        }
     }
 
     console.log('Swap thread conversion complete');
@@ -19667,7 +19746,7 @@ function showSwapWizardStep(step) {
                                step="0.000001"
                                placeholder="0.00"
                                value="${wizardData.outputAmount || ''}"
-                               onchange="window.swapWizardData.outputAmount = parseFloat(this.value) || 0"
+                               onchange="window.swapWizardData.outputAmount = Math.round((parseFloat(this.value) || 0) * 1000000) / 1000000"
                                style="width: 100%; padding: 10px; margin-top: 5px;">
                     </div>
                     <div style="flex: 1;">
@@ -19993,8 +20072,8 @@ async function lookupSwapTransaction() {
             document.getElementById('outputAmount').value = receivedAmount;
             document.getElementById('outputCurrency').value = receivedCurrency.toUpperCase();
 
-            // Update wizard data
-            wizardData.outputAmount = receivedAmount;
+            // Update wizard data with proper precision
+            wizardData.outputAmount = Math.round(receivedAmount * 1000000) / 1000000;
             wizardData.outputCurrency = receivedCurrency.toUpperCase();
 
             // Display the detected input for reference
@@ -20124,7 +20203,7 @@ function createSwapEntry() {
         toWallet: wizardData.swapService,
         toWalletType: 'brown', // BROWN for asset conversion
         amount: inputData.amount.toString(),
-        outputAmount: wizardData.outputAmount.toString(),
+        outputAmount: roundToCurrencyPrecision(wizardData.outputAmount, wizardData.outputCurrency).toString(),
         currency: inputCurrency,
         outputCurrency: wizardData.outputCurrency,
         txHash: wizardData.txHash,
@@ -20138,7 +20217,7 @@ function createSwapEntry() {
             fromCurrency: inputCurrency,
             toCurrency: wizardData.outputCurrency,
             fromAmount: inputData.amount,
-            toAmount: wizardData.outputAmount,
+            toAmount: roundToCurrencyPrecision(wizardData.outputAmount, wizardData.outputCurrency),
             dexAddress: wizardData.swapService,
             providerName: wizardData.providerName,
             type: wizardData.swapType
@@ -20691,9 +20770,10 @@ function applyPIFOAllocation(totalAmount, selectedThreads) {
 
         const available = thread.availableAmount;
         const toAllocate = Math.min(available, remainingAmount);
+        const currency = thread.currency || 'USD';
 
-        allocations[threadId] = toAllocate;
-        remainingAmount -= toAllocate;
+        allocations[threadId] = roundToCurrencyPrecision(toAllocate, currency);
+        remainingAmount = roundToCurrencyPrecision(remainingAmount - toAllocate, currency);
     }
 
     return allocations;
@@ -22422,7 +22502,7 @@ function createHopEntryFromWizard() {
     }
     
     // Validate thread allocations before proceeding
-    const totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+    let totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
 
     // Calculate total available across all selected threads
     const threads = getAvailableSourcesForHop(hop.hopNumber, null);
@@ -22447,7 +22527,9 @@ function createHopEntryFromWizard() {
         // First pass: Adjust each thread's allocation proportionally
         Object.keys(wizardData.allocations).forEach(threadId => {
             const originalAmount = wizardData.allocations[threadId];
-            wizardData.allocations[threadId] = Math.floor(originalAmount * adjustmentRatio * 100) / 100; // Round down to 2 decimals
+            const thread = threads.find(t => t.threadId === threadId);
+            const currency = thread?.currency || Array.from(currencies)[0] || 'USD';
+            wizardData.allocations[threadId] = roundToCurrencyPrecision(originalAmount * adjustmentRatio, currency);
         });
 
         // Recalculate to see how much is left due to rounding
@@ -22466,8 +22548,9 @@ function createHopEntryFromWizard() {
                     // Add as much of the remainder as this thread can handle
                     const maxAddition = Math.min(remainder, thread.availableAmount - wizardData.allocations[threadId]);
                     if (maxAddition > 0) {
-                        wizardData.allocations[threadId] = Math.round((wizardData.allocations[threadId] + maxAddition) * 100) / 100;
-                        remainder -= maxAddition;
+                        const currency = thread.currency || Array.from(currencies)[0] || 'USD';
+                        wizardData.allocations[threadId] = roundToCurrencyPrecision(wizardData.allocations[threadId] + maxAddition, currency);
+                        remainder = roundToCurrencyPrecision(remainder - maxAddition, currency);
                     }
                 }
                 i++;
@@ -22481,7 +22564,10 @@ function createHopEntryFromWizard() {
             const largestThread = Object.keys(wizardData.allocations).reduce((max, threadId) =>
                 wizardData.allocations[threadId] > wizardData.allocations[max] ? threadId : max
             );
-            wizardData.allocations[largestThread] = Math.round((wizardData.allocations[largestThread] + (totalAvailable - adjustedTotal)) * 100) / 100;
+            // Use higher precision for crypto allocations
+            const adjustment = totalAvailable - adjustedTotal;
+            const precision = currencies.has('BTC') || currencies.has('ETH') || currencies.has('USDC') || currencies.has('USDT') || currencies.has('HYPE') ? 1000000 : 100;
+            wizardData.allocations[largestThread] = Math.round((wizardData.allocations[largestThread] + adjustment) * precision) / precision;
         }
 
         console.log(`Auto-adjusted allocations to ${totalAvailable} (from ${totalAmount})`);
@@ -23869,10 +23955,12 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             // Check if this wallet received funds from multiple sources (commingling)
             const walletAddress = entry.toWallet;
             let totalIncoming = 0;
-            let ourAmount = parseFloat(entry.amount);
+            let ourTracedFunds = parseFloat(entry.amount);
+            let otherFundsInWallet = 0;
             let otherSources = [];
 
             // Look for other transactions to this same wallet in current or previous hops
+            // This finds all our traced funds that went to this wallet
             investigation.hops.forEach(h => {
                 if (h.hopNumber <= hopNumber) {
                     h.entries.forEach(e => {
@@ -23891,25 +23979,35 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 }
             });
 
-            // If there's commingling, show the calculator
-            if (otherSources.length > 0 || totalIncoming > ourAmount) {
+            // Check if the outgoing swap amount is larger than our total traced funds to this wallet
+            // This would indicate the wallet had pre-existing funds (true commingling)
+            const swapAmount = parseFloat(document.getElementById('bridgeSourceAmount')?.value || '0');
+
+            // Only show calculator if the swap amount exceeds our traced funds
+            // This means the wallet had other funds that are being commingled
+            if (swapAmount > totalIncoming && totalIncoming > 0) {
+                // Calculate how much of the wallet's funds are NOT from our trace
+                otherFundsInWallet = swapAmount - totalIncoming;
+
+                // Update ourAmount to reflect all our traced funds, not just this entry
+                const ourAmount = totalIncoming;
                 const section = document.getElementById('proportionalAttributionSection');
                 if (section) {
                     section.style.display = 'block';
 
-                    // Calculate our percentage
-                    const ourPercentage = (ourAmount / totalIncoming) * 100;
+                    // Calculate our percentage of the swap amount
+                    const ourPercentage = (ourAmount / swapAmount) * 100;
 
                     // Update commingling details
                     document.getElementById('comminglingDetails').innerHTML = `
                         <div style="margin-bottom: 8px;">
-                            <strong>Your traced funds:</strong> ${ourAmount} ${entry.currency} (${ourPercentage.toFixed(2)}%)
+                            <strong>Your traced funds in wallet:</strong> ${ourAmount.toFixed(6)} ${entry.currency} (${ourPercentage.toFixed(2)}%)
                         </div>
                         <div style="margin-bottom: 8px;">
-                            <strong>Other funds in wallet:</strong> ${(totalIncoming - ourAmount).toFixed(6)} ${entry.currency} (${(100 - ourPercentage).toFixed(2)}%)
+                            <strong>Pre-existing funds in wallet:</strong> ${otherFundsInWallet.toFixed(6)} ${entry.currency} (${(100 - ourPercentage).toFixed(2)}%)
                         </div>
                         <div>
-                            <strong>Total funds before conversion:</strong> ${totalIncoming.toFixed(6)} ${entry.currency}
+                            <strong>Total swap amount:</strong> ${swapAmount.toFixed(6)} ${entry.currency}
                         </div>
                     `;
 
@@ -23942,7 +24040,8 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     // Store the attribution data for later use
                     window.comminglingData = {
                         ourAmount: ourAmount,
-                        totalIncoming: totalIncoming,
+                        swapAmount: swapAmount,
+                        otherFundsInWallet: otherFundsInWallet,
                         ourPercentage: ourPercentage,
                         otherSources: otherSources
                     };
@@ -28933,19 +29032,31 @@ async function findAddressesByPattern(chain, searchType, pattern, activeOnly) {
 
         // Filter by activity if requested
         if (activeOnly) {
+            console.log('Filtering by activity. Results before filter:', results.length);
+            console.log('Full results array:', JSON.stringify(results, null, 2));
             const activeAddresses = [];
             for (const addr of results) {
+                console.log('Checking address:', addr);
+                console.log('  - entity:', addr.entity);
+                console.log('  - type:', addr.type);
+                console.log('  - hasActivity:', addr.hasActivity);
+
                 // Always include addresses with attribution (exchanges, known entities, etc.)
-                if (addr.entity && addr.entity !== 'Unknown' && addr.entity !== 'EOA (Wallet)') {
-                    console.log('Including attributed address regardless of activity:', addr.entity);
+                // Or if they already have the hasActivity flag set
+                if ((addr.entity && addr.entity !== 'Unknown' && addr.entity !== 'EOA' && addr.entity !== 'EOA (Wallet)') ||
+                    addr.hasActivity === true) {
+                    console.log('✓ Including address:', addr.address, 'Reason:',
+                        addr.hasActivity ? 'Has activity' : `Has attribution: ${addr.entity}`);
                     activeAddresses.push(addr);
                 } else {
                     // Check activity for non-attributed addresses
+                    console.log('Checking activity for address without attribution:', addr.address);
                     const hasActivity = await checkAddressHasActivity(addr.address, chain);
                     if (hasActivity) {
+                        console.log('✓ Address has on-chain activity');
                         activeAddresses.push(addr);
                     } else {
-                        console.log('Filtered out inactive address:', addr.address);
+                        console.log('✗ Filtered out inactive address:', addr.address);
                     }
                 }
             }
