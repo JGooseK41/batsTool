@@ -29097,11 +29097,58 @@ async function searchEVMAddresses(chain, searchType, pattern) {
     const apiKey = localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
 
     try {
-        // First, try Arkham Intelligence API if we have a key
-        // Note: We'll use our working attribution functions on complete addresses found
-        // Arkham doesn't have a partial search endpoint, only complete address lookups
+        // Strategy 1: If it's a complete address, try Arkham first for best attribution
+        if (pattern.match(/^0x[a-fA-F0-9]{40}$/i)) {
+            console.log('Complete address detected, trying Arkham first...');
+            try {
+                const arkhamKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
 
-        // Strategy 2: Use Etherscan API directly (no CORS proxy)
+                // Try multiple Arkham endpoints
+                const arkhamEndpoints = [
+                    `/intelligence/address/${pattern}/all`,
+                    `/intelligence/address/${pattern}`,
+                    `/intelligence/address_with_extra_enrichment/${pattern}/all`
+                ];
+
+                for (const endpoint of arkhamEndpoints) {
+                    try {
+                        const arkhamResponse = await fetch(`/.netlify/functions/arkham3?endpoint=${encodeURIComponent(endpoint)}`, {
+                            headers: {
+                                'X-Arkham-API-Key': arkhamKey
+                            }
+                        });
+
+                        if (arkhamResponse.ok) {
+                            const arkhamData = await arkhamResponse.json();
+                            console.log('Arkham response for', endpoint, ':', arkhamData);
+
+                            if (arkhamData && (arkhamData.arkhamEntity || arkhamData.entity || arkhamData.name || arkhamData.label)) {
+                                // Found attribution via Arkham
+                                const addressEntry = {
+                                    address: pattern,
+                                    type: 'EOA',
+                                    entity: arkhamData.arkhamEntity?.name || arkhamData.entity || arkhamData.name || arkhamData.label || 'Unknown',
+                                    name: arkhamData.arkhamEntity?.name || arkhamData.name || '',
+                                    source: 'Arkham Intelligence',
+                                    isExchange: arkhamData.arkhamEntity?.type === 'exchange' || arkhamData.type === 'exchange',
+                                    hasAttribution: true,
+                                    detectionConfidence: 95
+                                };
+                                console.log('Adding Arkham-attributed address:', addressEntry);
+                                addresses.push(addressEntry);
+                                break; // Found good attribution, stop trying other endpoints
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Arkham endpoint failed:', endpoint, e);
+                    }
+                }
+            } catch (arkhamError) {
+                console.log('Arkham search failed:', arkhamError);
+            }
+        }
+
+        // Strategy 2: Use Etherscan API (V2 endpoints if available)
         let apiUrl = '';
         if (chain === 'ethereum') {
             apiUrl = 'https://api.etherscan.io/api';
@@ -29111,10 +29158,16 @@ async function searchEVMAddresses(chain, searchType, pattern) {
             apiUrl = 'https://api.polygonscan.com/api';
         }
 
-        // For exact address match or if pattern is long enough, check directly
-        if (pattern.length >= 40) {
-            console.log('Checking full address:', pattern);
-            // Potentially a full address, check it directly
+        // For exact address match or if pattern is long enough, check directly via Etherscan
+        // Even if we already got it from Arkham, still check Etherscan for balance info
+        if (pattern.length >= 40 && pattern.match(/^0x[a-fA-F0-9]{40}$/i)) {
+            console.log('Checking full address via Etherscan:', pattern);
+            // Check if we already have this address from Arkham
+            const existingAddress = addresses.find(a => a.address.toLowerCase() === pattern.toLowerCase());
+            if (existingAddress) {
+                console.log('Address already found via Arkham, skipping Etherscan check');
+            } else {
+                // Potentially a full address, check it directly
             try {
                 const checkUrl = `${apiUrl}?module=account&action=balance&address=${pattern}&tag=latest&apikey=${apiKey}`;
                 console.log('Fetching from:', checkUrl);
@@ -29124,8 +29177,10 @@ async function searchEVMAddresses(chain, searchType, pattern) {
                     console.log('Etherscan response:', data);
                     try {
                         console.log('Response status:', data.status, 'Type:', typeof data.status);
-                        if (data.status === '1') {
-                        console.log('Valid address found, processing...');
+                        // Even if status is '0', it's still a valid Ethereum address format
+                        // Status '0' might mean no transactions or deprecated API
+                        if (pattern.match(/^0x[a-fA-F0-9]{40}$/i)) {
+                        console.log('Valid Ethereum address format, processing...');
                         // Valid address (even with zero balance)
                         // Try to get contract name if it's a contract
                         let contractName = '';
@@ -29179,8 +29234,9 @@ async function searchEVMAddresses(chain, searchType, pattern) {
                         };
                         console.log('Adding address to results:', addressEntry);
                         addresses.push(addressEntry);
+                        console.log('Addresses array now has', addresses.length, 'entries');
                     } else {
-                        console.log('Address not valid, status:', data.status, 'message:', data.message || data.result);
+                        console.log('Not a valid Ethereum address format:', pattern);
                     }
                     } catch (innerError) {
                         console.error('Error processing Etherscan response:', innerError);
@@ -29190,6 +29246,7 @@ async function searchEVMAddresses(chain, searchType, pattern) {
                 }
             } catch (e) {
                 console.log('Direct address check failed:', e);
+            }
             }
         }
 
