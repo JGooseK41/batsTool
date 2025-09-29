@@ -7127,7 +7127,8 @@ function buildAvailableThreadsIndex() {
             }
             // Handle write-off entries - they consume threads but don't create new ones
             else if (entry.entryType === 'writeoff' && parseFloat(entry.amount) > 0) {
-                console.log(`Processing write-off entry: ${entry.notation} for ${entry.amount} ${currency}`);
+                const writeoffCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                console.log(`Processing write-off entry: ${entry.notation} for ${entry.amount} ${writeoffCurrency}`);
 
                 // Write-offs consume source threads just like terminal entries
                 if (entry.individualSourceAssignments && typeof entry.individualSourceAssignments === 'object') {
