@@ -3,39 +3,40 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 06:56)
+## Latest Commit (Auto-updated: 2025-09-29 08:37)
 
-**Commit:** 619ae299b3aca51e7a9475f94e1f80e385160a78
+**Commit:** 03ef779736ea31c36e25343bef02f632ea5a4351
 **Author:** Your Name
-**Message:** Integrate Arkham API enhancements for attribution and swap detection
+**Message:** Add proportional attribution calculator for commingled fund conversions
 
-- Add tags=true parameter to Arkham attribution calls for richer metadata
-- Store populated tags in attribution objects for all entity types
-- Integrate Arkham swaps endpoint into bridge/swap logging workflow
-- Auto-detect DEX swaps when looking up bridge destination transactions
-- Display swap protocol, token pairs, and USD values when detected
-- Include swap details in bridge output entry notes
-- Allow both purple (terminal) and brown (conversion) wallets to log bridge outputs
+- Detect when funds are commingled before conversion/swap
+- Calculate ownership percentage based on traced amount vs total in wallet
+- Show proportional attribution calculator with suggested amount
+- Allow user to accept suggested attribution or override with full amount
+- Display calculation breakdown with formula and percentages
+- Document proportional attribution in entry notes
+- Clean up commingling data after use
+- Support both automatic calculation and manual adjustment
 
 ### Changed Files:
 ```
- CLAUDE.md  |  40 +++++++++---------
- index.html | 139 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 148 insertions(+), 31 deletions(-)
+ CLAUDE.md  |  38 +++++++-------
+ index.html | 163 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 181 insertions(+), 20 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 619ae29 Integrate Arkham API enhancements for attribution and swap detection (0 seconds ago)
-- 098cfb7 Implement smart contract detection as conversion wallets (11 minutes ago)
-- 1e147b3 Integrate Etherscan V2 nametag API for better address attribution (27 minutes ago)
-- c5f02ef Implement Arkham-first search strategy for Address Finder (33 minutes ago)
-- 23a71c2 Add extensive debug logging to trace Address Finder empty array issue (9 hours ago)
-- 9753ad1 Fix Address Finder search and add Arkham attribution (9 hours ago)
-- 1b58dbc Add more detailed logging to identify why addresses aren't being added (9 hours ago)
-- 187ebec Add extensive logging to debug Address Finder search (9 hours ago)
-- 92778d3 Fix Address Finder to show addresses with zero balance (9 hours ago)
-- 1b52a2f Fix Address Finder search button not working (9 hours ago)
+- 03ef779 Add proportional attribution calculator for commingled fund conversions (0 seconds ago)
+- 619ae29 Integrate Arkham API enhancements for attribution and swap detection (2 hours ago)
+- 098cfb7 Implement smart contract detection as conversion wallets (2 hours ago)
+- 1e147b3 Integrate Etherscan V2 nametag API for better address attribution (2 hours ago)
+- c5f02ef Implement Arkham-first search strategy for Address Finder (2 hours ago)
+- 23a71c2 Add extensive debug logging to trace Address Finder empty array issue (10 hours ago)
+- 9753ad1 Fix Address Finder search and add Arkham attribution (10 hours ago)
+- 1b58dbc Add more detailed logging to identify why addresses aren't being added (10 hours ago)
+- 187ebec Add extensive logging to debug Address Finder search (10 hours ago)
+- 92778d3 Fix Address Finder to show addresses with zero balance (10 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

@@ -28935,9 +28935,18 @@ async function findAddressesByPattern(chain, searchType, pattern, activeOnly) {
         if (activeOnly) {
             const activeAddresses = [];
             for (const addr of results) {
-                const hasActivity = await checkAddressHasActivity(addr.address, chain);
-                if (hasActivity) {
+                // Always include addresses with attribution (exchanges, known entities, etc.)
+                if (addr.entity && addr.entity !== 'Unknown' && addr.entity !== 'EOA (Wallet)') {
+                    console.log('Including attributed address regardless of activity:', addr.entity);
                     activeAddresses.push(addr);
+                } else {
+                    // Check activity for non-attributed addresses
+                    const hasActivity = await checkAddressHasActivity(addr.address, chain);
+                    if (hasActivity) {
+                        activeAddresses.push(addr);
+                    } else {
+                        console.log('Filtered out inactive address:', addr.address);
+                    }
                 }
             }
             console.log('Returning', activeAddresses.length, 'active addresses from findAddressesByPattern');
