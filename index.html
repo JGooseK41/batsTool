@@ -29113,8 +29113,9 @@ async function searchEVMAddresses(chain, searchType, pattern) {
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Etherscan response:', data);
-                    console.log('Response status:', data.status, 'Type:', typeof data.status);
-                    if (data.status === '1') {
+                    try {
+                        console.log('Response status:', data.status, 'Type:', typeof data.status);
+                        if (data.status === '1') {
                         console.log('Valid address found, processing...');
                         // Valid address (even with zero balance)
                         // Try to get contract name if it's a contract
@@ -29142,22 +29143,38 @@ async function searchEVMAddresses(chain, searchType, pattern) {
                             console.log('Could not fetch contract info:', e);
                         }
 
+                        // Get attribution from our working attribution function
+                        let attribution = null;
+                        try {
+                            attribution = await getWalletAttribution(pattern);
+                            console.log('Attribution found:', attribution);
+                        } catch (attrError) {
+                            console.log('Could not get attribution:', attrError);
+                        }
+
                         const addressEntry = {
                             address: pattern,
                             type: contractName ? 'Contract' : 'EOA',
-                            entity: entity,
-                            name: contractName,
-                            balance: parseFloat(data.result) / 1e18,
-                            source: 'Etherscan',
+                            entity: attribution?.name || attribution?.label || entity,
+                            name: contractName || attribution?.name || '',
+                            balance: parseFloat(data.result || '0') / 1e18,
+                            source: 'Etherscan + Arkham',
                             isToken: contractName && (contractName.toLowerCase().includes('token') ||
                                                      contractName.toLowerCase().includes('usdt') ||
                                                      contractName.toLowerCase().includes('usdc') ||
-                                                     contractName.toLowerCase().includes('dai'))
+                                                     contractName.toLowerCase().includes('dai')),
+                            isExchange: attribution?.isExchange || false,
+                            isPersonalLabel: attribution?.isPersonalLabel || false,
+                            detectionConfidence: attribution?.detectionConfidence || 0,
+                            hasActivity: parseFloat(data.result || '0') > 0
                         };
                         console.log('Adding address to results:', addressEntry);
                         addresses.push(addressEntry);
                     } else {
                         console.log('Address not valid, status:', data.status, 'message:', data.message || data.result);
+                    }
+                    } catch (innerError) {
+                        console.error('Error processing Etherscan response:', innerError);
                     }
                 } else {
                     console.log('Response not ok:', response.status, response.statusText);
