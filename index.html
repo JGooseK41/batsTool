@@ -11154,6 +11154,12 @@ function exportRedWalletIndexCSV() {
                 // Add amounts from trace outputs that continue to next hop
                 lastHop.entries.forEach(entry => {
                     if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0) {
+                        // CRITICAL: Skip bridges with logged outputs - they consumed the original currency
+                        if (entry.isBridge && entry.bridgeOutputLogged) {
+                            console.log(`Skipping bridge ${entry.notation} from ART - consumed ${entry.currency} and created ${entry.bridgeDetails?.destinationAsset}`);
+                            return; // Don't add this back to ART
+                        }
+
                         const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
                         if (!artByCurrency[currency]) {
                             artByCurrency[currency] = 0;
@@ -14231,6 +14237,13 @@ function completeHopAndProceed(hop) {
         if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
             const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
 
+            // CRITICAL: Skip bridges that have logged outputs - they consumed the original currency
+            // The bridge output creates a NEW thread in the converted currency, not the original
+            if (entry.isBridge && entry.bridgeOutputLogged) {
+                console.log(`Skipping bridge entry ${entry.notation} from next hop ART - already converted to ${entry.bridgeDetails?.destinationAsset}`);
+                return; // Skip this entry - it doesn't create a thread in the original currency
+            }
+
             // Check if this is a terminal wallet - note that wallet type is stored as lowercase
             const isTerminal = entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE' || entry.isTerminal === true;
 
@@ -14240,7 +14253,8 @@ function completeHopAndProceed(hop) {
                 currency: currency,
                 toWallet: entry.toWallet,
                 toWalletType: entry.toWalletType,
-                isTerminal: isTerminal
+                isTerminal: isTerminal,
+                isBridge: entry.isBridge
             });
 
             // Track if any non-terminal threads exist
