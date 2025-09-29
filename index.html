@@ -28496,10 +28496,12 @@ async function searchAddresses() {
 
     try {
         // Search for addresses based on pattern
+        console.log('Searching for addresses:', { chain, searchType, searchPattern, activeOnly });
         const addresses = await findAddressesByPattern(chain, searchType, searchPattern, activeOnly);
+        console.log('Found addresses:', addresses);
 
         // Display results
-        displayAddressFinderResults(addresses, chain);
+        await displayAddressFinderResults(addresses, chain);
 
     } catch (error) {
         console.error('Address search error:', error);
