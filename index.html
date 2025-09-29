@@ -3761,6 +3761,41 @@
             }
 
             let attribution = null;
+            let isSmartContract = false;
+            let contractName = null;
+
+            // First, check if this is a smart contract (for EVM chains)
+            if (lowerAddress.startsWith('0x') && lowerAddress.length === 42) {
+                try {
+                    const etherscanApiKey = localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+                    let apiUrl = 'https://api.etherscan.io/api';
+
+                    // Determine API URL based on chainId if provided
+                    if (chainId === 56 || chainId === 'bsc') {
+                        apiUrl = 'https://api.bscscan.com/api';
+                    } else if (chainId === 137 || chainId === 'polygon') {
+                        apiUrl = 'https://api.polygonscan.com/api';
+                    }
+
+                    // Check if it's a verified contract
+                    const contractUrl = `${apiUrl}?module=contract&action=getsourcecode&address=${address}&apikey=${etherscanApiKey}`;
+                    const contractResponse = await fetch(contractUrl);
+
+                    if (contractResponse.ok) {
+                        const contractData = await contractResponse.json();
+                        if (contractData.status === '1' && contractData.result && contractData.result[0]) {
+                            const contract = contractData.result[0];
+                            if (contract.ContractName && contract.ContractName !== '') {
+                                isSmartContract = true;
+                                contractName = contract.ContractName;
+                                console.log(`🤖 Smart Contract detected: ${contractName} at ${address}`);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.log('Error checking contract status:', err);
+                }
+            }
 
             try {
                 // ALWAYS CHECK ARKHAM FIRST - IT'S OUR PRIMARY SOURCE FOR ALL CHAINS
@@ -4131,6 +4166,21 @@
                     }
                 }
 
+                // Check for smart contract as conversion wallet if no other attribution found
+                if (!attribution && isSmartContract && contractName) {
+                    // Smart contracts should be treated as conversion wallets (brown) not terminal wallets (purple)
+                    attribution = {
+                        name: contractName,
+                        label: `Smart Contract: ${contractName}`,
+                        type: 'Smart Contract',
+                        isSmartContract: true,
+                        isConversionWallet: true,  // This indicates it should be brown, not purple
+                        source: 'etherscan_verified_contract',
+                        contractName: contractName
+                    };
+                    console.log(`🤖 Smart Contract will be treated as conversion wallet: ${contractName}`);
+                }
+
                 // Final fallback: Known exchange addresses
                 if (!attribution) {
                     const knownExchanges = {
@@ -4167,6 +4217,10 @@
                         console.log(`🏷️ Personal label found: ${attribution.name} (${address})`);
                         console.log(`   Source: ${attribution.source}`);
                         console.log(`   Note: This is NOT a terminal wallet`);
+                    } else if (attribution.isSmartContract) {
+                        console.log(`🤖 Smart Contract detected: ${attribution.name} (${address})`);
+                        console.log(`   Type: Conversion Wallet (Bridge/DEX)`);
+                        console.log(`   Source: ${attribution.source}`);
                     } else {
                         console.log(`🟣 Terminal wallet detected: ${attribution.name} (${address})`);
                         console.log(`   Label: ${attribution.label || 'N/A'}`);
@@ -11328,7 +11382,9 @@ function addNewHop() {
                                                 </span>
                                             ` : (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged ? `
                                                 <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
-                                                    TERMINAL${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}
+                                                    ${entry.isSmartContract ?
+                                    `SMART CONTRACT${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}` :
+                                    `TERMINAL${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}`}
                                                 </span>
                                             ` : ''}
                                         </div>
@@ -11361,10 +11417,14 @@ function addNewHop() {
                             </div>
                             <!-- Action buttons in collapsed view -->
                             <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-start;">
-                                ${(entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && entry.entryType === 'trace' && !entry.bridgeOutputLogged && !entry.isBridge ? `
+                                ${((entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') ||
+                                   (entry.toWalletType === 'brown' && entry.exchangeAttribution?.isSmartContract)) &&
+                                   entry.entryType === 'trace' && !entry.bridgeOutputLogged && !entry.isBridge ? `
                                     <button class="btn btn-sm" style="background: #27ae60; color: white; border: 1px solid #229954;"
                                             onclick="event.stopPropagation(); logBridgeOutput(${hop.hopNumber}, ${entry.id})"
-                                            title="Log the output transaction from this terminal wallet (CEX or Bridge)">
+                                            title="${entry.exchangeAttribution?.isSmartContract ?
+                                                'Log the output from this smart contract (DEX/Bridge)' :
+                                                'Log the output transaction from this terminal wallet (CEX or Bridge)'}">
                                         🌉 Log Bridge/Swap
                                     </button>
                                 ` : ''}
@@ -11394,7 +11454,9 @@ function addNewHop() {
                                                 </span>
                                             ` : (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged ? `
                                                 <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
-                                                    TERMINAL${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}
+                                                    ${entry.isSmartContract ?
+                                    `SMART CONTRACT${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}` :
+                                    `TERMINAL${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}`}
                                                 </span>
                                             ` : ''}
                                             <span style="color: #666; font-size: 11px;">
@@ -21219,6 +21281,8 @@ async function lookupWizardTransaction() {
         if (attribution) {
             if (attribution.isPersonalLabel) {
                 console.log('🏷️ Personal label found in transaction lookup:', attribution);
+            } else if (attribution.isSmartContract) {
+                console.log('🤖 Smart Contract detected in transaction lookup:', attribution);
             } else {
                 console.log('🟣 Terminal wallet detected in transaction lookup:', attribution);
             }
@@ -21226,7 +21290,38 @@ async function lookupWizardTransaction() {
             // Update the result div with attribution alert
             const alertDiv = document.createElement('div');
 
-            if (attribution.isPersonalLabel) {
+            if (attribution.isSmartContract) {
+                // Smart contract detection alert - treat as conversion wallet
+                alertDiv.style.cssText = 'background: #f5e6d3; border: 2px solid #8B4513; border-radius: 8px; padding: 15px; margin-top: 15px;';
+                alertDiv.innerHTML = `
+                    <h4 style="margin: 0 0 10px 0; color: #8B4513;">🤖 Smart Contract Detected</h4>
+                    <div style="font-size: 14px;">
+                        <strong>Contract Name:</strong> ${attribution.name || attribution.contractName}<br>
+                        <strong>Type:</strong> Conversion Wallet (DEX/Bridge)<br>
+                        <strong>Address:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span><br>
+                        <strong>Source:</strong> ${attribution.source || 'Etherscan Verified Contract'}<br>
+
+                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+                            <strong>🔄 This is a Smart Contract:</strong><br>
+                            • Will be treated as a conversion wallet (brown)<br>
+                            • Use the 🌉 Log Bridge/Swap button after entry<br>
+                            • Track the converted currency output<br>
+                            • Does NOT end the trace (not a terminal wallet)
+                        </div>
+
+                        <div style="margin-top: 10px; padding: 10px; background: #fff8e1; border-radius: 4px;">
+                            <strong>✅ Ready to proceed:</strong><br>
+                            This smart contract will be automatically marked as a conversion wallet.
+                            You can log the swap/bridge output after creating the entry.
+                        </div>
+                    </div>
+                `;
+
+                // Store in wizard data for entry creation
+                window.hopWizardData.detectedAttribution = attribution;
+                window.hopWizardData.isSmartContract = true;
+
+            } else if (attribution.isPersonalLabel) {
                 // Check if this might be a misidentified exchange
                 const suspectedType = attribution.suspectedExchange && attribution.detectionMatches?.length > 0;
 
@@ -22643,9 +22738,10 @@ function createHopEntryFromWizard() {
         }
     }
 
-    // Check if this is a terminal wallet
+    // Check if this is a terminal wallet or smart contract
     let isTerminalWallet = false;
     let terminalAttribution = null;
+    let isSmartContract = false;
 
     if (wizardData.isTerminalWallet || wizardData.terminalWalletType === 'purple') {
         isTerminalWallet = true;
@@ -22653,10 +22749,16 @@ function createHopEntryFromWizard() {
         toWalletType = 'purple';
     } else if (wizardData.detectedAttribution && toWallet &&
                toWallet.toLowerCase() === (wizardData.txData?.to || '').toLowerCase()) {
-        // Auto-detect terminal wallet (only for actual exchanges, not personal labels)
+        // Auto-detect wallet type based on attribution
         const attribution = wizardData.detectedAttribution;
-        if (attribution && attribution.isExchange && !attribution.isPersonalLabel) {
-            // This is a real exchange/service - mark as terminal wallet
+        if (attribution && attribution.isSmartContract) {
+            // Smart contract detected - treat as conversion wallet (brown)
+            console.log('Smart contract detected, marking as conversion wallet:', attribution.name);
+            isSmartContract = true;
+            toWalletType = 'brown';  // Brown for conversions/bridges
+            // We'll show the bridge/swap button similar to terminal wallets
+        } else if (attribution && attribution.isExchange && !attribution.isPersonalLabel) {
+            // This is a real exchange/service - mark as terminal wallet (purple)
             isTerminalWallet = true;
             terminalAttribution = attribution;
             toWalletType = 'purple';
@@ -22667,11 +22769,14 @@ function createHopEntryFromWizard() {
         }
     }
 
-    // Handle terminal wallet and attribution notes
+    // Handle terminal wallet, smart contract, and attribution notes
     let entryNotes = wizardData.manualData?.notes || '';
     if (isTerminalWallet && terminalAttribution) {
         const terminalNote = `Terminal wallet: ${terminalAttribution.name || terminalAttribution.label}\nType: ${terminalAttribution.type || 'CEX'}\nDetection source: ${terminalAttribution.source || 'detected'}`;
         entryNotes = terminalNote + (entryNotes ? '\n' + entryNotes : '');
+    } else if (isSmartContract && wizardData.detectedAttribution) {
+        const contractNote = `Smart Contract: ${wizardData.detectedAttribution.name || wizardData.detectedAttribution.contractName}\nType: Conversion Wallet (Bridge/DEX)\nDetection source: ${wizardData.detectedAttribution.source || 'etherscan_verified_contract'}`;
+        entryNotes = contractNote + (entryNotes ? '\n' + entryNotes : '');
     } else if (wizardData.detectedAttribution && wizardData.detectedAttribution.isPersonalLabel) {
         // Add personal label to notes (not a terminal wallet)
         const labelNote = wizardData.detectedAttribution.noteText || `Label: ${wizardData.detectedAttribution.name}`;
@@ -22733,7 +22838,7 @@ function createHopEntryFromWizard() {
             wizardData.selectedThreads.length === 1 ? {[wizardData.selectedThreads[0]]: traceAmount} : {}
     };
 
-    // Add terminal wallet attribution if present
+    // Add terminal wallet or smart contract attribution if present
     if (isTerminalWallet && terminalAttribution) {
         entry.exchangeAttribution = terminalAttribution;
         entry.isTerminalWallet = true;
@@ -22741,6 +22846,12 @@ function createHopEntryFromWizard() {
         // For terminal wallets, we use the allocated amounts (not the full thread amounts)
         // The allocations already respect the transaction amount limits
         console.log(`Terminal wallet entry created with allocated amounts:`, entry.individualSourceAssignments);
+    } else if (isSmartContract && wizardData.detectedAttribution) {
+        // Smart contract - save attribution and mark as conversion wallet
+        entry.exchangeAttribution = wizardData.detectedAttribution;
+        entry.isSmartContract = true;
+        entry.isConversionWallet = true;
+        console.log(`Smart contract entry created as conversion wallet:`, wizardData.detectedAttribution.name);
 
         // Just log what we're using - don't modify the allocations
         if (entry.individualSourceAssignments) {

@@ -3,28 +3,29 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 06:23)
+## Latest Commit (Auto-updated: 2025-09-29 06:29)
 
-**Commit:** c5f02efdfa5986b7efa4841a7d5dcd3c1f78f027
+**Commit:** 1e147b3e44d6ef12a5961b1e518bd7736f2c7c46
 **Author:** Your Name
-**Message:** Implement Arkham-first search strategy for Address Finder
+**Message:** Integrate Etherscan V2 nametag API for better address attribution
 
-- Try Arkham Intelligence first for complete addresses for best attribution
-- Check multiple Arkham endpoints for comprehensive coverage
-- Still use Etherscan as fallback if Arkham doesn't find the address
-- Accept any valid Ethereum address format even with no balance
-- Skip duplicate Etherscan checks if Arkham already found the address
+- Try Etherscan V2 nametag API first for address metadata
+- Fall back to V1 API for balance and contract info
+- Use proper chain IDs for V2 API (1 for Ethereum, 56 for BSC, 137 for Polygon)
+- Indicate in source field when V2 tags are found
+- Still support addresses with no balance or V1 deprecation warnings
 
 ### Changed Files:
 ```
- CLAUDE.md  | 41 ++++++++++++++++----------------
- index.html | 79 +++++++++++++++++++++++++++++++++++++++++++++++++++++---------
- 2 files changed, 88 insertions(+), 32 deletions(-)
+ CLAUDE.md  | 41 ++++++++++++++++++------------------
+ index.html | 71 +++++++++++++++++++++++++++++++++++++++++++-------------------
+ 2 files changed, 70 insertions(+), 42 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c5f02ef Implement Arkham-first search strategy for Address Finder (1 second ago)
+- 1e147b3 Integrate Etherscan V2 nametag API for better address attribution (0 seconds ago)
+- c5f02ef Implement Arkham-first search strategy for Address Finder (6 minutes ago)
 - 23a71c2 Add extensive debug logging to trace Address Finder empty array issue (8 hours ago)
 - 9753ad1 Fix Address Finder search and add Arkham attribution (8 hours ago)
 - 1b58dbc Add more detailed logging to identify why addresses aren't being added (8 hours ago)
@@ -33,7 +34,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 1b52a2f Fix Address Finder search button not working (8 hours ago)
 - 52869c5 Fix Address Finder search functionality (8 hours ago)
 - 371c1d3 Remove non-existent Arkham search endpoint causing 405 errors (8 hours ago)
-- 87a0c69 Explicitly use Solana API for Solana addresses in Address Finder (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
