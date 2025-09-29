@@ -29100,14 +29100,17 @@ async function searchEVMAddresses(chain, searchType, pattern) {
 
         // For exact address match or if pattern is long enough, check directly
         if (pattern.length >= 40) {
+            console.log('Checking full address:', pattern);
             // Potentially a full address, check it directly
             try {
                 const checkUrl = `${apiUrl}?module=account&action=balance&address=${pattern}&tag=latest&apikey=${apiKey}`;
+                console.log('Fetching from:', checkUrl);
                 const response = await fetch(checkUrl);
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.status === '1' && data.result !== '0') {
-                        // Valid address with balance
+                    console.log('Etherscan response:', data);
+                    if (data.status === '1') {
+                        // Valid address (even with zero balance)
                         // Try to get contract name if it's a contract
                         let contractName = '';
                         let entity = 'Unknown';

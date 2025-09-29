@@ -3,35 +3,35 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-28 22:07)
+## Latest Commit (Auto-updated: 2025-09-28 22:08)
 
-**Commit:** 52869c56902d7603bb4406a5b0e72216c2576365
+**Commit:** 1b52a2fa2c54adab2c7e64320f4e150314bda22a
 **Author:** Your Name
-**Message:** Fix Address Finder search functionality
+**Message:** Fix Address Finder search button not working
 
-- Added await for async displayAddressFinderResults function
-- Added console logging to debug search issues
-- Search now properly waits for attribution lookups to complete
+- Made searchAddresses function explicitly global via window object
+- Added console log to confirm button click is working
+- Function was not accessible from onclick handler
 
 ### Changed Files:
 ```
- CLAUDE.md  | 32 ++++++++++++++++----------------
- index.html |  4 +++-
- 2 files changed, 19 insertions(+), 17 deletions(-)
+ CLAUDE.md  | 33 ++++++++++++++++-----------------
+ index.html |  3 ++-
+ 2 files changed, 18 insertions(+), 18 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 52869c5 Fix Address Finder search functionality (0 seconds ago)
-- 371c1d3 Remove non-existent Arkham search endpoint causing 405 errors (3 minutes ago)
-- 87a0c69 Explicitly use Solana API for Solana addresses in Address Finder (9 minutes ago)
-- e7be079 Add full attribution capabilities to Address Finder (12 minutes ago)
-- add0764 Add intelligent exchange detection with user choice (18 minutes ago)
-- 5f30b0e Fix exchange detection and button functionality (23 minutes ago)
-- a54cd19 Fix all requested issues: terminal wallet display, rounding errors, and ART display (30 minutes ago)
+- 1b52a2f Fix Address Finder search button not working (0 seconds ago)
+- 52869c5 Fix Address Finder search functionality (60 seconds ago)
+- 371c1d3 Remove non-existent Arkham search endpoint causing 405 errors (4 minutes ago)
+- 87a0c69 Explicitly use Solana API for Solana addresses in Address Finder (10 minutes ago)
+- e7be079 Add full attribution capabilities to Address Finder (13 minutes ago)
+- add0764 Add intelligent exchange detection with user choice (19 minutes ago)
+- 5f30b0e Fix exchange detection and button functionality (24 minutes ago)
+- a54cd19 Fix all requested issues: terminal wallet display, rounding errors, and ART display (31 minutes ago)
 - 428461c Fix terminal wallet thread exhaustion bug (2 days ago)
 - 79690c2 Fix critical JavaScript error preventing hop wizard from opening (2 days ago)
-- d615be9 Fix terminal wallet detection to distinguish personal labels from exchanges (2 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
