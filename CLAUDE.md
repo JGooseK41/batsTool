@@ -3,36 +3,37 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-28 22:20)
+## Latest Commit (Auto-updated: 2025-09-29 06:23)
 
-**Commit:** 23a71c2e42781af81f03c656b4d3789d8fd36269
+**Commit:** c5f02efdfa5986b7efa4841a7d5dcd3c1f78f027
 **Author:** Your Name
-**Message:** Add extensive debug logging to trace Address Finder empty array issue
+**Message:** Implement Arkham-first search strategy for Address Finder
 
-- Added logging when searchEVMAddresses returns results
-- Added logging for results array building in findAddressesByPattern
-- Added logging at function returns to track data flow
-- Added error context logging to identify where addresses are lost
+- Try Arkham Intelligence first for complete addresses for best attribution
+- Check multiple Arkham endpoints for comprehensive coverage
+- Still use Etherscan as fallback if Arkham doesn't find the address
+- Accept any valid Ethereum address format even with no balance
+- Skip duplicate Etherscan checks if Arkham already found the address
 
 ### Changed Files:
 ```
- CLAUDE.md  | 41 +++++++++++++++++++++--------------------
- index.html | 13 ++++++++++++-
- 2 files changed, 33 insertions(+), 21 deletions(-)
+ CLAUDE.md  | 41 ++++++++++++++++----------------
+ index.html | 79 +++++++++++++++++++++++++++++++++++++++++++++++++++++---------
+ 2 files changed, 88 insertions(+), 32 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 23a71c2 Add extensive debug logging to trace Address Finder empty array issue (0 seconds ago)
-- 9753ad1 Fix Address Finder search and add Arkham attribution (4 minutes ago)
-- 1b58dbc Add more detailed logging to identify why addresses aren't being added (6 minutes ago)
-- 187ebec Add extensive logging to debug Address Finder search (8 minutes ago)
-- 92778d3 Fix Address Finder to show addresses with zero balance (10 minutes ago)
-- 1b52a2f Fix Address Finder search button not working (12 minutes ago)
-- 52869c5 Fix Address Finder search functionality (13 minutes ago)
-- 371c1d3 Remove non-existent Arkham search endpoint causing 405 errors (17 minutes ago)
-- 87a0c69 Explicitly use Solana API for Solana addresses in Address Finder (22 minutes ago)
-- e7be079 Add full attribution capabilities to Address Finder (25 minutes ago)
+- c5f02ef Implement Arkham-first search strategy for Address Finder (1 second ago)
+- 23a71c2 Add extensive debug logging to trace Address Finder empty array issue (8 hours ago)
+- 9753ad1 Fix Address Finder search and add Arkham attribution (8 hours ago)
+- 1b58dbc Add more detailed logging to identify why addresses aren't being added (8 hours ago)
+- 187ebec Add extensive logging to debug Address Finder search (8 hours ago)
+- 92778d3 Fix Address Finder to show addresses with zero balance (8 hours ago)
+- 1b52a2f Fix Address Finder search button not working (8 hours ago)
+- 52869c5 Fix Address Finder search functionality (8 hours ago)
+- 371c1d3 Remove non-existent Arkham search endpoint causing 405 errors (8 hours ago)
+- 87a0c69 Explicitly use Solana API for Solana addresses in Address Finder (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

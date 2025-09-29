@@ -29169,42 +29169,69 @@ async function searchEVMAddresses(chain, searchType, pattern) {
             } else {
                 // Potentially a full address, check it directly
             try {
+                // First try V2 API for address metadata/tags
+                let entity = 'Unknown';
+                let hasTag = false;
+
+                try {
+                    const chainId = chain === 'ethereum' ? 1 : chain === 'bsc' ? 56 : 137;
+                    const v2Url = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=nametag&action=getaddresstag&address=${pattern}&apikey=${apiKey}`;
+                    console.log('Trying Etherscan V2 nametag API:', v2Url);
+
+                    const v2Response = await fetch(v2Url);
+                    if (v2Response.ok) {
+                        const v2Data = await v2Response.json();
+                        console.log('Etherscan V2 response:', v2Data);
+
+                        if (v2Data.status === '1' && v2Data.result && v2Data.result.length > 0) {
+                            const tag = v2Data.result[0];
+                            entity = tag.name || tag.nameTag || 'Unknown';
+                            hasTag = true;
+                            console.log('Found V2 nametag:', entity);
+                        }
+                    }
+                } catch (v2Error) {
+                    console.log('V2 API failed, falling back to V1:', v2Error);
+                }
+
+                // Now get balance and contract info using V1 API (still supported)
                 const checkUrl = `${apiUrl}?module=account&action=balance&address=${pattern}&tag=latest&apikey=${apiKey}`;
-                console.log('Fetching from:', checkUrl);
+                console.log('Fetching balance from V1 API:', checkUrl);
                 const response = await fetch(checkUrl);
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Etherscan response:', data);
+                    console.log('Etherscan V1 balance response:', data);
                     try {
                         console.log('Response status:', data.status, 'Type:', typeof data.status);
                         // Even if status is '0', it's still a valid Ethereum address format
-                        // Status '0' might mean no transactions or deprecated API
+                        // Status '0' might mean no transactions or V1 deprecation warning
                         if (pattern.match(/^0x[a-fA-F0-9]{40}$/i)) {
                         console.log('Valid Ethereum address format, processing...');
                         // Valid address (even with zero balance)
                         // Try to get contract name if it's a contract
                         let contractName = '';
-                        let entity = 'Unknown';
 
-                        try {
-                            const contractUrl = `${apiUrl}?module=contract&action=getsourcecode&address=${pattern}&apikey=${apiKey}`;
-                            const contractResponse = await fetch(contractUrl);
-                            if (contractResponse.ok) {
-                                const contractData = await contractResponse.json();
-                                if (contractData.status === '1' && contractData.result[0]) {
-                                    contractName = contractData.result[0].ContractName || '';
-                                    // Common contract names to entity mapping
-                                    if (contractName.toLowerCase().includes('tether')) entity = 'Tether (USDT)';
-                                    else if (contractName.toLowerCase().includes('usdc')) entity = 'Circle (USDC)';
-                                    else if (contractName.toLowerCase().includes('uniswap')) entity = 'Uniswap';
-                                    else if (contractName.toLowerCase().includes('compound')) entity = 'Compound';
-                                    else if (contractName.toLowerCase().includes('aave')) entity = 'Aave';
-                                    else if (contractName === '') entity = 'EOA (Wallet)';
-                                    else entity = contractName;
+                        if (!hasTag) {
+                            try {
+                                const contractUrl = `${apiUrl}?module=contract&action=getsourcecode&address=${pattern}&apikey=${apiKey}`;
+                                const contractResponse = await fetch(contractUrl);
+                                if (contractResponse.ok) {
+                                    const contractData = await contractResponse.json();
+                                    if (contractData.status === '1' && contractData.result[0]) {
+                                        contractName = contractData.result[0].ContractName || '';
+                                        // Common contract names to entity mapping
+                                        if (contractName.toLowerCase().includes('tether')) entity = 'Tether (USDT)';
+                                        else if (contractName.toLowerCase().includes('usdc')) entity = 'Circle (USDC)';
+                                        else if (contractName.toLowerCase().includes('uniswap')) entity = 'Uniswap';
+                                        else if (contractName.toLowerCase().includes('compound')) entity = 'Compound';
+                                        else if (contractName.toLowerCase().includes('aave')) entity = 'Aave';
+                                        else if (contractName === '') entity = 'EOA (Wallet)';
+                                        else entity = contractName;
+                                    }
                                 }
+                            } catch (e) {
+                                console.log('Could not fetch contract info:', e);
                             }
-                        } catch (e) {
-                            console.log('Could not fetch contract info:', e);
                         }
 
                         // Get attribution from our working attribution function
@@ -29222,7 +29249,7 @@ async function searchEVMAddresses(chain, searchType, pattern) {
                             entity: attribution?.name || attribution?.label || entity,
                             name: contractName || attribution?.name || '',
                             balance: parseFloat(data.result || '0') / 1e18,
-                            source: 'Etherscan + Arkham',
+                            source: hasTag ? 'Etherscan V2' : 'Etherscan + Arkham',
                             isToken: contractName && (contractName.toLowerCase().includes('token') ||
                                                      contractName.toLowerCase().includes('usdt') ||
                                                      contractName.toLowerCase().includes('usdc') ||
