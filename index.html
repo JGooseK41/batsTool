@@ -4594,6 +4594,10 @@
 
         // Convert personal label to conversion wallet (brown)
         window.convertToConversionWallet = function() {
+            console.log('convertToConversionWallet called');
+            console.log('hopWizardData:', window.hopWizardData);
+            console.log('detectedAttribution:', window.hopWizardData?.detectedAttribution);
+
             if (!window.hopWizardData || !window.hopWizardData.detectedAttribution) {
                 alert('No label detected to convert.');
                 return;
@@ -4603,6 +4607,13 @@
             const walletName = attribution.name || attribution.label || 'Unknown';
             const walletAddress = window.hopWizardData.txData?.to || '';
 
+            console.log('Converting wallet to Bridge/DEX:', {
+                walletName,
+                walletAddress,
+                attribution,
+                currentHopNumber: window.hopWizardData?.hopNumber
+            });
+
             // Show confirmation dialog
             const confirmMessage = `Convert "${walletName}" to Conversion Wallet (Bridge/DEX)?\n\n` +
                 `This will mark the wallet as a bridge or DEX for asset conversion.\n` +
@@ -4611,8 +4622,20 @@
                 `Do you want to proceed?`;
 
             if (!confirm(confirmMessage)) {
+                console.log('User cancelled conversion');
                 return;
             }
+
+            // Store the data we need before closing wizard
+            const hopNumber = window.hopWizardData.hopNumber;
+            const storedWalletAddress = walletAddress;
+            const storedWalletName = walletName;
+
+            console.log('Stored data before wizard close:', {
+                hopNumber,
+                storedWalletAddress,
+                storedWalletName
+            });
 
             // Mark as conversion/bridge
             attribution.isPersonalLabel = false;
@@ -4636,26 +4659,27 @@
 
                 // Open swap wizard with pre-filled data
                 setTimeout(() => {
-                    const hopNumber = window.hopWizardData?.hopNumber;
+                    // Use the stored hopNumber from before we closed the wizard
                     if (hopNumber) {
-                        // Find the hop
-                        const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
-                        if (hop) {
-                            // Open swap wizard
-                            openSwapWizard(hop);
+                        console.log('Opening swap wizard for hop:', hopNumber);
+                        // Open swap wizard using the correct function
+                        showSwapWizard(hopNumber);
 
-                            // Pre-fill the swap service with the detected wallet
-                            setTimeout(() => {
-                                const swapServiceInput = document.getElementById('swapService');
-                                if (swapServiceInput) {
-                                    swapServiceInput.value = walletAddress;
-                                }
-                                const providerInput = document.getElementById('providerName');
-                                if (providerInput) {
-                                    providerInput.value = walletName;
-                                }
-                            }, 100);
-                        }
+                        // Pre-fill the swap service with the detected wallet
+                        setTimeout(() => {
+                            const swapServiceInput = document.getElementById('swapService');
+                            if (swapServiceInput) {
+                                swapServiceInput.value = storedWalletAddress;
+                                console.log('Pre-filled swap service with:', storedWalletAddress);
+                            }
+                            const providerInput = document.getElementById('providerName');
+                            if (providerInput) {
+                                providerInput.value = storedWalletName;
+                                console.log('Pre-filled provider name with:', storedWalletName);
+                            }
+                        }, 100);
+                    } else {
+                        console.error('No hop number found');
                     }
                 }, 500);
             }, 500);
@@ -33198,7 +33222,8 @@ To (RED Wallet): ${transfer.to}`;
                     'paradex', 'etherdelta', 'forkdelta', 'token store', 'oasis',
                     'deversifi', 'nash', 'dydx', 'perpetual protocol', 'gmx', 'gains',
                     'kwenta', 'polynomial', 'lyra', 'hegic', 'opyn', 'ribbon',
-                    'friktion', 'katana', 'zeta', 'drift', 'mango', 'jupiter'
+                    'friktion', 'katana', 'zeta', 'drift', 'mango', 'jupiter', 'gluex',
+                    'gluexrouter', 'meteora', 'lifinity', 'phoenixdex', 'fluxbeam'
                 ],
                 keywords: [
                     // General keywords
