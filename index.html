@@ -4360,6 +4360,106 @@
             showNotification('✅ Terminal wallet confirmed. Click "Create Terminal Entry" to proceed.', 'success');
         }
 
+        // Convert personal label to terminal wallet
+        function convertToTerminalWallet() {
+            if (!window.hopWizardData || !window.hopWizardData.detectedAttribution) {
+                alert('No label detected to convert.');
+                return;
+            }
+
+            const attribution = window.hopWizardData.detectedAttribution;
+
+            // Override the personal label flag and mark as terminal
+            attribution.isPersonalLabel = false;
+            attribution.isExchange = true;
+            attribution.type = attribution.type || 'CEX';
+
+            // Mark wizard data to create terminal entry
+            window.hopWizardData.isTerminalWallet = true;
+            window.hopWizardData.terminalWalletType = 'purple';
+
+            // Update the UI
+            const resultDiv = document.getElementById('wizardTxResult');
+            const alertDiv = resultDiv.querySelector('div[style*="#e3f2fd"]');
+
+            if (alertDiv) {
+                // Replace the personal label UI with terminal wallet UI
+                alertDiv.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; border-radius: 8px; padding: 15px; margin-top: 15px;';
+                alertDiv.innerHTML = `
+                    <h4 style="margin: 0 0 10px 0; color: #6a1b9a;">🟣 Converted to Terminal Wallet</h4>
+                    <div style="font-size: 14px;">
+                        <strong>Exchange/Service:</strong> ${attribution.name || attribution.label}<br>
+                        <strong>Type:</strong> Terminal Wallet (CEX)<br>
+                        <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${window.hopWizardData.txData?.to || ''}</span><br>
+                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+                            <strong>✅ Conversion Complete:</strong><br>
+                            • This will now be treated as a terminal wallet<br>
+                            • Thread will be marked as exhausted<br>
+                            • Legal process required for fund recovery
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Update button
+            const nextBtn = document.getElementById('wizardNextBtn');
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Create Terminal Entry';
+                nextBtn.style.background = '#9c27b0';
+            }
+        }
+
+        // Convert personal label to conversion wallet (brown)
+        function convertToConversionWallet() {
+            if (!window.hopWizardData || !window.hopWizardData.detectedAttribution) {
+                alert('No label detected to convert.');
+                return;
+            }
+
+            const attribution = window.hopWizardData.detectedAttribution;
+
+            // Mark as conversion/bridge
+            attribution.isPersonalLabel = false;
+            attribution.isConversion = true;
+            attribution.type = 'Bridge/DEX';
+
+            // Mark wizard data for conversion wallet
+            window.hopWizardData.isConversionWallet = true;
+            window.hopWizardData.terminalWalletType = 'brown';
+
+            // Update the UI
+            const resultDiv = document.getElementById('wizardTxResult');
+            const alertDiv = resultDiv.querySelector('div[style*="#e3f2fd"]');
+
+            if (alertDiv) {
+                // Replace the personal label UI with conversion wallet UI
+                alertDiv.style.cssText = 'background: #d7ccc8; border: 2px solid #8B4513; border-radius: 8px; padding: 15px; margin-top: 15px;';
+                alertDiv.innerHTML = `
+                    <h4 style="margin: 0 0 10px 0; color: #5d4037;">🟤 Converted to Conversion Wallet</h4>
+                    <div style="font-size: 14px;">
+                        <strong>Bridge/DEX:</strong> ${attribution.name || attribution.label}<br>
+                        <strong>Type:</strong> Conversion Service<br>
+                        <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${window.hopWizardData.txData?.to || ''}</span><br>
+                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+                            <strong>✅ Conversion Complete:</strong><br>
+                            • This will be treated as a bridge/swap<br>
+                            • Use the 🌉 Log Bridge/Swap button<br>
+                            • Track the converted currency output
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Update button
+            const nextBtn = document.getElementById('wizardNextBtn');
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Continue to Next Step';
+                nextBtn.style.background = '#8B4513';
+            }
+        }
+
         // REMOVED: continueTraceFromTerminal function
         // Exchange wallets MUST be marked as terminal - no option to continue regular trace
 
@@ -6687,8 +6787,8 @@ function buildAvailableThreadsIndex() {
                     internalId: internalId,          // Unique identifier
 
                     // Standard fields
-                    totalAmount: parseFloat(transaction.amount),
-                    availableAmount: parseFloat(transaction.amount),
+                    totalAmount: roundAmount(parseFloat(transaction.amount)),
+                    availableAmount: roundAmount(parseFloat(transaction.amount)),
                     assignments: [],
                     sourceWallet: transaction.receivingWallet,
                     sourceType: 'victim_transaction',
@@ -6804,8 +6904,8 @@ function buildAvailableThreadsIndex() {
                 investigation.availableThreads[currency][newInternalId] = {
                     notation: entry.notation,
                     internalId: newInternalId,
-                    totalAmount: parseFloat(entry.amount),
-                    availableAmount: parseFloat(entry.amount),
+                    totalAmount: roundAmount(parseFloat(entry.amount)),
+                    availableAmount: roundAmount(parseFloat(entry.amount)),
                     assignments: [],
                     sourceWallet: entry.toWallet,
                     sourceType: 'change_output',
@@ -6848,7 +6948,8 @@ function buildAvailableThreadsIndex() {
                                         const amountUsed = parseFloat(allocatedAmount) || 0;
                                         console.log(`Terminal wallet: Deducting ${amountUsed} from thread ${threadId} (had ${thread.availableAmount} available)`);
 
-                                        thread.availableAmount = Math.max(0, thread.availableAmount - amountUsed);
+                                        // Use proper rounding to avoid floating point errors
+                                        thread.availableAmount = roundAmount(Math.max(0, thread.availableAmount - amountUsed));
 
                                         // Only mark as fully exhausted if less than 0.01 remains
                                         if (thread.availableAmount < 0.01) {
@@ -6942,8 +7043,8 @@ function updateThreadAvailabilityFromHop(entry) {
         internalId: internalId,            // Unique identifier
 
         // Standard fields
-        totalAmount: amount,
-        availableAmount: amount,  // This thread's full amount is available
+        totalAmount: roundAmount(amount),
+        availableAmount: roundAmount(amount),  // This thread's full amount is available
         assignments: [],
         sourceWallet: entry.toWallet,
         sourceType: 'hop_output',
@@ -7111,8 +7212,8 @@ function updateThreadAvailabilityFromSwap(entry) {
                 internalId: newInternalId,
 
                 // Amounts
-                totalAmount: outputPortion,
-                availableAmount: outputPortion,
+                totalAmount: roundAmount(outputPortion),
+                availableAmount: roundAmount(outputPortion),
 
                 // Tracking
                 assignments: [],
@@ -11138,7 +11239,7 @@ function addNewHop() {
                                                 </span>
                                             ` : (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged ? `
                                                 <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
-                                                    TERMINAL
+                                                    TERMINAL${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}
                                                 </span>
                                             ` : ''}
                                         </div>
@@ -11175,7 +11276,7 @@ function addNewHop() {
                                     <button class="btn btn-sm" style="background: #27ae60; color: white; border: 1px solid #229954;"
                                             onclick="event.stopPropagation(); logBridgeOutput(${hop.hopNumber}, ${entry.id})"
                                             title="Log the output transaction from this terminal wallet (CEX or Bridge)">
-                                        🌉 Log Bridge Output
+                                        🌉 Log Bridge/Swap
                                     </button>
                                 ` : ''}
                                 <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); removeHopEntry(${hop.hopNumber}, ${entry.id})">
@@ -11204,7 +11305,7 @@ function addNewHop() {
                                                 </span>
                                             ` : (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged ? `
                                                 <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
-                                                    TERMINAL
+                                                    TERMINAL${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}
                                                 </span>
                                             ` : ''}
                                             <span style="color: #666; font-size: 11px;">
@@ -12407,7 +12508,7 @@ function addNewHop() {
                                     <div>
                                         <h2 style="margin: 0; font-size: 1.5rem;">🎯 Hop ${hop.hopNumber}</h2>
                                         <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">
-                                            ${isCollapsed ? `${tracesCount} traces, ${writeoffsCount} writeoffs | Total: ${totalAccountedDisplay || '0'}` : `Starting ART: ${artStartDisplay}`}
+                                            ${isCollapsed ? `${tracesCount} traces, ${writeoffsCount} writeoffs | Total: ${totalAccountedDisplay || '0'}` : `ART at Hop Start: ${artStartDisplay}`}
                                         </div>
                                         ${hasDuplicates ? `
                                             <div style="background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 6px; margin-top: 10px; border: 2px solid #fff;">
@@ -12457,8 +12558,40 @@ function addNewHop() {
                                 <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                                         <div>
-                                            <strong>Starting ART:</strong><br>
+                                            <strong>ART at Hop Start:</strong><br>
                                             <span style="color: #2c3e50; font-size: 18px;">${artStartDisplay}</span>
+                                        </div>
+                                        <div>
+                                            <strong>Current Available ART:</strong><br>
+                                            <span style="color: #3498db; font-size: 18px;">${(() => {
+                                                // Calculate current ART (accounts for writeoffs)
+                                                const currentART = {};
+
+                                                // Start with hop's starting ART
+                                                Object.entries(artAtStart).forEach(([currency, amount]) => {
+                                                    if (typeof amount === 'number') {
+                                                        currentART[currency] = amount;
+                                                    }
+                                                });
+
+                                                // Subtract writeoffs from current hop
+                                                hop.entries.forEach(entry => {
+                                                    if (entry.entryType === 'writeoff' && parseFloat(entry.amount) > 0) {
+                                                        const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                                                        if (currentART[currency]) {
+                                                            currentART[currency] = roundAmount(currentART[currency] - parseFloat(entry.amount));
+                                                        }
+                                                    }
+                                                });
+
+                                                // Format for display
+                                                const currentARTDisplay = Object.entries(currentART)
+                                                    .filter(([currency, amount]) => amount > 0)
+                                                    .map(([currency, amount]) => `${amount.toLocaleString()} ${currency}`)
+                                                    .join(' | ');
+
+                                                return currentARTDisplay || '0';
+                                            })()}</span>
                                         </div>
                                         <div>
                                             <strong>Total Accounted:</strong><br>
@@ -12493,7 +12626,8 @@ function addNewHop() {
                                         const currentHopThreads = getAvailableSourcesForHop(hop.hopNumber, null);
 
                                         // Add total amount information to each thread
-                                        const unallocatedInCurrentHop = currentHopThreads.filter(t => t.availableAmount > 0.01).map(thread => {
+                                        // We'll keep ALL threads to check if they're rounding remainders
+                                        const allThreadsInCurrentHop = currentHopThreads.filter(t => t.availableAmount > 0.000001).map(thread => {
                                             // Find the original thread to get total amount
                                             let totalAmount = thread.availableAmount;
 
@@ -12514,6 +12648,20 @@ function addNewHop() {
                                             };
                                         });
 
+                                        // Separate actual unallocated threads from rounding remainders
+                                        const unallocatedInCurrentHop = allThreadsInCurrentHop.filter(thread => {
+                                            const remaining = thread.availableAmount;
+                                            const original = thread.totalAmount || thread.availableAmount;
+                                            const assigned = original - remaining;
+                                            const percentAssigned = original > 0 ? (assigned / original) * 100 : 0;
+                                            // Consider it a rounding remainder if >99% assigned and remainder is <1% of original
+                                            const isRoundingRemainder = percentAssigned >= 99 && remaining < (original * 0.01);
+                                            return !isRoundingRemainder && remaining > 0.01; // Only show actual unallocated amounts
+                                        });
+
+                                        // Check if ALL remaining amounts are just rounding remainders
+                                        const onlyRoundingRemainders = allThreadsInCurrentHop.length > 0 && unallocatedInCurrentHop.length === 0;
+
                                         // Get available threads for the NEXT hop (created by this hop's entries)
                                         const nextHopNumber = hop.hopNumber + 1;
                                         const nextHopThreads = getAvailableSourcesForHop(nextHopNumber, null);
@@ -12522,13 +12670,14 @@ function addNewHop() {
                                         // Check if any threads are from swaps in the current hop
                                         const hasSwapOutputs = availableForNextHop.some(t => t.sourceType === 'swap_output' && t.hopLevel === hop.hopNumber);
 
-                                        // Always show threads available for CURRENT hop that still need assignment
-                                        if (unallocatedInCurrentHop.length > 0) {
+                                        // Show threads available for CURRENT hop that still need assignment
+                                        // BUT NOT if they're all just rounding remainders
+                                        if (unallocatedInCurrentHop.length > 0 || (onlyRoundingRemainders && allThreadsInCurrentHop.length > 0)) {
                                             return `
                                                 <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-                                                    <h4 style="margin: 0 0 10px 0; color: #e65100;">📋 Available Threads for Hop ${hop.hopNumber}:</h4>
+                                                    <h4 style="margin: 0 0 10px 0; color: #e65100;">${onlyRoundingRemainders ? '✅ Hop Complete (Rounding Remainders Only)' : '📋 Available Threads for Hop ' + hop.hopNumber + ':'}</h4>
                                                     <div style="display: grid; gap: 8px;">
-                                                        ${unallocatedInCurrentHop.map(thread => {
+                                                        ${(onlyRoundingRemainders ? allThreadsInCurrentHop : unallocatedInCurrentHop).map(thread => {
                                                             // Show the remaining amount for this thread
                                                             const remaining = thread.availableAmount;
                                                             const original = thread.totalAmount || thread.availableAmount;
@@ -17394,8 +17543,8 @@ function checkAllThreadsTerminated() {
                 }
                 
                 investigation.availableThreads[currency][threadId] = {
-                    totalAmount: parseFloat(transaction.amount),
-                    availableAmount: parseFloat(transaction.amount),
+                    totalAmount: roundAmount(parseFloat(transaction.amount)),
+                    availableAmount: roundAmount(parseFloat(transaction.amount)),
                     currency: currency
                 };
                 
@@ -21002,6 +21151,18 @@ async function lookupWizardTransaction() {
                             • The wallet can still send funds elsewhere<br>
                             • Continue tracing as normal<br>
                             • The label will be added to your entry notes
+                        </div>
+                        <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ff9800; border-radius: 4px;">
+                            <strong>❓ Is this actually an exchange or conversion service?</strong><br>
+                            <p style="margin: 8px 0; font-size: 13px;">If this label indicates a centralized exchange or DEX/Bridge, convert it to the appropriate wallet type:</p>
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <button class="btn btn-warning" onclick="convertToTerminalWallet()" style="background: #9c27b0; border-color: #9c27b0;">
+                                    🟣 Convert to Terminal Wallet
+                                </button>
+                                <button class="btn btn-secondary" onclick="convertToConversionWallet()" style="background: #8B4513; border-color: #8B4513;">
+                                    🟤 Convert to Conversion Wallet
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -31877,7 +32038,15 @@ To (RED Wallet): ${transfer.to}`;
                 indicator.style.opacity = '0';
             }, 2000);
         }
-        
+
+        // Helper function for proper decimal rounding to avoid floating point errors
+        function roundAmount(amount, decimals = 8) {
+            // Round to 8 decimal places by default - important for high value crypto
+            // where even small decimals can represent significant value
+            const factor = Math.pow(10, decimals);
+            return Math.round((amount + Number.EPSILON) * factor) / factor;
+        }
+
         // General notification function
         function showNotification(message, type = 'info', duration = 3000) {
             let notification = document.getElementById('notification');

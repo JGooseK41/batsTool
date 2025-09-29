@@ -3,15 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 14:32)
+## Latest Commit (Auto-updated: 2025-09-26 14:45)
 
-**Commit:** 79690c2f35b9b8715ce336582a7da6dd8c84b957
+**Commit:** 428461c80bea03ac5c3a73cceddab053ca33d738
 **Author:** Your Name
-**Message:** Fix critical JavaScript error preventing hop wizard from opening
+**Message:** Fix terminal wallet thread exhaustion bug
 
-- Fixed undefined function reference: changed window.addHop to window.addNewHop
-- This error was preventing the hop wizard from opening for some users
-- The function addHop doesn't exist, it should be addNewHop
+- Terminal wallets now only consume the allocated amount, not the entire thread
+- Removed code that was forcing 100% thread usage for terminal wallets
+- Threads are now only marked as fully exhausted if <0.01 remains
+- This allows partial traces to terminal wallets while preserving remainders
+
+Previously: Allocating 100 from a 149 thread to a terminal wallet would consume all 149
+Now: Allocating 100 from a 149 thread correctly leaves 49 available for future use
 
 🤖 Generated with Claude Code
 
@@ -19,23 +23,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 47 ++++++++++++++++++++++++++---------------------
- index.html |  2 +-
- 2 files changed, 27 insertions(+), 22 deletions(-)
+ CLAUDE.md  | 45 +++++++++++++++++++--------------------------
+ index.html | 55 ++++++++++++++++++++++++++-----------------------------
+ 2 files changed, 45 insertions(+), 55 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 79690c2 Fix critical JavaScript error preventing hop wizard from opening (0 seconds ago)
-- d615be9 Fix terminal wallet detection to distinguish personal labels from exchanges (78 minutes ago)
-- 3802b4c Fix Arkham API URL and add helpful error messages for transaction lookup (87 minutes ago)
+- 428461c Fix terminal wallet thread exhaustion bug (0 seconds ago)
+- 79690c2 Fix critical JavaScript error preventing hop wizard from opening (14 minutes ago)
+- d615be9 Fix terminal wallet detection to distinguish personal labels from exchanges (2 hours ago)
+- 3802b4c Fix Arkham API URL and add helpful error messages for transaction lookup (2 hours ago)
 - 39f47f8 Fix critical terminal wallet and hop management issues (2 hours ago)
 - 841a04a Add forensic precision with rounding remainder write-off feature (2 hours ago)
 - ef1130a Fix hop completion detection for threads with rounding remainders (2 hours ago)
 - d55b3ff Update CLAUDE.md with latest changes (2 hours ago)
 - 6842c7a Fix Arkham API response parsing for multi-chain structure (2 hours ago)
 - cc38541 Add API attribution test page and update to latest Arkham endpoints (2 hours ago)
-- 48fb5cb Update Arkham API to use enhanced endpoint for better attribution (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
