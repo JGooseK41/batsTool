@@ -24693,9 +24693,18 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 const toAddr = txData.to || '';
 
                 // Try to get swap data using the Arkham swaps endpoint
-                const swapsUrl = `/.netlify/functions/arkham3?endpoint=/swaps&base=${fromAddr}&chains=${arkhamChain}&timeLast=1h&limit=50`;
+                // Build URL with proper query string encoding
+                const swapParams = new URLSearchParams({
+                    endpoint: '/swaps',
+                    base: fromAddr,
+                    chains: arkhamChain,
+                    timeLast: '1h',
+                    limit: '50'
+                });
+                const swapsUrl = `/.netlify/functions/arkham3?${swapParams.toString()}`;
 
                 console.log('Fetching from Arkham swaps endpoint:', swapsUrl);
+                console.log('Looking for swaps from address:', fromAddr, 'on chain:', arkhamChain);
 
                 const response = await fetch(swapsUrl, {
                     headers: {
@@ -24703,16 +24712,35 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     }
                 });
 
+                console.log('Arkham swaps API response status:', response.status);
+
                 if (response.ok) {
                     const swapData = await response.json();
-                    console.log('Arkham swap data:', swapData);
+                    console.log('Arkham swap data received:', swapData);
+                    console.log('Number of swaps found:', swapData.swaps ? swapData.swaps.length : 0);
 
                     if (swapData.swaps && swapData.swaps.length > 0) {
                         // Find the swap matching our transaction
-                        const matchingSwap = swapData.swaps.find(swap => {
+                        // First try to match by transaction hash
+                        let matchingSwap = swapData.swaps.find(swap => {
                             // Match by transaction hash if available in the ID
-                            return swap.id && swap.id.includes(txHash.toLowerCase());
+                            return swap.id && swap.id.toLowerCase().includes(txHash.toLowerCase());
                         });
+
+                        // If no exact match, try to find a swap to the same contract address around the same time
+                        if (!matchingSwap && swapData.swaps.length === 1) {
+                            // If there's only one swap in the recent timeframe, it's likely our swap
+                            matchingSwap = swapData.swaps[0];
+                            console.log('Using only available swap from recent timeframe');
+                        } else if (!matchingSwap) {
+                            // Try to match by contract address
+                            matchingSwap = swapData.swaps.find(swap => {
+                                return swap.contractAddress?.address?.toLowerCase() === toAddr.toLowerCase();
+                            });
+                            if (matchingSwap) {
+                                console.log('Matched swap by contract address');
+                            }
+                        }
 
                         if (matchingSwap) {
                             console.log('Found matching swap:', matchingSwap);
@@ -24755,7 +24783,19 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                             if (!document.getElementById('bridgeDestAsset').value && txData.swapData.token1) {
                                 document.getElementById('bridgeDestAsset').value = txData.swapData.token1;
                             }
+                        } else {
+                            console.log('No matching swap found in Arkham data');
                         }
+                    } else {
+                        console.log('No swap data returned from Arkham');
+                    }
+                } else {
+                    console.log('Arkham swaps API returned non-OK status:', response.status);
+                    try {
+                        const errorData = await response.text();
+                        console.log('Error response:', errorData);
+                    } catch (e) {
+                        console.log('Could not read error response');
                     }
                 }
             } catch (error) {

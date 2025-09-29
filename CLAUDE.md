@@ -3,45 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 12:27)
+## Latest Commit (Auto-updated: 2025-09-29 13:03)
 
-**Commit:** e76fab9c04a179114611e5101d3bfb64eba546bd
+**Commit:** 02b27495a4d9f092c425782935344e495ec831bb
 **Author:** Your Name
-**Message:** Fix ART calculation to properly handle bridge conversions
+**Message:** Fix conversion wallet modal not opening after converting personal label
 
-- Skip bridges with logged outputs when calculating next hop ART
-- Bridges consume the original currency entirely (e.g., HYPE)
-- Bridge outputs create new threads in the converted currency (e.g., USDC)
-- This prevents double-counting where bridges were incorrectly adding both currencies
+- Fixed function name from openSwapWizard to showSwapWizard
+- Store hop number and wallet data before closing wizard
+- Use stored variables instead of reading from closed wizard data
+- Add detailed logging to debug conversion wallet flow
+- Add gluex and other Solana DEXes to known DEX list
+- Pre-fill swap service and provider fields with wallet info
 
-In the example case:
-- Started with 1290 HYPE
-- 1 HYPE written off
-- 989 HYPE converted to USDC via bridges
-- 300 HYPE sent to regular wallet (continues to Hop 2)
-- Result: Hop 2 ART should be 300 HYPE, not 1289 HYPE
+🤖 Generated with [Claude Code](https://claude.ai/code)
 
-This fixes the incorrect ART calculation that was including already-converted funds.
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 46 ++++++++++++++++++++++------------------------
- index.html | 16 +++++++++++++++-
- 2 files changed, 37 insertions(+), 25 deletions(-)
+ CLAUDE.md  | 50 ++++++++++++++++++++++++++---------------------
+ index.html | 65 +++++++++++++++++++++++++++++++++++++++++++-------------------
+ 2 files changed, 73 insertions(+), 42 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e76fab9 Fix ART calculation to properly handle bridge conversions (0 seconds ago)
-- b280140 Fix undefined function error and floating point precision issues (14 minutes ago)
-- 2f42dcc Fix auto-generated write-off display and thread filtering (17 minutes ago)
-- 231c7c6 Fix missing closing brace in buildAvailableThreadsIndex function (29 minutes ago)
-- cc956d9 Fix syntax error - remove extra closing brace on line 7230 (37 minutes ago)
-- 0a18141 Fix bridge/swap fee handling with automatic write-offs (47 minutes ago)
-- c414503 Fix personal label entries being incorrectly marked as terminal (65 minutes ago)
-- 0e45136 Fix undefined currency variable in write-off handling (81 minutes ago)
+- 02b2749 Fix conversion wallet modal not opening after converting personal label (0 seconds ago)
+- e76fab9 Fix ART calculation to properly handle bridge conversions (36 minutes ago)
+- b280140 Fix undefined function error and floating point precision issues (50 minutes ago)
+- 2f42dcc Fix auto-generated write-off display and thread filtering (53 minutes ago)
+- 231c7c6 Fix missing closing brace in buildAvailableThreadsIndex function (65 minutes ago)
+- cc956d9 Fix syntax error - remove extra closing brace on line 7230 (73 minutes ago)
+- 0a18141 Fix bridge/swap fee handling with automatic write-offs (83 minutes ago)
+- c414503 Fix personal label entries being incorrectly marked as terminal (2 hours ago)
+- 0e45136 Fix undefined currency variable in write-off handling (2 hours ago)
 - 9d6011c Update CLAUDE.md with latest auto-commit information (2 hours ago)
-- a8a10c0 Debug: Thread currency confusion in Hop 2 (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

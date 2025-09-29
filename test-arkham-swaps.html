@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Arkham Swap API</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .result { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { border-left: 4px solid green; }
+        .error { border-left: 4px solid red; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        input { padding: 8px; width: 400px; margin: 5px; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>Test Arkham Swap API</h1>
+
+    <div>
+        <label>Test Address (wallet that performed swap): </label><br>
+        <input type="text" id="testAddress" value="0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD" placeholder="Enter wallet address"><br>
+
+        <label>Chain: </label>
+        <select id="testChain">
+            <option value="ethereum">Ethereum</option>
+            <option value="bsc">BSC</option>
+            <option value="polygon">Polygon</option>
+            <option value="arbitrum_one">Arbitrum</option>
+            <option value="avalanche">Avalanche</option>
+            <option value="optimism">Optimism</option>
+        </select><br>
+
+        <label>Time Range: </label>
+        <select id="timeRange">
+            <option value="1h">Last 1 hour</option>
+            <option value="24h">Last 24 hours</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+        </select><br>
+
+        <button onclick="testArkhamSwaps()">Test Swap Endpoint</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        async function testArkhamSwaps() {
+            const address = document.getElementById('testAddress').value.trim();
+            const chain = document.getElementById('testChain').value;
+            const timeRange = document.getElementById('timeRange').value;
+            const resultsDiv = document.getElementById('results');
+
+            if (!address) {
+                alert('Please enter an address');
+                return;
+            }
+
+            resultsDiv.innerHTML = '<h2>Testing Arkham Swap API...</h2>';
+
+            const apiKey = 'd377a526-c9ea-4cb6-a647-775559583ff6';
+
+            try {
+                // Build the query parameters properly
+                const params = new URLSearchParams({
+                    endpoint: '/swaps',
+                    base: address,
+                    chains: chain,
+                    timeLast: timeRange,
+                    limit: '50'
+                });
+
+                const url = `/.netlify/functions/arkham3?${params.toString()}`;
+
+                console.log('Testing Arkham swaps endpoint:', url);
+                resultsDiv.innerHTML += `
+                    <div class="result">
+                        <strong>Request URL:</strong> ${url}<br>
+                        <strong>Address:</strong> ${address}<br>
+                        <strong>Chain:</strong> ${chain}<br>
+                        <strong>Time Range:</strong> ${timeRange}
+                    </div>
+                `;
+
+                const response = await fetch(url, {
+                    headers: {
+                        'X-Arkham-API-Key': apiKey
+                    }
+                });
+
+                resultsDiv.innerHTML += `
+                    <div class="result ${response.ok ? 'success' : 'error'}">
+                        <strong>Response Status:</strong> ${response.status} ${response.statusText}
+                    </div>
+                `;
+
+                const data = await response.json();
+                console.log('Arkham swaps response:', data);
+
+                if (data.swaps && Array.isArray(data.swaps)) {
+                    resultsDiv.innerHTML += `
+                        <div class="result success">
+                            <strong>✅ Swaps Found:</strong> ${data.swaps.length}<br>
+                            ${data.swaps.length > 0 ? '<strong>Recent Swaps:</strong>' : '<strong>No swaps found in this time period</strong>'}
+                        </div>
+                    `;
+
+                    // Display each swap
+                    data.swaps.forEach((swap, index) => {
+                        const swapDate = swap.time ? new Date(swap.time).toLocaleString() : 'Unknown';
+                        resultsDiv.innerHTML += `
+                            <div class="result">
+                                <strong>Swap ${index + 1}:</strong><br>
+                                <strong>Time:</strong> ${swapDate}<br>
+                                <strong>DEX:</strong> ${swap.contractEntityId || 'Unknown'}<br>
+                                <strong>Contract:</strong> ${swap.contractAddress?.address || 'Unknown'}<br>
+                                <strong>Tokens:</strong> ${swap.token0Symbol || swap.token0Name || '?'} → ${swap.token1Symbol || swap.token1Name || '?'}<br>
+                                <strong>Amounts:</strong> ${Math.abs(swap.unitValue0 || 0).toFixed(4)} → ${Math.abs(swap.unitValue1 || 0).toFixed(4)}<br>
+                                <strong>USD Value:</strong> $${(swap.historicalUSD || 0).toLocaleString()}<br>
+                                <strong>TX ID:</strong> ${swap.id || 'Unknown'}<br>
+                                <details>
+                                    <summary>View Full Swap Data</summary>
+                                    <pre>${JSON.stringify(swap, null, 2)}</pre>
+                                </details>
+                            </div>
+                        `;
+                    });
+                } else {
+                    resultsDiv.innerHTML += `
+                        <div class="result error">
+                            <strong>⚠️ Unexpected Response Format</strong><br>
+                            <details>
+                                <summary>View Response</summary>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Error testing Arkham swaps:', error);
+                resultsDiv.innerHTML += `
+                    <div class="result error">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Add some known DEX router addresses for testing
+        function setTestAddress(address, chain) {
+            document.getElementById('testAddress').value = address;
+            document.getElementById('testChain').value = chain;
+        }
+    </script>
+
+    <hr>
+    <h3>Quick Test Addresses (Known DEX Routers):</h3>
+    <button onclick="setTestAddress('0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD', 'ethereum')">Uniswap Universal Router (ETH)</button>
+    <button onclick="setTestAddress('0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45', 'ethereum')">Uniswap V3 Router (ETH)</button>
+    <button onclick="setTestAddress('0x1111111254fb6c44bAC0beD2854e76F90643097d', 'ethereum')">1inch Router (ETH)</button>
+    <button onclick="setTestAddress('0x10ED43C718714eb63d5aA57B78B54704E256024E', 'bsc')">PancakeSwap Router (BSC)</button>
+
+</body>
+</html>
