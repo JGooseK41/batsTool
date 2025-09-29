@@ -3,14 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 11:06)
+## Latest Commit (Auto-updated: 2025-09-29 11:22)
 
-**Commit:** 0e45136d9abbc9125f6d08b18ddb0fc05333b2f6
+**Commit:** c414503b8e767d37e13e83c3722d8b86aac5a452
 **Author:** Your Name
-**Message:** Fix undefined currency variable in write-off handling
+**Message:** Fix personal label entries being incorrectly marked as terminal
 
-- Add writeoffCurrency variable to get currency from entry
-- Fixes ReferenceError that was preventing write-off entries from being created
+- Personal label entries were being marked as isTerminalWallet=true
+- This prevented them from creating output threads for next hop
+- Now explicitly sets isTerminalWallet=false for personal labels
+- Ensures 300 HYPE sent to personal label wallet creates thread for Hop 2
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -18,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 33 +++++++++++----------------------
- index.html |  3 ++-
- 2 files changed, 13 insertions(+), 23 deletions(-)
+ CLAUDE.md  | 34 +++++++++++++++++++++-------------
+ index.html | 21 +++++++++++++++++++--
+ 2 files changed, 40 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0e45136 Fix undefined currency variable in write-off handling (0 seconds ago)
-- 9d6011c Update CLAUDE.md with latest auto-commit information (9 minutes ago)
-- a8a10c0 Debug: Thread currency confusion in Hop 2 (14 minutes ago)
-- 93808df Fix write-off entries not properly consuming source threads (22 minutes ago)
-- cc8e418 Improve personal label to terminal/conversion wallet conversion UX (31 minutes ago)
-- 4e409fc Fix terminal wallet detection and thread availability for subsequent hops (35 minutes ago)
-- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (43 minutes ago)
-- d47cba3 Fix Address Finder filtering out attributed addresses when 'Active Only' is checked (2 hours ago)
+- c414503 Fix personal label entries being incorrectly marked as terminal (0 seconds ago)
+- 0e45136 Fix undefined currency variable in write-off handling (16 minutes ago)
+- 9d6011c Update CLAUDE.md with latest auto-commit information (25 minutes ago)
+- a8a10c0 Debug: Thread currency confusion in Hop 2 (29 minutes ago)
+- 93808df Fix write-off entries not properly consuming source threads (37 minutes ago)
+- cc8e418 Improve personal label to terminal/conversion wallet conversion UX (46 minutes ago)
+- 4e409fc Fix terminal wallet detection and thread availability for subsequent hops (51 minutes ago)
+- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (59 minutes ago)
+- d47cba3 Fix Address Finder filtering out attributed addresses when 'Active Only' is checked (3 hours ago)
 - 03ef779 Add proportional attribution calculator for commingled fund conversions (3 hours ago)
-- 619ae29 Integrate Arkham API enhancements for attribution and swap detection (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

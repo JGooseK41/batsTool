@@ -7192,7 +7192,39 @@ function buildAvailableThreadsIndex() {
                                             console.log(`Thread ${threadId} fully exhausted by terminal wallet`);
                                         } else {
                                             console.log(`Thread ${threadId} has ${thread.availableAmount} remaining after terminal wallet`);
-                                        }
+                                            // These remainders represent bridge/swap fees or slippage - always write them off
+                                            if (thread.availableAmount > 0.01) { // Any remainder above dust
+                                                console.log(`Auto-creating write-off for bridge/swap fees: ${thread.availableAmount} ${thread.currency || entry.currency}`);
+
+                                                // Find the hop this entry belongs to
+                                                const hop = investigation.hops.find(h => h.entries.some(e => e.id === entry.id));
+                                                if (hop) {
+                                                    // Create a write-off entry for the fee
+                                                    const feeWriteOff = {
+                                                        id: Date.now() + Math.random(),
+                                                        entryType: 'writeoff',
+                                                        notation: `${thread.notation || threadId}-FEE`,
+                                                        amount: thread.availableAmount.toString(),
+                                                        currency: thread.currency || entry.currency,
+                                                        customCurrency: thread.currency === 'CUSTOM' ? thread.customCurrency : '',
+                                                        notes: `Auto-generated write-off for bridge/DEX fees. Parent transaction: ${entry.transactionHash}`,
+                                                        timestamp: entry.timestamp,
+                                                        hopNumber: hop.hopNumber,
+                                                        sourceThreadInternalId: threadId,
+                                                        isAutoFeeWriteOff: true
+                                                    };
+
+                                                    // Add the write-off entry to the hop
+                                                    hop.entries.push(feeWriteOff);
+
+                                                    // Consume the remaining thread amount
+                                                    thread.availableAmount = 0;
+                                                    thread.fullyExhausted = true;
+                                                    thread.exhaustedByFeeWriteOff = feeWriteOff.notation;
+
+                                                    console.log(`Created automatic fee write-off: ${feeWriteOff.notation} for ${feeWriteOff.amount} ${feeWriteOff.currency}`);
+                                                }
+                                            }
                                     }
                                 }
                             });
@@ -7386,12 +7418,12 @@ function updateThreadAvailabilityFromSwap(entry) {
         // For partial swaps, keep remainder in original currency
         threadsToProcess.forEach(item => {
             const consumedRatio = inputAmount / totalAvailableInput;
-            const consumedAmount = item.available * consumedRatio;
-            const remainingAmount = item.available - consumedAmount;
+            const consumedAmount = roundAmount(item.available * consumedRatio);
+            const remainingAmount = roundAmount(item.available - consumedAmount);
 
             if (remainingAmount > 0.01) { // Keep if more than dust
-                item.thread.totalAmount = remainingAmount;
-                item.thread.availableAmount = remainingAmount;
+                item.thread.totalAmount = roundAmount(remainingAmount);
+                item.thread.availableAmount = roundAmount(remainingAmount);
                 console.log(`Thread ${item.notation} keeps ${remainingAmount} ${inputCurrency}`);
             } else {
                 // Remove if dust amount
@@ -14065,6 +14097,60 @@ function finalizeHop(hopNumber) {
         console.error(`Hop ${hopNumber} has no valid entries with amounts`);
         alert(`Cannot finalize Hop ${hopNumber} - no valid entries!\n\nEntries must have amounts greater than 0.`);
         return;
+    }
+
+    // AUTO-WRITE-OFF: Before validation, automatically write off any bridge/swap output remainders
+    // These represent fees and slippage that should be immediately accounted for
+    console.log('Checking for bridge/swap output remainders to auto-write-off...');
+
+    // Get all available threads
+    const availableThreads = getAvailableThreadsDatabase();
+    let autoWriteOffCount = 0;
+
+    for (const currency in availableThreads) {
+        for (const threadId in availableThreads[currency]) {
+            const thread = availableThreads[currency][threadId];
+
+            // Check if this is a bridge or swap output with remaining balance
+            if ((thread.sourceType === 'bridge_output' || thread.sourceType === 'swap_output') &&
+                thread.availableAmount > 0.01 &&
+                thread.hopLevel === hopNumber) {
+
+                console.log(`Auto-writing off ${thread.sourceType} remainder: ${thread.availableAmount} ${currency} from ${thread.notation}`);
+
+                // Create an automatic write-off entry
+                const feeWriteOff = {
+                    id: Date.now() + Math.random(),
+                    entryType: 'writeoff',
+                    notation: `${thread.notation}-FEE`,
+                    amount: thread.availableAmount.toString(),
+                    currency: currency,
+                    customCurrency: currency === 'CUSTOM' ? thread.customCurrency : '',
+                    notes: `Auto-generated write-off for ${thread.sourceType === 'bridge_output' ? 'bridge' : 'DEX'} fees/slippage. Parent thread: ${thread.notation}`,
+                    timestamp: new Date().toISOString(),
+                    hopNumber: hopNumber,
+                    sourceThreadInternalId: threadId,
+                    isAutoFeeWriteOff: true,
+                    autoWriteOffType: thread.sourceType === 'bridge_output' ? 'bridge_fee' : 'swap_fee'
+                };
+
+                // Add the write-off entry to the hop
+                hop.entries.push(feeWriteOff);
+
+                // Consume the thread
+                thread.availableAmount = 0;
+                thread.fullyExhausted = true;
+                thread.exhaustedByAutoWriteOff = feeWriteOff.notation;
+
+                autoWriteOffCount++;
+                console.log(`Created automatic fee write-off: ${feeWriteOff.notation} for ${feeWriteOff.amount} ${currency}`);
+            }
+        }
+    }
+
+    if (autoWriteOffCount > 0) {
+        console.log(`✅ Auto-created ${autoWriteOffCount} write-offs for bridge/swap fees`);
+        saveState(); // Save the state after adding write-offs
     }
 
     // USE the validateHopCompletion function which properly handles swaps!
@@ -21919,7 +22005,7 @@ function updateThreadsAfterSwap(hop, swapEntry) {
 
                 // Update the original thread to only have the remaining amount
                 const thread = investigation.availableThreads[swapDetails.fromCurrency][partial.threadId];
-                thread.totalAmount = partial.remainingAmount;
+                thread.totalAmount = roundAmount(partial.remainingAmount);
 
                 // If remaining amount is very small (dust), remove the thread
                 if (partial.remainingAmount < 0.0001) {
@@ -24145,7 +24231,8 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
 
                     const calculateAttribution = () => {
                         const fullAmount = parseFloat(amountInput.value) || 0;
-                        const attributed = (fullAmount * ourPercentage / 100).toFixed(6);
+                        // Use roundAmount to avoid floating point precision issues
+                        const attributed = roundAmount(fullAmount * ourPercentage / 100);
                         attributedInput.value = attributed;
                         attributedCurrency.textContent = assetInput.value || 'ASSET';
 
@@ -24874,9 +24961,9 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
 
             if (existingThread) {
                 console.log(`Updating existing thread for ${sourceNotation} in ${outputCurrency}, amount from ${existingThread.totalAmount} to ${outputAmount}`);
-                // Update the existing thread
-                existingThread.totalAmount = outputAmount;
-                existingThread.availableAmount = outputAmount;
+                // Update the existing thread - ROUND to avoid floating point artifacts
+                existingThread.totalAmount = roundAmount(outputAmount);
+                existingThread.availableAmount = roundAmount(outputAmount);
                 existingThread.destinationTxHash = txHash;
                 existingThread.sourceWallet = destWallet;
                 existingThread.chainId = destChain;
@@ -24899,9 +24986,9 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     internalId: outputInternalId,
                     entryId: entryId,  // Track which entry created this bridge output
 
-                    // Thread amounts
-                    totalAmount: outputAmount,
-                    availableAmount: outputAmount,
+                    // Thread amounts - ROUND to avoid floating point artifacts
+                    totalAmount: roundAmount(outputAmount),
+                    availableAmount: roundAmount(outputAmount),
                     assignments: [],
 
                     // Source information
