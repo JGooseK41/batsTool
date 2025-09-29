@@ -3820,18 +3820,46 @@
                                     };
                                     break;
                                 } else if (chainData?.arkhamLabel) {
-                                    // arkhamLabel = personal label (NOT a terminal wallet, just informational)
                                     console.log(`    Found arkhamLabel on ${chain}:`, chainData.arkhamLabel);
-                                    foundAttribution = {
-                                        name: chainData.arkhamLabel.name,
-                                        label: chainData.arkhamLabel.name,
-                                        type: 'Personal Label',
-                                        chain: chain,
-                                        source: 'arkham_intelligence',
-                                        isExchange: false,  // arkhamLabel = personal label = NOT a terminal wallet
-                                        isPersonalLabel: true,
-                                        noteText: `Label: ${chainData.arkhamLabel.name}` // Include in notes instead
-                                    };
+
+                                    // Check if this label indicates an exchange/service
+                                    const labelName = chainData.arkhamLabel.name || '';
+                                    const exchangeKeywords = [
+                                        'deposit', 'exchange', 'hot wallet', 'cold wallet',
+                                        'binance', 'coinbase', 'kraken', 'crypto.com', 'kucoin',
+                                        'okx', 'huobi', 'bitfinex', 'bitstamp', 'gemini',
+                                        'ftx', 'gate.io', 'mexc', 'bybit', 'bitget'
+                                    ];
+
+                                    const isExchangeLabel = exchangeKeywords.some(keyword =>
+                                        labelName.toLowerCase().includes(keyword.toLowerCase())
+                                    );
+
+                                    if (isExchangeLabel) {
+                                        // This is an exchange despite being an arkhamLabel
+                                        console.log(`    Detected exchange from label: ${labelName}`);
+                                        foundAttribution = {
+                                            name: chainData.arkhamLabel.name,
+                                            label: chainData.arkhamLabel.name,
+                                            type: 'CEX',
+                                            chain: chain,
+                                            source: 'arkham_intelligence',
+                                            isExchange: true,  // Exchange detected from label
+                                            isPersonalLabel: false
+                                        };
+                                    } else {
+                                        // Regular personal label
+                                        foundAttribution = {
+                                            name: chainData.arkhamLabel.name,
+                                            label: chainData.arkhamLabel.name,
+                                            type: 'Personal Label',
+                                            chain: chain,
+                                            source: 'arkham_intelligence',
+                                            isExchange: false,
+                                            isPersonalLabel: true,
+                                            noteText: `Label: ${chainData.arkhamLabel.name}` // Include in notes instead
+                                        };
+                                    }
                                     break;
                                 }
                             }
@@ -3859,16 +3887,42 @@
                                 walletAttributionCache[lowerAddress] = attribution;
                                 return attribution;
                             } else if (arkhamData?.arkhamLabel) {
-                                // arkhamLabel = personal label (NOT a terminal wallet, just informational)
-                                attribution = {
-                                    name: arkhamData.arkhamLabel.name,
-                                    label: arkhamData.arkhamLabel.name,
-                                    type: 'Personal Label',
-                                    source: 'arkham_intelligence',
-                                    isExchange: false,  // arkhamLabel = personal label = NOT a terminal wallet
-                                    isPersonalLabel: true,
-                                    noteText: `Label: ${arkhamData.arkhamLabel.name}` // Include in notes instead
-                                };
+                                // Check if this label indicates an exchange/service
+                                const labelName = arkhamData.arkhamLabel.name || '';
+                                const exchangeKeywords = [
+                                    'deposit', 'exchange', 'hot wallet', 'cold wallet',
+                                    'binance', 'coinbase', 'kraken', 'crypto.com', 'kucoin',
+                                    'okx', 'huobi', 'bitfinex', 'bitstamp', 'gemini',
+                                    'ftx', 'gate.io', 'mexc', 'bybit', 'bitget'
+                                ];
+
+                                const isExchangeLabel = exchangeKeywords.some(keyword =>
+                                    labelName.toLowerCase().includes(keyword.toLowerCase())
+                                );
+
+                                if (isExchangeLabel) {
+                                    // This is an exchange despite being an arkhamLabel
+                                    console.log(`    Detected exchange from label: ${labelName}`);
+                                    attribution = {
+                                        name: arkhamData.arkhamLabel.name,
+                                        label: arkhamData.arkhamLabel.name,
+                                        type: 'CEX',
+                                        source: 'arkham_intelligence',
+                                        isExchange: true,  // Exchange detected from label
+                                        isPersonalLabel: false
+                                    };
+                                } else {
+                                    // Regular personal label
+                                    attribution = {
+                                        name: arkhamData.arkhamLabel.name,
+                                        label: arkhamData.arkhamLabel.name,
+                                        type: 'Personal Label',
+                                        source: 'arkham_intelligence',
+                                        isExchange: false,
+                                        isPersonalLabel: true,
+                                        noteText: `Label: ${arkhamData.arkhamLabel.name}` // Include in notes instead
+                                    };
+                                }
                                 console.log(`✅ Arkham personal label found for ${address}:`, attribution);
                                 walletAttributionCache[lowerAddress] = attribution;
                                 return attribution;
@@ -4361,7 +4415,7 @@
         }
 
         // Convert personal label to terminal wallet
-        function convertToTerminalWallet() {
+        window.convertToTerminalWallet = function() {
             if (!window.hopWizardData || !window.hopWizardData.detectedAttribution) {
                 alert('No label detected to convert.');
                 return;
@@ -4411,7 +4465,7 @@
         }
 
         // Convert personal label to conversion wallet (brown)
-        function convertToConversionWallet() {
+        window.convertToConversionWallet = function() {
             if (!window.hopWizardData || !window.hopWizardData.detectedAttribution) {
                 alert('No label detected to convert.');
                 return;

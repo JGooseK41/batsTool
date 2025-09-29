@@ -3,43 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-26 14:45)
+## Latest Commit (Auto-updated: 2025-09-28 21:37)
 
-**Commit:** 428461c80bea03ac5c3a73cceddab053ca33d738
+**Commit:** a54cd19321ac6b15adcf7cecdfeff628528b25e7
 **Author:** Your Name
-**Message:** Fix terminal wallet thread exhaustion bug
+**Message:** Fix all requested issues: terminal wallet display, rounding errors, and ART display
 
-- Terminal wallets now only consume the allocated amount, not the entire thread
-- Removed code that was forcing 100% thread usage for terminal wallets
-- Threads are now only marked as fully exhausted if <0.01 remains
-- This allows partial traces to terminal wallets while preserving remainders
-
-Previously: Allocating 100 from a 149 thread to a terminal wallet would consume all 149
-Now: Allocating 100 from a 149 thread correctly leaves 49 available for future use
-
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+- Added entity names in collapsed entry views for terminal wallets
+- Renamed 'Log Bridge Output' button to 'Log Bridge/Swap'
+- Fixed perpetual thread allocation card to properly handle rounding remainders
+- Added option to convert personal labels to terminal/conversion wallets
+- Fixed rounding remainder issues using proper 8 decimal place precision
+- Added Current Available ART display that accounts for writeoffs
+- Fixed ART display to show both starting and current values
 
 ### Changed Files:
 ```
- CLAUDE.md  | 45 +++++++++++++++++++--------------------------
- index.html | 55 ++++++++++++++++++++++++++-----------------------------
- 2 files changed, 45 insertions(+), 55 deletions(-)
+ CLAUDE.md  |  30 +++++----
+ index.html | 213 ++++++++++++++++++++++++++++++++++++++++++++++++++++++-------
+ 2 files changed, 208 insertions(+), 35 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 428461c Fix terminal wallet thread exhaustion bug (0 seconds ago)
-- 79690c2 Fix critical JavaScript error preventing hop wizard from opening (14 minutes ago)
-- d615be9 Fix terminal wallet detection to distinguish personal labels from exchanges (2 hours ago)
-- 3802b4c Fix Arkham API URL and add helpful error messages for transaction lookup (2 hours ago)
-- 39f47f8 Fix critical terminal wallet and hop management issues (2 hours ago)
-- 841a04a Add forensic precision with rounding remainder write-off feature (2 hours ago)
-- ef1130a Fix hop completion detection for threads with rounding remainders (2 hours ago)
-- d55b3ff Update CLAUDE.md with latest changes (2 hours ago)
-- 6842c7a Fix Arkham API response parsing for multi-chain structure (2 hours ago)
-- cc38541 Add API attribution test page and update to latest Arkham endpoints (2 hours ago)
+- a54cd19 Fix all requested issues: terminal wallet display, rounding errors, and ART display (0 seconds ago)
+- 428461c Fix terminal wallet thread exhaustion bug (2 days ago)
+- 79690c2 Fix critical JavaScript error preventing hop wizard from opening (2 days ago)
+- d615be9 Fix terminal wallet detection to distinguish personal labels from exchanges (2 days ago)
+- 3802b4c Fix Arkham API URL and add helpful error messages for transaction lookup (2 days ago)
+- 39f47f8 Fix critical terminal wallet and hop management issues (2 days ago)
+- 841a04a Add forensic precision with rounding remainder write-off feature (2 days ago)
+- ef1130a Fix hop completion detection for threads with rounding remainders (2 days ago)
+- d55b3ff Update CLAUDE.md with latest changes (2 days ago)
+- 6842c7a Fix Arkham API response parsing for multi-chain structure (2 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
