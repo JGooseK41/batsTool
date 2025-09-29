@@ -3,28 +3,33 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-28 21:44)
+## Latest Commit (Auto-updated: 2025-09-28 21:49)
 
-**Commit:** 5f30b0e6e41866c72be3d3f8fc6f873ec23bea75
+**Commit:** add0764cdb17c373d767ed2b7073947c48e86dc3
 **Author:** Your Name
-**Message:** Fix exchange detection and button functionality
+**Message:** Add intelligent exchange detection with user choice
 
-- Fixed Arkham label detection to properly identify exchanges (Crypto.com Deposit, etc.)
-- Added exchange keyword detection for labels containing 'deposit', 'exchange', etc.
-- Made conversion functions globally accessible (window scope)
-- Now properly detects exchanges even when returned as arkhamLabel
+- Added comprehensive exchange detection with 100+ known exchanges, DEXs, bridges, and mixers
+- Implemented confidence-based detection (50-95% confidence levels)
+- Shows intelligent popup when suspected exchange is detected with:
+  - Detection analysis showing what indicators were found
+  - Confidence percentage and recommendation
+  - Three choices: Terminal Wallet, Bridge/DEX, or Keep as Personal Label
+- User can now override detection and explicitly choose how to treat labels
+- 'Crypto.com Deposit' and similar will now be properly detected with high confidence
 
 ### Changed Files:
 ```
- CLAUDE.md  |  50 ++++++++++++++-----------------
- index.html | 100 +++++++++++++++++++++++++++++++++++++++++++++++--------------
- 2 files changed, 100 insertions(+), 50 deletions(-)
+ CLAUDE.md  |  27 +++--
+ index.html | 340 +++++++++++++++++++++++++++++++++++++++++++++++++------------
+ 2 files changed, 289 insertions(+), 78 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5f30b0e Fix exchange detection and button functionality (0 seconds ago)
-- a54cd19 Fix all requested issues: terminal wallet display, rounding errors, and ART display (7 minutes ago)
+- add0764 Add intelligent exchange detection with user choice (0 seconds ago)
+- 5f30b0e Fix exchange detection and button functionality (5 minutes ago)
+- a54cd19 Fix all requested issues: terminal wallet display, rounding errors, and ART display (12 minutes ago)
 - 428461c Fix terminal wallet thread exhaustion bug (2 days ago)
 - 79690c2 Fix critical JavaScript error preventing hop wizard from opening (2 days ago)
 - d615be9 Fix terminal wallet detection to distinguish personal labels from exchanges (2 days ago)
@@ -32,7 +37,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 39f47f8 Fix critical terminal wallet and hop management issues (2 days ago)
 - 841a04a Add forensic precision with rounding remainder write-off feature (2 days ago)
 - ef1130a Fix hop completion detection for threads with rounding remainders (2 days ago)
-- d55b3ff Update CLAUDE.md with latest changes (2 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

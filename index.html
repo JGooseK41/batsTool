@@ -29523,10 +29523,52 @@ async function checkAddressHasActivity(address, chain) {
 
 // Removed getDemoAddresses function - no demo data in production
 
-function displayAddressFinderResults(addresses, chain) {
+async function displayAddressFinderResults(addresses, chain) {
     const resultsDiv = document.getElementById('addressFinderResults');
     const gridDiv = document.getElementById('addressResultsGrid');
     const countSpan = document.getElementById('resultCount');
+
+    // Check attribution for each address
+    for (let addr of addresses) {
+        if (!addr.attribution && addr.entity && addr.entity !== 'Unknown') {
+            const indicators = checkExchangeIndicators(addr.entity);
+            addr.attribution = {
+                confidence: indicators.confidence,
+                isLikely: indicators.isLikely,
+                type: indicators.suggestedType,
+                matches: indicators.matches
+            };
+        }
+
+        // Also try to get attribution if we don't have entity info
+        if (!addr.entity || addr.entity === 'Unknown') {
+            try {
+                let attribution = null;
+                if (chain === 'bitcoin') {
+                    attribution = await getBitcoinWalletAttribution(addr.address);
+                } else {
+                    attribution = await getWalletAttribution(addr.address);
+                }
+
+                if (attribution) {
+                    addr.entity = attribution.name || attribution.label || 'Unknown';
+                    addr.entityType = attribution.type;
+                    addr.isExchange = attribution.isExchange;
+                    addr.isPersonalLabel = attribution.isPersonalLabel;
+
+                    const indicators = checkExchangeIndicators(addr.entity);
+                    addr.attribution = {
+                        confidence: indicators.confidence || attribution.detectionConfidence || 0,
+                        isLikely: indicators.isLikely || attribution.isExchange,
+                        type: indicators.suggestedType || attribution.type,
+                        matches: indicators.matches || attribution.detectionMatches || []
+                    };
+                }
+            } catch (e) {
+                console.log('Attribution lookup failed for', addr.address, e);
+            }
+        }
+    }
 
     gridDiv.innerHTML = '';
     countSpan.textContent = `Found ${addresses.length} address${addresses.length !== 1 ? 'es' : ''}`;
@@ -29580,6 +29622,38 @@ function displayAddressFinderResults(addresses, chain) {
                 tron: `https://tronscan.org/#/address/${addr.address}`
             };
 
+            // Determine attribution display
+            let attributionBadge = '';
+            let entityColor = '#c0392b';
+            let borderStyle = '';
+
+            if (addr.attribution && addr.attribution.confidence > 0) {
+                if (addr.attribution.confidence >= 85) {
+                    attributionBadge = `<span style="background: #9c27b0; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-left: 8px;">🏦 EXCHANGE ${addr.attribution.confidence}%</span>`;
+                    entityColor = '#9c27b0';
+                    borderStyle = 'border-left: 4px solid #9c27b0;';
+                } else if (addr.attribution.confidence >= 70) {
+                    attributionBadge = `<span style="background: #e67e22; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">⚠️ Likely Exchange ${addr.attribution.confidence}%</span>`;
+                    entityColor = '#e67e22';
+                    borderStyle = 'border-left: 4px solid #e67e22;';
+                } else if (addr.attribution.confidence >= 50) {
+                    attributionBadge = `<span style="background: #f39c12; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">❓ Possible Service</span>`;
+                    entityColor = '#f39c12';
+                }
+            } else if (addr.isExchange) {
+                attributionBadge = `<span style="background: #9c27b0; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-left: 8px;">🏦 VERIFIED EXCHANGE</span>`;
+                entityColor = '#9c27b0';
+                borderStyle = 'border-left: 4px solid #9c27b0;';
+            } else if (addr.isPersonalLabel) {
+                attributionBadge = `<span style="background: #3498db; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">🏷️ Personal Label</span>`;
+                entityColor = '#3498db';
+            }
+
+            // Update card style if high confidence exchange
+            if (borderStyle) {
+                card.style.cssText += borderStyle;
+            }
+
             card.innerHTML = `
                 <div>
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
@@ -29590,16 +29664,22 @@ function displayAddressFinderResults(addresses, chain) {
                                 style="padding: 2px 8px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">
                             Copy
                         </button>
+                        ${attributionBadge}
                     </div>
                     <div style="display: flex; gap: 20px; font-size: 12px; color: #666; flex-wrap: wrap;">
                         <span>Type: <strong>${addr.type || 'Unknown'}</strong></span>
                         ${addr.name && addr.type === 'Contract' ? `<span style="color: #9b59b6; font-weight: bold;">📜 Contract: <strong style="color: #8e44ad;">${addr.name}</strong></span>` : ''}
-                        ${addr.entity && addr.entity !== 'Unknown' ? `<span style="color: #e74c3c; font-weight: bold;">🏢 Entity: <strong style="color: #c0392b;">${addr.entity}</strong></span>` : ''}
+                        ${addr.entity && addr.entity !== 'Unknown' ? `<span style="color: #e74c3c; font-weight: bold;">🏢 Entity: <strong style="color: ${entityColor};">${addr.entity}</strong></span>` : ''}
                         ${addr.isToken ? `<span style="color: #27ae60; font-weight: bold;">🪙 Token</span>` : ''}
-                        ${addr.name && addr.type !== 'Contract' ? `<span>Label: <strong>${addr.name}</strong></span>` : ''}
+                        ${addr.name && addr.type !== 'Contract' && !addr.entity ? `<span>Label: <strong>${addr.name}</strong></span>` : ''}
                         <span>Balance: <strong>${addr.balance || 'Unknown'}</strong></span>
                         <span>Txs: <strong>${addr.txCount || 'Unknown'}</strong></span>
                     </div>
+                    ${addr.attribution && addr.attribution.matches && addr.attribution.matches.length > 0 ? `
+                        <div style="margin-top: 8px; padding: 6px; background: #f8f9fa; border-radius: 4px; font-size: 11px; color: #666;">
+                            <strong>Detection:</strong> ${addr.attribution.matches.map(m => `${m.type === 'CEX' ? '🏦' : m.type === 'DEX/Bridge' ? '🌉' : '🔍'} ${m.name}`).join(', ')}
+                        </div>
+                    ` : ''}
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button onclick="window.open('${explorerUrls[chain]}', '_blank'); event.stopPropagation();"
@@ -29642,6 +29722,18 @@ function addToInvestigation(address, chain) {
     // Add the address to the current investigation
     alert(`Address ${address} would be added to your investigation.\n\nThis feature will integrate with the main B.A.T.S. investigation workflow.`);
     // In production, this would add the address to the victims or traces
+}
+
+function searchEntityAddresses(entityName) {
+    // Close current modal and search for all addresses belonging to this entity
+    console.log('Searching for addresses belonging to entity:', entityName);
+
+    // You could enhance this to:
+    // 1. Search Arkham for all addresses with this entity
+    // 2. Filter by chain
+    // 3. Show results in the same modal
+
+    alert(`This would search for all addresses belonging to:\n${entityName}\n\nThis feature can help identify all wallets controlled by the same entity.`);
 }
 
 function showAddressFinderError(message) {
