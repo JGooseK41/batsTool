@@ -3,41 +3,36 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-28 21:55)
+## Latest Commit (Auto-updated: 2025-09-28 21:58)
 
-**Commit:** e7be07944d578f885def08095f168d32fffbee54
+**Commit:** 87a0c69d9756124cde8fb363c94d399c540c6a63
 **Author:** Your Name
-**Message:** Add full attribution capabilities to Address Finder
+**Message:** Explicitly use Solana API for Solana addresses in Address Finder
 
-- Address Finder now checks attribution for all found addresses
-- Shows exchange confidence badges (85%+, 70%+, 50%+)
-- Displays detection analysis showing what indicators were found
-- Color-coded cards: Purple for exchanges, Orange for likely exchanges, Blue for personal labels
-- Enhanced visual indicators with left border for high-confidence exchanges
-- Shows entity type and detection matches inline
-- Async attribution lookup for addresses without initial entity data
-- Uses same comprehensive exchange database as main tool
-- Supports both Bitcoin and EVM chain attribution checks
+- Address Finder now explicitly calls getSolanaWalletAttribution for Solana chain
+- Uses Solscan Pro API with default key (or user's override key)
+- Provides attribution for Solana addresses including exchanges and services
+- Already was working via auto-detection, now more explicit
 
 ### Changed Files:
 ```
- CLAUDE.md  | 30 ++++++++++---------
- index.html | 98 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 112 insertions(+), 16 deletions(-)
+ CLAUDE.md  | 39 ++++++++++++++++++++-------------------
+ index.html |  4 ++++
+ 2 files changed, 24 insertions(+), 19 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e7be079 Add full attribution capabilities to Address Finder (1 second ago)
-- add0764 Add intelligent exchange detection with user choice (6 minutes ago)
-- 5f30b0e Fix exchange detection and button functionality (11 minutes ago)
-- a54cd19 Fix all requested issues: terminal wallet display, rounding errors, and ART display (18 minutes ago)
+- 87a0c69 Explicitly use Solana API for Solana addresses in Address Finder (1 second ago)
+- e7be079 Add full attribution capabilities to Address Finder (3 minutes ago)
+- add0764 Add intelligent exchange detection with user choice (9 minutes ago)
+- 5f30b0e Fix exchange detection and button functionality (14 minutes ago)
+- a54cd19 Fix all requested issues: terminal wallet display, rounding errors, and ART display (21 minutes ago)
 - 428461c Fix terminal wallet thread exhaustion bug (2 days ago)
 - 79690c2 Fix critical JavaScript error preventing hop wizard from opening (2 days ago)
 - d615be9 Fix terminal wallet detection to distinguish personal labels from exchanges (2 days ago)
 - 3802b4c Fix Arkham API URL and add helpful error messages for transaction lookup (2 days ago)
 - 39f47f8 Fix critical terminal wallet and hop management issues (2 days ago)
-- 841a04a Add forensic precision with rounding remainder write-off feature (2 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

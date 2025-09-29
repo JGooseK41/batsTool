@@ -29082,45 +29082,8 @@ async function searchEVMAddresses(chain, searchType, pattern) {
 
     try {
         // First, try Arkham Intelligence API if we have a key
-        // Use default key as fallback for entity attribution
-        const arkhamKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
-        if (arkhamKey) {
-            try {
-                // Use Netlify Function proxy for Arkham API
-                const proxyUrl = `/.netlify/functions/arkham3?endpoint=/addresses/search&q=${pattern}&chains=${chain}`;
-                const arkhamResponse = await fetch(proxyUrl, {
-                    method: 'GET',
-                    headers: {
-                        'X-Arkham-API-Key': arkhamKey,
-                        'Accept': 'application/json'
-                    }
-                }).catch(err => {
-                    console.warn('Arkham API failed:', err);
-                    return null;
-                });
-
-                if (arkhamResponse && arkhamResponse.ok) {
-                    const arkhamData = await arkhamResponse.json();
-                    if (arkhamData && arkhamData.addresses) {
-                        for (const addr of arkhamData.addresses) {
-                            if ((searchType === 'prefix' && addr.address.toLowerCase().startsWith(pattern.toLowerCase())) ||
-                                (searchType === 'suffix' && addr.address.toLowerCase().endsWith(pattern.toLowerCase())) ||
-                                (searchType === 'contains' && addr.address.toLowerCase().includes(pattern.toLowerCase()))) {
-                                addresses.push({
-                                    address: addr.address,
-                                    type: 'EVM',
-                                    label: addr.name || addr.label || '',
-                                    entity: addr.entity || '',
-                                    source: 'Arkham Intelligence'
-                                });
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                console.log('Arkham search failed:', e);
-            }
-        }
+        // Note: We'll use our working attribution functions on complete addresses found
+        // Arkham doesn't have a partial search endpoint, only complete address lookups
 
         // Strategy 2: Use Etherscan API directly (no CORS proxy)
         let apiUrl = '';
