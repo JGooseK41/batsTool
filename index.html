@@ -7199,9 +7199,13 @@ function buildAvailableThreadsIndex() {
                                                 // Find the hop this entry belongs to
                                                 const hop = investigation.hops.find(h => h.entries.some(e => e.id === entry.id));
                                                 if (hop) {
+                                                    // Get next entry ID for this hop
+                                                    const maxId = Math.max(0, ...hop.entries.map(e => parseInt(e.id) || 0));
+                                                    const nextId = maxId + 1;
+
                                                     // Create a write-off entry for the fee
                                                     const feeWriteOff = {
-                                                        id: Date.now() + Math.random(),
+                                                        id: nextId,
                                                         entryType: 'writeoff',
                                                         notation: `${thread.notation || threadId}-FEE`,
                                                         amount: thread.availableAmount.toString(),
@@ -7211,7 +7215,11 @@ function buildAvailableThreadsIndex() {
                                                         timestamp: entry.timestamp,
                                                         hopNumber: hop.hopNumber,
                                                         sourceThreadInternalId: threadId,
-                                                        isAutoFeeWriteOff: true
+                                                        isAutoFeeWriteOff: true,
+                                                        isComplete: true,  // Mark as complete so it appears collapsed
+                                                        isCollapsed: true,  // Start collapsed
+                                                        category: 'bridge_fee',  // Set category
+                                                        justification: 'Bridge/DEX fees and slippage'
                                                     };
 
                                                     // Add the write-off entry to the hop
@@ -7221,6 +7229,7 @@ function buildAvailableThreadsIndex() {
                                                     thread.availableAmount = 0;
                                                     thread.fullyExhausted = true;
                                                     thread.exhaustedByFeeWriteOff = feeWriteOff.notation;
+                                                    thread.isActive = false;  // Mark as inactive so it won't show in available threads
 
                                                     console.log(`Created automatic fee write-off: ${feeWriteOff.notation} for ${feeWriteOff.amount} ${feeWriteOff.currency}`);
                                                 }
@@ -7655,8 +7664,8 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
                 currency
             );
 
-            // Only include threads with available amount
-            if (availableAmount > 0) {
+            // Only include threads with meaningful available amount (more than dust)
+            if (availableAmount > 0.01) {
                 // Use notation for display, internal ID for tracking
                 const notation = thread.notation || threadKey;
                 let displayText = notation;
@@ -14119,9 +14128,13 @@ function finalizeHop(hopNumber) {
 
                 console.log(`Auto-writing off ${thread.sourceType} remainder: ${thread.availableAmount} ${currency} from ${thread.notation}`);
 
+                // Get next entry ID for this hop
+                const maxId = Math.max(0, ...hop.entries.map(e => parseInt(e.id) || 0));
+                const nextId = maxId + 1;
+
                 // Create an automatic write-off entry
                 const feeWriteOff = {
-                    id: Date.now() + Math.random(),
+                    id: nextId,
                     entryType: 'writeoff',
                     notation: `${thread.notation}-FEE`,
                     amount: thread.availableAmount.toString(),
@@ -14132,7 +14145,11 @@ function finalizeHop(hopNumber) {
                     hopNumber: hopNumber,
                     sourceThreadInternalId: threadId,
                     isAutoFeeWriteOff: true,
-                    autoWriteOffType: thread.sourceType === 'bridge_output' ? 'bridge_fee' : 'swap_fee'
+                    autoWriteOffType: thread.sourceType === 'bridge_output' ? 'bridge_fee' : 'swap_fee',
+                    isComplete: true,  // Mark as complete so it appears collapsed
+                    isCollapsed: true,  // Start collapsed
+                    category: thread.sourceType === 'bridge_output' ? 'bridge_fee' : 'swap_fee',
+                    justification: 'Automatic write-off for conversion fees and slippage'
                 };
 
                 // Add the write-off entry to the hop
@@ -14142,6 +14159,7 @@ function finalizeHop(hopNumber) {
                 thread.availableAmount = 0;
                 thread.fullyExhausted = true;
                 thread.exhaustedByAutoWriteOff = feeWriteOff.notation;
+                thread.isActive = false;  // Mark as inactive
 
                 autoWriteOffCount++;
                 console.log(`Created automatic fee write-off: ${feeWriteOff.notation} for ${feeWriteOff.amount} ${currency}`);
