@@ -28433,7 +28433,8 @@ function updateAddressFinderInputs() {
     }
 }
 
-async function searchAddresses() {
+window.searchAddresses = async function() {
+    console.log('Search button clicked!');
     let chain = document.getElementById('addressFinderChain').value;
     const searchType = document.getElementById('addressFinderType').value;
     const activeOnly = document.getElementById('activeOnly').checked;
