@@ -14113,8 +14113,11 @@ function finalizeHop(hopNumber) {
     // These represent fees and slippage that should be immediately accounted for
     console.log('Checking for bridge/swap output remainders to auto-write-off...');
 
-    // Get all available threads
-    const availableThreads = getAvailableThreadsDatabase();
+    // Build the latest thread index first
+    buildAvailableThreadsIndex();
+
+    // Get all available threads directly from the investigation object
+    const availableThreads = investigation.availableThreads || {};
     let autoWriteOffCount = 0;
 
     for (const currency in availableThreads) {
@@ -18022,8 +18025,8 @@ function checkAllThreadsTerminated() {
                 // Only add if it doesn't already exist (to preserve any existing data)
                 if (!investigation.availableThreads[currency][threadId]) {
                     investigation.availableThreads[currency][threadId] = {
-                        totalAmount: parseFloat(entry.amount),
-                        availableAmount: parseFloat(entry.amount),
+                        totalAmount: roundAmount(parseFloat(entry.amount)),
+                        availableAmount: roundAmount(parseFloat(entry.amount)),
                         currency: currency,
                         sourceType: 'hop_output',
                         hopLevel: entry.hopNumber,
@@ -18257,10 +18260,11 @@ function getMaxAssignableAmount(sourceThreadIdentifier, currency, excludeEntryId
     });
 
     // Calculate available as total minus what's been assigned
-    const availableAmount = thread.totalAmount - totalAssignedInCurrentSession;
+    const availableAmount = roundAmount(thread.totalAmount - totalAssignedInCurrentSession);
     const displayName = thread.notation || sourceThreadIdentifier;
     console.log(`Thread ${displayName}: Total ${thread.totalAmount}, Assigned ${totalAssignedInCurrentSession}, Available ${availableAmount}`);
 
+    // Ensure no negative values and apply rounding
     return Math.max(0, availableAmount);
 }
 
