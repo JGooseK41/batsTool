@@ -3,39 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 06:45)
+## Latest Commit (Auto-updated: 2025-09-29 06:56)
 
-**Commit:** 098cfb79bc412312b712b1fa71af576edd26eb84
+**Commit:** 619ae299b3aca51e7a9475f94e1f80e385160a78
 **Author:** Your Name
-**Message:** Implement smart contract detection as conversion wallets
+**Message:** Integrate Arkham API enhancements for attribution and swap detection
 
-- Check Etherscan for verified smart contracts during attribution
-- Treat smart contracts as conversion wallets (brown) not terminal wallets (purple)
-- Show smart contract alert in wizard with clear explanation
-- Enable Log Bridge/Swap button for smart contracts same as terminal wallets
-- Display 'SMART CONTRACT' label in collapsed entry view
-- Add smart contract notes to entry documentation
-- Integrate smoothly into existing terminal wallet workflow
+- Add tags=true parameter to Arkham attribution calls for richer metadata
+- Store populated tags in attribution objects for all entity types
+- Integrate Arkham swaps endpoint into bridge/swap logging workflow
+- Auto-detect DEX swaps when looking up bridge destination transactions
+- Display swap protocol, token pairs, and USD values when detected
+- Include swap details in bridge output entry notes
+- Allow both purple (terminal) and brown (conversion) wallets to log bridge outputs
 
 ### Changed Files:
 ```
- CLAUDE.md  |  26 ++++++------
- index.html | 133 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 135 insertions(+), 24 deletions(-)
+ CLAUDE.md  |  40 +++++++++---------
+ index.html | 139 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 148 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 098cfb7 Implement smart contract detection as conversion wallets (0 seconds ago)
-- 1e147b3 Integrate Etherscan V2 nametag API for better address attribution (17 minutes ago)
-- c5f02ef Implement Arkham-first search strategy for Address Finder (22 minutes ago)
-- 23a71c2 Add extensive debug logging to trace Address Finder empty array issue (8 hours ago)
-- 9753ad1 Fix Address Finder search and add Arkham attribution (8 hours ago)
+- 619ae29 Integrate Arkham API enhancements for attribution and swap detection (0 seconds ago)
+- 098cfb7 Implement smart contract detection as conversion wallets (11 minutes ago)
+- 1e147b3 Integrate Etherscan V2 nametag API for better address attribution (27 minutes ago)
+- c5f02ef Implement Arkham-first search strategy for Address Finder (33 minutes ago)
+- 23a71c2 Add extensive debug logging to trace Address Finder empty array issue (9 hours ago)
+- 9753ad1 Fix Address Finder search and add Arkham attribution (9 hours ago)
 - 1b58dbc Add more detailed logging to identify why addresses aren't being added (9 hours ago)
 - 187ebec Add extensive logging to debug Address Finder search (9 hours ago)
 - 92778d3 Fix Address Finder to show addresses with zero balance (9 hours ago)
 - 1b52a2f Fix Address Finder search button not working (9 hours ago)
-- 52869c5 Fix Address Finder search functionality (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

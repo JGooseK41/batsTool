@@ -23805,6 +23805,42 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                             </small>
                         </div>
 
+                        <!-- Proportional Attribution Calculator -->
+                        <div id="proportionalAttributionSection" style="display: none; background: #f3e5f5; border: 2px solid #9c27b0; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                            <h4 style="margin: 0 0 10px 0; color: #6a1b9a; font-size: 16px;">
+                                🧮 Proportional Attribution Calculator
+                            </h4>
+                            <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                                <p style="margin: 0 0 10px 0; color: #555;">
+                                    <strong>Commingling detected!</strong> Your traced funds were mixed with other funds before conversion.
+                                </p>
+                                <div id="comminglingDetails" style="font-size: 14px; color: #666;">
+                                    <!-- Will be populated dynamically -->
+                                </div>
+                            </div>
+
+                            <div style="background: #fff9c4; border: 1px solid #f9a825; border-radius: 4px; padding: 10px; margin: 10px 0;">
+                                <strong>Suggested Attribution:</strong>
+                                <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                                    <input type="number"
+                                           id="attributedAmount"
+                                           step="0.000001"
+                                           style="flex: 1; padding: 10px; font-size: 16px; font-weight: bold; border: 2px solid #9c27b0; border-radius: 4px;">
+                                    <span id="attributedCurrency" style="font-weight: bold; font-size: 16px;"></span>
+                                    <button onclick="useFullAmount()" class="btn btn-secondary" style="padding: 8px 12px;">
+                                        Use Full Amount
+                                    </button>
+                                </div>
+                                <small style="color: #666; display: block; margin-top: 5px;">
+                                    You can accept this calculated amount or adjust it based on your investigation
+                                </small>
+                            </div>
+
+                            <div id="calculationBreakdown" style="background: #f5f5f5; padding: 10px; border-radius: 4px; font-size: 13px; color: #555;">
+                                <!-- Calculation details will go here -->
+                            </div>
+                        </div>
+
                         <div style="display: flex; justify-content: center; gap: 10px;">
                             <button class="btn btn-primary" onclick="confirmBridgeOutput(${hopNumber}, ${entryId})"
                                     style="padding: 12px 24px; font-size: 16px;">
@@ -23819,6 +23855,105 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 </div>
             `;
             document.body.appendChild(modal);
+
+            // Check for commingling and calculate proportional attribution
+            checkComminglingAndCalculateAttribution(hopNumber, entryId);
+        }
+
+        function checkComminglingAndCalculateAttribution(hopNumber, entryId) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            const entry = hop.entries.find(e => e.id === entryId);
+
+            if (!entry) return;
+
+            // Check if this wallet received funds from multiple sources (commingling)
+            const walletAddress = entry.toWallet;
+            let totalIncoming = 0;
+            let ourAmount = parseFloat(entry.amount);
+            let otherSources = [];
+
+            // Look for other transactions to this same wallet in current or previous hops
+            investigation.hops.forEach(h => {
+                if (h.hopNumber <= hopNumber) {
+                    h.entries.forEach(e => {
+                        if (e.entryType === 'trace' && e.toWallet === walletAddress) {
+                            totalIncoming += parseFloat(e.amount);
+                            if (e.id !== entry.id) {
+                                otherSources.push({
+                                    amount: parseFloat(e.amount),
+                                    currency: e.currency,
+                                    from: e.fromWallet,
+                                    notation: e.notation
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+
+            // If there's commingling, show the calculator
+            if (otherSources.length > 0 || totalIncoming > ourAmount) {
+                const section = document.getElementById('proportionalAttributionSection');
+                if (section) {
+                    section.style.display = 'block';
+
+                    // Calculate our percentage
+                    const ourPercentage = (ourAmount / totalIncoming) * 100;
+
+                    // Update commingling details
+                    document.getElementById('comminglingDetails').innerHTML = `
+                        <div style="margin-bottom: 8px;">
+                            <strong>Your traced funds:</strong> ${ourAmount} ${entry.currency} (${ourPercentage.toFixed(2)}%)
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <strong>Other funds in wallet:</strong> ${(totalIncoming - ourAmount).toFixed(6)} ${entry.currency} (${(100 - ourPercentage).toFixed(2)}%)
+                        </div>
+                        <div>
+                            <strong>Total funds before conversion:</strong> ${totalIncoming.toFixed(6)} ${entry.currency}
+                        </div>
+                    `;
+
+                    // Set up calculation when amount changes
+                    const amountInput = document.getElementById('bridgeDestAmount');
+                    const assetInput = document.getElementById('bridgeDestAsset');
+                    const attributedInput = document.getElementById('attributedAmount');
+                    const attributedCurrency = document.getElementById('attributedCurrency');
+
+                    const calculateAttribution = () => {
+                        const fullAmount = parseFloat(amountInput.value) || 0;
+                        const attributed = (fullAmount * ourPercentage / 100).toFixed(6);
+                        attributedInput.value = attributed;
+                        attributedCurrency.textContent = assetInput.value || 'ASSET';
+
+                        // Update calculation breakdown
+                        document.getElementById('calculationBreakdown').innerHTML = `
+                            <strong>Calculation:</strong><br>
+                            Total Output: ${fullAmount} ${assetInput.value || 'ASSET'}<br>
+                            Your Ownership: ${ourPercentage.toFixed(2)}%<br>
+                            Formula: ${fullAmount} × ${ourPercentage.toFixed(2)}% = ${attributed} ${assetInput.value || 'ASSET'}<br>
+                            <br>
+                            <small style="color: #666;">This calculation assumes proportional distribution through the conversion.</small>
+                        `;
+                    };
+
+                    amountInput.addEventListener('input', calculateAttribution);
+                    assetInput.addEventListener('input', calculateAttribution);
+
+                    // Store the attribution data for later use
+                    window.comminglingData = {
+                        ourAmount: ourAmount,
+                        totalIncoming: totalIncoming,
+                        ourPercentage: ourPercentage,
+                        otherSources: otherSources
+                    };
+                }
+            }
+        }
+
+        // Helper function to use full amount instead of attributed
+        window.useFullAmount = function() {
+            const fullAmount = document.getElementById('bridgeDestAmount').value;
+            document.getElementById('attributedAmount').value = fullAmount;
         }
 
         function showBridgeTransferSelectionModal(transfers) {
@@ -24370,7 +24505,17 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             const txHash = document.getElementById('bridgeDestTxHash').value.trim();
             const destChain = document.getElementById('bridgeDestChain').value;
             const destWallet = document.getElementById('bridgeDestWallet').value.trim();
-            const destAmount = document.getElementById('bridgeDestAmount').value;
+
+            // Check if we have commingling and should use attributed amount
+            let destAmount = document.getElementById('bridgeDestAmount').value;
+            const attributedAmountInput = document.getElementById('attributedAmount');
+            const proportionalSection = document.getElementById('proportionalAttributionSection');
+
+            if (proportionalSection && proportionalSection.style.display !== 'none' && attributedAmountInput && attributedAmountInput.value) {
+                // Use the attributed amount if commingling was detected
+                destAmount = attributedAmountInput.value;
+            }
+
             const destAsset = document.getElementById('bridgeDestAsset').value.trim();
             // Always use brown wallet type for bridges
             const walletType = 'brown';
@@ -24410,12 +24555,24 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                           `\n  USD Value: $${swap.usdValue.toLocaleString()}`;
             }
 
+            // Check if we have commingling attribution data
+            let comminglingInfo = '';
+            if (window.comminglingData) {
+                const fullAmount = document.getElementById('bridgeDestAmount').value;
+                comminglingInfo = `\n  PROPORTIONAL ATTRIBUTION APPLIED:` +
+                                 `\n    Total conversion output: ${fullAmount} ${destAsset}` +
+                                 `\n    Your ownership percentage: ${window.comminglingData.ourPercentage.toFixed(2)}%` +
+                                 `\n    Your attributed amount: ${destAmount} ${destAsset}` +
+                                 `\n    Calculation: ${fullAmount} × ${window.comminglingData.ourPercentage.toFixed(2)}% = ${destAmount}`;
+            }
+
             entry.notes = existingNotes + `\n[${noteType}] Wallet reclassified from terminal to bridge:\n` +
                 `  Output Chain: ${destChain}\n` +
                 `  Output Tx: ${txHash}\n` +
                 `  Output Wallet: ${destWallet}\n` +
                 `  Output Amount: ${destAmount} ${destAsset}` +
                 swapInfo +
+                comminglingInfo +
                 `\n  Reclassified: ${new Date().toISOString()}`;
 
             // Store bridge details for both types
@@ -24566,6 +24723,10 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             if (modal) {
                 modal.remove();
             }
+
+            // Clean up commingling data
+            window.comminglingData = null;
+            window.bridgeDestTxData = null;
 
             // Re-render
             buildAvailableThreadsIndex(); // Rebuild to create output threads
