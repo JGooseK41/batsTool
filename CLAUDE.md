@@ -3,37 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 06:29)
+## Latest Commit (Auto-updated: 2025-09-29 06:45)
 
-**Commit:** 1e147b3e44d6ef12a5961b1e518bd7736f2c7c46
+**Commit:** 098cfb79bc412312b712b1fa71af576edd26eb84
 **Author:** Your Name
-**Message:** Integrate Etherscan V2 nametag API for better address attribution
+**Message:** Implement smart contract detection as conversion wallets
 
-- Try Etherscan V2 nametag API first for address metadata
-- Fall back to V1 API for balance and contract info
-- Use proper chain IDs for V2 API (1 for Ethereum, 56 for BSC, 137 for Polygon)
-- Indicate in source field when V2 tags are found
-- Still support addresses with no balance or V1 deprecation warnings
+- Check Etherscan for verified smart contracts during attribution
+- Treat smart contracts as conversion wallets (brown) not terminal wallets (purple)
+- Show smart contract alert in wizard with clear explanation
+- Enable Log Bridge/Swap button for smart contracts same as terminal wallets
+- Display 'SMART CONTRACT' label in collapsed entry view
+- Add smart contract notes to entry documentation
+- Integrate smoothly into existing terminal wallet workflow
 
 ### Changed Files:
 ```
- CLAUDE.md  | 41 ++++++++++++++++++------------------
- index.html | 71 +++++++++++++++++++++++++++++++++++++++++++-------------------
- 2 files changed, 70 insertions(+), 42 deletions(-)
+ CLAUDE.md  |  26 ++++++------
+ index.html | 133 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 135 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1e147b3 Integrate Etherscan V2 nametag API for better address attribution (0 seconds ago)
-- c5f02ef Implement Arkham-first search strategy for Address Finder (6 minutes ago)
+- 098cfb7 Implement smart contract detection as conversion wallets (0 seconds ago)
+- 1e147b3 Integrate Etherscan V2 nametag API for better address attribution (17 minutes ago)
+- c5f02ef Implement Arkham-first search strategy for Address Finder (22 minutes ago)
 - 23a71c2 Add extensive debug logging to trace Address Finder empty array issue (8 hours ago)
 - 9753ad1 Fix Address Finder search and add Arkham attribution (8 hours ago)
-- 1b58dbc Add more detailed logging to identify why addresses aren't being added (8 hours ago)
-- 187ebec Add extensive logging to debug Address Finder search (8 hours ago)
-- 92778d3 Fix Address Finder to show addresses with zero balance (8 hours ago)
-- 1b52a2f Fix Address Finder search button not working (8 hours ago)
-- 52869c5 Fix Address Finder search functionality (8 hours ago)
-- 371c1d3 Remove non-existent Arkham search endpoint causing 405 errors (8 hours ago)
+- 1b58dbc Add more detailed logging to identify why addresses aren't being added (9 hours ago)
+- 187ebec Add extensive logging to debug Address Finder search (9 hours ago)
+- 92778d3 Fix Address Finder to show addresses with zero balance (9 hours ago)
+- 1b52a2f Fix Address Finder search button not working (9 hours ago)
+- 52869c5 Fix Address Finder search functionality (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

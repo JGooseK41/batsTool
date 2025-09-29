@@ -3804,9 +3804,9 @@
 
                 if (arkhamApiKey) {
                     try {
-                        // Use the new enhanced Arkham endpoint for better attribution data
-                        const proxyUrl = `/.netlify/functions/arkham3?endpoint=/intelligence/address_with_extra_enrichment/${address}/all`;
-                        console.log(`📡 Arkham API URL (enhanced endpoint): ${proxyUrl}`);
+                        // Use the new enhanced Arkham endpoint with tags for better attribution data
+                        const proxyUrl = `/.netlify/functions/arkham3?endpoint=/intelligence/address_with_extra_enrichment/${address}/all&tags=true`;
+                        console.log(`📡 Arkham API URL (enhanced endpoint with tags): ${proxyUrl}`);
                         console.log(`🔑 Using API key: ${arkhamApiKey.substring(0, 10)}...`);
 
                         const arkhamResponse = await fetch(proxyUrl, {
@@ -3851,7 +3851,8 @@
                                         chain: chain,
                                         source: 'arkham_intelligence',
                                         isExchange: true,  // arkhamEntity = real exchange/service = terminal wallet
-                                        isPersonalLabel: false
+                                        isPersonalLabel: false,
+                                        tags: chainData.populatedTags || []  // Include tags for richer metadata
                                     };
                                     break;
                                 } else if (chainData?.arkhamLabel) {
@@ -3887,7 +3888,8 @@
                                             noteText: `Label: ${chainData.arkhamLabel.name}`,
                                             suspectedExchange: indicators.confidence > 0,
                                             detectionConfidence: indicators.confidence,
-                                            detectionMatches: indicators.matches
+                                            detectionMatches: indicators.matches,
+                                            tags: chainData.populatedTags || []  // Include tags for richer metadata
                                         };
                                     }
                                     break;
@@ -23637,8 +23639,8 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             const entry = hop.entries.find(e => e.id === entryId);
 
-            if (!entry || entry.toWalletType !== 'purple') {
-                showNotification('❌ Only purple terminal wallets can log bridge outputs', 'error');
+            if (!entry || (entry.toWalletType !== 'purple' && entry.toWalletType !== 'brown')) {
+                showNotification('❌ Only terminal wallets (purple) or conversion wallets (brown) can log bridge outputs', 'error');
                 return;
             }
 
@@ -24158,6 +24160,102 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             `;
         }
 
+        async function checkArkhamSwapData(txHash, txData, chain) {
+            try {
+                const arkhamApiKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
+                if (!arkhamApiKey) return;
+
+                console.log('Checking Arkham for swap data on transaction:', txHash);
+
+                // Map our chain names to Arkham's chain names
+                const chainMap = {
+                    'ethereum': 'ethereum',
+                    'bsc': 'bsc',
+                    'polygon': 'polygon',
+                    'arbitrum': 'arbitrum_one',
+                    'avalanche': 'avalanche',
+                    'optimism': 'optimism'
+                };
+
+                const arkhamChain = chainMap[chain] || chain;
+
+                // Query the swaps endpoint for this transaction
+                // We'll search for swaps involving the from address in the last hour (transaction should be recent)
+                const fromAddr = txData.from || '';
+                const toAddr = txData.to || '';
+
+                // Try to get swap data using the Arkham swaps endpoint
+                const swapsUrl = `/.netlify/functions/arkham3?endpoint=/swaps&base=${fromAddr}&chains=${arkhamChain}&timeLast=1h&limit=50`;
+
+                console.log('Fetching from Arkham swaps endpoint:', swapsUrl);
+
+                const response = await fetch(swapsUrl, {
+                    headers: {
+                        'X-Arkham-API-Key': arkhamApiKey
+                    }
+                });
+
+                if (response.ok) {
+                    const swapData = await response.json();
+                    console.log('Arkham swap data:', swapData);
+
+                    if (swapData.swaps && swapData.swaps.length > 0) {
+                        // Find the swap matching our transaction
+                        const matchingSwap = swapData.swaps.find(swap => {
+                            // Match by transaction hash if available in the ID
+                            return swap.id && swap.id.includes(txHash.toLowerCase());
+                        });
+
+                        if (matchingSwap) {
+                            console.log('Found matching swap:', matchingSwap);
+
+                            // Enrich txData with swap information
+                            txData.swapData = {
+                                protocol: matchingSwap.contractEntityId || 'Unknown DEX',
+                                sender: matchingSwap.sender?.address,
+                                receiver: matchingSwap.receiver?.address,
+                                contractAddress: matchingSwap.contractAddress?.address,
+                                token0: matchingSwap.token0Name || matchingSwap.token0Symbol,
+                                token1: matchingSwap.token1Name || matchingSwap.token1Symbol,
+                                amount0: Math.abs(matchingSwap.unitValue0 || 0),
+                                amount1: Math.abs(matchingSwap.unitValue1 || 0),
+                                usdValue: matchingSwap.historicalUSD || 0,
+                                isSwap: true
+                            };
+
+                            // Update the result div to show swap detection
+                            const resultDiv = document.getElementById('bridgeLookupResult');
+                            if (resultDiv) {
+                                const swapInfo = `
+                                    <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 6px; padding: 10px; margin-top: 10px;">
+                                        🔄 <strong>DEX Swap Detected!</strong><br>
+                                        Protocol: ${txData.swapData.protocol}<br>
+                                        Swapped: ${txData.swapData.amount0.toFixed(4)} ${txData.swapData.token0} → ${txData.swapData.amount1.toFixed(4)} ${txData.swapData.token1}<br>
+                                        USD Value: $${txData.swapData.usdValue.toLocaleString()}
+                                    </div>
+                                `;
+
+                                // Add to existing content
+                                const existingContent = resultDiv.innerHTML;
+                                resultDiv.innerHTML = existingContent + swapInfo;
+                            }
+
+                            // Auto-fill with the output token data if fields are still empty
+                            if (!document.getElementById('bridgeDestAmount').value && txData.swapData.amount1) {
+                                document.getElementById('bridgeDestAmount').value = txData.swapData.amount1;
+                            }
+                            if (!document.getElementById('bridgeDestAsset').value && txData.swapData.token1) {
+                                document.getElementById('bridgeDestAsset').value = txData.swapData.token1;
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('Could not fetch Arkham swap data:', error);
+                // This is optional enrichment, so we don't show an error to the user
+            }
+        }
+
         async function lookupBridgeDestTransaction() {
             const txHash = document.getElementById('bridgeDestTxHash').value.trim();
             const destChain = document.getElementById('bridgeDestChain').value;
@@ -24216,6 +24314,12 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
 
                 if (txData) {
                     console.log('Bridge destination txData:', txData);
+
+                    // Try to get swap data from Arkham if available
+                    if (txData && (destChain === 'ethereum' || destChain === 'bsc' || destChain === 'polygon' ||
+                                   destChain === 'arbitrum' || destChain === 'avalanche' || destChain === 'optimism')) {
+                        await checkArkhamSwapData(txHash, txData, destChain);
+                    }
 
                     // Check if we have multiple transfers (Solana often has these)
                     if (txData.multipleTransfers && txData.transfers && txData.transfers.length > 0) {
@@ -24296,12 +24400,23 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
 
             const noteType = 'BRIDGE OUTPUT';
             const existingNotes = entry.notes || '';
+
+            // Check if we have swap data to include
+            let swapInfo = '';
+            if (window.bridgeDestTxData && window.bridgeDestTxData.swapData) {
+                const swap = window.bridgeDestTxData.swapData;
+                swapInfo = `\n  DEX Protocol: ${swap.protocol}` +
+                          `\n  Swap: ${swap.amount0} ${swap.token0} → ${swap.amount1} ${swap.token1}` +
+                          `\n  USD Value: $${swap.usdValue.toLocaleString()}`;
+            }
+
             entry.notes = existingNotes + `\n[${noteType}] Wallet reclassified from terminal to bridge:\n` +
                 `  Output Chain: ${destChain}\n` +
                 `  Output Tx: ${txHash}\n` +
                 `  Output Wallet: ${destWallet}\n` +
-                `  Output Amount: ${destAmount} ${destAsset}\n` +
-                `  Reclassified: ${new Date().toISOString()}`;
+                `  Output Amount: ${destAmount} ${destAsset}` +
+                swapInfo +
+                `\n  Reclassified: ${new Date().toISOString()}`;
 
             // Store bridge details for both types
             entry.bridgeDetails = {
@@ -29214,11 +29329,11 @@ async function searchEVMAddresses(chain, searchType, pattern) {
             try {
                 const arkhamKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
 
-                // Try multiple Arkham endpoints
+                // Try multiple Arkham endpoints (with tags for enhanced data)
                 const arkhamEndpoints = [
+                    `/intelligence/address_with_extra_enrichment/${pattern}/all?tags=true`,
                     `/intelligence/address/${pattern}/all`,
-                    `/intelligence/address/${pattern}`,
-                    `/intelligence/address_with_extra_enrichment/${pattern}/all`
+                    `/intelligence/address/${pattern}`
                 ];
 
                 for (const endpoint of arkhamEndpoints) {
