@@ -7517,17 +7517,20 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
                 }
             } else {
                 // Other hops: Show threads from previous hop or same-hop conversions
-                // Exclude victim threads
-                if (thread.sourceType === 'victim_transaction') continue;
-
-                // Check hop level - should be from previous hop or same hop (for swaps/bridges)
-                const expectedHopLevel = hopNumber - 1;
-                if (thread.hopLevel !== expectedHopLevel && thread.hopLevel !== hopNumber) {
-                    // Skip unless it's a same-hop conversion (swap/bridge/change)
-                    if (thread.sourceType !== 'swap_output' &&
-                        thread.sourceType !== 'bridge_output' &&
-                        thread.sourceType !== 'change_output') {
-                        continue;
+                // Include victim threads that still have available amounts (partial traces)
+                if (thread.sourceType === 'victim_transaction') {
+                    // Allow victim threads if they still have available funds
+                    if (thread.availableAmount <= 0.01) continue;
+                } else {
+                    // Check hop level - should be from previous hop or same hop (for swaps/bridges)
+                    const expectedHopLevel = hopNumber - 1;
+                    if (thread.hopLevel !== expectedHopLevel && thread.hopLevel !== hopNumber) {
+                        // Skip unless it's a same-hop conversion (swap/bridge/change)
+                        if (thread.sourceType !== 'swap_output' &&
+                            thread.sourceType !== 'bridge_output' &&
+                            thread.sourceType !== 'change_output') {
+                            continue;
+                        }
                     }
                 }
             }
@@ -11201,17 +11204,48 @@ function addNewHop() {
 
     if (activeThreads.length === 0) {
         // Check if all funds went to terminal wallets
-        const lastHop = investigation.hops[investigation.hops.length - 1];
-        if (lastHop) {
-            const terminalEntries = lastHop.entries.filter(e => e.isTerminalWallet || e.toWalletType === 'purple' || e.toWalletType === 'gray');
-            if (terminalEntries.length > 0) {
-                alert('All funds have reached terminal wallets. The investigation is complete.\n\nNo new hop can be created as there are no active threads to trace.');
+        // First, calculate total funds that need to be traced
+        let totalToTrace = {};
+        let totalTerminal = {};
 
-                // Show completion section
-                document.getElementById('completeInvestigationSection').style.display = 'block';
-                document.getElementById('addHopBtn').style.display = 'none';
-                return;
+        // Sum up all root totals by currency
+        if (investigation.rootTotalsByCurrency) {
+            Object.entries(investigation.rootTotalsByCurrency).forEach(([currency, amount]) => {
+                totalToTrace[currency] = amount;
+                totalTerminal[currency] = 0;
+            });
+        }
+
+        // Sum up all terminal wallet amounts
+        investigation.hops.forEach(hop => {
+            hop.entries.forEach(entry => {
+                if (entry.isTerminalWallet || entry.toWalletType === 'purple' || entry.toWalletType === 'gray') {
+                    const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                    const amount = parseFloat(entry.amount) || 0;
+                    if (!totalTerminal[currency]) totalTerminal[currency] = 0;
+                    totalTerminal[currency] += amount;
+                }
+            });
+        });
+
+        // Check if ALL funds have reached terminal wallets
+        let allFundsTerminal = true;
+        for (const currency in totalToTrace) {
+            const traced = totalTerminal[currency] || 0;
+            const total = totalToTrace[currency];
+            if (Math.abs(total - traced) > 0.01) { // Allow tiny rounding differences
+                allFundsTerminal = false;
+                break;
             }
+        }
+
+        if (allFundsTerminal) {
+            alert('All funds have reached terminal wallets. The investigation is complete.\n\nNo new hop can be created as there are no active threads to trace.');
+
+            // Show completion section
+            document.getElementById('completeInvestigationSection').style.display = 'block';
+            document.getElementById('addHopBtn').style.display = 'none';
+            return;
         }
 
         alert('No available threads to trace. Please check your previous hop entries.');
