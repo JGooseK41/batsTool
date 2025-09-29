@@ -3,17 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 10:45)
+## Latest Commit (Auto-updated: 2025-09-29 10:53)
 
-**Commit:** 93808dfad612c1767f359f6c22da6069ef2e4a7b
+**Commit:** a8a10c0c18dd422a42db67df22aef9ccfb8d14a1
 **Author:** Your Name
-**Message:** Fix write-off entries not properly consuming source threads
+**Message:** Debug: Thread currency confusion in Hop 2
 
-- Write-off entries now properly deduct from source thread availability
-- Write-offs are treated like terminal entries - they consume threads but don't create new ones
-- This fixes the issue where write-offs would show as 'remaining to account for'
-- Write-offs now correctly mark threads as exhausted when fully consumed
-- Proper rounding applied to avoid floating point errors
+Investigation notes:
+- User reports 300 HYPE from Hop 1 Entry 1 should be available for Hop 2
+- When trying to trace it, gets error that transaction doesn't include USDC
+- System appears to be looking for wrong currency (USDC instead of HYPE)
+- Likely caused by USDC swap output threads being selected instead of HYPE threads
+- Need to ensure proper thread filtering and selection by currency
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -21,23 +22,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 29 +++++++++++++++--------------
- index.html | 31 +++++++++++++++++++++++++++++++
- 2 files changed, 46 insertions(+), 14 deletions(-)
+ CLAUDE.md | 31 +++++++++++++++----------------
+ 1 file changed, 15 insertions(+), 16 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 93808df Fix write-off entries not properly consuming source threads (1 second ago)
-- cc8e418 Improve personal label to terminal/conversion wallet conversion UX (9 minutes ago)
-- 4e409fc Fix terminal wallet detection and thread availability for subsequent hops (14 minutes ago)
-- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (21 minutes ago)
+- a8a10c0 Debug: Thread currency confusion in Hop 2 (0 seconds ago)
+- 93808df Fix write-off entries not properly consuming source threads (8 minutes ago)
+- cc8e418 Improve personal label to terminal/conversion wallet conversion UX (17 minutes ago)
+- 4e409fc Fix terminal wallet detection and thread availability for subsequent hops (22 minutes ago)
+- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (29 minutes ago)
 - d47cba3 Fix Address Finder filtering out attributed addresses when 'Active Only' is checked (2 hours ago)
 - 03ef779 Add proportional attribution calculator for commingled fund conversions (2 hours ago)
 - 619ae29 Integrate Arkham API enhancements for attribution and swap detection (4 hours ago)
 - 098cfb7 Implement smart contract detection as conversion wallets (4 hours ago)
 - 1e147b3 Integrate Etherscan V2 nametag API for better address attribution (4 hours ago)
-- c5f02ef Implement Arkham-first search strategy for Address Finder (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
