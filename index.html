@@ -28528,7 +28528,14 @@ async function findAddressesByPattern(chain, searchType, pattern, activeOnly) {
         } else if (chain === 'ethereum' || chain === 'bsc' || chain === 'polygon') {
             console.log('Calling searchEVMAddresses...');
             // For EVM chains, use Etherscan-like APIs
-            results.push(...await searchEVMAddresses(chain, searchType, pattern));
+            const evmResults = await searchEVMAddresses(chain, searchType, pattern);
+            console.log('searchEVMAddresses returned:', evmResults);
+            if (evmResults && evmResults.length > 0) {
+                console.log('Adding', evmResults.length, 'EVM results to main results array');
+                results.push(...evmResults);
+            } else {
+                console.log('No EVM results to add');
+            }
         } else if (chain === 'tron') {
             // For Tron, use TronGrid API
             results.push(...await searchTronAddresses(searchType, pattern));
@@ -28546,9 +28553,11 @@ async function findAddressesByPattern(chain, searchType, pattern, activeOnly) {
                     activeAddresses.push(addr);
                 }
             }
+            console.log('Returning', activeAddresses.length, 'active addresses from findAddressesByPattern');
             return activeAddresses;
         }
 
+        console.log('Returning', results.length, 'total results from findAddressesByPattern:', results);
         return results;
 
     } catch (error) {
@@ -29290,6 +29299,7 @@ async function searchEVMAddresses(chain, searchType, pattern) {
 
     } catch (error) {
         console.error('EVM address search error:', error);
+        console.log('Error occurred but continuing with addresses found so far:', addresses.length, 'addresses');
     }
 
     // Remove duplicates
@@ -29302,6 +29312,7 @@ async function searchEVMAddresses(chain, searchType, pattern) {
         }
     }
 
+    console.log('searchEVMAddresses returning', uniqueAddresses.length, 'unique addresses:', uniqueAddresses);
     return uniqueAddresses;
 }
 
