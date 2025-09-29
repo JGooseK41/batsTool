@@ -29113,7 +29113,9 @@ async function searchEVMAddresses(chain, searchType, pattern) {
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Etherscan response:', data);
+                    console.log('Response status:', data.status, 'Type:', typeof data.status);
                     if (data.status === '1') {
+                        console.log('Valid address found, processing...');
                         // Valid address (even with zero balance)
                         // Try to get contract name if it's a contract
                         let contractName = '';
@@ -29140,7 +29142,7 @@ async function searchEVMAddresses(chain, searchType, pattern) {
                             console.log('Could not fetch contract info:', e);
                         }
 
-                        addresses.push({
+                        const addressEntry = {
                             address: pattern,
                             type: contractName ? 'Contract' : 'EOA',
                             entity: entity,
@@ -29151,8 +29153,14 @@ async function searchEVMAddresses(chain, searchType, pattern) {
                                                      contractName.toLowerCase().includes('usdt') ||
                                                      contractName.toLowerCase().includes('usdc') ||
                                                      contractName.toLowerCase().includes('dai'))
-                        });
+                        };
+                        console.log('Adding address to results:', addressEntry);
+                        addresses.push(addressEntry);
+                    } else {
+                        console.log('Address not valid, status:', data.status, 'message:', data.message || data.result);
                     }
+                } else {
+                    console.log('Response not ok:', response.status, response.statusText);
                 }
             } catch (e) {
                 console.log('Direct address check failed:', e);
