@@ -3,18 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 10:36)
+## Latest Commit (Auto-updated: 2025-09-29 10:45)
 
-**Commit:** cc8e4180edb691b36ea58be034801a00f831afe0
+**Commit:** 93808dfad612c1767f359f6c22da6069ef2e4a7b
 **Author:** Your Name
-**Message:** Improve personal label to terminal/conversion wallet conversion UX
+**Message:** Fix write-off entries not properly consuming source threads
 
-- Add confirmation dialog when converting personal label to terminal wallet
-- Automatically create terminal entry after confirmation (no extra click needed)
-- Add confirmation dialog for conversion wallet (Bridge/DEX) conversion
-- Auto-open swap wizard with pre-filled data after conversion wallet designation
-- Provide clear feedback with notifications during the conversion process
-- Improve user flow by eliminating unnecessary manual steps
+- Write-off entries now properly deduct from source thread availability
+- Write-offs are treated like terminal entries - they consume threads but don't create new ones
+- This fixes the issue where write-offs would show as 'remaining to account for'
+- Write-offs now correctly mark threads as exhausted when fully consumed
+- Proper rounding applied to avoid floating point errors
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  30 ++++++------
- index.html | 163 ++++++++++++++++++++++++++++++++++++++++---------------------
- 2 files changed, 120 insertions(+), 73 deletions(-)
+ CLAUDE.md  | 29 +++++++++++++++--------------
+ index.html | 31 +++++++++++++++++++++++++++++++
+ 2 files changed, 46 insertions(+), 14 deletions(-)
 ```
 
 ## Recent Commits History
 
-- cc8e418 Improve personal label to terminal/conversion wallet conversion UX (0 seconds ago)
-- 4e409fc Fix terminal wallet detection and thread availability for subsequent hops (5 minutes ago)
-- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (12 minutes ago)
+- 93808df Fix write-off entries not properly consuming source threads (1 second ago)
+- cc8e418 Improve personal label to terminal/conversion wallet conversion UX (9 minutes ago)
+- 4e409fc Fix terminal wallet detection and thread availability for subsequent hops (14 minutes ago)
+- 0e9ce2d Fix swap/bridge output thread creation and rounding precision issues (21 minutes ago)
 - d47cba3 Fix Address Finder filtering out attributed addresses when 'Active Only' is checked (2 hours ago)
 - 03ef779 Add proportional attribution calculator for commingled fund conversions (2 hours ago)
 - 619ae29 Integrate Arkham API enhancements for attribution and swap detection (4 hours ago)
 - 098cfb7 Implement smart contract detection as conversion wallets (4 hours ago)
 - 1e147b3 Integrate Etherscan V2 nametag API for better address attribution (4 hours ago)
 - c5f02ef Implement Arkham-first search strategy for Address Finder (4 hours ago)
-- 23a71c2 Add extensive debug logging to trace Address Finder empty array issue (12 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
