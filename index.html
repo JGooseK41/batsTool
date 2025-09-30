@@ -11716,24 +11716,24 @@ function addNewHop() {
             }
             
             // Entry background color and border based on type - color-coded with thicker borders
-            let entryBgColor = '#f0f7ff'; // Very light blue for regular trace entries
+            let entryBgColor = '#f8f8f8'; // Very light gray as default
             let entryBorderColor = '#27ae60'; // Green border for traced to next hop (default)
 
-            // Determine border color based on wallet type and entry type
+            // Determine border color and background based on wallet type and entry type
             if (entry.entryType === 'writeoff' || entry.entryType === 'abandoned') {
-                entryBgColor = '#f5f5f5'; // Light gray for writeoffs/abandoned
+                entryBgColor = '#fafafa'; // Very light gray for writeoffs/abandoned
                 entryBorderColor = '#7f8c8d'; // Gray border for abandoned
             } else if (entry.entryType === 'cold_storage' || entry.toWalletType === 'blue') {
-                entryBgColor = '#e3f2fd'; // Light blue for cold storage
+                entryBgColor = '#e8f4fd'; // Very light blue for cold storage
                 entryBorderColor = '#3498db'; // Blue border for cold wallet
             } else if (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') {
-                entryBgColor = '#f3e6ff'; // Light purple for exchange deposits
+                entryBgColor = '#f5ebff'; // Very light purple for exchange deposits
                 entryBorderColor = '#9b59b6'; // Purple border for exchange
             } else if (entry.toWalletType === 'brown' || entry.isBridge || entry.entryType === 'swap') {
-                entryBgColor = '#fff8e6'; // Light brown/tan for conversion wallets
+                entryBgColor = '#fff9f0'; // Very light brown/tan for conversion wallets
                 entryBorderColor = '#8b4513'; // Brown border for conversion wallet/bridge
             } else if (entry.toWalletType === 'gray') {
-                entryBgColor = '#f5f5f5'; // Light gray
+                entryBgColor = '#fafafa'; // Very light gray
                 entryBorderColor = '#7f8c8d'; // Gray border
             } else {
                 // Default green for regular traces that continue to next hop
@@ -22759,8 +22759,16 @@ function createWriteoffEntryFromWizard() {
     writeoffEntry.notation = `V${writeoffEntry.victimNumbers}-T${writeoffEntry.transactionNumbers}-H${hop.hopNumber}-WO`;
     writeoffEntry.generatedNotation = writeoffEntry.notation;
 
+    // Mark the writeoff entry as finalized/logged immediately
+    writeoffEntry.isFinalized = true;
+
     // Add entry to hop
     hop.entries.push(writeoffEntry);
+
+    // Mark the writeoff entry as collapsed immediately
+    const entryKey = `${hop.hopNumber}_${writeoffEntry.id}`;
+    window.entryCollapseState = window.entryCollapseState || {};
+    window.entryCollapseState[entryKey] = true;
 
     // Close wizard
     closeHopWizard();
@@ -22784,17 +22792,12 @@ function createWriteoffEntryFromWizard() {
     }
 
     // Show confirmation
-    const confirmMsg = `✅ Write-off entry created:\n\n` +
+    const confirmMsg = `✅ Write-off entry created and logged:\n\n` +
                        `Amount Written Off: ${totalAmount.toLocaleString()} ${currency}\n` +
                        `Transaction: ${wizardData.txHash || 'Not provided'}\n` +
                        `Category: ${wizardData.writeoffCategory || 'minimal_amount'}\n` +
                        `\nThe source thread has been reduced by ${totalAmount.toLocaleString()} ${currency}.\n` +
                        `Remaining traceable amount: ${remainingBalance} ${currency}`;
-
-    // Collapse the entry BEFORE showing the alert
-    const entryKey = `${hop.hopNumber}_${writeoffEntry.id}`;
-    window.entryCollapseState = window.entryCollapseState || {};
-    window.entryCollapseState[entryKey] = true;
 
     // Set a flag to prevent auto-reopening wizard after write-off
     window.justCreatedWriteoff = true;
@@ -22804,16 +22807,6 @@ function createWriteoffEntryFromWizard() {
 
     // Show confirmation
     alert(confirmMsg);
-
-    // Ensure the entry is shown as collapsed in the UI
-    setTimeout(() => {
-        const entryContent = document.getElementById(`entryContent_${entryKey}`);
-        const entrySummary = document.getElementById(`entrySummary_${entryKey}`);
-        if (entryContent && entrySummary) {
-            entryContent.style.display = 'none';
-            entrySummary.style.display = 'block';
-        }
-    }, 50);
 }
 
 function createHopEntryFromWizard() {

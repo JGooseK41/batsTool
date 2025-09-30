@@ -3,22 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 04:11)
+## Latest Commit (Auto-updated: 2025-09-30 06:33)
 
-**Commit:** 30619e150adb399692e63aed4efedcfa88c84e84
+**Commit:** 48a08207af62c111220e3a953bb793312df577d0
 **Author:** Your Name
-**Message:** Fix critical bugs in partial trace calculations and add multi-chain test suite
+**Message:** Simplify entry type selection and rename cold storage option
 
-- Fix circular calculation bug in partial trace bridge output
-- Add division by zero protection when calculating proportional multiplier
-- Store fullOutputAmount before adjustment to avoid recalculation errors
-- Add validation for totalAmount > 0 before division
-- Create comprehensive test suite for BTC, ETH, Solana, and BSC chains
-- Include test scenarios for bridges, DEX swaps, and partial traces
-- Add simulations for common swap patterns and edge cases
+- Remove DEX/Asset Conversion option from entry type selection
+- Rename 'Still in Wallet' to 'Mark as Cold Storage' for clarity
+- Update description to emphasize monitoring requirement
+- DEX/swap functionality now integrated into regular transaction flow
+- Simplify user workflow by removing redundant option
 
-The partial trace bug was causing incorrect calculation of the full output
-amount by dividing an already-adjusted value, creating circular logic.
+The DEX option was redundant since swaps are now automatically detected
+and handled through the regular transaction flow with conversion wallets.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -26,24 +24,25 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md             |  37 ++---
- index.html            |  51 +++---
- test-chain-swaps.html | 447 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 489 insertions(+), 46 deletions(-)
+ CLAUDE.md                  |  39 +-
+ index.html                 |  14 +-
+ run-automated-tests.js     | 951 +++++++++++----------------------------------
+ run-comprehensive-tests.js | 117 ++++++
+ 4 files changed, 371 insertions(+), 750 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (0 seconds ago)
-- 8f9c550 Fix bridge output button unresponsive due to variable initialization error (7 minutes ago)
-- e282f88 Prevent hop finalization when threads are at conversion wallets (15 minutes ago)
-- 2a6ad63 Add detailed calculation notes for partial trace bridge outputs (30 minutes ago)
-- 33e0337 Fix bridge output calculation for partial traces (30 minutes ago)
-- 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (70 minutes ago)
-- 229162c Add color-coded borders for collapsed entries in hop building page (74 minutes ago)
-- 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (8 hours ago)
-- 63ad605 Make DEX detection more conservative, default to exchange when uncertain (8 hours ago)
-- f1dedba Prevent DEXs from being treated as terminal wallets (8 hours ago)
+- 48a0820 Simplify entry type selection and rename cold storage option (0 seconds ago)
+- 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (2 hours ago)
+- 8f9c550 Fix bridge output button unresponsive due to variable initialization error (2 hours ago)
+- e282f88 Prevent hop finalization when threads are at conversion wallets (3 hours ago)
+- 2a6ad63 Add detailed calculation notes for partial trace bridge outputs (3 hours ago)
+- 33e0337 Fix bridge output calculation for partial traces (3 hours ago)
+- 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (4 hours ago)
+- 229162c Add color-coded borders for collapsed entries in hop building page (4 hours ago)
+- 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (10 hours ago)
+- 63ad605 Make DEX detection more conservative, default to exchange when uncertain (10 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
