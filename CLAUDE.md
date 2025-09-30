@@ -3,23 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 03:41)
+## Latest Commit (Auto-updated: 2025-09-30 04:04)
 
-**Commit:** 33e03370308b33bc43e077782c39b6129ad1b0ae
+**Commit:** 8f9c550f40bd1d2032fc9bdc9d9ab59d6f57c233
 **Author:** Your Name
-**Message:** Fix bridge output calculation for partial traces
+**Message:** Fix bridge output button unresponsive due to variable initialization error
 
-- Detects partial traces from entry notes (e.g. 'Following 88.58 of 306 HYPE')
-- Calculates proportional ownership percentage
-- Adjusts bridge output amount to only our proportional share
-- Adds detailed logging and notes about the calculation
-- Stores partial trace info in bridgeDetails for reference
-
-This fixes the critical bug where partial ownership of a bridge transaction
-would give full credit for the entire output amount. Now if you only own
-28.9% of the input, you only get 28.9% of the output.
-
-Example: 88.58 HYPE of 306 total → 3,959 USDC instead of 13,680 USDC
+- Move outputAmount declaration before its usage in confirmBridgeOutput function
+- Rearrange code to declare variables before building notes
+- Fixes ReferenceError: Cannot access 'outputAmount' before initialization
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -27,23 +19,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 32 +++++++++++++++-----------------
- index.html | 47 ++++++++++++++++++++++++++++++++++++++++++++---
- 2 files changed, 59 insertions(+), 20 deletions(-)
+ index.html | 76 +++++++++++++++++++++++++++++++-------------------------------
+ 1 file changed, 38 insertions(+), 38 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 33e0337 Fix bridge output calculation for partial traces (0 seconds ago)
-- 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (40 minutes ago)
-- 229162c Add color-coded borders for collapsed entries in hop building page (44 minutes ago)
+- 8f9c550 Fix bridge output button unresponsive due to variable initialization error (0 seconds ago)
+- e282f88 Prevent hop finalization when threads are at conversion wallets (8 minutes ago)
+- 2a6ad63 Add detailed calculation notes for partial trace bridge outputs (22 minutes ago)
+- 33e0337 Fix bridge output calculation for partial traces (23 minutes ago)
+- 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (63 minutes ago)
+- 229162c Add color-coded borders for collapsed entries in hop building page (67 minutes ago)
 - 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (8 hours ago)
 - 63ad605 Make DEX detection more conservative, default to exchange when uncertain (8 hours ago)
 - f1dedba Prevent DEXs from being treated as terminal wallets (8 hours ago)
 - bc53ba0 Improve Arkham swap endpoint integration and add test page (8 hours ago)
-- 02b2749 Fix conversion wallet modal not opening after converting personal label (15 hours ago)
-- e76fab9 Fix ART calculation to properly handle bridge conversions (15 hours ago)
-- b280140 Fix undefined function error and floating point precision issues (15 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

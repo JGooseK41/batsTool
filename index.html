@@ -25162,6 +25162,7 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             // CHECK FOR PARTIAL TRACE: Compare our traced amount to the total transaction
             let isPartialTrace = false;
             let proportionalMultiplier = 1.0;
+            let fullOutputAmount = outputAmount; // Store the original full amount
 
             // Check if the entry notes contain information about partial tracing
             if (entry.notes && entry.notes.includes('Partial trace:')) {
@@ -25170,39 +25171,43 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 if (partialMatch) {
                     const ourAmount = parseFloat(partialMatch[1]);
                     const totalAmount = parseFloat(partialMatch[2]);
-                    isPartialTrace = true;
-                    proportionalMultiplier = ourAmount / totalAmount;
 
-                    console.log(`🚨 PARTIAL TRACE DETECTED in bridge output:`);
-                    console.log(`   Our input: ${ourAmount} ${inputCurrency}`);
-                    console.log(`   Total transaction: ${totalAmount} ${inputCurrency}`);
-                    console.log(`   Our ownership: ${(proportionalMultiplier * 100).toFixed(2)}%`);
+                    // Validate to prevent division by zero
+                    if (totalAmount > 0) {
+                        isPartialTrace = true;
+                        proportionalMultiplier = ourAmount / totalAmount;
 
-                    // Calculate our proportional share of the output
-                    const fullOutputAmount = outputAmount;
-                    outputAmount = outputAmount * proportionalMultiplier;
+                        console.log(`🚨 PARTIAL TRACE DETECTED in bridge output:`);
+                        console.log(`   Our input: ${ourAmount} ${inputCurrency}`);
+                        console.log(`   Total transaction: ${totalAmount} ${inputCurrency}`);
+                        console.log(`   Our ownership: ${(proportionalMultiplier * 100).toFixed(2)}%`);
 
-                    console.log(`   Full bridge output: ${fullOutputAmount} ${outputCurrency}`);
-                    console.log(`   Our proportional share: ${outputAmount} ${outputCurrency}`);
+                        // Calculate our proportional share of the output
+                        fullOutputAmount = outputAmount; // Save the full amount before adjustment
+                        outputAmount = outputAmount * proportionalMultiplier;
 
-                    // Update the notes to reflect the proportional calculation
-                    comminglingInfo = `\n  ⚠️ PARTIAL TRACE PROPORTIONAL CALCULATION:` +
-                                     `\n    Your input: ${ourAmount} ${inputCurrency} of ${totalAmount} ${inputCurrency} total` +
-                                     `\n    Your ownership: ${(proportionalMultiplier * 100).toFixed(2)}%` +
-                                     `\n    Full bridge output: ${fullOutputAmount} ${outputCurrency}` +
-                                     `\n    Your proportional output: ${outputAmount.toFixed(6)} ${outputCurrency}`;
+                        console.log(`   Full bridge output: ${fullOutputAmount} ${outputCurrency}`);
+                        console.log(`   Our proportional share: ${outputAmount} ${outputCurrency}`);
 
-                    // Update the destAmount for the thread creation
-                    destAmount = outputAmount.toString();
+                        // Update the notes to reflect the proportional calculation
+                        comminglingInfo = `\n  ⚠️ PARTIAL TRACE PROPORTIONAL CALCULATION:` +
+                                         `\n    Your input: ${ourAmount} ${inputCurrency} of ${totalAmount} ${inputCurrency} total` +
+                                         `\n    Your ownership: ${(proportionalMultiplier * 100).toFixed(2)}%` +
+                                         `\n    Full bridge output: ${fullOutputAmount} ${outputCurrency}` +
+                                         `\n    Your proportional output: ${outputAmount.toFixed(6)} ${outputCurrency}`;
+
+                        // Update the destAmount for the thread creation
+                        destAmount = outputAmount.toString();
+                    } else {
+                        console.error('Invalid total amount in partial trace calculation:', totalAmount);
+                    }
                 }
             }
 
             // Build the final notes with all calculation details
             let outputAmountNote = `  Output Amount: ${outputAmount.toFixed(6)} ${destAsset}`;
-            if (isPartialTrace) {
-                // For partial traces, show both the full amount and our calculated share
-                // Remember: outputAmount has already been adjusted, so we need the original
-                const fullOutputAmount = outputAmount / proportionalMultiplier;
+            if (isPartialTrace && proportionalMultiplier > 0) {
+                // For partial traces, use the stored fullOutputAmount (no need to recalculate)
                 outputAmountNote = `  Full Bridge Output: ${fullOutputAmount.toFixed(6)} ${destAsset}\n` +
                                   `  Our Proportional Share: ${outputAmount.toFixed(6)} ${destAsset}\n` +
                                   `  Calculation: ${fullOutputAmount.toFixed(6)} × ${(proportionalMultiplier * 100).toFixed(4)}% = ${outputAmount.toFixed(6)}`;

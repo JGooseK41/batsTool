@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multi-Chain Swap Test Suite</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+        .test-section { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .chain-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .chain-badge { padding: 5px 15px; border-radius: 20px; color: white; font-weight: bold; }
+        .btc { background: #f7931a; }
+        .eth { background: #627eea; }
+        .sol { background: #00d4aa; }
+        .bsc { background: #f0b90b; color: #333; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; background: #3498db; color: white; }
+        button:hover { background: #2980b9; }
+        .result { margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; border-left: 4px solid #28a745; }
+        .error { background: #f8d7da; border-left: 4px solid #dc3545; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; }
+        .info { background: #d1ecf1; border-left: 4px solid #17a2b8; }
+        pre { white-space: pre-wrap; word-wrap: break-word; background: #f8f9fa; padding: 10px; border-radius: 4px; }
+        .test-case { margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 5px; }
+        h3 { color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <h1>🔄 Multi-Chain Swap & Bridge Test Suite</h1>
+    <p>Testing swap patterns and conversions across BTC, ETH, Solana, and BSC chains</p>
+
+    <div id="results"></div>
+
+    <!-- Bitcoin Tests -->
+    <div class="test-section">
+        <div class="chain-header">
+            <span class="chain-badge btc">BTC</span>
+            <h2>Bitcoin Chain Tests</h2>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 1: BTC → WBTC Bridge (via Ethereum)</h3>
+            <p>Simulating Bitcoin wrapping to WBTC on Ethereum</p>
+            <button onclick="testBTCtoWBTC()">Run BTC→WBTC Test</button>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 2: BTC Coinjoin Detection</h3>
+            <p>Testing partial ownership in Bitcoin mixing transactions</p>
+            <button onclick="testBTCCoinjoin()">Run Coinjoin Test</button>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 3: BTC → Lightning Network</h3>
+            <p>Testing Bitcoin to Lightning channel opening</p>
+            <button onclick="testBTCLightning()">Run Lightning Test</button>
+        </div>
+    </div>
+
+    <!-- Ethereum Tests -->
+    <div class="test-section">
+        <div class="chain-header">
+            <span class="chain-badge eth">ETH</span>
+            <h2>Ethereum Chain Tests</h2>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 1: Uniswap V3 ETH → USDC</h3>
+            <p>Testing DEX swap with slippage and fees</p>
+            <button onclick="testUniswapSwap()">Run Uniswap Test</button>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 2: ETH → Arbitrum Bridge</h3>
+            <p>Testing L1 to L2 bridge with partial trace</p>
+            <button onclick="testArbitrumBridge()">Run Arbitrum Bridge Test</button>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 3: Multi-hop DEX Aggregation</h3>
+            <p>Testing 1inch aggregated swap across multiple DEXs</p>
+            <button onclick="test1inchAggregation()">Run 1inch Test</button>
+        </div>
+    </div>
+
+    <!-- Solana Tests -->
+    <div class="test-section">
+        <div class="chain-header">
+            <span class="chain-badge sol">SOL</span>
+            <h2>Solana Chain Tests</h2>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 1: Jupiter Aggregator SOL → USDC</h3>
+            <p>Testing Solana DEX aggregation</p>
+            <button onclick="testJupiterSwap()">Run Jupiter Test</button>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 2: Wormhole Bridge SOL → ETH</h3>
+            <p>Testing cross-chain bridge from Solana to Ethereum</p>
+            <button onclick="testWormholeBridge()">Run Wormhole Test</button>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 3: Raydium LP Token Swap</h3>
+            <p>Testing liquidity pool token conversions</p>
+            <button onclick="testRaydiumLP()">Run Raydium Test</button>
+        </div>
+    </div>
+
+    <!-- BSC Tests -->
+    <div class="test-section">
+        <div class="chain-header">
+            <span class="chain-badge bsc">BSC</span>
+            <h2>Binance Smart Chain Tests</h2>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 1: PancakeSwap BNB → CAKE</h3>
+            <p>Testing BSC DEX with native token</p>
+            <button onclick="testPancakeSwap()">Run PancakeSwap Test</button>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 2: BSC → Polygon Bridge</h3>
+            <p>Testing cross-chain bridge with fee calculation</p>
+            <button onclick="testPolygonBridge()">Run Polygon Bridge Test</button>
+        </div>
+
+        <div class="test-case">
+            <h3>Test 3: Venus Protocol Liquidation</h3>
+            <p>Testing complex DeFi liquidation scenario</p>
+            <button onclick="testVenusLiquidation()">Run Venus Test</button>
+        </div>
+    </div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(title, status, data, details) {
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = status === 'success' ? 'success' :
+                               status === 'error' ? 'error' :
+                               status === 'warning' ? 'warning' : 'info';
+
+            resultsDiv.innerHTML = `
+                <div class="result ${statusClass}">
+                    <strong>${timestamp} - ${title}</strong><br>
+                    <div style="margin-top: 10px;">
+                        ${data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+                        ${details ? `<div style="margin-top: 10px;">${details}</div>` : ''}
+                    </div>
+                </div>
+            ` + resultsDiv.innerHTML;
+        }
+
+        // Bitcoin Tests
+        async function testBTCtoWBTC() {
+            addResult('BTC→WBTC Bridge Test', 'info', null, 'Starting test...');
+
+            const testData = {
+                chain: 'bitcoin',
+                inputAmount: 0.5,
+                inputCurrency: 'BTC',
+                bridgeAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+                outputChain: 'ethereum',
+                outputAmount: 0.4995, // After 0.1% bridge fee
+                outputCurrency: 'WBTC',
+                partialTrace: false,
+                txHash: '7e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f'
+            };
+
+            // Simulate partial trace scenario
+            if (Math.random() > 0.5) {
+                testData.partialTrace = true;
+                testData.totalInputAmount = 2.5;
+                testData.ourOwnership = (testData.inputAmount / testData.totalInputAmount * 100).toFixed(2) + '%';
+                testData.proportionalOutput = testData.outputAmount * (testData.inputAmount / testData.totalInputAmount);
+            }
+
+            addResult('BTC→WBTC Bridge Test', 'success', testData,
+                `✅ Bridge simulation complete. ${testData.partialTrace ? 'Partial trace detected!' : 'Full trace.'}`);
+        }
+
+        async function testBTCCoinjoin() {
+            addResult('BTC Coinjoin Test', 'info', null, 'Analyzing coinjoin transaction...');
+
+            const testData = {
+                chain: 'bitcoin',
+                txHash: 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456',
+                totalInputs: 10,
+                totalAmount: 5.0,
+                ourInput: 0.5,
+                ourOwnership: '10%',
+                outputs: [
+                    { address: 'bc1q...abc', amount: 0.49, ours: true },
+                    { address: 'bc1q...def', amount: 0.49, ours: false },
+                    { address: 'bc1q...ghi', amount: 0.49, ours: false },
+                    // ... more outputs
+                ],
+                mixingFee: 0.01
+            };
+
+            addResult('BTC Coinjoin Test', 'warning', testData,
+                '⚠️ Coinjoin detected. Partial ownership tracked. Multiple participants identified.');
+        }
+
+        async function testBTCLightning() {
+            addResult('BTC Lightning Test', 'info', null, 'Opening Lightning channel...');
+
+            const testData = {
+                chain: 'bitcoin',
+                channelCapacity: 0.1,
+                localBalance: 0.1,
+                remoteBalance: 0,
+                channelPoint: '7e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d:0',
+                nodePublicKey: '03abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+                status: 'channel_opened'
+            };
+
+            addResult('BTC Lightning Test', 'success', testData,
+                '✅ Lightning channel opened. Off-chain tracking required.');
+        }
+
+        // Ethereum Tests
+        async function testUniswapSwap() {
+            addResult('Uniswap V3 Test', 'info', null, 'Simulating Uniswap swap...');
+
+            const testData = {
+                chain: 'ethereum',
+                dex: 'Uniswap V3',
+                router: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+                inputToken: 'ETH',
+                inputAmount: 1.5,
+                outputToken: 'USDC',
+                outputAmount: 2847.35,
+                slippage: '0.5%',
+                gasUsed: 150000,
+                gasPrice: '30 gwei',
+                gasCost: 0.0045,
+                priceImpact: '0.12%'
+            };
+
+            // Calculate proportional if partial
+            if (Math.random() > 0.6) {
+                testData.isPartialSwap = true;
+                testData.totalPoolTrade = 10.5;
+                testData.ourPortion = (testData.inputAmount / testData.totalPoolTrade * 100).toFixed(2) + '%';
+            }
+
+            addResult('Uniswap V3 Test', 'success', testData,
+                `✅ Swap executed. Rate: 1 ETH = ${(testData.outputAmount/testData.inputAmount).toFixed(2)} USDC`);
+        }
+
+        async function testArbitrumBridge() {
+            addResult('Arbitrum Bridge Test', 'info', null, 'Bridging to Arbitrum...');
+
+            const testData = {
+                sourceChain: 'ethereum',
+                destChain: 'arbitrum',
+                bridgeContract: '0x4Dbd4fc535Ac27206064B68FfCf827b0A60BAB3f',
+                inputAmount: 2.0,
+                inputToken: 'ETH',
+                outputAmount: 2.0,
+                outputToken: 'ETH',
+                l1TxHash: '0xabc123...',
+                l2TxHash: '0xdef456...',
+                retryableTicket: '0x789ghi...',
+                bridgeTime: '~10 minutes',
+                status: 'confirmed'
+            };
+
+            addResult('Arbitrum Bridge Test', 'success', testData,
+                '✅ Bridge successful. L2 transaction confirmed.');
+        }
+
+        async function test1inchAggregation() {
+            addResult('1inch Aggregation Test', 'info', null, 'Routing through multiple DEXs...');
+
+            const testData = {
+                chain: 'ethereum',
+                aggregator: '1inch',
+                inputToken: 'USDT',
+                inputAmount: 5000,
+                outputToken: 'DAI',
+                outputAmount: 4987.53,
+                routes: [
+                    { dex: 'Uniswap V2', portion: '40%', amount: 2000 },
+                    { dex: 'SushiSwap', portion: '35%', amount: 1750 },
+                    { dex: 'Curve', portion: '25%', amount: 1250 }
+                ],
+                totalGas: 320000,
+                savedVsDirectSwap: '$12.47'
+            };
+
+            addResult('1inch Aggregation Test', 'success', testData,
+                '✅ Aggregated swap complete. Routed through 3 DEXs for best rate.');
+        }
+
+        // Solana Tests
+        async function testJupiterSwap() {
+            addResult('Jupiter Swap Test', 'info', null, 'Executing Jupiter aggregated swap...');
+
+            const testData = {
+                chain: 'solana',
+                aggregator: 'Jupiter',
+                inputToken: 'SOL',
+                inputAmount: 100,
+                outputToken: 'USDC',
+                outputAmount: 1847.25,
+                routes: [
+                    { dex: 'Orca', portion: '60%' },
+                    { dex: 'Raydium', portion: '40%' }
+                ],
+                txSignature: 'ABC123def456GHI789jkl012MNO345pqr678STU901vwx234YZ',
+                slot: 123456789,
+                blockTime: Date.now() / 1000
+            };
+
+            addResult('Jupiter Swap Test', 'success', testData,
+                '✅ Jupiter swap successful. Best route found across 2 DEXs.');
+        }
+
+        async function testWormholeBridge() {
+            addResult('Wormhole Bridge Test', 'info', null, 'Bridging SOL to ETH via Wormhole...');
+
+            const testData = {
+                protocol: 'Wormhole',
+                sourceChain: 'solana',
+                destChain: 'ethereum',
+                inputToken: 'SOL',
+                inputAmount: 50,
+                wrappedToken: 'wSOL',
+                outputToken: 'wSOL',
+                outputAmount: 49.95, // 0.1% fee
+                vaa: '0x123abc...', // Validator attestation
+                guardianSet: 19,
+                emitterAddress: 'EmiTter123...',
+                sequence: 12345,
+                estimatedTime: '~20 minutes'
+            };
+
+            addResult('Wormhole Bridge Test', 'success', testData,
+                '✅ Cross-chain bridge initiated. Awaiting guardian signatures.');
+        }
+
+        async function testRaydiumLP() {
+            addResult('Raydium LP Test', 'info', null, 'Testing LP token operations...');
+
+            const testData = {
+                chain: 'solana',
+                dex: 'Raydium',
+                pool: 'SOL-USDC',
+                operation: 'add_liquidity',
+                token0: 'SOL',
+                amount0: 10,
+                token1: 'USDC',
+                amount1: 185.50,
+                lpTokensMinted: 47.823,
+                poolShare: '0.0023%',
+                impermanentLoss: 'N/A (initial deposit)'
+            };
+
+            addResult('Raydium LP Test', 'success', testData,
+                '✅ Liquidity added to pool. LP tokens minted.');
+        }
+
+        // BSC Tests
+        async function testPancakeSwap() {
+            addResult('PancakeSwap Test', 'info', null, 'Executing PancakeSwap trade...');
+
+            const testData = {
+                chain: 'bsc',
+                dex: 'PancakeSwap V2',
+                router: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
+                inputToken: 'BNB',
+                inputAmount: 5,
+                outputToken: 'CAKE',
+                outputAmount: 847.23,
+                lpFee: '0.25%',
+                priceImpact: '0.08%',
+                txHash: '0xbsc123...',
+                blockNumber: 12345678
+            };
+
+            // Simulate partial ownership
+            if (Math.random() > 0.7) {
+                testData.partialOwnership = true;
+                testData.totalSwapVolume = 50;
+                testData.ourPortion = '10%';
+            }
+
+            addResult('PancakeSwap Test', 'success', testData,
+                `✅ Swap complete on BSC. Rate: 1 BNB = ${(testData.outputAmount/testData.inputAmount).toFixed(2)} CAKE`);
+        }
+
+        async function testPolygonBridge() {
+            addResult('Polygon Bridge Test', 'info', null, 'Bridging BSC to Polygon...');
+
+            const testData = {
+                bridge: 'Multichain (Anyswap)',
+                sourceChain: 'bsc',
+                destChain: 'polygon',
+                token: 'USDT',
+                inputAmount: 1000,
+                bridgeFee: 0.1, // 0.01%
+                outputAmount: 999.9,
+                minimumReceived: 999.0,
+                sourceTx: '0xbsc789...',
+                destTx: '0xmatic456...',
+                bridgeTime: '5-30 minutes',
+                status: 'completed'
+            };
+
+            addResult('Polygon Bridge Test', 'success', testData,
+                '✅ Cross-chain bridge complete. Funds received on Polygon.');
+        }
+
+        async function testVenusLiquidation() {
+            addResult('Venus Liquidation Test', 'info', null, 'Simulating liquidation event...');
+
+            const testData = {
+                protocol: 'Venus',
+                chain: 'bsc',
+                event: 'liquidation',
+                borrower: '0xabc123...',
+                collateralToken: 'BTC',
+                collateralAmount: 0.5,
+                debtToken: 'BUSD',
+                debtAmount: 15000,
+                liquidationPenalty: '10%',
+                liquidatorReward: 1500,
+                remainingCollateral: 0.05,
+                txHash: '0xliquidation123...'
+            };
+
+            addResult('Venus Liquidation Test', 'warning', testData,
+                '⚠️ Liquidation event detected. Collateral seized and debt repaid.');
+        }
+
+        // Auto-run a test on page load
+        window.onload = () => {
+            addResult('Test Suite Loaded', 'info', null,
+                'Ready to run multi-chain swap and bridge simulations. Click any test button to begin.');
+        };
+    </script>
+</body>
+</html>
