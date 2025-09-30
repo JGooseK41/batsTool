@@ -3,59 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 09:30)
+## Latest Commit (Auto-updated: 2025-09-30 09:48)
 
-**Commit:** 13f52d2222c3585ab7ad4a4d638a41e12b144b4c
+**Commit:** 8fb845ef06e7b925b65f175503c982cd2fb88bd2
 **Author:** Your Name
-**Message:** Implement comprehensive professional reporting system
+**Message:** Enhance workflow transitions from trace completion to visualization/reporting
 
-Created dedicated Reports tab with six sub-sections as specified:
-
-1. Cover Page:
-   - Case ID, investigator, agency, date
-   - Case type and synopsis
-   - Investigation summary metrics
-
-2. Victim Index:
-   - Complete victim listing with details
-   - Total loss amounts
-   - Contact information
-
-3. Red Wallet Index:
-   - All victim deposit wallets
-   - V-T notation tracking
-   - Amounts and dates
-
-4. Terminal Wallet Index:
-   - Exchange arrivals
-   - Wallet addresses and amounts
-   - Hop tracking
-
-5. Narrative Report:
-   - Custom text editor (NOT auto-generated)
-   - Rich text formatting tools (bold, italic, underline, lists)
-   - Save functionality to preserve narrative
-   - Investigator writes their own analysis
-
-6. Technical Audit Trail:
-   - Hop-by-hop documentation
-   - Opening ART for each hop
-   - All entries with transaction notes
-   - Hop reconciliation showing:
-     - Terminal deposits
-     - Continuing threads
-     - Write-offs
-     - ART validation
-   - Mathematical validation between hops
-
-Export Features:
-- Export individual tabs
-- Export complete report with all sections
-- Multiple format options (PDF, Word, HTML)
-- Print preview functionality
-- Page breaks for professional layout
-
-The system creates court-ready documentation with proper hop-based technical audit trail showing all transaction notes and mathematical validations.
+- Add enhanced completion modal with clear next steps and workflow options
+- Create dedicated guidance banners for visualization and reports tabs
+- Implement smooth navigation between completion → visualization → reports
+- Add quick export menu for all data export options
+- Show visual cards for each next step option with descriptive text
+- Add helper functions for terminal and thread summaries
+- Ensure proper initialization of visualization when navigating
+- Add step-by-step guidance in report generation banner
+- Fix button callbacks to properly initialize visualization
+- Create intuitive workflow that guides users through the complete process
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -63,23 +26,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  56 +++---
- index.html | 625 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 646 insertions(+), 35 deletions(-)
+ CLAUDE.md  |  88 +++++++---
+ index.html | 580 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 605 insertions(+), 63 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 13f52d2 Implement comprehensive professional reporting system (0 seconds ago)
-- 8588d1c Fix conversion wallet diamond positioning within hops (29 minutes ago)
-- 470563d Implement modern, cutting-edge graph visualization system (38 minutes ago)
-- 2402812 Add Save Investigation button to trace completion modals (50 minutes ago)
-- 78a86cb Add 'Edit Entries' option to investigation completion modal (2 hours ago)
+- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (0 seconds ago)
+- 13f52d2 Implement comprehensive professional reporting system (19 minutes ago)
+- 8588d1c Fix conversion wallet diamond positioning within hops (47 minutes ago)
+- 470563d Implement modern, cutting-edge graph visualization system (57 minutes ago)
+- 2402812 Add Save Investigation button to trace completion modals (69 minutes ago)
+- 78a86cb Add 'Edit Entries' option to investigation completion modal (3 hours ago)
 - 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (3 hours ago)
 - 48a0820 Simplify entry type selection and rename cold storage option (3 hours ago)
-- 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (5 hours ago)
-- 8f9c550 Fix bridge output button unresponsive due to variable initialization error (5 hours ago)
-- e282f88 Prevent hop finalization when threads are at conversion wallets (6 hours ago)
+- 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (6 hours ago)
+- 8f9c550 Fix bridge output button unresponsive due to variable initialization error (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

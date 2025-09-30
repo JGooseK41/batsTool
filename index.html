@@ -24114,68 +24114,30 @@ function createHopEntryFromWizard() {
         }
     });
 
-    // Allow partial allocation - cap at the available amount
+    // CRITICAL FIX: Don't auto-adjust to use all available funds
+    // The transaction amount should dictate consumption, not thread availability
     if (totalAmount > totalAvailable) {
-        console.log(`Allocation exceeds available: Requested ${totalAmount}, Available ${totalAvailable}`);
+        console.log(`ERROR: Allocation exceeds available: Requested ${totalAmount}, Available ${totalAvailable}`);
+        alert(`⚠️ Insufficient funds!\n\nTrying to allocate ${totalAmount} but only ${totalAvailable} available.\n\nPlease adjust the allocation amounts.`);
+        return; // Block the transaction
+    }
 
-        // Automatically adjust allocation to use all available funds
-        const adjustmentRatio = totalAvailable / totalAmount;
+    // If we have transaction data, use the actual transaction amount
+    // This ensures we only consume what the transaction actually moved
+    if (wizardData.txData && wizardData.txData.amount) {
+        const txAmount = parseFloat(wizardData.txData.amount);
 
-        // First pass: Adjust each thread's allocation proportionally
-        Object.keys(wizardData.allocations).forEach(threadId => {
-            const originalAmount = wizardData.allocations[threadId];
-            const thread = threads.find(t => t.threadId === threadId);
-            const currency = thread?.currency || Array.from(currencies)[0] || 'USD';
-            wizardData.allocations[threadId] = roundToCurrencyPrecision(originalAmount * adjustmentRatio, currency);
-        });
+        // If allocations don't match transaction amount, re-apply PIFO
+        if (Math.abs(totalAmount - txAmount) > 0.01) {
+            console.log(`Adjusting allocations to match transaction amount: ${txAmount} (was ${totalAmount})`);
 
-        // Recalculate to see how much is left due to rounding
-        let adjustedTotal = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
-        let remainder = totalAvailable - adjustedTotal;
+            // Re-apply PIFO allocation with the correct transaction amount
+            wizardData.allocations = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
+            totalAmount = txAmount;
 
-        // Second pass: Distribute the remainder to ensure we use EXACTLY the available amount
-        // Add the remainder to threads one by one until it's fully distributed
-        if (remainder > 0.001) { // Only adjust if remainder is significant
-            const threadIds = Object.keys(wizardData.allocations);
-            let i = 0;
-            while (remainder > 0.001 && i < threadIds.length) {
-                const threadId = threadIds[i];
-                const thread = threads.find(t => t.threadId === threadId || t.internalId === threadId);
-                if (thread) {
-                    // Add as much of the remainder as this thread can handle
-                    const maxAddition = Math.min(remainder, thread.availableAmount - wizardData.allocations[threadId]);
-                    if (maxAddition > 0) {
-                        const currency = thread.currency || Array.from(currencies)[0] || 'USD';
-                        wizardData.allocations[threadId] = roundToCurrencyPrecision(wizardData.allocations[threadId] + maxAddition, currency);
-                        remainder = roundToCurrencyPrecision(remainder - maxAddition, currency);
-                    }
-                }
-                i++;
-            }
+            // Log the adjustment
+            console.log('Adjusted allocations to match transaction:', wizardData.allocations);
         }
-
-        // Final adjustment to ensure exact match (handle tiny rounding errors)
-        adjustedTotal = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
-        if (Math.abs(adjustedTotal - totalAvailable) < 0.01 && adjustedTotal !== totalAvailable) {
-            // Find the largest allocation and adjust it by the tiny difference
-            const largestThread = Object.keys(wizardData.allocations).reduce((max, threadId) =>
-                wizardData.allocations[threadId] > wizardData.allocations[max] ? threadId : max
-            );
-            // Use higher precision for crypto allocations
-            const adjustment = totalAvailable - adjustedTotal;
-            const precision = currencies.has('BTC') || currencies.has('ETH') || currencies.has('USDC') || currencies.has('USDT') || currencies.has('HYPE') ? 1000000 : 100;
-            wizardData.allocations[largestThread] = Math.round((wizardData.allocations[largestThread] + adjustment) * precision) / precision;
-        }
-
-        console.log(`Auto-adjusted allocations to ${totalAvailable} (from ${totalAmount})`);
-        console.log('Adjusted allocations:', wizardData.allocations);
-
-        // Update totalAmount to reflect the adjustment
-        totalAmount = totalAvailable;
-
-        // Note this partial allocation in the entry
-        if (!wizardData.notes) wizardData.notes = '';
-        wizardData.notes += `\n[Auto-adjusted: Allocated ${totalAvailable} of ${wizardData.txData?.amount || totalAmount} ${Array.from(currencies)[0]}]`;
     }
 
     // Check if mixing currencies (which shouldn't be allowed)
@@ -24397,31 +24359,13 @@ function createHopEntryFromWizard() {
         toWalletType = wizardData.manualData.walletType;
     }
 
-    // Calculate the amount to trace - limited by transaction amount if available
+    // Calculate the amount to trace - should match allocations which already match transaction
     let totalAllocated = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
     let traceAmount = totalAllocated;
 
-    // Adjust allocations if they exceed transaction amount
-    if (wizardData.txData && wizardData.txData.amount) {
-        const txAmount = wizardData.txData.amount;
-        if (totalAllocated > txAmount) {
-            console.log(`Limiting trace amount from ${totalAllocated} to transaction amount ${txAmount}`);
-            traceAmount = txAmount;
-
-            // Re-apply PIFO allocation with the correct amount instead of proportional reduction
-            console.log(`Re-applying PIFO allocation for ${txAmount} across selected threads`);
-            wizardData.allocations = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
-
-            // Log PIFO results
-            const allocLog = [];
-            for (const [threadId, amount] of Object.entries(wizardData.allocations)) {
-                if (amount > 0) {
-                    allocLog.push(`${threadId}: ${amount.toFixed(2)}`);
-                }
-            }
-            console.log(`PIFO allocations applied:`, allocLog.join(', '));
-        }
-    }
+    // The allocations have already been adjusted to match transaction amount above
+    // No need to re-adjust here
+    console.log(`Trace amount: ${traceAmount} from allocations:`, wizardData.allocations);
 
     // Check if this is a terminal wallet or smart contract
     let isTerminalWallet = false;
