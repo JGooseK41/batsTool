@@ -3,17 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 08:39)
+## Latest Commit (Auto-updated: 2025-09-30 08:52)
 
-**Commit:** 2402812a1a2cc702bcb1d4a0f47d40821ad2c5a0
+**Commit:** 470563dbf30d1afdf50d906a8969d3ce3f5639f5
 **Author:** Your Name
-**Message:** Add Save Investigation button to trace completion modals
+**Message:** Implement modern, cutting-edge graph visualization system
 
-- Added prominent Save Investigation button to the completion notification that appears when all funds reach terminal wallets
-- Made the Save button more prominent in the main trace completion ceremony modal (larger, with shadow effect)
-- Save button appears alongside Complete Trace and Edit Entries options
-- Ensures investigation is preserved at critical milestone when trace is complete
-- Improved button hierarchy with Save as the primary action
+Major visualization improvements:
+- Removed redundant simple flow diagram section - now using only enhanced version
+- Implemented smart edge angle calculation based on output count for uniform appearance
+- Created optimal node positioning algorithm to minimize edge crossings
+- Added clickable nodes with detailed modal showing inbound/outbound threads
+- Implemented brown diamond nodes for conversion wallets/swaps
+- Modernized visual design with gradients, shadows, and smooth transitions
+- Added smooth entrance animations for nodes and edges
+- Enhanced pan and zoom with smooth cubic-bezier transitions
+
+Visual improvements:
+- Modern gradient fills for all node types (red, purple, black, brown, etc.)
+- Drop shadows and hover effects for depth
+- Smooth curved edges with calculated angles
+- Animated edge flow indicators
+- Clean, modern typography with Inter and SF Mono fonts
+- Backdrop blur effects on modals
+- Conversion wallets shown as brown diamonds positioned vertically
+
+Interaction features:
+- Click any node to see full wallet details
+- Click threads to view original entry form data
+- Smooth pan with grab cursor
+- Scroll wheel zoom with limits
+- Hover effects on all interactive elements
+
+The visualization now looks sharp, modern, and professional rather than dated.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -21,23 +43,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 38 +++++++++++++++++---------------------
- index.html | 13 ++++++++-----
- 2 files changed, 25 insertions(+), 26 deletions(-)
+ CLAUDE.md  |  43 +++--
+ index.html | 619 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 580 insertions(+), 82 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2402812 Add Save Investigation button to trace completion modals (0 seconds ago)
-- 78a86cb Add 'Edit Entries' option to investigation completion modal (88 minutes ago)
+- 470563d Implement modern, cutting-edge graph visualization system (0 seconds ago)
+- 2402812 Add Save Investigation button to trace completion modals (12 minutes ago)
+- 78a86cb Add 'Edit Entries' option to investigation completion modal (2 hours ago)
 - 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (2 hours ago)
 - 48a0820 Simplify entry type selection and rename cold storage option (2 hours ago)
-- 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (4 hours ago)
+- 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (5 hours ago)
 - 8f9c550 Fix bridge output button unresponsive due to variable initialization error (5 hours ago)
 - e282f88 Prevent hop finalization when threads are at conversion wallets (5 hours ago)
 - 2a6ad63 Add detailed calculation notes for partial trace bridge outputs (5 hours ago)
 - 33e0337 Fix bridge output calculation for partial traces (5 hours ago)
-- 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

@@ -35406,25 +35406,117 @@ To (RED Wallet): ${transfer.to}`;
             const width = container.offsetWidth || 1200;
             const height = container.offsetHeight || 700;
 
-            // Calculate hop column widths
+            // Identify conversion wallets in each hop
+            const conversionsByHop = {};
+            investigation.hops?.forEach(hop => {
+                conversionsByHop[hop.hopNumber] = [];
+                hop.entries?.forEach(entry => {
+                    if (entry.isBridge || entry.isSwap || entry.toWalletType === 'brown') {
+                        conversionsByHop[hop.hopNumber].push({
+                            wallet: entry.toWallet,
+                            fromWallet: entry.fromWallet,
+                            outputWallet: entry.swapDetails?.outputWallet || entry.toWallet,
+                            isSameWallet: entry.swapDetails?.outputWallet === entry.toWallet,
+                            amount: entry.amount,
+                            outputAmount: entry.swapDetails?.outputAmount,
+                            currency: entry.currency,
+                            outputCurrency: entry.swapDetails?.outputCurrency
+                        });
+                    }
+                });
+            });
+
+            // Calculate hop column widths - wider for hops with cross-chain swaps
             const numHops = graphState.hopLayers.length;
-            const columnWidth = width / (numHops + 1); // +1 for padding
+            const baseColumnWidth = width / (numHops + 1);
 
             graphState.hopLayers.forEach((layer, hopIndex) => {
-                const xCenter = (hopIndex + 0.5) * columnWidth + 50;
+                const hopConversions = conversionsByHop[layer.hopNumber] || [];
+                const hasCrossChainSwap = hopConversions.some(c => !c.isSameWallet);
+                const columnWidth = hasCrossChainSwap ? baseColumnWidth * 1.5 : baseColumnWidth;
+                const xCenter = (hopIndex + 0.5) * baseColumnWidth + 50;
 
-                // Smart vertical positioning to minimize edge crossings
-                const nodes = layer.nodes;
-                const nodeCount = nodes.length;
+                // Position regular wallet nodes
+                const regularNodes = layer.nodes.filter(n => !n.isConversion);
+                const nodeCount = regularNodes.length;
                 const verticalSpacing = Math.min(80, (height - 150) / Math.max(nodeCount, 1));
                 const startY = (height - (nodeCount * verticalSpacing)) / 2;
 
-                nodes.forEach((node, nodeIndex) => {
+                regularNodes.forEach((node, nodeIndex) => {
                     node.x = xCenter;
                     node.y = startY + (nodeIndex * verticalSpacing) + 50;
 
-                    // Calculate output edge angles
-                    const outputEdges = graphState.edges.filter(e => e.source === node.id);
+                    // Check if this node has a conversion
+                    const nodeConversion = hopConversions.find(c => c.wallet === node.wallet);
+                    if (nodeConversion) {
+                        // Create conversion diamond node
+                        const diamondNode = {
+                            id: `conversion_${node.id}`,
+                            isConversion: true,
+                            wallet: nodeConversion.wallet,
+                            type: 'brown',
+                            x: 0,
+                            y: 0
+                        };
+
+                        if (nodeConversion.isSameWallet) {
+                            // Same wallet conversion - position diamond directly above
+                            diamondNode.x = node.x;
+                            diamondNode.y = node.y - 50;
+                        } else {
+                            // Cross-chain swap - find or create output wallet in same hop
+                            let outputNode = regularNodes.find(n => n.wallet === nodeConversion.outputWallet);
+                            if (!outputNode) {
+                                // Create output wallet node in same hop
+                                outputNode = {
+                                    id: `output_${nodeConversion.outputWallet}`,
+                                    wallet: nodeConversion.outputWallet,
+                                    type: 'black',
+                                    x: node.x + columnWidth * 0.4,
+                                    y: node.y,
+                                    hopNumber: layer.hopNumber
+                                };
+                                layer.nodes.push(outputNode);
+                                graphState.nodes.push(outputNode);
+                            }
+
+                            // Position diamond between input and output wallets
+                            diamondNode.x = (node.x + outputNode.x) / 2;
+                            diamondNode.y = node.y;
+                        }
+
+                        // Add diamond to graph
+                        layer.nodes.push(diamondNode);
+                        graphState.nodes.push(diamondNode);
+
+                        // Create edges for the conversion
+                        // Edge from wallet to diamond (vertical or diagonal)
+                        graphState.edges.push({
+                            source: node.id,
+                            target: diamondNode.id,
+                            isSwapEdge: true,
+                            amount: nodeConversion.amount,
+                            currency: nodeConversion.currency,
+                            straight: nodeConversion.isSameWallet
+                        });
+
+                        // Edge from diamond to output (if different wallet)
+                        if (!nodeConversion.isSameWallet && nodeConversion.outputWallet) {
+                            const outputNode = layer.nodes.find(n => n.wallet === nodeConversion.outputWallet);
+                            if (outputNode) {
+                                graphState.edges.push({
+                                    source: diamondNode.id,
+                                    target: outputNode.id,
+                                    isSwapEdge: true,
+                                    amount: nodeConversion.outputAmount,
+                                    currency: nodeConversion.outputCurrency
+                                });
+                            }
+                        }
+                    }
+
+                    // Calculate output edge angles for non-swap edges
+                    const outputEdges = graphState.edges.filter(e => e.source === node.id && !e.isSwapEdge);
                     const outputCount = outputEdges.length;
 
                     if (outputCount > 0) {
@@ -35437,14 +35529,6 @@ To (RED Wallet): ${transfer.to}`;
                         });
                     }
                 });
-
-                // Position conversion wallets (diamonds) between hops
-                if (layer.conversions) {
-                    layer.conversions.forEach((conv, i) => {
-                        conv.x = xCenter + columnWidth * 0.6;
-                        conv.y = startY + (i * 60) + 100;
-                    });
-                }
             });
         }
 
@@ -36159,26 +36243,46 @@ To (RED Wallet): ${transfer.to}`;
 
                 if (!sourceNode || !targetNode) return;
 
-                // Calculate edge path with angle
-                const dx = targetNode.x - sourceNode.x;
-                const dy = targetNode.y - sourceNode.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                // Use the pre-calculated source angle
-                const angle = edge.sourceAngle || 0;
-                const controlDistance = distance * 0.3;
-
-                // Calculate control point based on angle
-                const controlX = sourceNode.x + Math.cos(angle) * controlDistance + dx * 0.3;
-                const controlY = sourceNode.y + Math.sin(angle) * controlDistance;
-
-                // Create smooth quadratic bezier curve
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const pathData = `M ${sourceNode.x} ${sourceNode.y} Q ${controlX} ${controlY} ${targetNode.x} ${targetNode.y}`;
+                let pathData;
+
+                if (edge.isSwapEdge) {
+                    // Special handling for swap edges
+                    if (edge.straight) {
+                        // Straight vertical line for same-wallet swaps
+                        pathData = `M ${sourceNode.x} ${sourceNode.y} L ${targetNode.x} ${targetNode.y}`;
+                        path.setAttribute('stroke', '#8b4513');
+                        path.setAttribute('stroke-width', '3');
+                        path.setAttribute('stroke-dasharray', '8 4');
+                    } else {
+                        // Straight line for cross-chain swaps (wallet to diamond to new wallet)
+                        pathData = `M ${sourceNode.x} ${sourceNode.y} L ${targetNode.x} ${targetNode.y}`;
+                        path.setAttribute('stroke', '#8b4513');
+                        path.setAttribute('stroke-width', '2');
+                    }
+                } else {
+                    // Regular curved edges for non-swap transactions
+                    const dx = targetNode.x - sourceNode.x;
+                    const dy = targetNode.y - sourceNode.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    // Use the pre-calculated source angle
+                    const angle = edge.sourceAngle || 0;
+                    const controlDistance = distance * 0.3;
+
+                    // Calculate control point based on angle
+                    const controlX = sourceNode.x + Math.cos(angle) * controlDistance + dx * 0.3;
+                    const controlY = sourceNode.y + Math.sin(angle) * controlDistance;
+
+                    // Create smooth quadratic bezier curve
+                    pathData = `M ${sourceNode.x} ${sourceNode.y} Q ${controlX} ${controlY} ${targetNode.x} ${targetNode.y}`;
+                    path.setAttribute('stroke', edge.isConversion ? '#8b4513' : '#495057');
+                    path.setAttribute('marker-end', edge.isTerminal ? 'url(#arrow-terminal)' : 'url(#arrow-default)');
+                }
+
                 path.setAttribute('d', pathData);
-                path.setAttribute('class', 'graph-edge');
-                path.setAttribute('stroke', edge.isConversion ? '#8b4513' : '#495057');
-                path.setAttribute('marker-end', edge.isTerminal ? 'url(#arrow-terminal)' : 'url(#arrow-default)');
+                path.setAttribute('class', edge.isSwapEdge ? 'swap-edge' : 'graph-edge');
+                path.setAttribute('fill', 'none');
                 path.setAttribute('data-edge-id', edge.id);
 
                 edgeGroup.appendChild(path);
@@ -36190,7 +36294,14 @@ To (RED Wallet): ${transfer.to}`;
                     text.setAttribute('y', (sourceNode.y + targetNode.y) / 2 - 5);
                     text.setAttribute('class', 'amount-label');
                     text.setAttribute('text-anchor', 'middle');
-                    text.textContent = `${edge.amount} ${edge.currency}`;
+
+                    // Show conversion for swap edges
+                    if (edge.isSwapEdge && edge.currency !== edge.outputCurrency) {
+                        text.textContent = `${edge.amount} ${edge.currency} → ${edge.outputAmount || '?'} ${edge.outputCurrency || '?'}`;
+                    } else {
+                        text.textContent = `${edge.amount} ${edge.currency}`;
+                    }
+
                     edgeGroup.appendChild(text);
                 }
             });
