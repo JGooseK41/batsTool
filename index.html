@@ -24148,9 +24148,31 @@ function createHopEntryFromWizard() {
     // CRITICAL FIX: Don't auto-adjust to use all available funds
     // The transaction amount should dictate consumption, not thread availability
     if (totalAmount > totalAvailable) {
-        console.log(`ERROR: Allocation exceeds available: Requested ${totalAmount}, Available ${totalAvailable}`);
-        alert(`⚠️ Insufficient funds!\n\nTrying to allocate ${totalAmount} but only ${totalAvailable} available.\n\nPlease adjust the allocation amounts.`);
-        return; // Block the transaction
+        const difference = totalAmount - totalAvailable;
+        const tolerance = 0.01; // Allow tiny rounding differences
+
+        // Check if this is just a rounding error
+        if (difference < tolerance) {
+            console.log(`Minor rounding difference detected: ${difference}. Adjusting to available amount.`);
+            // Use the available amount to avoid precision issues
+            totalAmount = totalAvailable;
+
+            // Re-distribute using PIFO to match exactly
+            wizardData.allocations = applyPIFOAllocation(totalAvailable, wizardData.selectedThreads);
+        } else {
+            // For commingled threads going to a terminal wallet, we might need to use all available
+            // Check if this is a terminal wallet scenario
+            if (wizardData.isTerminalWallet || wizardData.detectedAttribution?.isExchange) {
+                console.log(`Terminal wallet detected - using all available funds: ${totalAvailable}`);
+                // Use all available funds for terminal wallets
+                wizardData.allocations = applyPIFOAllocation(totalAvailable, wizardData.selectedThreads);
+                totalAmount = totalAvailable;
+            } else {
+                console.log(`ERROR: Allocation exceeds available: Requested ${totalAmount}, Available ${totalAvailable}`);
+                alert(`⚠️ Insufficient funds!\n\nTrying to allocate ${totalAmount} but only ${totalAvailable} available.\n\nDifference: ${difference.toFixed(6)}\n\nPlease adjust the allocation amounts.`);
+                return; // Block the transaction
+            }
+        }
     }
 
     // If we have transaction data, use the actual transaction amount

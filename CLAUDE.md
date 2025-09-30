@@ -3,28 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 10:25)
+## Latest Commit (Auto-updated: 2025-09-30 10:33)
 
-**Commit:** d1effdb0a11ca7cbf70a9a0d24ff6ce9b5177d67
+**Commit:** 1f3c263e58eb2f91e412983360077109f5e4f3e1
 **Author:** Your Name
-**Message:** Fix critical regression: threads consuming more than transaction amount
+**Message:** Fix write-off entries not collapsing after creation from modal
 
-The bug: When a thread had 450 HYPE available and a transaction was for 300 HYPE,
-the system was incorrectly consuming ALL 450 HYPE instead of just the 300 needed.
-
-Root cause: Lines 24117-24179 were auto-adjusting allocations to use ALL available
-funds when allocation exceeded available. This was wrong - the transaction amount
-should dictate consumption, not thread availability.
+After confirming a write-off in the modal, the manual entry form remained
+expanded instead of collapsing as expected.
 
 Fix:
-- Remove auto-adjustment that consumed all available funds
-- Block transactions that try to allocate more than available (error message)
-- Use transaction amount as the source of truth for allocations
-- Re-apply PIFO allocation with correct transaction amount when needed
-- Remove duplicate adjustment code that was limiting trace amounts
+- Add explicit collapse logic after write-off creation and rendering
+- Force hide entry-content and show entry-summary elements
+- Also hide manual entry form if present
+- Use setTimeout to ensure DOM is updated before applying collapse state
 
-Result: Threads now correctly consume only the transaction amount, leaving
-remaining funds available for future transactions as expected.
+Result: Write-off entries now properly collapse after being created,
+providing a cleaner UI experience.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -32,23 +27,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  87 ++++++++++++++++-------------------------------------
- index.html | 100 ++++++++++++++-----------------------------------------------
- 2 files changed, 47 insertions(+), 140 deletions(-)
+ CLAUDE.md  | 56 +++++++++++++++++++++++++++++++-------------------------
+ index.html | 31 +++++++++++++++++++++++++++++++
+ 2 files changed, 62 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d1effdb Fix critical regression: threads consuming more than transaction amount (0 seconds ago)
-- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (37 minutes ago)
-- 13f52d2 Implement comprehensive professional reporting system (56 minutes ago)
-- 8588d1c Fix conversion wallet diamond positioning within hops (84 minutes ago)
+- 1f3c263 Fix write-off entries not collapsing after creation from modal (0 seconds ago)
+- d1effdb Fix critical regression: threads consuming more than transaction amount (8 minutes ago)
+- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (45 minutes ago)
+- 13f52d2 Implement comprehensive professional reporting system (63 minutes ago)
+- 8588d1c Fix conversion wallet diamond positioning within hops (2 hours ago)
 - 470563d Implement modern, cutting-edge graph visualization system (2 hours ago)
 - 2402812 Add Save Investigation button to trace completion modals (2 hours ago)
 - 78a86cb Add 'Edit Entries' option to investigation completion modal (3 hours ago)
 - 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (4 hours ago)
 - 48a0820 Simplify entry type selection and rename cold storage option (4 hours ago)
-- 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
