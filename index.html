@@ -15389,6 +15389,15 @@ function focusOnHop(hopNumber) {
         const hopElement = document.querySelector(`#hop_${hopNumber}`);
         if (hopElement) {
             hopElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Expand the hop if collapsed
+            window.hopCollapseState = window.hopCollapseState || {};
+            window.hopCollapseState[hopNumber] = false;
+            const hopContent = document.getElementById(`hopContent_${hopNumber}`);
+            if (hopContent) {
+                hopContent.style.display = 'block';
+            }
+
             // Highlight the hop
             hopElement.style.border = '3px solid #ffc107';
             hopElement.style.boxShadow = '0 0 20px rgba(255, 193, 7, 0.3)';
@@ -15568,6 +15577,14 @@ function checkHopCompletionStatus(hop) {
                 <p style="color: #155724; margin: 0 0 20px 0;">
                     ${subText}
                 </p>
+                ${traceComplete ? `
+                    <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 10px; margin: 15px 0; text-align: left;">
+                        <small style="color: #856404;">
+                            <strong>💡 Tip:</strong> If you need to investigate further (e.g., a wallet marked as terminal might actually be a bridge/DEX),
+                            you can go back and edit your entries.
+                        </small>
+                    </div>
+                ` : ''}
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <button class="btn btn-success" onclick="closeHopAndProceed(${hop.hopNumber}, this.parentElement.parentElement)" style="padding: 12px 24px; font-size: 16px;">
                         ${buttonText}
@@ -15576,7 +15593,11 @@ function checkHopCompletionStatus(hop) {
                         <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()" style="padding: 12px 24px;">
                             <small>Continue Adding Entries</small>
                         </button>
-                    ` : ''}
+                    ` : `
+                        <button class="btn btn-primary" onclick="this.parentElement.parentElement.remove(); scrollToHop(${hop.hopNumber})" style="padding: 12px 24px; background: #3498db;">
+                            ✏️ Edit Entries
+                        </button>
+                    `}
                     <button class="btn btn-light" onclick="finalizeHop(${hop.hopNumber}); this.parentElement.parentElement.remove()" style="padding: 12px 24px;">
                         <small>📊 Review Details</small>
                     </button>

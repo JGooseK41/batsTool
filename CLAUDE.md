@@ -3,20 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 06:33)
+## Latest Commit (Auto-updated: 2025-09-30 06:46)
 
-**Commit:** 48a08207af62c111220e3a953bb793312df577d0
+**Commit:** 72987233d91d2957403deb1029423b5d277f00b5
 **Author:** Your Name
-**Message:** Simplify entry type selection and rename cold storage option
+**Message:** Fix write-off modal auto-log and add color-coded backgrounds for entries
 
-- Remove DEX/Asset Conversion option from entry type selection
-- Rename 'Still in Wallet' to 'Mark as Cold Storage' for clarity
-- Update description to emphasize monitoring requirement
-- DEX/swap functionality now integrated into regular transaction flow
-- Simplify user workflow by removing redundant option
-
-The DEX option was redundant since swaps are now automatically detected
-and handled through the regular transaction flow with conversion wallets.
+- Write-off entries now automatically marked as logged/collapsed after confirmation
+- No longer requires manual "Log Entry" button click after write-off modal
+- Added light background colors matching border colors for better visual distinction:
+  - Light green background for regular traces continuing to next hop
+  - Light purple background for exchange/terminal wallet deposits
+  - Light brown/tan background for conversion wallets/bridges/swaps
+  - Light blue background for cold storage entries
+  - Light gray background for write-offs and abandoned entries
+- Entry backgrounds provide subtle visual cues about transaction flow status
+- Improved user experience with clearer visual hierarchy
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -24,25 +26,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                  |  39 +-
- index.html                 |  14 +-
- run-automated-tests.js     | 951 +++++++++++----------------------------------
- run-comprehensive-tests.js | 117 ++++++
- 4 files changed, 371 insertions(+), 750 deletions(-)
+ CLAUDE.md  | 51 +++++++++++++++++++++++++--------------------------
+ index.html | 39 ++++++++++++++++-----------------------
+ 2 files changed, 41 insertions(+), 49 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 48a0820 Simplify entry type selection and rename cold storage option (0 seconds ago)
-- 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (2 hours ago)
-- 8f9c550 Fix bridge output button unresponsive due to variable initialization error (2 hours ago)
+- 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (0 seconds ago)
+- 48a0820 Simplify entry type selection and rename cold storage option (12 minutes ago)
+- 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (3 hours ago)
+- 8f9c550 Fix bridge output button unresponsive due to variable initialization error (3 hours ago)
 - e282f88 Prevent hop finalization when threads are at conversion wallets (3 hours ago)
 - 2a6ad63 Add detailed calculation notes for partial trace bridge outputs (3 hours ago)
 - 33e0337 Fix bridge output calculation for partial traces (3 hours ago)
 - 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (4 hours ago)
 - 229162c Add color-coded borders for collapsed entries in hop building page (4 hours ago)
-- 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (10 hours ago)
-- 63ad605 Make DEX detection more conservative, default to exchange when uncertain (10 hours ago)
+- 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (11 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
