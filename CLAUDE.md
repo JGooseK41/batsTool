@@ -3,21 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 20:10)
+## Latest Commit (Auto-updated: 2025-09-30 02:57)
 
-**Commit:** 98911a8a455c84eadd06a9d0db1192fc8bec7b3c
+**Commit:** 229162c3cd9550297dd5b0217fc6b827b95edb6c
 **Author:** Your Name
-**Message:** Add Etherscan v2 label/tag detection for smart contracts and DEXs
+**Message:** Add color-coded borders for collapsed entries in hop building page
 
-- Implemented Etherscan v2 addressinfo endpoint to get labels/tags
-- Checks for DEX/Bridge indicators in Etherscan labels (dex, swap, router, etc)
-- Falls back to Etherscan labels when Arkham data not available
-- Combines smart contract detection with label information
-- Supports Ethereum, BSC, and Polygon chains with proper chain ID mapping
+- Made borders twice as thick (4px instead of 2px)
+- Gray border for abandoned/writeoffs
+- Purple border for exchange wallets
+- Blue border for cold wallets
+- Brown border for conversion wallets/bridges/swaps
+- Green border for regular traces to next hop
+- Added matching light background colors for each type
 
-This improves identification of known DEXs and services that might not be
-in Arkham's database but are labeled by Etherscan, providing better
-coverage for smart contract detection.
+This provides visual clarity at a glance to identify different entry types
+and wallet destinations in the investigation flow.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,23 +26,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 34 +++++++++++++++----------------
- index.html | 67 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 83 insertions(+), 18 deletions(-)
+ CLAUDE.md  | 36 ++++++++++++++++++------------------
+ index.html | 32 ++++++++++++++++++++++----------
+ 2 files changed, 40 insertions(+), 28 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (0 seconds ago)
-- 63ad605 Make DEX detection more conservative, default to exchange when uncertain (3 minutes ago)
-- f1dedba Prevent DEXs from being treated as terminal wallets (7 minutes ago)
-- bc53ba0 Improve Arkham swap endpoint integration and add test page (11 minutes ago)
-- 02b2749 Fix conversion wallet modal not opening after converting personal label (7 hours ago)
-- e76fab9 Fix ART calculation to properly handle bridge conversions (8 hours ago)
-- b280140 Fix undefined function error and floating point precision issues (8 hours ago)
-- 2f42dcc Fix auto-generated write-off display and thread filtering (8 hours ago)
-- 231c7c6 Fix missing closing brace in buildAvailableThreadsIndex function (8 hours ago)
-- cc956d9 Fix syntax error - remove extra closing brace on line 7230 (8 hours ago)
+- 229162c Add color-coded borders for collapsed entries in hop building page (0 seconds ago)
+- 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (7 hours ago)
+- 63ad605 Make DEX detection more conservative, default to exchange when uncertain (7 hours ago)
+- f1dedba Prevent DEXs from being treated as terminal wallets (7 hours ago)
+- bc53ba0 Improve Arkham swap endpoint integration and add test page (7 hours ago)
+- 02b2749 Fix conversion wallet modal not opening after converting personal label (14 hours ago)
+- e76fab9 Fix ART calculation to properly handle bridge conversions (15 hours ago)
+- b280140 Fix undefined function error and floating point precision issues (15 hours ago)
+- 2f42dcc Fix auto-generated write-off display and thread filtering (15 hours ago)
+- 231c7c6 Fix missing closing brace in buildAvailableThreadsIndex function (15 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

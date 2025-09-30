@@ -24200,6 +24200,7 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                         <strong>💡 Tip:</strong> Use the transaction hash and address above to search in bridge explorers, CEX records, or the destination chain explorer to find the output transaction.
                     </p>
 
+                    ${entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE' ? `
                     <div style="background: #fff8f4; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #8b4513;">
                         <h3 style="margin-top: 0; font-size: 16px; color: #8b4513;">🌉 Wallet Classification Update</h3>
                         <p style="margin: 10px 0; color: #6b3410;">
@@ -24210,6 +24211,17 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                             The wallet color will change from purple to brown to reflect its true nature as a bridge.
                         </p>
                     </div>
+                    ` : entry.toWalletType === 'brown' ? `
+                    <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #4caf50;">
+                        <h3 style="margin-top: 0; font-size: 16px; color: #2e7d32;">✅ Conversion Wallet</h3>
+                        <p style="margin: 10px 0; color: #2e7d32;">
+                            <strong>This wallet is already classified as a bridge/conversion service</strong>
+                        </p>
+                        <p style="margin: 0; color: #666; font-size: 14px;">
+                            The bridge output will be logged and tracked through the conversion process.
+                        </p>
+                    </div>
+                    ` : ''}
 
                     <div style="border-top: 2px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
                         <h3 style="font-size: 16px; margin-bottom: 15px; color: #2c3e50;">Destination Transaction Details</h3>
