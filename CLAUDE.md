@@ -3,18 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 19:59)
+## Latest Commit (Auto-updated: 2025-09-29 20:03)
 
-**Commit:** bc53ba02755c00c4ad1f7559998c20a843209563
+**Commit:** f1dedbae3469954b52854614223ecc949e4e2bc5
 **Author:** Your Name
-**Message:** Improve Arkham swap endpoint integration and add test page
+**Message:** Prevent DEXs from being treated as terminal wallets
 
-- Fixed URL construction for Arkham swap endpoint using proper URLSearchParams
-- Added better error handling and logging for swap API responses
-- Improved swap matching logic (try tx hash, then single result, then contract address)
-- Added comprehensive logging to debug swap detection
-- Created test page to verify Arkham swap API functionality
-- Added fallback strategies for matching swaps when exact tx hash isn't available
+- Added logic to detect if an arkhamEntity is a DEX/Bridge based on name
+- Check for keywords like 'dex', 'swap', 'router', 'bridge' in entity names
+- Set isDEX and isSmartContract flags for DEXs
+- Only mark as isExchange if NOT a DEX (preventing terminal wallet treatment)
+- DEXs will now properly trigger conversion wallet flow instead of terminal
+
+This prevents situations where DEXs like GluexRouter would be incorrectly
+marked as terminal wallets and end the trace, when they should be treated
+as conversion wallets that continue the trace with converted currency.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,15 +25,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md              |  49 +++++++--------
- index.html             |  48 +++++++++++++--
- test-arkham-swaps.html | 163 +++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 230 insertions(+), 30 deletions(-)
+ CLAUDE.md  | 45 +++++++++++++++++++++++----------------------
+ index.html | 35 +++++++++++++++++++++++++++++------
+ 2 files changed, 52 insertions(+), 28 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bc53ba0 Improve Arkham swap endpoint integration and add test page (0 seconds ago)
+- f1dedba Prevent DEXs from being treated as terminal wallets (0 seconds ago)
+- bc53ba0 Improve Arkham swap endpoint integration and add test page (4 minutes ago)
 - 02b2749 Fix conversion wallet modal not opening after converting personal label (7 hours ago)
 - e76fab9 Fix ART calculation to properly handle bridge conversions (8 hours ago)
 - b280140 Fix undefined function error and floating point precision issues (8 hours ago)
@@ -39,7 +42,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - cc956d9 Fix syntax error - remove extra closing brace on line 7230 (8 hours ago)
 - 0a18141 Fix bridge/swap fee handling with automatic write-offs (8 hours ago)
 - c414503 Fix personal label entries being incorrectly marked as terminal (9 hours ago)
-- 0e45136 Fix undefined currency variable in write-off handling (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

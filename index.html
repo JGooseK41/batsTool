@@ -3851,14 +3851,18 @@
                                     // arkhamEntity = actual exchange or service
                                     console.log(`    Found arkhamEntity on ${chain}:`, chainData.arkhamEntity);
 
-                                    // Check if the entity name or service suggests it's a DEX/Bridge
+                                    // Check if the entity name strongly suggests it's a DEX/Bridge
+                                    // Be conservative - only mark as DEX if we're very confident
                                     const entityName = (chainData.arkhamEntity.name || chainData.arkhamEntity.service || '').toLowerCase();
                                     const indicators = checkExchangeIndicators(entityName);
-                                    const isDEX = indicators.suggestedType === 'DEX/Bridge' ||
-                                                 entityName.includes('dex') ||
-                                                 entityName.includes('swap') ||
-                                                 entityName.includes('router') ||
-                                                 entityName.includes('bridge');
+
+                                    // Only mark as DEX if it's explicitly identified as such by indicators with high confidence
+                                    // OR if the entity type from Arkham explicitly says it's a DEX/Router
+                                    const entityType = (chainData.arkhamEntity.type || '').toLowerCase();
+                                    const isDEX = (indicators.suggestedType === 'DEX/Bridge' && indicators.confidence >= 85) ||
+                                                 entityType.includes('dex') ||
+                                                 entityType.includes('router') ||
+                                                 entityType.includes('amm');
 
                                     foundAttribution = {
                                         name: chainData.arkhamEntity.name || chainData.arkhamEntity.service,
@@ -3867,11 +3871,15 @@
                                         service: chainData.arkhamEntity.service,
                                         chain: chain,
                                         source: 'arkham_intelligence',
-                                        isExchange: !isDEX,  // Only mark as exchange if NOT a DEX
-                                        isDEX: isDEX,  // Add explicit DEX flag
+                                        isExchange: true,  // Default to exchange - user can convert if needed
+                                        isDEX: isDEX,  // Add DEX flag for reference
                                         isSmartContract: isDEX,  // DEXes are smart contracts
                                         isPersonalLabel: false,
-                                        tags: chainData.populatedTags || []  // Include tags for richer metadata
+                                        tags: chainData.populatedTags || [],  // Include tags for richer metadata
+                                        // Add note if this might be a DEX but we're not certain
+                                        suspectedDEX: !isDEX && (indicators.suggestedType === 'DEX/Bridge' ||
+                                                                 entityName.includes('swap') ||
+                                                                 entityName.includes('router'))
                                     };
                                     break;
                                 } else if (chainData?.arkhamLabel) {
@@ -3925,14 +3933,16 @@
                             // Also check if it's a single chain response (not using /all endpoint)
                             if (arkhamData?.arkhamEntity) {
                                 // arkhamEntity = actual exchange or service
-                                // Check if it's a DEX/Bridge based on the entity name
+                                // Be conservative - only mark as DEX if we're very confident
                                 const entityName = (arkhamData.arkhamEntity.name || arkhamData.arkhamEntity.service || '').toLowerCase();
                                 const indicators = checkExchangeIndicators(entityName);
-                                const isDEX = indicators.suggestedType === 'DEX/Bridge' ||
-                                             entityName.includes('dex') ||
-                                             entityName.includes('swap') ||
-                                             entityName.includes('router') ||
-                                             entityName.includes('bridge');
+
+                                // Only mark as DEX if explicitly identified with high confidence
+                                const entityType = (arkhamData.arkhamEntity.type || '').toLowerCase();
+                                const isDEX = (indicators.suggestedType === 'DEX/Bridge' && indicators.confidence >= 85) ||
+                                             entityType.includes('dex') ||
+                                             entityType.includes('router') ||
+                                             entityType.includes('amm');
 
                                 attribution = {
                                     name: arkhamData.arkhamEntity.name || arkhamData.arkhamEntity.service,
@@ -3940,10 +3950,14 @@
                                     type: isDEX ? 'Bridge/DEX' : (arkhamData.arkhamEntity.type || 'CEX'),
                                     service: arkhamData.arkhamEntity.service,
                                     source: 'arkham_intelligence',
-                                    isExchange: !isDEX,  // Only mark as exchange if NOT a DEX
-                                    isDEX: isDEX,  // Add explicit DEX flag
+                                    isExchange: true,  // Default to exchange - user can convert if needed
+                                    isDEX: isDEX,  // Add DEX flag for reference
                                     isSmartContract: isDEX,  // DEXes are smart contracts
-                                    isPersonalLabel: false
+                                    isPersonalLabel: false,
+                                    // Add note if this might be a DEX but we're not certain
+                                    suspectedDEX: !isDEX && (indicators.suggestedType === 'DEX/Bridge' ||
+                                                             entityName.includes('swap') ||
+                                                             entityName.includes('router'))
                                 };
                                 console.log(`✅ Arkham attribution found (single chain) for ${address}:`, attribution);
                                 walletAttributionCache[lowerAddress] = attribution;
@@ -21786,12 +21800,27 @@ async function lookupWizardTransaction() {
             } else {
                 // Actual terminal wallet (exchange/service)
                 alertDiv.style.cssText = 'background: #e1bee7; border: 2px solid #9c27b0; border-radius: 8px; padding: 15px; margin-top: 15px;';
+
+                // Check if this might be a DEX that we're treating as an exchange
+                let dexHint = '';
+                if (attribution.suspectedDEX || attribution.isDEX) {
+                    dexHint = `
+                        <div style="margin-top: 10px; padding: 10px; background: #fff8e1; border: 1px solid #ff9800; border-radius: 4px;">
+                            <strong>💡 Possible DEX/Bridge Detected:</strong><br>
+                            <small>This wallet might be a DEX or bridge service. If you need to track a currency conversion:<br>
+                            1. Confirm as terminal wallet first<br>
+                            2. Then click "🌉 Log Bridge/Swap" to convert it to a conversion wallet</small>
+                        </div>
+                    `;
+                }
+
                 alertDiv.innerHTML = `
                     <h4 style="margin: 0 0 10px 0; color: #6a1b9a;">🟣 Exchange Wallet Detected - MANDATORY Terminal Entry</h4>
                     <div style="font-size: 14px;">
                         <strong>Exchange/Service:</strong> ${attribution.name || attribution.label}<br>
                         <strong>Type:</strong> ${attribution.type}<br>
                         <strong>Wallet:</strong> <span style="font-family: monospace; font-size: 12px;">${txData.to}</span><br>
+                        ${dexHint}
                         <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
                             <strong>⚠️ IMPORTANT:</strong><br>
                             • Funds have arrived at a centralized exchange<br>
