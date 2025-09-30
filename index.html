@@ -1461,6 +1461,7 @@
                     <button class="nav-tab" onclick="switchTab('walletindexes')">Wallet Indexes</button>
                     <button class="nav-tab" onclick="switchTab('pkconverter')">🔑 PK Converter</button>
                     <button class="nav-tab" onclick="switchTab('flowdiagram')">Flow Diagram</button>
+                    <button class="nav-tab" onclick="switchTab('reports')">📄 Reports</button>
                     <button class="nav-tab" onclick="switchTab('summary')">Summary & Export</button>
                 </div>
 
@@ -2244,6 +2245,172 @@
                         </div>
                     </div>
                     <!-- Summary prompt will be added dynamically when investigation is complete -->
+                </div>
+
+                <!-- Reports Tab - Professional Report Generation -->
+                <div id="reports-tab" class="tab-content">
+                    <div class="section-title">📄 Professional Investigation Reports</div>
+
+                    <!-- Sub-navigation for report sections -->
+                    <div class="report-tabs" style="display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #dee2e6; padding-bottom: 10px;">
+                        <button class="report-tab-btn active" onclick="switchReportTab('cover')" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px 4px 0 0; cursor: pointer;">
+                            📋 Cover Page
+                        </button>
+                        <button class="report-tab-btn" onclick="switchReportTab('victims')" style="padding: 10px 20px; background: #ecf0f1; color: #2c3e50; border: none; border-radius: 4px 4px 0 0; cursor: pointer;">
+                            👥 Victim Index
+                        </button>
+                        <button class="report-tab-btn" onclick="switchReportTab('redwallet')" style="padding: 10px 20px; background: #ecf0f1; color: #2c3e50; border: none; border-radius: 4px 4px 0 0; cursor: pointer;">
+                            🔴 Red Wallet Index
+                        </button>
+                        <button class="report-tab-btn" onclick="switchReportTab('terminal')" style="padding: 10px 20px; background: #ecf0f1; color: #2c3e50; border: none; border-radius: 4px 4px 0 0; cursor: pointer;">
+                            🟣 Terminal Wallet Index
+                        </button>
+                        <button class="report-tab-btn" onclick="switchReportTab('narrative')" style="padding: 10px 20px; background: #ecf0f1; color: #2c3e50; border: none; border-radius: 4px 4px 0 0; cursor: pointer;">
+                            📝 Narrative Report
+                        </button>
+                        <button class="report-tab-btn" onclick="switchReportTab('technical')" style="padding: 10px 20px; background: #ecf0f1; color: #2c3e50; border: none; border-radius: 4px 4px 0 0; cursor: pointer;">
+                            🔍 Technical Audit Trail
+                        </button>
+                    </div>
+
+                    <!-- Report Content Container -->
+                    <div id="reportContent" style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); min-height: 600px;">
+
+                        <!-- Cover Page Tab -->
+                        <div id="report-cover" class="report-tab-content" style="display: block;">
+                            <h2 style="text-align: center; color: #2c3e50; margin-bottom: 30px;">Investigation Cover Page</h2>
+
+                            <div style="max-width: 800px; margin: 0 auto;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                                    <div>
+                                        <label style="font-weight: bold; color: #495057;">Case ID:</label>
+                                        <div style="padding: 10px; background: #f8f9fa; border-radius: 4px; margin-top: 5px;">
+                                            <span id="report-caseId">${investigation.caseId || 'Not specified'}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label style="font-weight: bold; color: #495057;">Report Date:</label>
+                                        <div style="padding: 10px; background: #f8f9fa; border-radius: 4px; margin-top: 5px;">
+                                            <span id="report-date">${new Date().toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label style="font-weight: bold; color: #495057;">Investigator:</label>
+                                        <div style="padding: 10px; background: #f8f9fa; border-radius: 4px; margin-top: 5px;">
+                                            <span id="report-investigator">${investigation.investigator || 'Not specified'}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label style="font-weight: bold; color: #495057;">Agency:</label>
+                                        <div style="padding: 10px; background: #f8f9fa; border-radius: 4px; margin-top: 5px;">
+                                            <span id="report-agency">${investigation.agency || 'Not specified'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 30px;">
+                                    <label style="font-weight: bold; color: #495057;">Case Type:</label>
+                                    <div style="padding: 10px; background: #f8f9fa; border-radius: 4px; margin-top: 5px;">
+                                        <span id="report-caseType">${investigation.caseType || 'Not specified'}</span>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 30px;">
+                                    <label style="font-weight: bold; color: #495057;">Case Synopsis:</label>
+                                    <div style="padding: 15px; background: #f8f9fa; border-radius: 4px; margin-top: 5px; min-height: 150px;">
+                                        <p id="report-synopsis">${investigation.caseSynopsis || 'No synopsis provided'}</p>
+                                    </div>
+                                </div>
+
+                                <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; border: 2px solid #27ae60;">
+                                    <h4 style="color: #27ae60; margin: 0 0 15px 0;">Investigation Summary</h4>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        <div>Total Victims: <strong>${investigation.victims?.length || 0}</strong></div>
+                                        <div>Total Hops: <strong>${investigation.hops?.length || 0}</strong></div>
+                                        <div>Total Loss: <strong>${Object.entries(investigation.confirmedRootTotalsByCurrency || {})
+                                            .map(([curr, amt]) => `${amt.toLocaleString()} ${curr}`).join(', ') || 'Not calculated'}</strong></div>
+                                        <div>Terminal Wallets: <strong>${investigation.terminalWalletIndex?.length || 0}</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Victim Index Tab -->
+                        <div id="report-victims" class="report-tab-content" style="display: none;">
+                            <h2 style="color: #2c3e50; margin-bottom: 30px;">Victim Index</h2>
+                            <div id="report-victims-content"></div>
+                        </div>
+
+                        <!-- Red Wallet Index Tab -->
+                        <div id="report-redwallet" class="report-tab-content" style="display: none;">
+                            <h2 style="color: #2c3e50; margin-bottom: 30px;">Red Wallet Index</h2>
+                            <div id="report-redwallet-content"></div>
+                        </div>
+
+                        <!-- Terminal Wallet Index Tab -->
+                        <div id="report-terminal" class="report-tab-content" style="display: none;">
+                            <h2 style="color: #2c3e50; margin-bottom: 30px;">Terminal Wallet Index</h2>
+                            <div id="report-terminal-content"></div>
+                        </div>
+
+                        <!-- Narrative Report Tab -->
+                        <div id="report-narrative" class="report-tab-content" style="display: none;">
+                            <h2 style="color: #2c3e50; margin-bottom: 30px;">Narrative Report</h2>
+                            <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
+                                <strong>ℹ️ Note:</strong> This section is for your custom narrative. Write your investigation summary, key findings, and conclusions here.
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                    <button onclick="formatNarrativeText('bold')" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer;">
+                                        <strong>B</strong>
+                                    </button>
+                                    <button onclick="formatNarrativeText('italic')" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer;">
+                                        <em>I</em>
+                                    </button>
+                                    <button onclick="formatNarrativeText('underline')" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer;">
+                                        <u>U</u>
+                                    </button>
+                                    <button onclick="insertNarrativeBullet()" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer;">
+                                        • List
+                                    </button>
+                                    <button onclick="saveNarrative()" style="padding: 5px 15px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: auto;">
+                                        💾 Save Narrative
+                                    </button>
+                                </div>
+                                <div contenteditable="true" id="narrativeEditor" style="min-height: 400px; padding: 20px; border: 2px solid #dee2e6; border-radius: 4px; background: white; font-size: 14px; line-height: 1.6;">
+                                    ${investigation.narrativeReport || 'Enter your narrative report here...'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Audit Trail Tab -->
+                        <div id="report-technical" class="report-tab-content" style="display: none;">
+                            <h2 style="color: #2c3e50; margin-bottom: 30px;">Technical Audit Trail</h2>
+                            <div id="report-technical-content"></div>
+                        </div>
+                    </div>
+
+                    <!-- Export Controls -->
+                    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <button class="btn btn-primary" onclick="exportCurrentReportTab()" style="margin-right: 10px;">
+                                📥 Export Current Tab
+                            </button>
+                            <button class="btn btn-success" onclick="exportFullReport()">
+                                📚 Export Complete Report
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="exportFormat" style="padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 4px;">
+                                <option value="pdf">PDF</option>
+                                <option value="docx">Word Document</option>
+                                <option value="html">HTML</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="printPreview()">
+                                🖨️ Print Preview
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Summary Tab -->
@@ -3169,6 +3336,464 @@
 
             // If all attempts failed, throw the last error
             throw lastError || new Error('All connection attempts failed');
+        }
+
+        // Switch report sub-tabs
+        function switchReportTab(tabName) {
+            // Hide all report tabs
+            document.querySelectorAll('.report-tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.report-tab-btn').forEach(btn => {
+                btn.style.background = '#ecf0f1';
+                btn.style.color = '#2c3e50';
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            const selectedTab = document.getElementById(`report-${tabName}`);
+            if (selectedTab) {
+                selectedTab.style.display = 'block';
+            }
+
+            // Highlight active button
+            event.target.style.background = '#3498db';
+            event.target.style.color = 'white';
+            event.target.classList.add('active');
+
+            // Load content for the tab if needed
+            loadReportTabContent(tabName);
+        }
+
+        // Load content for report tabs
+        function loadReportTabContent(tabName) {
+            switch(tabName) {
+                case 'victims':
+                    generateVictimIndexReport();
+                    break;
+                case 'redwallet':
+                    generateRedWalletIndexReport();
+                    break;
+                case 'terminal':
+                    generateTerminalIndexReport();
+                    break;
+                case 'technical':
+                    generateTechnicalAuditTrail();
+                    break;
+                case 'cover':
+                    updateCoverPage();
+                    break;
+            }
+        }
+
+        // Generate Technical Audit Trail
+        function generateTechnicalAuditTrail() {
+            const container = document.getElementById('report-technical-content');
+            if (!container) return;
+
+            let html = '<div style="font-family: monospace; line-height: 1.8;">';
+
+            // Start with Root Total
+            const rootTotals = investigation.confirmedRootTotalsByCurrency || {};
+            html += '<div style="background: #2c3e50; color: white; padding: 20px; margin-bottom: 30px; border-radius: 8px;">';
+            html += '<h3 style="margin: 0 0 15px 0;">INITIAL ROOT TOTAL</h3>';
+            Object.entries(rootTotals).forEach(([currency, amount]) => {
+                html += `<div style="font-size: 18px; font-weight: bold;">${amount.toLocaleString()} ${currency}</div>`;
+            });
+            html += '</div>';
+
+            // Process each hop
+            investigation.hops?.forEach(hop => {
+                html += `<div style="border: 2px solid #3498db; border-radius: 8px; padding: 20px; margin-bottom: 30px;">`;
+                html += `<h3 style="color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 10px;">HOP ${hop.hopNumber}</h3>`;
+
+                // Opening ART
+                const hopART = hop.artAtStartByCurrency || {};
+                html += '<div style="background: #e8f5e9; padding: 15px; border-radius: 4px; margin: 15px 0;">';
+                html += '<strong>Opening Adjusted Root Total (ART):</strong><br>';
+                Object.entries(hopART).forEach(([currency, amount]) => {
+                    html += `&nbsp;&nbsp;• ${amount.toLocaleString()} ${currency}<br>`;
+                });
+                html += '</div>';
+
+                // List all entries
+                html += '<div style="margin: 20px 0;">';
+                html += '<h4 style="color: #2c3e50; margin-bottom: 15px;">ENTRIES:</h4>';
+
+                hop.entries?.forEach((entry, index) => {
+                    const isTerminal = entry.isTerminalWallet || entry.toWalletType === 'purple';
+                    const isConversion = entry.isBridge || entry.isSwap || entry.toWalletType === 'brown';
+                    const isWriteoff = entry.entryType === 'writeoff';
+
+                    // Entry container with appropriate styling
+                    let borderColor = '#27ae60'; // Green default
+                    let bgColor = '#f0fff0';
+                    if (isTerminal) {
+                        borderColor = '#9b59b6';
+                        bgColor = '#f5ebff';
+                    } else if (isConversion) {
+                        borderColor = '#8b4513';
+                        bgColor = '#fff9f0';
+                    } else if (isWriteoff) {
+                        borderColor = '#7f8c8d';
+                        bgColor = '#fafafa';
+                    }
+
+                    html += `<div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; padding: 15px; margin-bottom: 15px;">`;
+                    html += `<div style="display: flex; justify-content: space-between; margin-bottom: 10px;">`;
+                    html += `<strong>${entry.notation || `Entry ${index + 1}`}</strong>`;
+                    html += `<span style="color: #666;">${entry.amount} ${entry.currency}</span>`;
+                    html += '</div>';
+
+                    html += `<div style="font-size: 13px; color: #495057;">`;
+                    html += `From: <code>${entry.fromWallet || 'N/A'}</code><br>`;
+                    html += `To: <code>${entry.toWallet}</code><br>`;
+                    html += `Type: ${entry.toWalletType?.toUpperCase() || 'UNKNOWN'}<br>`;
+
+                    if (entry.txHash) {
+                        html += `TX: <code>${entry.txHash}</code><br>`;
+                    }
+
+                    if (entry.timestamp) {
+                        html += `Time: ${formatDateTimeForReport(entry.timestamp, entry.timezone || 'UTC')}<br>`;
+                    }
+
+                    if (entry.notes) {
+                        html += `<div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">`;
+                        html += `<strong>Transaction Notes:</strong><br>${entry.notes}`;
+                        html += '</div>';
+                    }
+
+                    if (isConversion && entry.swapDetails) {
+                        html += `<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 4px;">`;
+                        html += `<strong>Conversion:</strong> ${entry.amount} ${entry.currency} → `;
+                        html += `${entry.swapDetails.outputAmount} ${entry.swapDetails.outputCurrency}`;
+                        html += '</div>';
+                    }
+
+                    html += '</div></div>';
+                });
+
+                html += '</div>';
+
+                // Hop Reconciliation
+                html += '<div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 20px;">';
+                html += '<h4 style="color: #2c3e50; margin: 0 0 15px 0;">HOP ' + hop.hopNumber + ' RECONCILIATION:</h4>';
+
+                // Terminal deposits
+                const terminalEntries = hop.entries.filter(e => e.isTerminalWallet || e.toWalletType === 'purple');
+                if (terminalEntries.length > 0) {
+                    html += '<div style="margin-bottom: 10px;">• <strong>Terminal Deposits:</strong><br>';
+                    terminalEntries.forEach(entry => {
+                        html += `&nbsp;&nbsp;&nbsp;&nbsp;- ${entry.amount} ${entry.currency} to ${entry.exchangeName || 'Exchange'}<br>`;
+                    });
+                    html += '</div>';
+                }
+
+                // Continuing threads
+                const continuingEntries = hop.entries.filter(e =>
+                    !e.isTerminalWallet &&
+                    e.entryType !== 'writeoff' &&
+                    e.toWalletType !== 'purple'
+                );
+                if (continuingEntries.length > 0) {
+                    html += '<div style="margin-bottom: 10px;">• <strong>Continuing Threads:</strong><br>';
+                    continuingEntries.forEach(entry => {
+                        html += `&nbsp;&nbsp;&nbsp;&nbsp;- ${entry.notation}: ${entry.amount} ${entry.currency}<br>`;
+                    });
+                    html += '</div>';
+                }
+
+                // Write-offs
+                const writeoffEntries = hop.entries.filter(e => e.entryType === 'writeoff');
+                if (writeoffEntries.length > 0) {
+                    html += '<div style="margin-bottom: 10px;">• <strong>Write-offs:</strong><br>';
+                    let writeoffTotal = {};
+                    writeoffEntries.forEach(entry => {
+                        const currency = entry.currency;
+                        if (!writeoffTotal[currency]) writeoffTotal[currency] = 0;
+                        writeoffTotal[currency] += parseFloat(entry.amount);
+                    });
+                    Object.entries(writeoffTotal).forEach(([currency, amount]) => {
+                        html += `&nbsp;&nbsp;&nbsp;&nbsp;- ${amount.toLocaleString()} ${currency}<br>`;
+                    });
+                    html += '</div>';
+                }
+
+                // ART Validation
+                const nextHop = investigation.hops.find(h => h.hopNumber === hop.hopNumber + 1);
+                const nextART = nextHop?.artAtStartByCurrency || {};
+
+                html += '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">';
+                html += '<strong>ART Validation:</strong> ';
+
+                // Calculate expected ART for next hop
+                let validationPassed = true;
+                Object.entries(hopART).forEach(([currency, startAmount]) => {
+                    const terminals = terminalEntries
+                        .filter(e => e.currency === currency)
+                        .reduce((sum, e) => sum + parseFloat(e.amount), 0);
+                    const writeoffs = writeoffEntries
+                        .filter(e => e.currency === currency)
+                        .reduce((sum, e) => sum + parseFloat(e.amount), 0);
+                    const expectedNext = startAmount - terminals - writeoffs;
+                    const actualNext = nextART[currency] || 0;
+
+                    if (Math.abs(expectedNext - actualNext) > 0.01) {
+                        validationPassed = false;
+                    }
+                });
+
+                if (validationPassed) {
+                    html += '<span style="color: #27ae60; font-weight: bold;">✓ VALIDATED</span>';
+                } else {
+                    html += '<span style="color: #e74c3c; font-weight: bold;">✗ VALIDATION ERROR</span>';
+                }
+
+                if (nextHop) {
+                    html += '<br><strong>Next Hop ART:</strong> ';
+                    Object.entries(nextART).forEach(([currency, amount]) => {
+                        html += `${amount.toLocaleString()} ${currency} `;
+                    });
+                }
+
+                html += '</div></div>';
+                html += '</div>';
+            });
+
+            // Final summary
+            const finalTerminals = investigation.terminalWalletIndex || [];
+            if (finalTerminals.length > 0) {
+                html += '<div style="background: #e8e4f3; border: 2px solid #9b59b6; padding: 20px; border-radius: 8px;">';
+                html += '<h3 style="color: #9b59b6; margin: 0 0 15px 0;">FINAL TERMINAL WALLET SUMMARY</h3>';
+
+                const terminalsByExchange = {};
+                finalTerminals.forEach(terminal => {
+                    const exchange = terminal.exchangeName || 'Unknown Exchange';
+                    if (!terminalsByExchange[exchange]) {
+                        terminalsByExchange[exchange] = [];
+                    }
+                    terminalsByExchange[exchange].push(terminal);
+                });
+
+                Object.entries(terminalsByExchange).forEach(([exchange, terminals]) => {
+                    html += `<div style="margin-bottom: 15px;">`;
+                    html += `<strong>${exchange}:</strong><br>`;
+                    terminals.forEach(t => {
+                        html += `&nbsp;&nbsp;• ${t.amount} ${t.currency} (${t.notation})<br>`;
+                    });
+                    html += '</div>';
+                });
+
+                html += '</div>';
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Generate Victim Index Report
+        function generateVictimIndexReport() {
+            const container = document.getElementById('report-victims-content');
+            if (!container) return;
+
+            let html = '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<thead><tr style="background: #3498db; color: white;">';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Victim ID</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Name</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Total Loss</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Transactions</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Contact</th>';
+            html += '</tr></thead><tbody>';
+
+            investigation.victims?.forEach(victim => {
+                html += '<tr>';
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">V${victim.id}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${victim.name}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${victim.totalLoss}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${victim.transactions?.length || 0}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${victim.contactInfo || 'N/A'}</td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Generate Red Wallet Index Report
+        function generateRedWalletIndexReport() {
+            const container = document.getElementById('report-redwallet-content');
+            if (!container) return;
+
+            const redWalletIndex = investigation.redWalletIndex || [];
+
+            let html = '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<thead><tr style="background: #e74c3c; color: white;">';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">V-T Notation</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Wallet Address</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Amount</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Currency</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Date</th>';
+            html += '</tr></thead><tbody>';
+
+            redWalletIndex.forEach(entry => {
+                html += '<tr>';
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.vtNotation}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6; font-family: monospace; font-size: 12px;">${entry.walletAddress}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.amount.toLocaleString()}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.currency}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.depositDate ? formatDateTimeForReport(entry.depositDate, 'UTC') : 'N/A'}</td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Generate Terminal Index Report
+        function generateTerminalIndexReport() {
+            const container = document.getElementById('report-terminal-content');
+            if (!container) return;
+
+            const terminalIndex = investigation.terminalWalletIndex || [];
+
+            let html = '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<thead><tr style="background: #9b59b6; color: white;">';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Exchange</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Wallet Address</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Amount</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Currency</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Notation</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Hop</th>';
+            html += '</tr></thead><tbody>';
+
+            terminalIndex.forEach(entry => {
+                html += '<tr>';
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.exchangeName || 'Unknown'}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6; font-family: monospace; font-size: 12px;">${entry.toWallet}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.amount.toLocaleString()}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.currency}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.notation}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">H${entry.hopNumber}</td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Update Cover Page
+        function updateCoverPage() {
+            document.getElementById('report-caseId').textContent = investigation.caseId || 'Not specified';
+            document.getElementById('report-date').textContent = new Date().toLocaleDateString();
+            document.getElementById('report-investigator').textContent = investigation.investigator || 'Not specified';
+            document.getElementById('report-agency').textContent = investigation.agency || 'Not specified';
+            document.getElementById('report-caseType').textContent = investigation.caseType || 'Not specified';
+            document.getElementById('report-synopsis').textContent = investigation.caseSynopsis || 'No synopsis provided';
+        }
+
+        // Narrative Editor Functions
+        function formatNarrativeText(command) {
+            document.execCommand(command, false, null);
+            document.getElementById('narrativeEditor').focus();
+        }
+
+        function insertNarrativeBullet() {
+            document.execCommand('insertUnorderedList', false, null);
+            document.getElementById('narrativeEditor').focus();
+        }
+
+        function saveNarrative() {
+            const editor = document.getElementById('narrativeEditor');
+            investigation.narrativeReport = editor.innerHTML;
+            saveToStorage();
+            showNotification('Narrative saved successfully', 'success');
+        }
+
+        // Export Functions
+        function exportCurrentReportTab() {
+            const activeTab = document.querySelector('.report-tab-btn.active');
+            const tabName = activeTab ? activeTab.textContent.trim() : 'Report';
+            const content = document.querySelector('.report-tab-content[style*="display: block"]');
+
+            if (content) {
+                const html = generateExportHTML(tabName, content.innerHTML);
+                downloadFile(html, `${investigation.caseId}_${tabName.replace(/\s/g, '_')}.html`, 'text/html');
+            }
+        }
+
+        function exportFullReport() {
+            let fullHTML = '<html><head><title>Complete Investigation Report</title>';
+            fullHTML += '<style>body { font-family: Arial, sans-serif; } .page-break { page-break-after: always; }</style>';
+            fullHTML += '</head><body>';
+
+            // Cover Page
+            updateCoverPage();
+            const coverContent = document.getElementById('report-cover').innerHTML;
+            fullHTML += '<div class="page-break">' + coverContent + '</div>';
+
+            // Victim Index
+            generateVictimIndexReport();
+            const victimsContent = document.getElementById('report-victims-content').innerHTML;
+            fullHTML += '<div class="page-break"><h2>Victim Index</h2>' + victimsContent + '</div>';
+
+            // Red Wallet Index
+            generateRedWalletIndexReport();
+            const redContent = document.getElementById('report-redwallet-content').innerHTML;
+            fullHTML += '<div class="page-break"><h2>Red Wallet Index</h2>' + redContent + '</div>';
+
+            // Terminal Index
+            generateTerminalIndexReport();
+            const terminalContent = document.getElementById('report-terminal-content').innerHTML;
+            fullHTML += '<div class="page-break"><h2>Terminal Wallet Index</h2>' + terminalContent + '</div>';
+
+            // Narrative
+            const narrativeContent = document.getElementById('narrativeEditor').innerHTML;
+            fullHTML += '<div class="page-break"><h2>Narrative Report</h2>' + narrativeContent + '</div>';
+
+            // Technical Trail
+            generateTechnicalAuditTrail();
+            const technicalContent = document.getElementById('report-technical-content').innerHTML;
+            fullHTML += '<div class="page-break"><h2>Technical Audit Trail</h2>' + technicalContent + '</div>';
+
+            fullHTML += '</body></html>';
+
+            const format = document.getElementById('exportFormat').value;
+            const filename = `${investigation.caseId}_Complete_Report_${new Date().toISOString().split('T')[0]}.${format}`;
+            downloadFile(fullHTML, filename, 'text/html');
+        }
+
+        function generateExportHTML(title, content) {
+            return `<!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${title} - ${investigation.caseId}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; }
+                        table { border-collapse: collapse; width: 100%; }
+                        th, td { border: 1px solid #dee2e6; padding: 10px; }
+                        code { background: #f8f9fa; padding: 2px 4px; border-radius: 2px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>${title}</h1>
+                    <p>Case ID: ${investigation.caseId} | Date: ${new Date().toLocaleDateString()}</p>
+                    <hr>
+                    ${content}
+                </body>
+                </html>`;
+        }
+
+        function printPreview() {
+            const content = document.querySelector('.report-tab-content[style*="display: block"]');
+            if (content) {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(generateExportHTML('Print Preview', content.innerHTML));
+                printWindow.document.close();
+                printWindow.print();
+            }
         }
 
         // Define switchTab function early to ensure it's available when HTML loads

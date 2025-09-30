@@ -3,39 +3,25 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 08:52)
+## Latest Commit (Auto-updated: 2025-09-30 09:01)
 
-**Commit:** 470563dbf30d1afdf50d906a8969d3ce3f5639f5
+**Commit:** 8588d1c16d90b8645c79ac92401c550b0d378579
 **Author:** Your Name
-**Message:** Implement modern, cutting-edge graph visualization system
+**Message:** Fix conversion wallet diamond positioning within hops
 
-Major visualization improvements:
-- Removed redundant simple flow diagram section - now using only enhanced version
-- Implemented smart edge angle calculation based on output count for uniform appearance
-- Created optimal node positioning algorithm to minimize edge crossings
-- Added clickable nodes with detailed modal showing inbound/outbound threads
-- Implemented brown diamond nodes for conversion wallets/swaps
-- Modernized visual design with gradients, shadows, and smooth transitions
-- Added smooth entrance animations for nodes and edges
-- Enhanced pan and zoom with smooth cubic-bezier transitions
+- Conversion diamonds now positioned correctly within the same hop, not between hops
+- Same-wallet swaps show diamond directly above wallet with vertical dashed line
+- Cross-chain swaps widen hop column and show diamond between sender and receiver
+- Added detection logic to identify conversions from hop entries
+- Swap edges drawn as straight lines (vertical for same-wallet, horizontal for cross-chain)
+- Regular transaction edges maintain curved bezier paths with calculated angles
+- Amount labels show conversion (e.g., "100 USDC → 95 USDT") for swap edges
 
 Visual improvements:
-- Modern gradient fills for all node types (red, purple, black, brown, etc.)
-- Drop shadows and hover effects for depth
-- Smooth curved edges with calculated angles
-- Animated edge flow indicators
-- Clean, modern typography with Inter and SF Mono fonts
-- Backdrop blur effects on modals
-- Conversion wallets shown as brown diamonds positioned vertically
-
-Interaction features:
-- Click any node to see full wallet details
-- Click threads to view original entry form data
-- Smooth pan with grab cursor
-- Scroll wheel zoom with limits
-- Hover effects on all interactive elements
-
-The visualization now looks sharp, modern, and professional rather than dated.
+- Dashed vertical lines for same-wallet conversions
+- Solid lines connecting wallets through diamonds in cross-chain swaps
+- Automatic column width adjustment when hop contains cross-chain swaps
+- Brown diamonds positioned inline with wallet flow, not floating between hops
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -43,15 +29,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  43 +++--
- index.html | 619 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 580 insertions(+), 82 deletions(-)
+ CLAUDE.md  |  54 ++++++++++++------
+ index.html | 181 +++++++++++++++++++++++++++++++++++++++++++++++++------------
+ 2 files changed, 184 insertions(+), 51 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 470563d Implement modern, cutting-edge graph visualization system (0 seconds ago)
-- 2402812 Add Save Investigation button to trace completion modals (12 minutes ago)
+- 8588d1c Fix conversion wallet diamond positioning within hops (0 seconds ago)
+- 470563d Implement modern, cutting-edge graph visualization system (9 minutes ago)
+- 2402812 Add Save Investigation button to trace completion modals (22 minutes ago)
 - 78a86cb Add 'Edit Entries' option to investigation completion modal (2 hours ago)
 - 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (2 hours ago)
 - 48a0820 Simplify entry type selection and rename cold storage option (2 hours ago)
@@ -59,7 +46,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 8f9c550 Fix bridge output button unresponsive due to variable initialization error (5 hours ago)
 - e282f88 Prevent hop finalization when threads are at conversion wallets (5 hours ago)
 - 2a6ad63 Add detailed calculation notes for partial trace bridge outputs (5 hours ago)
-- 33e0337 Fix bridge output calculation for partial traces (5 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
