@@ -24392,10 +24392,16 @@ function createHopEntryFromWizard() {
 
     // Determine wallet type - BROWN for swaps/DEX, otherwise use manual selection or default
     let toWalletType = 'black';
+    let isBridgeEntry = false;
     if (isSwap) {
         toWalletType = 'brown'; // BROWN indicates asset conversion/DEX swap
+        isBridgeEntry = true; // Mark as bridge immediately for proper thread handling
     } else if (wizardData.manualData?.walletType) {
         toWalletType = wizardData.manualData.walletType;
+        // Also check if manually set to brown (conversion wallet)
+        if (toWalletType === 'brown') {
+            isBridgeEntry = true;
+        }
     }
 
     // Calculate the amount to trace - should match allocations which already match transaction
@@ -24424,6 +24430,7 @@ function createHopEntryFromWizard() {
             console.log('Smart contract detected, marking as conversion wallet:', attribution.name);
             isSmartContract = true;
             toWalletType = 'brown';  // Brown for conversions/bridges
+            isBridgeEntry = true; // Mark as bridge for proper thread handling
             // We'll show the bridge/swap button similar to terminal wallets
         } else if (attribution && attribution.isExchange && !attribution.isPersonalLabel) {
             // This is a real exchange/service - mark as terminal wallet (purple)
@@ -24490,9 +24497,10 @@ function createHopEntryFromWizard() {
         notes: entryNotes,
         category: '',
         justification: '',
-        // Swap tracking
+        // Swap/Bridge tracking
         isSwap: isSwap,
         swapDetails: swapDetails,
+        isBridge: isBridgeEntry, // Set immediately for brown wallets to ensure proper thread handling
         // Enhanced fields
         sourceChain: [],
         displayNotation: '',

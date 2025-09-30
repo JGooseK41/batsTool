@@ -3,29 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 10:40)
+## Latest Commit (Auto-updated: 2025-09-30 11:14)
 
-**Commit:** 6e563129bf86b91d663e230e153065e74817b57b
+**Commit:** af50966f8545b1973eb3856c7b68d513df0719bf
 **Author:** Your Name
-**Message:** Fix partial trace logic - only claim what threads support, not full transaction
+**Message:** Fix bridge conversions being treated as terminal wallets
 
-The system was incorrectly trying to force allocations to match the full
-transaction amount, causing errors when the transaction exceeded available threads.
+When logging a bridge output from a commingled entry initially detected as
+terminal (e.g., KuCoin), the system was not properly converting it to a
+bridge/conversion wallet and wasn't creating the output thread.
 
-Example: Transaction for 53,871 USDC but threads only have 53,592 USDC available
-was causing an error instead of just claiming the 53,592 we can trace.
-
-Root cause: Code was trying to match allocations to transaction amount instead
-of respecting that we only claim what our threads support.
+Issues fixed:
+- Entry marked as purple (terminal) wasn't being properly converted to brown (bridge)
+- Threads were being exhausted as if terminal, not restored when converted
+- Bridge output threads weren't being created in the new currency (USDeOFT)
 
 Fix:
-- Remove forced allocation matching to transaction amount
-- Only cap allocations if they exceed transaction (can't claim more than moved)
-- For partial traces, keep our allocations as-is (our portion of the transaction)
-- Simplify the available funds check to just cap at available, not block
+- Ensure proper conversion from terminal to bridge wallet type
+- Remove premature thread index rebuild that was interfering
+- Let the bridge output creation complete before rebuilding threads
+- Properly create output thread in destination currency
 
-Result: Partial traces now work correctly - we claim only what our threads
-support, ignoring any excess in the transaction that we can't trace.
+Result: Bridge conversions now correctly:
+1. Convert terminal wallets to bridges when output is logged
+2. Create new threads in the destination currency
+3. Allow continued tracing in the converted currency
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -33,23 +35,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 42 +++++++++++++++++++++++-------------------
- index.html | 52 +++++++++++++++++++---------------------------------
- 2 files changed, 42 insertions(+), 52 deletions(-)
+ CLAUDE.md  | 48 +++++++++++++++++++++++++-----------------------
+ index.html |  2 ++
+ 2 files changed, 27 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (0 seconds ago)
-- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (4 minutes ago)
-- 1f3c263 Fix write-off entries not collapsing after creation from modal (7 minutes ago)
-- d1effdb Fix critical regression: threads consuming more than transaction amount (15 minutes ago)
-- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (52 minutes ago)
-- 13f52d2 Implement comprehensive professional reporting system (71 minutes ago)
+- af50966 Fix bridge conversions being treated as terminal wallets (0 seconds ago)
+- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (34 minutes ago)
+- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (38 minutes ago)
+- 1f3c263 Fix write-off entries not collapsing after creation from modal (41 minutes ago)
+- d1effdb Fix critical regression: threads consuming more than transaction amount (49 minutes ago)
+- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (86 minutes ago)
+- 13f52d2 Implement comprehensive professional reporting system (2 hours ago)
 - 8588d1c Fix conversion wallet diamond positioning within hops (2 hours ago)
 - 470563d Implement modern, cutting-edge graph visualization system (2 hours ago)
-- 2402812 Add Save Investigation button to trace completion modals (2 hours ago)
-- 78a86cb Add 'Edit Entries' option to investigation completion modal (3 hours ago)
+- 2402812 Add Save Investigation button to trace completion modals (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
