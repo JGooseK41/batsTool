@@ -23964,6 +23964,37 @@ function createWriteoffEntryFromWizard() {
     renderHops();
     saveToStorage();
 
+    // Force collapse the write-off entry after rendering
+    setTimeout(() => {
+        const entryKey = `${hop.hopNumber}_${writeoffEntry.id}`;
+        const entryElement = document.getElementById(`entry_${entryKey}`);
+        if (entryElement) {
+            // Find the expand/collapse elements
+            const entryContent = entryElement.querySelector('.entry-content');
+            const entrySummary = entryElement.querySelector('.entry-summary');
+            const toggleBtn = entryElement.querySelector('[onclick*="toggleEntryCollapse"]');
+
+            if (entryContent) {
+                entryContent.style.display = 'none';
+            }
+            if (entrySummary) {
+                entrySummary.style.display = 'block';
+            }
+            if (toggleBtn) {
+                toggleBtn.textContent = '▶';
+            }
+
+            console.log('Force collapsed write-off entry:', entryKey);
+        }
+
+        // Also ensure manual form is hidden if present
+        const manualFormElement = document.getElementById(`manualEntryForm_${hop.hopNumber}_${writeoffEntry.id}`);
+        if (manualFormElement) {
+            manualFormElement.style.display = 'none';
+            console.log('Hidden manual form for write-off entry');
+        }
+    }, 100);
+
     // Do NOT show remaining threads summary for write-offs - it can trigger reopening the wizard
     // The alert below is sufficient
 

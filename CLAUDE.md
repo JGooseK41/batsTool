@@ -3,22 +3,28 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 09:48)
+## Latest Commit (Auto-updated: 2025-09-30 10:25)
 
-**Commit:** 8fb845ef06e7b925b65f175503c982cd2fb88bd2
+**Commit:** d1effdb0a11ca7cbf70a9a0d24ff6ce9b5177d67
 **Author:** Your Name
-**Message:** Enhance workflow transitions from trace completion to visualization/reporting
+**Message:** Fix critical regression: threads consuming more than transaction amount
 
-- Add enhanced completion modal with clear next steps and workflow options
-- Create dedicated guidance banners for visualization and reports tabs
-- Implement smooth navigation between completion → visualization → reports
-- Add quick export menu for all data export options
-- Show visual cards for each next step option with descriptive text
-- Add helper functions for terminal and thread summaries
-- Ensure proper initialization of visualization when navigating
-- Add step-by-step guidance in report generation banner
-- Fix button callbacks to properly initialize visualization
-- Create intuitive workflow that guides users through the complete process
+The bug: When a thread had 450 HYPE available and a transaction was for 300 HYPE,
+the system was incorrectly consuming ALL 450 HYPE instead of just the 300 needed.
+
+Root cause: Lines 24117-24179 were auto-adjusting allocations to use ALL available
+funds when allocation exceeded available. This was wrong - the transaction amount
+should dictate consumption, not thread availability.
+
+Fix:
+- Remove auto-adjustment that consumed all available funds
+- Block transactions that try to allocate more than available (error message)
+- Use transaction amount as the source of truth for allocations
+- Re-apply PIFO allocation with correct transaction amount when needed
+- Remove duplicate adjustment code that was limiting trace amounts
+
+Result: Threads now correctly consume only the transaction amount, leaving
+remaining funds available for future transactions as expected.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -26,23 +32,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  88 +++++++---
- index.html | 580 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
- 2 files changed, 605 insertions(+), 63 deletions(-)
+ CLAUDE.md  |  87 ++++++++++++++++-------------------------------------
+ index.html | 100 ++++++++++++++-----------------------------------------------
+ 2 files changed, 47 insertions(+), 140 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (0 seconds ago)
-- 13f52d2 Implement comprehensive professional reporting system (19 minutes ago)
-- 8588d1c Fix conversion wallet diamond positioning within hops (47 minutes ago)
-- 470563d Implement modern, cutting-edge graph visualization system (57 minutes ago)
-- 2402812 Add Save Investigation button to trace completion modals (69 minutes ago)
+- d1effdb Fix critical regression: threads consuming more than transaction amount (0 seconds ago)
+- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (37 minutes ago)
+- 13f52d2 Implement comprehensive professional reporting system (56 minutes ago)
+- 8588d1c Fix conversion wallet diamond positioning within hops (84 minutes ago)
+- 470563d Implement modern, cutting-edge graph visualization system (2 hours ago)
+- 2402812 Add Save Investigation button to trace completion modals (2 hours ago)
 - 78a86cb Add 'Edit Entries' option to investigation completion modal (3 hours ago)
-- 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (3 hours ago)
-- 48a0820 Simplify entry type selection and rename cold storage option (3 hours ago)
+- 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (4 hours ago)
+- 48a0820 Simplify entry type selection and rename cold storage option (4 hours ago)
 - 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (6 hours ago)
-- 8f9c550 Fix bridge output button unresponsive due to variable initialization error (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
