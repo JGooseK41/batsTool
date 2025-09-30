@@ -14253,6 +14253,37 @@ function finalizeHop(hopNumber) {
         return;
     }
 
+    // CRITICAL: Check if there are any entries going to conversion wallets (brown wallets)
+    // These represent threads that are still active and awaiting conversion
+    const conversionWalletEntries = hop.entries.filter(entry =>
+        entry.toWalletType === 'brown' ||
+        entry.isBridge ||
+        entry.isConversionWallet ||
+        (entry.swapDetails && !entry.swapDetails.outputCurrency) // Bridge without output logged yet
+    );
+
+    if (conversionWalletEntries.length > 0) {
+        // Check if any conversion wallet outputs haven't been logged yet
+        const unconvertedThreads = conversionWalletEntries.filter(entry => {
+            // Check if bridge output has been logged
+            if (entry.isBridge || entry.isConversionWallet) {
+                return !entry.bridgeOutputLogged;
+            }
+            return false;
+        });
+
+        if (unconvertedThreads.length > 0) {
+            const walletList = unconvertedThreads.map(entry => {
+                const amount = parseFloat(entry.amount).toLocaleString();
+                const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                return `  • ${amount} ${currency} to ${entry.toWallet || 'conversion wallet'}`;
+            }).join('\n');
+
+            alert(`❌ Cannot finalize Hop ${hopNumber}\n\nYou have threads at conversion wallets (bridges/DEXs) that haven't logged their output conversions yet:\n\n${walletList}\n\nThese threads are still active and need to be converted to their destination currency.\n\nPlease either:\n1. Log the bridge/swap outputs for these conversion wallets, OR\n2. Convert these wallets to terminal wallets if the funds actually stayed there`);
+            return;
+        }
+    }
+
     // AUTO-WRITE-OFF: Before validation, automatically write off any bridge/swap output remainders
     // These represent fees and slippage that should be immediately accounted for
     console.log('Checking for bridge/swap output remainders to auto-write-off...');
