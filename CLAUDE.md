@@ -3,20 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 03:01)
+## Latest Commit (Auto-updated: 2025-09-30 03:41)
 
-**Commit:** 2b0c349aab5b3ddc1f5818bc1a490f67b9eae75a
+**Commit:** 33e03370308b33bc43e077782c39b6129ad1b0ae
 **Author:** Your Name
-**Message:** Show wallet classification warning only for terminal wallets in bridge modal
+**Message:** Fix bridge output calculation for partial traces
 
-- Added conditional logic to check wallet type before showing warning
-- Terminal wallets (purple) show warning about conversion to brown
-- Conversion wallets (brown) show confirmation they're already classified correctly
-- No warning shown for other wallet types
-- Better UX by not showing unnecessary warnings for already-classified bridges
+- Detects partial traces from entry notes (e.g. 'Following 88.58 of 306 HYPE')
+- Calculates proportional ownership percentage
+- Adjusts bridge output amount to only our proportional share
+- Adds detailed logging and notes about the calculation
+- Stores partial trace info in bridgeDetails for reference
 
-This prevents confusion when logging bridge outputs from wallets that are
-already properly classified as conversion services.
+This fixes the critical bug where partial ownership of a bridge transaction
+would give full credit for the entire output amount. Now if you only own
+28.9% of the input, you only get 28.9% of the output.
+
+Example: 88.58 HYPE of 306 total → 3,959 USDC instead of 13,680 USDC
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -24,23 +27,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 49 +++++++++++++++++++++++++------------------------
- index.html | 12 ++++++++++++
- 2 files changed, 37 insertions(+), 24 deletions(-)
+ CLAUDE.md  | 32 +++++++++++++++-----------------
+ index.html | 47 ++++++++++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 59 insertions(+), 20 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (0 seconds ago)
-- 229162c Add color-coded borders for collapsed entries in hop building page (4 minutes ago)
-- 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (7 hours ago)
-- 63ad605 Make DEX detection more conservative, default to exchange when uncertain (7 hours ago)
-- f1dedba Prevent DEXs from being treated as terminal wallets (7 hours ago)
-- bc53ba0 Improve Arkham swap endpoint integration and add test page (7 hours ago)
-- 02b2749 Fix conversion wallet modal not opening after converting personal label (14 hours ago)
+- 33e0337 Fix bridge output calculation for partial traces (0 seconds ago)
+- 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (40 minutes ago)
+- 229162c Add color-coded borders for collapsed entries in hop building page (44 minutes ago)
+- 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (8 hours ago)
+- 63ad605 Make DEX detection more conservative, default to exchange when uncertain (8 hours ago)
+- f1dedba Prevent DEXs from being treated as terminal wallets (8 hours ago)
+- bc53ba0 Improve Arkham swap endpoint integration and add test page (8 hours ago)
+- 02b2749 Fix conversion wallet modal not opening after converting personal label (15 hours ago)
 - e76fab9 Fix ART calculation to properly handle bridge conversions (15 hours ago)
 - b280140 Fix undefined function error and floating point precision issues (15 hours ago)
-- 2f42dcc Fix auto-generated write-off display and thread filtering (15 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
