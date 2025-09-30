@@ -3848,16 +3848,28 @@
                                 console.log(`  - Chain ${chain} data:`, chainData);
 
                                 if (chainData?.arkhamEntity) {
-                                    // arkhamEntity = actual exchange or service (terminal wallet)
+                                    // arkhamEntity = actual exchange or service
                                     console.log(`    Found arkhamEntity on ${chain}:`, chainData.arkhamEntity);
+
+                                    // Check if the entity name or service suggests it's a DEX/Bridge
+                                    const entityName = (chainData.arkhamEntity.name || chainData.arkhamEntity.service || '').toLowerCase();
+                                    const indicators = checkExchangeIndicators(entityName);
+                                    const isDEX = indicators.suggestedType === 'DEX/Bridge' ||
+                                                 entityName.includes('dex') ||
+                                                 entityName.includes('swap') ||
+                                                 entityName.includes('router') ||
+                                                 entityName.includes('bridge');
+
                                     foundAttribution = {
                                         name: chainData.arkhamEntity.name || chainData.arkhamEntity.service,
                                         label: chainData.arkhamEntity.type || 'Exchange',
-                                        type: chainData.arkhamEntity.type || 'CEX',
+                                        type: isDEX ? 'Bridge/DEX' : (chainData.arkhamEntity.type || 'CEX'),
                                         service: chainData.arkhamEntity.service,
                                         chain: chain,
                                         source: 'arkham_intelligence',
-                                        isExchange: true,  // arkhamEntity = real exchange/service = terminal wallet
+                                        isExchange: !isDEX,  // Only mark as exchange if NOT a DEX
+                                        isDEX: isDEX,  // Add explicit DEX flag
+                                        isSmartContract: isDEX,  // DEXes are smart contracts
                                         isPersonalLabel: false,
                                         tags: chainData.populatedTags || []  // Include tags for richer metadata
                                     };
@@ -3912,14 +3924,25 @@
 
                             // Also check if it's a single chain response (not using /all endpoint)
                             if (arkhamData?.arkhamEntity) {
-                                // arkhamEntity = actual exchange or service (terminal wallet)
+                                // arkhamEntity = actual exchange or service
+                                // Check if it's a DEX/Bridge based on the entity name
+                                const entityName = (arkhamData.arkhamEntity.name || arkhamData.arkhamEntity.service || '').toLowerCase();
+                                const indicators = checkExchangeIndicators(entityName);
+                                const isDEX = indicators.suggestedType === 'DEX/Bridge' ||
+                                             entityName.includes('dex') ||
+                                             entityName.includes('swap') ||
+                                             entityName.includes('router') ||
+                                             entityName.includes('bridge');
+
                                 attribution = {
                                     name: arkhamData.arkhamEntity.name || arkhamData.arkhamEntity.service,
                                     label: arkhamData.arkhamEntity.type || 'Exchange',
-                                    type: arkhamData.arkhamEntity.type || 'CEX',
+                                    type: isDEX ? 'Bridge/DEX' : (arkhamData.arkhamEntity.type || 'CEX'),
                                     service: arkhamData.arkhamEntity.service,
                                     source: 'arkham_intelligence',
-                                    isExchange: true,  // arkhamEntity = real exchange/service = terminal wallet
+                                    isExchange: !isDEX,  // Only mark as exchange if NOT a DEX
+                                    isDEX: isDEX,  // Add explicit DEX flag
+                                    isSmartContract: isDEX,  // DEXes are smart contracts
                                     isPersonalLabel: false
                                 };
                                 console.log(`✅ Arkham attribution found (single chain) for ${address}:`, attribution);

@@ -3,18 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 13:03)
+## Latest Commit (Auto-updated: 2025-09-29 19:59)
 
-**Commit:** 02b27495a4d9f092c425782935344e495ec831bb
+**Commit:** bc53ba02755c00c4ad1f7559998c20a843209563
 **Author:** Your Name
-**Message:** Fix conversion wallet modal not opening after converting personal label
+**Message:** Improve Arkham swap endpoint integration and add test page
 
-- Fixed function name from openSwapWizard to showSwapWizard
-- Store hop number and wallet data before closing wizard
-- Use stored variables instead of reading from closed wizard data
-- Add detailed logging to debug conversion wallet flow
-- Add gluex and other Solana DEXes to known DEX list
-- Pre-fill swap service and provider fields with wallet info
+- Fixed URL construction for Arkham swap endpoint using proper URLSearchParams
+- Added better error handling and logging for swap API responses
+- Improved swap matching logic (try tx hash, then single result, then contract address)
+- Added comprehensive logging to debug swap detection
+- Created test page to verify Arkham swap API functionality
+- Added fallback strategies for matching swaps when exact tx hash isn't available
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,23 +22,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 50 ++++++++++++++++++++++++++---------------------
- index.html | 65 +++++++++++++++++++++++++++++++++++++++++++-------------------
- 2 files changed, 73 insertions(+), 42 deletions(-)
+ CLAUDE.md              |  49 +++++++--------
+ index.html             |  48 +++++++++++++--
+ test-arkham-swaps.html | 163 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 230 insertions(+), 30 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 02b2749 Fix conversion wallet modal not opening after converting personal label (0 seconds ago)
-- e76fab9 Fix ART calculation to properly handle bridge conversions (36 minutes ago)
-- b280140 Fix undefined function error and floating point precision issues (50 minutes ago)
-- 2f42dcc Fix auto-generated write-off display and thread filtering (53 minutes ago)
-- 231c7c6 Fix missing closing brace in buildAvailableThreadsIndex function (65 minutes ago)
-- cc956d9 Fix syntax error - remove extra closing brace on line 7230 (73 minutes ago)
-- 0a18141 Fix bridge/swap fee handling with automatic write-offs (83 minutes ago)
-- c414503 Fix personal label entries being incorrectly marked as terminal (2 hours ago)
-- 0e45136 Fix undefined currency variable in write-off handling (2 hours ago)
-- 9d6011c Update CLAUDE.md with latest auto-commit information (2 hours ago)
+- bc53ba0 Improve Arkham swap endpoint integration and add test page (0 seconds ago)
+- 02b2749 Fix conversion wallet modal not opening after converting personal label (7 hours ago)
+- e76fab9 Fix ART calculation to properly handle bridge conversions (8 hours ago)
+- b280140 Fix undefined function error and floating point precision issues (8 hours ago)
+- 2f42dcc Fix auto-generated write-off display and thread filtering (8 hours ago)
+- 231c7c6 Fix missing closing brace in buildAvailableThreadsIndex function (8 hours ago)
+- cc956d9 Fix syntax error - remove extra closing brace on line 7230 (8 hours ago)
+- 0a18141 Fix bridge/swap fee handling with automatic write-offs (8 hours ago)
+- c414503 Fix personal label entries being incorrectly marked as terminal (9 hours ago)
+- 0e45136 Fix undefined currency variable in write-off handling (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
