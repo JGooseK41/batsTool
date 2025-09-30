@@ -3,21 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 20:03)
+## Latest Commit (Auto-updated: 2025-09-29 20:07)
 
-**Commit:** f1dedbae3469954b52854614223ecc949e4e2bc5
+**Commit:** 63ad605c1ef4674cc3c5e9179739819b33b10152
 **Author:** Your Name
-**Message:** Prevent DEXs from being treated as terminal wallets
+**Message:** Make DEX detection more conservative, default to exchange when uncertain
 
-- Added logic to detect if an arkhamEntity is a DEX/Bridge based on name
-- Check for keywords like 'dex', 'swap', 'router', 'bridge' in entity names
-- Set isDEX and isSmartContract flags for DEXs
-- Only mark as isExchange if NOT a DEX (preventing terminal wallet treatment)
-- DEXs will now properly trigger conversion wallet flow instead of terminal
+- Changed logic to only mark as DEX with high confidence (85%+)
+- Default to marking arkhamEntity as exchange (terminal wallet)
+- Added suspectedDEX flag for entities that might be DEXs
+- Show helpful hint when suspected DEX is marked as terminal
+- User can easily convert terminal to conversion wallet if needed
 
-This prevents situations where DEXs like GluexRouter would be incorrectly
-marked as terminal wallets and end the trace, when they should be treated
-as conversion wallets that continue the trace with converted currency.
+This approach is safer since there's a smooth process to convert terminal
+wallets to conversion wallets when needed. Better to err on the side of
+caution and let the user decide based on investigation context.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,15 +25,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 45 +++++++++++++++++++++++----------------------
- index.html | 35 +++++++++++++++++++++++++++++------
- 2 files changed, 52 insertions(+), 28 deletions(-)
+ CLAUDE.md  | 32 ++++++++++++++++---------------
+ index.html | 65 +++++++++++++++++++++++++++++++++++++++++++++-----------------
+ 2 files changed, 64 insertions(+), 33 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f1dedba Prevent DEXs from being treated as terminal wallets (0 seconds ago)
-- bc53ba0 Improve Arkham swap endpoint integration and add test page (4 minutes ago)
+- 63ad605 Make DEX detection more conservative, default to exchange when uncertain (0 seconds ago)
+- f1dedba Prevent DEXs from being treated as terminal wallets (4 minutes ago)
+- bc53ba0 Improve Arkham swap endpoint integration and add test page (8 minutes ago)
 - 02b2749 Fix conversion wallet modal not opening after converting personal label (7 hours ago)
 - e76fab9 Fix ART calculation to properly handle bridge conversions (8 hours ago)
 - b280140 Fix undefined function error and floating point precision issues (8 hours ago)
@@ -41,7 +42,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 231c7c6 Fix missing closing brace in buildAvailableThreadsIndex function (8 hours ago)
 - cc956d9 Fix syntax error - remove extra closing brace on line 7230 (8 hours ago)
 - 0a18141 Fix bridge/swap fee handling with automatic write-offs (8 hours ago)
-- c414503 Fix personal label entries being incorrectly marked as terminal (9 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

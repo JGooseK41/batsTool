@@ -3770,6 +3770,7 @@
             let attribution = null;
             let isSmartContract = false;
             let contractName = null;
+            let etherscanLabel = null;
 
             // First, check if this is a smart contract (for EVM chains)
             if (lowerAddress.startsWith('0x') && lowerAddress.length === 42) {
@@ -3796,6 +3797,53 @@
                                 isSmartContract = true;
                                 contractName = contract.ContractName;
                                 console.log(`🤖 Smart Contract detected: ${contractName} at ${address}`);
+                            }
+                        }
+                    }
+
+                    // Also check Etherscan labels/tags for known services using v2 API
+                    // This can identify known DEXs, bridges, and other services
+                    // Build the v2 API URL based on chain
+                    let chainIdForV2 = 1; // Default to Ethereum
+                    if (chainId === 56 || chainId === 'bsc') {
+                        chainIdForV2 = 56;
+                    } else if (chainId === 137 || chainId === 'polygon') {
+                        chainIdForV2 = 137;
+                    }
+
+                    const labelUrl = `https://api.etherscan.io/v2/api?chainid=${chainIdForV2}&module=account&action=addressinfo&address=${address}&apikey=${etherscanApiKey}`;
+                    console.log('Checking Etherscan v2 labels:', labelUrl);
+
+                    const labelResponse = await fetch(labelUrl);
+                    if (labelResponse.ok) {
+                        const labelData = await labelResponse.json();
+                        console.log('Etherscan label data:', labelData);
+
+                        // Check if we got label information
+                        if (labelData.status === '1' && labelData.result) {
+                            const result = Array.isArray(labelData.result) ? labelData.result[0] : labelData.result;
+
+                            if (result && result.tag) {
+                                console.log(`🏷️ Etherscan label found: ${result.tag} for ${address}`);
+
+                                // Check if this label suggests it's a DEX/Bridge
+                                const tagLower = result.tag.toLowerCase();
+                                const isDEXTag = tagLower.includes('dex') ||
+                                                tagLower.includes('swap') ||
+                                                tagLower.includes('router') ||
+                                                tagLower.includes('bridge') ||
+                                                tagLower.includes('amm') ||
+                                                tagLower.includes('aggregator');
+
+                                // Store this information for later use
+                                if (!etherscanLabel) {
+                                    etherscanLabel = {
+                                        name: result.tag,
+                                        url: result.url || '',
+                                        isDEX: isDEXTag,
+                                        isSmartContract: isSmartContract || isDEXTag
+                                    };
+                                }
                             }
                         }
                     }
@@ -4222,9 +4270,26 @@
                         isSmartContract: true,
                         isConversionWallet: true,  // This indicates it should be brown, not purple
                         source: 'etherscan_verified_contract',
-                        contractName: contractName
+                        contractName: contractName,
+                        isDEX: etherscanLabel?.isDEX || false
                     };
                     console.log(`🤖 Smart Contract will be treated as conversion wallet: ${contractName}`);
+                }
+
+                // Check for Etherscan label if no other attribution found
+                if (!attribution && etherscanLabel) {
+                    attribution = {
+                        name: etherscanLabel.name,
+                        label: etherscanLabel.name,
+                        type: etherscanLabel.isDEX ? 'Bridge/DEX' : 'Service',
+                        isSmartContract: etherscanLabel.isSmartContract,
+                        isDEX: etherscanLabel.isDEX,
+                        isConversionWallet: etherscanLabel.isDEX,
+                        isExchange: !etherscanLabel.isDEX, // Only mark as exchange if NOT a DEX
+                        source: 'etherscan_v2_label',
+                        url: etherscanLabel.url
+                    };
+                    console.log(`🏷️ Using Etherscan v2 label for ${address}:`, attribution);
                 }
 
                 // Final fallback: Known exchange addresses
