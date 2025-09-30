@@ -26286,6 +26286,8 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             entry.wasTerminalWallet = true; // Track that this was originally classified as terminal
             entry.isTerminalWallet = false; // NO LONGER a terminal wallet - it's a bridge!
 
+            // Don't rebuild here - wait until after the bridge output thread is created
+
             const noteType = 'BRIDGE OUTPUT';
             const existingNotes = entry.notes || '';
 

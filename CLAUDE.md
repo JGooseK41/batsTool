@@ -3,27 +3,29 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 10:37)
+## Latest Commit (Auto-updated: 2025-09-30 10:40)
 
-**Commit:** 5a1f8feb3dd24e40bc4b387bbadaf9c2053b0d50
+**Commit:** 6e563129bf86b91d663e230e153065e74817b57b
 **Author:** Your Name
-**Message:** Fix allocation error when commingling threads to terminal wallets
+**Message:** Fix partial trace logic - only claim what threads support, not full transaction
 
-When sending multiple commingled threads (totaling 53,871 USDC) to a terminal
-wallet, the system was blocking with 'allocation exceeds available' even though
-the difference was the full transaction amount going to an exchange.
+The system was incorrectly trying to force allocations to match the full
+transaction amount, causing errors when the transaction exceeded available threads.
 
-Root cause: The strict allocation check was preventing legitimate terminal
-wallet deposits where we want to send all available funds.
+Example: Transaction for 53,871 USDC but threads only have 53,592 USDC available
+was causing an error instead of just claiming the 53,592 we can trace.
+
+Root cause: Code was trying to match allocations to transaction amount instead
+of respecting that we only claim what our threads support.
 
 Fix:
-- Add tolerance check for minor rounding differences (< 0.01)
-- For terminal wallets (exchanges), allow using all available funds
-- Re-apply PIFO allocation to match the exact available amount
-- Provide clearer error messages showing the exact difference
+- Remove forced allocation matching to transaction amount
+- Only cap allocations if they exceed transaction (can't claim more than moved)
+- For partial traces, keep our allocations as-is (our portion of the transaction)
+- Simplify the available funds check to just cap at available, not block
 
-Result: Commingled threads can now be properly sent to terminal wallets,
-using all available funds as intended for exchange deposits.
+Result: Partial traces now work correctly - we claim only what our threads
+support, ignoring any excess in the transaction that we can't trace.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -31,23 +33,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 43 +++++++++++++++++++------------------------
- index.html | 28 +++++++++++++++++++++++++---
- 2 files changed, 44 insertions(+), 27 deletions(-)
+ CLAUDE.md  | 42 +++++++++++++++++++++++-------------------
+ index.html | 52 +++++++++++++++++++---------------------------------
+ 2 files changed, 42 insertions(+), 52 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (0 seconds ago)
-- 1f3c263 Fix write-off entries not collapsing after creation from modal (4 minutes ago)
-- d1effdb Fix critical regression: threads consuming more than transaction amount (11 minutes ago)
-- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (48 minutes ago)
-- 13f52d2 Implement comprehensive professional reporting system (67 minutes ago)
+- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (0 seconds ago)
+- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (4 minutes ago)
+- 1f3c263 Fix write-off entries not collapsing after creation from modal (7 minutes ago)
+- d1effdb Fix critical regression: threads consuming more than transaction amount (15 minutes ago)
+- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (52 minutes ago)
+- 13f52d2 Implement comprehensive professional reporting system (71 minutes ago)
 - 8588d1c Fix conversion wallet diamond positioning within hops (2 hours ago)
 - 470563d Implement modern, cutting-edge graph visualization system (2 hours ago)
 - 2402812 Add Save Investigation button to trace completion modals (2 hours ago)
 - 78a86cb Add 'Edit Entries' option to investigation completion modal (3 hours ago)
-- 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
