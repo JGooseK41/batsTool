@@ -25151,44 +25151,6 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                                  `\n    Calculation: ${fullAmount} × ${window.comminglingData.ourPercentage.toFixed(2)}% = ${destAmount}`;
             }
 
-            // Build the final notes with all calculation details
-            let outputAmountNote = `  Output Amount: ${outputAmount.toFixed(6)} ${destAsset}`;
-            if (isPartialTrace) {
-                // For partial traces, show both the full amount and our calculated share
-                // Remember: outputAmount has already been adjusted, so we need the original
-                const fullOutputAmount = outputAmount / proportionalMultiplier;
-                outputAmountNote = `  Full Bridge Output: ${fullOutputAmount.toFixed(6)} ${destAsset}\n` +
-                                  `  Our Proportional Share: ${outputAmount.toFixed(6)} ${destAsset}\n` +
-                                  `  Calculation: ${fullOutputAmount.toFixed(6)} × ${(proportionalMultiplier * 100).toFixed(4)}% = ${outputAmount.toFixed(6)}`;
-            }
-
-            entry.notes = existingNotes + `\n[${noteType}] Wallet reclassified from terminal to bridge:\n` +
-                `  Output Chain: ${destChain}\n` +
-                `  Output Tx: ${txHash}\n` +
-                `  Output Wallet: ${destWallet}\n` +
-                outputAmountNote +
-                swapInfo +
-                comminglingInfo +
-                `\n  Reclassified: ${new Date().toISOString()}`;
-
-            // Store bridge details for both types
-            // Note: destAmount may have been adjusted for partial traces
-            entry.bridgeDetails = {
-                sourceChain: entry.chain || 'unknown',
-                destinationChain: destChain,
-                destinationTxHash: txHash,
-                destinationWallet: destWallet,
-                destinationAmount: outputAmount,  // Use the potentially adjusted amount
-                destinationAsset: destAsset,
-                bridgeAddress: entry.toWallet,
-                walletType: walletType,
-                wasPartialTrace: isPartialTrace,
-                proportionalMultiplier: proportionalMultiplier
-            };
-
-            // Mark that bridge output has been logged
-            entry.bridgeOutputLogged = true;
-
             // CRITICAL: Work exactly like swaps - replace the thread in the SAME HOP
             // The bridge converts the existing thread from one currency to another
 
@@ -25234,6 +25196,44 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     destAmount = outputAmount.toString();
                 }
             }
+
+            // Build the final notes with all calculation details
+            let outputAmountNote = `  Output Amount: ${outputAmount.toFixed(6)} ${destAsset}`;
+            if (isPartialTrace) {
+                // For partial traces, show both the full amount and our calculated share
+                // Remember: outputAmount has already been adjusted, so we need the original
+                const fullOutputAmount = outputAmount / proportionalMultiplier;
+                outputAmountNote = `  Full Bridge Output: ${fullOutputAmount.toFixed(6)} ${destAsset}\n` +
+                                  `  Our Proportional Share: ${outputAmount.toFixed(6)} ${destAsset}\n` +
+                                  `  Calculation: ${fullOutputAmount.toFixed(6)} × ${(proportionalMultiplier * 100).toFixed(4)}% = ${outputAmount.toFixed(6)}`;
+            }
+
+            entry.notes = existingNotes + `\n[${noteType}] Wallet reclassified from terminal to bridge:\n` +
+                `  Output Chain: ${destChain}\n` +
+                `  Output Tx: ${txHash}\n` +
+                `  Output Wallet: ${destWallet}\n` +
+                outputAmountNote +
+                swapInfo +
+                comminglingInfo +
+                `\n  Reclassified: ${new Date().toISOString()}`;
+
+            // Store bridge details for both types
+            // Note: destAmount may have been adjusted for partial traces
+            entry.bridgeDetails = {
+                sourceChain: entry.chain || 'unknown',
+                destinationChain: destChain,
+                destinationTxHash: txHash,
+                destinationWallet: destWallet,
+                destinationAmount: outputAmount,  // Use the potentially adjusted amount
+                destinationAsset: destAsset,
+                bridgeAddress: entry.toWallet,
+                walletType: walletType,
+                wasPartialTrace: isPartialTrace,
+                proportionalMultiplier: proportionalMultiplier
+            };
+
+            // Mark that bridge output has been logged
+            entry.bridgeOutputLogged = true;
 
             console.log(`Processing bridge conversion: ${inputAmount} ${inputCurrency} → ${outputAmount} ${outputCurrency}`);
 
