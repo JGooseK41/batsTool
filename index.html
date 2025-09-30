@@ -9177,8 +9177,7 @@ function updateFullNotationDisplayMultiple(hopNumber, entryId) {
 
         const entryTypes = {
             'trace': 'Outgoing Transaction',
-            'swap': 'DEX/Asset Conversion',
-            'cold_storage': 'Still in Wallet'
+            'cold_storage': 'Mark as Cold Storage'
         };
 
 
@@ -18919,14 +18918,9 @@ function showAddEntryWizard(hopNumber) {
             description: 'Outgoing Transaction - Track where funds moved to another wallet',
             color: '#3498db'
         },
-        'swap': {
-            icon: '🔄',
-            description: 'DEX/Asset Conversion - Funds were swapped for a different currency',
-            color: '#ff9800'
-        },
         'cold_storage': {
             icon: '🧊',
-            description: 'Still in Wallet - Funds haven\'t moved yet (mark as cold storage)',
+            description: 'Mark as Cold Storage - Funds haven\'t moved yet (monitoring required)',
             color: '#00bcd4'
         }
     };
@@ -19000,7 +18994,9 @@ function selectEntryType(hopNumber, entryType) {
                 alert('Error opening wizard: ' + error.message);
             }
         } else if (entryType === 'swap' || entryType === 'dex') {
-            // For swaps, use a dedicated swap wizard
+            // Swap entry type has been deprecated - swaps are now handled through trace entries
+            alert('DEX/Swap entries are now handled through the regular transaction flow. Please select "Outgoing Transaction" instead.');
+            return;
             console.log('Creating swap entry - showing swap wizard');
             showSwapWizard(hopNumber);
         } else {
