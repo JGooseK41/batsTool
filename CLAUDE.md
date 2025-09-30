@@ -3,22 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 06:46)
+## Latest Commit (Auto-updated: 2025-09-30 07:11)
 
-**Commit:** 72987233d91d2957403deb1029423b5d277f00b5
+**Commit:** 78a86cbbf79845c36fa54129c15205289f5371ba
 **Author:** Your Name
-**Message:** Fix write-off modal auto-log and add color-coded backgrounds for entries
+**Message:** Add 'Edit Entries' option to investigation completion modal
 
-- Write-off entries now automatically marked as logged/collapsed after confirmation
-- No longer requires manual "Log Entry" button click after write-off modal
-- Added light background colors matching border colors for better visual distinction:
-  - Light green background for regular traces continuing to next hop
-  - Light purple background for exchange/terminal wallet deposits
-  - Light brown/tan background for conversion wallets/bridges/swaps
-  - Light blue background for cold storage entries
-  - Light gray background for write-offs and abandoned entries
-- Entry backgrounds provide subtle visual cues about transaction flow status
-- Improved user experience with clearer visual hierarchy
+- Added 'Edit Entries' button to the completion modal that appears when all funds are accounted
+- Button allows users to go back and modify entries instead of forcing trace completion
+- Particularly useful when a terminal wallet needs to be investigated further (e.g., might be a bridge/DEX)
+- Modal now includes helpful tip about being able to edit entries when trace appears complete
+- Edit button automatically expands the hop and scrolls to it for easy access
+- Improves workflow flexibility for complex investigations
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -26,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 51 +++++++++++++++++++++++++--------------------------
- index.html | 39 ++++++++++++++++-----------------------
- 2 files changed, 41 insertions(+), 49 deletions(-)
+ CLAUDE.md  | 44 ++++++++++++++++++++++----------------------
+ index.html | 23 ++++++++++++++++++++++-
+ 2 files changed, 44 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (0 seconds ago)
-- 48a0820 Simplify entry type selection and rename cold storage option (12 minutes ago)
+- 78a86cb Add 'Edit Entries' option to investigation completion modal (0 seconds ago)
+- 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (26 minutes ago)
+- 48a0820 Simplify entry type selection and rename cold storage option (38 minutes ago)
 - 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (3 hours ago)
 - 8f9c550 Fix bridge output button unresponsive due to variable initialization error (3 hours ago)
 - e282f88 Prevent hop finalization when threads are at conversion wallets (3 hours ago)
 - 2a6ad63 Add detailed calculation notes for partial trace bridge outputs (3 hours ago)
-- 33e0337 Fix bridge output calculation for partial traces (3 hours ago)
+- 33e0337 Fix bridge output calculation for partial traces (4 hours ago)
 - 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (4 hours ago)
 - 229162c Add color-coded borders for collapsed entries in hop building page (4 hours ago)
-- 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (11 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

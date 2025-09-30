@@ -14699,7 +14699,7 @@ function showTraceCompletionCeremony(hop, threadsCreated) {
 
         <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
             <button class="btn btn-success btn-large" onclick="saveInvestigationAfterCompletion()"
-                    style="padding: 12px 30px; font-size: 18px;">
+                    style="padding: 15px 40px; font-size: 20px; background: #27ae60; border: none; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);">
                 💾 Save Investigation File
             </button>
             <button class="btn btn-primary" onclick="closeTraceCompletionAndGoToAnalysis()"
@@ -15589,13 +15589,16 @@ function checkHopCompletionStatus(hop) {
                     <button class="btn btn-success" onclick="closeHopAndProceed(${hop.hopNumber}, this.parentElement.parentElement)" style="padding: 12px 24px; font-size: 16px;">
                         ${buttonText}
                     </button>
-                    ${!traceComplete ? `
-                        <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()" style="padding: 12px 24px;">
-                            <small>Continue Adding Entries</small>
+                    ${traceComplete ? `
+                        <button class="btn btn-warning" onclick="saveInvestigation(); this.parentElement.parentElement.remove()" style="padding: 12px 24px; background: #ff9800; color: white;">
+                            💾 Save Investigation
                         </button>
-                    ` : `
                         <button class="btn btn-primary" onclick="this.parentElement.parentElement.remove(); scrollToHop(${hop.hopNumber})" style="padding: 12px 24px; background: #3498db;">
                             ✏️ Edit Entries
+                        </button>
+                    ` : `
+                        <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()" style="padding: 12px 24px;">
+                            <small>Continue Adding Entries</small>
                         </button>
                     `}
                     <button class="btn btn-light" onclick="finalizeHop(${hop.hopNumber}); this.parentElement.parentElement.remove()" style="padding: 12px 24px;">
