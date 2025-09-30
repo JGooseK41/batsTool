@@ -3,22 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 02:57)
+## Latest Commit (Auto-updated: 2025-09-30 03:01)
 
-**Commit:** 229162c3cd9550297dd5b0217fc6b827b95edb6c
+**Commit:** 2b0c349aab5b3ddc1f5818bc1a490f67b9eae75a
 **Author:** Your Name
-**Message:** Add color-coded borders for collapsed entries in hop building page
+**Message:** Show wallet classification warning only for terminal wallets in bridge modal
 
-- Made borders twice as thick (4px instead of 2px)
-- Gray border for abandoned/writeoffs
-- Purple border for exchange wallets
-- Blue border for cold wallets
-- Brown border for conversion wallets/bridges/swaps
-- Green border for regular traces to next hop
-- Added matching light background colors for each type
+- Added conditional logic to check wallet type before showing warning
+- Terminal wallets (purple) show warning about conversion to brown
+- Conversion wallets (brown) show confirmation they're already classified correctly
+- No warning shown for other wallet types
+- Better UX by not showing unnecessary warnings for already-classified bridges
 
-This provides visual clarity at a glance to identify different entry types
-and wallet destinations in the investigation flow.
+This prevents confusion when logging bridge outputs from wallets that are
+already properly classified as conversion services.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -26,14 +24,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 36 ++++++++++++++++++------------------
- index.html | 32 ++++++++++++++++++++++----------
- 2 files changed, 40 insertions(+), 28 deletions(-)
+ CLAUDE.md  | 49 +++++++++++++++++++++++++------------------------
+ index.html | 12 ++++++++++++
+ 2 files changed, 37 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 229162c Add color-coded borders for collapsed entries in hop building page (0 seconds ago)
+- 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (0 seconds ago)
+- 229162c Add color-coded borders for collapsed entries in hop building page (4 minutes ago)
 - 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (7 hours ago)
 - 63ad605 Make DEX detection more conservative, default to exchange when uncertain (7 hours ago)
 - f1dedba Prevent DEXs from being treated as terminal wallets (7 hours ago)
@@ -42,7 +41,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - e76fab9 Fix ART calculation to properly handle bridge conversions (15 hours ago)
 - b280140 Fix undefined function error and floating point precision issues (15 hours ago)
 - 2f42dcc Fix auto-generated write-off display and thread filtering (15 hours ago)
-- 231c7c6 Fix missing closing brace in buildAvailableThreadsIndex function (15 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

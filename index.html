@@ -25130,15 +25130,18 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 `\n  Reclassified: ${new Date().toISOString()}`;
 
             // Store bridge details for both types
+            // Note: destAmount may have been adjusted for partial traces
             entry.bridgeDetails = {
                 sourceChain: entry.chain || 'unknown',
                 destinationChain: destChain,
                 destinationTxHash: txHash,
                 destinationWallet: destWallet,
-                destinationAmount: parseFloat(destAmount),
+                destinationAmount: outputAmount,  // Use the potentially adjusted amount
                 destinationAsset: destAsset,
                 bridgeAddress: entry.toWallet,
-                walletType: walletType
+                walletType: walletType,
+                wasPartialTrace: isPartialTrace,
+                proportionalMultiplier: proportionalMultiplier
             };
 
             // Mark that bridge output has been logged
@@ -25150,7 +25153,45 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             const inputCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
             const outputCurrency = destAsset;
             const inputAmount = parseFloat(entry.amount);
-            const outputAmount = parseFloat(destAmount);
+            let outputAmount = parseFloat(destAmount);
+
+            // CHECK FOR PARTIAL TRACE: Compare our traced amount to the total transaction
+            let isPartialTrace = false;
+            let proportionalMultiplier = 1.0;
+
+            // Check if the entry notes contain information about partial tracing
+            if (entry.notes && entry.notes.includes('Partial trace:')) {
+                // Extract the total transaction amount from the notes
+                const partialMatch = entry.notes.match(/Partial trace: Following ([\d.]+) of ([\d.]+)/);
+                if (partialMatch) {
+                    const ourAmount = parseFloat(partialMatch[1]);
+                    const totalAmount = parseFloat(partialMatch[2]);
+                    isPartialTrace = true;
+                    proportionalMultiplier = ourAmount / totalAmount;
+
+                    console.log(`🚨 PARTIAL TRACE DETECTED in bridge output:`);
+                    console.log(`   Our input: ${ourAmount} ${inputCurrency}`);
+                    console.log(`   Total transaction: ${totalAmount} ${inputCurrency}`);
+                    console.log(`   Our ownership: ${(proportionalMultiplier * 100).toFixed(2)}%`);
+
+                    // Calculate our proportional share of the output
+                    const fullOutputAmount = outputAmount;
+                    outputAmount = outputAmount * proportionalMultiplier;
+
+                    console.log(`   Full bridge output: ${fullOutputAmount} ${outputCurrency}`);
+                    console.log(`   Our proportional share: ${outputAmount} ${outputCurrency}`);
+
+                    // Update the notes to reflect the proportional calculation
+                    comminglingInfo = `\n  ⚠️ PARTIAL TRACE PROPORTIONAL CALCULATION:` +
+                                     `\n    Your input: ${ourAmount} ${inputCurrency} of ${totalAmount} ${inputCurrency} total` +
+                                     `\n    Your ownership: ${(proportionalMultiplier * 100).toFixed(2)}%` +
+                                     `\n    Full bridge output: ${fullOutputAmount} ${outputCurrency}` +
+                                     `\n    Your proportional output: ${outputAmount.toFixed(6)} ${outputCurrency}`;
+
+                    // Update the destAmount for the thread creation
+                    destAmount = outputAmount.toString();
+                }
+            }
 
             console.log(`Processing bridge conversion: ${inputAmount} ${inputCurrency} → ${outputAmount} ${outputCurrency}`);
 
