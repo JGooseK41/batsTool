@@ -3,25 +3,59 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 09:01)
+## Latest Commit (Auto-updated: 2025-09-30 09:30)
 
-**Commit:** 8588d1c16d90b8645c79ac92401c550b0d378579
+**Commit:** 13f52d2222c3585ab7ad4a4d638a41e12b144b4c
 **Author:** Your Name
-**Message:** Fix conversion wallet diamond positioning within hops
+**Message:** Implement comprehensive professional reporting system
 
-- Conversion diamonds now positioned correctly within the same hop, not between hops
-- Same-wallet swaps show diamond directly above wallet with vertical dashed line
-- Cross-chain swaps widen hop column and show diamond between sender and receiver
-- Added detection logic to identify conversions from hop entries
-- Swap edges drawn as straight lines (vertical for same-wallet, horizontal for cross-chain)
-- Regular transaction edges maintain curved bezier paths with calculated angles
-- Amount labels show conversion (e.g., "100 USDC → 95 USDT") for swap edges
+Created dedicated Reports tab with six sub-sections as specified:
 
-Visual improvements:
-- Dashed vertical lines for same-wallet conversions
-- Solid lines connecting wallets through diamonds in cross-chain swaps
-- Automatic column width adjustment when hop contains cross-chain swaps
-- Brown diamonds positioned inline with wallet flow, not floating between hops
+1. Cover Page:
+   - Case ID, investigator, agency, date
+   - Case type and synopsis
+   - Investigation summary metrics
+
+2. Victim Index:
+   - Complete victim listing with details
+   - Total loss amounts
+   - Contact information
+
+3. Red Wallet Index:
+   - All victim deposit wallets
+   - V-T notation tracking
+   - Amounts and dates
+
+4. Terminal Wallet Index:
+   - Exchange arrivals
+   - Wallet addresses and amounts
+   - Hop tracking
+
+5. Narrative Report:
+   - Custom text editor (NOT auto-generated)
+   - Rich text formatting tools (bold, italic, underline, lists)
+   - Save functionality to preserve narrative
+   - Investigator writes their own analysis
+
+6. Technical Audit Trail:
+   - Hop-by-hop documentation
+   - Opening ART for each hop
+   - All entries with transaction notes
+   - Hop reconciliation showing:
+     - Terminal deposits
+     - Continuing threads
+     - Write-offs
+     - ART validation
+   - Mathematical validation between hops
+
+Export Features:
+- Export individual tabs
+- Export complete report with all sections
+- Multiple format options (PDF, Word, HTML)
+- Print preview functionality
+- Page breaks for professional layout
+
+The system creates court-ready documentation with proper hop-based technical audit trail showing all transaction notes and mathematical validations.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -29,23 +63,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  54 ++++++++++++------
- index.html | 181 +++++++++++++++++++++++++++++++++++++++++++++++++------------
- 2 files changed, 184 insertions(+), 51 deletions(-)
+ CLAUDE.md  |  56 +++---
+ index.html | 625 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 646 insertions(+), 35 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8588d1c Fix conversion wallet diamond positioning within hops (0 seconds ago)
-- 470563d Implement modern, cutting-edge graph visualization system (9 minutes ago)
-- 2402812 Add Save Investigation button to trace completion modals (22 minutes ago)
+- 13f52d2 Implement comprehensive professional reporting system (0 seconds ago)
+- 8588d1c Fix conversion wallet diamond positioning within hops (29 minutes ago)
+- 470563d Implement modern, cutting-edge graph visualization system (38 minutes ago)
+- 2402812 Add Save Investigation button to trace completion modals (50 minutes ago)
 - 78a86cb Add 'Edit Entries' option to investigation completion modal (2 hours ago)
-- 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (2 hours ago)
-- 48a0820 Simplify entry type selection and rename cold storage option (2 hours ago)
+- 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (3 hours ago)
+- 48a0820 Simplify entry type selection and rename cold storage option (3 hours ago)
 - 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (5 hours ago)
 - 8f9c550 Fix bridge output button unresponsive due to variable initialization error (5 hours ago)
-- e282f88 Prevent hop finalization when threads are at conversion wallets (5 hours ago)
-- 2a6ad63 Add detailed calculation notes for partial trace bridge outputs (5 hours ago)
+- e282f88 Prevent hop finalization when threads are at conversion wallets (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
