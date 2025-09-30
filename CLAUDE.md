@@ -3,23 +3,27 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 10:33)
+## Latest Commit (Auto-updated: 2025-09-30 10:37)
 
-**Commit:** 1f3c263e58eb2f91e412983360077109f5e4f3e1
+**Commit:** 5a1f8feb3dd24e40bc4b387bbadaf9c2053b0d50
 **Author:** Your Name
-**Message:** Fix write-off entries not collapsing after creation from modal
+**Message:** Fix allocation error when commingling threads to terminal wallets
 
-After confirming a write-off in the modal, the manual entry form remained
-expanded instead of collapsing as expected.
+When sending multiple commingled threads (totaling 53,871 USDC) to a terminal
+wallet, the system was blocking with 'allocation exceeds available' even though
+the difference was the full transaction amount going to an exchange.
+
+Root cause: The strict allocation check was preventing legitimate terminal
+wallet deposits where we want to send all available funds.
 
 Fix:
-- Add explicit collapse logic after write-off creation and rendering
-- Force hide entry-content and show entry-summary elements
-- Also hide manual entry form if present
-- Use setTimeout to ensure DOM is updated before applying collapse state
+- Add tolerance check for minor rounding differences (< 0.01)
+- For terminal wallets (exchanges), allow using all available funds
+- Re-apply PIFO allocation to match the exact available amount
+- Provide clearer error messages showing the exact difference
 
-Result: Write-off entries now properly collapse after being created,
-providing a cleaner UI experience.
+Result: Commingled threads can now be properly sent to terminal wallets,
+using all available funds as intended for exchange deposits.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -27,23 +31,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 56 +++++++++++++++++++++++++++++++-------------------------
- index.html | 31 +++++++++++++++++++++++++++++++
- 2 files changed, 62 insertions(+), 25 deletions(-)
+ CLAUDE.md  | 43 +++++++++++++++++++------------------------
+ index.html | 28 +++++++++++++++++++++++++---
+ 2 files changed, 44 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1f3c263 Fix write-off entries not collapsing after creation from modal (0 seconds ago)
-- d1effdb Fix critical regression: threads consuming more than transaction amount (8 minutes ago)
-- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (45 minutes ago)
-- 13f52d2 Implement comprehensive professional reporting system (63 minutes ago)
+- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (0 seconds ago)
+- 1f3c263 Fix write-off entries not collapsing after creation from modal (4 minutes ago)
+- d1effdb Fix critical regression: threads consuming more than transaction amount (11 minutes ago)
+- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (48 minutes ago)
+- 13f52d2 Implement comprehensive professional reporting system (67 minutes ago)
 - 8588d1c Fix conversion wallet diamond positioning within hops (2 hours ago)
 - 470563d Implement modern, cutting-edge graph visualization system (2 hours ago)
 - 2402812 Add Save Investigation button to trace completion modals (2 hours ago)
 - 78a86cb Add 'Edit Entries' option to investigation completion modal (3 hours ago)
 - 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (4 hours ago)
-- 48a0820 Simplify entry type selection and rename cold storage option (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

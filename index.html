@@ -24145,51 +24145,37 @@ function createHopEntryFromWizard() {
         }
     });
 
-    // CRITICAL FIX: Don't auto-adjust to use all available funds
-    // The transaction amount should dictate consumption, not thread availability
+    // Ensure we're not trying to allocate more than we have
     if (totalAmount > totalAvailable) {
-        const difference = totalAmount - totalAvailable;
-        const tolerance = 0.01; // Allow tiny rounding differences
+        console.log(`Allocation exceeds available: Requested ${totalAmount}, Available ${totalAvailable}`);
+        console.log(`Capping allocation at available amount: ${totalAvailable}`);
 
-        // Check if this is just a rounding error
-        if (difference < tolerance) {
-            console.log(`Minor rounding difference detected: ${difference}. Adjusting to available amount.`);
-            // Use the available amount to avoid precision issues
-            totalAmount = totalAvailable;
+        // Simply cap at what's available - this is our maximum claim
+        wizardData.allocations = applyPIFOAllocation(totalAvailable, wizardData.selectedThreads);
+        totalAmount = totalAvailable;
 
-            // Re-distribute using PIFO to match exactly
-            wizardData.allocations = applyPIFOAllocation(totalAvailable, wizardData.selectedThreads);
-        } else {
-            // For commingled threads going to a terminal wallet, we might need to use all available
-            // Check if this is a terminal wallet scenario
-            if (wizardData.isTerminalWallet || wizardData.detectedAttribution?.isExchange) {
-                console.log(`Terminal wallet detected - using all available funds: ${totalAvailable}`);
-                // Use all available funds for terminal wallets
-                wizardData.allocations = applyPIFOAllocation(totalAvailable, wizardData.selectedThreads);
-                totalAmount = totalAvailable;
-            } else {
-                console.log(`ERROR: Allocation exceeds available: Requested ${totalAmount}, Available ${totalAvailable}`);
-                alert(`⚠️ Insufficient funds!\n\nTrying to allocate ${totalAmount} but only ${totalAvailable} available.\n\nDifference: ${difference.toFixed(6)}\n\nPlease adjust the allocation amounts.`);
-                return; // Block the transaction
-            }
-        }
+        console.log('Adjusted allocations to available amount:', wizardData.allocations);
     }
 
-    // If we have transaction data, use the actual transaction amount
-    // This ensures we only consume what the transaction actually moved
+    // For partial traces, we only claim what we have, not the full transaction
+    // The transaction amount is informational but doesn't dictate our allocation
     if (wizardData.txData && wizardData.txData.amount) {
         const txAmount = parseFloat(wizardData.txData.amount);
 
-        // If allocations don't match transaction amount, re-apply PIFO
-        if (Math.abs(totalAmount - txAmount) > 0.01) {
-            console.log(`Adjusting allocations to match transaction amount: ${txAmount} (was ${totalAmount})`);
+        // Only adjust if we're trying to allocate MORE than the transaction
+        // Never force allocation UP to match transaction (that would be claiming funds we don't have)
+        if (totalAmount > txAmount) {
+            console.log(`Capping allocation at transaction amount: ${txAmount} (was trying to allocate ${totalAmount})`);
 
-            // Re-apply PIFO allocation with the correct transaction amount
+            // Cap at transaction amount - can't claim more than what moved
             wizardData.allocations = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
             totalAmount = txAmount;
 
-            // Log the adjustment
-            console.log('Adjusted allocations to match transaction:', wizardData.allocations);
+            console.log('Capped allocations at transaction amount:', wizardData.allocations);
+        } else if (txAmount > totalAmount) {
+            // This is a partial trace - we're only following our portion
+            console.log(`Partial trace: Following ${totalAmount} of ${txAmount} total transaction`);
+            // Keep our allocations as-is, don't try to match the full transaction
         }
     }
 
