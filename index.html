@@ -11716,22 +11716,34 @@ function addNewHop() {
                 sourceThreadsInfo = `from ${sourceThreads.join(', ')}`;
             }
             
-            // Entry background color based on type - thematically consistent
+            // Entry background color and border based on type - color-coded with thicker borders
             let entryBgColor = '#f0f7ff'; // Very light blue for regular trace entries
-            let entryBorderColor = '#b8daff'; // Soft blue border
-            if (entry.entryType === 'writeoff') {
-                entryBgColor = '#f5f5f5'; // Light gray for writeoffs (abandoned like gray wallets)
-                entryBorderColor = '#9e9e9e'; // Gray border
+            let entryBorderColor = '#27ae60'; // Green border for traced to next hop (default)
+
+            // Determine border color based on wallet type and entry type
+            if (entry.entryType === 'writeoff' || entry.entryType === 'abandoned') {
+                entryBgColor = '#f5f5f5'; // Light gray for writeoffs/abandoned
+                entryBorderColor = '#7f8c8d'; // Gray border for abandoned
             } else if (entry.entryType === 'cold_storage' || entry.toWalletType === 'blue') {
                 entryBgColor = '#e3f2fd'; // Light blue for cold storage
-                entryBorderColor = '#3498db';
-            } else if (entry.toWalletType === 'purple') {
+                entryBorderColor = '#3498db'; // Blue border for cold wallet
+            } else if (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') {
                 entryBgColor = '#f3e6ff'; // Light purple for exchange deposits
-                entryBorderColor = '#9b59b6';
+                entryBorderColor = '#9b59b6'; // Purple border for exchange
+            } else if (entry.toWalletType === 'brown' || entry.isBridge || entry.entryType === 'swap') {
+                entryBgColor = '#fff8e6'; // Light brown/tan for conversion wallets
+                entryBorderColor = '#8b4513'; // Brown border for conversion wallet/bridge
+            } else if (entry.toWalletType === 'gray') {
+                entryBgColor = '#f5f5f5'; // Light gray
+                entryBorderColor = '#7f8c8d'; // Gray border
+            } else {
+                // Default green for regular traces that continue to next hop
+                entryBgColor = '#f0fff0'; // Very light green
+                entryBorderColor = '#27ae60'; // Green border for traced to next hop
             }
-            
+
             return `
-                <div id="entry_${hop.hopNumber}_${entry.id}" style="background: ${entryBgColor}; border: 2px solid ${entryBorderColor}; border-radius: 8px; margin-bottom: 10px; overflow: hidden;">
+                <div id="entry_${hop.hopNumber}_${entry.id}" style="background: ${entryBgColor}; border: 4px solid ${entryBorderColor}; border-radius: 8px; margin-bottom: 10px; overflow: hidden;">
                     <div style="padding: ${isCollapsed ? '8px' : '15px'};">
                         <!-- Collapsed state header -->
                         <div id="entrySummary_${entryKey}" style="display: ${isCollapsed ? 'block' : 'none'}; background: rgba(255,255,255,0.7); padding: 6px 10px; border-radius: 6px;">

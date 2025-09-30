@@ -3,21 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-29 20:07)
+## Latest Commit (Auto-updated: 2025-09-29 20:10)
 
-**Commit:** 63ad605c1ef4674cc3c5e9179739819b33b10152
+**Commit:** 98911a8a455c84eadd06a9d0db1192fc8bec7b3c
 **Author:** Your Name
-**Message:** Make DEX detection more conservative, default to exchange when uncertain
+**Message:** Add Etherscan v2 label/tag detection for smart contracts and DEXs
 
-- Changed logic to only mark as DEX with high confidence (85%+)
-- Default to marking arkhamEntity as exchange (terminal wallet)
-- Added suspectedDEX flag for entities that might be DEXs
-- Show helpful hint when suspected DEX is marked as terminal
-- User can easily convert terminal to conversion wallet if needed
+- Implemented Etherscan v2 addressinfo endpoint to get labels/tags
+- Checks for DEX/Bridge indicators in Etherscan labels (dex, swap, router, etc)
+- Falls back to Etherscan labels when Arkham data not available
+- Combines smart contract detection with label information
+- Supports Ethereum, BSC, and Polygon chains with proper chain ID mapping
 
-This approach is safer since there's a smooth process to convert terminal
-wallets to conversion wallets when needed. Better to err on the side of
-caution and let the user decide based on investigation context.
+This improves identification of known DEXs and services that might not be
+in Arkham's database but are labeled by Etherscan, providing better
+coverage for smart contract detection.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,23 +25,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 32 ++++++++++++++++---------------
- index.html | 65 +++++++++++++++++++++++++++++++++++++++++++++-----------------
- 2 files changed, 64 insertions(+), 33 deletions(-)
+ CLAUDE.md  | 34 +++++++++++++++----------------
+ index.html | 67 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 83 insertions(+), 18 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 63ad605 Make DEX detection more conservative, default to exchange when uncertain (0 seconds ago)
-- f1dedba Prevent DEXs from being treated as terminal wallets (4 minutes ago)
-- bc53ba0 Improve Arkham swap endpoint integration and add test page (8 minutes ago)
+- 98911a8 Add Etherscan v2 label/tag detection for smart contracts and DEXs (0 seconds ago)
+- 63ad605 Make DEX detection more conservative, default to exchange when uncertain (3 minutes ago)
+- f1dedba Prevent DEXs from being treated as terminal wallets (7 minutes ago)
+- bc53ba0 Improve Arkham swap endpoint integration and add test page (11 minutes ago)
 - 02b2749 Fix conversion wallet modal not opening after converting personal label (7 hours ago)
 - e76fab9 Fix ART calculation to properly handle bridge conversions (8 hours ago)
 - b280140 Fix undefined function error and floating point precision issues (8 hours ago)
 - 2f42dcc Fix auto-generated write-off display and thread filtering (8 hours ago)
 - 231c7c6 Fix missing closing brace in buildAvailableThreadsIndex function (8 hours ago)
 - cc956d9 Fix syntax error - remove extra closing brace on line 7230 (8 hours ago)
-- 0a18141 Fix bridge/swap fee handling with automatic write-offs (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
