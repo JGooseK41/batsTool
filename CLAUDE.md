@@ -3,18 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 07:11)
+## Latest Commit (Auto-updated: 2025-09-30 08:39)
 
-**Commit:** 78a86cbbf79845c36fa54129c15205289f5371ba
+**Commit:** 2402812a1a2cc702bcb1d4a0f47d40821ad2c5a0
 **Author:** Your Name
-**Message:** Add 'Edit Entries' option to investigation completion modal
+**Message:** Add Save Investigation button to trace completion modals
 
-- Added 'Edit Entries' button to the completion modal that appears when all funds are accounted
-- Button allows users to go back and modify entries instead of forcing trace completion
-- Particularly useful when a terminal wallet needs to be investigated further (e.g., might be a bridge/DEX)
-- Modal now includes helpful tip about being able to edit entries when trace appears complete
-- Edit button automatically expands the hop and scrolls to it for easy access
-- Improves workflow flexibility for complex investigations
+- Added prominent Save Investigation button to the completion notification that appears when all funds reach terminal wallets
+- Made the Save button more prominent in the main trace completion ceremony modal (larger, with shadow effect)
+- Save button appears alongside Complete Trace and Edit Entries options
+- Ensures investigation is preserved at critical milestone when trace is complete
+- Improved button hierarchy with Save as the primary action
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 44 ++++++++++++++++++++++----------------------
- index.html | 23 ++++++++++++++++++++++-
- 2 files changed, 44 insertions(+), 23 deletions(-)
+ CLAUDE.md  | 38 +++++++++++++++++---------------------
+ index.html | 13 ++++++++-----
+ 2 files changed, 25 insertions(+), 26 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 78a86cb Add 'Edit Entries' option to investigation completion modal (0 seconds ago)
-- 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (26 minutes ago)
-- 48a0820 Simplify entry type selection and rename cold storage option (38 minutes ago)
-- 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (3 hours ago)
-- 8f9c550 Fix bridge output button unresponsive due to variable initialization error (3 hours ago)
-- e282f88 Prevent hop finalization when threads are at conversion wallets (3 hours ago)
-- 2a6ad63 Add detailed calculation notes for partial trace bridge outputs (3 hours ago)
-- 33e0337 Fix bridge output calculation for partial traces (4 hours ago)
-- 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (4 hours ago)
-- 229162c Add color-coded borders for collapsed entries in hop building page (4 hours ago)
+- 2402812 Add Save Investigation button to trace completion modals (0 seconds ago)
+- 78a86cb Add 'Edit Entries' option to investigation completion modal (88 minutes ago)
+- 7298723 Fix write-off modal auto-log and add color-coded backgrounds for entries (2 hours ago)
+- 48a0820 Simplify entry type selection and rename cold storage option (2 hours ago)
+- 30619e1 Fix critical bugs in partial trace calculations and add multi-chain test suite (4 hours ago)
+- 8f9c550 Fix bridge output button unresponsive due to variable initialization error (5 hours ago)
+- e282f88 Prevent hop finalization when threads are at conversion wallets (5 hours ago)
+- 2a6ad63 Add detailed calculation notes for partial trace bridge outputs (5 hours ago)
+- 33e0337 Fix bridge output calculation for partial traces (5 hours ago)
+- 2b0c349 Show wallet classification warning only for terminal wallets in bridge modal (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

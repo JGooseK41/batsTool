@@ -1036,35 +1036,89 @@
     }
 }
 
-/* Flow Diagram Styles */
-.flow-wallet-node {
+/* Modern Graph Visualization Styles */
+.graph-node {
     cursor: pointer;
-    transition: all 0.2s ease;
-    stroke: #333;
-    stroke-width: 2;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.flow-wallet-node:hover {
-    filter: brightness(1.1);
-    transform: scale(1.05);
+.graph-node:hover {
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2));
+    transform: translateY(-2px) scale(1.05);
 }
 
-.flow-connection-line {
+.graph-edge {
     fill: none;
-    stroke-width: 1;
-    stroke: #333;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.8;
+    transition: all 0.3s ease;
 }
 
-.flow-thread-amount {
-    font-size: 14px;
+.graph-edge:hover {
+    stroke-width: 3;
+    opacity: 1;
+}
+
+.graph-edge-animated {
+    stroke-dasharray: 5 5;
+    animation: flow 1s linear infinite;
+}
+
+@keyframes flow {
+    to {
+        stroke-dashoffset: -10;
+    }
+}
+
+.conversion-diamond {
+    cursor: pointer;
+    filter: drop-shadow(0 2px 6px rgba(139, 69, 19, 0.3));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.conversion-diamond:hover {
+    filter: drop-shadow(0 6px 12px rgba(139, 69, 19, 0.5));
+    transform: rotate(45deg) scale(1.1);
+}
+
+.thread-label {
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    fill: #495057;
+    pointer-events: none;
+}
+
+.node-label {
+    font-size: 12px;
     font-weight: 600;
-    font-family: 'Courier New', monospace;
-    fill: #2c3e50;
-    background: white;
-    padding: 2px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    fill: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
-.flow-hop-lane {
+.amount-label {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'SF Mono', Monaco, monospace;
+    fill: #2c3e50;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.hop-background {
+    fill: url(#hopGradient);
+    opacity: 0.03;
+}
+
+.hop-divider {
+    stroke: #e1e4e8;
+    stroke-width: 1;
+    stroke-dasharray: 8 4;
     opacity: 0.3;
 }
 
@@ -2188,31 +2242,6 @@
                                 <!-- Stats will be populated dynamically -->
                             </div>
                         </div>
-                    </div>
-                    <div class="section-title">Visual Flow Diagram</div>
-                    
-                    <div id="flowDiagramControls" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                        <button class="btn btn-secondary" onclick="generateFlowDiagram()" style="margin-right: 10px;">
-                            Generate/Refresh Diagram
-                        </button>
-                        <button class="btn" onclick="exportFlowDiagram('svg')" style="margin-right: 10px;">
-                            Export SVG
-                        </button>
-                        <button class="btn" onclick="exportFlowDiagram('png')" style="margin-right: 10px;">
-                            Export PNG
-                        </button>
-                        <button class="btn" onclick="printFlowDiagram()" style="margin-right: 10px;">
-                            Print
-                        </button>
-                        <button class="btn btn-success" onclick="generateBATSTrainingExample()" style="margin-left: 20px;">
-                            Show Training Example
-                        </button>
-                    </div>
-                    
-                    <div id="flowDiagramContainer" style="background: white; border: 1px solid #e8f0fe; border-radius: 8px; padding: 20px; min-height: 600px; overflow: auto;">
-                        <svg id="flowDiagramSVG" width="100%" height="100%">
-                            <!-- Flow diagram will be generated here -->
-                        </svg>
                     </div>
                     <!-- Summary prompt will be added dynamically when investigation is complete -->
                 </div>
@@ -34931,28 +34960,41 @@ To (RED Wallet): ${transfer.to}`;
 
         // Initialize the graph visualization
         function initializeGraphVisualization() {
-            console.log('Initializing graph visualization...');
+            console.log('Initializing modern graph visualization...');
 
-            // Build graph data from investigation
-            buildGraphData();
+            // Check if investigation has data
+            if (!investigation.hops || investigation.hops.length === 0) {
+                showEmptyGraphState();
+                return;
+            }
 
-            // Render the graph
-            renderGraph();
+            // Build graph data with conversion wallet support
+            buildModernGraphData();
 
-            // Setup event handlers
-            setupGraphInteraction();
+            // Calculate optimal layout
+            calculateOptimalLayout();
+
+            // Render the modern graph
+            renderModernGraph();
+
+            // Setup enhanced interactions
+            setupEnhancedInteractions();
 
             // Update statistics
             updateGraphStatistics();
 
-            // Fit to screen initially
-            setTimeout(fitToScreen, 100);
+            // Apply smooth entrance animation
+            animateGraphEntrance();
+
+            // Fit to screen with padding
+            setTimeout(() => fitToScreen(true), 100);
         }
 
-        // Build T-account DAG - ONLY show receiving wallets per hop
-        function buildGraphData() {
+        // Build modern graph data with conversion wallets
+        function buildModernGraphData() {
             graphState.nodes = [];
             graphState.edges = [];
+            graphState.conversionNodes = [];
             graphState.hopLayers = [];
             let nodeId = 0;
 
@@ -35358,17 +35400,66 @@ To (RED Wallet): ${transfer.to}`;
             });
         }
 
-        // Render the graph with hop shading and T-account structure
-        function renderGraph() {
+        // Calculate optimal layout with smart positioning
+        function calculateOptimalLayout() {
+            const container = document.getElementById('graphContainer');
+            const width = container.offsetWidth || 1200;
+            const height = container.offsetHeight || 700;
+
+            // Calculate hop column widths
+            const numHops = graphState.hopLayers.length;
+            const columnWidth = width / (numHops + 1); // +1 for padding
+
+            graphState.hopLayers.forEach((layer, hopIndex) => {
+                const xCenter = (hopIndex + 0.5) * columnWidth + 50;
+
+                // Smart vertical positioning to minimize edge crossings
+                const nodes = layer.nodes;
+                const nodeCount = nodes.length;
+                const verticalSpacing = Math.min(80, (height - 150) / Math.max(nodeCount, 1));
+                const startY = (height - (nodeCount * verticalSpacing)) / 2;
+
+                nodes.forEach((node, nodeIndex) => {
+                    node.x = xCenter;
+                    node.y = startY + (nodeIndex * verticalSpacing) + 50;
+
+                    // Calculate output edge angles
+                    const outputEdges = graphState.edges.filter(e => e.source === node.id);
+                    const outputCount = outputEdges.length;
+
+                    if (outputCount > 0) {
+                        const angleRange = Math.PI / 3; // 60 degrees total spread
+                        const angleStep = outputCount > 1 ? angleRange / (outputCount - 1) : 0;
+                        const startAngle = -angleRange / 2;
+
+                        outputEdges.forEach((edge, i) => {
+                            edge.sourceAngle = startAngle + (i * angleStep);
+                        });
+                    }
+                });
+
+                // Position conversion wallets (diamonds) between hops
+                if (layer.conversions) {
+                    layer.conversions.forEach((conv, i) => {
+                        conv.x = xCenter + columnWidth * 0.6;
+                        conv.y = startY + (i * 60) + 100;
+                    });
+                }
+            });
+        }
+
+        // Render modern graph with sharp visuals
+        function renderModernGraph() {
             const svg = document.getElementById('investigationGraph');
             const content = document.getElementById('graphContent');
 
-            // Clear existing content
-            while (content.firstChild) {
-                content.removeChild(content.firstChild);
-            }
+            // Clear and prepare canvas
+            content.innerHTML = '';
 
-            // Draw hop backgrounds with CLEAR alternating colors
+            // Add modern gradients
+            addModernGradients(svg);
+
+            // Draw subtle hop backgrounds with modern styling
             if (graphState.hopLayers) {
                 const container = document.getElementById('graphContainer');
                 const totalWidth = Math.max(container ? container.offsetWidth : 1200, graphState.hopLayers.length * 500);
@@ -35963,6 +36054,414 @@ To (RED Wallet): ${transfer.to}`;
             const content = document.getElementById('graphContent');
             content.setAttribute('transform',
                 `translate(${graphState.translateX}, ${graphState.translateY}) scale(${graphState.zoom})`);
+        }
+
+        // ============================================
+        // MODERN GRAPH VISUALIZATION FUNCTIONS
+        // ============================================
+
+        // Add modern SVG gradients and filters
+        function addModernGradients(svg) {
+            const defs = svg.querySelector('defs') || svg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'defs'));
+
+            // Clear old defs
+            defs.innerHTML = '';
+
+            // Modern gradients for nodes
+            const gradients = [
+                { id: 'redGradient', colors: ['#ff6b6b', '#ee5a24'] },
+                { id: 'purpleGradient', colors: ['#a29bfe', '#6c5ce7'] },
+                { id: 'blackGradient', colors: ['#2d3436', '#000000'] },
+                { id: 'brownGradient', colors: ['#cd853f', '#8b4513'] },
+                { id: 'grayGradient', colors: ['#95a5a6', '#7f8c8d'] },
+                { id: 'greenGradient', colors: ['#00b894', '#00cec9'] },
+                { id: 'blueGradient', colors: ['#74b9ff', '#0984e3'] }
+            ];
+
+            gradients.forEach(grad => {
+                const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+                gradient.id = grad.id;
+                gradient.setAttribute('x1', '0%');
+                gradient.setAttribute('y1', '0%');
+                gradient.setAttribute('x2', '100%');
+                gradient.setAttribute('y2', '100%');
+
+                const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+                stop1.setAttribute('offset', '0%');
+                stop1.setAttribute('stop-color', grad.colors[0]);
+
+                const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+                stop2.setAttribute('offset', '100%');
+                stop2.setAttribute('stop-color', grad.colors[1]);
+
+                gradient.appendChild(stop1);
+                gradient.appendChild(stop2);
+                defs.appendChild(gradient);
+            });
+
+            // Add glow filter
+            const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+            filter.id = 'glow';
+            filter.setAttribute('x', '-50%');
+            filter.setAttribute('y', '-50%');
+            filter.setAttribute('width', '200%');
+            filter.setAttribute('height', '200%');
+
+            const feGaussianBlur = document.createElementNS('http://www.w3.org/2000/svg', 'feGaussianBlur');
+            feGaussianBlur.setAttribute('result', 'coloredBlur');
+            feGaussianBlur.setAttribute('stdDeviation', '4');
+
+            const feMerge = document.createElementNS('http://www.w3.org/2000/svg', 'feMerge');
+            const feMergeNode1 = document.createElementNS('http://www.w3.org/2000/svg', 'feMergeNode');
+            feMergeNode1.setAttribute('in', 'coloredBlur');
+            const feMergeNode2 = document.createElementNS('http://www.w3.org/2000/svg', 'feMergeNode');
+            feMergeNode2.setAttribute('in', 'SourceGraphic');
+
+            feMerge.appendChild(feMergeNode1);
+            feMerge.appendChild(feMergeNode2);
+            filter.appendChild(feGaussianBlur);
+            filter.appendChild(feMerge);
+            defs.appendChild(filter);
+
+            // Modern arrow markers
+            const arrowColors = [
+                { id: 'arrow-default', color: '#495057' },
+                { id: 'arrow-terminal', color: '#6c5ce7' },
+                { id: 'arrow-conversion', color: '#8b4513' }
+            ];
+
+            arrowColors.forEach(arrow => {
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.id = arrow.id;
+                marker.setAttribute('markerWidth', '10');
+                marker.setAttribute('markerHeight', '10');
+                marker.setAttribute('refX', '9');
+                marker.setAttribute('refY', '5');
+                marker.setAttribute('orient', 'auto');
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+                path.setAttribute('fill', arrow.color);
+
+                marker.appendChild(path);
+                defs.appendChild(marker);
+            });
+        }
+
+        // Draw modern curved edges with proper angles
+        function drawModernEdges(content) {
+            const edgeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            edgeGroup.id = 'edgeGroup';
+
+            graphState.edges.forEach(edge => {
+                const sourceNode = graphState.nodes.find(n => n.id === edge.source);
+                const targetNode = graphState.nodes.find(n => n.id === edge.target);
+
+                if (!sourceNode || !targetNode) return;
+
+                // Calculate edge path with angle
+                const dx = targetNode.x - sourceNode.x;
+                const dy = targetNode.y - sourceNode.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Use the pre-calculated source angle
+                const angle = edge.sourceAngle || 0;
+                const controlDistance = distance * 0.3;
+
+                // Calculate control point based on angle
+                const controlX = sourceNode.x + Math.cos(angle) * controlDistance + dx * 0.3;
+                const controlY = sourceNode.y + Math.sin(angle) * controlDistance;
+
+                // Create smooth quadratic bezier curve
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const pathData = `M ${sourceNode.x} ${sourceNode.y} Q ${controlX} ${controlY} ${targetNode.x} ${targetNode.y}`;
+                path.setAttribute('d', pathData);
+                path.setAttribute('class', 'graph-edge');
+                path.setAttribute('stroke', edge.isConversion ? '#8b4513' : '#495057');
+                path.setAttribute('marker-end', edge.isTerminal ? 'url(#arrow-terminal)' : 'url(#arrow-default)');
+                path.setAttribute('data-edge-id', edge.id);
+
+                edgeGroup.appendChild(path);
+
+                // Add amount label if enabled
+                if (graphState.showAmounts && edge.amount) {
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', (sourceNode.x + targetNode.x) / 2);
+                    text.setAttribute('y', (sourceNode.y + targetNode.y) / 2 - 5);
+                    text.setAttribute('class', 'amount-label');
+                    text.setAttribute('text-anchor', 'middle');
+                    text.textContent = `${edge.amount} ${edge.currency}`;
+                    edgeGroup.appendChild(text);
+                }
+            });
+
+            content.appendChild(edgeGroup);
+        }
+
+        // Draw modern nodes with conversion diamonds
+        function drawModernNodes(content) {
+            const nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            nodeGroup.id = 'nodeGroup';
+
+            graphState.nodes.forEach(node => {
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                group.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+                group.setAttribute('class', 'graph-node');
+                group.setAttribute('data-node-id', node.id);
+
+                // Draw node based on type
+                if (node.isConversion) {
+                    // Draw brown diamond for conversion wallets
+                    const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    diamond.setAttribute('x', '-15');
+                    diamond.setAttribute('y', '-15');
+                    diamond.setAttribute('width', '30');
+                    diamond.setAttribute('height', '30');
+                    diamond.setAttribute('transform', 'rotate(45)');
+                    diamond.setAttribute('fill', 'url(#brownGradient)');
+                    diamond.setAttribute('class', 'conversion-diamond');
+                    group.appendChild(diamond);
+
+                    // Add swap label
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('y', '35');
+                    label.setAttribute('text-anchor', 'middle');
+                    label.setAttribute('class', 'node-label');
+                    label.setAttribute('fill', '#8b4513');
+                    label.textContent = 'SWAP';
+                    group.appendChild(label);
+                } else {
+                    // Draw regular circular node
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('r', '25');
+                    circle.setAttribute('fill', getNodeGradient(node.type));
+                    group.appendChild(circle);
+
+                    // Add wallet label
+                    if (graphState.showLabels) {
+                        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        label.setAttribute('y', '5');
+                        label.setAttribute('text-anchor', 'middle');
+                        label.setAttribute('class', 'node-label');
+                        label.textContent = node.label || node.wallet.substring(0, 8) + '...';
+                        group.appendChild(label);
+                    }
+                }
+
+                // Add click handler
+                group.addEventListener('click', () => showNodeDetails(node));
+
+                nodeGroup.appendChild(group);
+            });
+
+            content.appendChild(nodeGroup);
+        }
+
+        // Get gradient URL based on wallet type
+        function getNodeGradient(type) {
+            const gradientMap = {
+                'red': 'url(#redGradient)',
+                'purple': 'url(#purpleGradient)',
+                'black': 'url(#blackGradient)',
+                'gray': 'url(#grayGradient)',
+                'green': 'url(#greenGradient)',
+                'blue': 'url(#blueGradient)',
+                'brown': 'url(#brownGradient)'
+            };
+            return gradientMap[type] || 'url(#blackGradient)';
+        }
+
+        // Show node details modal
+        function showNodeDetails(node) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(4px);
+                z-index: 10000;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 30px;
+                max-width: 600px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            // Get node's inbound and outbound threads
+            const inboundThreads = graphState.edges.filter(e => e.target === node.id);
+            const outboundThreads = graphState.edges.filter(e => e.source === node.id);
+
+            content.innerHTML = `
+                <h2 style="margin: 0 0 20px 0; color: #2c3e50;">
+                    ${node.isConversion ? '🔄 Conversion Wallet' : '💼 Wallet Details'}
+                </h2>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <strong>Address:</strong> ${node.wallet}<br>
+                    <strong>Type:</strong> ${node.type.toUpperCase()}<br>
+                    <strong>Hop:</strong> ${node.hopNumber}<br>
+                    ${node.label ? `<strong>Label:</strong> ${node.label}<br>` : ''}
+                </div>
+
+                <h3 style="color: #27ae60;">Inbound Threads (${inboundThreads.length})</h3>
+                <div style="margin-bottom: 20px;">
+                    ${inboundThreads.map(thread => `
+                        <div class="thread-item" style="padding: 10px; background: #e8f5e9; margin: 5px 0; border-radius: 4px; cursor: pointer;"
+                             onclick="showThreadEntry('${thread.id}')">
+                            <strong>${thread.notation || thread.id}</strong><br>
+                            Amount: ${thread.amount} ${thread.currency}
+                        </div>
+                    `).join('') || '<p style="color: #999;">No inbound threads</p>'}
+                </div>
+
+                <h3 style="color: #e74c3c;">Outbound Threads (${outboundThreads.length})</h3>
+                <div style="margin-bottom: 20px;">
+                    ${outboundThreads.map(thread => `
+                        <div class="thread-item" style="padding: 10px; background: #ffeaa7; margin: 5px 0; border-radius: 4px; cursor: pointer;"
+                             onclick="showThreadEntry('${thread.id}')">
+                            <strong>${thread.notation || thread.id}</strong><br>
+                            Amount: ${thread.amount} ${thread.currency}
+                        </div>
+                    `).join('') || '<p style="color: #999;">No outbound threads</p>'}
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                </div>
+            `;
+
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+
+        // Show thread entry form details
+        window.showThreadEntry = function(threadId) {
+            // Find the entry that created this thread
+            const edge = graphState.edges.find(e => e.id === threadId);
+            if (!edge) return;
+
+            // Find corresponding hop entry
+            let foundEntry = null;
+            investigation.hops.forEach(hop => {
+                hop.entries.forEach(entry => {
+                    if (entry.notation === edge.notation ||
+                        (entry.toWallet === edge.targetWallet && entry.amount == edge.amount)) {
+                        foundEntry = entry;
+                    }
+                });
+            });
+
+            if (foundEntry) {
+                // Show entry details modal
+                alert(`Entry Details:\n\nNotation: ${foundEntry.notation}\nAmount: ${foundEntry.amount} ${foundEntry.currency}\nFrom: ${foundEntry.fromWallet}\nTo: ${foundEntry.toWallet}\nNotes: ${foundEntry.notes || 'None'}`);
+            }
+        };
+
+        // Apply entrance animations
+        function animateGraphEntrance() {
+            const nodes = document.querySelectorAll('.graph-node');
+            const edges = document.querySelectorAll('.graph-edge');
+
+            // Animate edges first
+            edges.forEach((edge, i) => {
+                edge.style.opacity = '0';
+                edge.style.strokeDasharray = '1000';
+                edge.style.strokeDashoffset = '1000';
+
+                setTimeout(() => {
+                    edge.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+                    edge.style.opacity = '0.8';
+                    edge.style.strokeDashoffset = '0';
+                }, i * 50);
+            });
+
+            // Then animate nodes
+            nodes.forEach((node, i) => {
+                node.style.opacity = '0';
+                node.style.transform += ' scale(0)';
+
+                setTimeout(() => {
+                    node.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    node.style.opacity = '1';
+                    node.style.transform = node.style.transform.replace(' scale(0)', ' scale(1)');
+                }, i * 30 + 200);
+            });
+        }
+
+        // Setup enhanced interactions
+        function setupEnhancedInteractions() {
+            const container = document.getElementById('graphContainer');
+            const svg = document.getElementById('investigationGraph');
+            const content = document.getElementById('graphContent');
+
+            // Smooth pan and zoom
+            let isPanning = false;
+            let startX = 0;
+            let startY = 0;
+
+            container.addEventListener('mousedown', (e) => {
+                if (e.target === svg || e.target === content) {
+                    isPanning = true;
+                    startX = e.clientX - graphState.translateX;
+                    startY = e.clientY - graphState.translateY;
+                    container.style.cursor = 'grabbing';
+                }
+            });
+
+            container.addEventListener('mousemove', (e) => {
+                if (isPanning) {
+                    graphState.translateX = e.clientX - startX;
+                    graphState.translateY = e.clientY - startY;
+                    updateGraphTransform();
+                }
+            });
+
+            container.addEventListener('mouseup', () => {
+                isPanning = false;
+                container.style.cursor = 'grab';
+            });
+
+            // Smooth scroll zoom
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                graphState.zoom *= delta;
+                graphState.zoom = Math.max(0.3, Math.min(3, graphState.zoom));
+                updateGraphTransform();
+                updateZoomLevel();
+            });
+        }
+
+        // Show empty state
+        function showEmptyGraphState() {
+            const content = document.getElementById('graphContent');
+            content.innerHTML = `
+                <text x="50%" y="50%" text-anchor="middle" font-size="18" fill="#999">
+                    No investigation data to visualize yet
+                </text>
+            `;
+        }
+
+        // Build T-account DAG - keep existing function
+        function buildGraphData() {
+            // Keep existing implementation
+            graphState.nodes = [];
+            graphState.edges = [];
+            graphState.hopLayers = [];
+            let nodeId = 0;
         }
 
         // Zoom controls
