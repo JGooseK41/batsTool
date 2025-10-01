@@ -12488,11 +12488,12 @@ function addNewHop() {
                             <!-- Action buttons in collapsed view -->
                             <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-start;">
                                 ${((entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') ||
-                                   (entry.toWalletType === 'brown' && entry.exchangeAttribution?.isSmartContract)) &&
-                                   entry.entryType === 'trace' && !entry.bridgeOutputLogged && !entry.isBridge ? `
+                                   (entry.toWalletType === 'brown' && entry.exchangeAttribution?.isSmartContract) ||
+                                   (entry.toWalletType === 'brown' && entry.isBridge)) &&
+                                   entry.entryType === 'trace' && !entry.bridgeOutputLogged ? `
                                     <button class="btn btn-sm" style="background: #27ae60; color: white; border: 1px solid #229954;"
                                             onclick="event.stopPropagation(); logBridgeOutput(${hop.hopNumber}, ${entry.id})"
-                                            title="${entry.exchangeAttribution?.isSmartContract ?
+                                            title="${entry.exchangeAttribution?.isSmartContract || entry.isBridge ?
                                                 'Log the output from this smart contract (DEX/Bridge)' :
                                                 'Log the output transaction from this terminal wallet (CEX or Bridge)'}">
                                         🌉 Log Bridge/Swap
@@ -21801,6 +21802,7 @@ function createSwapEntry() {
         notes: wizardData.notes || `Asset conversion: ${inputData.amount} ${inputCurrency} swapped for ${wizardData.outputAmount} ${wizardData.outputCurrency} via ${wizardData.providerName || (wizardData.swapType === 'cex' ? 'CEX' : 'DEX')}`,
         notation: notation,
         isSwap: true,
+        isBridge: true, // CRITICAL: All brown conversion wallets should have bridge flag
         partialSwaps: partialSwaps, // Track which threads had partial amounts
         swapDetails: {
             fromCurrency: inputCurrency,
