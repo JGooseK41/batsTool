@@ -14051,6 +14051,27 @@ function addNewHop() {
             
             // Update add hop button and complete investigation section visibility
             updateInvestigationCompletionStatus();
+
+            // Add manual completion check button if all hops are complete but UI doesn't show
+            const allComplete = investigation.hops.every(h => h.completed);
+            const hasHops = investigation.hops.length > 0;
+            const completeSection = document.getElementById('completeInvestigationSection');
+
+            if (allComplete && hasHops && (!completeSection || completeSection.style.display === 'none')) {
+                // All hops marked complete but completion UI not showing
+                // Add a manual trigger button
+                const manualCompleteBtn = document.createElement('div');
+                manualCompleteBtn.style.cssText = 'background: #27ae60; color: white; padding: 20px; margin: 20px; border-radius: 8px; text-align: center;';
+                manualCompleteBtn.innerHTML = `
+                    <h3 style="margin: 0 0 10px 0;">✅ All Hops Complete</h3>
+                    <p style="margin: 0 0 15px 0;">All ${investigation.hops.length} hops have been completed. Click below to proceed to reporting.</p>
+                    <button class="btn" style="background: white; color: #27ae60; padding: 12px 30px; font-size: 16px; font-weight: bold;"
+                            onclick="showEnhancedCompletionModal()">
+                        📄 Proceed to Reports & Visualization
+                    </button>
+                `;
+                container.appendChild(manualCompleteBtn);
+            }
         }
 
 // Get starting ART for a specific hop
@@ -15202,6 +15223,14 @@ function completeHopAndProceed(hop) {
             'success',
             4000
         );
+
+        // Check if this was the last hop with no remaining threads
+        const nextHopThreads = getAvailableSourcesForHop(hop.hopNumber + 1, null);
+        if (nextHopThreads.length === 0 && allThreadsTerminal) {
+            // Investigation is complete - show completion options
+            console.log('Investigation complete - no threads remain for next hop');
+            showEnhancedCompletionModal();
+        }
     }
 }
 
@@ -16845,6 +16874,7 @@ function showEnhancedCompletionModal() {
 
     document.body.appendChild(modal);
 }
+window.showEnhancedCompletionModal = showEnhancedCompletionModal;
 
 // Generate terminal wallet summary for completion modal
 function generateTerminalSummary() {
@@ -18504,22 +18534,29 @@ function updateInvestigationCompletionStatus() {
         hop.entries && hop.entries.some(e => e.entryType === 'trace' && e.amount > 0)
     );
 
-    if (!hasActiveThreads && investigation.hops.length > 0 && hasTracedFunds && threadStatus.allTerminated) {
-        // All threads reached terminal wallets - investigation is truly complete
+    // Check if investigation is complete - multiple conditions
+    const investigationComplete =
+        // No active threads AND we have traced funds
+        (!hasActiveThreads && investigation.hops.length > 0 && hasTracedFunds) ||
+        // All threads terminated
+        (threadStatus.allTerminated && hasTracedFunds) ||
+        // All hops complete with no remaining threads
+        (allHopsComplete && !hasActiveThreads && hasTracedFunds);
+
+    if (investigationComplete) {
+        // Investigation is complete - show completion options
+        console.log('Investigation complete - showing completion options');
         addHopBtn.style.display = 'none';
         completeSection.style.display = 'block';
         if (visualizationSection) {
             visualizationSection.style.display = 'block';
         }
         updateFinalThreadSummary();
-    } else if (threadStatus.allTerminated && allHopsComplete && totalValidationErrors === 0 && hasTracedFunds) {
-        // All threads at terminal wallets
-        addHopBtn.style.display = 'none';
-        completeSection.style.display = 'block';
-        if (visualizationSection) {
-            visualizationSection.style.display = 'block';
+
+        // Also show completion modal if not already shown
+        if (!document.getElementById('completionWorkflowModal')) {
+            showEnhancedCompletionModal();
         }
-        updateFinalThreadSummary();
     } else if (lastHopComplete && hasActiveThreads) {
         // Last hop complete with active threads - show what will be traced
         const artSummary = Object.entries(nextHopART)

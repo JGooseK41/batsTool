@@ -3,41 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-01 19:51)
+## Latest Commit (Auto-updated: 2025-10-01 20:41)
 
-**Commit:** 4941da2fb7ecc81d631506bcf13f20ed2ade47db
+**Commit:** 15138bad9f98254f7fe7b090f485ae4320abdad4
 **Author:** Your Name
-**Message:** Fix bridge entry handling and ensure consistent treatment across all code paths
+**Message:** Fix hop entry wizard buttons and bridge name display in collapsed view
 
-- Fixed regression where Log Bridge/Swap button was missing from conversion wallet entries
-- Added isBridge flag to swap entries created through swap wizard for consistency
-- Updated button rendering logic to show for all brown wallets with isBridge flag
-- Ensured all bridge types (DEX, CEX, smart contracts) are treated uniformly
-- Verified bridge output threads are correctly available for same-hop allocation
-- Bridge outputs maintain hopLevel from parent entry enabling immediate reuse
+- Fixed non-working close and back buttons in hop entry wizard
+- Added window exposure for all wizard-related functions to ensure availability
+- Updated onclick handlers to use window. prefix for proper function access
+- Fixed missing bridge/smart contract names in collapsed entry badges
+- Bridge badges now show 'BRIDGE: [Name]' instead of just 'BRIDGE'
+- Ensured all wizard navigation functions are globally accessible
 
-This ensures complete consistency in how the system handles bridge/swap conversions,
-fixing the issue where deBridge Finance entries couldn't log their output transactions.
+This resolves issues where users couldn't exit the hop entry wizard once opened
+and improves the display of bridge entries with their identified service names.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 54 ++++++++++++++++++++++++++----------------------------
- index.html |  8 +++++---
- 2 files changed, 31 insertions(+), 31 deletions(-)
+ CLAUDE.md  | 60 ++++++++++++++++++++++++------------------------------------
+ index.html | 22 +++++++++++++---------
+ 2 files changed, 37 insertions(+), 45 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (0 seconds ago)
+- 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (0 seconds ago)
+- 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (51 minutes ago)
 - 8ac514b Fix brown conversion wallets being treated as terminal (33 hours ago)
 - af50966 Fix bridge conversions being treated as terminal wallets (33 hours ago)
-- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (33 hours ago)
-- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (33 hours ago)
-- 1f3c263 Fix write-off entries not collapsing after creation from modal (33 hours ago)
-- d1effdb Fix critical regression: threads consuming more than transaction amount (33 hours ago)
-- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (34 hours ago)
-- 13f52d2 Implement comprehensive professional reporting system (34 hours ago)
-- 8588d1c Fix conversion wallet diamond positioning within hops (35 hours ago)
+- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (34 hours ago)
+- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (34 hours ago)
+- 1f3c263 Fix write-off entries not collapsing after creation from modal (34 hours ago)
+- d1effdb Fix critical regression: threads consuming more than transaction amount (34 hours ago)
+- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (35 hours ago)
+- 13f52d2 Implement comprehensive professional reporting system (35 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
