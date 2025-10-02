@@ -3,53 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-09-30 11:20)
+## Latest Commit (Auto-updated: 2025-10-01 19:51)
 
-**Commit:** 8ac514b72c2fcedae60fda4a86987e20ccdf52a1
+**Commit:** 4941da2fb7ecc81d631506bcf13f20ed2ade47db
 **Author:** Your Name
-**Message:** Fix brown conversion wallets being treated as terminal
+**Message:** Fix bridge entry handling and ensure consistent treatment across all code paths
 
-Brown (conversion) wallet entries were correctly displayed but incorrectly
-handled by the thread management system, exhausting threads as if terminal
-instead of waiting for bridge output to be logged.
+- Fixed regression where Log Bridge/Swap button was missing from conversion wallet entries
+- Added isBridge flag to swap entries created through swap wizard for consistency
+- Updated button rendering logic to show for all brown wallets with isBridge flag
+- Ensured all bridge types (DEX, CEX, smart contracts) are treated uniformly
+- Verified bridge output threads are correctly available for same-hop allocation
+- Bridge outputs maintain hopLevel from parent entry enabling immediate reuse
 
-Root cause: Brown wallet entries didn't have isBridge flag set immediately
-on creation, only after bridge output was logged. This caused the thread
-handling logic to misprocess them.
-
-Fix:
-- Set isBridge = true immediately when creating brown wallet entries
-- Applies to both detected swaps and smart contracts marked as conversions
-- Ensures proper thread handling from the moment of entry creation
-
-Result: Conversion wallets (brown) now properly:
-1. Don't exhaust source threads
-2. Wait for bridge output to be logged
-3. Create new threads in the converted currency
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+This ensures complete consistency in how the system handles bridge/swap conversions,
+fixing the issue where deBridge Finance entries couldn't log their output transactions.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 56 +++++++++++++++++++++++++++++---------------------------
- index.html | 10 +++++++++-
- 2 files changed, 38 insertions(+), 28 deletions(-)
+ CLAUDE.md  | 54 ++++++++++++++++++++++++++----------------------------
+ index.html |  8 +++++---
+ 2 files changed, 31 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8ac514b Fix brown conversion wallets being treated as terminal (0 seconds ago)
-- af50966 Fix bridge conversions being treated as terminal wallets (6 minutes ago)
-- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (40 minutes ago)
-- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (43 minutes ago)
-- 1f3c263 Fix write-off entries not collapsing after creation from modal (47 minutes ago)
-- d1effdb Fix critical regression: threads consuming more than transaction amount (55 minutes ago)
-- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (2 hours ago)
-- 13f52d2 Implement comprehensive professional reporting system (2 hours ago)
-- 8588d1c Fix conversion wallet diamond positioning within hops (2 hours ago)
-- 470563d Implement modern, cutting-edge graph visualization system (2 hours ago)
+- 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (0 seconds ago)
+- 8ac514b Fix brown conversion wallets being treated as terminal (33 hours ago)
+- af50966 Fix bridge conversions being treated as terminal wallets (33 hours ago)
+- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (33 hours ago)
+- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (33 hours ago)
+- 1f3c263 Fix write-off entries not collapsing after creation from modal (33 hours ago)
+- d1effdb Fix critical regression: threads consuming more than transaction amount (33 hours ago)
+- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (34 hours ago)
+- 13f52d2 Implement comprehensive professional reporting system (34 hours ago)
+- 8588d1c Fix conversion wallet diamond positioning within hops (35 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

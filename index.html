@@ -12448,7 +12448,7 @@ function addNewHop() {
                                             </span>
                                             ${entry.isBridge ? `
                                                 <span style="background: #8b4513; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
-                                                    🌉 BRIDGE
+                                                    🌉 BRIDGE${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}
                                                 </span>
                                             ` : (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged ? `
                                                 <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
@@ -12521,7 +12521,7 @@ function addNewHop() {
                                             </span>
                                             ${entry.isBridge ? `
                                                 <span style="background: #8b4513; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
-                                                    🌉 BRIDGE
+                                                    🌉 BRIDGE${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}
                                                 </span>
                                             ` : (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged ? `
                                                 <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
@@ -20142,7 +20142,7 @@ function showAddEntryWizard(hopNumber) {
                 </div>
                 
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="closeAddEntryWizard()">Cancel</button>
+                    <button class="btn btn-secondary" onclick="window.closeAddEntryWizard ? window.closeAddEntryWizard() : (function(){ const el = document.getElementById('addEntryWizard'); if(el) el.remove(); })()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -20194,11 +20194,13 @@ function selectEntryType(hopNumber, entryType) {
         }
     }, 250);
 }
+window.showAddEntryWizard = showAddEntryWizard;
 
 function closeAddEntryWizard() {
     const wizard = document.getElementById('addEntryWizard');
     if (wizard) wizard.remove();
 }
+window.closeAddEntryWizard = closeAddEntryWizard;
 
 function addHopEntry(hopNumber, entryType = 'trace') {
     // This function is now primarily used when wizards are disabled
@@ -20374,7 +20376,7 @@ function showHopWizardStep(step) {
                 <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; text-align: center;">
                     <strong>⚠️ Session Error</strong><br>
                     The wizard session was lost. Please close and restart.<br>
-                    <button class="btn btn-secondary" onclick="closeHopWizard()" style="margin-top: 15px;">Close Wizard</button>
+                    <button class="btn btn-secondary" onclick="window.closeHopWizard()" style="margin-top: 15px;">Close Wizard</button>
                 </div>
             `;
         }
@@ -20394,8 +20396,8 @@ function showHopWizardStep(step) {
     // Restore standard buttons for steps 1 and 2
     if (step !== 3) {
         footerButtons.innerHTML = `
-            <button class="btn btn-secondary" id="wizardBackBtn" onclick="hopWizardBack()" style="padding: 10px 20px;" ${step === 1 ? 'disabled' : ''}>← Back</button>
-            <button class="btn btn-primary" id="wizardNextBtn" onclick="hopWizardNext()" style="padding: 10px 20px;">Next →</button>
+            <button class="btn btn-secondary" id="wizardBackBtn" onclick="window.hopWizardBack()" style="padding: 10px 20px;" ${step === 1 ? 'disabled' : ''}>← Back</button>
+            <button class="btn btn-primary" id="wizardNextBtn" onclick="window.hopWizardNext()" style="padding: 10px 20px;">Next →</button>
         `;
     }
 
@@ -21909,6 +21911,7 @@ function reopenHopWizard(hopNumber, entryId) {
 
     openHopEntryWizard(hopNumber);
 }
+window.reopenHopWizard = reopenHopWizard;
 
 function openHopEntryWizard(hopNumber) {
     console.log('openHopEntryWizard called with hopNumber:', hopNumber, 'type:', typeof hopNumber);
@@ -21948,7 +21951,7 @@ function openHopEntryWizard(hopNumber) {
             <div class="modal-content" style="max-width: 900px; width: 90%;">
                 <div class="modal-header" style="position: relative;">
                     <h2>🔍 Add Trace Entry - Hop ${numericHopNumber}</h2>
-                    <button class="close-btn" onclick="closeHopWizard(); return false;"
+                    <button class="close-btn" onclick="window.closeHopWizard(); return false;"
                             style="position: absolute; right: 15px; top: 15px; width: 30px; height: 30px;
                                    font-size: 24px; background: #e74c3c; color: white; border: none;
                                    border-radius: 50%; cursor: pointer; display: flex; align-items: center;
@@ -21972,8 +21975,8 @@ function openHopEntryWizard(hopNumber) {
                 
                 <div class="wizard-footer" style="padding: 20px; border-top: 1px solid #ddd;">
                     <div id="wizardFooterButtons" style="display: flex; justify-content: space-around; align-items: center;">
-                        <button class="btn btn-secondary" id="wizardBackBtn" onclick="hopWizardBack()" style="padding: 10px 20px;" disabled>← Back</button>
-                        <button class="btn btn-primary" id="wizardNextBtn" onclick="hopWizardNext()" style="padding: 10px 20px;">Next →</button>
+                        <button class="btn btn-secondary" id="wizardBackBtn" onclick="window.hopWizardBack()" style="padding: 10px 20px;" disabled>← Back</button>
+                        <button class="btn btn-primary" id="wizardNextBtn" onclick="window.hopWizardNext()" style="padding: 10px 20px;">Next →</button>
                     </div>
                 </div>
             </div>
@@ -22035,6 +22038,7 @@ function openHopEntryWizard(hopNumber) {
     // Show first step
     showHopWizardStep(1);
 }
+window.openHopEntryWizard = openHopEntryWizard;
 
 function skipHopWizard() {
     closeHopWizard();
