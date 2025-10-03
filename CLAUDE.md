@@ -3,41 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-01 20:41)
+## Latest Commit (Auto-updated: 2025-10-01 21:04)
 
-**Commit:** 15138bad9f98254f7fe7b090f485ae4320abdad4
+**Commit:** 77a65c250789755ebfee6e85681a2cbc98574386
 **Author:** Your Name
-**Message:** Fix hop entry wizard buttons and bridge name display in collapsed view
+**Message:** Fix trace completion detection and add navigation options when investigation complete
 
-- Fixed non-working close and back buttons in hop entry wizard
-- Added window exposure for all wizard-related functions to ensure availability
-- Updated onclick handlers to use window. prefix for proper function access
-- Fixed missing bridge/smart contract names in collapsed entry badges
-- Bridge badges now show 'BRIDGE: [Name]' instead of just 'BRIDGE'
-- Ensured all wizard navigation functions are globally accessible
+- Enhanced completion detection to recognize when all threads are exhausted
+- Added manual completion trigger button when all hops are marked complete
+- Shows completion modal automatically when no threads remain for next hop
+- Fixed updateInvestigationCompletionStatus to detect multiple completion conditions
+- Added 'Proceed to Reports & Visualization' button when all hops complete
+- Exposed showEnhancedCompletionModal globally for manual triggers
+- Improved detection of terminal wallets and cold storage completions
 
-This resolves issues where users couldn't exit the hop entry wizard once opened
-and improves the display of bridge entries with their identified service names.
+This ensures users can proceed to reporting/visualization after completing their trace,
+even when all funds end in cold storage or when automatic detection fails.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 60 ++++++++++++++++++++++++------------------------------------
- index.html | 22 +++++++++++++---------
- 2 files changed, 37 insertions(+), 45 deletions(-)
+ CLAUDE.md  | 44 ++++++++++++++++++++++----------------------
+ index.html | 55 ++++++++++++++++++++++++++++++++++++++++++++++---------
+ 2 files changed, 68 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (0 seconds ago)
-- 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (51 minutes ago)
-- 8ac514b Fix brown conversion wallets being treated as terminal (33 hours ago)
-- af50966 Fix bridge conversions being treated as terminal wallets (33 hours ago)
+- 77a65c2 Fix trace completion detection and add navigation options when investigation complete (0 seconds ago)
+- 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (22 minutes ago)
+- 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (73 minutes ago)
+- 8ac514b Fix brown conversion wallets being treated as terminal (34 hours ago)
+- af50966 Fix bridge conversions being treated as terminal wallets (34 hours ago)
 - 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (34 hours ago)
 - 5a1f8fe Fix allocation error when commingling threads to terminal wallets (34 hours ago)
-- 1f3c263 Fix write-off entries not collapsing after creation from modal (34 hours ago)
-- d1effdb Fix critical regression: threads consuming more than transaction amount (34 hours ago)
+- 1f3c263 Fix write-off entries not collapsing after creation from modal (35 hours ago)
+- d1effdb Fix critical regression: threads consuming more than transaction amount (35 hours ago)
 - 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (35 hours ago)
-- 13f52d2 Implement comprehensive professional reporting system (35 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
