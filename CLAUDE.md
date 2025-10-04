@@ -3,30 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-04 11:21)
+## Latest Commit (Auto-updated: 2025-10-04 12:58)
 
-**Commit:** 1bfe8c97cfc158552d118af96357f829165a44dc
+**Commit:** 5524d16b0c023e8b054c4100952a732c80bad7f1
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest changes
+**Message:** Redesign audit trail with hierarchical structure and proper conversion tracking
+
+- Changed from 'Balance Sheet' to 'Forensic Transaction Flow Analysis'
+- Implemented clear visual hierarchy: Hops → Entries → Threads
+- Added indentation to show thread composition of entries
+- Fixed false balance errors for currency conversions
+- Separated conversion tracking from regular fund movements
+- Added visual indicators for partial trace ownership percentages
+- Improved summary section with fund flow breakdowns
+- Shows new currencies introduced by conversions
+- Enhanced color coding for different entry types
 
 ### Changed Files:
 ```
- CLAUDE.md | 36 +++++++++++++++++++++++++++---------
- 1 file changed, 27 insertions(+), 9 deletions(-)
+ CLAUDE.md  |  38 +--
+ index.html | 988 ++++++++++++++++++++++++++++++++++++++++++++++++++++---------
+ 2 files changed, 866 insertions(+), 160 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1bfe8c9 Update CLAUDE.md with latest changes (0 seconds ago)
-- 1dcea68 Remove incorrect auto-write-off of bridge/swap outputs (32 minutes ago)
-- 7e5d62f Update CLAUDE.md with latest changes (42 minutes ago)
-- 6ca8f4d Fix critical partial trace bridge handling bug (44 minutes ago)
-- b584699 Add chain mismatch detection with clear error messaging (4 hours ago)
-- c4a57c6 Add attribution override feature and improve write-off entry display (5 hours ago)
-- 0d90653 Fix flow diagram visualization not initializing when trace is complete (5 hours ago)
-- 39674c8 Fix report generation issues and improve Technical Audit Trail (28 hours ago)
+- 5524d16 Redesign audit trail with hierarchical structure and proper conversion tracking (1 second ago)
+- 1bfe8c9 Update CLAUDE.md with latest changes (2 hours ago)
+- 1dcea68 Remove incorrect auto-write-off of bridge/swap outputs (2 hours ago)
+- 7e5d62f Update CLAUDE.md with latest changes (2 hours ago)
+- 6ca8f4d Fix critical partial trace bridge handling bug (2 hours ago)
+- b584699 Add chain mismatch detection with clear error messaging (6 hours ago)
+- c4a57c6 Add attribution override feature and improve write-off entry display (6 hours ago)
+- 0d90653 Fix flow diagram visualization not initializing when trace is complete (7 hours ago)
+- 39674c8 Fix report generation issues and improve Technical Audit Trail (30 hours ago)
 - 77a65c2 Fix trace completion detection and add navigation options when investigation complete (3 days ago)
-- 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (3 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

@@ -2147,7 +2147,18 @@
                     
                     <div id="hopsList"></div>
                     <button class="btn" onclick="addNewHop()" id="addHopBtn">Start Next Hop</button>
-                    
+
+                    <!-- Manual Completion Option -->
+                    <div id="manualCompletionOption" style="display: none; margin: 20px 0; padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px;">
+                        <h4 style="color: #856404; margin: 0 0 10px 0;">⚠️ Unable to Continue Tracing?</h4>
+                        <p style="color: #856404; margin-bottom: 15px;">
+                            If funds are stuck, lost, or you want to end the investigation here, you can manually complete it.
+                        </p>
+                        <button class="btn" onclick="manuallyCompleteInvestigation()" style="background: #ffc107; color: #000;">
+                            ✋ Manually Complete Investigation
+                        </button>
+                    </div>
+
                     <!-- Complete Investigation Section -->
                     <div id="completeInvestigationSection" style="display: none;">
                         <div style="background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%); border: 3px solid #27ae60; border-radius: 12px; padding: 30px; text-align: center; margin-top: 30px; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.2);">
@@ -16037,6 +16048,20 @@ function showTraceCompletionCeremony(hop, threadsCreated) {
     hop.isCollapsed = true;
     window.hopCollapseState[hop.hopNumber] = true;
 
+    // Mark investigation as complete
+    investigation.traceCompletedAt = new Date().toISOString();
+    investigation.traceComplete = true;
+
+    // Save and update status
+    saveInvestigation();
+    updateInvestigationCompletionStatus(); // This will trigger the unified completion flow
+
+    // The unified completion handler will show the proper modal
+    console.log('✅ Trace completion detected - triggering unified completion flow');
+
+    return; // Exit early - let unified flow handle everything
+
+    // OLD CODE BELOW - NO LONGER EXECUTED
     // Calculate trace statistics
     const totalVictims = investigation.victims.length;
     const totalHops = investigation.hops.length;
@@ -19224,27 +19249,27 @@ function updateInvestigationCompletionStatus() {
         addHopBtn.style.display = 'inline-block';
         return;
     }
-    
+
     let allHopsComplete = true;
     let lastHopComplete = false;
     let totalValidationErrors = 0;
-    
+
     // Check all hops for completion and validation
     investigation.hops.forEach((hop, index) => {
         const isLastHop = index === investigation.hops.length - 1;
         const validation = validateHopCompletion(hop.hopNumber);
-        
+
         if (validation.errors && validation.errors.length > 0) {
             totalValidationErrors += validation.errors.length;
         }
-        
+
         if (!hop.completed) {
             allHopsComplete = false;
         } else if (isLastHop) {
             lastHopComplete = true;
         }
     });
-    
+
     // Check if all threads have reached terminal wallets
     const threadStatus = checkAllThreadsTerminated();
 
@@ -19270,48 +19295,70 @@ function updateInvestigationCompletionStatus() {
             }
         });
     }
-    
+
     // Show different buttons based on state
     // Only show complete if we have traced funds AND all threads are terminated
     const hasTracedFunds = investigation.hops.some(hop =>
         hop.entries && hop.entries.some(e => e.entryType === 'trace' && e.amount > 0)
     );
 
-    // Check if investigation is complete - multiple conditions
-    const investigationComplete =
-        // No active threads AND we have traced funds
-        (!hasActiveThreads && investigation.hops.length > 0 && hasTracedFunds) ||
-        // All threads terminated
-        (threadStatus.allTerminated && hasTracedFunds) ||
-        // All hops complete with no remaining threads
-        (allHopsComplete && !hasActiveThreads && hasTracedFunds);
+    // UNIFIED COMPLETION CHECK - All paths lead to same completion flow
+    const investigationComplete = hasTracedFunds && (
+        // All threads terminated (purple exchanges, blue cold storage, gray obfuscated)
+        threadStatus.allTerminated ||
+        // All write-offs completed
+        (allHopsComplete && !hasActiveThreads && checkAllWrittenOff()) ||
+        // Manual close triggered
+        investigation.manuallyCompleted ||
+        // No remaining threads to trace and hops completed
+        (!hasActiveThreads && investigation.hops.length > 0 && allHopsComplete)
+    );
 
     if (investigationComplete) {
-        // Investigation is complete - show completion options
-        console.log('Investigation complete - showing completion options');
+        // UNIFIED COMPLETION PATH - Always show the same modal and options
+        console.log('✅ Investigation complete via unified flow - showing completion modal');
+
+        // Hide the add hop button and manual completion option
         addHopBtn.style.display = 'none';
+        const manualOption = document.getElementById('manualCompletionOption');
+        if (manualOption) {
+            manualOption.style.display = 'none';
+        }
+
+        // Show completion section with graph and report options
         completeSection.style.display = 'block';
         if (visualizationSection) {
             visualizationSection.style.display = 'block';
         }
+
+        // Update final thread summary
         updateFinalThreadSummary();
 
-        // Also show completion modal if not already shown
+        // ALWAYS show the completion modal with graph/report options
+        // This ensures consistent flow regardless of how investigation ended
         if (!document.getElementById('completionWorkflowModal')) {
-            showEnhancedCompletionModal();
+            setTimeout(() => {
+                showEnhancedCompletionModal();
+            }, 500); // Small delay to ensure DOM is ready
         }
     } else if (lastHopComplete && hasActiveThreads) {
         // Last hop complete with active threads - show what will be traced
         const artSummary = Object.entries(nextHopART)
             .map(([currency, amount]) => `${amount.toLocaleString()} ${currency}`)
             .join(' + ');
-        
+
         addHopBtn.innerHTML = `📝 Start Hop ${lastHop.hopNumber + 1} (${artSummary} available)`;
         addHopBtn.style.display = 'inline-block';
-        addHopBtn.onclick = function() { 
+        addHopBtn.onclick = function() {
             addNewHop();
         };
         completeSection.style.display = 'none';
+
+        // Also show manual completion option since there are active threads
+        const manualOption = document.getElementById('manualCompletionOption');
+        if (manualOption) {
+            manualOption.style.display = 'block';
+        }
     } else if (lastHopComplete && !hasActiveThreads && hasTracedFunds && threadStatus.allTerminated) {
         // No active threads AND all threads terminated - investigation is complete
         addHopBtn.style.display = 'none';
@@ -19331,6 +19378,12 @@ function updateInvestigationCompletionStatus() {
         addHopBtn.style.opacity = '0.6';
         addHopBtn.onclick = null;
         completeSection.style.display = 'none';
+
+        // Hide manual option when hop is incomplete
+        const manualOption = document.getElementById('manualCompletionOption');
+        if (manualOption) {
+            manualOption.style.display = 'none';
+        }
     } else {
         // Initial state or validation errors
         addHopBtn.innerHTML = `📝 Start First Hop`;
@@ -19339,6 +19392,12 @@ function updateInvestigationCompletionStatus() {
         addHopBtn.style.opacity = '1';
         addHopBtn.onclick = function() { addNewHop(); };
         completeSection.style.display = 'none';
+
+        // Hide manual option in initial state
+        const manualOption = document.getElementById('manualCompletionOption');
+        if (manualOption) {
+            manualOption.style.display = 'none';
+        }
         
         // Show validation status in console for debugging
         if (totalValidationErrors > 0) {
@@ -19843,6 +19902,48 @@ function updateInvestigationCompletionStatus() {
 function isTerminalWalletType(walletType) {
     // Terminal wallets: GRAY (obfuscated), PURPLE (exchange deposit), BLUE (cold storage - temporary terminal)
     return ['gray', 'purple', 'blue'].includes(walletType);
+}
+
+// Check if all remaining threads have been written off
+function checkAllWrittenOff() {
+    // Check if all available threads have been written off
+    let hasNonWrittenOffThreads = false;
+
+    Object.entries(investigation.availableThreads || {}).forEach(([currency, threads]) => {
+        Object.entries(threads).forEach(([threadId, thread]) => {
+            const availableAmount = getMaxAssignableAmount(thread.internalId || threadId, currency);
+            // If thread has available amount and isn't written off, investigation not complete
+            if (availableAmount > 0.01 && !thread.writtenOff) {
+                hasNonWrittenOffThreads = true;
+            }
+        });
+    });
+
+    return !hasNonWrittenOffThreads;
+}
+
+// Manual completion trigger - can be called when user wants to end investigation
+function manuallyCompleteInvestigation() {
+    // Confirm with user
+    const confirm = window.confirm(
+        'Are you sure you want to manually complete this investigation?\n\n' +
+        'This will mark the investigation as complete even if there are remaining untraced funds.\n\n' +
+        'You can still generate reports and visualizations after completion.'
+    );
+
+    if (!confirm) return;
+
+    // Mark as manually completed
+    investigation.manuallyCompleted = true;
+    investigation.manualCompletionTime = new Date().toISOString();
+
+    // Save the state
+    saveInvestigation();
+
+    // Trigger the unified completion flow
+    updateInvestigationCompletionStatus();
+
+    console.log('✅ Investigation manually completed - triggering unified completion flow');
 }
 
 // Check if all active threads have reached terminal wallets
