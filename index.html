@@ -22920,6 +22920,29 @@ async function lookupWizardTransaction() {
             throw new Error('Unable to detect blockchain from hash');
         }
 
+        // Detect the actual blockchain from the hash pattern
+        const actualChain = detectBlockchainFromHash(txHash);
+
+        // Check for chain mismatch
+        if (actualChain && actualChain !== detectedChain) {
+            // Special handling for EVM chains - they share the same hash format
+            const evmChains = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc',
+                              'avalanche', 'hyperevm', 'linea', 'scroll', 'mantle', 'blast',
+                              'zksync', 'gnosis', 'celo', 'moonbeam', 'moonriver', 'fraxtal',
+                              'taiko', 'arbitrumnova', 'bittorrent', 'opbnb'];
+
+            const isSourceEVM = evmChains.includes(detectedChain);
+            const isHashEVM = evmChains.includes(actualChain);
+
+            // If not both EVM (which share format), show clear mismatch error
+            if (!(isSourceEVM && isHashEVM)) {
+                const sourceChainName = window.blockchainAPIs[detectedChain]?.name || detectedChain;
+                const actualChainName = window.blockchainAPIs[actualChain]?.name || actualChain;
+
+                throw new Error(`CHAIN MISMATCH: This transaction hash appears to be from ${actualChainName}, but the source thread is on ${sourceChainName}. Please check that you've copied the correct transaction hash for this hop.`);
+            }
+        }
+
         console.log(`Using chain: ${detectedChain} for transaction lookup`);
 
         // Call the appropriate lookup function based on chain type
@@ -23673,8 +23696,16 @@ async function lookupWizardTransaction() {
         } else {
             let errorMessage = error.message || 'Unknown error occurred';
             let suggestions = '';
+            let isChainMismatch = false;
 
-            if (error.name === 'AbortError' || errorMessage.includes('timeout')) {
+            // Check for chain mismatch error first
+            if (errorMessage.includes('CHAIN MISMATCH')) {
+                isChainMismatch = true;
+                // Extract the clean error message
+                const mismatchParts = errorMessage.split('CHAIN MISMATCH:');
+                errorMessage = mismatchParts[1] ? mismatchParts[1].trim() : errorMessage;
+                suggestions = '<br><small style="color: #dc3545;"><strong>⚠️ Wrong Blockchain!</strong></small>';
+            } else if (error.name === 'AbortError' || errorMessage.includes('timeout')) {
                 errorMessage = 'Transaction lookup timed out';
                 suggestions = '<br><small>• Check your internet connection<br>• The blockchain API may be slow<br>• Try again in a few moments</small>';
             } else if (errorMessage.includes('HTTP 429')) {
@@ -23683,14 +23714,25 @@ async function lookupWizardTransaction() {
             } else if (errorMessage.includes('HTTP 404')) {
                 errorMessage = 'Transaction not found';
                 suggestions = '<br><small>• Verify the transaction hash is correct<br>• The transaction may not be confirmed yet</small>';
+            } else if (errorMessage.includes('Failed to fetch Ethereum') || errorMessage.includes('Failed to fetch Bitcoin') ||
+                       errorMessage.includes('Failed to fetch Solana') || errorMessage.includes('Failed to fetch Tron')) {
+                // Generic blockchain fetch error - likely wrong chain
+                errorMessage = 'Transaction lookup failed';
+                suggestions = '<br><small>• Check that the transaction hash is correct<br>• Verify this transaction is on the expected blockchain<br>• The transaction may not exist on this chain</small>';
             } else if (errorMessage.includes('Failed to fetch')) {
                 errorMessage = 'Network connection error';
                 suggestions = '<br><small>• Check your internet connection<br>• The blockchain API may be unavailable</small>';
             }
 
+            // Use different styling for chain mismatch
+            const bgColor = isChainMismatch ? '#fff3cd' : '#f8d7da';
+            const borderColor = isChainMismatch ? '#ffc107' : '#f5c6cb';
+            const iconEmoji = isChainMismatch ? '⚠️' : '❌';
+            const titleText = isChainMismatch ? 'Chain Mismatch' : 'Lookup Failed';
+
             resultDiv.innerHTML = `
-                <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 15px;">
-                    <strong>❌ Lookup Failed</strong><br>
+                <div style="background: ${bgColor}; border: 2px solid ${borderColor}; border-radius: 8px; padding: 15px;">
+                    <strong>${iconEmoji} ${titleText}</strong><br>
                     ${errorMessage}
                     ${suggestions}
                 </div>
