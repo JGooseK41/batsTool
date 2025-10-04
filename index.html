@@ -10370,6 +10370,13 @@ function updateFormFieldsFromInvestigation() {
             },
             'flowdiagram': () => {
                 if (investigation.hops && investigation.hops.length > 0) {
+                    // Initialize the graph visualization
+                    if (typeof initializeGraphVisualization === 'function') {
+                        console.log('Initializing graph visualization from flowdiagram tab action');
+                        initializeGraphVisualization();
+                    } else {
+                        console.error('initializeGraphVisualization function not found');
+                    }
                     const controls = document.getElementById('flowDiagramControls');
                     if (controls) controls.style.display = 'block';
                 } else {
@@ -39151,6 +39158,19 @@ To (RED Wallet): ${transfer.to}`;
                 });
             }
         }
+
+        // Expose graph visualization functions to window for global access
+        window.initializeGraphVisualization = initializeGraphVisualization;
+        window.zoomIn = zoomIn;
+        window.zoomOut = zoomOut;
+        window.resetZoom = resetZoom;
+        window.fitToScreen = fitToScreen;
+        window.toggleLabels = toggleLabels;
+        window.toggleAmounts = toggleAmounts;
+        window.cycleDetailLevel = cycleDetailLevel;
+        window.exportGraphAsSVG = exportGraphAsSVG;
+        window.exportGraphAsImage = exportGraphAsImage;
+        window.shareGraph = shareGraph;
     </script>
 </body>
 </html>

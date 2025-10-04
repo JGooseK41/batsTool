@@ -3,42 +3,45 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-01 21:04)
+## Latest Commit (Auto-updated: 2025-10-03 07:00)
 
-**Commit:** 77a65c250789755ebfee6e85681a2cbc98574386
+**Commit:** 39674c85318e802336cfd32159fa29446b6434df
 **Author:** Your Name
-**Message:** Fix trace completion detection and add navigation options when investigation complete
+**Message:** Fix report generation issues and improve Technical Audit Trail
 
-- Enhanced completion detection to recognize when all threads are exhausted
-- Added manual completion trigger button when all hops are marked complete
-- Shows completion modal automatically when no threads remain for next hop
-- Fixed updateInvestigationCompletionStatus to detect multiple completion conditions
-- Added 'Proceed to Reports & Visualization' button when all hops complete
-- Exposed showEnhancedCompletionModal globally for manual triggers
-- Improved detection of terminal wallets and cold storage completions
+- Fix cover sheet template literal interpolation to display actual values
+- Fix victim index to calculate totals and handle missing names
+- Add transaction hash and timestamp columns to terminal wallet index for legal process
+- Fix narrative editor template literal display issue
+- Completely redesign Technical Audit Trail with accounting ledger format
+- Add clear hierarchy with numbered entries and transaction classifications
+- Implement double-entry reconciliation with balance verification
+- Add navigation button to Flow Diagram from Reports tab
+- Improve conversion entry display to show output amounts prominently
 
-This ensures users can proceed to reporting/visualization after completing their trace,
-even when all funds end in cold storage or when automatic detection fails.
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 44 ++++++++++++++++++++++----------------------
- index.html | 55 ++++++++++++++++++++++++++++++++++++++++++++++---------
- 2 files changed, 68 insertions(+), 31 deletions(-)
+ CLAUDE.md  |  43 +++----
+ index.html | 384 ++++++++++++++++++++++++++++++++++++++++---------------------
+ 2 files changed, 278 insertions(+), 149 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 77a65c2 Fix trace completion detection and add navigation options when investigation complete (0 seconds ago)
-- 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (22 minutes ago)
-- 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (73 minutes ago)
-- 8ac514b Fix brown conversion wallets being treated as terminal (34 hours ago)
-- af50966 Fix bridge conversions being treated as terminal wallets (34 hours ago)
-- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (34 hours ago)
-- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (34 hours ago)
-- 1f3c263 Fix write-off entries not collapsing after creation from modal (35 hours ago)
-- d1effdb Fix critical regression: threads consuming more than transaction amount (35 hours ago)
-- 8fb845e Enhance workflow transitions from trace completion to visualization/reporting (35 hours ago)
+- 39674c8 Fix report generation issues and improve Technical Audit Trail (0 seconds ago)
+- 77a65c2 Fix trace completion detection and add navigation options when investigation complete (34 hours ago)
+- 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (34 hours ago)
+- 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (35 hours ago)
+- 8ac514b Fix brown conversion wallets being treated as terminal (3 days ago)
+- af50966 Fix bridge conversions being treated as terminal wallets (3 days ago)
+- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (3 days ago)
+- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (3 days ago)
+- 1f3c263 Fix write-off entries not collapsing after creation from modal (3 days ago)
+- d1effdb Fix critical regression: threads consuming more than transaction amount (3 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
