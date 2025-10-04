@@ -5,29 +5,20 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-04 13:31)
 
-**Commit:** 854140a568d43d2299f5424daf7f1deae6a24b45
+**Commit:** cbca4eb123bccacedd071d94b1abc476efeb6316
 **Author:** Your Name
-**Message:** Standardize workflow completion for all closure types
-
-- Unified completion flow for terminal wallets, cold storage, write-offs, and manual close
-- All completion paths now lead to same modal with graph/report options
-- Added manual completion button for stuck investigations
-- Terminal types include purple (exchanges), blue (cold storage), gray (obfuscated)
-- Auto-triggers completion modal when all funds accounted for
-- Removed duplicate completion ceremonies in favor of unified flow
-- Shows manual completion option when threads remain but user wants to end
-- Properly hides/shows UI elements based on investigation state
+**Message:** Update CLAUDE.md with latest changes
 
 ### Changed Files:
 ```
- CLAUDE.md  |  39 +++++++++++------
- index.html | 143 ++++++++++++++++++++++++++++++++++++++++++++++++++++---------
- 2 files changed, 147 insertions(+), 35 deletions(-)
+ CLAUDE.md | 47 +++++++++++++++++++++++------------------------
+ 1 file changed, 23 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 854140a Standardize workflow completion for all closure types (0 seconds ago)
+- cbca4eb Update CLAUDE.md with latest changes (0 seconds ago)
+- 854140a Standardize workflow completion for all closure types (28 seconds ago)
 - 5524d16 Redesign audit trail with hierarchical structure and proper conversion tracking (33 minutes ago)
 - 1bfe8c9 Update CLAUDE.md with latest changes (2 hours ago)
 - 1dcea68 Remove incorrect auto-write-off of bridge/swap outputs (3 hours ago)
@@ -36,7 +27,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - b584699 Add chain mismatch detection with clear error messaging (7 hours ago)
 - c4a57c6 Add attribution override feature and improve write-off entry display (7 hours ago)
 - 0d90653 Fix flow diagram visualization not initializing when trace is complete (7 hours ago)
-- 39674c8 Fix report generation issues and improve Technical Audit Trail (31 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

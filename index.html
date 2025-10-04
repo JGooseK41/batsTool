@@ -2257,9 +2257,17 @@
 
                         <!-- Premium Header with Glassmorphism -->
                         <div class="visualization-header" style="position: relative; padding: 30px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); z-index: 10;">
+                            <!-- Emergency Back Button - Always Visible -->
+                            <button onclick="switchTab('hops'); saveInvestigation();"
+                                    style="position: absolute; top: 20px; left: 20px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid white; padding: 10px 20px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s; z-index: 1000;"
+                                    onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.transform='scale(1.05)';"
+                                    onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.transform='scale(1)';">
+                                ← Back to Investigation
+                            </button>
+
                             <div style="max-width: 1400px; margin: 0 auto;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
+                                    <div style="margin-left: 200px;">
                                         <h2 style="margin: 0; font-size: 2.5rem; font-weight: 700; color: white; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);">
                                             <span style="display: inline-block; animation: pulse-glow 2s ease-in-out infinite;">🔬</span>
                                             Forensic Fund Flow Analysis
@@ -4309,6 +4317,38 @@
             // Tab-specific actions (these functions will be defined later)
             if (typeof window.tabActions !== 'undefined' && window.tabActions[tabName]) {
                 window.tabActions[tabName]();
+            }
+
+            // Special handling for flow diagram tab - auto-save and initialize
+            if (tabName === 'flowdiagram') {
+                // Auto-save before switching to graph
+                try {
+                    console.log('Auto-saving before graph visualization...');
+                    if (typeof saveInvestigation === 'function') {
+                        saveInvestigation();
+                    }
+                } catch (saveError) {
+                    console.error('Error auto-saving:', saveError);
+                }
+
+                // Initialize graph visualization when tab is shown
+                setTimeout(() => {
+                    try {
+                        if (typeof initializeGraphVisualization === 'function') {
+                            initializeGraphVisualization();
+                        } else {
+                            console.error('Graph initialization function not found');
+                            if (typeof showGraphErrorState === 'function') {
+                                showGraphErrorState('Graph visualization not loaded. Please refresh the page.');
+                            }
+                        }
+                    } catch (initError) {
+                        console.error('Error initializing graph:', initError);
+                        if (typeof showGraphErrorState === 'function') {
+                            showGraphErrorState('Failed to initialize graph. Your data is safe - please return to investigation.');
+                        }
+                    }
+                }, 100);
             }
             
             // Update the workflow indicators (function will be defined later)
@@ -37031,37 +37071,93 @@ To (RED Wallet): ${transfer.to}`;
             nextNoteId: 1               // ID counter for notes
         };
 
-        // Initialize the graph visualization
+        // Initialize the graph visualization with error handling
         function initializeGraphVisualization() {
-            console.log('🎨 Initializing premium DAG visualization...');
+            try {
+                console.log('🎨 Initializing premium DAG visualization...');
 
-            // Update header stats first
-            updateVisualizationStats();
+                // Ensure container exists
+                const container = document.getElementById('visualizationContainer');
+                if (!container) {
+                    console.error('Visualization container not found');
+                    showGraphErrorState('Visualization container not found. Please refresh the page.');
+                    return;
+                }
 
-            // Check if investigation has data
-            if (!investigation.hops || investigation.hops.length === 0) {
-                showEmptyGraphState();
-                return;
+                // Update header stats first
+                if (typeof updateVisualizationStats === 'function') {
+                    updateVisualizationStats();
+                }
+
+                // Check if investigation has data
+                if (!investigation || !investigation.hops || investigation.hops.length === 0) {
+                    showEmptyGraphState();
+                    return;
+                }
+
+                // Build advanced graph data structure with error handling
+                let graphData;
+                try {
+                    graphData = buildAdvancedDAG();
+                } catch (dagError) {
+                    console.error('Error building DAG:', dagError);
+                    showGraphErrorState('Error building graph structure. Your data is safe - please return to investigation.');
+                    return;
+                }
+
+                // Render based on current mode
+                const mode = window.currentVizMode || 'flow';
+                try {
+                    renderVisualization(mode, graphData);
+                } catch (renderError) {
+                    console.error('Error rendering visualization:', renderError);
+                    showGraphErrorState('Error rendering graph. Your data is safe - please return to investigation.');
+                    return;
+                }
+
+                // Setup premium interactions (with safety checks)
+                if (typeof setupPremiumInteractions === 'function') {
+                    try {
+                        setupPremiumInteractions();
+                    } catch (e) {
+                        console.warn('Could not setup interactions:', e);
+                    }
+                }
+
+                // Initialize mini-map (optional)
+                if (typeof renderMiniMap === 'function') {
+                    try {
+                        renderMiniMap(graphData);
+                    } catch (e) {
+                        console.warn('Could not render mini-map:', e);
+                    }
+                }
+
+                // Apply entrance animation (optional)
+                if (typeof animateGraphEntrance === 'function') {
+                    try {
+                        animateGraphEntrance();
+                    } catch (e) {
+                        console.warn('Could not animate entrance:', e);
+                    }
+                }
+
+                // Auto-fit with padding (optional)
+                if (typeof fitToScreen === 'function') {
+                    setTimeout(() => {
+                        try {
+                            fitToScreen(true);
+                        } catch (e) {
+                            console.warn('Could not auto-fit:', e);
+                        }
+                    }, 300);
+                }
+
+                console.log('✅ Graph visualization initialized successfully');
+            } catch (error) {
+                console.error('Fatal error in graph initialization:', error);
+                showGraphErrorState('An error occurred while loading the graph. Your data is safe - please return to investigation.');
             }
-
-            // Build advanced graph data structure
-            const graphData = buildAdvancedDAG();
-
-            // Render based on current mode
-            const mode = window.currentVizMode || 'flow';
-            renderVisualization(mode, graphData);
-
-            // Setup premium interactions
-            setupPremiumInteractions();
-
-            // Initialize mini-map
-            renderMiniMap(graphData);
-
-            // Apply entrance animation
-            animateGraphEntrance();
-
-            // Auto-fit with padding
-            setTimeout(() => fitToScreen(true), 300);
         }
 
         // Build advanced DAG structure with full accounting
@@ -38802,11 +38898,62 @@ To (RED Wallet): ${transfer.to}`;
         // Show empty state
         function showEmptyGraphState() {
             const content = document.getElementById('graphContent');
-            content.innerHTML = `
-                <text x="50%" y="50%" text-anchor="middle" font-size="18" fill="#999">
-                    No investigation data to visualize yet
-                </text>
-            `;
+            if (content) {
+                content.innerHTML = `
+                    <text x="50%" y="50%" text-anchor="middle" font-size="18" fill="#999">
+                        No investigation data to visualize yet
+                    </text>
+                `;
+            } else {
+                // Fallback if SVG content doesn't exist
+                const container = document.getElementById('visualizationContainer');
+                if (container) {
+                    container.innerHTML += `
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #999;">
+                            <h3>No investigation data to visualize yet</h3>
+                            <p>Complete at least one hop to see the flow diagram.</p>
+                            <button onclick="switchTab('hops')" class="btn" style="margin-top: 20px;">Return to Investigation</button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Show error state with message
+        function showGraphErrorState(errorMessage) {
+            const container = document.getElementById('visualizationContainer');
+            if (container) {
+                // Keep the header but show error in content area
+                const existingHeader = container.querySelector('.visualization-header');
+                container.innerHTML = '';
+                if (existingHeader) {
+                    container.appendChild(existingHeader);
+                }
+
+                container.innerHTML += `
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; padding: 40px; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff4444; border-radius: 10px; max-width: 600px;">
+                        <h2 style="color: #ff4444; margin-bottom: 20px;">⚠️ Visualization Error</h2>
+                        <p style="color: #fff; margin-bottom: 20px;">${errorMessage}</p>
+                        <div style="display: flex; gap: 15px; justify-content: center;">
+                            <button onclick="switchTab('hops'); saveInvestigation();" class="btn" style="background: #27ae60;">
+                                ← Back to Investigation
+                            </button>
+                            <button onclick="location.reload();" class="btn" style="background: #3498db;">
+                                🔄 Refresh Page
+                            </button>
+                            <button onclick="saveInvestigation();" class="btn" style="background: #9b59b6;">
+                                💾 Save Investigation
+                            </button>
+                        </div>
+                        <p style="color: #aaa; margin-top: 20px; font-size: 14px;">
+                            Your investigation data is safe and has been auto-saved.
+                        </p>
+                    </div>
+                `;
+            } else {
+                // Emergency fallback - show alert
+                alert('Graph visualization error: ' + errorMessage + '\n\nYour data is safe. Please save your investigation and refresh the page.');
+            }
         }
 
         // Build T-account DAG - keep existing function
