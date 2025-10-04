@@ -1073,6 +1073,88 @@
     }
 }
 
+/* Premium Visualization Animations */
+@keyframes grid-move {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 50px); }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+@keyframes flow-animation {
+    0% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -40; }
+}
+
+.viz-mode-btn:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.viz-mode-btn.active {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Premium DAG Node Styles */
+.dag-node {
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dag-node:hover {
+    transform: scale(1.05);
+    filter: brightness(1.2);
+}
+
+.dag-edge {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.dag-edge:hover {
+    opacity: 1;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* ART Verification Overlay Styles */
+.art-hop-section {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.art-thread-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.art-balance {
+    font-weight: bold;
+    color: #10b981;
+}
+
+.art-deficit {
+    font-weight: bold;
+    color: #ef4444;
+}
+
 .conversion-diamond {
     cursor: pointer;
     filter: drop-shadow(0 2px 6px rgba(139, 69, 19, 0.3));
@@ -2157,14 +2239,177 @@
 
                 <!-- Flow Diagram Tab -->
                 <div id="flowdiagram-tab" class="tab-content">
-                    <!-- Enhanced Graph Visualization Container -->
-                    <div id="visualizationContainer" style="width: 100%; min-height: 800px; background: #f8f9fa;">
-                        <div class="visualization-header" style="padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                            <h2 style="margin: 0 0 10px 0; font-size: 2rem;">🌐 Investigation Flow Visualization</h2>
-                            <p style="margin: 0; opacity: 0.95;">Interactive graph showing the complete flow of stolen funds through the blockchain</p>
+                    <!-- Ultra-Modern Graph Visualization Container -->
+                    <div id="visualizationContainer" style="width: 100%; min-height: 900px; background: linear-gradient(180deg, #0f0f1e 0%, #1a1a2e 100%); position: relative; overflow: hidden;">
+                        <!-- Animated background grid -->
+                        <div style="position: absolute; inset: 0; background-image: linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px); background-size: 50px 50px; animation: grid-move 10s linear infinite; pointer-events: none;"></div>
+
+                        <!-- Premium Header with Glassmorphism -->
+                        <div class="visualization-header" style="position: relative; padding: 30px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); z-index: 10;">
+                            <div style="max-width: 1400px; margin: 0 auto;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <h2 style="margin: 0; font-size: 2.5rem; font-weight: 700; color: white; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);">
+                                            <span style="display: inline-block; animation: pulse-glow 2s ease-in-out infinite;">🔬</span>
+                                            Forensic Fund Flow Analysis
+                                        </h2>
+                                        <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 1.1rem;">
+                                            Precision tracking with <strong>ART verification</strong> across <span id="totalHopsCount">0</span> hops
+                                        </p>
+                                    </div>
+
+                                    <!-- Real-time Stats Dashboard -->
+                                    <div style="display: flex; gap: 20px; align-items: center;">
+                                        <div style="text-align: center; padding: 0 20px; border-right: 1px solid rgba(255, 255, 255, 0.2);">
+                                            <div style="font-size: 2rem; font-weight: bold; color: #ffd700;" id="totalTrackedAmount">$0</div>
+                                            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-transform: uppercase;">Total Tracked</div>
+                                        </div>
+                                        <div style="text-align: center; padding: 0 20px; border-right: 1px solid rgba(255, 255, 255, 0.2);">
+                                            <div style="font-size: 2rem; font-weight: bold; color: #4ade80;" id="recoveredAmount">0%</div>
+                                            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-transform: uppercase;">Recovery Rate</div>
+                                        </div>
+                                        <div style="text-align: center; padding-left: 20px;">
+                                            <div style="font-size: 2rem; font-weight: bold; color: #60a5fa;" id="activeThreadsCount">0</div>
+                                            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-transform: uppercase;">Active Threads</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Advanced Controls Bar -->
+                                <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <button onclick="setVisualizationMode('flow')" class="viz-mode-btn active" style="padding: 8px 16px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white; border-radius: 8px; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s;">
+                                        <span style="margin-right: 6px;">⚡</span> Flow View
+                                    </button>
+                                    <button onclick="setVisualizationMode('sankey')" class="viz-mode-btn" style="padding: 8px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; border-radius: 8px; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s;">
+                                        <span style="margin-right: 6px;">〰️</span> Sankey
+                                    </button>
+                                    <button onclick="setVisualizationMode('circular')" class="viz-mode-btn" style="padding: 8px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; border-radius: 8px; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s;">
+                                        <span style="margin-right: 6px;">🎯</span> Circular
+                                    </button>
+                                    <button onclick="setVisualizationMode('timeline')" class="viz-mode-btn" style="padding: 8px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; border-radius: 8px; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s;">
+                                        <span style="margin-right: 6px;">📅</span> Timeline
+                                    </button>
+
+                                    <div style="flex: 1;"></div>
+
+                                    <button onclick="toggleARTOverlay()" style="padding: 8px 16px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1a1a2e; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                                        <span style="margin-right: 6px;">💎</span> ART Details
+                                    </button>
+                                    <button onclick="exportVisualization()" style="padding: 8px 16px; background: linear-gradient(135deg, #10b981, #34d399); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                                        <span style="margin-right: 6px;">📸</span> Export
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="visualization-controls" style="padding: 15px 20px; background: white; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <!-- Main Visualization Canvas -->
+                        <div id="mainVisualizationCanvas" style="position: relative; width: 100%; height: 700px; background: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 70%);">
+                            <!-- SVG Canvas for DAG -->
+                            <svg id="dagCanvas" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;">
+                                <defs>
+                                    <!-- Gradient Definitions -->
+                                    <linearGradient id="flowGradientRed" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.8" />
+                                        <stop offset="100%" style="stop-color:#dc2626;stop-opacity:1" />
+                                    </linearGradient>
+                                    <linearGradient id="flowGradientGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.8" />
+                                        <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+                                    </linearGradient>
+                                    <linearGradient id="flowGradientPurple" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#a855f7;stop-opacity:0.8" />
+                                        <stop offset="100%" style="stop-color:#9333ea;stop-opacity:1" />
+                                    </linearGradient>
+                                    <linearGradient id="flowGradientGold" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:0.8" />
+                                        <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+                                    </linearGradient>
+
+                                    <!-- Glow Filters -->
+                                    <filter id="nodeGlow">
+                                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                                        <feMerge>
+                                            <feMergeNode in="coloredBlur"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+
+                                    <!-- Drop Shadow -->
+                                    <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
+                                        <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+                                        <feOffset dx="0" dy="2" result="offsetblur"/>
+                                        <feFlood flood-color="#000000" flood-opacity="0.2"/>
+                                        <feComposite in2="offsetblur" operator="in"/>
+                                        <feMerge>
+                                            <feMergeNode/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+
+                                    <!-- Animated Path Pattern -->
+                                    <pattern id="flowPattern" x="0" y="0" width="40" height="1" patternUnits="userSpaceOnUse">
+                                        <rect x="0" y="0" width="20" height="1" fill="rgba(99, 102, 241, 0.3)">
+                                            <animate attributeName="x" from="-20" to="20" dur="2s" repeatCount="indefinite"/>
+                                        </rect>
+                                    </pattern>
+                                </defs>
+
+                                <!-- Canvas groups will be inserted here -->
+                                <g id="edgeLayer"></g>
+                                <g id="nodeLayer"></g>
+                                <g id="labelLayer"></g>
+                                <g id="overlayLayer"></g>
+                            </svg>
+
+                            <!-- HTML Overlay for Rich Interactions -->
+                            <div id="htmlOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                                <!-- Tooltip -->
+                                <div id="vizTooltip" style="position: absolute; display: none; background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 12px; color: white; font-size: 13px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); z-index: 1000; pointer-events: none;"></div>
+
+                                <!-- ART Overlay Panel -->
+                                <div id="artOverlay" style="position: absolute; top: 20px; right: 20px; width: 320px; background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 16px; padding: 20px; display: none; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); z-index: 100;">
+                                    <h3 style="margin: 0 0 16px 0; color: #fbbf24; font-size: 18px; font-weight: 600;">💎 ART Verification</h3>
+                                    <div id="artDetails" style="max-height: 500px; overflow-y: auto;"></div>
+                                    <button onclick="toggleARTOverlay()" style="margin-top: 16px; width: 100%; padding: 8px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.3); color: white; border-radius: 8px; cursor: pointer;">Close</button>
+                                </div>
+                            </div>
+
+                            <!-- Mini-map -->
+                            <div id="miniMap" style="position: absolute; bottom: 20px; right: 20px; width: 200px; height: 150px; background: rgba(17, 24, 39, 0.9); border: 2px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 8px; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+                                <div style="color: rgba(255, 255, 255, 0.7); font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px;">Overview</div>
+                                <svg id="miniMapSvg" style="width: 100%; height: calc(100% - 20px); border-radius: 6px; background: rgba(0, 0, 0, 0.3);"></svg>
+                            </div>
+
+                            <!-- Legend -->
+                            <div id="legendPanel" style="position: absolute; bottom: 20px; left: 20px; background: rgba(17, 24, 39, 0.9); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 16px; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+                                <div style="color: white; font-size: 12px; font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Legend</div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 4px;"></div>
+                                        <span style="color: rgba(255, 255, 255, 0.9); font-size: 13px;">Victim Wallet</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 20px; height: 20px; background: #3b82f6; border-radius: 4px;"></div>
+                                        <span style="color: rgba(255, 255, 255, 0.9); font-size: 13px;">Intermediate</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 20px; height: 20px; background: #a855f7; border-radius: 4px;"></div>
+                                        <span style="color: rgba(255, 255, 255, 0.9); font-size: 13px;">Exchange</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 20px; height: 20px; background: #f59e0b; border-radius: 4px;"></div>
+                                        <span style="color: rgba(255, 255, 255, 0.9); font-size: 13px;">Bridge/DEX</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 20px; height: 20px; background: #10b981; border-radius: 4px;"></div>
+                                        <span style="color: rgba(255, 255, 255, 0.9); font-size: 13px;">Recovered</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Controls (Hidden for now) -->
+                        <div class="visualization-controls" style="padding: 15px 20px; background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(99, 102, 241, 0.2); display: none;">
                             <div class="zoom-controls" style="display: flex; gap: 8px;">
                                 <button onclick="zoomIn()" class="btn btn-secondary" title="Zoom In">🔍+</button>
                                 <button onclick="zoomOut()" class="btn btn-secondary" title="Zoom Out">🔍-</button>
@@ -3434,10 +3679,11 @@
 
             let html = '<div style="font-family: \'Courier New\', monospace; font-size: 13px;">';
 
-            // Opening Balance Sheet
+            // Opening - Initial Stolen Funds
             const rootTotals = investigation.confirmedRootTotalsByCurrency || {};
             html += '<div style="background: #1a1a2e; color: #fff; padding: 20px; margin-bottom: 30px; border-radius: 8px;">';
-            html += '<h2 style="margin: 0 0 15px 0; text-align: center; border-bottom: 2px solid #fff; padding-bottom: 10px;">═══ OPENING BALANCE SHEET ═══</h2>';
+            html += '<h2 style="margin: 0 0 15px 0; text-align: center; border-bottom: 2px solid #fff; padding-bottom: 10px;">═══ FORENSIC TRANSACTION FLOW ANALYSIS ═══</h2>';
+            html += '<h3 style="margin: 15px 0 10px 0; text-align: center; color: #ff6b6b;">Initial Stolen Funds</h3>';
             html += '<table style="width: 100%; margin-top: 15px;">';
             html += '<tr><th style="text-align: left; padding: 5px;">Currency</th><th style="text-align: right; padding: 5px;">Amount</th></tr>';
             Object.entries(rootTotals).forEach(([currency, amount]) => {
@@ -3446,42 +3692,27 @@
             html += '</table>';
             html += '</div>';
 
-            // Process each hop with accounting ledger format
+            // Process each hop with hierarchical structure
             investigation.hops?.forEach(hop => {
                 html += `<div style="border: 3px solid #2c3e50; margin-bottom: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">`;
                 html += `<div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 15px;">`;
-                html += `<h2 style="margin: 0; text-align: center;">══════════ HOP ${hop.hopNumber} LEDGER ══════════</h2>`;
+                html += `<h2 style="margin: 0;">🔹 HOP ${hop.hopNumber}</h2>`;
+                html += `<div style="font-size: 14px; margin-top: 5px; opacity: 0.9;">Funds Available: `;
+                const hopART = hop.artAtStartByCurrency || {};
+                Object.entries(hopART).forEach(([currency, amount], index) => {
+                    if (index > 0) html += ' | ';
+                    html += `${amount.toLocaleString()} ${currency}`;
+                });
+                html += `</div>`;
                 html += `</div>`;
 
-                // Opening balance for this hop
-                const hopART = hop.artAtStartByCurrency || {};
                 html += '<div style="padding: 20px;">';
-                html += '<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">';
-                html += '<tr style="background: #34495e; color: white;">';
-                html += '<th colspan="4" style="padding: 10px; text-align: center;">OPENING BALANCE</th>';
-                html += '</tr>';
-                html += '<tr style="background: #ecf0f1;">';
-                Object.entries(hopART).forEach(([currency, amount]) => {
-                    html += `<td style="padding: 8px; font-weight: bold;">${currency}:</td>`;
-                    html += `<td style="padding: 8px; text-align: right;">${amount.toLocaleString()}</td>`;
-                });
-                html += '</tr>';
-                html += '</table>';
 
-                // Transaction Ledger
-                html += '<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">';
-                html += '<thead>';
-                html += '<tr style="background: #2c3e50; color: white;">';
-                html += '<th style="padding: 10px; border: 1px solid #34495e; width: 5%;">#</th>';
-                html += '<th style="padding: 10px; border: 1px solid #34495e; width: 15%;">Type</th>';
-                html += '<th style="padding: 10px; border: 1px solid #34495e; width: 15%;">Notation</th>';
-                html += '<th style="padding: 10px; border: 1px solid #34495e; width: 15%; text-align: right;">Amount</th>';
-                html += '<th style="padding: 10px; border: 1px solid #34495e; width: 50%;">Details</th>';
-                html += '</tr>';
-                html += '</thead>';
-                html += '<tbody>';
+                // Show hierarchical structure: Entries contain threads
+                html += '<div style="margin-bottom: 20px;">';
+                html += '<h3 style="margin: 0 0 15px 0; color: #2c3e50;">Transaction Flow:</h3>';
 
-                hop.entries?.forEach((entry, index) => {
+                hop.entries?.forEach((entry, entryIndex) => {
                     const isTerminal = entry.isTerminalWallet || entry.toWalletType === 'purple';
                     const isConversion = entry.isBridge || entry.isSwap || entry.toWalletType === 'brown';
                     const isWriteoff = entry.entryType === 'writeoff';
@@ -3489,165 +3720,259 @@
                     // Determine entry type and styling
                     let entryType = 'TRACE';
                     let bgColor = '#ffffff';
+                    let borderColor = '#3498db';
                     if (isTerminal) {
                         entryType = 'TERMINAL';
                         bgColor = '#f3e5ff';
+                        borderColor = '#9b59b6';
                     } else if (isConversion) {
                         entryType = 'CONVERSION';
                         bgColor = '#fff9f0';
+                        borderColor = '#f39c12';
                     } else if (isWriteoff) {
                         entryType = 'WRITE-OFF';
                         bgColor = '#f5f5f5';
+                        borderColor = '#95a5a6';
                     }
 
-                    html += `<tr style="background: ${bgColor};">`;
-                    html += `<td style="padding: 10px; border: 1px solid #dee2e6; text-align: center; font-weight: bold;">${index + 1}</td>`;
-                    html += `<td style="padding: 10px; border: 1px solid #dee2e6;"><strong>${entryType}</strong></td>`;
-                    html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.notation || `Entry ${index + 1}`}</td>`;
-                    html += `<td style="padding: 10px; border: 1px solid #dee2e6; text-align: right; font-weight: bold;">${parseFloat(entry.amount).toLocaleString()} ${entry.currency}</td>`;
+                    // Entry container with hierarchy
+                    html += `<div style="margin-bottom: 20px; border-left: 4px solid ${borderColor}; padding-left: 15px;">`;
 
-                    // Details column
-                    html += `<td style="padding: 10px; border: 1px solid #dee2e6; font-size: 11px;">`;
+                    // Entry header
+                    html += `<div style="background: ${bgColor}; padding: 12px; border-radius: 5px; margin-bottom: 10px;">`;
+                    html += `<div style="display: flex; justify-content: space-between; align-items: center;">`;
+                    html += `<div>`;
+                    html += `<strong style="font-size: 16px;">📄 Entry ${entryIndex + 1}: ${entryType}</strong>`;
+                    if (entry.notation) {
+                        html += ` <span style="color: #7f8c8d; margin-left: 10px;">${entry.notation}</span>`;
+                    }
+                    html += `</div>`;
+                    html += `<div style="font-size: 18px; font-weight: bold;">${parseFloat(entry.amount).toLocaleString()} ${entry.currency}</div>`;
+                    html += `</div>`;
 
+                    // Entry details
+                    html += `<div style="margin-top: 10px; font-size: 12px; color: #555;">`;
                     if (entry.txHash) {
-                        html += `<div><strong>TX:</strong> <code style="font-size: 10px;">${entry.txHash}</code></div>`;
+                        html += `<div><strong>Transaction:</strong> <code style="background: #f4f4f4; padding: 2px 4px; border-radius: 3px;">${entry.txHash.substring(0, 20)}...${entry.txHash.slice(-20)}</code></div>`;
                     }
-
                     if (entry.toWallet) {
-                        html += `<div><strong>To:</strong> <code style="font-size: 10px;">${entry.toWallet}</code></div>`;
+                        html += `<div><strong>Destination:</strong> <code style="background: #f4f4f4; padding: 2px 4px; border-radius: 3px;">${entry.toWallet.substring(0, 20)}...${entry.toWallet.slice(-20)}</code></div>`;
                     }
-
                     if (entry.timestamp || entry.datetime) {
                         const timeDisplay = entry.timestamp ?
                             formatDateTimeForReport(entry.timestamp, entry.timezone || 'UTC') :
                             entry.datetime + ' ' + (entry.timezone || 'UTC');
                         html += `<div><strong>Time:</strong> ${timeDisplay}</div>`;
                     }
+                    html += `</div>`;
+                    html += `</div>`;
 
-                    // Show conversion output for bridges/swaps
+                    // Show threads that compose this entry
+                    if (entry.allocatedThreads && entry.allocatedThreads.length > 0) {
+                        html += `<div style="margin-left: 20px; margin-top: 10px;">`;
+                        html += `<div style="font-weight: bold; margin-bottom: 8px; color: #2c3e50;">└─ Source Threads Used:</div>`;
+                        entry.allocatedThreads.forEach(thread => {
+                            html += `<div style="margin-left: 20px; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-bottom: 5px;">`;
+                            html += `<span style="font-family: monospace; color: #e74c3c;">🧵 ${thread.notation}</span>`;
+                            html += ` - ${thread.amount.toLocaleString()} ${thread.currency}`;
+                            if (thread.wasPartialTrace) {
+                                const percentage = (thread.proportionalMultiplier * 100).toFixed(2);
+                                html += ` <span style="color: #e67e22; font-weight: bold;">(${percentage}% ownership)</span>`;
+                            }
+                            html += `</div>`;
+                        });
+                        html += `</div>`;
+                    }
+
+                    // Show conversion output
                     if (isConversion) {
+                        html += `<div style="margin-left: 20px; margin-top: 15px; background: #ffe4b5; padding: 10px; border-radius: 5px;">`;
+                        html += `<strong>🔄 Conversion Output:</strong> `;
+
                         // Check for bridge output in notes
                         if (entry.notes && entry.notes.includes('[BRIDGE OUTPUT]')) {
                             const outputMatch = entry.notes.match(/Output Amount: ([\d,\.]+) (\w+)/);
                             if (outputMatch) {
-                                html += `<div style="background: #ffe4b5; padding: 5px; margin-top: 5px; border-radius: 3px;">`;
-                                html += `<strong>→ OUTPUT:</strong> ${outputMatch[1]} ${outputMatch[2]}`;
-                                html += `</div>`;
+                                html += `${outputMatch[1]} ${outputMatch[2]}`;
+
+                                // Check if this created new threads
+                                const outputThreads = investigation.sourceThreadsIndex?.filter(t =>
+                                    t.sourceType === 'bridge' && t.bridgeFromNotation === entry.notation
+                                );
+                                if (outputThreads && outputThreads.length > 0) {
+                                    html += `<div style="margin-top: 8px;">`;
+                                    html += `<strong>New threads created:</strong>`;
+                                    outputThreads.forEach(thread => {
+                                        html += `<div style="margin-top: 5px;">`;
+                                        html += `• <span style="font-family: monospace; color: #27ae60;">🧵 ${thread.notation}</span>`;
+                                        html += ` - ${thread.amount.toLocaleString()} ${thread.currency}`;
+                                        if (!thread.allocated && !thread.writtenOff) {
+                                            html += ` <span style="color: #e74c3c; font-weight: bold;">[UNALLOCATED]</span>`;
+                                        }
+                                        html += `</div>`;
+                                    });
+                                    html += `</div>`;
+                                }
                             }
                         } else if (entry.swapDetails) {
-                            html += `<div style="background: #ffe4b5; padding: 5px; margin-top: 5px; border-radius: 3px;">`;
-                            html += `<strong>→ OUTPUT:</strong> ${entry.swapDetails.outputAmount} ${entry.swapDetails.outputCurrency}`;
-                            html += `</div>`;
+                            html += `${entry.swapDetails.outputAmount} ${entry.swapDetails.outputCurrency}`;
                         }
-                    }
-
-                    // Show terminal exchange name
-                    if (isTerminal && (entry.exchangeName || entry.notes)) {
-                        const exchangeName = entry.exchangeName ||
-                            (entry.notes && entry.notes.match(/Terminal wallet: ([^\n]+)/)?.[1]) ||
-                            'Unknown Exchange';
-                        html += `<div style="background: #e6d7ff; padding: 5px; margin-top: 5px; border-radius: 3px;">`;
-                        html += `<strong>EXCHANGE:</strong> ${exchangeName}`;
                         html += `</div>`;
                     }
 
-                    html += `</td>`;
-                    html += `</tr>`;
+                    // Show terminal exchange
+                    if (isTerminal) {
+                        const exchangeName = entry.exchangeName ||
+                            (entry.notes && entry.notes.match(/Terminal wallet: ([^\n]+)/)?.[1]) ||
+                            'Unknown Exchange';
+                        html += `<div style="margin-left: 20px; margin-top: 15px; background: #e6d7ff; padding: 10px; border-radius: 5px;">`;
+                        html += `<strong>🏦 Terminal Exchange:</strong> ${exchangeName}`;
+                        html += `</div>`;
+                    }
+
+                    html += `</div>`; // Close entry container
                 });
 
-                html += '</tbody>';
-                html += '</table>';
+                html += `</div>`; // Close flow container
 
-                // Accounting Reconciliation
-                html += '<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">';
-                html += '<tr style="background: #34495e; color: white;">';
-                html += '<th colspan="4" style="padding: 10px; text-align: center;">HOP ' + hop.hopNumber + ' RECONCILIATION</th>';
-                html += '</tr>';
+                // Hop Summary
+                html += '<div style="background: #f8f9fa; padding: 15px; margin-top: 20px; border-radius: 8px;">';
+                html += `<h4 style="margin: 0 0 10px 0; color: #2c3e50;">Hop ${hop.hopNumber} Summary:</h4>`;
 
                 // Calculate totals by category
                 const terminalEntries = hop.entries.filter(e => e.isTerminalWallet || e.toWalletType === 'purple');
                 const writeoffEntries = hop.entries.filter(e => e.entryType === 'writeoff');
+                const conversionEntries = hop.entries.filter(e => e.isBridge || e.isSwap || e.toWalletType === 'brown');
                 const continuingEntries = hop.entries.filter(e =>
                     !e.isTerminalWallet &&
                     e.entryType !== 'writeoff' &&
-                    e.toWalletType !== 'purple'
+                    e.toWalletType !== 'purple' &&
+                    !e.isBridge && !e.isSwap && e.toWalletType !== 'brown'
                 );
 
-                // Group by currency for proper accounting
-                const currencyTotals = {};
+                // Group totals by currency and track conversions
+                const currencyFlows = {};
+                const conversions = [];
+
                 Object.keys(hopART).forEach(currency => {
-                    currencyTotals[currency] = {
+                    currencyFlows[currency] = {
                         opening: hopART[currency] || 0,
                         terminal: 0,
                         writeoff: 0,
-                        continuing: 0
+                        continuing: 0,
+                        converted: 0
                     };
                 });
 
                 terminalEntries.forEach(e => {
                     const curr = e.currency;
-                    if (!currencyTotals[curr]) currencyTotals[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0 };
-                    currencyTotals[curr].terminal += parseFloat(e.amount);
+                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0 };
+                    currencyFlows[curr].terminal += parseFloat(e.amount);
                 });
 
                 writeoffEntries.forEach(e => {
                     const curr = e.currency;
-                    if (!currencyTotals[curr]) currencyTotals[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0 };
-                    currencyTotals[curr].writeoff += parseFloat(e.amount);
+                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0 };
+                    currencyFlows[curr].writeoff += parseFloat(e.amount);
+                });
+
+                conversionEntries.forEach(e => {
+                    const curr = e.currency;
+                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0 };
+                    currencyFlows[curr].converted += parseFloat(e.amount);
+
+                    // Track conversion details
+                    if (e.notes && e.notes.includes('[BRIDGE OUTPUT]')) {
+                        const outputMatch = e.notes.match(/Output Amount: ([\d,\.]+) (\w+)/);
+                        if (outputMatch) {
+                            conversions.push({
+                                from: `${parseFloat(e.amount).toLocaleString()} ${curr}`,
+                                to: `${outputMatch[1]} ${outputMatch[2]}`,
+                                notation: e.notation
+                            });
+                        }
+                    } else if (e.swapDetails) {
+                        conversions.push({
+                            from: `${parseFloat(e.amount).toLocaleString()} ${curr}`,
+                            to: `${e.swapDetails.outputAmount} ${e.swapDetails.outputCurrency}`,
+                            notation: e.notation
+                        });
+                    }
                 });
 
                 continuingEntries.forEach(e => {
                     const curr = e.currency;
-                    if (!currencyTotals[curr]) currencyTotals[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0 };
-                    currencyTotals[curr].continuing += parseFloat(e.amount);
+                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0 };
+                    currencyFlows[curr].continuing += parseFloat(e.amount);
                 });
 
-                // Display reconciliation table
-                Object.entries(currencyTotals).forEach(([currency, totals]) => {
-                    html += '<tr style="background: #ecf0f1;">';
-                    html += `<td style="padding: 8px; border: 1px solid #dee2e6; font-weight: bold;">${currency}</td>`;
-                    html += '<td colspan="3" style="padding: 8px; border: 1px solid #dee2e6;">';
-                    html += '<table style="width: 100%;">';
-                    html += `<tr><td>Opening Balance:</td><td style="text-align: right;">${totals.opening.toLocaleString()}</td></tr>`;
-                    if (totals.terminal > 0) {
-                        html += `<tr><td style="color: #9b59b6;">- Terminal Deposits:</td><td style="text-align: right; color: #9b59b6;">-${totals.terminal.toLocaleString()}</td></tr>`;
-                    }
-                    if (totals.writeoff > 0) {
-                        html += `<tr><td style="color: #7f8c8d;">- Write-offs:</td><td style="text-align: right; color: #7f8c8d;">-${totals.writeoff.toLocaleString()}</td></tr>`;
-                    }
-                    const closing = totals.opening - totals.terminal - totals.writeoff;
-                    html += `<tr style="border-top: 2px solid #34495e; font-weight: bold;"><td>Closing Balance:</td><td style="text-align: right;">${closing.toLocaleString()}</td></tr>`;
-                    html += '</table>';
-                    html += '</td>';
-                    html += '</tr>';
-                });
+                // Display flow summary
+                html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">';
 
-                // Validation row
-                const nextHop = investigation.hops.find(h => h.hopNumber === hop.hopNumber + 1);
-                const nextART = nextHop?.artAtStartByCurrency || {};
-
-                html += '<tr style="background: #2c3e50; color: white;">';
-                html += '<td colspan="4" style="padding: 10px; text-align: center; font-weight: bold;">';
-
-                // Calculate validation
-                let validationPassed = true;
-                let validationDetails = [];
-                Object.entries(currencyTotals).forEach(([currency, totals]) => {
-                    const expected = totals.opening - totals.terminal - totals.writeoff;
-                    const actual = nextART[currency] || 0;
-                    if (Math.abs(expected - actual) > 0.01) {
-                        validationPassed = false;
-                        validationDetails.push(`${currency}: Expected ${expected.toLocaleString()}, Got ${actual.toLocaleString()}`);
+                // Left side: Fund flows
+                html += '<div>';
+                html += '<strong>Fund Movements:</strong>';
+                Object.entries(currencyFlows).forEach(([currency, flows]) => {
+                    if (flows.opening > 0 || flows.terminal > 0 || flows.writeoff > 0 || flows.continuing > 0 || flows.converted > 0) {
+                        html += `<div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">`;
+                        html += `<strong>${currency}:</strong><br>`;
+                        html += `Starting: ${flows.opening.toLocaleString()}<br>`;
+                        if (flows.terminal > 0) {
+                            html += `<span style="color: #9b59b6;">→ To Exchanges: ${flows.terminal.toLocaleString()}</span><br>`;
+                        }
+                        if (flows.converted > 0) {
+                            html += `<span style="color: #f39c12;">→ Converted: ${flows.converted.toLocaleString()}</span><br>`;
+                        }
+                        if (flows.writeoff > 0) {
+                            html += `<span style="color: #95a5a6;">→ Written off: ${flows.writeoff.toLocaleString()}</span><br>`;
+                        }
+                        if (flows.continuing > 0) {
+                            html += `<span style="color: #27ae60;">→ Continuing: ${flows.continuing.toLocaleString()}</span><br>`;
+                        }
+                        const remaining = flows.opening - flows.terminal - flows.writeoff - flows.converted - flows.continuing;
+                        if (Math.abs(remaining) > 0.01) {
+                            html += `<strong>Unaccounted: ${remaining.toLocaleString()}</strong>`;
+                        }
+                        html += `</div>`;
                     }
                 });
+                html += '</div>';
 
-                if (validationPassed) {
-                    html += '✔ BALANCE VERIFIED';
-                } else {
-                    html += '✖ BALANCE ERROR: ' + validationDetails.join(', ');
+                // Right side: Conversions
+                if (conversions.length > 0) {
+                    html += '<div>';
+                    html += '<strong>Currency Conversions:</strong>';
+                    conversions.forEach(conv => {
+                        html += `<div style="margin: 10px 0; padding: 10px; background: #fff9f0; border-radius: 5px;">`;
+                        html += `<div style="font-size: 12px; color: #666;">${conv.notation}</div>`;
+                        html += `${conv.from} → ${conv.to}`;
+                        html += `</div>`;
+                    });
+                    html += '</div>';
                 }
-                html += '</td></tr>';
-                html += '</table>';
+
+                html += '</div>'; // Close grid
+
+                // Show any new currency threads created
+                const newCurrencies = new Set();
+                conversionEntries.forEach(entry => {
+                    if (entry.notes && entry.notes.includes('[BRIDGE OUTPUT]')) {
+                        const outputMatch = entry.notes.match(/Output Amount: ([\d,\.]+) (\w+)/);
+                        if (outputMatch && !currencyFlows[outputMatch[2]]) {
+                            newCurrencies.add(outputMatch[2]);
+                        }
+                    } else if (entry.swapDetails && !currencyFlows[entry.swapDetails.outputCurrency]) {
+                        newCurrencies.add(entry.swapDetails.outputCurrency);
+                    }
+                });
+
+                if (newCurrencies.size > 0) {
+                    html += `<div style="margin-top: 10px; padding: 10px; background: #d4edda; border-radius: 5px;">`;
+                    html += `<strong>New Currencies Introduced:</strong> ${Array.from(newCurrencies).join(', ')}`;
+                    html += `</div>`;
+                }
+
+                html += '</div>'; // Close summary box
                 html += '</div>'; // Close hop padding
                 html += '</div>'; // Close hop container
             });
@@ -36607,7 +36932,10 @@ To (RED Wallet): ${transfer.to}`;
 
         // Initialize the graph visualization
         function initializeGraphVisualization() {
-            console.log('Initializing modern graph visualization...');
+            console.log('🎨 Initializing premium DAG visualization...');
+
+            // Update header stats first
+            updateVisualizationStats();
 
             // Check if investigation has data
             if (!investigation.hops || investigation.hops.length === 0) {
@@ -36615,26 +36943,193 @@ To (RED Wallet): ${transfer.to}`;
                 return;
             }
 
-            // Build graph data with conversion wallet support
-            buildModernGraphData();
+            // Build advanced graph data structure
+            const graphData = buildAdvancedDAG();
 
-            // Calculate optimal layout
-            calculateOptimalLayout();
+            // Render based on current mode
+            const mode = window.currentVizMode || 'flow';
+            renderVisualization(mode, graphData);
 
-            // Render the modern graph
-            renderModernGraph();
+            // Setup premium interactions
+            setupPremiumInteractions();
 
-            // Setup enhanced interactions
-            setupEnhancedInteractions();
+            // Initialize mini-map
+            renderMiniMap(graphData);
 
-            // Update statistics
-            updateGraphStatistics();
-
-            // Apply smooth entrance animation
+            // Apply entrance animation
             animateGraphEntrance();
 
-            // Fit to screen with padding
-            setTimeout(() => fitToScreen(true), 100);
+            // Auto-fit with padding
+            setTimeout(() => fitToScreen(true), 300);
+        }
+
+        // Build advanced DAG structure with full accounting
+        function buildAdvancedDAG() {
+            const nodes = new Map();
+            const edges = [];
+            const layers = [];
+
+            // Layer 0: Victim wallets
+            const victimLayer = {
+                id: 'victims',
+                label: 'Victim Wallets',
+                nodes: [],
+                artIn: {},
+                artOut: {}
+            };
+
+            investigation.victims?.forEach(victim => {
+                victim.transactions?.forEach(tx => {
+                    const nodeId = `victim_${tx.receivingWallet}`;
+                    if (!nodes.has(nodeId)) {
+                        const node = {
+                            id: nodeId,
+                            label: tx.receivingWallet.substring(0, 8) + '...',
+                            fullAddress: tx.receivingWallet,
+                            type: 'victim',
+                            layer: 0,
+                            threads: [],
+                            totalIn: 0,
+                            totalOut: 0,
+                            currencies: new Set(),
+                            color: '#ef4444'
+                        };
+                        nodes.set(nodeId, node);
+                        victimLayer.nodes.push(node);
+                    }
+
+                    const node = nodes.get(nodeId);
+                    const amount = parseFloat(tx.amount);
+                    const currency = tx.currency === 'CUSTOM' ? tx.customCurrency : tx.currency;
+
+                    node.threads.push(`V${victim.id}-T${tx.id}`);
+                    node.totalIn += amount;
+                    node.totalOut += amount;
+                    node.currencies.add(currency);
+
+                    // Track ART
+                    victimLayer.artOut[currency] = (victimLayer.artOut[currency] || 0) + amount;
+                });
+            });
+            layers.push(victimLayer);
+
+            // Process each hop
+            investigation.hops?.forEach(hop => {
+                const hopLayer = {
+                    id: `hop_${hop.hopNumber}`,
+                    label: `Hop ${hop.hopNumber}`,
+                    nodes: [],
+                    artIn: { ...hop.artAtStartByCurrency },
+                    artOut: {}
+                };
+
+                hop.entries?.forEach(entry => {
+                    if (entry.entryType === 'trace') {
+                        const nodeId = entry.isTerminalWallet ?
+                            `terminal_${entry.toWallet}` :
+                            `hop${hop.hopNumber}_${entry.toWallet}`;
+
+                        if (!nodes.has(nodeId)) {
+                            const node = {
+                                id: nodeId,
+                                label: getSmartLabel(entry.toWallet, entry.toWalletType),
+                                fullAddress: entry.toWallet,
+                                type: getNodeType(entry),
+                                layer: entry.isTerminalWallet ? 999 : hop.hopNumber,
+                                threads: [],
+                                totalIn: 0,
+                                totalOut: 0,
+                                currencies: new Set(),
+                                color: getNodeColor(entry),
+                                exchangeName: entry.exchangeName,
+                                isBridge: entry.isBridge,
+                                isTerminal: entry.isTerminalWallet
+                            };
+                            nodes.set(nodeId, node);
+
+                            if (entry.isTerminalWallet) {
+                                // Terminal nodes go in special layer
+                            } else {
+                                hopLayer.nodes.push(node);
+                            }
+                        }
+
+                        const node = nodes.get(nodeId);
+                        const amount = parseFloat(entry.amount);
+                        const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+
+                        node.threads.push(entry.notation);
+                        node.totalIn += amount;
+                        node.currencies.add(currency);
+
+                        // Create edge
+                        const fromId = hop.hopNumber === 1 ?
+                            `victim_${entry.fromWallet || ''}` :
+                            `hop${hop.hopNumber - 1}_${entry.fromWallet || ''}`;
+
+                        edges.push({
+                            id: `edge_${edges.length}`,
+                            from: fromId,
+                            to: nodeId,
+                            amount: amount,
+                            currency: currency,
+                            thread: entry.notation,
+                            txHash: entry.txHash,
+                            hopNumber: hop.hopNumber,
+                            color: entry.isTerminalWallet ? '#a855f7' : '#6366f1',
+                            animated: entry.isBridge || entry.isSwap
+                        });
+
+                        // Track ART flow
+                        if (!entry.isTerminalWallet) {
+                            hopLayer.artOut[currency] = (hopLayer.artOut[currency] || 0) + amount;
+                        }
+                    }
+                });
+
+                layers.push(hopLayer);
+            });
+
+            return { nodes, edges, layers };
+        }
+
+        // Get smart label for nodes
+        function getSmartLabel(address, walletType) {
+            if (!address) return 'Unknown';
+
+            // Check known entities
+            const knownEntity = window.knownWalletEntities?.[address];
+            if (knownEntity) {
+                return knownEntity.name;
+            }
+
+            // Short address
+            return address.substring(0, 6) + '...' + address.substring(address.length - 4);
+        }
+
+        // Get node type for styling
+        function getNodeType(entry) {
+            if (entry.isTerminalWallet) return 'terminal';
+            if (entry.isBridge) return 'bridge';
+            if (entry.isSwap) return 'dex';
+            if (entry.toWalletType === 'red') return 'victim';
+            if (entry.toWalletType === 'purple') return 'exchange';
+            if (entry.toWalletType === 'brown') return 'conversion';
+            return 'intermediate';
+        }
+
+        // Get node color based on type
+        function getNodeColor(entry) {
+            const colors = {
+                'terminal': '#a855f7',
+                'bridge': '#f59e0b',
+                'dex': '#eab308',
+                'victim': '#ef4444',
+                'exchange': '#a855f7',
+                'conversion': '#f59e0b',
+                'intermediate': '#6366f1'
+            };
+            return colors[getNodeType(entry)] || '#6b7280';
         }
 
         // Build modern graph data with conversion wallets
@@ -39503,6 +39998,235 @@ To (RED Wallet): ${transfer.to}`;
         }
 
         // Expose graph visualization functions to window for global access
+        // Premium rendering functions
+        window.renderVisualization = function(mode, graphData) {
+            const svg = document.getElementById('dagCanvas');
+            const nodeLayer = document.getElementById('nodeLayer');
+            const edgeLayer = document.getElementById('edgeLayer');
+
+            // Clear previous render
+            nodeLayer.innerHTML = '';
+            edgeLayer.innerHTML = '';
+
+            if (mode === 'flow') {
+                renderFlowView(graphData, svg);
+            } else if (mode === 'sankey') {
+                renderSankeyView(graphData, svg);
+            } else if (mode === 'circular') {
+                renderCircularView(graphData, svg);
+            } else if (mode === 'timeline') {
+                renderTimelineView(graphData, svg);
+            }
+        };
+
+        function renderFlowView(graphData, svg) {
+            const width = svg.clientWidth;
+            const height = svg.clientHeight;
+            const layerWidth = width / (graphData.layers.length + 1);
+
+            // Position nodes in layers
+            graphData.layers.forEach((layer, layerIndex) => {
+                const x = layerWidth * (layerIndex + 0.5);
+                const nodeSpacing = Math.min(80, height / (layer.nodes.length + 1));
+
+                layer.nodes.forEach((node, nodeIndex) => {
+                    node.x = x;
+                    node.y = nodeSpacing * (nodeIndex + 1);
+                });
+            });
+
+            // Render edges with bezier curves
+            const edgeLayer = document.getElementById('edgeLayer');
+            graphData.edges.forEach(edge => {
+                const fromNode = graphData.nodes.get(edge.from);
+                const toNode = graphData.nodes.get(edge.to);
+
+                if (fromNode && toNode) {
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    const midX = (fromNode.x + toNode.x) / 2;
+
+                    path.setAttribute('d', `M ${fromNode.x} ${fromNode.y}
+                                           C ${midX} ${fromNode.y},
+                                             ${midX} ${toNode.y},
+                                             ${toNode.x} ${toNode.y}`);
+                    path.setAttribute('stroke', edge.color);
+                    path.setAttribute('stroke-width', Math.max(2, Math.min(8, edge.amount / 100)));
+                    path.setAttribute('fill', 'none');
+                    path.setAttribute('class', 'dag-edge');
+
+                    if (edge.animated) {
+                        path.setAttribute('stroke-dasharray', '10 5');
+                        path.style.animation = 'flow-animation 2s linear infinite';
+                    }
+
+                    edgeLayer.appendChild(path);
+                }
+            });
+
+            // Render nodes
+            const nodeLayer = document.getElementById('nodeLayer');
+            graphData.nodes.forEach(node => {
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+                g.setAttribute('class', 'dag-node');
+
+                // Node circle
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('r', Math.min(30, 15 + Math.sqrt(node.totalIn)));
+                circle.setAttribute('fill', node.color);
+                circle.setAttribute('filter', 'url(#dropShadow)');
+                g.appendChild(circle);
+
+                // Node label
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('y', '40');
+                text.setAttribute('fill', 'white');
+                text.setAttribute('font-size', '12');
+                text.textContent = node.label;
+                g.appendChild(text);
+
+                // Add hover interaction
+                g.addEventListener('mouseenter', (e) => showNodeTooltip(e, node));
+                g.addEventListener('mouseleave', hideTooltip);
+
+                nodeLayer.appendChild(g);
+            });
+        }
+
+        function showNodeTooltip(event, node) {
+            const tooltip = document.getElementById('vizTooltip');
+            const currencies = Array.from(node.currencies).join(', ');
+
+            tooltip.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 8px;">${node.label}</div>
+                <div style="font-size: 11px; opacity: 0.8; margin-bottom: 8px;">${node.fullAddress}</div>
+                <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px; margin-top: 8px;">
+                    <div>Type: <span style="color: ${node.color}">${node.type}</span></div>
+                    <div>Total In: ${node.totalIn.toLocaleString()} ${currencies}</div>
+                    <div>Threads: ${node.threads.length}</div>
+                    ${node.exchangeName ? `<div>Exchange: ${node.exchangeName}</div>` : ''}
+                </div>
+            `;
+
+            tooltip.style.display = 'block';
+            tooltip.style.left = event.pageX + 10 + 'px';
+            tooltip.style.top = event.pageY + 10 + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('vizTooltip').style.display = 'none';
+        }
+
+        window.toggleARTOverlay = function() {
+            const overlay = document.getElementById('artOverlay');
+            const isVisible = overlay.style.display !== 'none';
+
+            if (!isVisible) {
+                // Build ART details
+                const details = document.getElementById('artDetails');
+                details.innerHTML = '';
+
+                investigation.hops?.forEach(hop => {
+                    const section = document.createElement('div');
+                    section.className = 'art-hop-section';
+                    section.innerHTML = `
+                        <h4 style="color: #fbbf24; margin: 0 0 8px 0;">Hop ${hop.hopNumber}</h4>
+                        <div style="margin-bottom: 8px;">
+                            <strong>Starting ART:</strong>
+                            ${Object.entries(hop.artAtStartByCurrency || {})
+                                .map(([curr, amt]) => `${amt.toLocaleString()} ${curr}`)
+                                .join(', ') || 'None'}
+                        </div>
+                    `;
+
+                    // Add thread details
+                    hop.entries?.forEach(entry => {
+                        if (entry.entryType === 'trace') {
+                            const item = document.createElement('div');
+                            item.className = 'art-thread-item';
+                            item.innerHTML = `
+                                <span>${entry.notation}</span>
+                                <span class="${entry.isTerminalWallet ? 'art-balance' : ''}">${entry.amount} ${entry.currency}</span>
+                            `;
+                            section.appendChild(item);
+                        }
+                    });
+
+                    details.appendChild(section);
+                });
+
+                overlay.style.display = 'block';
+            } else {
+                overlay.style.display = 'none';
+            }
+        };
+
+        window.setVisualizationMode = function(mode) {
+            window.currentVizMode = mode;
+
+            // Update button states
+            document.querySelectorAll('.viz-mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Re-render
+            const graphData = buildAdvancedDAG();
+            renderVisualization(mode, graphData);
+        };
+
+        window.updateVisualizationStats = function() {
+            // Calculate stats
+            const totalAmount = Object.values(investigation.confirmedRootTotalsByCurrency || {})
+                .reduce((sum, amt) => sum + amt, 0);
+
+            const terminalAmount = investigation.hops?.reduce((sum, hop) => {
+                return sum + hop.entries?.reduce((hopSum, entry) => {
+                    return hopSum + (entry.isTerminalWallet ? parseFloat(entry.amount) : 0);
+                }, 0);
+            }, 0) || 0;
+
+            const recoveryRate = totalAmount > 0 ? (terminalAmount / totalAmount * 100).toFixed(1) : 0;
+
+            const activeThreads = Object.values(investigation.availableThreads || {})
+                .reduce((sum, currency) => sum + Object.keys(currency).length, 0);
+
+            // Update displays
+            document.getElementById('totalHopsCount').textContent = investigation.hops?.length || 0;
+            document.getElementById('totalTrackedAmount').textContent = `${totalAmount.toLocaleString()}`;
+            document.getElementById('recoveredAmount').textContent = `${recoveryRate}%`;
+            document.getElementById('activeThreadsCount').textContent = activeThreads;
+        };
+
+        window.setupPremiumInteractions = function() {
+            // Premium interactions setup
+        };
+
+        window.renderMiniMap = function(graphData) {
+            // Mini-map rendering
+        };
+
+        window.renderSankeyView = function(graphData, svg) {
+            // Sankey diagram implementation
+            renderFlowView(graphData, svg); // Fallback for now
+        };
+
+        window.renderCircularView = function(graphData, svg) {
+            // Circular layout implementation
+            renderFlowView(graphData, svg); // Fallback for now
+        };
+
+        window.renderTimelineView = function(graphData, svg) {
+            // Timeline view implementation
+            renderFlowView(graphData, svg); // Fallback for now
+        };
+
+        window.exportVisualization = function() {
+            // Export to PNG/SVG
+            alert('Export feature coming soon!');
+        };
+
         window.initializeGraphVisualization = initializeGraphVisualization;
         window.zoomIn = zoomIn;
         window.zoomOut = zoomOut;
