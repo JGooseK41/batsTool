@@ -8854,14 +8854,19 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
                 // Use notation for display, internal ID for tracking
                 const notation = thread.notation || threadKey;
                 let displayText = notation;
+
+                // Add partial trace indicator if applicable
+                const partialIndicator = thread.wasPartialTrace ?
+                    ` [${(thread.proportionalMultiplier * 100).toFixed(1)}% TRACE]` : '';
+
                 if (thread.sourceType === 'victim_transaction') {
-                    displayText = `${notation} (RED Wallet)`;
+                    displayText = `${notation} (RED Wallet)${partialIndicator}`;
                 } else if (thread.sourceType === 'bridge_output') {
-                    displayText = `${notation} (Bridge Output - ${currency})`;
+                    displayText = `${notation} (Bridge Output - ${currency})${partialIndicator}`;
                 } else if (thread.sourceType === 'swap_output') {
-                    displayText = `${notation} (Swap Output - ${currency})`;
+                    displayText = `${notation} (Swap Output - ${currency})${partialIndicator}`;
                 } else if (thread.sourceType === 'change_output') {
-                    displayText = `${notation} (Change - ${currency})`;
+                    displayText = `${notation} (Change - ${currency})${partialIndicator}`;
                 }
 
                 availableSources.push({
@@ -15421,6 +15426,14 @@ function finalizeHop(hopNumber) {
                 thread.availableAmount > 0.01 &&
                 thread.hopLevel === hopNumber) {
 
+                // CRITICAL: Skip partial trace outputs - we don't own the untraced portion!
+                if (thread.wasPartialTrace) {
+                    console.log(`⚠️ SKIPPING auto-write-off for partial trace output: ${thread.availableAmount} ${currency} from ${thread.notation}`);
+                    console.log(`  This is our proportional share (${(thread.proportionalMultiplier * 100).toFixed(2)}% ownership)`);
+                    console.log(`  These funds must be allocated to continue the trace - not written off!`);
+                    continue; // Skip this thread - it's not a fee, it's our actual traced funds!
+                }
+
                 console.log(`Auto-writing off ${thread.sourceType} remainder: ${thread.availableAmount} ${currency} from ${thread.notation}`);
 
                 // Get next entry ID for this hop
@@ -15465,6 +15478,38 @@ function finalizeHop(hopNumber) {
     if (autoWriteOffCount > 0) {
         console.log(`✅ Auto-created ${autoWriteOffCount} write-offs for bridge/swap fees`);
         saveState(); // Save the state after adding write-offs
+    }
+
+    // CRITICAL: Check for unallocated partial trace outputs before validation
+    const partialTraceOutputs = [];
+    for (const currency in availableThreads) {
+        for (const threadId in availableThreads[currency]) {
+            const thread = availableThreads[currency][threadId];
+
+            // Check for partial trace bridge/swap outputs that haven't been allocated
+            if ((thread.sourceType === 'bridge_output' || thread.sourceType === 'swap_output') &&
+                thread.wasPartialTrace &&
+                thread.availableAmount > 0.01 &&
+                thread.hopLevel === hopNumber) {
+
+                partialTraceOutputs.push({
+                    notation: thread.notation,
+                    amount: thread.availableAmount,
+                    currency: currency,
+                    ownership: (thread.proportionalMultiplier * 100).toFixed(2)
+                });
+            }
+        }
+    }
+
+    // Block finalization if there are unallocated partial trace outputs
+    if (partialTraceOutputs.length > 0) {
+        const outputList = partialTraceOutputs.map(output =>
+            `  • ${output.notation}: ${output.amount.toLocaleString()} ${output.currency} (${output.ownership}% ownership)`
+        ).join('\n');
+
+        alert(`❌ Cannot finalize Hop ${hopNumber}\n\nYou have partial trace outputs that must be allocated:\n\n${outputList}\n\nThese represent your proportional share of bridge/swap outputs.\nYou must allocate these threads to continue the trace.\n\nNote: These are NOT fees - they are your actual traced funds!`);
+        return;
     }
 
     // USE the validateHopCompletion function which properly handles swaps!
@@ -21651,6 +21696,7 @@ function showSwapWizardStep(step) {
                                     <strong>${thread.displayText}</strong>
                                     <div style="font-size: 12px; color: #666; margin-top: 4px;">
                                         From: ${thread.sourceWallet ? thread.sourceWallet.substring(0, 10) + '...' : 'Unknown'}
+                                        ${thread.displayText.includes('% TRACE]') ? `<br><span style="color: #ff9800;">⚠️ Partial trace - your proportional share</span>` : ''}
                                     </div>
                                 </label>
                             </div>
@@ -26963,6 +27009,11 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 existingThread.chainName = window.blockchainAPIs?.[destChain]?.name || destChain;
                 existingThread.sourceType = 'bridge_output';
 
+                // CRITICAL: Update partial trace info to prevent incorrect auto-write-offs
+                existingThread.wasPartialTrace = isPartialTrace;
+                existingThread.proportionalMultiplier = proportionalMultiplier;
+                existingThread.fullOutputAmount = isPartialTrace ? fullOutputAmount : outputAmount;
+
                 // If the thread has a different key, delete it and re-add with correct key
                 if (existingThreadKey !== outputInternalId) {
                     delete investigation.availableThreads[outputCurrency][existingThreadKey];
@@ -27016,7 +27067,12 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                         fromCurrency: inputCurrency,
                         toCurrency: outputCurrency,
                         bridgeAddress: entry.toWallet
-                    }
+                    },
+
+                    // CRITICAL: Store partial trace info to prevent incorrect auto-write-offs
+                    wasPartialTrace: isPartialTrace,
+                    proportionalMultiplier: proportionalMultiplier,
+                    fullOutputAmount: isPartialTrace ? fullOutputAmount : outputAmount
                 };
 
                 console.log(`Created bridge output thread: ${sourceNotation} with ${outputAmount} ${outputCurrency} on ${destChain} at hop ${hop.hopNumber}`);

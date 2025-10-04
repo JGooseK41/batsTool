@@ -3,26 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-04 06:47)
+## Latest Commit (Auto-updated: 2025-10-04 06:56)
 
-**Commit:** c4a57c6ca5853a1ed10e1ee6f734b3a5a282a2eb
+**Commit:** b58469957d36646f86e6ed71424e8948d9b1c841
 **Author:** Your Name
-**Message:** Add attribution override feature and improve write-off entry display
+**Message:** Add chain mismatch detection with clear error messaging
 
-Features:
-- Add attribution override capability for terminal wallet confirmations
-- Allow investigators to override attribution using commercial tools (TRM, Chainalysis, etc.)
-- Three override modes: mark as terminal, mark as not terminal, or rename only
-- Comprehensive warning system about risks of incorrect attribution
-- Full audit trail with override documentation in transaction notes
-- Track attribution source (TRM Labs, Chainalysis, CipherTrace, etc.)
+- Detect blockchain type from transaction hash pattern
+- Show clear 'Chain Mismatch' error when wrong chain hash is entered
+- Display expected vs actual blockchain in error message
+- Use yellow warning styling for chain mismatches vs red for real errors
+- Improve error messages to distinguish between network issues and wrong chain
+- Handle EVM chains (Ethereum, BSC, Polygon) that share hash format
+- Replace generic 'network error' with specific actionable messages
 
-UI Improvements:
-- Fix write-off entries to show clear data in collapsed view
-- Display write-off warning emoji and label in red
-- Show write-off amount with minus sign in red color
-- Add write-off notation display (e.g., V1-T1-H2-WO)
-- Improve visual distinction with gray background for write-offs
+Example: If user pastes Solana hash when source is Ethereum, shows:
+'This transaction hash appears to be from Solana, but the source thread is on Ethereum'
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -30,15 +26,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  47 +++++-----
- index.html | 285 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 303 insertions(+), 29 deletions(-)
+ CLAUDE.md  | 38 ++++++++++++++++++++++++--------------
+ index.html | 50 ++++++++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 70 insertions(+), 18 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c4a57c6 Add attribution override feature and improve write-off entry display (0 seconds ago)
-- 0d90653 Fix flow diagram visualization not initializing when trace is complete (32 minutes ago)
+- b584699 Add chain mismatch detection with clear error messaging (0 seconds ago)
+- c4a57c6 Add attribution override feature and improve write-off entry display (10 minutes ago)
+- 0d90653 Fix flow diagram visualization not initializing when trace is complete (42 minutes ago)
 - 39674c8 Fix report generation issues and improve Technical Audit Trail (24 hours ago)
 - 77a65c2 Fix trace completion detection and add navigation options when investigation complete (2 days ago)
 - 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (2 days ago)
@@ -46,7 +43,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 8ac514b Fix brown conversion wallets being treated as terminal (4 days ago)
 - af50966 Fix bridge conversions being treated as terminal wallets (4 days ago)
 - 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (4 days ago)
-- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (4 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
