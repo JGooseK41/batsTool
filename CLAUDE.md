@@ -3,30 +3,48 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-04 10:38)
+## Latest Commit (Auto-updated: 2025-10-04 10:49)
 
-**Commit:** 7e5d62f26cd37c1bf59f400a7925f5e969950e7a
+**Commit:** 1dcea6897b5e78586e9e69e6bab4993da585990d
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest changes
+**Message:** Remove incorrect auto-write-off of bridge/swap outputs
+
+CRITICAL FIX: Bridge and swap outputs are NOT fees - they are legitimate traced funds!
+
+The system was incorrectly auto-writing off ALL bridge/swap outputs as 'fees', which prevented users from tracing their converted funds. This was catastrophically wrong.
+
+Changes:
+- Removed auto-write-off logic for bridge/swap outputs entirely
+- Bridge outputs (e.g., HYPE→USDC) are the actual converted funds to trace
+- Only actual fees (gas in different currency) should be written off
+- Added validation to require allocation of ALL bridge/swap outputs before finalization
+- Separate handling for partial trace vs full bridge outputs
+
+Bridge/swap outputs represent the continuation of the trace in the new currency. They must be allocated to continue tracing, not written off as fees.
+
+Users must now manually:
+1. Allocate bridge/swap outputs to continue the trace
+2. OR explicitly write off actual fees/slippage if needed
 
 ### Changed Files:
 ```
- CLAUDE.md | 52 +++++++++++++++++++++++++++-------------------------
- 1 file changed, 27 insertions(+), 25 deletions(-)
+ CLAUDE.md  |  32 +++++--------------
+ index.html | 102 +++++++++++++++++++++----------------------------------------
+ 2 files changed, 41 insertions(+), 93 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7e5d62f Update CLAUDE.md with latest changes (0 seconds ago)
-- 6ca8f4d Fix critical partial trace bridge handling bug (78 seconds ago)
+- 1dcea68 Remove incorrect auto-write-off of bridge/swap outputs (1 second ago)
+- 7e5d62f Update CLAUDE.md with latest changes (11 minutes ago)
+- 6ca8f4d Fix critical partial trace bridge handling bug (12 minutes ago)
 - b584699 Add chain mismatch detection with clear error messaging (4 hours ago)
 - c4a57c6 Add attribution override feature and improve write-off entry display (4 hours ago)
-- 0d90653 Fix flow diagram visualization not initializing when trace is complete (4 hours ago)
+- 0d90653 Fix flow diagram visualization not initializing when trace is complete (5 hours ago)
 - 39674c8 Fix report generation issues and improve Technical Audit Trail (28 hours ago)
 - 77a65c2 Fix trace completion detection and add navigation options when investigation complete (3 days ago)
 - 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (3 days ago)
 - 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (3 days ago)
-- 8ac514b Fix brown conversion wallets being treated as terminal (4 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
