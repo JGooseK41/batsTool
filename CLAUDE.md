@@ -3,46 +3,48 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-04 06:56)
+## Latest Commit (Auto-updated: 2025-10-04 10:37)
 
-**Commit:** b58469957d36646f86e6ed71424e8948d9b1c841
+**Commit:** 6ca8f4dcffa592534b7299515efdf8866fcc58a5
 **Author:** Your Name
-**Message:** Add chain mismatch detection with clear error messaging
+**Message:** Fix critical partial trace bridge handling bug
 
-- Detect blockchain type from transaction hash pattern
-- Show clear 'Chain Mismatch' error when wrong chain hash is entered
-- Display expected vs actual blockchain in error message
-- Use yellow warning styling for chain mismatches vs red for real errors
-- Improve error messages to distinguish between network issues and wrong chain
-- Handle EVM chains (Ethereum, BSC, Polygon) that share hash format
-- Replace generic 'network error' with specific actionable messages
+CRITICAL BUG FIX: System was incorrectly auto-writing off ALL bridge/swap outputs including unowned portions from partial traces.
 
-Example: If user pastes Solana hash when source is Ethereum, shows:
-'This transaction hash appears to be from Solana, but the source thread is on Ethereum'
+When user only owns partial amount (e.g., 86 of 306 HYPE = 28.94%), the system must:
+- Calculate proportional share of bridge output (e.g., 3959 USDC from 13680 USDC total)
+- Create thread for ONLY the owned portion
+- NOT write off these funds as fees - they are actual traced funds
+- Require allocation before hop finalization
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
+Changes:
+- Store wasPartialTrace flag and proportionalMultiplier in bridge output threads
+- Skip auto-write-off for partial trace outputs in finalizeHop
+- Block hop finalization if partial trace outputs remain unallocated
+- Add visual indicators showing ownership percentage in thread selection
+- Show warning when selecting partial trace threads
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+This prevents incorrect write-offs of funds the user doesn't own and ensures proper tracking of proportional ownership through bridge conversions.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 38 ++++++++++++++++++++++++--------------
- index.html | 50 ++++++++++++++++++++++++++++++++++++++++++++++----
- 2 files changed, 70 insertions(+), 18 deletions(-)
+ CLAUDE.md  | 44 +++++++++++++++++++----------------------
+ index.html | 66 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 81 insertions(+), 29 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b584699 Add chain mismatch detection with clear error messaging (0 seconds ago)
-- c4a57c6 Add attribution override feature and improve write-off entry display (10 minutes ago)
-- 0d90653 Fix flow diagram visualization not initializing when trace is complete (42 minutes ago)
-- 39674c8 Fix report generation issues and improve Technical Audit Trail (24 hours ago)
-- 77a65c2 Fix trace completion detection and add navigation options when investigation complete (2 days ago)
-- 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (2 days ago)
-- 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (2 days ago)
+- 6ca8f4d Fix critical partial trace bridge handling bug (0 seconds ago)
+- b584699 Add chain mismatch detection with clear error messaging (4 hours ago)
+- c4a57c6 Add attribution override feature and improve write-off entry display (4 hours ago)
+- 0d90653 Fix flow diagram visualization not initializing when trace is complete (4 hours ago)
+- 39674c8 Fix report generation issues and improve Technical Audit Trail (28 hours ago)
+- 77a65c2 Fix trace completion detection and add navigation options when investigation complete (3 days ago)
+- 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (3 days ago)
+- 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (3 days ago)
 - 8ac514b Fix brown conversion wallets being treated as terminal (4 days ago)
 - af50966 Fix bridge conversions being treated as terminal wallets (4 days ago)
-- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (4 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
