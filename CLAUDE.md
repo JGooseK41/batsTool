@@ -3,39 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-04 10:37)
+## Latest Commit (Auto-updated: 2025-10-04 10:38)
 
-**Commit:** 6ca8f4dcffa592534b7299515efdf8866fcc58a5
+**Commit:** 7e5d62f26cd37c1bf59f400a7925f5e969950e7a
 **Author:** Your Name
-**Message:** Fix critical partial trace bridge handling bug
-
-CRITICAL BUG FIX: System was incorrectly auto-writing off ALL bridge/swap outputs including unowned portions from partial traces.
-
-When user only owns partial amount (e.g., 86 of 306 HYPE = 28.94%), the system must:
-- Calculate proportional share of bridge output (e.g., 3959 USDC from 13680 USDC total)
-- Create thread for ONLY the owned portion
-- NOT write off these funds as fees - they are actual traced funds
-- Require allocation before hop finalization
-
-Changes:
-- Store wasPartialTrace flag and proportionalMultiplier in bridge output threads
-- Skip auto-write-off for partial trace outputs in finalizeHop
-- Block hop finalization if partial trace outputs remain unallocated
-- Add visual indicators showing ownership percentage in thread selection
-- Show warning when selecting partial trace threads
-
-This prevents incorrect write-offs of funds the user doesn't own and ensures proper tracking of proportional ownership through bridge conversions.
+**Message:** Update CLAUDE.md with latest changes
 
 ### Changed Files:
 ```
- CLAUDE.md  | 44 +++++++++++++++++++----------------------
- index.html | 66 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 81 insertions(+), 29 deletions(-)
+ CLAUDE.md | 52 +++++++++++++++++++++++++++-------------------------
+ 1 file changed, 27 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6ca8f4d Fix critical partial trace bridge handling bug (0 seconds ago)
+- 7e5d62f Update CLAUDE.md with latest changes (0 seconds ago)
+- 6ca8f4d Fix critical partial trace bridge handling bug (78 seconds ago)
 - b584699 Add chain mismatch detection with clear error messaging (4 hours ago)
 - c4a57c6 Add attribution override feature and improve write-off entry display (4 hours ago)
 - 0d90653 Fix flow diagram visualization not initializing when trace is complete (4 hours ago)
@@ -44,7 +27,6 @@ This prevents incorrect write-offs of funds the user doesn't own and ensures pro
 - 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (3 days ago)
 - 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (3 days ago)
 - 8ac514b Fix brown conversion wallets being treated as terminal (4 days ago)
-- af50966 Fix bridge conversions being treated as terminal wallets (4 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

@@ -15406,81 +15406,16 @@ function finalizeHop(hopNumber) {
         }
     }
 
-    // AUTO-WRITE-OFF: Before validation, automatically write off any bridge/swap output remainders
-    // These represent fees and slippage that should be immediately accounted for
-    console.log('Checking for bridge/swap output remainders to auto-write-off...');
+    // REMOVED AUTO-WRITE-OFF: Bridge and swap outputs are NOT fees - they're legitimate traced funds!
+    // Bridge/swap outputs represent the converted currency that needs to be traced further.
+    // Only actual fees (like gas fees paid in a different currency) should be written off.
+    // The user must manually allocate bridge/swap outputs or explicitly write them off if needed.
 
-    // Build the latest thread index first
+    console.log('Checking available threads before validation...');
     buildAvailableThreadsIndex();
 
-    // Get all available threads directly from the investigation object
-    const availableThreads = investigation.availableThreads || {};
-    let autoWriteOffCount = 0;
-
-    for (const currency in availableThreads) {
-        for (const threadId in availableThreads[currency]) {
-            const thread = availableThreads[currency][threadId];
-
-            // Check if this is a bridge or swap output with remaining balance
-            if ((thread.sourceType === 'bridge_output' || thread.sourceType === 'swap_output') &&
-                thread.availableAmount > 0.01 &&
-                thread.hopLevel === hopNumber) {
-
-                // CRITICAL: Skip partial trace outputs - we don't own the untraced portion!
-                if (thread.wasPartialTrace) {
-                    console.log(`⚠️ SKIPPING auto-write-off for partial trace output: ${thread.availableAmount} ${currency} from ${thread.notation}`);
-                    console.log(`  This is our proportional share (${(thread.proportionalMultiplier * 100).toFixed(2)}% ownership)`);
-                    console.log(`  These funds must be allocated to continue the trace - not written off!`);
-                    continue; // Skip this thread - it's not a fee, it's our actual traced funds!
-                }
-
-                console.log(`Auto-writing off ${thread.sourceType} remainder: ${thread.availableAmount} ${currency} from ${thread.notation}`);
-
-                // Get next entry ID for this hop
-                const maxId = Math.max(0, ...hop.entries.map(e => parseInt(e.id) || 0));
-                const nextId = maxId + 1;
-
-                // Create an automatic write-off entry
-                const feeWriteOff = {
-                    id: nextId,
-                    entryType: 'writeoff',
-                    notation: `${thread.notation}-FEE`,
-                    amount: thread.availableAmount.toString(),
-                    currency: currency,
-                    customCurrency: currency === 'CUSTOM' ? thread.customCurrency : '',
-                    notes: `Auto-generated write-off for ${thread.sourceType === 'bridge_output' ? 'bridge' : 'DEX'} fees/slippage. Parent thread: ${thread.notation}`,
-                    timestamp: new Date().toISOString(),
-                    hopNumber: hopNumber,
-                    sourceThreadInternalId: threadId,
-                    isAutoFeeWriteOff: true,
-                    autoWriteOffType: thread.sourceType === 'bridge_output' ? 'bridge_fee' : 'swap_fee',
-                    isComplete: true,  // Mark as complete so it appears collapsed
-                    isCollapsed: true,  // Start collapsed
-                    category: thread.sourceType === 'bridge_output' ? 'bridge_fee' : 'swap_fee',
-                    justification: 'Automatic write-off for conversion fees and slippage'
-                };
-
-                // Add the write-off entry to the hop
-                hop.entries.push(feeWriteOff);
-
-                // Consume the thread
-                thread.availableAmount = 0;
-                thread.fullyExhausted = true;
-                thread.exhaustedByAutoWriteOff = feeWriteOff.notation;
-                thread.isActive = false;  // Mark as inactive
-
-                autoWriteOffCount++;
-                console.log(`Created automatic fee write-off: ${feeWriteOff.notation} for ${feeWriteOff.amount} ${currency}`);
-            }
-        }
-    }
-
-    if (autoWriteOffCount > 0) {
-        console.log(`✅ Auto-created ${autoWriteOffCount} write-offs for bridge/swap fees`);
-        saveState(); // Save the state after adding write-offs
-    }
-
     // CRITICAL: Check for unallocated partial trace outputs before validation
+    const availableThreads = investigation.availableThreads || {};
     const partialTraceOutputs = [];
     for (const currency in availableThreads) {
         for (const threadId in availableThreads[currency]) {
@@ -15509,6 +15444,37 @@ function finalizeHop(hopNumber) {
         ).join('\n');
 
         alert(`❌ Cannot finalize Hop ${hopNumber}\n\nYou have partial trace outputs that must be allocated:\n\n${outputList}\n\nThese represent your proportional share of bridge/swap outputs.\nYou must allocate these threads to continue the trace.\n\nNote: These are NOT fees - they are your actual traced funds!`);
+        return;
+    }
+
+    // Also check for any unallocated bridge/swap outputs (not just partial traces)
+    const unallocatedConversionOutputs = [];
+    for (const currency in availableThreads) {
+        for (const threadId in availableThreads[currency]) {
+            const thread = availableThreads[currency][threadId];
+
+            // Check for ANY bridge/swap outputs that haven't been allocated
+            if ((thread.sourceType === 'bridge_output' || thread.sourceType === 'swap_output') &&
+                thread.availableAmount > 0.01 &&
+                thread.hopLevel === hopNumber &&
+                !thread.wasPartialTrace) { // Already handled partial traces above
+
+                unallocatedConversionOutputs.push({
+                    notation: thread.notation,
+                    amount: thread.availableAmount,
+                    currency: currency
+                });
+            }
+        }
+    }
+
+    // Block finalization if there are unallocated conversion outputs
+    if (unallocatedConversionOutputs.length > 0) {
+        const outputList = unallocatedConversionOutputs.map(output =>
+            `  • ${output.notation}: ${output.amount.toLocaleString()} ${output.currency}`
+        ).join('\n');
+
+        alert(`❌ Cannot finalize Hop ${hopNumber}\n\nYou have bridge/swap outputs that must be allocated:\n\n${outputList}\n\nThese are converted funds that need to be traced further.\nPlease allocate these threads or explicitly write them off if they represent fees.`);
         return;
     }
 
