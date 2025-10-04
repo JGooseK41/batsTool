@@ -3,21 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-03 07:00)
+## Latest Commit (Auto-updated: 2025-10-04 06:14)
 
-**Commit:** 39674c85318e802336cfd32159fa29446b6434df
+**Commit:** 0d90653fc016f01ba0a34a4c192f0b2c1daed3a6
 **Author:** Your Name
-**Message:** Fix report generation issues and improve Technical Audit Trail
+**Message:** Fix flow diagram visualization not initializing when trace is complete
 
-- Fix cover sheet template literal interpolation to display actual values
-- Fix victim index to calculate totals and handle missing names
-- Add transaction hash and timestamp columns to terminal wallet index for legal process
-- Fix narrative editor template literal display issue
-- Completely redesign Technical Audit Trail with accounting ledger format
-- Add clear hierarchy with numbered entries and transaction classifications
-- Implement double-entry reconciliation with balance verification
-- Add navigation button to Flow Diagram from Reports tab
-- Improve conversion entry display to show output amounts prominently
+- Add initializeGraphVisualization call to flowdiagram tab action
+- Expose graph visualization functions to window object for global access
+- Fix visualization not working after trace completion
+- Ensure graph initializes when navigating from reports or completion modal
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -25,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  43 +++----
- index.html | 384 ++++++++++++++++++++++++++++++++++++++++---------------------
- 2 files changed, 278 insertions(+), 149 deletions(-)
+ CLAUDE.md  | 53 ++++++++++++++++++++++++++++-------------------------
+ index.html | 20 ++++++++++++++++++++
+ 2 files changed, 48 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 39674c8 Fix report generation issues and improve Technical Audit Trail (0 seconds ago)
-- 77a65c2 Fix trace completion detection and add navigation options when investigation complete (34 hours ago)
-- 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (34 hours ago)
-- 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (35 hours ago)
-- 8ac514b Fix brown conversion wallets being treated as terminal (3 days ago)
-- af50966 Fix bridge conversions being treated as terminal wallets (3 days ago)
-- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (3 days ago)
-- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (3 days ago)
-- 1f3c263 Fix write-off entries not collapsing after creation from modal (3 days ago)
-- d1effdb Fix critical regression: threads consuming more than transaction amount (3 days ago)
+- 0d90653 Fix flow diagram visualization not initializing when trace is complete (0 seconds ago)
+- 39674c8 Fix report generation issues and improve Technical Audit Trail (23 hours ago)
+- 77a65c2 Fix trace completion detection and add navigation options when investigation complete (2 days ago)
+- 15138ba Fix hop entry wizard buttons and bridge name display in collapsed view (2 days ago)
+- 4941da2 Fix bridge entry handling and ensure consistent treatment across all code paths (2 days ago)
+- 8ac514b Fix brown conversion wallets being treated as terminal (4 days ago)
+- af50966 Fix bridge conversions being treated as terminal wallets (4 days ago)
+- 6e56312 Fix partial trace logic - only claim what threads support, not full transaction (4 days ago)
+- 5a1f8fe Fix allocation error when commingling threads to terminal wallets (4 days ago)
+- 1f3c263 Fix write-off entries not collapsing after creation from modal (4 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

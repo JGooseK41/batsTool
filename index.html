@@ -5321,6 +5321,266 @@
             }
         }
 
+        // Override attribution function
+        function overrideAttribution() {
+            if (!window.hopWizardData) {
+                alert('No transaction data available.');
+                return;
+            }
+
+            const currentAttribution = window.hopWizardData.detectedAttribution;
+            const walletAddress = window.hopWizardData.txData?.to || '';
+
+            // Create override modal
+            const modal = document.createElement('div');
+            modal.id = 'attributionOverrideModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <h3 style="margin: 0 0 20px 0; color: #dc3545;">⚠️ Attribution Override Warning</h3>
+
+                    <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <strong>🚨 CRITICAL WARNING:</strong><br>
+                        • Only override attribution with data from trusted sources (TRM, Chainalysis, CipherTrace, etc.)<br>
+                        • Incorrect attribution can invalidate your entire trace<br>
+                        • Tracing through an exchange account without marking it as terminal will corrupt the investigation<br>
+                        • This action will be documented in the transaction notes
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <strong>Current Attribution:</strong><br>
+                        <div style="padding: 10px; background: #f8f9fa; border-radius: 4px; margin-top: 5px;">
+                            ${currentAttribution ? `
+                                Name: ${currentAttribution.name || 'Unknown'}<br>
+                                Source: ${currentAttribution.source || 'Unknown'}<br>
+                                Type: ${currentAttribution.isExchange ? 'Exchange/VASP' : 'Other'}
+                            ` : 'No attribution detected'}
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <strong>Wallet Address:</strong><br>
+                        <div style="padding: 10px; background: #f8f9fa; border-radius: 4px; margin-top: 5px; font-family: monospace; font-size: 12px; word-break: break-all;">
+                            ${walletAddress}
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-weight: bold;">Override Type:</label>
+                        <select id="overrideType" onchange="toggleOverrideFields()" style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #dee2e6; border-radius: 4px;">
+                            <option value="">Select override action...</option>
+                            <option value="terminal">Mark as Terminal Exchange/VASP</option>
+                            <option value="not-terminal">Mark as NOT Terminal (Bridge/DEX/Personal)</option>
+                            <option value="rename">Change Attribution Name Only</option>
+                        </select>
+                    </div>
+
+                    <div id="overrideFields" style="display: none;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-weight: bold;">New Attribution Name:</label>
+                            <input type="text" id="newAttributionName" placeholder="e.g., Binance, Coinbase, Uniswap Router"
+                                   style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #dee2e6; border-radius: 4px;">
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-weight: bold;">Attribution Source:</label>
+                            <select id="attributionSource" style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #dee2e6; border-radius: 4px;">
+                                <option value="">Select source...</option>
+                                <option value="TRM Labs">TRM Labs</option>
+                                <option value="Chainalysis">Chainalysis</option>
+                                <option value="CipherTrace">CipherTrace</option>
+                                <option value="Elliptic">Elliptic</option>
+                                <option value="Crystal Blockchain">Crystal Blockchain</option>
+                                <option value="Manual Research">Manual Research</option>
+                                <option value="Exchange Documentation">Exchange Documentation</option>
+                                <option value="Other">Other (specify in notes)</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-weight: bold;">Additional Notes (Optional):</label>
+                            <textarea id="overrideNotes" placeholder="Explain the reason for override..."
+                                      style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #dee2e6; border-radius: 4px; min-height: 80px;"></textarea>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-secondary" onclick="cancelAttributionOverride()">
+                            Cancel
+                        </button>
+                        <button class="btn btn-danger" id="confirmOverrideBtn" onclick="applyAttributionOverride()" disabled>
+                            Apply Override
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        // Toggle override fields visibility
+        function toggleOverrideFields() {
+            const overrideType = document.getElementById('overrideType').value;
+            const fieldsDiv = document.getElementById('overrideFields');
+            const confirmBtn = document.getElementById('confirmOverrideBtn');
+
+            if (overrideType) {
+                fieldsDiv.style.display = 'block';
+                confirmBtn.disabled = false;
+            } else {
+                fieldsDiv.style.display = 'none';
+                confirmBtn.disabled = true;
+            }
+        }
+
+        // Cancel attribution override
+        function cancelAttributionOverride() {
+            const modal = document.getElementById('attributionOverrideModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Apply attribution override
+        function applyAttributionOverride() {
+            const overrideType = document.getElementById('overrideType').value;
+            const newName = document.getElementById('newAttributionName').value.trim();
+            const source = document.getElementById('attributionSource').value;
+            const notes = document.getElementById('overrideNotes').value.trim();
+
+            if (!overrideType) {
+                alert('Please select an override type');
+                return;
+            }
+
+            if (!newName && overrideType !== 'not-terminal') {
+                alert('Please enter the new attribution name');
+                return;
+            }
+
+            if (!source) {
+                alert('Please select the attribution source');
+                return;
+            }
+
+            // Create override record
+            const overrideRecord = {
+                timestamp: new Date().toISOString(),
+                type: overrideType,
+                newName: newName,
+                source: source,
+                notes: notes,
+                originalAttribution: window.hopWizardData.detectedAttribution
+            };
+
+            // Apply the override
+            if (overrideType === 'terminal') {
+                // Mark as terminal exchange
+                window.hopWizardData.detectedAttribution = {
+                    name: newName,
+                    source: source,
+                    isExchange: true,
+                    isTerminal: true,
+                    overridden: true,
+                    overrideRecord: overrideRecord
+                };
+                window.hopWizardData.isTerminalWallet = true;
+                window.hopWizardData.terminalWalletType = 'purple';
+            } else if (overrideType === 'not-terminal') {
+                // Mark as NOT terminal (bridge/DEX/personal)
+                window.hopWizardData.detectedAttribution = {
+                    name: newName || 'Unknown',
+                    source: source,
+                    isExchange: false,
+                    isTerminal: false,
+                    isPersonalLabel: true,
+                    overridden: true,
+                    overrideRecord: overrideRecord
+                };
+                window.hopWizardData.isTerminalWallet = false;
+                delete window.hopWizardData.terminalWalletType;
+            } else if (overrideType === 'rename') {
+                // Just change the name, keep terminal status
+                if (window.hopWizardData.detectedAttribution) {
+                    window.hopWizardData.detectedAttribution.name = newName;
+                    window.hopWizardData.detectedAttribution.source = source;
+                    window.hopWizardData.detectedAttribution.overridden = true;
+                    window.hopWizardData.detectedAttribution.overrideRecord = overrideRecord;
+                } else {
+                    window.hopWizardData.detectedAttribution = {
+                        name: newName,
+                        source: source,
+                        overridden: true,
+                        overrideRecord: overrideRecord
+                    };
+                }
+            }
+
+            // Add override note to transaction notes
+            const overrideNote = `\n\n[ATTRIBUTION OVERRIDE - ${new Date().toLocaleString()}]\n` +
+                `Type: ${overrideType}\n` +
+                `New Name: ${newName || 'N/A'}\n` +
+                `Source: ${source}\n` +
+                (notes ? `Notes: ${notes}\n` : '') +
+                `Original: ${overrideRecord.originalAttribution?.name || 'None detected'} (${overrideRecord.originalAttribution?.source || 'N/A'})`;
+
+            if (window.hopWizardData.notes) {
+                window.hopWizardData.notes += overrideNote;
+            } else {
+                window.hopWizardData.notes = overrideNote;
+            }
+
+            // Update the UI
+            const resultDiv = document.getElementById('wizardTxResult');
+
+            // Remove existing terminal confirmation div
+            const existingConfirmDiv = resultDiv.querySelector('div[style*="#fff3cd"]');
+            if (existingConfirmDiv) {
+                existingConfirmDiv.remove();
+            }
+
+            // Add override confirmation message
+            const overrideConfirmation = document.createElement('div');
+            overrideConfirmation.style.cssText = 'background: #d4edda; border: 2px solid #28a745; padding: 15px; margin-top: 10px; border-radius: 4px;';
+            overrideConfirmation.innerHTML = `
+                <strong>✅ Attribution Override Applied</strong><br>
+                ${overrideType === 'terminal' ? `Terminal Exchange: ${newName}` :
+                  overrideType === 'not-terminal' ? `NOT Terminal: ${newName || 'Unmarked'}` :
+                  `Renamed to: ${newName}`}<br>
+                Source: ${source}<br>
+                <small>This override has been documented in the transaction notes</small>
+            `;
+            resultDiv.appendChild(overrideConfirmation);
+
+            // Update the next button
+            const nextBtn = document.getElementById('wizardNextBtn');
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                if (overrideType === 'terminal') {
+                    nextBtn.textContent = 'Create Terminal Entry';
+                    nextBtn.style.background = '#9c27b0';
+                } else {
+                    nextBtn.textContent = 'Log Entry';
+                    nextBtn.style.background = '';
+                }
+            }
+
+            // Close the modal
+            cancelAttributionOverride();
+        }
+
         // Terminal wallet confirmation functions
         function confirmTerminalWallet() {
             if (!window.hopWizardData || !window.hopWizardData.detectedAttribution) {
@@ -12578,9 +12838,14 @@ function addNewHop() {
                                             <span style="font-weight: bold; color: #2c3e50;">
                                                 Hop ${hopNumber} Entry ${entry.id}${threadNumber ? ` (Thread ${threadNumber})` : ''}
                                             </span>
-                                            <span style="color: #7f8c8d; font-size: 12px;">
-                                                ${entryTypeLabel}
+                                            <span style="color: ${entry.entryType === 'writeoff' ? '#e74c3c' : '#7f8c8d'}; font-size: 12px; font-weight: ${entry.entryType === 'writeoff' ? 'bold' : 'normal'};">
+                                                ${entry.entryType === 'writeoff' ? '⚠️ WRITE-OFF' : entryTypeLabel}
                                             </span>
+                                            ${entry.entryType === 'writeoff' && entry.notation ? `
+                                                <span style="color: #666; font-size: 11px; font-style: italic;">
+                                                    (${entry.notation})
+                                                </span>
+                                            ` : ''}
                                             ${entry.isBridge ? `
                                                 <span style="background: #8b4513; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
                                                     🌉 BRIDGE${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}
@@ -12603,7 +12868,14 @@ function addNewHop() {
                                     </div>
                                     <div style="text-align: right;">
                                         ${amount > 0 ? (
-                                            entry.entryType === 'swap' && entry.swapDetails ? `
+                                            entry.entryType === 'writeoff' ? `
+                                                <span style="font-weight: bold; color: #e74c3c;">
+                                                    -${amount.toLocaleString()} ${currency}
+                                                </span>
+                                                <div style="font-size: 11px; color: #7f8c8d;">
+                                                    Written off
+                                                </div>
+                                            ` : entry.entryType === 'swap' && entry.swapDetails ? `
                                                 <span style="font-weight: bold; color: #27ae60;">
                                                     ${amount.toLocaleString()} ${displayCurrency} → ${parseFloat(entry.outputAmount || 0).toLocaleString()} ${entry.outputCurrency || ''}
                                                 </span>
@@ -23303,6 +23575,9 @@ async function lookupWizardTransaction() {
                             </p>
                             <button class="btn btn-warning" onclick="confirmTerminalWallet()" style="margin-top: 10px; background: #9c27b0; border-color: #9c27b0; font-size: 16px; padding: 10px 20px;">
                                 ✅ Confirm Terminal Wallet Entry
+                            </button>
+                            <button class="btn btn-secondary" onclick="overrideAttribution()" style="margin-top: 10px; margin-left: 10px; background: #6c757d; border-color: #6c757d; font-size: 14px; padding: 8px 15px;">
+                                🔄 Override Attribution
                             </button>
                             <div style="margin-top: 10px; font-size: 12px; color: #666;">
                                 ⚖️ Legal process (subpoena/court order) will be required to recover funds from ${attribution.name || 'this exchange'}
@@ -36220,6 +36495,10 @@ To (RED Wallet): ${transfer.to}`;
         window.renderBridgeTransferModalCards = renderBridgeTransferModalCards;
         window.removeHopEntry = removeHopEntry;
         window.addNewHop = addNewHop;
+        window.overrideAttribution = overrideAttribution;
+        window.toggleOverrideFields = toggleOverrideFields;
+        window.cancelAttributionOverride = cancelAttributionOverride;
+        window.applyAttributionOverride = applyAttributionOverride;
 
         // Add event listeners to setup fields
         document.addEventListener('DOMContentLoaded', function() {
