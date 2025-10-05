@@ -79,8 +79,9 @@
         <span style="font-weight: 600; margin-right: 10px;">Layout:</span>
         <button class="btn-primary" onclick="changeLayout('hop-columns')">📊 Hop Columns</button>
         <button class="btn-primary" onclick="changeLayout('sankey')">🌊 Sankey Diagram</button>
+        <button class="btn-primary" onclick="toggleOrientation()">🔄 Rotate View</button>
         <span style="flex: 1;"></span>
-        <button class="btn-secondary" onclick="resetView()">🔄 Reset View</button>
+        <button class="btn-secondary" onclick="resetView()">↺ Reset View</button>
         <button class="btn-secondary" onclick="fitToScreen()">📐 Fit to Screen</button>
         <button class="btn-success" onclick="exportVisualization('png')">📸 Export PNG</button>
         <button class="btn-success" onclick="exportVisualization('svg')">📄 Export SVG</button>
@@ -142,6 +143,12 @@
         function fitToScreen() {
             if (vizEngine) {
                 vizEngine.fitToView();
+            }
+        }
+
+        function toggleOrientation() {
+            if (vizEngine) {
+                vizEngine.toggleOrientation();
             }
         }
 

@@ -3,30 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 17:05)
+## Latest Commit (Auto-updated: 2025-10-05 17:08)
 
-**Commit:** 6a5c9af356f5da15fee2a5be76a0cb8770e6da07
+**Commit:** bcd9d5834054557424081e8506ef3981e1b16896
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Fix template literal syntax errors in visualization.html
+
+- Removed escaped backticks that were causing syntax errors
+- Changed \` to regular backticks for template literals
+- Fixes 500 server error on deployment
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 55 ++++++++++++++++++++++++++++++++++++++++---------------
- 1 file changed, 40 insertions(+), 15 deletions(-)
+ CLAUDE.md          | 55 +++++++++++++++---------------------------------------
+ visualization.html | 24 ++++++++++++------------
+ 2 files changed, 27 insertions(+), 52 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6a5c9af Update CLAUDE.md with latest commit info (0 seconds ago)
-- 696d416 Add standalone HTML and PDF export options (2 minutes ago)
-- 6585a9d Update CLAUDE.md with latest commit info (5 minutes ago)
-- bf1cfde Add drag-and-drop nodes and enhanced modal popups (6 minutes ago)
-- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (10 minutes ago)
-- 4293663 Fix amount parsing error in reconciliation display (12 minutes ago)
-- 3b9b6b0 Update CLAUDE.md with latest commit info (14 minutes ago)
-- 5ba1cdd Implement hop column T-account reconciliation system (15 minutes ago)
-- 2dfd7ff Implement complete Sankey diagram visualization for BATS (33 minutes ago)
-- 2e34fb4 Add interactive click handlers: view wallet details and thread notes (37 minutes ago)
+- bcd9d58 Fix template literal syntax errors in visualization.html (0 seconds ago)
+- 6a5c9af Update CLAUDE.md with latest commit info (3 minutes ago)
+- 696d416 Add standalone HTML and PDF export options (4 minutes ago)
+- 6585a9d Update CLAUDE.md with latest commit info (7 minutes ago)
+- bf1cfde Add drag-and-drop nodes and enhanced modal popups (9 minutes ago)
+- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (13 minutes ago)
+- 4293663 Fix amount parsing error in reconciliation display (15 minutes ago)
+- 3b9b6b0 Update CLAUDE.md with latest commit info (17 minutes ago)
+- 5ba1cdd Implement hop column T-account reconciliation system (18 minutes ago)
+- 2dfd7ff Implement complete Sankey diagram visualization for BATS (36 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

@@ -9,6 +9,7 @@ class BATSVisualizationD3 {
         this.container = document.getElementById(containerId);
         this.investigation = null;
         this.layoutMode = 'hop-columns'; // 'hop-columns' or 'sankey'
+        this.orientation = 'horizontal'; // 'horizontal' or 'vertical'
 
         // Configuration
         this.config = {
@@ -343,42 +344,71 @@ class BATSVisualizationD3 {
     }
 
     renderHopColumns() {
-        console.log('Rendering hop-centric column layout...');
+        console.log(`Rendering hop-centric column layout (${this.orientation})...`);
 
-        // Calculate positions for wallet columns and hop spaces
-        // Layout: [Wallet Col 0] [Hop Space 1] [Wallet Col 1] [Hop Space 2] [Wallet Col 2] ...
-        this.hopColumns.forEach((column) => {
-            const colIndex = column.columnIndex;
-            column.x = this.config.margin.left +
-                       colIndex * (this.config.walletColumnWidth + this.config.hopSpaceWidth) +
-                       this.config.walletColumnWidth / 2;
-        });
-
-        // Position nodes in their wallet columns
-        this.hopColumns.forEach((column) => {
-            const totalHeight = column.nodes.length * this.config.verticalSpacing;
-            const startY = (this.config.height - totalHeight) / 2;
-
-            column.nodes.forEach((node, nodeIndex) => {
-                node.x = column.x;
-                node.y = startY + nodeIndex * this.config.verticalSpacing;
+        if (this.orientation === 'horizontal') {
+            // Horizontal layout (left-to-right)
+            this.hopColumns.forEach((column) => {
+                const colIndex = column.columnIndex;
+                column.x = this.config.margin.left +
+                           colIndex * (this.config.walletColumnWidth + this.config.hopSpaceWidth) +
+                           this.config.walletColumnWidth / 2;
             });
-        });
 
-        // Position swap nodes in hop spaces (between columns)
-        const swapNodes = this.nodes.filter(n => n.isSwap);
-        swapNodes.forEach((swapNode, index) => {
-            const colIndex = Math.floor(swapNode.column);
-            const leftColumn = this.hopColumns[colIndex];
-            const rightColumn = this.hopColumns[colIndex + 1];
+            this.hopColumns.forEach((column) => {
+                const totalHeight = column.nodes.length * this.config.verticalSpacing;
+                const startY = (this.config.height - totalHeight) / 2;
 
-            if (leftColumn && rightColumn) {
-                // Position in middle of hop space
-                swapNode.x = (leftColumn.x + this.config.walletColumnWidth / 2 +
-                             rightColumn.x - this.config.walletColumnWidth / 2) / 2;
-                swapNode.y = 400 + index * 120;  // Stagger vertically if multiple swaps
-            }
-        });
+                column.nodes.forEach((node, nodeIndex) => {
+                    node.x = column.x;
+                    node.y = startY + nodeIndex * this.config.verticalSpacing;
+                });
+            });
+
+            const swapNodes = this.nodes.filter(n => n.isSwap);
+            swapNodes.forEach((swapNode, index) => {
+                const colIndex = Math.floor(swapNode.column);
+                const leftColumn = this.hopColumns[colIndex];
+                const rightColumn = this.hopColumns[colIndex + 1];
+
+                if (leftColumn && rightColumn) {
+                    swapNode.x = (leftColumn.x + this.config.walletColumnWidth / 2 +
+                                 rightColumn.x - this.config.walletColumnWidth / 2) / 2;
+                    swapNode.y = 400 + index * 120;
+                }
+            });
+        } else {
+            // Vertical layout (top-to-bottom)
+            this.hopColumns.forEach((column) => {
+                const colIndex = column.columnIndex;
+                column.y = this.config.margin.top +
+                           colIndex * (this.config.walletColumnWidth + this.config.hopSpaceWidth) +
+                           this.config.walletColumnWidth / 2;
+            });
+
+            this.hopColumns.forEach((column) => {
+                const totalWidth = column.nodes.length * this.config.verticalSpacing;
+                const startX = (this.config.width - totalWidth) / 2;
+
+                column.nodes.forEach((node, nodeIndex) => {
+                    node.y = column.y;
+                    node.x = startX + nodeIndex * this.config.verticalSpacing;
+                });
+            });
+
+            const swapNodes = this.nodes.filter(n => n.isSwap);
+            swapNodes.forEach((swapNode, index) => {
+                const colIndex = Math.floor(swapNode.column);
+                const topColumn = this.hopColumns[colIndex];
+                const bottomColumn = this.hopColumns[colIndex + 1];
+
+                if (topColumn && bottomColumn) {
+                    swapNode.y = (topColumn.y + this.config.walletColumnWidth / 2 +
+                                 bottomColumn.y - this.config.walletColumnWidth / 2) / 2;
+                    swapNode.x = 400 + index * 120;
+                }
+            });
+        }
 
         // Draw wallet column backgrounds
         this.drawWalletColumnBackgrounds();
@@ -1514,6 +1544,25 @@ Click OK to copy transaction hash to clipboard.
         this.svg.transition()
             .duration(750)
             .call(this.zoom.transform, d3.zoomIdentity);
+    }
+
+    toggleOrientation() {
+        this.orientation = this.orientation === 'horizontal' ? 'vertical' : 'horizontal';
+        console.log(`🔄 Switched to ${this.orientation} orientation`);
+
+        // Swap width and height for vertical mode
+        if (this.orientation === 'vertical') {
+            [this.config.width, this.config.height] = [this.config.height, this.config.width];
+        } else {
+            // Restore original dimensions
+            [this.config.width, this.config.height] = [this.config.height, this.config.width];
+        }
+
+        // Update SVG viewBox
+        this.svg.attr('viewBox', `0 0 ${this.config.width} ${this.config.height}`);
+
+        // Re-render the visualization
+        this.render();
     }
 
     exportPNG(filename = 'bats_visualization.png') {
