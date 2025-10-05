@@ -169,18 +169,20 @@ class BATSVisualizationD3 {
 
                     if (isInternalSwap) {
                         // Internal conversion - brown wallet exists ONLY in hop space
-                        // Check if brown wallet node already exists for this address in this hop
-                        const brownWalletKey = `H${hop.hopNumber}-BROWN-${entry.destinationWallet}`;
+                        // Consolidate by attribution/label, not address
+                        const attribution = entry.walletLabel || this.shortenAddress(entry.destinationWallet);
+                        const brownWalletKey = `H${hop.hopNumber}-BROWN-${attribution}`;
                         let brownNode = this.nodeMap.get(brownWalletKey);
 
                         if (!brownNode) {
                             // Create brown wallet node in hop space (between columns)
                             brownNode = {
                                 id: brownWalletKey,
-                                label: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
-                                wallet: entry.destinationWallet,
-                                walletLabel: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
-                                walletId: this.generateWalletId('brown', entry.destinationWallet),
+                                label: attribution,
+                                wallet: entry.destinationWallet,  // Primary wallet address
+                                walletAddresses: [entry.destinationWallet],  // Track all addresses in cluster
+                                walletLabel: attribution,
+                                walletId: this.generateWalletId('brown', attribution),
                                 type: 'brown',
                                 amount: 0,  // Will accumulate from threads
                                 currency: 'multiple',  // Brown wallets handle multiple currencies
@@ -194,6 +196,11 @@ class BATSVisualizationD3 {
 
                             this.nodes.push(brownNode);
                             this.nodeMap.set(brownWalletKey, brownNode);
+                        } else {
+                            // Brown wallet already exists - add this address to the cluster if not already present
+                            if (!brownNode.walletAddresses.includes(entry.destinationWallet)) {
+                                brownNode.walletAddresses.push(entry.destinationWallet);
+                            }
                         }
 
                         // Add this thread to the brown wallet's inputs
@@ -235,19 +242,21 @@ class BATSVisualizationD3 {
                         hopColumn.artAfter[outputCurrency] = (hopColumn.artAfter[outputCurrency] || 0) + outputAmount;
 
                     } else {
-                        // External swap - brown wallet in hop space, check if already exists
+                        // External swap - brown wallet in hop space, consolidate by attribution
                         const swapWalletAddress = entry.swapPlatform || entry.destinationWallet;
-                        const swapNodeKey = `H${hop.hopNumber}-BROWN-${swapWalletAddress}`;
+                        const attribution = entry.swapPlatform || 'DEX';
+                        const swapNodeKey = `H${hop.hopNumber}-BROWN-${attribution}`;
                         let swapNode = this.nodeMap.get(swapNodeKey);
 
                         if (!swapNode) {
                             // Create DEX/brown wallet node in hop space
                             swapNode = {
                                 id: swapNodeKey,
-                                label: entry.swapPlatform || 'DEX',
-                                wallet: swapWalletAddress,
-                                walletLabel: entry.swapPlatform || 'Conversion',
-                                walletId: this.generateWalletId('brown', swapWalletAddress),
+                                label: attribution,
+                                wallet: swapWalletAddress,  // Primary wallet address
+                                walletAddresses: [swapWalletAddress],  // Track all addresses in cluster
+                                walletLabel: attribution,
+                                walletId: this.generateWalletId('brown', attribution),
                                 type: 'brown',
                                 amount: parseFloat(entry.amount || 0),
                                 currency: entry.currency,
@@ -258,6 +267,11 @@ class BATSVisualizationD3 {
 
                             this.nodes.push(swapNode);
                             this.nodeMap.set(swapNodeKey, swapNode);
+                        } else {
+                            // Brown wallet already exists - add this address to the cluster if not already present
+                            if (!swapNode.walletAddresses.includes(swapWalletAddress)) {
+                                swapNode.walletAddresses.push(swapWalletAddress);
+                            }
                         }
 
                         // Edge 1: Source → DEX (input currency)
@@ -1183,14 +1197,26 @@ class BATSVisualizationD3 {
                 </div>
 
                 <div style="margin-bottom: 20px;">
-                    <strong style="color: #7f8c8d;">Full Wallet Address:</strong><br>
-                    <div style="background: #ecf0f1; padding: 12px; border-radius: 8px; font-family: monospace; word-break: break-all; margin-top: 5px;">
-                        ${node.wallet}
-                    </div>
-                    <button onclick="navigator.clipboard.writeText('${node.wallet}').then(() => alert('Address copied!'))"
-                            style="margin-top: 10px; padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                        📋 Copy Address
-                    </button>
+                    <strong style="color: #7f8c8d;">${node.walletAddresses && node.walletAddresses.length > 1 ? 'Clustered Wallet Addresses:' : 'Full Wallet Address:'}</strong><br>
+                    ${node.walletAddresses && node.walletAddresses.length > 1 ?
+                        node.walletAddresses.map((addr, idx) => `
+                            <div style="background: #ecf0f1; padding: 12px; border-radius: 8px; font-family: monospace; word-break: break-all; margin-top: 5px;">
+                                <div style="color: #7f8c8d; font-size: 11px; margin-bottom: 3px;">Address ${idx + 1}:</div>
+                                ${addr}
+                                <button onclick="navigator.clipboard.writeText('${addr}').then(() => alert('Address copied!'))"
+                                        style="margin-top: 8px; padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">
+                                    📋 Copy
+                                </button>
+                            </div>
+                        `).join('') :
+                        `<div style="background: #ecf0f1; padding: 12px; border-radius: 8px; font-family: monospace; word-break: break-all; margin-top: 5px;">
+                            ${node.wallet}
+                        </div>
+                        <button onclick="navigator.clipboard.writeText('${node.wallet}').then(() => alert('Address copied!'))"
+                                style="margin-top: 10px; padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            📋 Copy Address
+                        </button>`
+                    }
                 </div>
 
                 <div style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
