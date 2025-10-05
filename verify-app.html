@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>B.A.T.S. Tool - Quick Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #2c3e50;
+            color: white;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background: #27ae60; }
+        .error { background: #e74c3c; }
+        .warning { background: #f39c12; }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #34495e;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 B.A.T.S. Tool Verification</h1>
+
+    <div id="status"></div>
+
+    <button onclick="runTests()">Run Verification Tests</button>
+
+    <iframe id="appFrame" src="index.html"></iframe>
+
+    <script>
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            document.getElementById('status').appendChild(div);
+        }
+
+        function runTests() {
+            document.getElementById('status').innerHTML = '';
+
+            try {
+                const frame = document.getElementById('appFrame').contentWindow;
+
+                // Test 1: Check if page loaded
+                if (frame.document.readyState === 'complete') {
+                    log('✅ Page loaded successfully', 'success');
+                } else {
+                    log('⚠️ Page still loading', 'warning');
+                }
+
+                // Test 2: Check for console errors
+                const originalError = frame.console.error;
+                let errorCount = 0;
+                frame.console.error = function() {
+                    errorCount++;
+                    originalError.apply(frame.console, arguments);
+                };
+
+                setTimeout(() => {
+                    if (errorCount === 0) {
+                        log('✅ No console errors detected', 'success');
+                    } else {
+                        log(`⚠️ ${errorCount} console error(s) detected`, 'warning');
+                    }
+                }, 1000);
+
+                // Test 3: Check critical functions
+                const functions = [
+                    'initializeGraphVisualization',
+                    'exportVisualization',
+                    'changeLayout',
+                    'switchTab',
+                    'addVictim',
+                    'generateRootTotal'
+                ];
+
+                let found = 0;
+                functions.forEach(fn => {
+                    if (typeof frame[fn] === 'function') {
+                        found++;
+                    }
+                });
+
+                log(`✅ ${found}/${functions.length} critical functions available`, found === functions.length ? 'success' : 'warning');
+
+                // Test 4: Check visualization engine
+                if (typeof frame.BATSVisualizationEngine !== 'undefined') {
+                    log('✅ Visualization engine loaded', 'success');
+                } else {
+                    log('❌ Visualization engine not loaded', 'error');
+                }
+
+                // Test 5: Check localStorage
+                try {
+                    frame.localStorage.setItem('test', '1');
+                    frame.localStorage.removeItem('test');
+                    log('✅ LocalStorage working', 'success');
+                } catch (e) {
+                    log('⚠️ LocalStorage issue: ' + e.message, 'warning');
+                }
+
+                log('🎉 Verification complete!', 'success');
+
+            } catch (error) {
+                log('❌ Error during verification: ' + error.message, 'error');
+            }
+        }
+
+        // Auto-run after load
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 2000);
+        });
+    </script>
+</body>
+</html>
