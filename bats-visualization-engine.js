@@ -875,23 +875,36 @@ class BATSVisualizationEngine {
     }
 
     loadInvestigation(investigation) {
-        // Clear existing graph
-        this.graph.clear();
+        try {
+            console.log('Loading investigation into visualization:', investigation);
 
-        // Convert investigation data to graph
-        let nodeIdCounter = 0;
-        let edgeIdCounter = 0;
+            // Clear existing graph
+            this.graph.clear();
+
+            // Validate investigation data
+            if (!investigation) {
+                console.warn('No investigation data provided');
+                return;
+            }
+
+            // Convert investigation data to graph
+            let nodeIdCounter = 0;
+            let edgeIdCounter = 0;
 
         // Add victim nodes
         if (investigation.victims) {
             investigation.victims.forEach(victim => {
                 victim.transactions?.forEach(tx => {
                     const nodeId = `victim_${nodeIdCounter++}`;
+                    const walletAddress = tx.receivingWallet || tx.redWallet || 'Unknown';
+                    const displayLabel = walletAddress && walletAddress.length > 12 ?
+                        walletAddress.substring(0, 8) + '...' : walletAddress;
+
                     this.graph.addNode(nodeId, {
                         type: 'victim',
-                        label: tx.receivingWallet.substring(0, 8) + '...',
-                        amount: parseFloat(tx.amount),
-                        currency: tx.currency,
+                        label: displayLabel,
+                        amount: parseFloat(tx.amount) || 0,
+                        currency: tx.currency || 'Unknown',
                         layer: 0,
                         data: tx
                     });
@@ -904,12 +917,17 @@ class BATSVisualizationEngine {
             investigation.hops.forEach((hop, hopIndex) => {
                 hop.entries?.forEach(entry => {
                     const nodeId = `hop_${nodeIdCounter++}`;
-                    const nodeType = entry.type || 'hop';
+                    const nodeType = entry.entryType || entry.type || 'hop';
+
+                    // Get wallet address from appropriate field
+                    const walletAddress = entry.toWallet || entry.walletAddress || 'Unknown';
+                    const displayLabel = walletAddress.length > 12 ?
+                        walletAddress.substring(0, 8) + '...' : walletAddress;
 
                     this.graph.addNode(nodeId, {
                         type: nodeType,
-                        label: entry.walletAddress.substring(0, 8) + '...',
-                        entity: entry.entity,
+                        label: displayLabel,
+                        entity: entry.exchangeName || entry.exchangeAttribution?.name || entry.entity,
                         layer: hopIndex + 1,
                         data: entry
                     });
@@ -948,6 +966,21 @@ class BATSVisualizationEngine {
 
         // Fit to screen
         this.interaction.fitToScreen();
+
+        } catch (error) {
+            console.error('Error loading investigation into visualization:', error);
+            // Show error message to user
+            const container = document.getElementById('visualization-container');
+            if (container) {
+                container.innerHTML = `
+                    <div style="padding: 20px; background: #fff3cd; border: 2px solid #ff9800; border-radius: 8px; margin: 20px;">
+                        <h3 style="color: #e65100;">⚠️ Visualization Error</h3>
+                        <p>Unable to render the visualization: ${error.message}</p>
+                        <p style="font-size: 12px; color: #666;">Check console for details.</p>
+                    </div>
+                `;
+            }
+        }
     }
 
     applyLayout(type = 'hierarchical') {

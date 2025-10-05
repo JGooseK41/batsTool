@@ -3,18 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 05:32)
+## Latest Commit (Auto-updated: 2025-10-05 05:33)
 
-**Commit:** 49f6064978c9a3e940fcfd6e814125cce73b38eb
+**Commit:** 40465877b9ac911ea0a088d6495b94add43904ed
 **Author:** Your Name
-**Message:** Fix write-off entry collapsed display to show category, justification and details
+**Message:** Fix terminal wallet summary double-counting in investigation complete modal
 
-- Added write-off category badge display in collapsed view
-- Show justification text (truncated to 50 chars)
-- Display wallet address and transaction hash info
-- Added 📝 icon for visual clarity
-- Enhanced collapsed state to show all write-off details
-- Fixed issue where collapsed write-off entries showed no data
+- Deduplicate terminal wallets by address + amount + currency
+- Prevent entries from being counted twice when in both index and entries
+- Use Map to ensure unique terminal wallet tracking
+- Fix KuCoin showing double the actual amount
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -22,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 17 ++++++++---------
- index.html | 27 ++++++++++++++++++++++++---
- 2 files changed, 32 insertions(+), 12 deletions(-)
+ CLAUDE.md  | 40 ++++++++++++++++++++++++++--------------
+ index.html | 20 ++++++++++++++++++--
+ 2 files changed, 44 insertions(+), 16 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 49f6064 Fix write-off entry collapsed display to show category, justification and details (0 seconds ago)
-- 77be354 Update CLAUDE.md (10 minutes ago)
-- 822d0c7 Add verification test page (10 minutes ago)
-- b7c10d2 Fix syntax error from broken template literal (12 minutes ago)
-- f634ff1 Final CLAUDE.md update (16 minutes ago)
-- dce59d7 Update CLAUDE.md with latest commit info (16 minutes ago)
-- 5b84f18 Add test results and documentation (16 minutes ago)
+- 4046587 Fix terminal wallet summary double-counting in investigation complete modal (0 seconds ago)
+- 49f6064 Fix write-off entry collapsed display to show category, justification and details (74 seconds ago)
+- 77be354 Update CLAUDE.md (11 minutes ago)
+- 822d0c7 Add verification test page (12 minutes ago)
+- b7c10d2 Fix syntax error from broken template literal (13 minutes ago)
+- f634ff1 Final CLAUDE.md update (17 minutes ago)
+- dce59d7 Update CLAUDE.md with latest commit info (17 minutes ago)
+- 5b84f18 Add test results and documentation (17 minutes ago)
 - fbfd451 Add comprehensive workflow testing suite (7 hours ago)
 - ff05a23 Simplify visualization to use modern engine exclusively (8 hours ago)
-- 2363b87 Implement modern Canvas-based visualization engine (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
