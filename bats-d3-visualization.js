@@ -1231,17 +1231,19 @@ class BATSVisualizationD3 {
                 this.hideNoteTooltip();
             })
             .call(d3.drag()
-                .on('start', (event, d) => {
+                .on('start', function(event, d) {
                     event.sourceEvent.stopPropagation();  // Prevent zoom/pan interference
-                    this.dragStarted(event, d);
+                    d3.select(this).style('cursor', 'grabbing');
+                    d.isDragging = true;
                 })
                 .on('drag', (event, d) => {
                     event.sourceEvent.stopPropagation();  // Prevent zoom/pan interference
                     this.dragging(event, d);
                 })
-                .on('end', (event, d) => {
+                .on('end', function(event, d) {
                     event.sourceEvent.stopPropagation();  // Prevent zoom/pan interference
-                    this.dragEnded(event, d);
+                    d3.select(this).style('cursor', 'grab');
+                    d.isDragging = false;
                 }));
 
         // Node circle
@@ -1303,11 +1305,6 @@ class BATSVisualizationD3 {
             .text(d => `${d.amount.toFixed(2)} ${d.currency}`);
     }
 
-    dragStarted(event, d) {
-        d3.select(event.sourceEvent.target.parentNode).style('cursor', 'grabbing');
-        d.isDragging = true;
-    }
-
     dragging(event, d) {
         // Strictly constrain movement to vertical only within column
         const newY = event.y;
@@ -1322,17 +1319,13 @@ class BATSVisualizationD3 {
         // Only Y can change, and only within bounds
         d.y = Math.max(minY, Math.min(maxY, newY));
 
-        // Update node visual position - X is always d.x (original column position)
-        d3.select(event.sourceEvent.target.parentNode)
+        // Update all node positions (D3 will only update the dragged node's transform)
+        this.nodesGroup.selectAll('.node')
+            .filter(node => node.id === d.id)
             .attr('transform', `translate(${d.x}, ${d.y})`);
 
         // Update all connected edges
         this.updateEdges();
-    }
-
-    dragEnded(event, d) {
-        d3.select(event.sourceEvent.target.parentNode).style('cursor', 'grab');
-        d.isDragging = false;
     }
 
     toggleEdgeGroup(edgeGroup) {
