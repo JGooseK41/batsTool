@@ -15,7 +15,8 @@ class BATSVisualizationD3 {
             width: 2400,
             height: 1600,
             margin: { top: 80, right: 50, bottom: 80, left: 50 },
-            hopColumnWidth: 350,
+            walletColumnWidth: 200,  // Width of wallet columns
+            hopSpaceWidth: 300,      // Space between wallet columns (for edges/flow)
             nodeRadius: 35,
             verticalSpacing: 100,
             artBoxHeight: 70,
@@ -91,7 +92,7 @@ class BATSVisualizationD3 {
             nodes: [],
             artBefore: {},
             artAfter: {},
-            x: this.config.margin.left + this.config.hopColumnWidth / 2
+            columnIndex: 0
         };
 
         // Add victim nodes
@@ -130,7 +131,7 @@ class BATSVisualizationD3 {
                 nodes: [],
                 artBefore: hop.artAtStartByCurrency || {},
                 artAfter: {},
-                x: this.config.margin.left + (hopIndex + 1) * this.config.hopColumnWidth + this.config.hopColumnWidth / 2
+                columnIndex: hopIndex + 1
             };
 
             // Process entries
@@ -233,20 +234,31 @@ class BATSVisualizationD3 {
     renderHopColumns() {
         console.log('Rendering hop-centric column layout...');
 
-        // Position nodes in columns
-        this.hopColumns.forEach((column, colIndex) => {
-            const columnX = this.config.margin.left + colIndex * this.config.hopColumnWidth;
+        // Calculate positions for wallet columns and hop spaces
+        // Layout: [Wallet Col 0] [Hop Space 1] [Wallet Col 1] [Hop Space 2] [Wallet Col 2] ...
+        this.hopColumns.forEach((column) => {
+            const colIndex = column.columnIndex;
+            column.x = this.config.margin.left +
+                       colIndex * (this.config.walletColumnWidth + this.config.hopSpaceWidth) +
+                       this.config.walletColumnWidth / 2;
+        });
+
+        // Position nodes in their wallet columns
+        this.hopColumns.forEach((column) => {
             const totalHeight = column.nodes.length * this.config.verticalSpacing;
             const startY = (this.config.height - totalHeight) / 2;
 
             column.nodes.forEach((node, nodeIndex) => {
-                node.x = columnX + this.config.hopColumnWidth / 2;
+                node.x = column.x;
                 node.y = startY + nodeIndex * this.config.verticalSpacing;
             });
         });
 
-        // Draw hop column dividers
-        this.drawHopDividers();
+        // Draw wallet column backgrounds
+        this.drawWalletColumnBackgrounds();
+
+        // Draw hop space labels
+        this.drawHopSpaceLabels();
 
         // Draw ART boxes
         this.drawARTBoxes();
@@ -261,36 +273,79 @@ class BATSVisualizationD3 {
         this.fitToView();
     }
 
-    drawHopDividers() {
-        const dividers = this.mainGroup.selectAll('.hop-divider')
+    drawWalletColumnBackgrounds() {
+        // Draw shaded background rectangles for each wallet column
+        const columns = this.mainGroup.selectAll('.wallet-column-bg')
             .data(this.hopColumns);
 
-        dividers.enter()
-            .append('g')
-            .attr('class', 'hop-divider')
-            .each(function(d, i) {
-                const g = d3.select(this);
+        columns.enter()
+            .append('rect')
+            .attr('class', 'wallet-column-bg')
+            .attr('x', d => d.x - this.config.walletColumnWidth / 2)
+            .attr('y', 60)
+            .attr('width', this.config.walletColumnWidth)
+            .attr('height', 1420)
+            .attr('fill', d => d.columnIndex === 0 ? '#ffe6e6' : '#e6f2ff')  // Light red for victims, light blue for others
+            .attr('opacity', 0.3)
+            .attr('rx', 8);
 
-                // Vertical line
-                g.append('line')
-                    .attr('x1', d.x)
-                    .attr('y1', 50)
-                    .attr('x2', d.x)
-                    .attr('y2', 1550)
-                    .attr('stroke', '#ddd')
-                    .attr('stroke-width', 2)
-                    .attr('stroke-dasharray', '5,5');
+        // Add wallet column titles
+        columns.enter()
+            .append('text')
+            .attr('x', d => d.x)
+            .attr('y', 40)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '16px')
+            .attr('font-weight', 'bold')
+            .attr('fill', '#2c3e50')
+            .text(d => d.title);
+    }
 
-                // Title
-                g.append('text')
-                    .attr('x', d.x)
-                    .attr('y', 40)
-                    .attr('text-anchor', 'middle')
-                    .attr('font-size', '20px')
-                    .attr('font-weight', 'bold')
-                    .attr('fill', '#2c3e50')
-                    .text(d.title);
+    drawHopSpaceLabels() {
+        // Draw labels in the space BETWEEN wallet columns
+        const hopSpaces = [];
+
+        for (let i = 0; i < this.hopColumns.length - 1; i++) {
+            const leftColumn = this.hopColumns[i];
+            const rightColumn = this.hopColumns[i + 1];
+
+            hopSpaces.push({
+                hopNumber: rightColumn.hopNumber,
+                x: (leftColumn.x + this.config.walletColumnWidth / 2 + rightColumn.x - this.config.walletColumnWidth / 2) / 2,
+                leftX: leftColumn.x + this.config.walletColumnWidth / 2,
+                rightX: rightColumn.x - this.config.walletColumnWidth / 2
             });
+        }
+
+        const labels = this.mainGroup.selectAll('.hop-space-label')
+            .data(hopSpaces);
+
+        labels.enter()
+            .append('text')
+            .attr('class', 'hop-space-label')
+            .attr('x', d => d.x)
+            .attr('y', 40)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '18px')
+            .attr('font-weight', 'bold')
+            .attr('fill', '#7f8c8d')
+            .text(d => `→ HOP ${d.hopNumber} →`);
+
+        // Draw subtle vertical guides at hop space boundaries
+        const guides = this.mainGroup.selectAll('.hop-guide')
+            .data(hopSpaces);
+
+        guides.enter()
+            .append('line')
+            .attr('class', 'hop-guide')
+            .attr('x1', d => d.leftX)
+            .attr('y1', 60)
+            .attr('x2', d => d.leftX)
+            .attr('y2', 1480)
+            .attr('stroke', '#ddd')
+            .attr('stroke-width', 1)
+            .attr('stroke-dasharray', '10,5')
+            .attr('opacity', 0.4);
     }
 
     drawARTBoxes() {
