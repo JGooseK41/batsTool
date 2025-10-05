@@ -892,38 +892,45 @@ class BATSVisualizationEngine {
             let edgeIdCounter = 0;
 
         // Add victim nodes
-        if (investigation.victims) {
+        if (investigation.victims && Array.isArray(investigation.victims)) {
             investigation.victims.forEach(victim => {
-                victim.transactions?.forEach(tx => {
-                    const nodeId = `victim_${nodeIdCounter++}`;
-                    const walletAddress = tx.receivingWallet || tx.redWallet || 'Unknown';
-                    const displayLabel = (walletAddress && typeof walletAddress === 'string' && walletAddress.length > 12) ?
-                        walletAddress.substring(0, 8) + '...' : (walletAddress || 'Unknown');
+                if (victim && victim.transactions && Array.isArray(victim.transactions)) {
+                    victim.transactions.forEach(tx => {
+                        if (!tx) return; // Skip null/undefined transactions
 
-                    this.graph.addNode(nodeId, {
-                        type: 'victim',
-                        label: displayLabel,
-                        amount: parseFloat(tx.amount) || 0,
-                        currency: tx.currency || 'Unknown',
-                        layer: 0,
-                        data: tx
+                        const nodeId = `victim_${nodeIdCounter++}`;
+                        const walletAddress = tx.receivingWallet || tx.redWallet || 'Unknown';
+                        const displayLabel = (walletAddress && typeof walletAddress === 'string' && walletAddress.length > 12) ?
+                            walletAddress.substring(0, 8) + '...' : (walletAddress || 'Unknown');
+
+                        this.graph.addNode(nodeId, {
+                            type: 'victim',
+                            label: displayLabel,
+                            amount: parseFloat(tx.amount) || 0,
+                            currency: tx.currency || 'Unknown',
+                            layer: 0,
+                            data: tx
+                        });
                     });
-                });
+                }
             });
         }
 
         // Add hop nodes
-        if (investigation.hops) {
+        if (investigation.hops && Array.isArray(investigation.hops)) {
             investigation.hops.forEach((hop, hopIndex) => {
-                hop.entries?.forEach(entry => {
-                    try {
-                        const nodeId = `hop_${nodeIdCounter++}`;
-                        const nodeType = entry.entryType || entry.type || 'hop';
+                if (hop && hop.entries && Array.isArray(hop.entries)) {
+                    hop.entries.forEach(entry => {
+                        if (!entry) return; // Skip null/undefined entries
 
-                        // Get wallet address from appropriate field
-                        const walletAddress = entry.toWallet || entry.walletAddress || 'Unknown';
-                        const displayLabel = (walletAddress && typeof walletAddress === 'string' && walletAddress.length > 12) ?
-                            walletAddress.substring(0, 8) + '...' : (walletAddress || 'Unknown');
+                        try {
+                            const nodeId = `hop_${nodeIdCounter++}`;
+                            const nodeType = entry.entryType || entry.type || 'hop';
+
+                            // Get wallet address from appropriate field
+                            const walletAddress = entry.toWallet || entry.walletAddress || 'Unknown';
+                            const displayLabel = (walletAddress && typeof walletAddress === 'string' && walletAddress.length > 12) ?
+                                walletAddress.substring(0, 8) + '...' : (walletAddress || 'Unknown');
 
                     this.graph.addNode(nodeId, {
                         type: nodeType,
@@ -955,11 +962,12 @@ class BATSVisualizationEngine {
                             );
                         }
                     }
-                    } catch (entryError) {
-                        console.error('Error processing hop entry:', entry, entryError);
-                        // Continue with next entry
-                    }
-                });
+                        } catch (entryError) {
+                            console.error('Error processing hop entry:', entry, entryError);
+                            // Continue with next entry
+                        }
+                    });
+                }
             });
         }
 

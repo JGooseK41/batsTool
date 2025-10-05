@@ -3,41 +3,36 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 06:14)
+## Latest Commit (Auto-updated: 2025-10-05 06:20)
 
-**Commit:** e963bb8f8ace4a0519d64c6990afae2595ee45c6
+**Commit:** cba3b28c3573f5a44fb63f66bd091daa8afd0599
 **Author:** Your Name
-**Message:** Fix dashboard update errors after tab removal
+**Message:** Add null checks to prevent crashes from removed tab elements
 
-- Added null checks to updateDashboard to prevent errors when elements don't exist
-- Dashboard elements were part of removed traces tab
-- All dashboard update functions now safely check for element existence
-- Fixed duplicate null check in updateThreadStatusBar
-- App now loads without errors even with missing dashboard elements
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+- Fixed pagination controls null references in renderHops()
+- Added null checks for paginationControls, pageInfo, prevPageBtn, nextPageBtn
+- Prevents 'Cannot set properties of null' errors when loading investigations
+- Ensures app continues to function even when UI elements are missing
 
 ### Changed Files:
 ```
- CLAUDE.md  | 45 ++++++++++++++++++++++++---------------------
- index.html | 54 +++++++++++++++++++++++++++++++++---------------------
- 2 files changed, 57 insertions(+), 42 deletions(-)
+ CLAUDE.md  | 45 +++++++++++++++++++++------------------------
+ index.html | 43 ++++++++++++++++++++++++++++++-------------
+ 2 files changed, 51 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e963bb8 Fix dashboard update errors after tab removal (0 seconds ago)
-- a7b3b00 Major refactor: Remove old duplicate tabs and implement new window visualization (3 minutes ago)
-- 192fe3f Fix completed investigation loading - use same completion modal as normal workflow (14 minutes ago)
-- 60958ee Fix visualization engine substring error on undefined wallet addresses (21 minutes ago)
-- 1cfbb6f Fix write-off entries reopening when navigating between hops (25 minutes ago)
-- 90f4c59 Fix write-off entry display issues - properly collapse on creation (31 minutes ago)
-- 6482a44 Fix visualization engine errors by handling undefined wallet addresses (39 minutes ago)
-- 4046587 Fix terminal wallet summary double-counting in investigation complete modal (41 minutes ago)
-- 49f6064 Fix write-off entry collapsed display to show category, justification and details (42 minutes ago)
-- 77be354 Update CLAUDE.md (53 minutes ago)
+- cba3b28 Add null checks to prevent crashes from removed tab elements (0 seconds ago)
+- e963bb8 Fix dashboard update errors after tab removal (6 minutes ago)
+- a7b3b00 Major refactor: Remove old duplicate tabs and implement new window visualization (9 minutes ago)
+- 192fe3f Fix completed investigation loading - use same completion modal as normal workflow (20 minutes ago)
+- 60958ee Fix visualization engine substring error on undefined wallet addresses (27 minutes ago)
+- 1cfbb6f Fix write-off entries reopening when navigating between hops (32 minutes ago)
+- 90f4c59 Fix write-off entry display issues - properly collapse on creation (37 minutes ago)
+- 6482a44 Fix visualization engine errors by handling undefined wallet addresses (45 minutes ago)
+- 4046587 Fix terminal wallet summary double-counting in investigation complete modal (47 minutes ago)
+- 49f6064 Fix write-off entry collapsed display to show category, justification and details (49 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
