@@ -3,30 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 09:12)
+## Latest Commit (Auto-updated: 2025-10-05 09:14)
 
-**Commit:** c6621912fd2913861490f52a9e9e6637686837a0
+**Commit:** 61bdff74cb31081377d55a56a67d05409bc62a4a
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Update B.A.T.S. header text to better gold color (#FFA500)
+
+- Changed B.A.T.S. header text from bright yellow (#FFD700) to gold (#FFA500)
+- Updated only the header text colors, not all gold elements
+- Applied to main index.html, mobile.html, training.html headers
+- Also updated visualization page header color
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 38 +++++++++++++++++++++++++-------------
- 1 file changed, 25 insertions(+), 13 deletions(-)
+ CLAUDE.md     | 32 ++++++++++----------------------
+ index.html    |  6 +++---
+ mobile.html   |  2 +-
+ training.html |  2 +-
+ 4 files changed, 15 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c662191 Update CLAUDE.md with latest commit info (1 second ago)
-- 633149f Change gold color from orange (#f39c12) to yellow (#FFD700) (38 seconds ago)
-- e0c9c3a Update CLAUDE.md (6 minutes ago)
-- d632342 Update all header text to gold color (#f39c12) across all pages (6 minutes ago)
-- b9acd04 Update CLAUDE.md (10 minutes ago)
-- c7df7b1 Update visualization page header to match main app theme (10 minutes ago)
-- 9af9bfd Add detailed logging to visualization engine for debugging (14 minutes ago)
-- be3c798 Update CLAUDE.md with latest changes (16 minutes ago)
-- 472c5b9 Fix substring errors in visualization engine (17 minutes ago)
-- cba3b28 Add null checks to prevent crashes from removed tab elements (3 hours ago)
+- 61bdff7 Update B.A.T.S. header text to better gold color (#FFA500) (1 second ago)
+- c662191 Update CLAUDE.md with latest commit info (2 minutes ago)
+- 633149f Change gold color from orange (#f39c12) to yellow (#FFD700) (3 minutes ago)
+- e0c9c3a Update CLAUDE.md (8 minutes ago)
+- d632342 Update all header text to gold color (#f39c12) across all pages (9 minutes ago)
+- b9acd04 Update CLAUDE.md (12 minutes ago)
+- c7df7b1 Update visualization page header to match main app theme (12 minutes ago)
+- 9af9bfd Add detailed logging to visualization engine for debugging (16 minutes ago)
+- be3c798 Update CLAUDE.md with latest changes (19 minutes ago)
+- 472c5b9 Fix substring errors in visualization engine (19 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
