@@ -1542,7 +1542,7 @@
                     <button class="nav-tab" onclick="returnToLanding()" style="background: #34495e; color: white;">🏠 Home</button>
                     <button class="nav-tab" onclick="switchTab('casedetails')">Case Details</button>
                     <button class="nav-tab active" onclick="switchTab('victims')">Victims & Transactions</button>
-                    <button class="nav-tab" onclick="switchTab('traces')">Trace Documentation</button>
+                    <button class="nav-tab" onclick="switchTab('victims'); setTimeout(() => { const hopsSection = document.getElementById('hops-section'); if (hopsSection) hopsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);">Trace Documentation</button>
                     <!-- Old tabs removed - using modern completion modal workflow -->
                 </div>
 
@@ -10891,25 +10891,33 @@ function updateFormFieldsFromInvestigation() {
                 console.log('Auto-saving investigation...');
                 saveInvestigation();
             
-            // Switch to traces tab
+            // Switch to victims tab where hops are rendered
             try {
-                switchTab('traces');
-                
+                switchTab('victims');
+
+                // Scroll to hops section
+                setTimeout(() => {
+                    const hopsSection = document.getElementById('hops-section');
+                    if (hopsSection) {
+                        hopsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 200);
+
                 // Force re-render hops to show ready state
                 renderHops();
-                
+
                 // Show success message with clear next steps
                 setTimeout(() => {
                     alert('✅ Root Total Confirmed!\n\n' +
                           'Your investigation baseline has been established.\n\n' +
                           '🎯 NEXT STEP:\n' +
-                          'You will now be taken to the Trace Documentation tab.\n' +
+                          'Scroll down to the "Trace Documentation" section below.\n' +
                           'Click "Create Hop 1" to start tracking where the funds went from the RED wallets.\n\n' +
                           'Hop 1 = First movement of funds AFTER leaving the RED wallets');
-                }, 100);
+                }, 300);
             } catch (error) {
-                console.error('Error switching to traces tab:', error);
-                alert('Root total confirmed, but there was an error switching tabs. Please manually click on "Trace Documentation" to continue.');
+                console.error('Error switching to victims tab:', error);
+                alert('Root total confirmed, but there was an error switching tabs. Please manually scroll down to "Trace Documentation" to continue.');
             }
             
             } catch (error) {
