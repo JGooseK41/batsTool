@@ -897,8 +897,8 @@ class BATSVisualizationEngine {
                 victim.transactions?.forEach(tx => {
                     const nodeId = `victim_${nodeIdCounter++}`;
                     const walletAddress = tx.receivingWallet || tx.redWallet || 'Unknown';
-                    const displayLabel = walletAddress && walletAddress.length > 12 ?
-                        walletAddress.substring(0, 8) + '...' : walletAddress;
+                    const displayLabel = (walletAddress && typeof walletAddress === 'string' && walletAddress.length > 12) ?
+                        walletAddress.substring(0, 8) + '...' : (walletAddress || 'Unknown');
 
                     this.graph.addNode(nodeId, {
                         type: 'victim',
@@ -916,13 +916,14 @@ class BATSVisualizationEngine {
         if (investigation.hops) {
             investigation.hops.forEach((hop, hopIndex) => {
                 hop.entries?.forEach(entry => {
-                    const nodeId = `hop_${nodeIdCounter++}`;
-                    const nodeType = entry.entryType || entry.type || 'hop';
+                    try {
+                        const nodeId = `hop_${nodeIdCounter++}`;
+                        const nodeType = entry.entryType || entry.type || 'hop';
 
-                    // Get wallet address from appropriate field
-                    const walletAddress = entry.toWallet || entry.walletAddress || 'Unknown';
-                    const displayLabel = walletAddress.length > 12 ?
-                        walletAddress.substring(0, 8) + '...' : walletAddress;
+                        // Get wallet address from appropriate field
+                        const walletAddress = entry.toWallet || entry.walletAddress || 'Unknown';
+                        const displayLabel = (walletAddress && typeof walletAddress === 'string' && walletAddress.length > 12) ?
+                            walletAddress.substring(0, 8) + '...' : (walletAddress || 'Unknown');
 
                     this.graph.addNode(nodeId, {
                         type: nodeType,
@@ -953,6 +954,10 @@ class BATSVisualizationEngine {
                                 nodeId
                             );
                         }
+                    }
+                    } catch (entryError) {
+                        console.error('Error processing hop entry:', entry, entryError);
+                        // Continue with next entry
                     }
                 });
             });
