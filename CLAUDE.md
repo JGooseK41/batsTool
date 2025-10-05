@@ -3,15 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 16:53)
+## Latest Commit (Auto-updated: 2025-10-05 16:55)
 
-**Commit:** 42936633dbc4763b002e031836581e6a321cc3a8
+**Commit:** bb5dee7514023cdc1f8cda0064e25f73fd8cfd9e
 **Author:** Your Name
-**Message:** Fix amount parsing error in reconciliation display
+**Message:** Fix layer ordering: nodes and edges now visible above backgrounds
 
-- Parse all amounts as floats with parseFloat() to prevent .toFixed() errors
-- Add fallback to 0 if amount is invalid
-- Fixes TypeError: item.amount.toFixed is not a function
+- Created separate backgroundGroup for column shading, headers, reconciliation
+- Layer order now: backgrounds → edges → nodes → labels → art boxes
+- Prevents backgrounds from covering up wallet circles and connection threads
+- Fixes issue where no visuals were showing for wallet nodes or threads
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -19,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 47 +++++++++++++++--------------------------------
- bats-d3-visualization.js | 10 +++++-----
- 2 files changed, 20 insertions(+), 37 deletions(-)
+ CLAUDE.md                | 39 ++++++++++++++++++++++++---------------
+ bats-d3-visualization.js | 15 ++++++++-------
+ 2 files changed, 32 insertions(+), 22 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4293663 Fix amount parsing error in reconciliation display (0 seconds ago)
-- 3b9b6b0 Update CLAUDE.md with latest commit info (2 minutes ago)
-- 5ba1cdd Implement hop column T-account reconciliation system (4 minutes ago)
-- 2dfd7ff Implement complete Sankey diagram visualization for BATS (21 minutes ago)
-- 2e34fb4 Add interactive click handlers: view wallet details and thread notes (25 minutes ago)
-- 39243dc Add wallet IDs and increase spacing to prevent text overlap (26 minutes ago)
-- db3497d Add DEX/conversion nodes in hop spaces with dual-currency flow (29 minutes ago)
-- 623ed32 Redesign layout: Wallet columns with shaded backgrounds, hop spaces between (32 minutes ago)
-- ddceaf4 Fix CSP violation by using local D3.js instead of CDN (37 minutes ago)
-- 559f86a PROFESSIONAL REBUILD: D3.js visualization engine for BATS (39 minutes ago)
+- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (0 seconds ago)
+- 4293663 Fix amount parsing error in reconciliation display (2 minutes ago)
+- 3b9b6b0 Update CLAUDE.md with latest commit info (4 minutes ago)
+- 5ba1cdd Implement hop column T-account reconciliation system (5 minutes ago)
+- 2dfd7ff Implement complete Sankey diagram visualization for BATS (23 minutes ago)
+- 2e34fb4 Add interactive click handlers: view wallet details and thread notes (27 minutes ago)
+- 39243dc Add wallet IDs and increase spacing to prevent text overlap (28 minutes ago)
+- db3497d Add DEX/conversion nodes in hop spaces with dual-currency flow (31 minutes ago)
+- 623ed32 Redesign layout: Wallet columns with shaded backgrounds, hop spaces between (34 minutes ago)
+- ddceaf4 Fix CSP violation by using local D3.js instead of CDN (39 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

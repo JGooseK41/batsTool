@@ -878,8 +878,12 @@ class BATSVisualizationD3 {
             .append('g')
             .attr('class', 'node')
             .attr('transform', d => `translate(${d.x}, ${d.y})`)
-            .style('cursor', 'pointer')
-            .on('click', (event, d) => this.showNodeDetails(event, d));
+            .style('cursor', 'grab')
+            .on('click', (event, d) => this.showNodeDetails(event, d))
+            .call(d3.drag()
+                .on('start', (event, d) => this.dragStarted(event, d))
+                .on('drag', (event, d) => this.dragging(event, d))
+                .on('end', (event, d) => this.dragEnded(event, d)));
 
         // Node circle
         nodeEnter.append('circle')
@@ -931,53 +935,323 @@ class BATSVisualizationD3 {
             .text(d => `${d.amount.toFixed(2)} ${d.currency}`);
     }
 
+    dragStarted(event, d) {
+        d3.select(event.sourceEvent.target.parentNode).style('cursor', 'grabbing');
+        d.isDragging = true;
+    }
+
+    dragging(event, d) {
+        // Constrain movement to within the column (only vertical movement)
+        const newY = event.y;
+        const minY = 150;  // Top boundary
+        const maxY = 1300;  // Bottom boundary
+
+        // Update node position (keep X the same, only change Y)
+        d.y = Math.max(minY, Math.min(maxY, newY));
+
+        // Update node visual position
+        d3.select(event.sourceEvent.target.parentNode)
+            .attr('transform', `translate(${d.x}, ${d.y})`);
+
+        // Update all connected edges
+        this.updateEdges();
+    }
+
+    dragEnded(event, d) {
+        d3.select(event.sourceEvent.target.parentNode).style('cursor', 'grab');
+        d.isDragging = false;
+    }
+
+    updateEdges() {
+        // Update edge paths to follow node positions
+        this.edgesGroup.selectAll('.edge')
+            .select('path')
+            .attr('d', d => {
+                const x1 = d.source.x + this.config.nodeRadius;
+                const y1 = d.source.y;
+                const x2 = d.target.x - this.config.nodeRadius;
+                const y2 = d.target.y;
+                const mx = (x1 + x2) / 2;
+
+                return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+            });
+
+        // Update edge notation labels
+        this.edgesGroup.selectAll('.edge')
+            .selectAll('text')
+            .attr('x', d => (d.source.x + d.target.x) / 2)
+            .attr('y', (d, i) => (d.source.y + d.target.y) / 2 + (i === 0 ? 15 : -5));
+    }
+
     showNodeDetails(event, node) {
-        const details = `
-Wallet ID: ${node.walletId}
-Thread Notation: ${node.label}
-Full Address: ${node.wallet}
-Amount: ${node.amount.toFixed(6)} ${node.currency}
-Type: ${node.type.charAt(0).toUpperCase() + node.type.slice(1)}
-${node.isSwap ? '\nSwap/Conversion Node' : ''}
-${node.isTerminal ? '\nTerminal Exchange' : ''}
+        // Calculate total funds through this wallet
+        const totalIncoming = this.edges
+            .filter(e => e.target === node.id)
+            .reduce((sum, e) => sum + e.amount, 0);
 
-Click OK to copy full address to clipboard.
-        `.trim();
+        const totalOutgoing = this.edges
+            .filter(e => e.source === node.id)
+            .reduce((sum, e) => sum + e.amount, 0);
 
-        if (confirm(details)) {
-            navigator.clipboard.writeText(node.wallet);
-            alert('Address copied to clipboard!');
-        }
+        // Get unique VTH notations for this wallet
+        const vthNotations = new Set();
+        this.edges.forEach(e => {
+            if (e.source === node.id || e.target === node.id) {
+                if (e.notation) vthNotations.add(e.notation);
+                if (e.entryData && e.entryData.notation) vthNotations.add(e.entryData.notation);
+            }
+        });
+
+        // If this is a victim node, add its own notation
+        if (node.label) vthNotations.add(node.label);
+
+        const vthList = Array.from(vthNotations).sort().join(', ');
+
+        // Create modal HTML
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        `;
+
+        modal.innerHTML = `
+            <div style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <h2 style="margin: 0 0 20px 0; color: #2c3e50; border-bottom: 3px solid ${this.config.colors[node.type]}; padding-bottom: 10px;">
+                    <span style="background: ${this.config.colors[node.type]}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 18px; margin-right: 10px;">
+                        ${node.walletId}
+                    </span>
+                    Wallet Details
+                </h2>
+
+                <div style="margin-bottom: 20px;">
+                    <strong style="color: #7f8c8d;">Thread Notation:</strong><br>
+                    <span style="color: #2c3e50; font-size: 16px; font-weight: 600;">${node.label}</span>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <strong style="color: #7f8c8d;">Full Wallet Address:</strong><br>
+                    <div style="background: #ecf0f1; padding: 12px; border-radius: 8px; font-family: monospace; word-break: break-all; margin-top: 5px;">
+                        ${node.wallet}
+                    </div>
+                    <button onclick="navigator.clipboard.writeText('${node.wallet}').then(() => alert('Address copied!'))"
+                            style="margin-top: 10px; padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        📋 Copy Address
+                    </button>
+                </div>
+
+                <div style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                        <div style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">TOTAL INCOMING</div>
+                        <div style="color: #27ae60; font-size: 20px; font-weight: bold;">${totalIncoming.toFixed(6)} ${node.currency}</div>
+                    </div>
+                    <div style="background: #ffebee; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c;">
+                        <div style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">TOTAL OUTGOING</div>
+                        <div style="color: #e74c3c; font-size: 20px; font-weight: bold;">${totalOutgoing.toFixed(6)} ${node.currency}</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <strong style="color: #7f8c8d;">Wallet Type:</strong>
+                    <span style="color: #2c3e50; margin-left: 10px;">
+                        ${node.type.charAt(0).toUpperCase() + node.type.slice(1)}
+                        ${node.isSwap ? ' (Conversion/DEX)' : ''}
+                        ${node.isTerminal ? ' (Terminal Exchange)' : ''}
+                    </span>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <strong style="color: #7f8c8d;">Connected Thread Notations:</strong>
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 5px; font-family: monospace; color: #2c3e50;">
+                        ${vthList || 'None'}
+                    </div>
+                </div>
+
+                <button onclick="this.parentElement.parentElement.remove()"
+                        style="width: 100%; padding: 12px; background: #34495e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                    Close
+                </button>
+            </div>
+        `;
+
+        // Close on background click
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.remove();
+        };
+
+        document.body.appendChild(modal);
     }
 
     showEdgeDetails(event, edge) {
         if (!edge.entryData) {
-            alert('No entry data available for this edge.');
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.7); display: flex; align-items: center;
+                justify-content: center; z-index: 10000;
+            `;
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px;">
+                    <h2 style="color: #2c3e50; margin-bottom: 15px;">Thread Details</h2>
+                    <p>No detailed entry data available for this connection.</p>
+                    <p><strong>Amount:</strong> ${edge.amount.toFixed(6)} ${edge.currency}</p>
+                    <p><strong>Notation:</strong> ${edge.notation || 'N/A'}</p>
+                    <button onclick="this.parentElement.parentElement.remove()"
+                            style="margin-top: 20px; width: 100%; padding: 12px; background: #34495e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        Close
+                    </button>
+                </div>
+            `;
+            modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+            document.body.appendChild(modal);
             return;
         }
 
         const entry = edge.entryData;
-        const details = `
-═══════════════════════════════════
-THREAD DETAILS
-═══════════════════════════════════
-Notation: ${entry.notation || 'N/A'}
-Amount: ${edge.amount.toFixed(6)} ${edge.currency}
 
-Source Thread: ${entry.sourceThreadId || 'N/A'}
-Destination: ${entry.destinationWallet || 'N/A'}
-${entry.transactionHash ? `\nTx Hash: ${entry.transactionHash}` : ''}
-${entry.timestamp ? `\nTimestamp: ${entry.timestamp}` : ''}
+        // Create modal HTML
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        `;
 
-Entry Type: ${entry.entryType || 'trace'}
-${entry.walletType ? `Wallet Type: ${entry.walletType}` : ''}
+        const isSwap = entry.entryType === 'swap' || entry.isSwap;
+        const txHash = entry.transactionHash || entry.txHash || '';
 
-${entry.notes ? `\n───────────────────────────────────\nNOTES:\n${entry.notes}\n───────────────────────────────────` : ''}
+        modal.innerHTML = `
+            <div style="background: white; border-radius: 12px; padding: 30px; max-width: 700px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <h2 style="margin: 0 0 20px 0; color: #2c3e50; border-bottom: 3px solid #f39c12; padding-bottom: 10px;">
+                    🔗 Thread Entry Details
+                </h2>
 
-${entry.swapDetails ? `\n───────────────────────────────────\nSWAP DETAILS:\nPlatform: ${entry.swapPlatform || entry.swapDetails.platform || 'Unknown'}\nInput: ${entry.amount} ${entry.currency}\nOutput: ${entry.swapDetails.outputAmount || entry.outputAmount} ${entry.swapDetails.outputCurrency}\n───────────────────────────────────` : ''}
-        `.trim();
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #3498db;">
+                    <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 5px;">THREAD NOTATION</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #2c3e50; font-family: monospace;">
+                        ${entry.notation || edge.notation || 'N/A'}
+                    </div>
+                </div>
 
-        alert(details);
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div>
+                        <strong style="color: #7f8c8d; font-size: 12px;">AMOUNT</strong>
+                        <div style="font-size: 18px; color: #27ae60; font-weight: bold;">
+                            ${edge.amount.toFixed(6)} ${edge.currency}
+                        </div>
+                    </div>
+                    <div>
+                        <strong style="color: #7f8c8d; font-size: 12px;">ENTRY TYPE</strong>
+                        <div style="font-size: 16px; color: #2c3e50; font-weight: 600;">
+                            ${(entry.entryType || 'trace').toUpperCase()}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <strong style="color: #7f8c8d;">Source Thread:</strong>
+                    <div style="background: #ecf0f1; padding: 10px; border-radius: 6px; margin-top: 5px; font-family: monospace;">
+                        ${entry.sourceThreadId || 'N/A'}
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <strong style="color: #7f8c8d;">Destination Wallet:</strong>
+                    <div style="background: #ecf0f1; padding: 10px; border-radius: 6px; margin-top: 5px; font-family: monospace; word-break: break-all;">
+                        ${entry.destinationWallet || 'N/A'}
+                    </div>
+                </div>
+
+                ${txHash ? `
+                <div style="margin-bottom: 20px;">
+                    <strong style="color: #7f8c8d;">Transaction Hash:</strong>
+                    <div style="background: #ecf0f1; padding: 10px; border-radius: 6px; margin-top: 5px; font-family: monospace; word-break: break-all; font-size: 11px;">
+                        ${txHash}
+                    </div>
+                    <button onclick="navigator.clipboard.writeText('${txHash}').then(() => alert('Transaction hash copied!'))"
+                            style="margin-top: 8px; padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        📋 Copy Tx Hash
+                    </button>
+                </div>
+                ` : ''}
+
+                ${entry.timestamp ? `
+                <div style="margin-bottom: 20px;">
+                    <strong style="color: #7f8c8d;">Timestamp:</strong>
+                    <span style="margin-left: 10px; color: #2c3e50;">${entry.timestamp}</span>
+                </div>
+                ` : ''}
+
+                ${isSwap ? `
+                <div style="background: #fff3cd; border: 2px solid #8B4513; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 10px 0; color: #8B4513;">🔄 Swap/Conversion Details</h3>
+                    <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center;">
+                        <div>
+                            <div style="font-size: 12px; color: #7f8c8d;">INPUT</div>
+                            <div style="font-size: 16px; font-weight: bold; color: #e74c3c;">
+                                ${entry.inputAmount || entry.amount} ${entry.inputCurrency || entry.currency}
+                            </div>
+                        </div>
+                        <div style="font-size: 24px;">→</div>
+                        <div>
+                            <div style="font-size: 12px; color: #7f8c8d;">OUTPUT</div>
+                            <div style="font-size: 16px; font-weight: bold; color: #27ae60;">
+                                ${entry.outputAmount || 'N/A'} ${entry.outputCurrency || 'N/A'}
+                            </div>
+                        </div>
+                    </div>
+                    ${entry.swapPlatform || entry.dexName ? `
+                    <div style="margin-top: 10px;">
+                        <strong style="font-size: 12px; color: #7f8c8d;">PLATFORM:</strong>
+                        <span style="margin-left: 5px; color: #2c3e50;">${entry.swapPlatform || entry.dexName}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+
+                ${entry.notes ? `
+                <div style="margin-bottom: 20px;">
+                    <strong style="color: #7f8c8d;">Entry Notes:</strong>
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 5px; white-space: pre-wrap; color: #2c3e50; border-left: 3px solid #f39c12;">
+                        ${entry.notes}
+                    </div>
+                </div>
+                ` : ''}
+
+                ${entry.walletType ? `
+                <div style="margin-bottom: 20px;">
+                    <strong style="color: #7f8c8d;">Wallet Type:</strong>
+                    <span style="margin-left: 10px; color: #2c3e50;">${entry.walletType}</span>
+                </div>
+                ` : ''}
+
+                <button onclick="this.parentElement.parentElement.remove()"
+                        style="width: 100%; padding: 12px; background: #34495e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                    Close
+                </button>
+            </div>
+        `;
+
+        // Close on background click
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.remove();
+        };
+
+        document.body.appendChild(modal);
     }
 
     renderSankey() {
