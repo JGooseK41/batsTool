@@ -180,6 +180,11 @@ class BATSVisualizationD3 {
                     return;
                 }
 
+                // Skip entries that don't belong to this hop (BATS sometimes stores next hop entries in previous hop array)
+                if (entry.hopNumber && entry.hopNumber !== hop.hopNumber) {
+                    return;
+                }
+
                 // Normalize entry data - BATS app uses different field names
                 if (!entry.destinationWallet && entry.toWallet) {
                     entry.destinationWallet = entry.toWallet;

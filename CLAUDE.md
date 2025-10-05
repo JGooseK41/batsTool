@@ -3,25 +3,33 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 19:26)
+## Latest Commit (Auto-updated: 2025-10-05 19:37)
 
-**Commit:** fce015cd9134126239c91db7ec65b7712d7922b2
+**Commit:** 50178753430e5705adbc7d71ea04a8ee1a0aa5d2
 **Author:** Your Name
-**Message:** Fix drag event handlers causing underlay movement
+**Message:** Fix BATS data compatibility and bridge thread tracking
 
-Issue: Dragging wallets caused errors and moved the entire underlay
-Root cause: Using event.sourceEvent.target.parentNode incorrectly
-in drag handlers, causing D3 to select wrong elements
+Data Normalization:
+- Added field mapping for BATS app format (toWallet → destinationWallet)
+- Map toWalletType → walletType for proper color coding
+- Extract wallet labels from notes field
+- Map isTerminalWallet → isTerminal for purple wallet display
 
-Fixes:
-- Changed drag start/end handlers to use function() instead of arrow
-  functions to get correct 'this' context
-- Use d3.select(this) to directly reference the dragged node group
-- Updated dragging() to filter and select by node.id instead of
-  using event.sourceEvent.target
-- Removed separate dragStarted() and dragEnded() methods (now inline)
+Bridge Thread Tracking:
+- Store bridge output internal IDs from availableThreads
+- Updated findSourceNode() to handle bridge_* internal IDs
+- Search brown wallet outputThreads for matching internal IDs
+- Properly link bridge outputs to next hop entries
 
-Result: Wallets now drag smoothly without affecting other elements
+Bridge Amount Handling:
+- Use bridgeDetails.destinationAmount for output amounts
+- Use bridgeDetails.destinationAsset for output currency
+- Fallback to swapDetails for non-bridge conversions
+
+Issues Fixed:
+- Terminal wallets now display (purple nodes)
+- Bridge outputs properly connect to next hop
+- No more threads bypassing hops
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -29,23 +37,25 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 60 +++++++++++++++++++++++++++++-------------------
- bats-d3-visualization.js | 25 ++++++++------------
- 2 files changed, 45 insertions(+), 40 deletions(-)
+ CLAUDE.md                             |   66 +-
+ Miami Assist (6).bats                 | 1252 +++++++++++++++++++++++++++++++++
+ Miami Assist (6).bats:Zone.Identifier |    3 +
+ bats-d3-visualization.js              |   56 +-
+ 4 files changed, 1339 insertions(+), 38 deletions(-)
 ```
 
 ## Recent Commits History
 
-- fce015c Fix drag event handlers causing underlay movement (0 seconds ago)
-- f04b421 Fix brown wallet consolidation and add multi-thread edge grouping (3 minutes ago)
-- 8c49022 Fix Generate Reports button and add graph/reports navigation (14 minutes ago)
-- 28958bb Update CLAUDE.md with latest commit info (22 minutes ago)
-- a25501b Update CLAUDE.md with latest commit info (23 minutes ago)
-- 06715f7 Add note functionality to edges and wallets with right-click and hover (24 minutes ago)
-- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (27 minutes ago)
-- 9f94636 Fix thread connections from brown wallets to next hop (32 minutes ago)
-- ca4dc39 Update CLAUDE.md with latest commit info (34 minutes ago)
-- 82952b6 Consolidate brown wallets by attribution instead of address (35 minutes ago)
+- 5017875 Fix BATS data compatibility and bridge thread tracking (0 seconds ago)
+- fce015c Fix drag event handlers causing underlay movement (11 minutes ago)
+- f04b421 Fix brown wallet consolidation and add multi-thread edge grouping (15 minutes ago)
+- 8c49022 Fix Generate Reports button and add graph/reports navigation (25 minutes ago)
+- 28958bb Update CLAUDE.md with latest commit info (33 minutes ago)
+- a25501b Update CLAUDE.md with latest commit info (34 minutes ago)
+- 06715f7 Add note functionality to edges and wallets with right-click and hover (36 minutes ago)
+- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (39 minutes ago)
+- 9f94636 Fix thread connections from brown wallets to next hop (44 minutes ago)
+- ca4dc39 Update CLAUDE.md with latest commit info (45 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
