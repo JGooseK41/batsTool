@@ -12135,9 +12135,11 @@ function addNewHop() {
         if (allFundsTerminal) {
             alert('All funds have reached terminal wallets. The investigation is complete.\n\nNo new hop can be created as there are no active threads to trace.');
 
-            // Show completion section
-            document.getElementById('completeInvestigationSection').style.display = 'block';
-            document.getElementById('addHopBtn').style.display = 'none';
+            // Show completion section if it exists
+            const completeSectionEl = document.getElementById('completeInvestigationSection');
+            const addHopBtnEl = document.getElementById('addHopBtn');
+            if (completeSectionEl) completeSectionEl.style.display = 'block';
+            if (addHopBtnEl) addHopBtnEl.style.display = 'none';
             return;
         }
 
@@ -13518,6 +13520,7 @@ function addNewHop() {
             updateDashboard();
 
             const container = document.getElementById('hopsList');
+            if (!container) return; // Exit if element doesn't exist (was part of removed traces tab)
             container.innerHTML = '';
 
             if (!investigation.rootTotalConfirmed) {
@@ -13583,19 +13586,32 @@ function addNewHop() {
             // Pagination logic
             const totalHops = investigation.hops.length;
             const showPagination = totalHops > 10 && hopsPerPage !== 'all';
-            document.getElementById('paginationControls').style.display = showPagination ? 'block' : 'none';
-            
+            const paginationControls = document.getElementById('paginationControls');
+            if (paginationControls) {
+                paginationControls.style.display = showPagination ? 'block' : 'none';
+            }
+
             let hopsToShow = investigation.hops;
             if (showPagination) {
                 const startIndex = (currentHopPage - 1) * hopsPerPage;
                 const endIndex = startIndex + hopsPerPage;
                 hopsToShow = investigation.hops.slice(startIndex, endIndex);
-                
+
                 // Update pagination info
                 const totalPages = Math.ceil(totalHops / hopsPerPage);
-                document.getElementById('pageInfo').textContent = `Page ${currentHopPage} of ${totalPages} (${totalHops} total hops)`;
-                document.getElementById('prevPageBtn').disabled = currentHopPage === 1;
-                document.getElementById('nextPageBtn').disabled = currentHopPage === totalPages;
+                const pageInfo = document.getElementById('pageInfo');
+                const prevPageBtn = document.getElementById('prevPageBtn');
+                const nextPageBtn = document.getElementById('nextPageBtn');
+
+                if (pageInfo) {
+                    pageInfo.textContent = `Page ${currentHopPage} of ${totalPages} (${totalHops} total hops)`;
+                }
+                if (prevPageBtn) {
+                    prevPageBtn.disabled = currentHopPage === 1;
+                }
+                if (nextPageBtn) {
+                    nextPageBtn.disabled = currentHopPage === totalPages;
+                }
             }
             
             hopsToShow.forEach((hop, hopIndex) => {
@@ -18770,18 +18786,19 @@ function updateInvestigationCompletionStatus() {
     const completeSection = document.getElementById('completeInvestigationSection');
     const visualizationSection = document.getElementById('visualizationPromptSection');
 
-    if (!addHopBtn || !completeSection) return;
+    // Early exit if these elements don't exist (were part of removed tabs)
+    if (!addHopBtn && !completeSection) return;
 
-    // Hide both sections by default
+    // Hide both sections by default (with null checks)
     if (visualizationSection) {
         visualizationSection.style.display = 'none';
     }
-    completeSection.style.display = 'none';
+    if (completeSection) completeSection.style.display = 'none';
 
     // Check if we have victims entered
     if (!investigation.victims || investigation.victims.length === 0) {
         // No victims yet - hide everything
-        addHopBtn.style.display = 'none';
+        if (addHopBtn) addHopBtn.style.display = 'none';
         return;
     }
 
