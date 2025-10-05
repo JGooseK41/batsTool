@@ -8274,20 +8274,30 @@ function renderHopEntry(entry, hop) {
                 </div>
             ` : ''}
             
-            ${isWriteoff ? `
+            ${isWriteoff && !isFinalized ? `
                 <div class="form-group">
                     <label>Write-off Category</label>
                     <select onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'category', this.value)">
                         <option value="">Select category...</option>
-                        ${Object.entries(writeoffCategories).map(([key, value]) => 
+                        ${Object.entries(writeoffCategories).map(([key, value]) =>
                             `<option value="${key}" ${entry.category === key ? 'selected' : ''}>${value}</option>`
                         ).join('')}
                     </select>
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Justification</label>
-                    <textarea rows="3" placeholder="Detailed explanation for abandoning this trace path..." 
+                    <textarea rows="3" placeholder="Detailed explanation for abandoning this trace path..."
                               onchange="updateHopEntry(${hop.hopNumber}, ${entry.id}, 'justification', this.value)">${entry.justification || ''}</textarea>
+                </div>
+            ` : isWriteoff && isFinalized ? `
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                    <h4 style="color: #e74c3c; margin: 0 0 10px 0;">📝 Write-off Details</h4>
+                    <div style="display: grid; gap: 10px;">
+                        <div><strong>Category:</strong> ${writeoffCategories[entry.category] || entry.category || 'Unspecified'}</div>
+                        <div><strong>Justification:</strong> ${entry.justification || 'No justification provided'}</div>
+                        <div><strong>Amount:</strong> ${parseFloat(entry.amount).toLocaleString()} ${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency}</div>
+                        ${entry.notation ? `<div><strong>Notation:</strong> ${entry.notation}</div>` : ''}
+                    </div>
                 </div>
             ` : isColdStorage ? `
                 <div class="form-group" style="grid-column: span 2;">
@@ -8303,16 +8313,18 @@ function renderHopEntry(entry, hop) {
                 </div>
             `}
             
-            <!-- Log Entry Button -->
-            <div style="margin-top: 20px; text-align: center; border-top: 2px solid #e8f0fe; padding-top: 20px;">
-                <button class="btn btn-confirm" onclick="logAndCollapseEntry(${hop.hopNumber}, ${entry.id})" 
-                        style="padding: 12px 30px; font-size: 16px; background: #27ae60;">
-                    ✅ Log Entry
-                </button>
-                <p style="margin-top: 10px; font-size: 12px; color: #666;">
-                    This will save and collapse the entry. You can click the header to expand it again.
-                </p>
-            </div>
+            <!-- Log Entry Button (only show if not finalized) -->
+            ${!isFinalized ? `
+                <div style="margin-top: 20px; text-align: center; border-top: 2px solid #e8f0fe; padding-top: 20px;">
+                    <button class="btn btn-confirm" onclick="logAndCollapseEntry(${hop.hopNumber}, ${entry.id})"
+                            style="padding: 12px 30px; font-size: 16px; background: #27ae60;">
+                        ✅ Log Entry
+                    </button>
+                    <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                        This will save and collapse the entry. You can click the header to expand it again.
+                    </p>
+                </div>
+            ` : ''}
         </div>
     `;
 }
@@ -25020,27 +25032,39 @@ function createWriteoffEntryFromWizard() {
     renderHops();
     saveToStorage();
 
-    // Force collapse the write-off entry after rendering
+    // Force collapse the write-off entry after rendering (increased timeout for render completion)
     setTimeout(() => {
         const entryKey = `${hop.hopNumber}_${writeoffEntry.id}`;
-        const entryElement = document.getElementById(`entry_${entryKey}`);
-        if (entryElement) {
-            // Find the expand/collapse elements
-            const entryContent = entryElement.querySelector('.entry-content');
-            const entrySummary = entryElement.querySelector('.entry-summary');
-            const toggleBtn = entryElement.querySelector('[onclick*="toggleEntryCollapse"]');
 
-            if (entryContent) {
-                entryContent.style.display = 'none';
-            }
-            if (entrySummary) {
-                entrySummary.style.display = 'block';
-            }
-            if (toggleBtn) {
-                toggleBtn.textContent = '▶';
-            }
+        // Make sure the collapse state is set
+        window.entryCollapseState[entryKey] = true;
 
-            console.log('Force collapsed write-off entry:', entryKey);
+        // Use the correct IDs based on renderCollapsibleHopEntry function
+        const entryContent = document.getElementById(`entryContent_${entryKey}`);
+        const entrySummary = document.getElementById(`entrySummary_${entryKey}`);
+
+        if (entryContent && entrySummary) {
+            entryContent.style.display = 'none';
+            entrySummary.style.display = 'block';
+            console.log('Successfully collapsed write-off entry:', entryKey);
+
+            // Also update the toggle button if it exists
+            const entryElement = document.getElementById(`entry_${hop.hopNumber}_${writeoffEntry.id}`);
+            if (entryElement) {
+                const toggleBtns = entryElement.querySelectorAll('[onclick*="toggleEntryCollapse"]');
+                toggleBtns.forEach(btn => {
+                    const arrow = btn.querySelector('span');
+                    if (arrow) {
+                        arrow.style.transform = 'rotate(0deg)';
+                    }
+                });
+            }
+        } else {
+            console.warn('Could not find entry elements to collapse:', {
+                entryContent: !!entryContent,
+                entrySummary: !!entrySummary,
+                entryKey
+            });
         }
 
         // Also ensure manual form is hidden if present
@@ -25049,7 +25073,7 @@ function createWriteoffEntryFromWizard() {
             manualFormElement.style.display = 'none';
             console.log('Hidden manual form for write-off entry');
         }
-    }, 100);
+    }, 250); // Increased timeout to ensure rendering is complete
 
     // Do NOT show remaining threads summary for write-offs - it can trigger reopening the wizard
     // The alert below is sufficient
