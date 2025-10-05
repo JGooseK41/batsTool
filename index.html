@@ -37114,10 +37114,10 @@ To (RED Wallet): ${transfer.to}`;
             nextNoteId: 1               // ID counter for notes
         };
 
-        // Initialize the graph visualization with error handling
+        // Initialize the graph visualization with error handling and fallback
         function initializeGraphVisualization() {
             try {
-                console.log('🎨 Initializing premium DAG visualization...');
+                console.log('🎨 Initializing graph visualization...');
 
                 // Ensure container exists
                 const container = document.getElementById('visualizationContainer');
@@ -37138,69 +37138,259 @@ To (RED Wallet): ${transfer.to}`;
                     return;
                 }
 
-                // Build advanced graph data structure with error handling
-                let graphData;
+                // Try advanced visualization first, fall back to simple if it fails
+                let success = false;
+
+                // First attempt: Try building advanced DAG
                 try {
-                    graphData = buildAdvancedDAG();
-                } catch (dagError) {
-                    console.error('Error building DAG:', dagError);
-                    showGraphErrorState('Error building graph structure. Your data is safe - please return to investigation.');
-                    return;
-                }
-
-                // Render based on current mode
-                const mode = window.currentVizMode || 'flow';
-                try {
-                    renderVisualization(mode, graphData);
-                } catch (renderError) {
-                    console.error('Error rendering visualization:', renderError);
-                    showGraphErrorState('Error rendering graph. Your data is safe - please return to investigation.');
-                    return;
-                }
-
-                // Setup premium interactions (with safety checks)
-                if (typeof setupPremiumInteractions === 'function') {
-                    try {
-                        setupPremiumInteractions();
-                    } catch (e) {
-                        console.warn('Could not setup interactions:', e);
-                    }
-                }
-
-                // Initialize mini-map (optional)
-                if (typeof renderMiniMap === 'function') {
-                    try {
-                        renderMiniMap(graphData);
-                    } catch (e) {
-                        console.warn('Could not render mini-map:', e);
-                    }
-                }
-
-                // Apply entrance animation (optional)
-                if (typeof animateGraphEntrance === 'function') {
-                    try {
-                        animateGraphEntrance();
-                    } catch (e) {
-                        console.warn('Could not animate entrance:', e);
-                    }
-                }
-
-                // Auto-fit with padding (optional)
-                if (typeof fitToScreen === 'function') {
-                    setTimeout(() => {
-                        try {
-                            fitToScreen(true);
-                        } catch (e) {
-                            console.warn('Could not auto-fit:', e);
+                    const graphData = buildAdvancedDAG();
+                    if (graphData && graphData.nodes && graphData.edges) {
+                        // Validate data before rendering
+                        const validData = validateGraphData(graphData);
+                        if (validData) {
+                            // Try rendering advanced visualization
+                            const mode = window.currentVizMode || 'flow';
+                            try {
+                                renderVisualization(mode, graphData);
+                                success = true;
+                                console.log('✅ Advanced visualization rendered successfully');
+                            } catch (renderError) {
+                                console.warn('Advanced render failed, trying fallback:', renderError);
+                            }
                         }
-                    }, 300);
+                    }
+                } catch (dagError) {
+                    console.warn('DAG building failed, trying fallback:', dagError);
                 }
 
-                console.log('✅ Graph visualization initialized successfully');
+                // Fallback: Use simple HTML visualization if advanced fails
+                if (!success) {
+                    console.log('Using simple fallback visualization...');
+                    renderSimpleFlowDiagram();
+                    success = true;
+                }
+
+                // Setup interactions if available
+                if (success) {
+                    if (typeof setupPremiumInteractions === 'function') {
+                        try {
+                            setupPremiumInteractions();
+                        } catch (e) {
+                            console.warn('Could not setup interactions:', e);
+                        }
+                    }
+                }
+
+                console.log('✅ Graph visualization initialized');
+
             } catch (error) {
                 console.error('Fatal error in graph initialization:', error);
-                showGraphErrorState('An error occurred while loading the graph. Your data is safe - please return to investigation.');
+                // Last resort: Simple text-based visualization
+                renderTextBasedVisualization();
             }
+        }
+
+        // Validate graph data to prevent NaN errors
+        function validateGraphData(graphData) {
+            if (!graphData || !graphData.nodes || !graphData.edges) {
+                console.warn('Invalid graph data structure');
+                return false;
+            }
+
+            // Check all nodes have valid positions
+            for (const [nodeId, node] of graphData.nodes) {
+                if (node.x === undefined || node.x === null || isNaN(node.x)) {
+                    console.warn(`Node ${nodeId} has invalid x position:`, node.x);
+                    // Assign default position
+                    node.x = 100;
+                }
+                if (node.y === undefined || node.y === null || isNaN(node.y)) {
+                    console.warn(`Node ${nodeId} has invalid y position:`, node.y);
+                    // Assign default position
+                    node.y = 100;
+                }
+            }
+
+            // Check edges have valid source/target
+            graphData.edges = graphData.edges.filter(edge => {
+                if (!edge.source || !edge.target) {
+                    console.warn('Edge missing source or target:', edge);
+                    return false;
+                }
+                if (!graphData.nodes.has(edge.source) || !graphData.nodes.has(edge.target)) {
+                    console.warn('Edge references non-existent node:', edge);
+                    return false;
+                }
+                return true;
+            });
+
+            return true;
+        }
+
+        // Simple HTML-based flow diagram fallback
+        function renderSimpleFlowDiagram() {
+            const container = document.getElementById('visualizationContainer');
+            if (!container) return;
+
+            // Clear and set up container
+            container.innerHTML = `
+                <div class="visualization-header" style="background: rgba(0,0,0,0.8); padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <button onclick="switchTab('hops'); saveInvestigation();" class="btn" style="position: absolute; left: 20px; top: 20px; background: rgba(52, 152, 219, 0.9);">
+                        ← Back to Investigation
+                    </button>
+                    <h2 style="color: #fff; text-align: center; margin: 0;">Investigation Flow Diagram</h2>
+                </div>
+                <div id="simpleFlowContainer" style="
+                    padding: 40px;
+                    overflow: auto;
+                    height: calc(100% - 80px);
+                    background: linear-gradient(135deg, #1a1a2e, #16213e);
+                ">
+                    <!-- Flow will be rendered here -->
+                </div>
+            `;
+
+            const flowContainer = document.getElementById('simpleFlowContainer');
+            let flowHTML = '<div style="display: flex; flex-direction: column; gap: 30px; align-items: center;">';
+
+            // Render victims
+            if (investigation.victims && investigation.victims.length > 0) {
+                flowHTML += '<div class="flow-section" style="background: rgba(239, 68, 68, 0.1); padding: 20px; border-radius: 10px; border: 2px solid #ef4444; width: 90%; max-width: 800px;">';
+                flowHTML += '<h3 style="color: #ef4444; margin-bottom: 15px;">Victim Wallets</h3>';
+                flowHTML += '<div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">';
+
+                investigation.victims.forEach(victim => {
+                    victim.transactions?.forEach(tx => {
+                        const amount = parseFloat(tx.amount) || 0;
+                        const currency = tx.currency === 'CUSTOM' ? tx.customCurrency : tx.currency;
+                        flowHTML += `
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; border: 1px solid #ef4444;">
+                                <div style="color: #fff; font-size: 12px;">${tx.receivingWallet.substring(0, 8)}...</div>
+                                <div style="color: #ef4444; font-weight: bold;">${amount.toFixed(2)} ${currency}</div>
+                                <div style="color: #aaa; font-size: 11px;">V${victim.id}-T${tx.id}</div>
+                            </div>
+                        `;
+                    });
+                });
+
+                flowHTML += '</div></div>';
+
+                // Arrow down
+                flowHTML += '<div style="color: #fff; font-size: 30px;">↓</div>';
+            }
+
+            // Render hops
+            investigation.hops?.forEach((hop, hopIndex) => {
+                const hopColor = hop.isComplete ? '#27ae60' : '#f39c12';
+                flowHTML += `<div class="flow-section" style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; border: 2px solid ${hopColor}; width: 90%; max-width: 800px;">`;
+                flowHTML += `<h3 style="color: ${hopColor}; margin-bottom: 15px;">Hop ${hop.id} ${hop.isComplete ? '✓' : '(In Progress)'}</h3>`;
+
+                // Entries in this hop
+                flowHTML += '<div style="display: flex; flex-direction: column; gap: 10px;">';
+                hop.entries?.forEach(entry => {
+                    const entryBg = entry.type === 'bridge' ? 'rgba(155, 89, 182, 0.2)' :
+                                  entry.type === 'terminal' ? 'rgba(52, 152, 219, 0.2)' :
+                                  'rgba(255, 255, 255, 0.05)';
+
+                    flowHTML += `
+                        <div style="background: ${entryBg}; padding: 15px; border-radius: 8px; border-left: 4px solid ${hopColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <div style="color: #fff; font-weight: bold;">${entry.walletAddress.substring(0, 12)}...</div>
+                                    <div style="color: #aaa; font-size: 12px; margin-top: 5px;">
+                                        ${entry.entity || 'Unknown Entity'}
+                                        ${entry.type ? ` • ${entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}` : ''}
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="color: #fff; font-size: 14px;">
+                                        ${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency}
+                                    </div>
+                                    ${entry.notes ? `<div style="color: #888; font-size: 11px; max-width: 200px;">${entry.notes.substring(0, 50)}...</div>` : ''}
+                                </div>
+                            </div>
+
+                            <!-- Thread allocations -->
+                            ${entry.allocations && entry.allocations.length > 0 ? `
+                                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <div style="color: #aaa; font-size: 11px; margin-bottom: 5px;">Threads:</div>
+                                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                        ${entry.allocations.map(alloc => `
+                                            <span style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 3px; font-size: 11px; color: #fff;">
+                                                ${alloc.threadId}: ${parseFloat(alloc.amount || 0).toFixed(2)}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                flowHTML += '</div></div>';
+
+                // Arrow down (if not last hop)
+                if (hopIndex < investigation.hops.length - 1) {
+                    flowHTML += '<div style="color: #fff; font-size: 30px;">↓</div>';
+                }
+            });
+
+            // Summary
+            const totalVictimAmount = investigation.victims?.reduce((sum, v) =>
+                sum + (v.transactions?.reduce((s, t) => s + parseFloat(t.amount || 0), 0) || 0), 0) || 0;
+
+            flowHTML += `
+                <div style="background: rgba(52, 152, 219, 0.1); padding: 20px; border-radius: 10px; border: 2px solid #3498db; margin-top: 30px;">
+                    <h3 style="color: #3498db; margin-bottom: 10px;">Investigation Summary</h3>
+                    <div style="color: #fff;">
+                        <div>Total Victims: ${investigation.victims?.length || 0}</div>
+                        <div>Total Hops: ${investigation.hops?.length || 0}</div>
+                        <div>Total Amount Traced: ${totalVictimAmount.toFixed(2)}</div>
+                        <div>Status: ${investigation.hops?.every(h => h.isComplete) ? '✅ Complete' : '⏳ In Progress'}</div>
+                    </div>
+                </div>
+            `;
+
+            flowHTML += '</div>';
+            flowContainer.innerHTML = flowHTML;
+        }
+
+        // Ultra-simple text-based visualization as last resort
+        function renderTextBasedVisualization() {
+            const container = document.getElementById('visualizationContainer');
+            if (!container) return;
+
+            let textContent = 'INVESTIGATION FLOW\n==================\n\n';
+
+            // Add victims
+            if (investigation.victims && investigation.victims.length > 0) {
+                textContent += 'VICTIMS:\n';
+                investigation.victims.forEach(v => {
+                    v.transactions?.forEach(t => {
+                        textContent += `  ${t.receivingWallet.substring(0, 10)}... : ${t.amount} ${t.currency}\n`;
+                    });
+                });
+                textContent += '\n';
+            }
+
+            // Add hops
+            investigation.hops?.forEach(hop => {
+                textContent += `HOP ${hop.id}${hop.isComplete ? ' ✓' : ''}\n`;
+                hop.entries?.forEach(e => {
+                    textContent += `  → ${e.walletAddress.substring(0, 10)}... (${e.entity || 'Unknown'})\n`;
+                });
+                textContent += '\n';
+            });
+
+            container.innerHTML = `
+                <div style="padding: 20px; height: 100%; overflow: auto; background: #000;">
+                    <button onclick="switchTab('hops'); saveInvestigation();" class="btn" style="margin-bottom: 20px;">
+                        ← Back to Investigation
+                    </button>
+                    <pre style="color: #0f0; font-family: monospace; font-size: 14px; line-height: 1.6;">
+${textContent}
+                    </pre>
+                </div>
+            `;
         }
 
         // Build advanced DAG structure with full accounting
