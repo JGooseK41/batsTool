@@ -3,22 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 08:56)
+## Latest Commit (Auto-updated: 2025-10-05 08:59)
 
-**Commit:** be3c798529465328897264e68693f34890e9a390
+**Commit:** 9af9bfd2034553044ad981314f4b0fe3e454123d
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest changes
+**Message:** Add detailed logging to visualization engine for debugging
+
+- Added console logs for victim processing
+- Added console logs for hop processing
+- Added console logs for graph state after loading
+- Shows node and edge counts
+- Helps identify where visualization loading fails
+- Logs each step of the rendering process
 
 ### Changed Files:
 ```
- CLAUDE.md | 41 +++++++++++++++++++++--------------------
- 1 file changed, 21 insertions(+), 20 deletions(-)
+ CLAUDE.md                    | 21 +++++++--------------
+ bats-visualization-engine.js | 38 ++++++++++++++++++++++++++++++++++----
+ 2 files changed, 41 insertions(+), 18 deletions(-)
 ```
 
 ## Recent Commits History
 
-- be3c798 Update CLAUDE.md with latest changes (1 second ago)
-- 472c5b9 Fix substring errors in visualization engine (42 seconds ago)
+- 9af9bfd Add detailed logging to visualization engine for debugging (0 seconds ago)
+- be3c798 Update CLAUDE.md with latest changes (3 minutes ago)
+- 472c5b9 Fix substring errors in visualization engine (3 minutes ago)
 - cba3b28 Add null checks to prevent crashes from removed tab elements (3 hours ago)
 - e963bb8 Fix dashboard update errors after tab removal (3 hours ago)
 - a7b3b00 Major refactor: Remove old duplicate tabs and implement new window visualization (3 hours ago)
@@ -26,7 +35,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 60958ee Fix visualization engine substring error on undefined wallet addresses (3 hours ago)
 - 1cfbb6f Fix write-off entries reopening when navigating between hops (3 hours ago)
 - 90f4c59 Fix write-off entry display issues - properly collapse on creation (3 hours ago)
-- 6482a44 Fix visualization engine errors by handling undefined wallet addresses (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

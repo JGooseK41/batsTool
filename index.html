@@ -17047,13 +17047,36 @@ function generateVisualizationPage() {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #f5f5f5; }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
             color: white;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
         }
-        .header h1 { font-size: 24px; margin-bottom: 5px; }
-        .header p { opacity: 0.9; }
+        .header-logo {
+            width: 140px;
+            height: auto;
+            flex-shrink: 0;
+        }
+        .header-content {
+            flex: 1;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            color: #f39c12;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+            color: #ffffff;
+        }
         .controls {
             background: white;
             padding: 15px;
@@ -17072,13 +17095,16 @@ function generateVisualizationPage() {
             transition: transform 0.2s;
         }
         .controls button:hover { transform: translateY(-2px); }
-        .btn-primary { background: #3498db; color: white; }
-        .btn-secondary { background: #95a5a6; color: white; }
+        .btn-primary { background: #f39c12; color: white; font-weight: 500; }
+        .btn-primary:hover { background: #e67e22; }
+        .btn-secondary { background: #34495e; color: white; }
+        .btn-secondary:hover { background: #2c3e50; }
         .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #229954; }
         #canvas-container {
             position: relative;
             width: 100%;
-            height: calc(100vh - 140px);
+            height: calc(100vh - 180px);
             background: white;
         }
         #visualization-canvas {
@@ -17100,8 +17126,9 @@ function generateVisualizationPage() {
             transition: all 0.3s;
         }
         .tab-nav button.active {
-            color: #3498db;
+            color: #f39c12;
             background: #f8f9fa;
+            font-weight: 600;
         }
         .tab-nav button.active::after {
             content: '';
@@ -17109,8 +17136,8 @@ function generateVisualizationPage() {
             bottom: -2px;
             left: 0;
             right: 0;
-            height: 2px;
-            background: #3498db;
+            height: 3px;
+            background: #f39c12;
         }
         .tab-content {
             display: none;
@@ -17123,8 +17150,36 @@ function generateVisualizationPage() {
 </head>
 <body>
     <div class="header">
-        <h1>🌐 B.A.T.S. Investigation Visualization</h1>
-        <p>Case: ${investigation.caseId} | Total Traced: ${getTotalTracedSummary()}</p>
+        <svg class="header-logo" viewBox="0 0 240 60" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#f39c12;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#e67e22;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="blockGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#3498db;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#2980b9;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+
+            <!-- Block icon -->
+            <g transform="translate(10, 15)">
+                <rect x="0" y="0" width="30" height="30" fill="url(#blockGradient)" rx="3"/>
+                <rect x="5" y="5" width="8" height="8" fill="#ffffff" opacity="0.9"/>
+                <rect x="17" y="5" width="8" height="8" fill="#ffffff" opacity="0.7"/>
+                <rect x="5" y="17" width="8" height="8" fill="#ffffff" opacity="0.7"/>
+                <rect x="17" y="17" width="8" height="8" fill="#ffffff" opacity="0.5"/>
+            </g>
+
+            <!-- Text: BLOCK AUDIT -->
+            <text x="50" y="36" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="url(#goldGradient)">
+                BLOCK AUDIT
+            </text>
+        </svg>
+        <div class="header-content">
+            <h1>B.A.T.S. Investigation Visualization</h1>
+            <p>Case: ${investigation.caseId} | Total Traced: ${getTotalTracedSummary()}</p>
+        </div>
     </div>
 
     <div class="tab-nav">
