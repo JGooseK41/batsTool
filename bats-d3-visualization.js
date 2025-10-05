@@ -141,39 +141,106 @@ class BATSVisualizationD3 {
                     return;
                 }
 
-                const nodeId = `H${hop.hopNumber}-E${entryIndex}`;
-                const node = {
-                    id: nodeId,
-                    label: entry.notation || nodeId,
-                    wallet: entry.destinationWallet,
-                    walletLabel: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
-                    type: entry.walletType || 'black',
-                    amount: parseFloat(entry.amount || 0),
-                    currency: entry.currency,
-                    column: hopIndex + 1,
-                    isTerminal: entry.walletType === 'purple'
-                };
+                // Handle swaps/conversions - create intermediate DEX node in hop space
+                if (entry.entryType === 'swap' || entry.walletType === 'brown' || entry.isBridge) {
+                    const swapNodeId = `H${hop.hopNumber}-SWAP${entryIndex}`;
+                    const swapNode = {
+                        id: swapNodeId,
+                        label: entry.swapPlatform || 'DEX',
+                        wallet: entry.destinationWallet || 'Swap Contract',
+                        walletLabel: entry.swapPlatform || 'Conversion',
+                        type: 'brown',
+                        amount: parseFloat(entry.amount || 0),
+                        currency: entry.currency,
+                        column: hopIndex + 0.5,  // Position in hop space (between columns)
+                        isSwap: true,
+                        swapDetails: entry.swapDetails
+                    };
 
-                hopColumn.nodes.push(node);
-                this.nodes.push(node);
-                this.nodeMap.set(nodeId, node);
+                    this.nodes.push(swapNode);
+                    this.nodeMap.set(swapNodeId, swapNode);
 
-                // Update ART
-                const currency = node.currency;
-                hopColumn.artAfter[currency] = (hopColumn.artAfter[currency] || 0) + node.amount;
+                    // Edge 1: Source → DEX (input currency)
+                    if (entry.sourceThreadId) {
+                        const sourceThread = this.findSourceNode(entry.sourceThreadId, hopIndex);
+                        if (sourceThread) {
+                            this.edges.push({
+                                source: sourceThread.id,
+                                target: swapNodeId,
+                                label: entry.notation || '',
+                                amount: parseFloat(entry.amount || 0),
+                                currency: entry.currency
+                            });
+                        }
+                    }
 
-                // Create edges from source threads
-                if (entry.sourceThreadId) {
-                    // Find source node
-                    const sourceThread = this.findSourceNode(entry.sourceThreadId, hopIndex);
-                    if (sourceThread) {
-                        this.edges.push({
-                            source: sourceThread.id,
-                            target: nodeId,
-                            label: entry.notation || '',
-                            amount: node.amount,
-                            currency: node.currency
-                        });
+                    // Create output node in destination column
+                    const outputNodeId = `H${hop.hopNumber}-E${entryIndex}`;
+                    const outputNode = {
+                        id: outputNodeId,
+                        label: entry.notation || outputNodeId,
+                        wallet: entry.destinationWallet,
+                        walletLabel: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
+                        type: entry.toWalletType || 'black',
+                        amount: entry.swapDetails ? parseFloat(entry.swapDetails.outputAmount || entry.outputAmount || 0) : parseFloat(entry.amount || 0),
+                        currency: entry.swapDetails ? entry.swapDetails.outputCurrency : entry.currency,
+                        column: hopIndex + 1,
+                        isTerminal: entry.toWalletType === 'purple'
+                    };
+
+                    hopColumn.nodes.push(outputNode);
+                    this.nodes.push(outputNode);
+                    this.nodeMap.set(outputNodeId, outputNode);
+
+                    // Edge 2: DEX → Output (output currency)
+                    this.edges.push({
+                        source: swapNodeId,
+                        target: outputNodeId,
+                        label: `${outputNode.amount.toFixed(2)} ${outputNode.currency}`,
+                        amount: outputNode.amount,
+                        currency: outputNode.currency
+                    });
+
+                    // Update ART with output currency
+                    const outCurrency = outputNode.currency;
+                    hopColumn.artAfter[outCurrency] = (hopColumn.artAfter[outCurrency] || 0) + outputNode.amount;
+
+                } else {
+                    // Regular trace entry
+                    const nodeId = `H${hop.hopNumber}-E${entryIndex}`;
+                    const node = {
+                        id: nodeId,
+                        label: entry.notation || nodeId,
+                        wallet: entry.destinationWallet,
+                        walletLabel: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
+                        type: entry.walletType || 'black',
+                        amount: parseFloat(entry.amount || 0),
+                        currency: entry.currency,
+                        column: hopIndex + 1,
+                        isTerminal: entry.walletType === 'purple'
+                    };
+
+                    hopColumn.nodes.push(node);
+                    this.nodes.push(node);
+                    this.nodeMap.set(nodeId, node);
+
+                    // Update ART
+                    const currency = node.currency;
+                    hopColumn.artAfter[currency] = (hopColumn.artAfter[currency] || 0) + node.amount;
+
+                    // Create edges from source threads
+                    if (entry.sourceThreadId) {
+                        // Find source node
+                        const sourceThread = this.findSourceNode(entry.sourceThreadId, hopIndex);
+                        if (sourceThread) {
+                            this.edges.push({
+                                source: sourceThread.id,
+                                target: nodeId,
+                                label: entry.notation || '',
+                                amount: node.amount,
+                                currency: node.currency
+                            });
+                        }
                     }
                 }
             });
@@ -252,6 +319,21 @@ class BATSVisualizationD3 {
                 node.x = column.x;
                 node.y = startY + nodeIndex * this.config.verticalSpacing;
             });
+        });
+
+        // Position swap nodes in hop spaces (between columns)
+        const swapNodes = this.nodes.filter(n => n.isSwap);
+        swapNodes.forEach((swapNode, index) => {
+            const colIndex = Math.floor(swapNode.column);
+            const leftColumn = this.hopColumns[colIndex];
+            const rightColumn = this.hopColumns[colIndex + 1];
+
+            if (leftColumn && rightColumn) {
+                // Position in middle of hop space
+                swapNode.x = (leftColumn.x + this.config.walletColumnWidth / 2 +
+                             rightColumn.x - this.config.walletColumnWidth / 2) / 2;
+                swapNode.y = 400 + index * 120;  // Stagger vertically if multiple swaps
+            }
         });
 
         // Draw wallet column backgrounds
@@ -431,15 +513,25 @@ class BATSVisualizationD3 {
             .attr('points', '0 0, 10 3, 0 6')
             .attr('fill', '#95a5a6');
 
-        // Add edge label
+        // Add edge label with notation
         edgeEnter.append('text')
             .attr('x', d => (d.source.x + d.target.x) / 2)
-            .attr('y', d => (d.source.y + d.target.y) / 2 - 10)
+            .attr('y', d => (d.source.y + d.target.y) / 2 - 20)
             .attr('text-anchor', 'middle')
             .attr('font-size', '11px')
-            .attr('fill', '#7f8c8d')
-            .attr('font-weight', '600')
+            .attr('fill', '#2c3e50')
+            .attr('font-weight', 'bold')
             .text(d => d.label);
+
+        // Add edge amount + currency label
+        edgeEnter.append('text')
+            .attr('x', d => (d.source.x + d.target.x) / 2)
+            .attr('y', d => (d.source.y + d.target.y) / 2 - 5)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '10px')
+            .attr('fill', '#27ae60')
+            .attr('font-weight', '600')
+            .text(d => `${d.amount.toFixed(2)} ${d.currency}`);
     }
 
     drawNodes() {

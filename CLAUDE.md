@@ -3,21 +3,34 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 16:16)
+## Latest Commit (Auto-updated: 2025-10-05 16:21)
 
-**Commit:** ddceaf40feb5cc707ddaca03bbcb3949e7ca047a
+**Commit:** 623ed32391a2194da6da66e7f06642dd963452c1
 **Author:** Your Name
-**Message:** Fix CSP violation by using local D3.js instead of CDN
+**Message:** Redesign layout: Wallet columns with shaded backgrounds, hop spaces between
 
-Content Security Policy blocked external script from d3js.org CDN.
+Major visual improvement to clarify structure:
 
-Solution:
-- Downloaded D3.js v7 (279KB minified)
-- Hosting locally as d3.v7.min.js
-- Updated visualization.html to use local copy
+**Before:** Columns split through wallet icons
+**After:** Distinct wallet columns + hop flow spaces
 
-This ensures D3.js loads correctly without CSP issues while
-maintaining security policies.
+**New Layout:**
+┌─────────┐   HOP 1    ┌─────────┐   HOP 2    ┌─────────┐
+│ VICTIMS │ ─────────> │ Wallets │ ─────────> │ Wallets │
+│ (pink)  │            │ (blue)  │            │ (blue)  │
+└─────────┘            └─────────┘            └─────────┘
+
+**Changes:**
+- Wallet columns: 200px wide with shaded backgrounds
+  - Victims column: Light pink (#ffe6e6)
+  - Other columns: Light blue (#e6f2ff)
+- Hop spaces: 300px between columns for edge flow
+- Hop labels: "→ HOP 1 →" centered in flow space
+- Subtle dashed guides mark column boundaries
+- Wallets stay cleanly within their columns
+
+This makes it crystal clear which wallets are in which
+investigation stage and where the hops occur.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -25,24 +38,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md          | 76 +++++++++++++++++++++++++++++++++++-------------------
- d3.v7.min.js       |  2 ++
- visualization.html |  4 +--
- 3 files changed, 53 insertions(+), 29 deletions(-)
+ CLAUDE.md                |  76 ++++++++++------------------
+ bats-d3-visualization.js | 127 +++++++++++++++++++++++++++++++++--------------
+ 2 files changed, 118 insertions(+), 85 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ddceaf4 Fix CSP violation by using local D3.js instead of CDN (0 seconds ago)
-- 559f86a PROFESSIONAL REBUILD: D3.js visualization engine for BATS (2 minutes ago)
-- 550d787 Add setLayout method to BATSVisualizationEngine (10 minutes ago)
-- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (12 minutes ago)
-- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (19 minutes ago)
-- 9a70e89 Fix JSON embedding in popup using script type="application/json" (20 minutes ago)
-- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (21 minutes ago)
-- b711b09 Restore Canvas-based visualization engine with popup window (23 minutes ago)
-- c6811da Move flowdiagram-tab to correct location in main app container (30 minutes ago)
-- b5aee22 Strengthen cache-busting headers for immediate updates (36 minutes ago)
+- 623ed32 Redesign layout: Wallet columns with shaded backgrounds, hop spaces between (0 seconds ago)
+- ddceaf4 Fix CSP violation by using local D3.js instead of CDN (5 minutes ago)
+- 559f86a PROFESSIONAL REBUILD: D3.js visualization engine for BATS (7 minutes ago)
+- 550d787 Add setLayout method to BATSVisualizationEngine (15 minutes ago)
+- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (18 minutes ago)
+- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (24 minutes ago)
+- 9a70e89 Fix JSON embedding in popup using script type="application/json" (26 minutes ago)
+- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (27 minutes ago)
+- b711b09 Restore Canvas-based visualization engine with popup window (28 minutes ago)
+- c6811da Move flowdiagram-tab to correct location in main app container (35 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
