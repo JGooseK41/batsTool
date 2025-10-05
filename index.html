@@ -17498,6 +17498,11 @@ function generateFlowVisualization() {
 
 // Simple proceed functions for cards
 function proceedToVisualization() {
+    // Close the modal first
+    const modal = document.getElementById('completionWorkflowModal');
+    if (modal) modal.remove();
+
+    // Then proceed to visualization
     proceedWithVisualizationFirst();
 }
 

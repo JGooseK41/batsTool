@@ -3,30 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 15:18)
+## Latest Commit (Auto-updated: 2025-10-05 15:28)
 
-**Commit:** 313616549fc43994d1450beb2c984b6f4da3318f
+**Commit:** 8fd24983ae5ff8fe19e9ecdbd6af4d2e63f64380
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Bump version to force cache invalidation
 
 ### Changed Files:
 ```
- CLAUDE.md | 48 +++++++++++++++++++++++++++++++++++-------------
- 1 file changed, 35 insertions(+), 13 deletions(-)
+ CLAUDE.md  | 49 +++++++++++++------------------------------------
+ index.html |  2 +-
+ 2 files changed, 14 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3136165 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 0d8a323 Fix root cause of visualization tab not activating properly (78 seconds ago)
-- 0b39905 Fix infinite loop in visualization initialization - add retry limit (3 minutes ago)
-- 9ca63d7 Fix file loading navigation and visualization tab timing issues (6 minutes ago)
-- 359623d Update CLAUDE.md with latest commit info (9 minutes ago)
-- 1087c48 Replace visualization system with proper BATS flow diagram engine (10 minutes ago)
-- 17f898e Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check (16 minutes ago)
-- 4c95723 Fix visualization canvas sizing and add missing flowdiagram tab (28 minutes ago)
-- f5529fb Enable flow diagram visualization in training page (5 hours ago)
-- dbdcf41 Adjust B.A.T.S. header text to amber gold (#FFBF00) (6 hours ago)
+- 8fd2498 Bump version to force cache invalidation (0 seconds ago)
+- 3136165 Update CLAUDE.md with latest commit info (10 minutes ago)
+- 0d8a323 Fix root cause of visualization tab not activating properly (11 minutes ago)
+- 0b39905 Fix infinite loop in visualization initialization - add retry limit (12 minutes ago)
+- 9ca63d7 Fix file loading navigation and visualization tab timing issues (16 minutes ago)
+- 359623d Update CLAUDE.md with latest commit info (19 minutes ago)
+- 1087c48 Replace visualization system with proper BATS flow diagram engine (20 minutes ago)
+- 17f898e Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check (26 minutes ago)
+- 4c95723 Fix visualization canvas sizing and add missing flowdiagram tab (37 minutes ago)
+- f5529fb Enable flow diagram visualization in training page (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
