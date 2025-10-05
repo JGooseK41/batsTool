@@ -3,30 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 09:03)
+## Latest Commit (Auto-updated: 2025-10-05 09:06)
 
-**Commit:** b9acd0459e8cb7689f2f0407bfc72b3407c15c2b
+**Commit:** d632342c2ed4c6e96c45266812b68ed9766313de
 **Author:** Your Name
-**Message:** Update CLAUDE.md
+**Message:** Update all header text to gold color (#f39c12) across all pages
+
+- Updated main index.html header subtitle to gold
+- Updated mobile.html header and footer text to gold
+- Updated training.html header subtitle to gold
+- Ensures consistent gold color theme for B.A.T.S. branding text
+- Professional Crypto Investigation Documentation now in gold
 
 ### Changed Files:
 ```
- CLAUDE.md | 34 ++++++++++++++++++----------------
- 1 file changed, 18 insertions(+), 16 deletions(-)
+ CLAUDE.md     | 28 +++++++++-------------------
+ index.html    |  2 +-
+ mobile.html   |  6 +++---
+ training.html |  2 +-
+ 4 files changed, 14 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b9acd04 Update CLAUDE.md (0 seconds ago)
-- c7df7b1 Update visualization page header to match main app theme (31 seconds ago)
-- 9af9bfd Add detailed logging to visualization engine for debugging (4 minutes ago)
-- be3c798 Update CLAUDE.md with latest changes (7 minutes ago)
-- 472c5b9 Fix substring errors in visualization engine (7 minutes ago)
+- d632342 Update all header text to gold color (#f39c12) across all pages (0 seconds ago)
+- b9acd04 Update CLAUDE.md (3 minutes ago)
+- c7df7b1 Update visualization page header to match main app theme (4 minutes ago)
+- 9af9bfd Add detailed logging to visualization engine for debugging (7 minutes ago)
+- be3c798 Update CLAUDE.md with latest changes (10 minutes ago)
+- 472c5b9 Fix substring errors in visualization engine (11 minutes ago)
 - cba3b28 Add null checks to prevent crashes from removed tab elements (3 hours ago)
 - e963bb8 Fix dashboard update errors after tab removal (3 hours ago)
 - a7b3b00 Major refactor: Remove old duplicate tabs and implement new window visualization (3 hours ago)
 - 192fe3f Fix completed investigation loading - use same completion modal as normal workflow (3 hours ago)
-- 60958ee Fix visualization engine substring error on undefined wallet addresses (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
