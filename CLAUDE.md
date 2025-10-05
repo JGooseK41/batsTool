@@ -3,22 +3,56 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 15:02)
+## Latest Commit (Auto-updated: 2025-10-05 15:08)
 
-**Commit:** 17f898ef47e1300584216425e5407c1d8436b04c
+**Commit:** 1087c485d8e4c9888fd6eec54a32b0658407c871
 **Author:** Your Name
-**Message:** Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check
+**Message:** Replace visualization system with proper BATS flow diagram engine
+
+**PERMANENT FIXES - All visualization now uses flow-diagram-enhanced.js**
+
+Changes:
+1. Replaced BATSVisualizationEngine (generic canvas) with generateHopCentricDAG (BATS-specific SVG)
+2. Updated initializeGraphVisualization() to render proper hop-centric DAG with:
+   - Hop columns with dividers
+   - ART (Available Running Total) calculations
+   - V-T-H notation on edges
+   - BATS color scheme (red/purple/brown/etc)
+   - Professional forensic layout
+
+3. Fixed completion modal buttons to use switchTab('flowdiagram') instead of opening popups
+4. Removed outdated Canvas-based export/layout functions (exportVisualization, changeLayout)
+5. Added new exportFlowDiagram() for SVG export
+6. Cleaned up unused vizEngine variable
+7. switchTab already properly handles flowdiagram tab initialization
+
+**What was wrong:**
+- Generic graph visualization (bats-visualization-engine.js) showed random node layouts
+- No hop grouping, no ART display, no BATS notation
+- Completion buttons opened popup windows that got blocked
+
+**What's fixed:**
+- Professional BATS hop-centric DAG visualization
+- Shows victims → hops → terminals with proper accounting
+- Click "Visualize Flow" button now properly switches to flowdiagram tab
+- SVG-based for crisp rendering and easy export
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- flow-diagram-enhanced.js | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ CLAUDE.md  |  44 ++++++----------
+ index.html | 169 ++++++++++++++++++++++---------------------------------------
+ 2 files changed, 76 insertions(+), 137 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 17f898e Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check (0 seconds ago)
-- 4c95723 Fix visualization canvas sizing and add missing flowdiagram tab (12 minutes ago)
+- 1087c48 Replace visualization system with proper BATS flow diagram engine (0 seconds ago)
+- 17f898e Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check (6 minutes ago)
+- 4c95723 Fix visualization canvas sizing and add missing flowdiagram tab (17 minutes ago)
 - f5529fb Enable flow diagram visualization in training page (5 hours ago)
 - dbdcf41 Adjust B.A.T.S. header text to amber gold (#FFBF00) (6 hours ago)
 - 31ae650 Update CLAUDE.md with latest commit info (6 hours ago)
@@ -26,7 +60,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - c662191 Update CLAUDE.md with latest commit info (6 hours ago)
 - 633149f Change gold color from orange (#f39c12) to yellow (#FFD700) (6 hours ago)
 - e0c9c3a Update CLAUDE.md (6 hours ago)
-- d632342 Update all header text to gold color (#f39c12) across all pages (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
