@@ -3,30 +3,55 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 17:00)
+## Latest Commit (Auto-updated: 2025-10-05 17:03)
 
-**Commit:** 6585a9df87015b0685c059ed4e1ce32076b65f02
+**Commit:** 696d416a58b4e7e2c716ede9e6182a396c0254dc
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Add standalone HTML and PDF export options
+
+**Option 1: Standalone HTML Export** (📦)
+- Creates a self-contained single HTML file
+- Embeds all JavaScript: D3.js, d3-sankey, visualization engine
+- Embeds complete investigation data as JSON
+- Fully interactive: zoom, pan, drag nodes, click for details
+- No external dependencies - works offline
+- Can be shared with anyone - just open in browser
+- Preserves all functionality: hop columns, Sankey, modals
+
+**Option 2: PDF Report Export** (📄)
+- Generates professional PDF report via browser print
+- Includes case summary and financial overview
+- High-resolution visualization image (landscape)
+- Branded B.A.T.S. header and styling
+- Ready for court/client documentation
+- Uses browser's native Save as PDF feature
+- Print-optimized layout
+
+Both exports accessible from visualization toolbar buttons.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 64 ++++++++++++++++++++++++++++++++++++++++++---------------------
- 1 file changed, 43 insertions(+), 21 deletions(-)
+ CLAUDE.md          |  62 +++---------
+ visualization.html | 275 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 290 insertions(+), 47 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6585a9d Update CLAUDE.md with latest commit info (0 seconds ago)
-- bf1cfde Add drag-and-drop nodes and enhanced modal popups (2 minutes ago)
-- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (5 minutes ago)
-- 4293663 Fix amount parsing error in reconciliation display (7 minutes ago)
-- 3b9b6b0 Update CLAUDE.md with latest commit info (10 minutes ago)
-- 5ba1cdd Implement hop column T-account reconciliation system (11 minutes ago)
-- 2dfd7ff Implement complete Sankey diagram visualization for BATS (28 minutes ago)
-- 2e34fb4 Add interactive click handlers: view wallet details and thread notes (32 minutes ago)
-- 39243dc Add wallet IDs and increase spacing to prevent text overlap (34 minutes ago)
-- db3497d Add DEX/conversion nodes in hop spaces with dual-currency flow (37 minutes ago)
+- 696d416 Add standalone HTML and PDF export options (0 seconds ago)
+- 6585a9d Update CLAUDE.md with latest commit info (3 minutes ago)
+- bf1cfde Add drag-and-drop nodes and enhanced modal popups (5 minutes ago)
+- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (8 minutes ago)
+- 4293663 Fix amount parsing error in reconciliation display (10 minutes ago)
+- 3b9b6b0 Update CLAUDE.md with latest commit info (13 minutes ago)
+- 5ba1cdd Implement hop column T-account reconciliation system (14 minutes ago)
+- 2dfd7ff Implement complete Sankey diagram visualization for BATS (31 minutes ago)
+- 2e34fb4 Add interactive click handlers: view wallet details and thread notes (35 minutes ago)
+- 39243dc Add wallet IDs and increase spacing to prevent text overlap (37 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
