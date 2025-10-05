@@ -3,30 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 09:07)
+## Latest Commit (Auto-updated: 2025-10-05 09:12)
 
-**Commit:** e0c9c3a01713037c05c8bc7ec5464ed0c6563c2c
+**Commit:** 633149f6b01e68d0133fc38b23b8aa31c73c9e0c
 **Author:** Your Name
-**Message:** Update CLAUDE.md
+**Message:** Change gold color from orange (#f39c12) to yellow (#FFD700)
+
+- Updated all instances of #f39c12 to #FFD700 for more yellow hue
+- Applied change across index.html, mobile.html, and training.html
+- Updated B.A.T.S. text color to match new gold color
+- Changed buttons, borders, and accent colors to new yellow gold
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 31 ++++++++++++++++++++-----------
- 1 file changed, 20 insertions(+), 11 deletions(-)
+ CLAUDE.md     | 31 +++++++++++--------------------
+ index.html    | 48 ++++++++++++++++++++++++------------------------
+ mobile.html   |  6 +++---
+ training.html |  8 ++++----
+ 4 files changed, 42 insertions(+), 51 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e0c9c3a Update CLAUDE.md (1 second ago)
-- d632342 Update all header text to gold color (#f39c12) across all pages (43 seconds ago)
-- b9acd04 Update CLAUDE.md (4 minutes ago)
-- c7df7b1 Update visualization page header to match main app theme (5 minutes ago)
-- 9af9bfd Add detailed logging to visualization engine for debugging (8 minutes ago)
-- be3c798 Update CLAUDE.md with latest changes (11 minutes ago)
-- 472c5b9 Fix substring errors in visualization engine (11 minutes ago)
+- 633149f Change gold color from orange (#f39c12) to yellow (#FFD700) (0 seconds ago)
+- e0c9c3a Update CLAUDE.md (5 minutes ago)
+- d632342 Update all header text to gold color (#f39c12) across all pages (6 minutes ago)
+- b9acd04 Update CLAUDE.md (9 minutes ago)
+- c7df7b1 Update visualization page header to match main app theme (10 minutes ago)
+- 9af9bfd Add detailed logging to visualization engine for debugging (13 minutes ago)
+- be3c798 Update CLAUDE.md with latest changes (16 minutes ago)
+- 472c5b9 Fix substring errors in visualization engine (16 minutes ago)
 - cba3b28 Add null checks to prevent crashes from removed tab elements (3 hours ago)
 - e963bb8 Fix dashboard update errors after tab removal (3 hours ago)
-- a7b3b00 Major refactor: Remove old duplicate tabs and implement new window visualization (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
