@@ -1015,7 +1015,19 @@ class BATSVisualizationD3 {
             .append('g')
             .attr('class', 'edge')
             .style('cursor', 'pointer')
-            .on('click', (event, d) => this.showEdgeDetails(event, d));
+            .on('click', (event, d) => this.showEdgeDetails(event, d))
+            .on('contextmenu', (event, d) => {
+                event.preventDefault();
+                this.showAddNoteModal(event, d, 'edge');
+            })
+            .on('mouseover', (event, d) => {
+                if (d.note) {
+                    this.showNoteTooltip(event, d.note);
+                }
+            })
+            .on('mouseout', () => {
+                this.hideNoteTooltip();
+            });
 
         // Draw curved path
         edgeEnter.append('path')
@@ -1065,6 +1077,15 @@ class BATSVisualizationD3 {
             .attr('fill', '#27ae60')
             .attr('font-weight', '600')
             .text(d => `${d.amount.toFixed(2)} ${d.currency}`);
+
+        // Add note indicator for edges
+        edgeEnter.append('text')
+            .attr('x', d => (d.source.x + d.target.x) / 2 + 35)
+            .attr('y', d => (d.source.y + d.target.y) / 2 - 15)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '14px')
+            .style('pointer-events', 'none')
+            .text(d => d.note ? '📝' : '');
     }
 
     drawNodes() {
@@ -1077,6 +1098,18 @@ class BATSVisualizationD3 {
             .attr('transform', d => `translate(${d.x}, ${d.y})`)
             .style('cursor', 'grab')
             .on('click', (event, d) => this.showNodeDetails(event, d))
+            .on('contextmenu', (event, d) => {
+                event.preventDefault();
+                this.showAddNoteModal(event, d, 'node');
+            })
+            .on('mouseover', (event, d) => {
+                if (d.note) {
+                    this.showNoteTooltip(event, d.note);
+                }
+            })
+            .on('mouseout', () => {
+                this.hideNoteTooltip();
+            })
             .call(d3.drag()
                 .on('start', (event, d) => {
                     event.sourceEvent.stopPropagation();  // Prevent zoom/pan interference
@@ -1122,6 +1155,15 @@ class BATSVisualizationD3 {
             .attr('font-weight', '600')
             .attr('fill', '#2c3e50')
             .text(d => d.label);
+
+        // Note indicator (small icon if note exists)
+        nodeEnter.append('text')
+            .attr('x', this.config.nodeRadius - 8)
+            .attr('y', -this.config.nodeRadius + 5)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '16px')
+            .style('pointer-events', 'none')
+            .text(d => d.note ? '📝' : '');
 
         // Wallet address
         nodeEnter.append('text')
@@ -1800,5 +1842,118 @@ Click OK to copy transaction hash to clipboard.
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
+    }
+
+    showAddNoteModal(event, data, type) {
+        // Create modal for adding/editing notes
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        `;
+
+        const title = type === 'node' ? `Add Note to ${data.walletId || data.label}` : `Add Note to Edge`;
+        const existingNote = data.note || '';
+
+        modal.innerHTML = `
+            <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <h3 style="margin: 0 0 20px 0; color: #2c3e50;">${title}</h3>
+                <textarea id="noteInput"
+                          placeholder="Enter your note here..."
+                          style="width: 100%; min-height: 120px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; font-family: Arial, sans-serif; resize: vertical;">${existingNote}</textarea>
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button id="cancelNote" style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+                    ${existingNote ? '<button id="deleteNote" style="padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Delete</button>' : ''}
+                    <button id="saveNote" style="padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Save Note</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Focus textarea
+        const textarea = modal.querySelector('#noteInput');
+        textarea.focus();
+
+        // Cancel button
+        modal.querySelector('#cancelNote').onclick = () => {
+            document.body.removeChild(modal);
+        };
+
+        // Delete button (if exists)
+        const deleteBtn = modal.querySelector('#deleteNote');
+        if (deleteBtn) {
+            deleteBtn.onclick = () => {
+                delete data.note;
+                document.body.removeChild(modal);
+                this.render(); // Re-render to update display
+            };
+        }
+
+        // Save button
+        modal.querySelector('#saveNote').onclick = () => {
+            const note = textarea.value.trim();
+            if (note) {
+                data.note = note;
+            } else {
+                delete data.note;
+            }
+            document.body.removeChild(modal);
+            this.render(); // Re-render to update display
+        };
+
+        // Close on background click
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        };
+    }
+
+    showNoteTooltip(event, note) {
+        // Remove any existing tooltip
+        this.hideNoteTooltip();
+
+        // Create tooltip
+        this.noteTooltip = document.createElement('div');
+        this.noteTooltip.id = 'note-tooltip';
+        this.noteTooltip.style.cssText = `
+            position: fixed;
+            background: rgba(44, 62, 80, 0.95);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            max-width: 300px;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            line-height: 1.4;
+        `;
+        this.noteTooltip.textContent = note;
+
+        document.body.appendChild(this.noteTooltip);
+
+        // Position tooltip near cursor
+        const x = event.pageX + 15;
+        const y = event.pageY + 15;
+
+        this.noteTooltip.style.left = x + 'px';
+        this.noteTooltip.style.top = y + 'px';
+    }
+
+    hideNoteTooltip() {
+        if (this.noteTooltip) {
+            document.body.removeChild(this.noteTooltip);
+            this.noteTooltip = null;
+        }
     }
 }

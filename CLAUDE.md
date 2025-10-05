@@ -3,34 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 18:53)
+## Latest Commit (Auto-updated: 2025-10-05 18:58)
 
-**Commit:** 9f94636c239695074f55237dbb8a2f533d3c0cf3
+**Commit:** 2ac47a3f5031083bef471be2341b4408c1e574ca
 **Author:** Your Name
-**Message:** Fix thread connections from brown wallets to next hop
+**Message:** Fix zoom behavior to prevent white space and keep graph/columns scaled together
 
-Ensures swapped threads properly connect to brown wallets that created them.
+Ensures graph always fills viewport and zooms/pans without showing white space.
 
 Changes:
-1. Enhanced findSourceNode() to try direct notation lookup first
-   - Brown wallets registered with notation like "(V1-T1) H1" can be found directly
-   - Falls back to parsing and searching through output threads if needed
-   - Handles parentheses notation format correctly
+1. Graph and column backgrounds always scale together
+   - Both are in mainGroup which transforms together
+   - Zoom applies to entire mainGroup including backgrounds
 
-2. Register all nodes by notation in addition to node ID
-   - External swap output nodes: registered by both H{hop}-E{index} AND notation
-   - Regular nodes: registered by both H{hop}-E{index} AND notation
-   - Brown wallets: already registered by notation (line 224)
+2. Constrained zoom bounds to prevent white space
+   - Min scale: 0.8 (allows slight zoom out but prevents excessive white space)
+   - Max scale: 4 (allows detailed zoom in)
+   - Dynamic translation constraints based on current scale
 
-3. Improved thread ID parsing
-   - Handles both "(V1-T1) H1" and "V1-T1 H1" formats
-   - Removes parentheses before parsing
-   - Splits on both spaces and dashes
+3. Translation clamping algorithm
+   - At scale 1: content fills viewport perfectly (no translation needed)
+   - At scale < 1: restrict panning to prevent white space edges
+   - At scale > 1: allow panning to view zoomed areas
+   - Formulas: minTranslateX = width * (1 - scale), maxTranslateX = 0
+   - Same for Y axis
 
-Flow example:
-- Hop 1: V1-T1 (500 HYPE) → Br-1 (brown wallet with notation "(V1-T1) H1")
-- Hop 2: Entry has sourceThreadId "(V1-T1) H1" → findSourceNode() finds Br-1 directly
-- Result: Hop 2 wallet connects FROM brown wallet, showing converted currency
+4. Modified fitToView() to not scale down
+   - Graph columns already extend to full viewport height
+   - Only centers content horizontally/vertically at scale 1
+   - No shrinking - graph always fills available space
+
+Result: Zoom in/out always shows full graph without white space.
+Columns and node network stay perfectly aligned at all zoom levels.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -38,23 +42,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 57 +++++++++++++-----------------------------------
- bats-d3-visualization.js | 46 ++++++++++++++++++++++++++++++--------
- 2 files changed, 52 insertions(+), 51 deletions(-)
+ CLAUDE.md                | 58 +++++++++++++++++++++++++++++++++++-------------
+ bats-d3-visualization.js | 48 ++++++++++++++++++++++++++++-----------
+ 2 files changed, 78 insertions(+), 28 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9f94636 Fix thread connections from brown wallets to next hop (0 seconds ago)
-- ca4dc39 Update CLAUDE.md with latest commit info (2 minutes ago)
-- 82952b6 Consolidate brown wallets by attribution instead of address (3 minutes ago)
-- c91a5d3 Fix brown wallet consolidation and positioning - complete rewrite (7 minutes ago)
-- 7005083 Fix brown wallet positioning and consolidation in D3 visualization (19 minutes ago)
-- 7da7783 Fix missing hops section - add to victims tab (47 minutes ago)
-- 0887cef Add comprehensive workflow test documentation and sample data (55 minutes ago)
-- e36e6bb Fix root total confirmation tab navigation (58 minutes ago)
-- fff08da Update CLAUDE.md with latest commit info (63 minutes ago)
-- 1ccaa49 Add debug logging to Sankey diagram for swap tracking (64 minutes ago)
+- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (0 seconds ago)
+- 9f94636 Fix thread connections from brown wallets to next hop (5 minutes ago)
+- ca4dc39 Update CLAUDE.md with latest commit info (7 minutes ago)
+- 82952b6 Consolidate brown wallets by attribution instead of address (8 minutes ago)
+- c91a5d3 Fix brown wallet consolidation and positioning - complete rewrite (13 minutes ago)
+- 7005083 Fix brown wallet positioning and consolidation in D3 visualization (25 minutes ago)
+- 7da7783 Fix missing hops section - add to victims tab (53 minutes ago)
+- 0887cef Add comprehensive workflow test documentation and sample data (60 minutes ago)
+- e36e6bb Fix root total confirmation tab navigation (63 minutes ago)
+- fff08da Update CLAUDE.md with latest commit info (68 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
