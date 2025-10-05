@@ -1059,6 +1059,13 @@ class BATSVisualizationEngine {
         }
     }
 
+    setLayout(type) {
+        console.log('Changing layout to:', type);
+        this.applyLayout(type);
+        this.render();
+        this.interaction.fitToScreen();
+    }
+
     render() {
         this.renderer.render(this.graph);
     }

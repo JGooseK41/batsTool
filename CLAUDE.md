@@ -3,33 +3,35 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 15:57)
+## Latest Commit (Auto-updated: 2025-10-05 16:04)
 
-**Commit:** 6bf9d2c96f9154e534d9fda3d48d2c1d3c30a7d9
+**Commit:** bad4db4b9162d7336b190db04653b3dd5d9603fc
 **Author:** Your Name
-**Message:** PERMANENT FIX: Pass investigation data via window reference
+**Message:** ACTUAL PERMANENT FIX: Create separate visualization.html file
 
-Replaced all JSON embedding workarounds with proper window communication:
+Replaced dynamic HTML generation with proper static file approach:
 
-**The Problem:**
-Embedding JSON in HTML causes syntax errors when JSON contains special
-characters, template literals, or script tags. Escaping is a workaround.
+**The Real Problem:**
+Dynamically generated popup HTML couldn't load bats-visualization-engine.js
+because window.open() with document.write() has no base URL context.
 
-**The Permanent Solution:**
-1. Generate popup HTML without any investigation data
-2. Open popup window and get window reference
-3. Pass investigation object directly via window.initializeVisualization()
-4. No serialization, no escaping, no injection vulnerabilities
+**The Actual Permanent Solution:**
+1. Created visualization.html as a separate deployed file
+2. Opens with window.open('visualization.html')
+3. Proper file paths work because it's a real HTML file
+4. Passes data via window.opener.investigation reference
+5. Clean, maintainable, proper separation of concerns
 
 **Benefits:**
-- No JSON parsing errors (data passed as JavaScript object)
-- No special character issues
-- No template literal conflicts
-- Clean separation of concerns
-- Better performance (no JSON serialization)
-- Works with any investigation data structure
+- Script src paths work correctly
+- No dynamic HTML generation complexity
+- Easy to debug and maintain
+- Proper file that can be tested independently
+- Standard web development pattern
+- No escaping, no injection, no syntax errors
 
-This is the proper way to pass data between windows.
+Removed 120+ lines of generateVisualizationPage() function.
+Added clean 140-line visualization.html file.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -37,23 +39,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 46 ++++++++++++++++++++++++----------------------
- index.html | 25 +++++++++----------------
- 2 files changed, 33 insertions(+), 38 deletions(-)
+ CLAUDE.md          |  59 +++++++++++--------
+ index.html         | 131 +------------------------------------------
+ visualization.html | 162 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 199 insertions(+), 153 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (0 seconds ago)
-- 9a70e89 Fix JSON embedding in popup using script type="application/json" (2 minutes ago)
-- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (3 minutes ago)
-- b711b09 Restore Canvas-based visualization engine with popup window (4 minutes ago)
-- c6811da Move flowdiagram-tab to correct location in main app container (12 minutes ago)
-- b5aee22 Strengthen cache-busting headers for immediate updates (17 minutes ago)
-- 4a9b6ef Add _headers file to force no-cache (22 minutes ago)
-- 99a759b Fix visualization from file load modal - close modal before switching tabs (25 minutes ago)
-- 8fd2498 Bump version to force cache invalidation (29 minutes ago)
-- 3136165 Update CLAUDE.md with latest commit info (39 minutes ago)
+- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (2 seconds ago)
+- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (6 minutes ago)
+- 9a70e89 Fix JSON embedding in popup using script type="application/json" (8 minutes ago)
+- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (9 minutes ago)
+- b711b09 Restore Canvas-based visualization engine with popup window (11 minutes ago)
+- c6811da Move flowdiagram-tab to correct location in main app container (18 minutes ago)
+- b5aee22 Strengthen cache-busting headers for immediate updates (24 minutes ago)
+- 4a9b6ef Add _headers file to force no-cache (29 minutes ago)
+- 99a759b Fix visualization from file load modal - close modal before switching tabs (31 minutes ago)
+- 8fd2498 Bump version to force cache invalidation (36 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
