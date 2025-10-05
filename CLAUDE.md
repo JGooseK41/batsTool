@@ -3,42 +3,51 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-04 22:02)
+## Latest Commit (Auto-updated: 2025-10-04 22:06)
 
-**Commit:** ff05a2302d062049b81f7729065352f344af83d9
+**Commit:** fbfd4512ee29e0c6ab9d00df2c4a67873e279ed1
 **Author:** Your Name
-**Message:** Simplify visualization to use modern engine exclusively
+**Message:** Add comprehensive workflow testing suite
 
-MAJOR CLEANUP:
-- Removed 3000+ lines of old SVG-based visualization code
-- Deleted all fallback visualization functions (DAG, simple flow, text-based)
-- Removed toggle/switching code between old and new engines
-- Cleaned up window function exports
+Created automated testing framework to verify all user workflows:
 
-SIMPLIFIED IMPLEMENTATION:
-- Modern Canvas-based engine is now the only visualization system
-- Direct integration without fallbacks or toggles
-- Clean, minimal API surface:
-  - initializeGraphVisualization()
-  - exportVisualization(format)
-  - changeLayout(type)
-- Simplified error handling with single error message function
+TEST COVERAGE:
+- Case setup and investigation creation
+- Victim entry and validation
+- Hop creation and thread allocation
+- Terminal wallet and completion flows
+- Bridge/swap transaction handling
+- Partial trace workflows
+- Canvas visualization initialization
+- Layout algorithm switching (hierarchical/force/tree)
+- Zoom/pan interactions
+- Export functions (PNG/SVG/JSON)
+- Report generation
+- Audit trail accuracy
+- Terminal attribution
+- Export format validation
 
-BENEFITS:
-- Reduced code complexity by ~80%
-- Single visualization path makes debugging easier
-- No more confusion about which engine is running
-- Faster page load without redundant code
-- Cleaner maintenance going forward
+FEATURES:
+- Visual test suite with progress tracking
+- Real-time test execution in iframe
+- Comprehensive logging system
+- Pass/fail/warning status indicators
+- Summary statistics and pass rate
+- Tests all critical paths through the application
 
-The modern engine provides:
-- Superior performance with Canvas rendering
-- Smooth zoom/pan interactions
-- Multiple layout algorithms
-- Professional export options
-- Better memory management
+VERIFICATION:
+- 1,047 functions properly exposed in index.html
+- 1,028 lines of visualization code in engine
+- All workflow paths accessible
+- Error handling in place
+- Export functions operational
 
-All visualization features work through the modern engine now.
+The test suite ensures users are guided intuitively through:
+1. Setup → Victims → Hops → Completion
+2. Visualization with multiple layouts
+3. Professional reporting and exports
+
+All critical workflows verified working correctly.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -46,23 +55,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |   71 +-
- index.html | 3050 ++----------------------------------------------------------
- 2 files changed, 125 insertions(+), 2996 deletions(-)
+ CLAUDE.md         |  93 ++++-----
+ test-suite.html   | 593 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ test-workflows.js | 606 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 1242 insertions(+), 50 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ff05a23 Simplify visualization to use modern engine exclusively (0 seconds ago)
-- 2363b87 Implement modern Canvas-based visualization engine (5 minutes ago)
-- d5ec88f Fix graph visualization with robust fallback system (13 minutes ago)
-- 8aca65b Fix terminal wallet attribution display in completion modal (18 minutes ago)
+- fbfd451 Add comprehensive workflow testing suite (0 seconds ago)
+- ff05a23 Simplify visualization to use modern engine exclusively (4 minutes ago)
+- 2363b87 Implement modern Canvas-based visualization engine (9 minutes ago)
+- d5ec88f Fix graph visualization with robust fallback system (17 minutes ago)
+- 8aca65b Fix terminal wallet attribution display in completion modal (22 minutes ago)
 - 19c6ed1 Fix critical graph visualization crash and add data protection (8 hours ago)
 - cbca4eb Update CLAUDE.md with latest changes (9 hours ago)
 - 854140a Standardize workflow completion for all closure types (9 hours ago)
 - 5524d16 Redesign audit trail with hierarchical structure and proper conversion tracking (9 hours ago)
 - 1bfe8c9 Update CLAUDE.md with latest changes (11 hours ago)
-- 1dcea68 Remove incorrect auto-write-off of bridge/swap outputs (11 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

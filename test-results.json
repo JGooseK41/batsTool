@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-10-05T02:08:27.215Z",
+  "passed": 36,
+  "failed": 24,
+  "warnings": 4,
+  "passRate": "60.0",
+  "details": {
+    "workflowFunctions": 7,
+    "vizFunctions": 5,
+    "progressionSteps": 7,
+    "validationChecks": 5
+  }
+}
