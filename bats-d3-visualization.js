@@ -57,13 +57,15 @@ class BATSVisualizationD3 {
                 this.mainGroup.attr('transform', event.transform);
             });
 
-        this.svg.call(this.zoom);
+        // Fixed background layer (not affected by zoom/pan)
+        this.backgroundGroup = this.svg.append('g').attr('class', 'backgrounds-fixed');
 
-        // Main group for all elements
+        // Main group for zoomable/pannable elements
         this.mainGroup = this.svg.append('g');
 
+        this.svg.call(this.zoom);
+
         // Groups for different layers (order matters - first drawn is behind)
-        this.backgroundGroup = this.mainGroup.append('g').attr('class', 'backgrounds');
         this.edgesGroup = this.mainGroup.append('g').attr('class', 'edges');
         this.nodesGroup = this.mainGroup.append('g').attr('class', 'nodes');
         this.labelsGroup = this.mainGroup.append('g').attr('class', 'labels');
@@ -438,9 +440,9 @@ class BATSVisualizationD3 {
             .append('rect')
             .attr('class', 'wallet-column-bg')
             .attr('x', d => d.x - this.config.walletColumnWidth / 2)
-            .attr('y', 60)
+            .attr('y', 0)
             .attr('width', this.config.walletColumnWidth)
-            .attr('height', 1420)
+            .attr('height', this.config.height)  // Full viewport height
             .attr('fill', d => {
                 // Darker shading for wallet columns - much more contrast
                 if (d.columnIndex === 0) return '#2c3e50';  // Dark blue-gray for victims
@@ -489,9 +491,9 @@ class BATSVisualizationD3 {
             .append('rect')
             .attr('class', 'hop-column-bg')
             .attr('x', d => d.leftX)
-            .attr('y', 60)
+            .attr('y', 0)
             .attr('width', d => d.width)
-            .attr('height', 1420)
+            .attr('height', this.config.height)  // Full viewport height
             .attr('fill', '#FFD700')  // Light gold for hop columns
             .attr('opacity', 0.06)  // Very subtle
             .attr('rx', 8);
@@ -524,9 +526,9 @@ class BATSVisualizationD3 {
             .append('line')
             .attr('class', 'hop-guide')
             .attr('x1', d => d.leftX)
-            .attr('y1', 60)
+            .attr('y1', 0)
             .attr('x2', d => d.leftX)
-            .attr('y2', 1480)
+            .attr('y2', this.config.height)
             .attr('stroke', '#ddd')
             .attr('stroke-width', 1)
             .attr('stroke-dasharray', '10,5')
@@ -973,10 +975,10 @@ class BATSVisualizationD3 {
     dragging(event, d) {
         // Constrain movement to within the column (only vertical movement)
         const newY = event.y;
-        const minY = 150;  // Top boundary
-        const maxY = 1300;  // Bottom boundary
+        const minY = 100;  // Top boundary (below header)
+        const maxY = this.config.height - 50;  // Bottom boundary (dynamic based on viewport)
 
-        // Update node position (keep X the same, only change Y)
+        // Update node position (keep X the same, only change Y within column bounds)
         d.y = Math.max(minY, Math.min(maxY, newY));
 
         // Update node visual position
