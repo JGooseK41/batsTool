@@ -3,17 +3,33 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 18:06)
+## Latest Commit (Auto-updated: 2025-10-05 18:34)
 
-**Commit:** 7da7783f8dfb441c93c757a7b7b7b55f56637ec5
+**Commit:** 70050834ee66fde7df12035ec5d9e96edd2ffe41
 **Author:** Your Name
-**Message:** Fix missing hops section - add to victims tab
+**Message:** Fix brown wallet positioning and consolidation in D3 visualization
 
-- Add hops-section div with hopsList container to victims tab
-- Fixes blank page issue after root total confirmation
-- renderHops() now has proper container to render into
-- Auto-scroll to hops-section now works correctly
-- Completes workflow: root total → victims tab → scroll to hops → create hop 1
+Critical fixes for multi-currency conversion display:
+
+1. Brown wallets now positioned in hop space (column 0.5, 1.5, 2.5) instead of wallet columns
+   - Changed from hopIndex + 1 to hopIndex + 0.5
+   - Brown/conversion wallets correctly appear BETWEEN wallet columns, not inside them
+
+2. Consolidate duplicate brown wallets in same hop
+   - Track brown wallets by H{hopNumber}-BROWN-{walletAddress} key
+   - Reuse existing brown wallet node when multiple threads go to same address
+   - Single brown wallet now shows all input/output threads (inputThreads[], outputThreads[])
+
+3. Proper HYPE→USDC currency conversion flow
+   - Input threads (HYPE) → Single brown wallet in hop space
+   - Brown wallet → Output threads (USDC) in destination column
+   - Correctly shows conversion as flow through one consolidated entity
+
+4. Improved drag boundary constraint
+   - Increased minY from 100 to 180 to prevent dragging above column headers
+   - Prevents layout breakage when wallets dragged too high
+
+Fixes issue where same conversion wallet (e.g., Mixer A) appeared multiple times instead of showing as one consolidated brown wallet handling all conversions.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -21,23 +37,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 43 +++++++++++++++++++++++--------------------
- index.html |  7 ++++++-
- 2 files changed, 29 insertions(+), 21 deletions(-)
+ CLAUDE.md                | 44 +++++++++++++-------------
+ bats-d3-visualization.js | 81 +++++++++++++++++++++++++++++++++++++++---------
+ 2 files changed, 87 insertions(+), 38 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7da7783 Fix missing hops section - add to victims tab (0 seconds ago)
-- 0887cef Add comprehensive workflow test documentation and sample data (8 minutes ago)
-- e36e6bb Fix root total confirmation tab navigation (10 minutes ago)
-- fff08da Update CLAUDE.md with latest commit info (16 minutes ago)
-- 1ccaa49 Add debug logging to Sankey diagram for swap tracking (17 minutes ago)
-- 1ef5bab Fix drag behavior to prevent column movement (21 minutes ago)
-- 9aad5f4 Make T-account reconciliation boxes visible and dynamic (24 minutes ago)
-- 1f0a947 Fix zoom behavior to keep columns and wallets in sync (26 minutes ago)
-- 21c7c4c Fix brown wallet ID assignment to reuse same ID for same address (29 minutes ago)
-- 635460d Fix column backgrounds and drag constraints for visualization (33 minutes ago)
+- 7005083 Fix brown wallet positioning and consolidation in D3 visualization (1 second ago)
+- 7da7783 Fix missing hops section - add to victims tab (28 minutes ago)
+- 0887cef Add comprehensive workflow test documentation and sample data (36 minutes ago)
+- e36e6bb Fix root total confirmation tab navigation (38 minutes ago)
+- fff08da Update CLAUDE.md with latest commit info (44 minutes ago)
+- 1ccaa49 Add debug logging to Sankey diagram for swap tracking (45 minutes ago)
+- 1ef5bab Fix drag behavior to prevent column movement (49 minutes ago)
+- 9aad5f4 Make T-account reconciliation boxes visible and dynamic (52 minutes ago)
+- 1f0a947 Fix zoom behavior to keep columns and wallets in sync (54 minutes ago)
+- 21c7c4c Fix brown wallet ID assignment to reuse same ID for same address (57 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
