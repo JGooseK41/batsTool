@@ -61,7 +61,8 @@ class BATSVisualizationD3 {
         // Main group for all elements
         this.mainGroup = this.svg.append('g');
 
-        // Groups for different layers
+        // Groups for different layers (order matters - first drawn is behind)
+        this.backgroundGroup = this.mainGroup.append('g').attr('class', 'backgrounds');
         this.edgesGroup = this.mainGroup.append('g').attr('class', 'edges');
         this.nodesGroup = this.mainGroup.append('g').attr('class', 'nodes');
         this.labelsGroup = this.mainGroup.append('g').attr('class', 'labels');
@@ -400,7 +401,7 @@ class BATSVisualizationD3 {
 
     drawWalletColumnBackgrounds() {
         // Draw shaded background rectangles for each wallet column
-        const columns = this.mainGroup.selectAll('.wallet-column-bg')
+        const columns = this.backgroundGroup.selectAll('.wallet-column-bg')
             .data(this.hopColumns);
 
         columns.enter()
@@ -451,7 +452,7 @@ class BATSVisualizationD3 {
         }
 
         // Draw hop column backgrounds (lighter shade for contrast)
-        const hopBgs = this.mainGroup.selectAll('.hop-column-bg')
+        const hopBgs = this.backgroundGroup.selectAll('.hop-column-bg')
             .data(hopSpaces);
 
         hopBgs.enter()
@@ -471,7 +472,7 @@ class BATSVisualizationD3 {
         // Draw hop reconciliation boxes
         this.drawHopReconciliation(hopSpaces);
 
-        const labels = this.mainGroup.selectAll('.hop-space-label')
+        const labels = this.backgroundGroup.selectAll('.hop-space-label')
             .data(hopSpaces);
 
         labels.enter()
@@ -486,7 +487,7 @@ class BATSVisualizationD3 {
             .text(d => `→ HOP ${d.hopNumber} →`);
 
         // Draw subtle vertical guides at hop space boundaries
-        const guides = this.mainGroup.selectAll('.hop-guide')
+        const guides = this.backgroundGroup.selectAll('.hop-guide')
             .data(hopSpaces);
 
         guides.enter()
@@ -504,7 +505,7 @@ class BATSVisualizationD3 {
 
     drawHopHeaders(hopSpaces) {
         // Draw ART header at top of each hop column
-        const headers = this.mainGroup.selectAll('.hop-header')
+        const headers = this.backgroundGroup.selectAll('.hop-header')
             .data(hopSpaces);
 
         const headerGroup = headers.enter()
@@ -552,7 +553,7 @@ class BATSVisualizationD3 {
 
     drawHopReconciliation(hopSpaces) {
         // Draw T-account reconciliation at bottom of each hop column
-        const recon = this.mainGroup.selectAll('.hop-reconciliation')
+        const recon = this.backgroundGroup.selectAll('.hop-reconciliation')
             .data(hopSpaces);
 
         const reconGroup = recon.enter()
