@@ -36675,16 +36675,32 @@ To (RED Wallet): ${transfer.to}`;
         // ============================================
 
         // Initialize the BATS hop-centric flow diagram
-        function initializeGraphVisualization() {
+        function initializeGraphVisualization(retryCount = 0) {
             try {
                 console.log('🎨 Initializing BATS Flow Diagram...');
 
                 // Ensure flowdiagram tab is active first
                 const flowTab = document.getElementById('flowdiagram-tab');
                 if (!flowTab || !flowTab.classList.contains('active')) {
-                    console.warn('Flow diagram tab not active yet, waiting...');
-                    setTimeout(initializeGraphVisualization, 100);
-                    return;
+                    if (retryCount < 10) {
+                        console.warn(`Flow diagram tab not active yet, retrying... (${retryCount + 1}/10)`);
+                        setTimeout(() => initializeGraphVisualization(retryCount + 1), 100);
+                        return;
+                    } else {
+                        console.error('Flow diagram tab failed to activate after 10 retries');
+                        // Force activate the tab
+                        document.querySelectorAll('.tab-content').forEach(t => {
+                            t.classList.remove('active');
+                            t.style.display = 'none';
+                        });
+                        if (flowTab) {
+                            flowTab.classList.add('active');
+                            flowTab.style.display = 'block';
+                        }
+                        // Try one more time after forcing activation
+                        setTimeout(() => initializeGraphVisualization(99), 200);
+                        return;
+                    }
                 }
 
                 // Ensure container exists

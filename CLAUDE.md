@@ -3,30 +3,51 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 15:09)
+## Latest Commit (Auto-updated: 2025-10-05 15:12)
 
-**Commit:** 359623df55cf07113d38e7a262239351df18ae46
+**Commit:** 9ca63d75a1aa95ca3e74e9e60d4632ae3472e08b
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Fix file loading navigation and visualization tab timing issues
+
+**Issues Fixed:**
+
+1. **File loading doesn't navigate to investigation**
+   - Added switchTab('hops') after successful file load (index.html:27854)
+   - Investigation now properly displays after loading .bats file
+
+2. **Visualization container not found error**
+   - Added check to ensure flowdiagram-tab is active before initializing (index.html:27683-27688)
+   - Function now waits 100ms and retries if tab not active yet
+   - Prevents "container not found" errors during tab transitions
+
+**Changes:**
+- File load now switches to hops tab to show loaded investigation
+- Visualization initialization waits for tab to be fully active
+- Better error handling and retry logic for tab transitions
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 49 +++++++++++++++++++++++++++++++++++++++++--------
- 1 file changed, 41 insertions(+), 8 deletions(-)
+ CLAUDE.md  | 51 +++++++++------------------------------------------
+ index.html | 13 +++++++++++++
+ 2 files changed, 22 insertions(+), 42 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 359623d Update CLAUDE.md with latest commit info (0 seconds ago)
-- 1087c48 Replace visualization system with proper BATS flow diagram engine (71 seconds ago)
-- 17f898e Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check (7 minutes ago)
-- 4c95723 Fix visualization canvas sizing and add missing flowdiagram tab (19 minutes ago)
+- 9ca63d7 Fix file loading navigation and visualization tab timing issues (0 seconds ago)
+- 359623d Update CLAUDE.md with latest commit info (3 minutes ago)
+- 1087c48 Replace visualization system with proper BATS flow diagram engine (5 minutes ago)
+- 17f898e Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check (10 minutes ago)
+- 4c95723 Fix visualization canvas sizing and add missing flowdiagram tab (22 minutes ago)
 - f5529fb Enable flow diagram visualization in training page (5 hours ago)
 - dbdcf41 Adjust B.A.T.S. header text to amber gold (#FFBF00) (6 hours ago)
 - 31ae650 Update CLAUDE.md with latest commit info (6 hours ago)
 - 61bdff7 Update B.A.T.S. header text to better gold color (#FFA500) (6 hours ago)
 - c662191 Update CLAUDE.md with latest commit info (6 hours ago)
-- 633149f Change gold color from orange (#f39c12) to yellow (#FFD700) (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
