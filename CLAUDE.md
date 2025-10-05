@@ -3,16 +3,14 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 17:45)
+## Latest Commit (Auto-updated: 2025-10-05 17:49)
 
-**Commit:** 1ef5bab712b0b3df261a250b695307ea54359561
+**Commit:** 1ccaa49560212db896ad465526c7ca8c751dcb93
 **Author:** Your Name
-**Message:** Fix drag behavior to prevent column movement
+**Message:** Add debug logging to Sankey diagram for swap tracking
 
-- Add stopPropagation() to drag events to prevent zoom/pan interference
-- Lock X position strictly during drag (only vertical movement allowed)
-- Adjust maxY boundary to avoid overlapping reconciliation boxes
-- Prevents column structure from moving when dragging wallet nodes
+- Log nodes and links being passed to Sankey visualization
+- Will help diagnose why swaps/conversions aren't flowing through
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -20,23 +18,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 39 ++++++++++++++++++++-------------------
- bats-d3-visualization.js | 24 +++++++++++++++++-------
- 2 files changed, 37 insertions(+), 26 deletions(-)
+ CLAUDE.md                | 40 ++++++++++++++++++++--------------------
+ bats-d3-visualization.js |  3 +++
+ 2 files changed, 23 insertions(+), 20 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1ef5bab Fix drag behavior to prevent column movement (0 seconds ago)
-- 9aad5f4 Make T-account reconciliation boxes visible and dynamic (3 minutes ago)
-- 1f0a947 Fix zoom behavior to keep columns and wallets in sync (5 minutes ago)
-- 21c7c4c Fix brown wallet ID assignment to reuse same ID for same address (8 minutes ago)
-- 635460d Fix column backgrounds and drag constraints for visualization (12 minutes ago)
-- 98a9208 Use string concatenation instead of template literals for script tags (18 minutes ago)
-- 5d7e9b1 Update CLAUDE.md with latest commit info (20 minutes ago)
-- b17c965 Fix template literal script tag parsing in standalone HTML export (21 minutes ago)
-- a121318 Consolidate export buttons into dropdown menu and add Save Changes button (25 minutes ago)
-- c6c0ef5 Fix script tag parsing in standalone HTML export template (28 minutes ago)
+- 1ccaa49 Add debug logging to Sankey diagram for swap tracking (0 seconds ago)
+- 1ef5bab Fix drag behavior to prevent column movement (4 minutes ago)
+- 9aad5f4 Make T-account reconciliation boxes visible and dynamic (7 minutes ago)
+- 1f0a947 Fix zoom behavior to keep columns and wallets in sync (9 minutes ago)
+- 21c7c4c Fix brown wallet ID assignment to reuse same ID for same address (12 minutes ago)
+- 635460d Fix column backgrounds and drag constraints for visualization (16 minutes ago)
+- 98a9208 Use string concatenation instead of template literals for script tags (22 minutes ago)
+- 5d7e9b1 Update CLAUDE.md with latest commit info (24 minutes ago)
+- b17c965 Fix template literal script tag parsing in standalone HTML export (25 minutes ago)
+- a121318 Consolidate export buttons into dropdown menu and add Save Changes button (29 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
