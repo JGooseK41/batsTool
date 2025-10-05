@@ -57,15 +57,13 @@ class BATSVisualizationD3 {
                 this.mainGroup.attr('transform', event.transform);
             });
 
-        // Fixed background layer (not affected by zoom/pan)
-        this.backgroundGroup = this.svg.append('g').attr('class', 'backgrounds-fixed');
-
-        // Main group for zoomable/pannable elements
+        // Main group for zoomable/pannable elements (including backgrounds)
         this.mainGroup = this.svg.append('g');
 
         this.svg.call(this.zoom);
 
         // Groups for different layers (order matters - first drawn is behind)
+        this.backgroundGroup = this.mainGroup.append('g').attr('class', 'backgrounds');
         this.edgesGroup = this.mainGroup.append('g').attr('class', 'edges');
         this.nodesGroup = this.mainGroup.append('g').attr('class', 'nodes');
         this.labelsGroup = this.mainGroup.append('g').attr('class', 'labels');
@@ -371,8 +369,10 @@ class BATSVisualizationD3 {
     generateWalletId(colorType, walletAddress = null) {
         // If we have a wallet address, check if we've already assigned an ID to it
         if (walletAddress && this.walletAddressMap) {
-            const existingId = this.walletAddressMap.get(walletAddress + ':' + colorType);
+            const key = walletAddress + ':' + colorType;
+            const existingId = this.walletAddressMap.get(key);
             if (existingId) {
+                console.log(`♻️ Reusing wallet ID ${existingId} for ${colorType} wallet ${walletAddress.substring(0, 20)}...`);
                 return existingId;
             }
         }
@@ -397,7 +397,9 @@ class BATSVisualizationD3 {
 
         // Store mapping for reuse
         if (walletAddress && this.walletAddressMap) {
-            this.walletAddressMap.set(walletAddress + ':' + colorType, walletId);
+            const key = walletAddress + ':' + colorType;
+            this.walletAddressMap.set(key, walletId);
+            console.log(`🆕 Created new wallet ID ${walletId} for ${colorType} wallet ${walletAddress.substring(0, 20)}...`);
         }
 
         return walletId;

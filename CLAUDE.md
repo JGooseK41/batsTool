@@ -3,17 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 17:33)
+## Latest Commit (Auto-updated: 2025-10-05 17:37)
 
-**Commit:** 635460dc0bc8d87f0f853688a86011c1b5b08d4c
+**Commit:** 21c7c4c3a06a835920604eed59e969c4b99614fb
 **Author:** Your Name
-**Message:** Fix column backgrounds and drag constraints for visualization
+**Message:** Fix brown wallet ID assignment to reuse same ID for same address
 
-- Make column backgrounds full viewport height (not fixed pixels)
-- Separate background layer from zoomable content (columns stay fixed)
-- Make drag constraints dynamic based on viewport height
-- Wallets can only move vertically within their column
-- Columns and ART overlays always span entire page regardless of zoom
+- Track wallet addresses to reuse same ID when same wallet appears multiple times
+- Detect internal swaps (same wallet doing conversion) and create single node
+- External swaps still create DEX node + output node as before
+- Prevents brown-1 → brown-2 for same wallet doing multiple conversions
+- All threads to same address now show same wallet ID (e.g., all → Br-1)
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -21,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 36 +++++++++++++++++++++---------------
- bats-d3-visualization.js | 26 ++++++++++++++------------
- 2 files changed, 35 insertions(+), 27 deletions(-)
+ CLAUDE.md                |  41 +++++-----
+ bats-d3-visualization.js | 204 +++++++++++++++++++++++++++++++----------------
+ 2 files changed, 156 insertions(+), 89 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 635460d Fix column backgrounds and drag constraints for visualization (0 seconds ago)
-- 98a9208 Use string concatenation instead of template literals for script tags (6 minutes ago)
-- 5d7e9b1 Update CLAUDE.md with latest commit info (8 minutes ago)
-- b17c965 Fix template literal script tag parsing in standalone HTML export (9 minutes ago)
-- a121318 Consolidate export buttons into dropdown menu and add Save Changes button (13 minutes ago)
-- c6c0ef5 Fix script tag parsing in standalone HTML export template (16 minutes ago)
-- 40a7058 Update CLAUDE.md with latest commit info (20 minutes ago)
-- 9716164 Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views (22 minutes ago)
-- bcd9d58 Fix template literal syntax errors in visualization.html (25 minutes ago)
-- 6a5c9af Update CLAUDE.md with latest commit info (28 minutes ago)
+- 21c7c4c Fix brown wallet ID assignment to reuse same ID for same address (0 seconds ago)
+- 635460d Fix column backgrounds and drag constraints for visualization (4 minutes ago)
+- 98a9208 Use string concatenation instead of template literals for script tags (10 minutes ago)
+- 5d7e9b1 Update CLAUDE.md with latest commit info (12 minutes ago)
+- b17c965 Fix template literal script tag parsing in standalone HTML export (13 minutes ago)
+- a121318 Consolidate export buttons into dropdown menu and add Save Changes button (17 minutes ago)
+- c6c0ef5 Fix script tag parsing in standalone HTML export template (20 minutes ago)
+- 40a7058 Update CLAUDE.md with latest commit info (25 minutes ago)
+- 9716164 Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views (26 minutes ago)
+- bcd9d58 Fix template literal syntax errors in visualization.html (30 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
