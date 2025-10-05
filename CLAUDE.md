@@ -3,38 +3,33 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 18:46)
+## Latest Commit (Auto-updated: 2025-10-05 18:51)
 
-**Commit:** c91a5d3722675ac0718b9466a8cf53e84747c937
+**Commit:** 82952b6ec5c406d3980f4bd473d8741b43a03b1e
 **Author:** Your Name
-**Message:** Fix brown wallet consolidation and positioning - complete rewrite
+**Message:** Consolidate brown wallets by attribution instead of address
 
-CRITICAL FIXES:
-1. Brown wallets ONLY in hop space (0.5, 1.5, 2.5) - NEVER in wallet columns
-   - Internal swaps: No output nodes created in hop columns
-   - External swaps: Consolidated by wallet address with same key pattern
-   - Brown wallet registers as thread source for next hop connections
+Brown wallets now cluster by attribution/label (e.g., "Uniswap", "Tornado Cash")
+rather than by specific wallet address.
 
-2. Eliminate duplicate brown wallets
-   - Both internal and external swaps check for existing brown wallet by address
-   - Single brown wallet per unique address per hop
-   - Track input/output threads within brown wallet node
+Changes:
+1. Brown wallet consolidation key changed from wallet address to attribution/label
+   - Key format: H{hopNumber}-BROWN-{attribution}
+   - Multiple addresses with same attribution show as single visual node
+   - Tracks all addresses in walletAddresses[] array
 
-3. Fix initial node positioning to respect header boundary
-   - Changed startY from (height - totalHeight) / 2 to Math.max(200, ...)
-   - Ensures nodes never start above column headers
-   - Prevents drag issues with wallets positioned too high
+2. Both internal and external swaps use attribution-based clustering
+   - Internal swap: Uses entry.walletLabel as attribution
+   - External swap: Uses entry.swapPlatform as attribution
+   - Adds new addresses to cluster when same attribution appears again
 
-4. Output nodes properly typed and connected
-   - Internal swap: Brown wallet stores output thread info, no output node
-   - External swap: Black/purple output nodes in hop columns connect to brown wallet
-   - Edge labels show currency conversion (HYPE → USDC)
+3. Updated modal to display clustered addresses
+   - Shows "Clustered Wallet Addresses" header when multiple addresses
+   - Lists all addresses with individual copy buttons
+   - Maintains single address display for non-clustered wallets
 
-Fixes all reported issues:
-- 10 duplicate brown wallets → 1 consolidated brown wallet
-- Brown wallets in wallet columns → Only in hop space
-- Disconnected black wallets → Properly connected to brown wallets
-- Drag above header breaking layout → Initial position enforced below header
+Example: 5 Uniswap addresses (0x111..., 0x222..., etc.) with same "Uniswap"
+label will show as ONE Br-1 node, with all 5 addresses accessible in modal.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -42,23 +37,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                |  58 +++++++++++++++++----------
- bats-d3-visualization.js | 101 +++++++++++++++++++----------------------------
- 2 files changed, 78 insertions(+), 81 deletions(-)
+ CLAUDE.md                | 81 +++++++++++++++++++++++++-----------------------
+ bats-d3-visualization.js | 66 +++++++++++++++++++++++++++------------
+ 2 files changed, 89 insertions(+), 58 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c91a5d3 Fix brown wallet consolidation and positioning - complete rewrite (0 seconds ago)
-- 7005083 Fix brown wallet positioning and consolidation in D3 visualization (12 minutes ago)
-- 7da7783 Fix missing hops section - add to victims tab (40 minutes ago)
-- 0887cef Add comprehensive workflow test documentation and sample data (48 minutes ago)
-- e36e6bb Fix root total confirmation tab navigation (50 minutes ago)
-- fff08da Update CLAUDE.md with latest commit info (56 minutes ago)
-- 1ccaa49 Add debug logging to Sankey diagram for swap tracking (57 minutes ago)
-- 1ef5bab Fix drag behavior to prevent column movement (61 minutes ago)
-- 9aad5f4 Make T-account reconciliation boxes visible and dynamic (64 minutes ago)
-- 1f0a947 Fix zoom behavior to keep columns and wallets in sync (66 minutes ago)
+- 82952b6 Consolidate brown wallets by attribution instead of address (0 seconds ago)
+- c91a5d3 Fix brown wallet consolidation and positioning - complete rewrite (5 minutes ago)
+- 7005083 Fix brown wallet positioning and consolidation in D3 visualization (17 minutes ago)
+- 7da7783 Fix missing hops section - add to victims tab (45 minutes ago)
+- 0887cef Add comprehensive workflow test documentation and sample data (52 minutes ago)
+- e36e6bb Fix root total confirmation tab navigation (55 minutes ago)
+- fff08da Update CLAUDE.md with latest commit info (60 minutes ago)
+- 1ccaa49 Add debug logging to Sankey diagram for swap tracking (61 minutes ago)
+- 1ef5bab Fix drag behavior to prevent column movement (65 minutes ago)
+- 9aad5f4 Make T-account reconciliation boxes visible and dynamic (69 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
