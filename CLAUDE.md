@@ -3,65 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 19:01)
+## Latest Commit (Auto-updated: 2025-10-05 19:03)
 
-**Commit:** 06715f702191719bdb7ef1b5c153a48f6b0dd0c8
+**Commit:** a25501bf77ace7d03a88474a9b1557743264ed96
 **Author:** Your Name
-**Message:** Add note functionality to edges and wallets with right-click and hover
-
-Users can now add notes to any wallet or edge, with visual indicators and tooltips.
-
-Features:
-1. Right-click context menu on wallets and edges
-   - Opens modal to add/edit/delete notes
-   - Clean, intuitive interface with textarea
-   - Save, Cancel, and Delete (if existing) buttons
-
-2. Note storage in data objects
-   - Notes stored directly in node.note and edge.note
-   - Persists through re-renders
-   - Will be saved with investigation data
-
-3. Visual note indicators
-   - 📝 emoji appears on nodes with notes (top-right corner)
-   - 📝 emoji appears on edges with notes (next to amount label)
-   - Immediate visual feedback that note exists
-
-4. Hover tooltips for notes
-   - Hovering over wallet/edge with note shows tooltip
-   - Dark semi-transparent background for readability
-   - Positioned near cursor, max-width 300px
-   - Automatically hides on mouseout
-
-Usage:
-- Right-click wallet or edge → Add Note modal appears
-- Enter text → Click Save
-- Hover over item with 📝 → See note in tooltip
-- Right-click again → Edit or Delete existing note
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md                |  76 ++++++++++++-----------
- bats-d3-visualization.js | 157 ++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 196 insertions(+), 37 deletions(-)
+ CLAUDE.md | 89 +++++++++++++++++++++++++++++++++------------------------------
+ 1 file changed, 46 insertions(+), 43 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 06715f7 Add note functionality to edges and wallets with right-click and hover (0 seconds ago)
-- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (3 minutes ago)
-- 9f94636 Fix thread connections from brown wallets to next hop (8 minutes ago)
-- ca4dc39 Update CLAUDE.md with latest commit info (10 minutes ago)
-- 82952b6 Consolidate brown wallets by attribution instead of address (11 minutes ago)
-- c91a5d3 Fix brown wallet consolidation and positioning - complete rewrite (16 minutes ago)
-- 7005083 Fix brown wallet positioning and consolidation in D3 visualization (28 minutes ago)
-- 7da7783 Fix missing hops section - add to victims tab (56 minutes ago)
-- 0887cef Add comprehensive workflow test documentation and sample data (63 minutes ago)
-- e36e6bb Fix root total confirmation tab navigation (66 minutes ago)
+- a25501b Update CLAUDE.md with latest commit info (1 second ago)
+- 06715f7 Add note functionality to edges and wallets with right-click and hover (2 minutes ago)
+- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (5 minutes ago)
+- 9f94636 Fix thread connections from brown wallets to next hop (10 minutes ago)
+- ca4dc39 Update CLAUDE.md with latest commit info (11 minutes ago)
+- 82952b6 Consolidate brown wallets by attribution instead of address (12 minutes ago)
+- c91a5d3 Fix brown wallet consolidation and positioning - complete rewrite (17 minutes ago)
+- 7005083 Fix brown wallet positioning and consolidation in D3 visualization (29 minutes ago)
+- 7da7783 Fix missing hops section - add to victims tab (57 minutes ago)
+- 0887cef Add comprehensive workflow test documentation and sample data (65 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
