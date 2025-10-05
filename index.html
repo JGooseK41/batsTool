@@ -3320,23 +3320,29 @@
 
         // Update Cover Page
         function updateCoverPage() {
-            document.getElementById('report-caseId').textContent = investigation.caseId || 'Not specified';
-            document.getElementById('report-date').textContent = new Date().toLocaleDateString();
-            document.getElementById('report-investigator').textContent = investigation.investigator || 'Not specified';
-            document.getElementById('report-agency').textContent = investigation.agency || 'Not specified';
-            document.getElementById('report-caseType').textContent = investigation.caseType || 'Not specified';
-            document.getElementById('report-synopsis').textContent = investigation.caseSynopsis || 'No synopsis provided';
+            // Safely update elements only if they exist
+            const updateElement = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+
+            updateElement('report-caseId', investigation.caseId || 'Not specified');
+            updateElement('report-date', new Date().toLocaleDateString());
+            updateElement('report-investigator', investigation.investigator || 'Not specified');
+            updateElement('report-agency', investigation.agency || 'Not specified');
+            updateElement('report-caseType', investigation.caseType || 'Not specified');
+            updateElement('report-synopsis', investigation.caseSynopsis || 'No synopsis provided');
 
             // Update Investigation Summary
-            document.getElementById('report-totalVictims').textContent = investigation.victims?.length || 0;
-            document.getElementById('report-totalHops').textContent = investigation.hops?.length || 0;
+            updateElement('report-totalVictims', investigation.victims?.length || 0);
+            updateElement('report-totalHops', investigation.hops?.length || 0);
 
             // Calculate total loss
             const totalLoss = Object.entries(investigation.confirmedRootTotalsByCurrency || {})
                 .map(([curr, amt]) => `${amt.toLocaleString()} ${curr}`);
-            document.getElementById('report-totalLoss').textContent = totalLoss.length > 0 ? totalLoss.join(', ') : 'Not calculated';
+            updateElement('report-totalLoss', totalLoss.length > 0 ? totalLoss.join(', ') : 'Not calculated');
 
-            document.getElementById('report-terminalWallets').textContent = investigation.terminalWalletIndex?.length || 0;
+            updateElement('report-terminalWallets', investigation.terminalWalletIndex?.length || 0);
         }
 
         // Narrative Editor Functions
@@ -15653,8 +15659,35 @@ function proceedToReportsFromViz() {
     const banner = document.getElementById('vizGuidanceBanner');
     if (banner) banner.remove();
 
-    // Navigate to reports
-    switchTab('reports');
+    // Show the reports tab
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+        tab.classList.remove('active');
+    });
+
+    const reportsTab = document.getElementById('reports-tab');
+    if (reportsTab) {
+        reportsTab.style.display = 'block';
+        reportsTab.classList.add('active');
+    }
+
+    // Activate the reports nav tab
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    const reportsNavTab = document.querySelector('[onclick="switchTab(\'reports\')"]');
+    if (reportsNavTab) {
+        reportsNavTab.classList.add('active');
+    }
+
+    // Show navigation tabs
+    const navTabs = document.getElementById('mainNavTabs');
+    if (navTabs) {
+        navTabs.style.display = 'flex';
+    }
+
+    // Generate the reports
+    generateReports();
 
     // Show report guidance
     setTimeout(() => {
@@ -17208,6 +17241,7 @@ function generateVisualizationPage() {
             <button class="btn-primary" onclick="changeLayout('force')">🔀 Force Layout</button>
             <button class="btn-primary" onclick="changeLayout('tree')">🌳 Tree Layout</button>
             <span style="flex: 1;"></span>
+            <button class="btn-secondary" onclick="navigateToReports()">📄 Go to Reports</button>
             <button class="btn-secondary" onclick="resetView()">🔄 Reset View</button>
             <button class="btn-secondary" onclick="fitToScreen()">📐 Fit to Screen</button>
             <button class="btn-success" onclick="exportVisualization('png')">📸 Export PNG</button>
@@ -17220,6 +17254,11 @@ function generateVisualizationPage() {
 
     <!-- Reports Tab -->
     <div id="reports-tab" class="tab-content">
+        <div class="controls">
+            <button class="btn-secondary" onclick="navigateToGraph()">📊 Go to Graph</button>
+            <span style="flex: 1;"></span>
+            <button class="btn-success" onclick="exportFormat('pdf')">📄 Export PDF</button>
+        </div>
         <div id="reports-container"></div>
     </div>
 
@@ -17308,6 +17347,18 @@ function generateVisualizationPage() {
             if (tabName === 'reports') {
                 generateReports();
             }
+        }
+
+        // Navigation functions
+        function navigateToReports() {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('reports-tab').classList.add('active');
+            generateReports();
+        }
+
+        function navigateToGraph() {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('graph-tab').classList.add('active');
         }
 
         // Generate reports
@@ -17478,7 +17529,36 @@ function showQuickExportMenu() {
 // Skip directly to reports
 function proceedDirectlyToReports() {
     closeCompletionModal();
-    switchTab('reports');
+
+    // Show the reports tab
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+        tab.classList.remove('active');
+    });
+
+    const reportsTab = document.getElementById('reports-tab');
+    if (reportsTab) {
+        reportsTab.style.display = 'block';
+        reportsTab.classList.add('active');
+    }
+
+    // Activate the reports nav tab
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    const reportsNavTab = document.querySelector('[onclick="switchTab(\'reports\')"]');
+    if (reportsNavTab) {
+        reportsNavTab.classList.add('active');
+    }
+
+    // Show navigation tabs
+    const navTabs = document.getElementById('mainNavTabs');
+    if (navTabs) {
+        navTabs.style.display = 'flex';
+    }
+
+    // Generate the reports
+    generateReports();
 
     // Add guidance banner
     setTimeout(() => {
