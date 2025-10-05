@@ -308,6 +308,10 @@ class BATSVisualizationD3 {
                         hopColumn.nodes.push(outputNode);
                         this.nodes.push(outputNode);
                         this.nodeMap.set(outputNodeId, outputNode);
+                        // Also register by notation for next hop lookups
+                        if (entry.notation) {
+                            this.nodeMap.set(entry.notation, outputNode);
+                        }
 
                         // Edge 2: DEX → Output (output currency)
                         this.edges.push({
@@ -344,6 +348,10 @@ class BATSVisualizationD3 {
                     hopColumn.nodes.push(node);
                     this.nodes.push(node);
                     this.nodeMap.set(nodeId, node);
+                    // Also register by notation for next hop lookups
+                    if (entry.notation) {
+                        this.nodeMap.set(entry.notation, node);
+                    }
 
                     // Update ART
                     const currency = node.currency;
@@ -378,22 +386,42 @@ class BATSVisualizationD3 {
     }
 
     findSourceNode(threadId, currentHop) {
+        // First try direct lookup by notation (for brown wallets registered with full notation)
+        const directLookup = this.nodeMap.get(threadId);
+        if (directLookup) {
+            return directLookup;
+        }
+
         // Parse thread ID to find source node
-        // Thread format: V{victimId}-T{txId}_CURRENCY or V{victimId}-T{txId}-H{hopNum}
-        const parts = threadId.split('_')[0].split('-');
+        // Thread format: V{victimId}-T{txId}_CURRENCY or (V{victimId}-T{txId}) H{hopNum} or V{victimId}-T{txId} H{hopNum}
+
+        // Remove parentheses if present
+        const cleanThreadId = threadId.replace(/[()]/g, '').trim();
+        const parts = cleanThreadId.split(/[\s-]+/);  // Split on spaces or dashes
 
         if (parts.length >= 2) {
             const vPart = parts[0]; // V1
             const tPart = parts[1]; // T1
-            const hPart = parts[2]; // H1 (if exists)
 
-            if (hPart) {
-                // Thread from previous hop
-                const hopNum = parseInt(hPart.substring(1));
-                const searchId = `H${hopNum}-`;
+            // Check if there's a hop number
+            const hopPart = parts.find(p => p.startsWith('H'));
+
+            if (hopPart) {
+                // Thread from previous hop - could be in brown wallet
+                const hopNum = parseInt(hopPart.substring(1));
+
+                // Try to find matching node in that hop
+                const searchPrefix = `H${hopNum}-`;
                 for (let [id, node] of this.nodeMap) {
-                    if (id.startsWith(searchId)) {
-                        return node;
+                    if (id.startsWith(searchPrefix)) {
+                        // Check if this node has output threads matching our thread ID
+                        if (node.outputThreads && node.outputThreads.some(t => t.notation === threadId)) {
+                            return node;
+                        }
+                        // Or if the node notation matches
+                        if (node.notation === threadId || node.label === threadId) {
+                            return node;
+                        }
                     }
                 }
             } else {

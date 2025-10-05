@@ -3,57 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 18:51)
+## Latest Commit (Auto-updated: 2025-10-05 18:52)
 
-**Commit:** 82952b6ec5c406d3980f4bd473d8741b43a03b1e
+**Commit:** ca4dc399bc12caba275a289645bab7671af19f3c
 **Author:** Your Name
-**Message:** Consolidate brown wallets by attribution instead of address
-
-Brown wallets now cluster by attribution/label (e.g., "Uniswap", "Tornado Cash")
-rather than by specific wallet address.
-
-Changes:
-1. Brown wallet consolidation key changed from wallet address to attribution/label
-   - Key format: H{hopNumber}-BROWN-{attribution}
-   - Multiple addresses with same attribution show as single visual node
-   - Tracks all addresses in walletAddresses[] array
-
-2. Both internal and external swaps use attribution-based clustering
-   - Internal swap: Uses entry.walletLabel as attribution
-   - External swap: Uses entry.swapPlatform as attribution
-   - Adds new addresses to cluster when same attribution appears again
-
-3. Updated modal to display clustered addresses
-   - Shows "Clustered Wallet Addresses" header when multiple addresses
-   - Lists all addresses with individual copy buttons
-   - Maintains single address display for non-clustered wallets
-
-Example: 5 Uniswap addresses (0x111..., 0x222..., etc.) with same "Uniswap"
-label will show as ONE Br-1 node, with all 5 addresses accessible in modal.
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md                | 81 +++++++++++++++++++++++++-----------------------
- bats-d3-visualization.js | 66 +++++++++++++++++++++++++++------------
- 2 files changed, 89 insertions(+), 58 deletions(-)
+ CLAUDE.md | 81 ++++++++++++++++++++++++++++++---------------------------------
+ 1 file changed, 38 insertions(+), 43 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 82952b6 Consolidate brown wallets by attribution instead of address (0 seconds ago)
-- c91a5d3 Fix brown wallet consolidation and positioning - complete rewrite (5 minutes ago)
-- 7005083 Fix brown wallet positioning and consolidation in D3 visualization (17 minutes ago)
-- 7da7783 Fix missing hops section - add to victims tab (45 minutes ago)
-- 0887cef Add comprehensive workflow test documentation and sample data (52 minutes ago)
-- e36e6bb Fix root total confirmation tab navigation (55 minutes ago)
-- fff08da Update CLAUDE.md with latest commit info (60 minutes ago)
-- 1ccaa49 Add debug logging to Sankey diagram for swap tracking (61 minutes ago)
-- 1ef5bab Fix drag behavior to prevent column movement (65 minutes ago)
-- 9aad5f4 Make T-account reconciliation boxes visible and dynamic (69 minutes ago)
+- ca4dc39 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 82952b6 Consolidate brown wallets by attribution instead of address (62 seconds ago)
+- c91a5d3 Fix brown wallet consolidation and positioning - complete rewrite (6 minutes ago)
+- 7005083 Fix brown wallet positioning and consolidation in D3 visualization (18 minutes ago)
+- 7da7783 Fix missing hops section - add to victims tab (46 minutes ago)
+- 0887cef Add comprehensive workflow test documentation and sample data (53 minutes ago)
+- e36e6bb Fix root total confirmation tab navigation (56 minutes ago)
+- fff08da Update CLAUDE.md with latest commit info (61 minutes ago)
+- 1ccaa49 Add debug logging to Sankey diagram for swap tracking (62 minutes ago)
+- 1ef5bab Fix drag behavior to prevent column movement (66 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
