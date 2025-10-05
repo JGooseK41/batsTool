@@ -410,8 +410,12 @@ class BATSVisualizationD3 {
             .attr('y', 60)
             .attr('width', this.config.walletColumnWidth)
             .attr('height', 1420)
-            .attr('fill', d => d.columnIndex === 0 ? '#ffe6e6' : '#e6f2ff')  // Light red for victims, light blue for others
-            .attr('opacity', 0.3)
+            .attr('fill', d => {
+                // Darker shading for wallet columns - much more contrast
+                if (d.columnIndex === 0) return '#2c3e50';  // Dark blue-gray for victims
+                return '#34495e';  // Slightly lighter dark for other wallets
+            })
+            .attr('opacity', 0.12)  // Higher contrast
             .attr('rx', 8);
 
         // Add wallet column titles
@@ -427,7 +431,7 @@ class BATSVisualizationD3 {
     }
 
     drawHopSpaceLabels() {
-        // Draw labels in the space BETWEEN wallet columns
+        // Draw labels and reconciliation in the space BETWEEN wallet columns
         const hopSpaces = [];
 
         for (let i = 0; i < this.hopColumns.length - 1; i++) {
@@ -438,9 +442,34 @@ class BATSVisualizationD3 {
                 hopNumber: rightColumn.hopNumber,
                 x: (leftColumn.x + this.config.walletColumnWidth / 2 + rightColumn.x - this.config.walletColumnWidth / 2) / 2,
                 leftX: leftColumn.x + this.config.walletColumnWidth / 2,
-                rightX: rightColumn.x - this.config.walletColumnWidth / 2
+                rightX: rightColumn.x - this.config.walletColumnWidth / 2,
+                width: rightColumn.x - this.config.walletColumnWidth / 2 - (leftColumn.x + this.config.walletColumnWidth / 2),
+                hopData: this.investigation.hops.find(h => h.hopNumber === rightColumn.hopNumber),
+                artBefore: rightColumn.artBefore,
+                artAfter: rightColumn.artAfter
             });
         }
+
+        // Draw hop column backgrounds (lighter shade for contrast)
+        const hopBgs = this.mainGroup.selectAll('.hop-column-bg')
+            .data(hopSpaces);
+
+        hopBgs.enter()
+            .append('rect')
+            .attr('class', 'hop-column-bg')
+            .attr('x', d => d.leftX)
+            .attr('y', 60)
+            .attr('width', d => d.width)
+            .attr('height', 1420)
+            .attr('fill', '#FFD700')  // Light gold for hop columns
+            .attr('opacity', 0.06)  // Very subtle
+            .attr('rx', 8);
+
+        // Draw hop headers with ART
+        this.drawHopHeaders(hopSpaces);
+
+        // Draw hop reconciliation boxes
+        this.drawHopReconciliation(hopSpaces);
 
         const labels = this.mainGroup.selectAll('.hop-space-label')
             .data(hopSpaces);
@@ -449,7 +478,7 @@ class BATSVisualizationD3 {
             .append('text')
             .attr('class', 'hop-space-label')
             .attr('x', d => d.x)
-            .attr('y', 40)
+            .attr('y', 115)  // Moved down to make room for header
             .attr('text-anchor', 'middle')
             .attr('font-size', '18px')
             .attr('font-weight', 'bold')
@@ -471,6 +500,267 @@ class BATSVisualizationD3 {
             .attr('stroke-width', 1)
             .attr('stroke-dasharray', '10,5')
             .attr('opacity', 0.4);
+    }
+
+    drawHopHeaders(hopSpaces) {
+        // Draw ART header at top of each hop column
+        const headers = this.mainGroup.selectAll('.hop-header')
+            .data(hopSpaces);
+
+        const headerGroup = headers.enter()
+            .append('g')
+            .attr('class', 'hop-header');
+
+        // Header background box
+        headerGroup.append('rect')
+            .attr('x', d => d.leftX + 10)
+            .attr('y', 65)
+            .attr('width', d => d.width - 20)
+            .attr('height', 45)
+            .attr('fill', '#2c3e50')
+            .attr('stroke', '#f39c12')
+            .attr('stroke-width', 2)
+            .attr('rx', 5);
+
+        // ART Title
+        headerGroup.append('text')
+            .attr('x', d => d.x)
+            .attr('y', 82)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '11px')
+            .attr('font-weight', 'bold')
+            .attr('fill', '#f39c12')
+            .text(d => `HOP ${d.hopNumber} - ART (Adjusted Root Total)`);
+
+        // ART Values
+        headerGroup.append('text')
+            .attr('x', d => d.x)
+            .attr('y', 100)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '13px')
+            .attr('font-weight', 'bold')
+            .attr('fill', '#ffffff')
+            .text(d => {
+                // Format ART values
+                const artEntries = Object.entries(d.artBefore || {});
+                if (artEntries.length === 0) return 'No ART';
+                return artEntries.map(([currency, amount]) =>
+                    `${amount.toFixed(2)} ${currency}`
+                ).join(' + ');
+            });
+    }
+
+    drawHopReconciliation(hopSpaces) {
+        // Draw T-account reconciliation at bottom of each hop column
+        const recon = this.mainGroup.selectAll('.hop-reconciliation')
+            .data(hopSpaces);
+
+        const reconGroup = recon.enter()
+            .append('g')
+            .attr('class', 'hop-reconciliation');
+
+        // Calculate reconciliation data for each hop
+        hopSpaces.forEach(hopSpace => {
+            if (!hopSpace.hopData) return;
+
+            const hop = hopSpace.hopData;
+            const leftItems = [];  // Terminated/Write-offs/Conversion inputs
+            const rightItems = [];  // Continuing/Conversion outputs
+
+            // Process entries to categorize
+            hop.entries.forEach(entry => {
+                if (entry.entryType === 'writeoff') {
+                    leftItems.push({
+                        type: 'write-off',
+                        amount: entry.amount,
+                        currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
+                        label: `Write-off: ${entry.reason || 'Unknown'}`
+                    });
+                } else if (entry.entryType === 'swap') {
+                    // Swap input on left, output on right
+                    leftItems.push({
+                        type: 'swap-in',
+                        amount: entry.inputAmount,
+                        currency: entry.inputCurrency,
+                        label: `Swap: ${entry.inputCurrency} → ${entry.outputCurrency}`
+                    });
+                    rightItems.push({
+                        type: 'swap-out',
+                        amount: entry.outputAmount,
+                        currency: entry.outputCurrency,
+                        label: `Converted to ${entry.outputCurrency}`
+                    });
+                } else if (entry.isTerminal || entry.walletType === 'purple') {
+                    // Terminal wallet - goes on left
+                    leftItems.push({
+                        type: 'terminal',
+                        amount: entry.amount,
+                        currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
+                        label: `Terminal: ${entry.walletLabel || 'Exchange'}`,
+                        notation: entry.notation
+                    });
+                } else {
+                    // Continuing trace - goes on right
+                    rightItems.push({
+                        type: 'trace',
+                        amount: entry.amount,
+                        currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
+                        label: entry.notation || `Trace to H${hop.hopNumber + 1}`,
+                        notation: entry.notation
+                    });
+                }
+            });
+
+            hopSpace.leftItems = leftItems;
+            hopSpace.rightItems = rightItems;
+        });
+
+        // Main reconciliation box
+        reconGroup.append('rect')
+            .attr('x', d => d.leftX + 10)
+            .attr('y', 1350)
+            .attr('width', d => d.width - 20)
+            .attr('height', 120)
+            .attr('fill', '#ecf0f1')
+            .attr('stroke', '#2c3e50')
+            .attr('stroke-width', 2)
+            .attr('rx', 5);
+
+        // Title
+        reconGroup.append('text')
+            .attr('x', d => d.x)
+            .attr('y', 1368)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '12px')
+            .attr('font-weight', 'bold')
+            .attr('fill', '#2c3e50')
+            .text('RECONCILIATION');
+
+        // Divider line (vertical center)
+        reconGroup.append('line')
+            .attr('x1', d => d.x)
+            .attr('y1', 1375)
+            .attr('x2', d => d.x)
+            .attr('y2', 1465)
+            .attr('stroke', '#34495e')
+            .attr('stroke-width', 2);
+
+        // Left header (TERMINATED)
+        reconGroup.append('text')
+            .attr('x', d => d.leftX + (d.width / 4))
+            .attr('y', 1390)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '10px')
+            .attr('font-weight', 'bold')
+            .attr('fill', '#e74c3c')
+            .text('TERMINATED');
+
+        // Right header (CONTINUING)
+        reconGroup.append('text')
+            .attr('x', d => d.x + (d.width / 4))
+            .attr('y', 1390)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '10px')
+            .attr('font-weight', 'bold')
+            .attr('fill', '#27ae60')
+            .text('CONTINUING');
+
+        // Left items (with visual indicators)
+        reconGroup.each(function(d, i) {
+            const group = d3.select(this);
+            const leftItems = d.leftItems || [];
+            const startY = 1405;
+            const lineHeight = 12;
+
+            leftItems.slice(0, 3).forEach((item, idx) => {
+                // Visual indicator
+                const icon = item.type === 'terminal' ? '⬤' :
+                           item.type === 'swap-in' ? '🔄' : '✕';
+                const iconColor = item.type === 'terminal' ? '#9b59b6' :
+                                item.type === 'swap-in' ? '#8B4513' : '#e74c3c';
+
+                group.append('text')
+                    .attr('x', d.leftX + 15)
+                    .attr('y', startY + idx * lineHeight)
+                    .attr('font-size', '10px')
+                    .attr('fill', iconColor)
+                    .text(icon);
+
+                group.append('text')
+                    .attr('x', d.leftX + 30)
+                    .attr('y', startY + idx * lineHeight)
+                    .attr('font-size', '9px')
+                    .attr('fill', '#2c3e50')
+                    .text(`- ${item.amount.toFixed(2)} ${item.currency}`);
+            });
+
+            // "More..." indicator if there are more items
+            if (leftItems.length > 3) {
+                group.append('text')
+                    .attr('x', d.leftX + 30)
+                    .attr('y', startY + 3 * lineHeight)
+                    .attr('font-size', '8px')
+                    .attr('fill', '#7f8c8d')
+                    .attr('font-style', 'italic')
+                    .text(`... +${leftItems.length - 3} more`);
+            }
+        });
+
+        // Right items (with visual indicators)
+        reconGroup.each(function(d, i) {
+            const group = d3.select(this);
+            const rightItems = d.rightItems || [];
+            const startY = 1405;
+            const lineHeight = 12;
+
+            rightItems.slice(0, 3).forEach((item, idx) => {
+                // Visual indicator
+                const icon = item.type === 'trace' ? '→' : '🔄';
+                const iconColor = item.type === 'trace' ? '#27ae60' : '#8B4513';
+
+                group.append('text')
+                    .attr('x', d.x + 15)
+                    .attr('y', startY + idx * lineHeight)
+                    .attr('font-size', '10px')
+                    .attr('fill', iconColor)
+                    .text(icon);
+
+                group.append('text')
+                    .attr('x', d.x + 30)
+                    .attr('y', startY + idx * lineHeight)
+                    .attr('font-size', '9px')
+                    .attr('fill', '#2c3e50')
+                    .text(`+ ${item.amount.toFixed(2)} ${item.currency}`);
+            });
+
+            // "More..." indicator if there are more items
+            if (rightItems.length > 3) {
+                group.append('text')
+                    .attr('x', d.x + 30)
+                    .attr('y', startY + 3 * lineHeight)
+                    .attr('font-size', '8px')
+                    .attr('fill', '#7f8c8d')
+                    .attr('font-style', 'italic')
+                    .text(`... +${rightItems.length - 3} more`);
+            }
+        });
+
+        // Balance indicator
+        reconGroup.append('text')
+            .attr('x', d => d.x)
+            .attr('y', 1460)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '9px')
+            .attr('font-weight', 'bold')
+            .attr('fill', d => {
+                // Check if balanced
+                const artTotal = Object.values(d.artBefore || {}).reduce((sum, val) => sum + val, 0);
+                return artTotal > 0 ? '#27ae60' : '#95a5a6';
+            })
+            .text(d => {
+                const artTotal = Object.values(d.artBefore || {}).reduce((sum, val) => sum + val, 0);
+                return artTotal > 0 ? `✓ BALANCED` : '— No Data';
+            });
     }
 
     drawARTBoxes() {
@@ -603,13 +893,14 @@ class BATSVisualizationD3 {
                 d3.select(this).attr('stroke-width', 3);
             });
 
-        // Wallet ID (B-1, P-2, etc) - top label
+        // Wallet ID (B-1, P-2, etc) - INSIDE the circle in white
         nodeEnter.append('text')
-            .attr('y', -this.config.nodeRadius - 30)
+            .attr('y', 5)  // Center vertically in circle
             .attr('text-anchor', 'middle')
-            .attr('font-size', '14px')
+            .attr('font-size', '16px')
             .attr('font-weight', 'bold')
-            .attr('fill', d => this.config.colors[d.type] || '#2c3e50')
+            .attr('fill', '#ffffff')  // White text
+            .style('pointer-events', 'none')
             .text(d => d.walletId);
 
         // Node label (V-T-H notation)
