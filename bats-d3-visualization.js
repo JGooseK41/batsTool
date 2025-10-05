@@ -10,6 +10,7 @@ class BATSVisualizationD3 {
         this.investigation = null;
         this.layoutMode = 'hop-columns'; // 'hop-columns' or 'sankey'
         this.orientation = 'horizontal'; // 'horizontal' or 'vertical'
+        this.expandedEdgeGroups = new Set(); // Track which edge groups are manually expanded (>5 auto-collapse)
 
         // Configuration
         this.config = {
@@ -308,43 +309,66 @@ class BATSVisualizationD3 {
                             }
                         }
 
-                        // Create output node in destination column
-                        const outputNodeId = `H${hop.hopNumber}-E${entryIndex}`;
+                        // Check if output is also brown (same entity, possibly new chain/address)
                         const outputColorType = entry.toWalletType || 'black';
-                        const outputNode = {
-                            id: outputNodeId,
-                            label: entry.notation || outputNodeId,
-                            wallet: entry.destinationWallet,
-                            walletLabel: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
-                            walletId: this.generateWalletId(outputColorType, entry.destinationWallet),
-                            type: outputColorType,
-                            amount: entry.swapDetails ? parseFloat(entry.swapDetails.outputAmount || entry.outputAmount || 0) : parseFloat(entry.amount || 0),
-                            currency: entry.swapDetails ? entry.swapDetails.outputCurrency : entry.currency,
-                            column: hopIndex + 1,
-                            isTerminal: entry.toWalletType === 'purple'
-                        };
+                        const outputAmount = entry.swapDetails ? parseFloat(entry.swapDetails.outputAmount || entry.outputAmount || 0) : parseFloat(entry.amount || 0);
+                        const outputCurrency = entry.swapDetails ? entry.swapDetails.outputCurrency : entry.currency;
 
-                        hopColumn.nodes.push(outputNode);
-                        this.nodes.push(outputNode);
-                        this.nodeMap.set(outputNodeId, outputNode);
-                        // Also register by notation for next hop lookups
-                        if (entry.notation) {
-                            this.nodeMap.set(entry.notation, outputNode);
+                        if (outputColorType === 'brown') {
+                            // Output is also brown (e.g., bridge to new chain) - NO new wallet node
+                            // The swap node handles both input and output
+                            // Just track the output thread
+                            if (!swapNode.outputThreads) swapNode.outputThreads = [];
+                            swapNode.outputThreads.push({
+                                notation: entry.notation,
+                                amount: outputAmount,
+                                currency: outputCurrency
+                            });
+
+                            // Register this notation as pointing to the brown wallet for next hop
+                            if (entry.notation) {
+                                this.nodeMap.set(entry.notation, swapNode);
+                            }
+
+                            // Update ART with output currency
+                            hopColumn.artAfter[outputCurrency] = (hopColumn.artAfter[outputCurrency] || 0) + outputAmount;
+                        } else {
+                            // Output is different type (black, purple, etc.) - create output node
+                            const outputNodeId = `H${hop.hopNumber}-E${entryIndex}`;
+                            const outputNode = {
+                                id: outputNodeId,
+                                label: entry.notation || outputNodeId,
+                                wallet: entry.destinationWallet,
+                                walletLabel: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
+                                walletId: this.generateWalletId(outputColorType, entry.destinationWallet),
+                                type: outputColorType,
+                                amount: outputAmount,
+                                currency: outputCurrency,
+                                column: hopIndex + 1,
+                                isTerminal: entry.toWalletType === 'purple'
+                            };
+
+                            hopColumn.nodes.push(outputNode);
+                            this.nodes.push(outputNode);
+                            this.nodeMap.set(outputNodeId, outputNode);
+                            // Also register by notation for next hop lookups
+                            if (entry.notation) {
+                                this.nodeMap.set(entry.notation, outputNode);
+                            }
+
+                            // Edge 2: DEX → Output (output currency)
+                            this.edges.push({
+                                source: swapNodeKey,
+                                target: outputNodeId,
+                                label: `${outputNode.amount.toFixed(2)} ${outputNode.currency}`,
+                                amount: outputNode.amount,
+                                currency: outputNode.currency,
+                                entryData: entry
+                            });
+
+                            // Update ART with output currency
+                            hopColumn.artAfter[outputCurrency] = (hopColumn.artAfter[outputCurrency] || 0) + outputAmount;
                         }
-
-                        // Edge 2: DEX → Output (output currency)
-                        this.edges.push({
-                            source: swapNodeKey,
-                            target: outputNodeId,
-                            label: `${outputNode.amount.toFixed(2)} ${outputNode.currency}`,
-                            amount: outputNode.amount,
-                            currency: outputNode.currency,
-                            entryData: entry
-                        });
-
-                        // Update ART with output currency
-                        const outCurrency = outputNode.currency;
-                        hopColumn.artAfter[outCurrency] = (hopColumn.artAfter[outCurrency] || 0) + outputNode.amount;
                     }
 
                 } else {
@@ -1008,14 +1032,80 @@ class BATSVisualizationD3 {
             target: this.nodeMap.get(e.target)
         })).filter(e => e.source && e.target);
 
+        // Group edges by source-target pair
+        const edgeGroups = new Map();
+        edgeData.forEach(edge => {
+            const key = `${edge.source.id}->${edge.target.id}`;
+            if (!edgeGroups.has(key)) {
+                edgeGroups.set(key, []);
+            }
+            edgeGroups.get(key).push(edge);
+        });
+
+        // Process edge groups to determine if they should be collapsed
+        const processedEdges = [];
+        edgeGroups.forEach((edges, key) => {
+            if (edges.length === 1) {
+                // Single edge - render normally
+                processedEdges.push({
+                    ...edges[0],
+                    isGroup: false,
+                    threadCount: 1
+                });
+            } else {
+                // Multiple edges - check if should be collapsed
+                const groupKey = key;
+                // Auto-collapse if >5 threads, unless user explicitly expanded
+                // Or if <5 threads, collapse only if user explicitly collapsed (via right-click future feature)
+                const isExpanded = this.expandedEdgeGroups?.has(groupKey);
+                const isCollapsed = edges.length > 5 ? !isExpanded : false; // >5: collapsed by default, <5: expanded by default
+
+                if (isCollapsed) {
+                    // Collapsed group - show as single thick edge
+                    const totalAmount = edges.reduce((sum, e) => sum + e.amount, 0);
+                    processedEdges.push({
+                        ...edges[0], // Use first edge as template
+                        isGroup: true,
+                        isCollapsed: true,
+                        threadCount: edges.length,
+                        groupKey: groupKey,
+                        threads: edges,
+                        amount: totalAmount,
+                        label: `${edges.length} threads`
+                    });
+                } else {
+                    // Expanded group - show spaced individual edges
+                    edges.forEach((edge, index) => {
+                        processedEdges.push({
+                            ...edge,
+                            isGroup: true,
+                            isCollapsed: false,
+                            threadCount: edges.length,
+                            threadIndex: index,
+                            groupKey: groupKey,
+                            threads: edges
+                        });
+                    });
+                }
+            }
+        });
+
         const edges = this.edgesGroup.selectAll('.edge')
-            .data(edgeData);
+            .data(processedEdges, d => d.isGroup ? `${d.groupKey}-${d.isCollapsed}` : `${d.source.id}-${d.target.id}-${d.label}`);
+
+        edges.exit().remove();
 
         const edgeEnter = edges.enter()
             .append('g')
             .attr('class', 'edge')
             .style('cursor', 'pointer')
-            .on('click', (event, d) => this.showEdgeDetails(event, d))
+            .on('click', (event, d) => {
+                if (d.isGroup && d.threadCount > 1) {
+                    this.toggleEdgeGroup(d);
+                } else {
+                    this.showEdgeDetails(event, d);
+                }
+            })
             .on('contextmenu', (event, d) => {
                 event.preventDefault();
                 this.showAddNoteModal(event, d, 'edge');
@@ -1023,6 +1113,8 @@ class BATSVisualizationD3 {
             .on('mouseover', (event, d) => {
                 if (d.note) {
                     this.showNoteTooltip(event, d.note);
+                } else if (d.isGroup && d.threadCount > 1) {
+                    this.showNoteTooltip(event, `${d.threadCount} threads - Click to ${d.isCollapsed ? 'expand' : 'collapse'}`);
                 }
             })
             .on('mouseout', () => {
@@ -1032,18 +1124,28 @@ class BATSVisualizationD3 {
         // Draw curved path
         edgeEnter.append('path')
             .attr('d', d => {
-                const x1 = d.source.x + this.config.nodeRadius;
-                const y1 = d.source.y;
-                const x2 = d.target.x - this.config.nodeRadius;
-                const y2 = d.target.y;
-                const mx = (x1 + x2) / 2;
+                let x1 = d.source.x + this.config.nodeRadius;
+                let y1 = d.source.y;
+                let x2 = d.target.x - this.config.nodeRadius;
+                let y2 = d.target.y;
 
+                // Apply offset for expanded multi-thread edges
+                if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
+                    const spacing = 15; // pixels between parallel edges
+                    const totalHeight = (d.threadCount - 1) * spacing;
+                    const offset = -totalHeight / 2 + d.threadIndex * spacing;
+                    y1 += offset;
+                    y2 += offset;
+                }
+
+                const mx = (x1 + x2) / 2;
                 return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
             })
             .attr('fill', 'none')
-            .attr('stroke', '#95a5a6')
-            .attr('stroke-width', 2)
-            .attr('marker-end', 'url(#arrowhead)');
+            .attr('stroke', d => d.isCollapsed ? '#34495e' : '#95a5a6')
+            .attr('stroke-width', d => d.isCollapsed ? Math.min(8, 2 + d.threadCount) : 2)
+            .attr('marker-end', 'url(#arrowhead)')
+            .attr('opacity', d => d.isCollapsed ? 0.8 : 1);
 
         // Add arrow marker definition
         this.svg.append('defs')
@@ -1058,20 +1160,38 @@ class BATSVisualizationD3 {
             .attr('points', '0 0, 10 3, 0 6')
             .attr('fill', '#95a5a6');
 
-        // Add edge label with notation
+        // Add edge label with notation (or thread count for collapsed)
         edgeEnter.append('text')
             .attr('x', d => (d.source.x + d.target.x) / 2)
-            .attr('y', d => (d.source.y + d.target.y) / 2 - 20)
+            .attr('y', d => {
+                const baseY = (d.source.y + d.target.y) / 2 - 20;
+                if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
+                    const spacing = 15;
+                    const totalHeight = (d.threadCount - 1) * spacing;
+                    const offset = -totalHeight / 2 + d.threadIndex * spacing;
+                    return baseY + offset;
+                }
+                return baseY;
+            })
             .attr('text-anchor', 'middle')
             .attr('font-size', '11px')
             .attr('fill', '#2c3e50')
             .attr('font-weight', 'bold')
-            .text(d => d.label);
+            .text(d => d.isCollapsed ? `${d.threadCount} threads` : d.label);
 
         // Add edge amount + currency label
         edgeEnter.append('text')
             .attr('x', d => (d.source.x + d.target.x) / 2)
-            .attr('y', d => (d.source.y + d.target.y) / 2 - 5)
+            .attr('y', d => {
+                const baseY = (d.source.y + d.target.y) / 2 - 5;
+                if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
+                    const spacing = 15;
+                    const totalHeight = (d.threadCount - 1) * spacing;
+                    const offset = -totalHeight / 2 + d.threadIndex * spacing;
+                    return baseY + offset;
+                }
+                return baseY;
+            })
             .attr('text-anchor', 'middle')
             .attr('font-size', '10px')
             .attr('fill', '#27ae60')
@@ -1191,7 +1311,11 @@ class BATSVisualizationD3 {
     dragging(event, d) {
         // Strictly constrain movement to vertical only within column
         const newY = event.y;
-        const minY = 180;  // Top boundary (well below header to prevent layout issues)
+
+        // Calculate dynamic top boundary based on column header position
+        // Column headers are at y=150 with height=60, so min should be 150 + 60 + nodeRadius
+        const columnHeaderBottom = 150 + 60;  // Column header y + height
+        const minY = columnHeaderBottom + this.config.nodeRadius + 10;  // Add padding below header
         const maxY = this.config.height - 250;  // Bottom boundary (above reconciliation boxes)
 
         // IMPORTANT: X position is LOCKED - never changes
@@ -1209,6 +1333,93 @@ class BATSVisualizationD3 {
     dragEnded(event, d) {
         d3.select(event.sourceEvent.target.parentNode).style('cursor', 'grab');
         d.isDragging = false;
+    }
+
+    toggleEdgeGroup(edgeGroup) {
+        const groupKey = edgeGroup.groupKey;
+
+        if (edgeGroup.isCollapsed) {
+            // Show modal with thread details before expanding
+            this.showEdgeGroupModal(edgeGroup);
+        } else {
+            // Collapse the group - remove from expanded set (will auto-collapse if >5)
+            this.expandedEdgeGroups.delete(groupKey);
+            // Redraw edges to reflect the change
+            this.edgesGroup.selectAll('.edge').remove();
+            this.drawEdges();
+        }
+    }
+
+    showEdgeGroupModal(edgeGroup) {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 3px solid #3498db;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            z-index: 10000;
+            max-width: 600px;
+            max-height: 70vh;
+            overflow-y: auto;
+        `;
+
+        const threadsList = edgeGroup.threads.map((thread, idx) => `
+            <div style="background: ${idx % 2 === 0 ? '#ecf0f1' : 'white'}; padding: 10px; border-radius: 6px; margin: 5px 0;">
+                <div style="font-weight: bold; color: #2c3e50;">${idx + 1}. ${thread.label || thread.notation || 'Thread'}</div>
+                <div style="color: #27ae60; font-weight: 600; margin-top: 5px;">
+                    ${thread.amount.toFixed(2)} ${thread.currency}
+                </div>
+            </div>
+        `).join('');
+
+        modal.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #3498db; margin: 0;">🔗 Edge Group</h2>
+                <p style="color: #7f8c8d; margin: 10px 0;">
+                    ${edgeGroup.threadCount} threads between wallets
+                </p>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <div style="background: #3498db; color: white; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+                    <strong>Total Amount:</strong> ${edgeGroup.amount.toFixed(2)} ${edgeGroup.currency}
+                </div>
+
+                <h3 style="color: #2c3e50; margin: 15px 0 10px 0;">Individual Threads:</h3>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${threadsList}
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="this.getRootNode().host.remove()" style="flex: 1; padding: 12px; background: #95a5a6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                    Keep Collapsed
+                </button>
+                <button id="expandEdgeGroupBtn" style="flex: 1; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                    Expand Group
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Add expand button handler
+        document.getElementById('expandEdgeGroupBtn').onclick = () => {
+            this.expandedEdgeGroups.add(edgeGroup.groupKey);
+            this.edgesGroup.selectAll('.edge').remove();
+            this.drawEdges();
+            modal.remove();
+        };
+
+        // Close on backdrop click
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.remove();
+        };
     }
 
     updateEdges() {
