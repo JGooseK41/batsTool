@@ -3,31 +3,53 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 15:16)
+## Latest Commit (Auto-updated: 2025-10-05 15:17)
 
-**Commit:** 0b399051bfe44b15c1feb6863cb99913c995c133
+**Commit:** 0d8a3232876bca0cb8f5bead40233f58b4fc6c63
 **Author:** Your Name
-**Message:** Fix infinite loop in visualization initialization - add retry limit
+**Message:** Fix root cause of visualization tab not activating properly
+
+**ROOT CAUSE IDENTIFIED:**
+switchTab() was setting tab.style.display = '' (empty string) which fell back to CSS default (display: none).
+The .active class has display: block !important but wasn't overriding because inline styles conflicted.
+
+**THE FIX:**
+Changed line 3449 from `tab.style.display = ''` to `tab.style.display = 'none'`
+
+Now the CSS cascade works properly:
+1. Inline style: display: none (base state)
+2. CSS class .tab-content.active: display: block !important (overrides inline)
+3. Tab becomes visible when 'active' class is added
+
+**REMOVED:**
+- Unnecessary retry logic and infinite loop protection
+- The tab now activates immediately on first try
+
+This was a CSS specificity issue, not a timing issue.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 41 +++++++++++++++++++++++++++++++----------
- index.html | 24 ++++++++++++++++++++----
- 2 files changed, 51 insertions(+), 14 deletions(-)
+ CLAUDE.md  | 44 ++++++++++++--------------------------------
+ index.html | 30 +++---------------------------
+ 2 files changed, 15 insertions(+), 59 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0b39905 Fix infinite loop in visualization initialization - add retry limit (0 seconds ago)
-- 9ca63d7 Fix file loading navigation and visualization tab timing issues (3 minutes ago)
-- 359623d Update CLAUDE.md with latest commit info (6 minutes ago)
-- 1087c48 Replace visualization system with proper BATS flow diagram engine (8 minutes ago)
-- 17f898e Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check (13 minutes ago)
-- 4c95723 Fix visualization canvas sizing and add missing flowdiagram tab (25 minutes ago)
+- 0d8a323 Fix root cause of visualization tab not activating properly (2 seconds ago)
+- 0b39905 Fix infinite loop in visualization initialization - add retry limit (86 seconds ago)
+- 9ca63d7 Fix file loading navigation and visualization tab timing issues (5 minutes ago)
+- 359623d Update CLAUDE.md with latest commit info (8 minutes ago)
+- 1087c48 Replace visualization system with proper BATS flow diagram engine (9 minutes ago)
+- 17f898e Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check (15 minutes ago)
+- 4c95723 Fix visualization canvas sizing and add missing flowdiagram tab (26 minutes ago)
 - f5529fb Enable flow diagram visualization in training page (5 hours ago)
 - dbdcf41 Adjust B.A.T.S. header text to amber gold (#FFBF00) (6 hours ago)
 - 31ae650 Update CLAUDE.md with latest commit info (6 hours ago)
-- 61bdff7 Update B.A.T.S. header text to better gold color (#FFA500) (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
