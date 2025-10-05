@@ -572,7 +572,7 @@ class BATSVisualizationD3 {
                 if (entry.entryType === 'writeoff') {
                     leftItems.push({
                         type: 'write-off',
-                        amount: entry.amount,
+                        amount: parseFloat(entry.amount) || 0,
                         currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
                         label: `Write-off: ${entry.reason || 'Unknown'}`
                     });
@@ -580,13 +580,13 @@ class BATSVisualizationD3 {
                     // Swap input on left, output on right
                     leftItems.push({
                         type: 'swap-in',
-                        amount: entry.inputAmount,
+                        amount: parseFloat(entry.inputAmount) || 0,
                         currency: entry.inputCurrency,
                         label: `Swap: ${entry.inputCurrency} → ${entry.outputCurrency}`
                     });
                     rightItems.push({
                         type: 'swap-out',
-                        amount: entry.outputAmount,
+                        amount: parseFloat(entry.outputAmount) || 0,
                         currency: entry.outputCurrency,
                         label: `Converted to ${entry.outputCurrency}`
                     });
@@ -594,7 +594,7 @@ class BATSVisualizationD3 {
                     // Terminal wallet - goes on left
                     leftItems.push({
                         type: 'terminal',
-                        amount: entry.amount,
+                        amount: parseFloat(entry.amount) || 0,
                         currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
                         label: `Terminal: ${entry.walletLabel || 'Exchange'}`,
                         notation: entry.notation
@@ -603,7 +603,7 @@ class BATSVisualizationD3 {
                     // Continuing trace - goes on right
                     rightItems.push({
                         type: 'trace',
-                        amount: entry.amount,
+                        amount: parseFloat(entry.amount) || 0,
                         currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
                         label: entry.notation || `Trace to H${hop.hopNumber + 1}`,
                         notation: entry.notation
