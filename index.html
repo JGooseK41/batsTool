@@ -17344,20 +17344,28 @@ function getTotalTracedSummary() {
 function proceedWithVisualizationFirst() {
     closeCompletionModal();
 
-    // Generate a new HTML page with the visualization
-    const visualizationHTML = generateVisualizationPage();
-
-    // Open in new tab/window
-    const newWindow = window.open('', '_blank');
-    newWindow.document.write(visualizationHTML);
-    newWindow.document.close();
-
-    // Initialize the visualization in the new window
-    setTimeout(() => {
-        if (newWindow && newWindow.initializeVisualization) {
-            newWindow.initializeVisualization(investigation);
+    // Switch to the flow diagram tab instead of opening popup
+    if (typeof window.switchTab === 'function') {
+        window.switchTab('flowdiagram');
+    } else {
+        // Fallback: manually switch tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+            tab.style.display = 'none';
+        });
+        const flowTab = document.getElementById('flowdiagram-tab');
+        if (flowTab) {
+            flowTab.classList.add('active');
+            flowTab.style.display = 'block';
         }
-    }, 100);
+
+        // Initialize visualization after tab switch
+        setTimeout(() => {
+            if (typeof initializeGraphVisualization === 'function') {
+                initializeGraphVisualization();
+            }
+        }, 100);
+    }
 }
 
 // Add guidance banner to visualization tab
@@ -36658,15 +36666,13 @@ To (RED Wallet): ${transfer.to}`;
         });
 
         // ============================================
-        // MODERN VISUALIZATION SYSTEM
+        // BATS FLOW DIAGRAM VISUALIZATION
         // ============================================
 
-        let vizEngine = null;
-
-        // Initialize the modern graph visualization
+        // Initialize the BATS hop-centric flow diagram
         function initializeGraphVisualization() {
             try {
-                console.log('🎨 Initializing visualization...');
+                console.log('🎨 Initializing BATS Flow Diagram...');
 
                 // Ensure container exists
                 const container = document.getElementById('visualizationContainer');
@@ -36688,62 +36694,30 @@ To (RED Wallet): ${transfer.to}`;
                     return;
                 }
 
-                // Clear container and setup
-                container.innerHTML = `
-                    <div style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
-                        <button onclick="switchTab('hops'); saveInvestigation();" class="btn" style="background: rgba(52, 152, 219, 0.9);">
-                            ← Back to Investigation
-                        </button>
-                    </div>
-                    <div id="vizCanvas" style="width: 100%; height: 100%; position: relative;"></div>
-                `;
-
-                // Check if BATSVisualizationEngine is available
-                if (typeof BATSVisualizationEngine === 'undefined') {
-                    console.error('BATSVisualizationEngine not loaded');
-                    showErrorMessage('Visualization engine not loaded. Please refresh the page.');
+                // Check if generateHopCentricDAG is available
+                if (typeof generateHopCentricDAG !== 'function') {
+                    console.error('generateHopCentricDAG not loaded');
+                    showErrorMessage('Flow diagram engine not loaded. Please refresh the page.');
                     return;
                 }
 
-                // Create new engine instance
-                vizEngine = new BATSVisualizationEngine('vizCanvas');
-
-                // Load investigation data
-                vizEngine.loadInvestigation(investigation);
-
-                // Add export buttons
-                const exportButtons = document.createElement('div');
-                exportButtons.style.cssText = 'position: absolute; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 1000;';
-                exportButtons.innerHTML = `
-                    <button onclick="exportVisualization('png')" class="btn" style="background: rgba(46, 204, 113, 0.9);">
-                        📸 Export PNG
-                    </button>
-                    <button onclick="exportVisualization('svg')" class="btn" style="background: rgba(52, 152, 219, 0.9);">
-                        📐 Export SVG
-                    </button>
-                    <button onclick="exportVisualization('json')" class="btn" style="background: rgba(241, 196, 15, 0.9);">
-                        📋 Export JSON
-                    </button>
+                // Clear container and setup with SVG for proper BATS visualization
+                container.innerHTML = `
+                    <div style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
+                        <button onclick="switchTab('hops'); saveInvestigation();" class="btn" style="background: rgba(52, 152, 219, 0.9); padding: 10px 20px; border: none; color: white; cursor: pointer; border-radius: 4px;">
+                            ← Back to Investigation
+                        </button>
+                    </div>
+                    <div style="width: 100%; height: 100%; overflow: auto; background: white; padding: 20px;">
+                        <svg id="bats-flow-diagram" width="2400" height="2000" style="display: block;"></svg>
+                    </div>
                 `;
-                container.appendChild(exportButtons);
 
-                // Add layout switcher
-                const layoutButtons = document.createElement('div');
-                layoutButtons.style.cssText = 'position: absolute; top: 10px; left: 10px; display: flex; gap: 5px; z-index: 1000;';
-                layoutButtons.innerHTML = `
-                    <button onclick="changeLayout('hierarchical')" class="btn btn-small" style="background: rgba(52, 73, 94, 0.7);">
-                        📊 Hierarchical
-                    </button>
-                    <button onclick="changeLayout('force')" class="btn btn-small" style="background: rgba(52, 73, 94, 0.7);">
-                        🌐 Force-Directed
-                    </button>
-                    <button onclick="changeLayout('tree')" class="btn btn-small" style="background: rgba(52, 73, 94, 0.7);">
-                        🌳 Tree
-                    </button>
-                `;
-                container.appendChild(layoutButtons);
+                // Generate the proper BATS hop-centric DAG visualization
+                const svg = document.getElementById('bats-flow-diagram');
+                generateHopCentricDAG(svg, investigation);
 
-                console.log('✅ Visualization initialized successfully');
+                console.log('✅ BATS Flow Diagram rendered successfully');
 
             } catch (error) {
                 console.error('Error initializing visualization:', error);
@@ -36751,55 +36725,35 @@ To (RED Wallet): ${transfer.to}`;
             }
         }
 
-        // Export visualization in different formats
-        async function exportVisualization(format) {
-            if (!vizEngine) {
-                alert('Visualization engine not initialized');
+        // Export SVG visualization (flow-diagram-enhanced.js renders as SVG)
+        function exportFlowDiagram() {
+            const svg = document.getElementById('bats-flow-diagram');
+            if (!svg) {
+                alert('No visualization to export. Please generate the flow diagram first.');
                 return;
             }
 
             try {
-                const result = await vizEngine.exportAs(format);
+                // Get the SVG as a string
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
 
-                if (format === 'png') {
-                    const url = URL.createObjectURL(result);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `bats-investigation-${Date.now()}.png`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                } else if (format === 'svg') {
-                    const blob = new Blob([result], { type: 'image/svg+xml' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `bats-investigation-${Date.now()}.svg`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                } else if (format === 'json') {
-                    const blob = new Blob([result], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `bats-investigation-${Date.now()}.json`;
-                    a.click();
-                    URL.revokeObjectURL(url);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bats-flow-diagram-${investigation.caseId || 'investigation'}-${Date.now()}.svg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                if (typeof showNotification === 'function') {
+                    showNotification('Flow diagram exported successfully!', 'success');
                 }
-
-                showNotification('Export successful!', 'success');
             } catch (error) {
                 console.error('Export error:', error);
-                showNotification('Export failed: ' + error.message, 'error');
+                alert('Failed to export flow diagram: ' + error.message);
             }
-        }
-
-        // Change layout type
-        function changeLayout(type) {
-            if (!vizEngine) return;
-
-            vizEngine.applyLayout(type);
-            vizEngine.render();
-            vizEngine.interaction.fitToScreen();
         }
 
         // Show error message in visualization container
@@ -36830,8 +36784,7 @@ To (RED Wallet): ${transfer.to}`;
 
         // Expose visualization functions globally
         window.initializeGraphVisualization = initializeGraphVisualization;
-        window.exportVisualization = exportVisualization;
-        window.changeLayout = changeLayout;
+        window.exportFlowDiagram = exportFlowDiagram;
     </script>
 </body>
 </html>

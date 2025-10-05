@@ -3,44 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 09:50)
+## Latest Commit (Auto-updated: 2025-10-05 15:02)
 
-**Commit:** f5529fb48e0fef2aa9e0b27abd53afc53120da2e
+**Commit:** 17f898ef47e1300584216425e5407c1d8436b04c
 **Author:** Your Name
-**Message:** Enable flow diagram visualization in training page
-
-- Added SVG container element to graph illustration section
-- Removed early return that disabled visualization function
-- Uncommented DOMContentLoaded event listener to render on page load
-- Visualization now displays comprehensive BATS flow diagram with victims, hops, exchanges, and write-offs
-
-Also includes color refinements across pages for consistency.
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check
 
 ### Changed Files:
 ```
- CLAUDE.md     | 39 +++++++++++++++++++++++++--------------
- index.html    | 42 +++++++++++++++++++++---------------------
- mobile.html   |  4 ++--
- training.html | 24 +++++++++++-------------
- 4 files changed, 59 insertions(+), 50 deletions(-)
+ flow-diagram-enhanced.js | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f5529fb Enable flow diagram visualization in training page (0 seconds ago)
-- dbdcf41 Adjust B.A.T.S. header text to amber gold (#FFBF00) (34 minutes ago)
-- 31ae650 Update CLAUDE.md with latest commit info (35 minutes ago)
-- 61bdff7 Update B.A.T.S. header text to better gold color (#FFA500) (35 minutes ago)
-- c662191 Update CLAUDE.md with latest commit info (37 minutes ago)
-- 633149f Change gold color from orange (#f39c12) to yellow (#FFD700) (38 minutes ago)
-- e0c9c3a Update CLAUDE.md (43 minutes ago)
-- d632342 Update all header text to gold color (#f39c12) across all pages (44 minutes ago)
-- b9acd04 Update CLAUDE.md (47 minutes ago)
-- c7df7b1 Update visualization page header to match main app theme (48 minutes ago)
+- 17f898e Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check (0 seconds ago)
+- 4c95723 Fix visualization canvas sizing and add missing flowdiagram tab (12 minutes ago)
+- f5529fb Enable flow diagram visualization in training page (5 hours ago)
+- dbdcf41 Adjust B.A.T.S. header text to amber gold (#FFBF00) (6 hours ago)
+- 31ae650 Update CLAUDE.md with latest commit info (6 hours ago)
+- 61bdff7 Update B.A.T.S. header text to better gold color (#FFA500) (6 hours ago)
+- c662191 Update CLAUDE.md with latest commit info (6 hours ago)
+- 633149f Change gold color from orange (#f39c12) to yellow (#FFD700) (6 hours ago)
+- e0c9c3a Update CLAUDE.md (6 hours ago)
+- d632342 Update all header text to gold color (#f39c12) across all pages (6 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
