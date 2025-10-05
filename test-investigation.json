@@ -1,0 +1,252 @@
+{
+  "caseId": "TEST-2025-001",
+  "caseName": "Simulated DEX Hack Test Case",
+  "investigator": "Claude Test",
+  "dateOpened": "2025-01-15",
+  "targetCurrency": "ETH",
+  "victims": [
+    {
+      "id": 1,
+      "name": "Alice",
+      "contact": "alice@test.com",
+      "transactions": [
+        {
+          "id": 1,
+          "amount": 500,
+          "currency": "HYPE",
+          "receivingWallet": "0x1234567890abcdef1234567890abcdef12345678",
+          "walletLabel": "Alice Wallet",
+          "transactionHash": "0xabc123def456",
+          "blockchain": "hyperevm",
+          "timestamp": "2025-01-15T10:00:00Z"
+        },
+        {
+          "id": 2,
+          "amount": 300,
+          "currency": "HYPE",
+          "receivingWallet": "0x1234567890abcdef1234567890abcdef12345678",
+          "walletLabel": "Alice Wallet",
+          "transactionHash": "0xdef789ghi012",
+          "blockchain": "hyperevm",
+          "timestamp": "2025-01-15T10:15:00Z"
+        }
+      ],
+      "completed": true,
+      "completedAt": "2025-01-15T10:30:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Bob",
+      "contact": "bob@test.com",
+      "transactions": [
+        {
+          "id": 1,
+          "amount": 1000,
+          "currency": "HYPE",
+          "receivingWallet": "0xabcdef1234567890abcdef1234567890abcdef12",
+          "walletLabel": "Bob's Wallet",
+          "transactionHash": "0x123abc456def",
+          "blockchain": "hyperevm",
+          "timestamp": "2025-01-15T11:00:00Z"
+        }
+      ],
+      "completed": true,
+      "completedAt": "2025-01-15T11:15:00Z"
+    }
+  ],
+  "rootTotalConfirmed": true,
+  "confirmedRootTotal": 1800,
+  "confirmedRootTotalsByCurrency": {
+    "HYPE": 1800
+  },
+  "currentART": {
+    "HYPE": 1800
+  },
+  "hops": [
+    {
+      "hopNumber": 1,
+      "artAtStartByCurrency": {
+        "HYPE": 1800
+      },
+      "entries": [
+        {
+          "id": 1,
+          "sourceThreadId": "V1-T1",
+          "amount": 500,
+          "currency": "HYPE",
+          "destinationWallet": "0x9876543210fedcba9876543210fedcba98765432",
+          "walletLabel": "Mixer A",
+          "walletType": "brown",
+          "toWalletType": "brown",
+          "entryType": "swap",
+          "swapPlatform": "0x9876543210fedcba9876543210fedcba98765432",
+          "swapDetails": {
+            "inputAmount": 500,
+            "inputCurrency": "HYPE",
+            "outputAmount": 1000,
+            "outputCurrency": "USDC",
+            "platform": "Uniswap"
+          },
+          "notation": "(V1-T1) H1",
+          "transactionHash": "0xswap111222333"
+        },
+        {
+          "id": 2,
+          "sourceThreadId": "V1-T2",
+          "amount": 300,
+          "currency": "HYPE",
+          "destinationWallet": "0x9876543210fedcba9876543210fedcba98765432",
+          "walletLabel": "Mixer A",
+          "walletType": "brown",
+          "toWalletType": "brown",
+          "entryType": "swap",
+          "swapPlatform": "0x9876543210fedcba9876543210fedcba98765432",
+          "swapDetails": {
+            "inputAmount": 300,
+            "inputCurrency": "HYPE",
+            "outputAmount": 600,
+            "outputCurrency": "USDC",
+            "platform": "Uniswap"
+          },
+          "notation": "(V1-T2) H1",
+          "transactionHash": "0xswap444555666"
+        },
+        {
+          "id": 3,
+          "sourceThreadId": "V2-T1",
+          "amount": 1000,
+          "currency": "HYPE",
+          "destinationWallet": "0xfedcba9876543210fedcba9876543210fedcba98",
+          "walletLabel": "Intermediate Wallet",
+          "walletType": "black",
+          "notation": "(V2-T1) H1",
+          "transactionHash": "0xtrace777888999"
+        }
+      ]
+    },
+    {
+      "hopNumber": 2,
+      "artAtStartByCurrency": {
+        "USDC": 1600,
+        "HYPE": 1000
+      },
+      "entries": [
+        {
+          "id": 1,
+          "sourceThreadId": "(V1-T1) H1",
+          "amount": 1000,
+          "currency": "USDC",
+          "destinationWallet": "0x1111222233334444555566667777888899990000",
+          "walletLabel": "Binance Hot Wallet",
+          "walletType": "purple",
+          "isTerminalWallet": true,
+          "notation": "(V1-T1) H1 H2",
+          "transactionHash": "0xterminal111",
+          "terminalDetails": {
+            "exchange": "Binance",
+            "depositAddress": "0x1111222233334444555566667777888899990000"
+          }
+        },
+        {
+          "id": 2,
+          "sourceThreadId": "(V1-T2) H1",
+          "amount": 400,
+          "currency": "USDC",
+          "destinationWallet": "0xaaaa1111bbbb2222cccc3333dddd4444eeee5555",
+          "walletLabel": "Splitter Wallet",
+          "walletType": "black",
+          "notation": "(V1-T2) H1 H2",
+          "transactionHash": "0xtrace222333"
+        },
+        {
+          "id": 3,
+          "sourceThreadId": "(V1-T2) H1",
+          "amount": 200,
+          "currency": "USDC",
+          "destinationWallet": "0x2222333344445555666677778888999900001111",
+          "walletLabel": "Kraken Deposit",
+          "walletType": "purple",
+          "isTerminalWallet": true,
+          "notation": "(V1-T2) H1 H2",
+          "transactionHash": "0xterminal222",
+          "terminalDetails": {
+            "exchange": "Kraken",
+            "depositAddress": "0x2222333344445555666677778888999900001111"
+          }
+        },
+        {
+          "id": 4,
+          "sourceThreadId": "(V2-T1) H1",
+          "amount": 1000,
+          "currency": "HYPE",
+          "destinationWallet": "0xbbbbccccddddeeeeffffaaaabbbbccccddddeeee",
+          "walletLabel": "Bridge Contract",
+          "walletType": "brown",
+          "toWalletType": "brown",
+          "entryType": "swap",
+          "isBridge": true,
+          "swapPlatform": "0xbbbbccccddddeeeeffffaaaabbbbccccddddeeee",
+          "swapDetails": {
+            "inputAmount": 1000,
+            "inputCurrency": "HYPE",
+            "outputAmount": 0.5,
+            "outputCurrency": "ETH",
+            "platform": "LayerZero Bridge"
+          },
+          "notation": "(V2-T1) H1 H2",
+          "transactionHash": "0xbridge333"
+        }
+      ]
+    },
+    {
+      "hopNumber": 3,
+      "artAtStartByCurrency": {
+        "USDC": 400,
+        "ETH": 0.5
+      },
+      "entries": [
+        {
+          "id": 1,
+          "sourceThreadId": "(V1-T2) H1 H2",
+          "amount": 200,
+          "currency": "USDC",
+          "destinationWallet": "0x3333444455556666777788889999aaaabbbbcccc",
+          "walletLabel": "Final EOA",
+          "walletType": "black",
+          "notation": "(V1-T2) H1 H2 H3",
+          "transactionHash": "0xfinal111"
+        },
+        {
+          "id": 2,
+          "sourceThreadId": "(V1-T2) H1 H2",
+          "amount": 200,
+          "currency": "USDC",
+          "destinationWallet": "0x4444555566667777888899990000aaaabbbbcccc",
+          "walletLabel": "OKX Deposit",
+          "walletType": "purple",
+          "isTerminalWallet": true,
+          "notation": "(V1-T2) H1 H2 H3",
+          "transactionHash": "0xterminal333",
+          "terminalDetails": {
+            "exchange": "OKX",
+            "depositAddress": "0x4444555566667777888899990000aaaabbbbcccc"
+          }
+        },
+        {
+          "id": 3,
+          "sourceThreadId": "(V2-T1) H1 H2",
+          "amount": 0.5,
+          "currency": "ETH",
+          "destinationWallet": "0x5555666677778888999900001111aaaabbbbcccc",
+          "walletLabel": "Tornado Cash",
+          "walletType": "brown",
+          "notation": "(V2-T1) H1 H2 H3",
+          "transactionHash": "0xmixer444"
+        }
+      ]
+    }
+  ],
+  "universalWalletIndex": {},
+  "redWalletIndex": {},
+  "availableThreads": {}
+}
