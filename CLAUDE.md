@@ -3,31 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 05:21)
+## Latest Commit (Auto-updated: 2025-10-05 05:22)
 
-**Commit:** 822d0c72bd74136dff692d474a3f5f780651b383
+**Commit:** 77be354738b24c80e2fcec99b752786d479eeb1d
 **Author:** Your Name
-**Message:** Add verification test page
+**Message:** Update CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md       |  28 ++++++++-----
- verify-app.html | 123 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 141 insertions(+), 10 deletions(-)
+ CLAUDE.md | 29 +++++++++++------------------
+ 1 file changed, 11 insertions(+), 18 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 822d0c7 Add verification test page (0 seconds ago)
+- 77be354 Update CLAUDE.md (0 seconds ago)
+- 822d0c7 Add verification test page (12 seconds ago)
 - b7c10d2 Fix syntax error from broken template literal (2 minutes ago)
-- f634ff1 Final CLAUDE.md update (5 minutes ago)
+- f634ff1 Final CLAUDE.md update (6 minutes ago)
 - dce59d7 Update CLAUDE.md with latest commit info (6 minutes ago)
 - 5b84f18 Add test results and documentation (6 minutes ago)
 - fbfd451 Add comprehensive workflow testing suite (7 hours ago)
 - ff05a23 Simplify visualization to use modern engine exclusively (7 hours ago)
 - 2363b87 Implement modern Canvas-based visualization engine (7 hours ago)
 - d5ec88f Fix graph visualization with robust fallback system (8 hours ago)
-- 8aca65b Fix terminal wallet attribution display in completion modal (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

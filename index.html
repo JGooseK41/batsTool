@@ -13234,9 +13234,14 @@ function addNewHop() {
                                                 Hop ${hopNumber} Entry ${entry.id}${threadNumber ? ` (Thread ${threadNumber})` : ''}
                                             </span>
                                             <span style="color: ${entry.entryType === 'writeoff' ? '#e74c3c' : '#7f8c8d'}; font-size: 12px; font-weight: ${entry.entryType === 'writeoff' ? 'bold' : 'normal'};">
-                                                ${entry.entryType === 'writeoff' ? '⚠️ WRITE-OFF' : entryTypeLabel}
+                                                ${entry.entryType === 'writeoff' ? '📝 WRITE-OFF' : entryTypeLabel}
                                             </span>
-                                            ${entry.entryType === 'writeoff' && entry.notation ? `
+                                            ${entry.entryType === 'writeoff' ? `
+                                                <span style="background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                                                    ${entry.category ? entry.category.toUpperCase() : 'UNSPECIFIED'}
+                                                </span>
+                                            ` : ''}
+                                            ${entry.notation ? `
                                                 <span style="color: #666; font-size: 11px; font-style: italic;">
                                                     (${entry.notation})
                                                 </span>
@@ -13260,6 +13265,14 @@ function addNewHop() {
                                                 </span>
                                             </div>
                                         ` : ''}
+                                        ${entry.entryType === 'writeoff' && (entry.toWallet || entry.transactionHash) ? `
+                                            <div style="margin-left: 26px; margin-top: 4px;">
+                                                <span style="color: #666; font-size: 11px;">
+                                                    ${entry.toWallet ? `Wallet: ${entry.toWallet.substring(0, 8)}...${entry.toWallet.substring(entry.toWallet.length - 6)}` : ''}
+                                                    ${entry.transactionHash ? `TX: ${entry.transactionHash.substring(0, 8)}...` : ''}
+                                                </span>
+                                            </div>
+                                        ` : ''}
                                     </div>
                                     <div style="text-align: right;">
                                         ${amount > 0 ? (
@@ -13268,7 +13281,7 @@ function addNewHop() {
                                                     -${amount.toLocaleString()} ${currency}
                                                 </span>
                                                 <div style="font-size: 11px; color: #7f8c8d;">
-                                                    Written off
+                                                    ${entry.category || 'Written off'}${entry.justification ? `: ${entry.justification.substring(0, 50)}${entry.justification.length > 50 ? '...' : ''}` : ''}
                                                 </div>
                                             ` : entry.entryType === 'swap' && entry.swapDetails ? `
                                                 <span style="font-weight: bold; color: #27ae60;">
@@ -13340,6 +13353,14 @@ function addNewHop() {
                                             <div style="margin-left: 26px; margin-top: 4px;">
                                                 <span style="color: #666; font-size: 11px; font-style: italic;">
                                                     ${sourceThreadsInfo}
+                                                </span>
+                                            </div>
+                                        ` : ''}
+                                        ${entry.entryType === 'writeoff' && (entry.toWallet || entry.transactionHash) ? `
+                                            <div style="margin-left: 26px; margin-top: 4px;">
+                                                <span style="color: #666; font-size: 11px;">
+                                                    ${entry.toWallet ? `Wallet: ${entry.toWallet.substring(0, 8)}...${entry.toWallet.substring(entry.toWallet.length - 6)}` : ''}
+                                                    ${entry.transactionHash ? `TX: ${entry.transactionHash.substring(0, 8)}...` : ''}
                                                 </span>
                                             </div>
                                         ` : ''}
