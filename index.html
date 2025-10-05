@@ -17742,8 +17742,24 @@ function generateTerminalSummary() {
         });
     });
 
-    // Combine both sources
-    const allTerminals = [...terminals, ...terminalEntries];
+    // Combine both sources but deduplicate by wallet address + amount to avoid double counting
+    const uniqueTerminals = new Map();
+
+    // Add terminals from index first
+    terminals.forEach(terminal => {
+        const key = `${terminal.walletAddress}_${terminal.amount}_${terminal.currency}`;
+        uniqueTerminals.set(key, terminal);
+    });
+
+    // Add entries only if they don't already exist
+    terminalEntries.forEach(terminal => {
+        const key = `${terminal.walletAddress}_${terminal.amount}_${terminal.currency}`;
+        if (!uniqueTerminals.has(key)) {
+            uniqueTerminals.set(key, terminal);
+        }
+    });
+
+    const allTerminals = Array.from(uniqueTerminals.values());
     if (allTerminals.length === 0) return '';
 
     // Group by exchange and currency
