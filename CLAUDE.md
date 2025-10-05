@@ -3,31 +3,25 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 19:22)
+## Latest Commit (Auto-updated: 2025-10-05 19:26)
 
-**Commit:** f04b421363417edf951fe164f3293f2fd09c87d8
+**Commit:** fce015cd9134126239c91db7ec65b7712d7922b2
 **Author:** Your Name
-**Message:** Fix brown wallet consolidation and add multi-thread edge grouping
+**Message:** Fix drag event handlers causing underlay movement
 
-Brown Wallet Fixes:
-- Fixed brown wallet output consolidation for swaps/bridges
-- When output is also brown (same entity, new chain), no new wallet created
-- Brown wallet handles both input and output threads
-- Prevents duplicate brown wallets in hop columns
+Issue: Dragging wallets caused errors and moved the entire underlay
+Root cause: Using event.sourceEvent.target.parentNode incorrectly
+in drag handlers, causing D3 to select wrong elements
 
-Drag Boundary Improvements:
-- Enforced drag boundaries based on column header position
-- Wallets can no longer be dragged above column underlay
-- Dynamic calculation: columnHeaderBottom + nodeRadius + padding
+Fixes:
+- Changed drag start/end handlers to use function() instead of arrow
+  functions to get correct 'this' context
+- Use d3.select(this) to directly reference the dragged node group
+- Updated dragging() to filter and select by node.id instead of
+  using event.sourceEvent.target
+- Removed separate dragStarted() and dragEnded() methods (now inline)
 
-Multi-Thread Edge Grouping:
-- Groups multiple edges between same source/target pair
-- Auto-collapses groups with >5 threads (thicker line with count)
-- Expands groups with ≤5 threads (spaced parallel lines)
-- Click to toggle between collapsed/expanded
-- Collapsed edges show modal with all thread details
-- Hover tooltip shows thread count and collapse/expand hint
-- Expanded multi-thread edges are vertically spaced (15px apart)
+Result: Wallets now drag smoothly without affecting other elements
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -35,23 +29,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                |  43 ++++---
- bats-d3-visualization.js | 309 +++++++++++++++++++++++++++++++++++++++--------
- 2 files changed, 288 insertions(+), 64 deletions(-)
+ CLAUDE.md                | 60 +++++++++++++++++++++++++++++-------------------
+ bats-d3-visualization.js | 25 ++++++++------------
+ 2 files changed, 45 insertions(+), 40 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f04b421 Fix brown wallet consolidation and add multi-thread edge grouping (1 second ago)
-- 8c49022 Fix Generate Reports button and add graph/reports navigation (11 minutes ago)
-- 28958bb Update CLAUDE.md with latest commit info (19 minutes ago)
-- a25501b Update CLAUDE.md with latest commit info (19 minutes ago)
-- 06715f7 Add note functionality to edges and wallets with right-click and hover (21 minutes ago)
-- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (24 minutes ago)
-- 9f94636 Fix thread connections from brown wallets to next hop (29 minutes ago)
-- ca4dc39 Update CLAUDE.md with latest commit info (31 minutes ago)
-- 82952b6 Consolidate brown wallets by attribution instead of address (32 minutes ago)
-- c91a5d3 Fix brown wallet consolidation and positioning - complete rewrite (37 minutes ago)
+- fce015c Fix drag event handlers causing underlay movement (0 seconds ago)
+- f04b421 Fix brown wallet consolidation and add multi-thread edge grouping (3 minutes ago)
+- 8c49022 Fix Generate Reports button and add graph/reports navigation (14 minutes ago)
+- 28958bb Update CLAUDE.md with latest commit info (22 minutes ago)
+- a25501b Update CLAUDE.md with latest commit info (23 minutes ago)
+- 06715f7 Add note functionality to edges and wallets with right-click and hover (24 minutes ago)
+- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (27 minutes ago)
+- 9f94636 Fix thread connections from brown wallets to next hop (32 minutes ago)
+- ca4dc39 Update CLAUDE.md with latest commit info (34 minutes ago)
+- 82952b6 Consolidate brown wallets by attribution instead of address (35 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

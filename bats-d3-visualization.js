@@ -180,6 +180,24 @@ class BATSVisualizationD3 {
                     return;
                 }
 
+                // Normalize entry data - BATS app uses different field names
+                if (!entry.destinationWallet && entry.toWallet) {
+                    entry.destinationWallet = entry.toWallet;
+                }
+                if (!entry.walletType && entry.toWalletType) {
+                    entry.walletType = entry.toWalletType;
+                }
+                if (!entry.walletLabel && entry.notes) {
+                    // Extract wallet label from notes if available
+                    const labelMatch = entry.notes.match(/Terminal wallet: ([^\n]+)/);
+                    if (labelMatch) {
+                        entry.walletLabel = labelMatch[1];
+                    }
+                }
+                if (entry.isTerminalWallet && !entry.isTerminal) {
+                    entry.isTerminal = entry.isTerminalWallet;
+                }
+
                 // Handle swaps/conversions
                 if (entry.entryType === 'swap' || entry.walletType === 'brown' || entry.isBridge) {
                     // Check if this is an internal swap (same wallet doing the conversion)
@@ -231,11 +249,30 @@ class BATSVisualizationD3 {
                         });
 
                         // Add output thread info (but NO output node in hop column)
-                        const outputAmount = entry.swapDetails ? parseFloat(entry.swapDetails.outputAmount || entry.outputAmount || 0) : parseFloat(entry.amount || 0);
-                        const outputCurrency = entry.swapDetails ? entry.swapDetails.outputCurrency : entry.currency;
+                        const outputAmount = entry.bridgeDetails ? parseFloat(entry.bridgeDetails.destinationAmount || entry.bridgeDetails.toAmount || 0) :
+                                           (entry.swapDetails ? parseFloat(entry.swapDetails.outputAmount || entry.outputAmount || 0) : parseFloat(entry.amount || 0));
+                        const outputCurrency = entry.bridgeDetails ? entry.bridgeDetails.destinationAsset || entry.bridgeDetails.toCurrency :
+                                             (entry.swapDetails ? entry.swapDetails.outputCurrency : entry.currency);
+
+                        // For bridges, find the internal ID from availableThreads
+                        let internalId = null;
+                        if (entry.isBridge && this.investigation.availableThreads) {
+                            // Search through available threads to find matching bridge output
+                            for (const currency in this.investigation.availableThreads) {
+                                for (const threadId in this.investigation.availableThreads[currency]) {
+                                    const thread = this.investigation.availableThreads[currency][threadId];
+                                    if (thread.entryId === entry.id && thread.hopLevel === hop.hopNumber) {
+                                        internalId = thread.internalId;
+                                        break;
+                                    }
+                                }
+                                if (internalId) break;
+                            }
+                        }
 
                         brownNode.outputThreads.push({
                             notation: entry.notation,
+                            internalId: internalId, // Store internal bridge output ID for lookup
                             amount: outputAmount,
                             currency: outputCurrency
                         });
@@ -433,6 +470,21 @@ class BATSVisualizationD3 {
         const directLookup = this.nodeMap.get(threadId);
         if (directLookup) {
             return directLookup;
+        }
+
+        // Check if it's a bridge output thread ID (e.g., bridge_3_USDC_1759657824768_xks0aq)
+        if (threadId.startsWith('bridge_')) {
+            // Find the brown wallet that created this bridge output
+            // Bridge outputs come from hop entries with isBridge=true
+            for (let [id, node] of this.nodeMap) {
+                if (node.type === 'brown' && node.outputThreads) {
+                    // Check if any output thread has this internal ID
+                    const match = node.outputThreads.find(t => t.internalId === threadId || t.notation === threadId);
+                    if (match) {
+                        return node;
+                    }
+                }
+            }
         }
 
         // Parse thread ID to find source node
