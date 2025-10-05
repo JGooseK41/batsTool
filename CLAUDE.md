@@ -3,30 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-04 13:31)
+## Latest Commit (Auto-updated: 2025-10-04 14:04)
 
-**Commit:** cbca4eb123bccacedd071d94b1abc476efeb6316
+**Commit:** 19c6ed12dbc9fdf7ab0540c2f1fe3829cf110a05
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest changes
+**Message:** Fix critical graph visualization crash and add data protection
+
+- Added prominent back button to graph visualization that's always visible
+- Wrapped graph initialization in comprehensive error handling
+- Added auto-save before switching to graph to prevent data loss
+- Created error state display with recovery options (back, refresh, save)
+- Added fallback displays for empty and error states
+- Ensured all graph functions check for existence before calling
+- Added emergency save button in error states
+- Fixed potential blank screen issue with proper error messages
+- Graph errors now clearly indicate data is safe and provide navigation options
 
 ### Changed Files:
 ```
- CLAUDE.md | 47 +++++++++++++++++++++++------------------------
- 1 file changed, 23 insertions(+), 24 deletions(-)
+ CLAUDE.md  |  22 ++-----
+ index.html | 203 ++++++++++++++++++++++++++++++++++++++++++++++++++++---------
+ 2 files changed, 181 insertions(+), 44 deletions(-)
 ```
 
 ## Recent Commits History
 
-- cbca4eb Update CLAUDE.md with latest changes (0 seconds ago)
-- 854140a Standardize workflow completion for all closure types (28 seconds ago)
-- 5524d16 Redesign audit trail with hierarchical structure and proper conversion tracking (33 minutes ago)
-- 1bfe8c9 Update CLAUDE.md with latest changes (2 hours ago)
+- 19c6ed1 Fix critical graph visualization crash and add data protection (0 seconds ago)
+- cbca4eb Update CLAUDE.md with latest changes (33 minutes ago)
+- 854140a Standardize workflow completion for all closure types (33 minutes ago)
+- 5524d16 Redesign audit trail with hierarchical structure and proper conversion tracking (66 minutes ago)
+- 1bfe8c9 Update CLAUDE.md with latest changes (3 hours ago)
 - 1dcea68 Remove incorrect auto-write-off of bridge/swap outputs (3 hours ago)
 - 7e5d62f Update CLAUDE.md with latest changes (3 hours ago)
 - 6ca8f4d Fix critical partial trace bridge handling bug (3 hours ago)
 - b584699 Add chain mismatch detection with clear error messaging (7 hours ago)
 - c4a57c6 Add attribution override feature and improve write-off entry display (7 hours ago)
-- 0d90653 Fix flow diagram visualization not initializing when trace is complete (7 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

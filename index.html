@@ -4789,6 +4789,14 @@
                 investigation.terminalWalletIndex = [];
             }
 
+            // Extract exchange name from various possible sources
+            let exchangeName = entry.exchangeAttribution?.name ||
+                              entry.exchangeAttribution?.label ||
+                              entry.exchangeName ||
+                              entry.terminalAttribution?.name ||
+                              (entry.notes && entry.notes.match(/Terminal wallet: ([^\n]+)/)?.[1]) ||
+                              'Unknown Exchange';
+
             const terminalRecord = {
                 id: Date.now(),
                 timestamp: entry.timestamp || new Date().toISOString(),
@@ -4796,13 +4804,16 @@
                 txHash: entry.txHash,
                 fromWallet: entry.fromWallet,
                 toWallet: entry.toWallet,
-                exchangeName: entry.exchangeAttribution?.name || entry.exchangeAttribution?.label || 'Unknown Exchange',
+                walletAddress: entry.toWallet,  // Add for compatibility with generateTerminalSummary
+                walletLabel: exchangeName,      // Add for compatibility with generateTerminalSummary
+                exchangeName: exchangeName,
                 exchangeType: entry.exchangeAttribution?.type || 'Terminal',
                 amount: parseFloat(entry.amount),
-                currency: entry.currency,
+                currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
                 notation: entry.notation,
-                detectionSource: entry.exchangeAttribution?.source || 'manual',
-                notes: entry.notes || ''
+                detectionSource: entry.exchangeAttribution?.source || entry.terminalAttribution?.source || 'manual',
+                notes: entry.notes || '',
+                walletType: entry.toWalletType || 'purple'
             };
 
             investigation.terminalWalletIndex.push(terminalRecord);
@@ -17686,18 +17697,43 @@ window.showEnhancedCompletionModal = showEnhancedCompletionModal;
 
 // Generate terminal wallet summary for completion modal
 function generateTerminalSummary() {
+    // First check terminal wallet index
     const terminals = investigation.terminalWalletIndex || [];
-    if (terminals.length === 0) return '';
 
-    const summary = terminals.reduce((acc, terminal) => {
-        const key = `${terminal.walletAddress}_${terminal.currency}`;
+    // Also check entries for terminal wallets (as backup)
+    const terminalEntries = [];
+    investigation.hops?.forEach(hop => {
+        hop.entries?.forEach(entry => {
+            if (entry.isTerminalWallet || entry.toWalletType === 'purple' || entry.toWalletType === 'blue') {
+                terminalEntries.push({
+                    walletAddress: entry.toWallet,
+                    walletLabel: entry.exchangeName || entry.exchangeAttribution?.name ||
+                                 (entry.notes && entry.notes.match(/Terminal wallet: ([^\n]+)/)?.[1]) ||
+                                 'Unknown Exchange',
+                    currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
+                    amount: parseFloat(entry.amount) || 0,
+                    walletType: entry.toWalletType
+                });
+            }
+        });
+    });
+
+    // Combine both sources
+    const allTerminals = [...terminals, ...terminalEntries];
+    if (allTerminals.length === 0) return '';
+
+    // Group by exchange and currency
+    const summary = allTerminals.reduce((acc, terminal) => {
+        const label = terminal.walletLabel || 'Unknown Exchange';
+        const key = `${label}_${terminal.currency}`;
+
         if (!acc[key]) {
             acc[key] = {
-                address: terminal.walletAddress,
-                label: terminal.walletLabel,
+                label: label,
                 currency: terminal.currency,
                 totalAmount: 0,
-                count: 0
+                count: 0,
+                walletType: terminal.walletType || 'purple'
             };
         }
         acc[key].totalAmount += parseFloat(terminal.amount) || 0;
@@ -17705,14 +17741,21 @@ function generateTerminalSummary() {
         return acc;
     }, {});
 
+    // Sort by amount descending
+    const sortedSummary = Object.values(summary).sort((a, b) => b.totalAmount - a.totalAmount);
+
     return `
         <div style="margin-top: 15px;">
-            <strong>${Object.keys(summary).length} Terminal Wallet(s) Identified:</strong>
-            ${Object.values(summary).map(s => `
-                <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 4px; font-size: 14px;">
-                    🟣 ${s.label || 'Unknown Exchange'}: ${s.totalAmount.toLocaleString()} ${s.currency}
-                </div>
-            `).join('')}
+            <strong>${sortedSummary.length} Terminal Wallet(s) Identified:</strong>
+            ${sortedSummary.map(s => {
+                const icon = s.walletType === 'blue' ? '🔵' : '🟣';
+                const typeLabel = s.walletType === 'blue' ? ' (Cold Storage)' : '';
+                return `
+                    <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 4px; font-size: 14px;">
+                        ${icon} ${s.label}${typeLabel}: ${s.totalAmount.toLocaleString()} ${s.currency}
+                    </div>
+                `;
+            }).join('')}
         </div>
     `;
 }
