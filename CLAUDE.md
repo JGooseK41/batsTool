@@ -3,34 +3,35 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 16:27)
+## Latest Commit (Auto-updated: 2025-10-05 16:28)
 
-**Commit:** 39243dc5546676d8585cb17923048cc3e896f45d
+**Commit:** 2e34fb4f5febc8b42981396461603d7428ad4ab3
 **Author:** Your Name
-**Message:** Add wallet IDs and increase spacing to prevent text overlap
+**Message:** Add interactive click handlers: view wallet details and thread notes
 
-**Wallet ID System:**
-- Each wallet gets a color-coded ID: B-1, P-2, Br-3, etc.
-- Prefixes: R (red/victim), B (black), P (purple/terminal),
-  Br (brown/DEX), BL (blue), G (gray), O (orange), GR (green)
-- IDs increment per color type
-- Displayed above each node in matching color
+**Click Nodes (wallets):**
+- Shows wallet ID, notation, full address, amount, type
+- Click OK to copy full address to clipboard
+- Displays if swap/conversion or terminal node
 
-**Increased Spacing:**
-- Canvas: 2400×1600 → 3000×1800
-- Vertical spacing: 100 → 140px
-- Wallet columns: 200 → 220px wide
-- Hop spaces: 300 → 400px wide
-- Node radius: 35 → 40px
-- Margins increased for breathing room
+**Click Edges (threads):**
+- Shows complete thread/entry details:
+  - Notation and amount
+  - Source thread ID
+  - Destination wallet
+  - Transaction hash (if available)
+  - Timestamp
+  - Entry type and wallet type
+  - **Entry notes** (investigator notes)
+  - **Swap details** (platform, input/output amounts)
 
-**Node Label Layout (top to bottom):**
-1. Wallet ID (colored, bold) - Br-1, P-2, etc.
-2. V-T-H notation
-3. Wallet address (shortened)
-4. Amount + currency (green)
+**Use Cases:**
+- Click wallet to get full address for blockchain explorer
+- Click thread to review investigator notes
+- Click conversion to see swap details
+- Quick access to all entry metadata
 
-No more overlapping text or cramped layouts!
+All data stored in edge.entryData from investigation object.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -38,23 +39,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 81 +++++++++++++++++++++++++-------------------
- bats-d3-visualization.js | 87 +++++++++++++++++++++++++++++++++++++-----------
- 2 files changed, 114 insertions(+), 54 deletions(-)
+ CLAUDE.md                | 89 +++++++++++++++++++++---------------------------
+ bats-d3-visualization.js | 66 +++++++++++++++++++++++++++++------
+ 2 files changed, 95 insertions(+), 60 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 39243dc Add wallet IDs and increase spacing to prevent text overlap (1 second ago)
-- db3497d Add DEX/conversion nodes in hop spaces with dual-currency flow (3 minutes ago)
-- 623ed32 Redesign layout: Wallet columns with shaded backgrounds, hop spaces between (6 minutes ago)
-- ddceaf4 Fix CSP violation by using local D3.js instead of CDN (11 minutes ago)
-- 559f86a PROFESSIONAL REBUILD: D3.js visualization engine for BATS (13 minutes ago)
-- 550d787 Add setLayout method to BATSVisualizationEngine (21 minutes ago)
-- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (23 minutes ago)
-- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (30 minutes ago)
-- 9a70e89 Fix JSON embedding in popup using script type="application/json" (32 minutes ago)
-- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (33 minutes ago)
+- 2e34fb4 Add interactive click handlers: view wallet details and thread notes (1 second ago)
+- 39243dc Add wallet IDs and increase spacing to prevent text overlap (89 seconds ago)
+- db3497d Add DEX/conversion nodes in hop spaces with dual-currency flow (5 minutes ago)
+- 623ed32 Redesign layout: Wallet columns with shaded backgrounds, hop spaces between (7 minutes ago)
+- ddceaf4 Fix CSP violation by using local D3.js instead of CDN (13 minutes ago)
+- 559f86a PROFESSIONAL REBUILD: D3.js visualization engine for BATS (14 minutes ago)
+- 550d787 Add setLayout method to BATSVisualizationEngine (22 minutes ago)
+- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (25 minutes ago)
+- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (31 minutes ago)
+- 9a70e89 Fix JSON embedding in popup using script type="application/json" (33 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

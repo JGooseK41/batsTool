@@ -689,9 +689,237 @@ ${entry.swapDetails ? `\n──────────────────�
     }
 
     renderSankey() {
-        console.log('Rendering Sankey diagram...');
-        // TODO: Implement Sankey layout using d3-sankey
-        alert('Sankey diagram coming soon!');
+        console.log('🌊 Rendering Sankey diagram...');
+
+        // Clear existing content
+        this.mainGroup.selectAll('*').remove();
+
+        // Transform BATS data into Sankey format
+        const sankeyData = this.transformToSankeyFormat();
+
+        if (!sankeyData || sankeyData.nodes.length === 0) {
+            console.error('No data available for Sankey diagram');
+            return;
+        }
+
+        // Configure Sankey generator
+        const sankey = d3.sankey()
+            .nodeId(d => d.id)
+            .nodeWidth(30)
+            .nodePadding(40)
+            .extent([[100, 100], [this.config.width - 100, this.config.height - 100]]);
+
+        // Generate Sankey layout
+        const graph = sankey({
+            nodes: sankeyData.nodes.map(d => Object.assign({}, d)),
+            links: sankeyData.links.map(d => Object.assign({}, d))
+        });
+
+        // Draw links (flows)
+        const link = this.mainGroup.append('g')
+            .selectAll('.sankey-link')
+            .data(graph.links)
+            .enter()
+            .append('path')
+            .attr('class', 'sankey-link')
+            .attr('d', d3.sankeyLinkHorizontal())
+            .attr('stroke', d => {
+                // Color based on source node type
+                const sourceNode = graph.nodes.find(n => n.id === d.source.id);
+                return sourceNode ? this.config.colors[sourceNode.colorType] || '#95a5a6' : '#95a5a6';
+            })
+            .attr('stroke-width', d => Math.max(1, d.width))
+            .attr('fill', 'none')
+            .attr('opacity', 0.5)
+            .style('cursor', 'pointer')
+            .on('mouseover', function(event, d) {
+                d3.select(this).attr('opacity', 0.8);
+            })
+            .on('mouseout', function(event, d) {
+                d3.select(this).attr('opacity', 0.5);
+            })
+            .on('click', (event, d) => this.showSankeyLinkDetails(event, d));
+
+        // Add link labels (amounts)
+        this.mainGroup.append('g')
+            .selectAll('.link-label')
+            .data(graph.links)
+            .enter()
+            .append('text')
+            .attr('class', 'link-label')
+            .attr('x', d => (d.source.x1 + d.target.x0) / 2)
+            .attr('y', d => (d.y0 + d.y1) / 2)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '10px')
+            .attr('fill', '#2c3e50')
+            .attr('font-weight', 'bold')
+            .style('pointer-events', 'none')
+            .text(d => `${d.value.toFixed(2)} ${d.currency || ''}`);
+
+        // Draw nodes (wallets)
+        const node = this.mainGroup.append('g')
+            .selectAll('.sankey-node')
+            .data(graph.nodes)
+            .enter()
+            .append('g')
+            .attr('class', 'sankey-node')
+            .style('cursor', 'pointer')
+            .on('click', (event, d) => this.showSankeyNodeDetails(event, d));
+
+        // Node rectangles
+        node.append('rect')
+            .attr('x', d => d.x0)
+            .attr('y', d => d.y0)
+            .attr('height', d => d.y1 - d.y0)
+            .attr('width', d => d.x1 - d.x0)
+            .attr('fill', d => this.config.colors[d.colorType] || '#34495e')
+            .attr('stroke', '#2c3e50')
+            .attr('stroke-width', 2)
+            .on('mouseover', function(event, d) {
+                d3.select(this)
+                    .attr('opacity', 0.8)
+                    .attr('stroke-width', 3);
+            })
+            .on('mouseout', function(event, d) {
+                d3.select(this)
+                    .attr('opacity', 1)
+                    .attr('stroke-width', 2);
+            });
+
+        // Node labels (wallet IDs)
+        node.append('text')
+            .attr('x', d => d.x0 - 10)
+            .attr('y', d => (d.y0 + d.y1) / 2)
+            .attr('text-anchor', 'end')
+            .attr('font-size', '12px')
+            .attr('font-weight', 'bold')
+            .attr('fill', '#2c3e50')
+            .style('pointer-events', 'none')
+            .text(d => d.walletId || d.name);
+
+        // Node amounts
+        node.append('text')
+            .attr('x', d => d.x1 + 10)
+            .attr('y', d => (d.y0 + d.y1) / 2)
+            .attr('text-anchor', 'start')
+            .attr('font-size', '11px')
+            .attr('font-weight', 'bold')
+            .attr('fill', '#27ae60')
+            .style('pointer-events', 'none')
+            .text(d => d.amount ? `${d.amount.toFixed(2)} ${d.currency || ''}` : '');
+
+        console.log('✅ Sankey diagram rendered');
+    }
+
+    transformToSankeyFormat() {
+        const nodes = [];
+        const links = [];
+        const nodeMap = new Map();
+
+        // Create nodes from BATS nodes
+        this.nodes.forEach(node => {
+            const sankeyNode = {
+                id: node.id,
+                name: node.label,
+                walletId: node.walletId,
+                wallet: node.wallet,
+                colorType: node.type,
+                amount: node.amount,
+                currency: node.currency,
+                isSwap: node.isSwap,
+                isTerminal: node.isTerminal
+            };
+            nodes.push(sankeyNode);
+            nodeMap.set(node.id, sankeyNode);
+        });
+
+        // Create links from BATS edges
+        this.edges.forEach(edge => {
+            const sourceNode = nodeMap.get(edge.source);
+            const targetNode = nodeMap.get(edge.target);
+
+            if (sourceNode && targetNode) {
+                links.push({
+                    source: edge.source,
+                    target: edge.target,
+                    value: edge.amount,
+                    currency: edge.currency,
+                    notation: edge.notation,
+                    entryData: edge.entryData
+                });
+            }
+        });
+
+        return { nodes, links };
+    }
+
+    showSankeyNodeDetails(event, node) {
+        const details = `
+Wallet ID: ${node.walletId || 'N/A'}
+Thread Notation: ${node.name}
+Full Address: ${node.wallet || 'N/A'}
+Amount: ${node.amount ? node.amount.toFixed(6) : 'N/A'} ${node.currency || ''}
+Type: ${node.colorType ? node.colorType.charAt(0).toUpperCase() + node.colorType.slice(1) : 'Unknown'}
+${node.isSwap ? '\nSwap/Conversion Node' : ''}
+${node.isTerminal ? '\nTerminal Exchange' : ''}
+
+Click OK to copy full address to clipboard.
+        `.trim();
+
+        if (node.wallet && confirm(details)) {
+            navigator.clipboard.writeText(node.wallet);
+            alert('Address copied to clipboard!');
+        } else if (!node.wallet) {
+            alert(details);
+        }
+    }
+
+    showSankeyLinkDetails(event, link) {
+        const entry = link.entryData;
+
+        if (!entry) {
+            alert(`
+Flow Details:
+Amount: ${link.value.toFixed(6)} ${link.currency || ''}
+Notation: ${link.notation || 'N/A'}
+            `.trim());
+            return;
+        }
+
+        const details = `
+═══════════════════════════════════
+THREAD DETAILS
+═══════════════════════════════════
+Notation: ${entry.notation || link.notation || 'N/A'}
+Amount: ${link.value.toFixed(6)} ${link.currency || ''}
+
+Source Thread: ${entry.sourceThreadId || 'N/A'}
+Destination: ${entry.destinationWallet || 'N/A'}
+${entry.transactionHash ? `\nTx Hash: ${entry.transactionHash}` : ''}
+${entry.timestamp ? `\nTimestamp: ${entry.timestamp}` : ''}
+
+${entry.isSwap ? `
+SWAP DETAILS:
+From: ${entry.inputAmount} ${entry.inputCurrency}
+To: ${entry.outputAmount} ${entry.outputCurrency}
+Rate: ${entry.exchangeRate || 'N/A'}
+DEX: ${entry.dexName || 'Unknown'}
+` : ''}
+
+${entry.notes ? `
+NOTES:
+${entry.notes}
+` : ''}
+
+Click OK to copy transaction hash to clipboard.
+        `.trim();
+
+        if (entry.transactionHash && confirm(details)) {
+            navigator.clipboard.writeText(entry.transactionHash);
+            alert('Transaction hash copied to clipboard!');
+        } else {
+            alert(details);
+        }
     }
 
     setLayout(mode) {
