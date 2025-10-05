@@ -5,27 +5,20 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-05 05:16)
 
-**Commit:** 5b84f18cc6fc7c3e80e4cb88003a3bbcacfcf3c6
+**Commit:** dce59d70a1c4f0b4bb077d9c0f275cf538f0a074
 **Author:** Your Name
-**Message:** Add test results and documentation
-
-- Added comprehensive test runner (run-tests.js)
-- Test results showing 60% pass rate (expected due to naming differences)
-- Test summary documentation confirming all features operational
-- Verified all critical workflows functioning correctly
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md         |  94 ++++++++++---------
- run-tests.js      | 274 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- test-results.json |  13 +++
- test-summary.md   |  94 +++++++++++++++++++
- 4 files changed, 433 insertions(+), 42 deletions(-)
+ CLAUDE.md | 84 +++++++++++++++++----------------------------------------------
+ 1 file changed, 23 insertions(+), 61 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5b84f18 Add test results and documentation (0 seconds ago)
+- dce59d7 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 5b84f18 Add test results and documentation (18 seconds ago)
 - fbfd451 Add comprehensive workflow testing suite (7 hours ago)
 - ff05a23 Simplify visualization to use modern engine exclusively (7 hours ago)
 - 2363b87 Implement modern Canvas-based visualization engine (7 hours ago)
@@ -34,7 +27,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 19c6ed1 Fix critical graph visualization crash and add data protection (15 hours ago)
 - cbca4eb Update CLAUDE.md with latest changes (16 hours ago)
 - 854140a Standardize workflow completion for all closure types (16 hours ago)
-- 5524d16 Redesign audit trail with hierarchical structure and proper conversion tracking (16 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
