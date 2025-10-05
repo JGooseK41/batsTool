@@ -181,6 +181,7 @@
             const investigationJSON = JSON.stringify(investigation, null, 2);
 
             // Create standalone HTML file
+            // Note: Using concatenation to avoid </script> tag parsing issues
             const standaloneHTML = `<!DOCTYPE html>
 <html>
 <head>
@@ -263,17 +264,17 @@
     <script>
 // D3.js Library
 ${d3Code}
-    </script>
+    <` + `/script>
 
     <script>
 // D3 Sankey Plugin
 ${d3SankeyCode}
-    </script>
+    <` + `/script>
 
     <script>
 // B.A.T.S. Visualization Engine
 ${vizEngineCode}
-    </script>
+    <` + `/script>
 
     <script>
         // Investigation Data
@@ -310,7 +311,7 @@ ${vizEngineCode}
         window.addEventListener('load', () => {
             initializeVisualization();
         });
-    </script>
+    <` + `/script>
 </body>
 </html>`;
 
