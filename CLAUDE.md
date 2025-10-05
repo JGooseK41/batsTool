@@ -3,22 +3,43 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 16:06)
+## Latest Commit (Auto-updated: 2025-10-05 16:14)
 
-**Commit:** 550d7872c92bce3f3105fe0f88843e92cc6ccfc4
+**Commit:** 559f86a64d7ee656c6c028453654e921249343c0
 **Author:** Your Name
-**Message:** Add setLayout method to BATSVisualizationEngine
+**Message:** PROFESSIONAL REBUILD: D3.js visualization engine for BATS
 
-The visualization.html buttons call vizEngine.setLayout() but this
-method didn't exist - only applyLayout() existed internally.
+Complete rebuild using D3.js (industry standard) with professional features:
 
-Added setLayout(type) method that:
-1. Calls applyLayout(type) to reposition nodes
-2. Calls render() to redraw the canvas
-3. Calls fitToScreen() to show the full graph
+**NEW: bats-d3-visualization.js**
+- Hop-centric column layout (left-to-right flow)
+- ART (Available Running Total) reconciliation boxes per hop
+- V-T-H notation on nodes and edges
+- BATS color scheme (red=victim, purple=terminal, etc.)
+- Crisp SVG rendering at any zoom level
+- Interactive zoom/pan with mouse wheel and drag
+- Click nodes to edit wallet labels
+- Export to PNG/SVG
 
-This enables the layout switcher buttons (Hierarchical, Force-Directed,
-Tree) to work correctly.
+**Features Implemented:**
+✅ Hop columns with vertical dividers
+✅ Victim column → Hop 1 → Hop 2 → ... → Terminals
+✅ ART boxes showing running totals per currency
+✅ Curved edges with V-T-H notation labels
+✅ Node tooltips with wallet addresses and amounts
+✅ Editable labels (click any node)
+✅ Zoom/pan/reset controls
+✅ Export functionality
+
+**Coming Next:**
+- Sankey diagram layout (placeholder button added)
+- Enhanced thread reconciliation display
+- Multi-currency support in edges
+
+**Why D3.js:**
+Same technology used by TRM Labs, Chainalysis, and major financial
+institutions. Vector graphics for crisp display, powerful layout
+algorithms, and extensive ecosystem.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -26,23 +47,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                    | 67 +++++++++++++++++++++++---------------------
- bats-visualization-engine.js |  7 +++++
- 2 files changed, 42 insertions(+), 32 deletions(-)
+ CLAUDE.md                |  62 +++---
+ bats-d3-visualization.js | 524 +++++++++++++++++++++++++++++++++++++++++++++++
+ visualization.html       |  33 +--
+ 3 files changed, 566 insertions(+), 53 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 550d787 Add setLayout method to BATSVisualizationEngine (0 seconds ago)
-- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (2 minutes ago)
-- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (9 minutes ago)
-- 9a70e89 Fix JSON embedding in popup using script type="application/json" (11 minutes ago)
-- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (12 minutes ago)
-- b711b09 Restore Canvas-based visualization engine with popup window (13 minutes ago)
-- c6811da Move flowdiagram-tab to correct location in main app container (20 minutes ago)
-- b5aee22 Strengthen cache-busting headers for immediate updates (26 minutes ago)
-- 4a9b6ef Add _headers file to force no-cache (31 minutes ago)
-- 99a759b Fix visualization from file load modal - close modal before switching tabs (33 minutes ago)
+- 559f86a PROFESSIONAL REBUILD: D3.js visualization engine for BATS (0 seconds ago)
+- 550d787 Add setLayout method to BATSVisualizationEngine (8 minutes ago)
+- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (11 minutes ago)
+- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (17 minutes ago)
+- 9a70e89 Fix JSON embedding in popup using script type="application/json" (19 minutes ago)
+- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (20 minutes ago)
+- b711b09 Restore Canvas-based visualization engine with popup window (22 minutes ago)
+- c6811da Move flowdiagram-tab to correct location in main app container (29 minutes ago)
+- b5aee22 Strengthen cache-busting headers for immediate updates (34 minutes ago)
+- 4a9b6ef Add _headers file to force no-cache (39 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
