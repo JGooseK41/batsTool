@@ -50,15 +50,34 @@ class BATSVisualizationD3 {
             .attr('viewBox', `0 0 ${this.config.width} ${this.config.height}`)
             .attr('preserveAspectRatio', 'xMidYMid meet');
 
-        // Add zoom behavior
-        this.zoom = d3.zoom()
-            .scaleExtent([0.1, 4])
-            .on('zoom', (event) => {
-                this.mainGroup.attr('transform', event.transform);
-            });
-
         // Main group for zoomable/pannable elements (including backgrounds)
         this.mainGroup = this.svg.append('g');
+
+        // Add zoom behavior with constraints to prevent white space
+        this.zoom = d3.zoom()
+            .scaleExtent([0.8, 4])  // Min zoom 0.8 - allows slight zoom out but prevents excessive white space
+            .extent([[0, 0], [this.config.width, this.config.height]])  // Viewport bounds
+            .on('zoom', (event) => {
+                // Constrain translation to prevent white space
+                const transform = event.transform;
+                const scale = transform.k;
+
+                // Calculate bounds based on current scale
+                // At scale 1, content fills viewport perfectly
+                // At smaller scales, allow less panning
+                // At larger scales, allow more panning to see zoomed areas
+                const maxTranslateX = 0;
+                const minTranslateX = this.config.width * (1 - scale);
+                const maxTranslateY = 0;
+                const minTranslateY = this.config.height * (1 - scale);
+
+                // Clamp translation to prevent white space
+                const clampedX = Math.max(minTranslateX, Math.min(maxTranslateX, transform.x));
+                const clampedY = Math.max(minTranslateY, Math.min(maxTranslateY, transform.y));
+
+                this.mainGroup.attr('transform',
+                    `translate(${clampedX},${clampedY}) scale(${scale})`);
+            });
 
         this.svg.call(this.zoom);
 
@@ -1697,20 +1716,23 @@ Click OK to copy transaction hash to clipboard.
     }
 
     fitToView() {
+        // Graph should always fill viewport - backgrounds already set to full height
+        // Just center content horizontally and vertically without scaling down
         const bounds = this.mainGroup.node().getBBox();
         const fullWidth = this.config.width;
         const fullHeight = this.config.height;
-        const width = bounds.width;
-        const height = bounds.height;
-        const midX = bounds.x + width / 2;
-        const midY = bounds.y + height / 2;
+        const midX = bounds.x + bounds.width / 2;
+        const midY = bounds.y + bounds.height / 2;
 
-        const scale = 0.9 / Math.max(width / fullWidth, height / fullHeight);
-        const translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
+        // Center the content, but don't scale down
+        // Graph columns extend full height, so content should fill viewport
+        const translateX = fullWidth / 2 - midX;
+        const translateY = fullHeight / 2 - midY;
 
+        // Apply centering translation only
         this.svg.transition()
             .duration(750)
-            .call(this.zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+            .call(this.zoom.transform, d3.zoomIdentity.translate(translateX, translateY).scale(1));
     }
 
     resetView() {
