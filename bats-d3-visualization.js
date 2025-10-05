@@ -168,14 +168,48 @@ class BATSVisualizationD3 {
                                           entry.destinationWallet && entry.destinationWallet === entry.swapPlatform;
 
                     if (isInternalSwap) {
-                        // Internal conversion within same brown wallet - create single node in hop column
-                        const nodeId = `H${hop.hopNumber}-E${entryIndex}`;
-                        const node = {
-                            id: nodeId,
-                            label: entry.notation || nodeId,
+                        // Internal conversion within same brown wallet
+                        // Check if brown wallet node already exists for this address in this hop
+                        const brownWalletKey = `H${hop.hopNumber}-BROWN-${entry.destinationWallet}`;
+                        let brownNode = this.nodeMap.get(brownWalletKey);
+
+                        if (!brownNode) {
+                            // Create brown wallet node in hop space (between columns)
+                            brownNode = {
+                                id: brownWalletKey,
+                                label: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
+                                wallet: entry.destinationWallet,
+                                walletLabel: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
+                                walletId: this.generateWalletId('brown', entry.destinationWallet),
+                                type: 'brown',
+                                amount: 0,  // Will accumulate from threads
+                                currency: 'multiple',  // Brown wallets handle multiple currencies
+                                column: hopIndex + 0.5,  // Position in hop space (between columns)
+                                isSwap: true,
+                                swapDetails: entry.swapDetails,
+                                inputThreads: [],
+                                outputThreads: []
+                            };
+
+                            this.nodes.push(brownNode);
+                            this.nodeMap.set(brownWalletKey, brownNode);
+                        }
+
+                        // Add this thread to the brown wallet's inputs
+                        brownNode.inputThreads.push({
+                            notation: entry.notation,
+                            amount: parseFloat(entry.amount || 0),
+                            currency: entry.currency
+                        });
+
+                        // Create output thread node in destination column
+                        const outputNodeId = `H${hop.hopNumber}-E${entryIndex}`;
+                        const outputNode = {
+                            id: outputNodeId,
+                            label: entry.notation || outputNodeId,
                             wallet: entry.destinationWallet,
                             walletLabel: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
-                            walletId: this.generateWalletId('brown', entry.destinationWallet),
+                            walletId: brownNode.walletId,  // Use same wallet ID as brown node
                             type: 'brown',
                             amount: entry.swapDetails ? parseFloat(entry.swapDetails.outputAmount || entry.outputAmount || 0) : parseFloat(entry.amount || 0),
                             currency: entry.swapDetails ? entry.swapDetails.outputCurrency : entry.currency,
@@ -184,18 +218,25 @@ class BATSVisualizationD3 {
                             swapDetails: entry.swapDetails
                         };
 
-                        hopColumn.nodes.push(node);
-                        this.nodes.push(node);
-                        this.nodeMap.set(nodeId, node);
+                        hopColumn.nodes.push(outputNode);
+                        this.nodes.push(outputNode);
+                        this.nodeMap.set(outputNodeId, outputNode);
 
-                        // Single edge: Source → Brown wallet (shows conversion)
+                        // Add to brown wallet's outputs
+                        brownNode.outputThreads.push({
+                            nodeId: outputNodeId,
+                            amount: outputNode.amount,
+                            currency: outputNode.currency
+                        });
+
+                        // Edge 1: Source → Brown wallet (input currency)
                         if (entry.sourceThreadId) {
                             const sourceThread = this.findSourceNode(entry.sourceThreadId, hopIndex);
                             if (sourceThread) {
                                 this.edges.push({
                                     source: sourceThread.id,
-                                    target: nodeId,
-                                    label: `${entry.notation || ''} (→ ${node.amount.toFixed(2)} ${node.currency})`,
+                                    target: brownWalletKey,
+                                    label: entry.notation || '',
                                     amount: parseFloat(entry.amount || 0),
                                     currency: entry.currency,
                                     entryData: entry
@@ -203,9 +244,19 @@ class BATSVisualizationD3 {
                             }
                         }
 
+                        // Edge 2: Brown wallet → Output thread (output currency)
+                        this.edges.push({
+                            source: brownWalletKey,
+                            target: outputNodeId,
+                            label: `→ ${outputNode.amount.toFixed(2)} ${outputNode.currency}`,
+                            amount: outputNode.amount,
+                            currency: outputNode.currency,
+                            entryData: entry
+                        });
+
                         // Update ART with output currency
-                        const outCurrency = node.currency;
-                        hopColumn.artAfter[outCurrency] = (hopColumn.artAfter[outCurrency] || 0) + node.amount;
+                        const outCurrency = outputNode.currency;
+                        hopColumn.artAfter[outCurrency] = (hopColumn.artAfter[outCurrency] || 0) + outputNode.amount;
 
                     } else {
                         // External swap - create DEX node in hop space + output node
@@ -1056,7 +1107,7 @@ class BATSVisualizationD3 {
     dragging(event, d) {
         // Strictly constrain movement to vertical only within column
         const newY = event.y;
-        const minY = 100;  // Top boundary (below header)
+        const minY = 180;  // Top boundary (well below header to prevent layout issues)
         const maxY = this.config.height - 250;  // Bottom boundary (above reconciliation boxes)
 
         // IMPORTANT: X position is LOCKED - never changes

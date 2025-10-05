@@ -3,18 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 17:58)
+## Latest Commit (Auto-updated: 2025-10-05 18:06)
 
-**Commit:** 0887cefc02c39fe7278972cd447a38ef10239b3e
+**Commit:** 7da7783f8dfb441c93c757a7b7b7b55f56637ec5
 **Author:** Your Name
-**Message:** Add comprehensive workflow test documentation and sample data
+**Message:** Fix missing hops section - add to victims tab
 
-- Create WORKFLOW-TEST.md with full investigation checklist
-- Add test-investigation.json with complete simulated case
-- Test case includes: 2 victims, 3 hops, swaps, terminals, bridges
-- Covers HYPE → USDC → ETH multi-currency flow
-- 60+ verification points for complete workflow testing
-- Tests navigation, visualization, reports, and file operations
+- Add hops-section div with hopsList container to victims tab
+- Fixes blank page issue after root total confirmation
+- renderHops() now has proper container to render into
+- Auto-scroll to hops-section now works correctly
+- Completes workflow: root total → victims tab → scroll to hops → create hop 1
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -22,24 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md               |  36 ++++---
- WORKFLOW-TEST.md        | 196 +++++++++++++++++++++++++++++++++++++
- test-investigation.json | 252 ++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 469 insertions(+), 15 deletions(-)
+ CLAUDE.md  | 43 +++++++++++++++++++++++--------------------
+ index.html |  7 ++++++-
+ 2 files changed, 29 insertions(+), 21 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0887cef Add comprehensive workflow test documentation and sample data (0 seconds ago)
-- e36e6bb Fix root total confirmation tab navigation (2 minutes ago)
-- fff08da Update CLAUDE.md with latest commit info (8 minutes ago)
-- 1ccaa49 Add debug logging to Sankey diagram for swap tracking (9 minutes ago)
-- 1ef5bab Fix drag behavior to prevent column movement (13 minutes ago)
-- 9aad5f4 Make T-account reconciliation boxes visible and dynamic (16 minutes ago)
-- 1f0a947 Fix zoom behavior to keep columns and wallets in sync (18 minutes ago)
-- 21c7c4c Fix brown wallet ID assignment to reuse same ID for same address (21 minutes ago)
-- 635460d Fix column backgrounds and drag constraints for visualization (25 minutes ago)
-- 98a9208 Use string concatenation instead of template literals for script tags (31 minutes ago)
+- 7da7783 Fix missing hops section - add to victims tab (0 seconds ago)
+- 0887cef Add comprehensive workflow test documentation and sample data (8 minutes ago)
+- e36e6bb Fix root total confirmation tab navigation (10 minutes ago)
+- fff08da Update CLAUDE.md with latest commit info (16 minutes ago)
+- 1ccaa49 Add debug logging to Sankey diagram for swap tracking (17 minutes ago)
+- 1ef5bab Fix drag behavior to prevent column movement (21 minutes ago)
+- 9aad5f4 Make T-account reconciliation boxes visible and dynamic (24 minutes ago)
+- 1f0a947 Fix zoom behavior to keep columns and wallets in sync (26 minutes ago)
+- 21c7c4c Fix brown wallet ID assignment to reuse same ID for same address (29 minutes ago)
+- 635460d Fix column backgrounds and drag constraints for visualization (33 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
