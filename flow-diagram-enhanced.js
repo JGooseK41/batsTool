@@ -44,7 +44,9 @@ function generateHopCentricDAG(svg, investigation) {
         title: 'VICTIMS',
         nodes: [],
         artBefore: {},
-        artAfter: {}
+        artAfter: {},
+        writeoffs: [],
+        swaps: []
     };
 
     // Process victims
@@ -256,7 +258,7 @@ function generateHopCentricDAG(svg, investigation) {
         }
 
         // Draw writeoffs if any
-        if (column.writeoffs.length > 0) {
+        if (column.writeoffs && column.writeoffs.length > 0) {
             drawWriteoffs(svg, x, totalHeight - 100, column.writeoffs, config);
         }
     });
