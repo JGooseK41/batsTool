@@ -9,6 +9,9 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https://api.etherscan.io https://api.bscscan.com https://api.polygonscan.com https://api.blockcypher.com https://blockchain.info https://api.blockchair.com https://*.infura.io https://mempool.space https://api.mainnet-beta.solana.com https://rpc.ankr.com https://solana-mainnet.g.alchemy.com https://api.arkhamintelligence.com https://api.trongrid.io https://tronscan.org https://api.blockchain.info https://walletexplorer.com https://www.walletexplorer.com https://*.solscan.io https://pro-api.solscan.io https://public-api.solscan.io https://api.solscan.io; img-src 'self' data: https:; font-src 'self' data:;">
     <title>B.A.T.S. - Block Audit Tracing Standard v4.1</title>
 
+    <!-- Modern Visualization Engine -->
+    <script src="bats-visualization-engine.js"></script>
+
     <script>
         // Mobile detection and redirect
         (function() {
@@ -37392,6 +37395,200 @@ ${textContent}
                 </div>
             `;
         }
+
+        // ============================================
+        // MODERN VISUALIZATION ENGINE INTEGRATION
+        // ============================================
+
+        let modernVizEngine = null;
+
+        // Initialize the modern Canvas-based visualization engine
+        function initializeModernVisualization() {
+            try {
+                console.log('🚀 Initializing Modern Visualization Engine...');
+
+                const container = document.getElementById('visualizationContainer');
+                if (!container) {
+                    console.error('Container not found');
+                    // Fall back to old system
+                    initializeGraphVisualization();
+                    return;
+                }
+
+                // Clear container and add toggle button
+                container.innerHTML = `
+                    <div style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
+                        <button onclick="toggleVisualizationEngine()" class="btn" style="background: rgba(155, 89, 182, 0.9);">
+                            🔄 Switch to ${localStorage.getItem('bats_use_new_viz') === 'true' ? 'Classic' : 'Modern'} View
+                        </button>
+                        <button onclick="switchTab('hops'); saveInvestigation();" class="btn" style="background: rgba(52, 152, 219, 0.9);">
+                            ← Back to Investigation
+                        </button>
+                    </div>
+                    <div id="modernVizContainer" style="width: 100%; height: 100%; position: relative;"></div>
+                `;
+
+                // Check if BATSVisualizationEngine is available
+                if (typeof BATSVisualizationEngine === 'undefined') {
+                    console.error('BATSVisualizationEngine not loaded');
+                    // Fall back to old system
+                    initializeGraphVisualization();
+                    return;
+                }
+
+                // Create new engine instance
+                modernVizEngine = new BATSVisualizationEngine('modernVizContainer');
+
+                // Load investigation data
+                modernVizEngine.loadInvestigation(investigation);
+
+                // Add export buttons
+                const exportButtons = document.createElement('div');
+                exportButtons.style.cssText = 'position: absolute; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 1000;';
+                exportButtons.innerHTML = `
+                    <button onclick="exportModernVisualization('png')" class="btn" style="background: rgba(46, 204, 113, 0.9);">
+                        📸 Export PNG
+                    </button>
+                    <button onclick="exportModernVisualization('svg')" class="btn" style="background: rgba(52, 152, 219, 0.9);">
+                        📐 Export SVG
+                    </button>
+                    <button onclick="exportModernVisualization('json')" class="btn" style="background: rgba(241, 196, 15, 0.9);">
+                        📋 Export JSON
+                    </button>
+                `;
+                container.appendChild(exportButtons);
+
+                // Add layout switcher
+                const layoutButtons = document.createElement('div');
+                layoutButtons.style.cssText = 'position: absolute; top: 60px; right: 10px; display: flex; flex-direction: column; gap: 5px; z-index: 1000;';
+                layoutButtons.innerHTML = `
+                    <button onclick="changeModernLayout('hierarchical')" class="btn btn-small" style="background: rgba(52, 73, 94, 0.7);">
+                        📊 Hierarchical
+                    </button>
+                    <button onclick="changeModernLayout('force')" class="btn btn-small" style="background: rgba(52, 73, 94, 0.7);">
+                        🌐 Force-Directed
+                    </button>
+                    <button onclick="changeModernLayout('tree')" class="btn btn-small" style="background: rgba(52, 73, 94, 0.7);">
+                        🌳 Tree
+                    </button>
+                `;
+                container.appendChild(layoutButtons);
+
+                console.log('✅ Modern Visualization Engine initialized successfully');
+
+            } catch (error) {
+                console.error('Error initializing modern visualization:', error);
+                // Fall back to old system
+                initializeGraphVisualization();
+            }
+        }
+
+        // Toggle between old and new visualization engines
+        function toggleVisualizationEngine() {
+            const currentEngine = localStorage.getItem('bats_use_new_viz') === 'true';
+            localStorage.setItem('bats_use_new_viz', !currentEngine);
+
+            // Cleanup current engine
+            if (modernVizEngine) {
+                modernVizEngine.destroy();
+                modernVizEngine = null;
+            }
+
+            // Reinitialize with different engine
+            if (!currentEngine) {
+                initializeModernVisualization();
+            } else {
+                initializeGraphVisualization();
+            }
+        }
+
+        // Export from modern visualization
+        async function exportModernVisualization(format) {
+            if (!modernVizEngine) {
+                alert('Visualization engine not initialized');
+                return;
+            }
+
+            try {
+                const result = await modernVizEngine.exportAs(format);
+
+                if (format === 'png') {
+                    // Download PNG
+                    const url = URL.createObjectURL(result);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `bats-investigation-${Date.now()}.png`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } else if (format === 'svg') {
+                    // Download SVG
+                    const blob = new Blob([result], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `bats-investigation-${Date.now()}.svg`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } else if (format === 'json') {
+                    // Download JSON
+                    const blob = new Blob([result], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `bats-investigation-${Date.now()}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
+
+                showNotification('Export successful!', 'success');
+            } catch (error) {
+                console.error('Export error:', error);
+                showNotification('Export failed: ' + error.message, 'error');
+            }
+        }
+
+        // Change layout in modern visualization
+        function changeModernLayout(type) {
+            if (!modernVizEngine) return;
+
+            modernVizEngine.applyLayout(type);
+            modernVizEngine.render();
+            modernVizEngine.interaction.fitToScreen();
+        }
+
+        // Check on page load if we should use modern engine
+        window.addEventListener('DOMContentLoaded', () => {
+            // Add a settings option for users
+            const settingsSection = document.querySelector('.settings-section');
+            if (settingsSection) {
+                const vizToggle = document.createElement('div');
+                vizToggle.style.cssText = 'margin-top: 20px; padding: 15px; background: rgba(155, 89, 182, 0.1); border-radius: 8px;';
+                vizToggle.innerHTML = `
+                    <h4 style="color: #9b59b6; margin-bottom: 10px;">Visualization Engine</h4>
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="modernVizToggle"
+                               ${localStorage.getItem('bats_use_new_viz') === 'true' ? 'checked' : ''}
+                               onchange="localStorage.setItem('bats_use_new_viz', this.checked)"
+                               style="margin-right: 10px;">
+                        <span>Use Modern Canvas-based Visualization (Experimental)</span>
+                    </label>
+                    <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                        The modern engine provides better performance, smooth zoom/pan, and multiple layout options.
+                    </p>
+                `;
+                settingsSection.appendChild(vizToggle);
+            }
+        });
+
+        // Override the visualization initialization based on user preference
+        const originalInitGraphViz = initializeGraphVisualization;
+        window.initializeGraphVisualization = function() {
+            if (localStorage.getItem('bats_use_new_viz') === 'true') {
+                initializeModernVisualization();
+            } else {
+                originalInitGraphViz();
+            }
+        };
 
         // Build advanced DAG structure with full accounting
         function buildAdvancedDAG() {

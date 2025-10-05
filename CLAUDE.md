@@ -3,31 +3,40 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-04 21:44)
+## Latest Commit (Auto-updated: 2025-10-04 21:49)
 
-**Commit:** 8aca65bae969c6a84da947b138cafc977091d7b2
+**Commit:** d5ec88f7e12bb4c806f0220389e6ef00aa0d97ce
 **Author:** Your Name
-**Message:** Fix terminal wallet attribution display in completion modal
+**Message:** Fix graph visualization with robust fallback system
 
-- Enhanced generateTerminalSummary to pull exchange names from multiple sources
-- Checks entry.exchangeName, exchangeAttribution, and notes for terminal names
-- Updated addToTerminalWalletIndex to extract names from all possible sources
-- Added fallback checking for entries directly if terminal index is incomplete
-- Groups terminals by exchange and currency for clearer display
-- Shows proper exchange names instead of 'Unknown Exchange'
-- Sorts terminal wallets by amount for better visibility
-- Added support for cold storage (blue) wallet display with icon
+- Added data validation to prevent NaN coordinate errors
+- Implemented three-tier visualization fallback:
+  1. Advanced DAG visualization (if data is valid)
+  2. Simple HTML flow diagram (if DAG fails)
+  3. Text-based visualization (last resort)
+- Added validateGraphData() to check and fix invalid node positions
+- Created renderSimpleFlowDiagram() for clean HTML-based visualization
+- Added renderTextBasedVisualization() as ultra-reliable fallback
+- Prevents blank screen crashes when visualization data is corrupted
+- Maintains back button and auto-save functionality in all modes
+
+This ensures users never lose work due to visualization errors.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 31 +++++++++++++++++---------
- index.html | 75 ++++++++++++++++++++++++++++++++++++++++++++++++--------------
- 2 files changed, 80 insertions(+), 26 deletions(-)
+ CLAUDE.md  |  51 ++++++-----
+ index.html | 288 ++++++++++++++++++++++++++++++++++++++++++++++++++-----------
+ 2 files changed, 264 insertions(+), 75 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8aca65b Fix terminal wallet attribution display in completion modal (0 seconds ago)
+- d5ec88f Fix graph visualization with robust fallback system (0 seconds ago)
+- 8aca65b Fix terminal wallet attribution display in completion modal (5 minutes ago)
 - 19c6ed1 Fix critical graph visualization crash and add data protection (8 hours ago)
 - cbca4eb Update CLAUDE.md with latest changes (8 hours ago)
 - 854140a Standardize workflow completion for all closure types (8 hours ago)
@@ -36,7 +45,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 1dcea68 Remove incorrect auto-write-off of bridge/swap outputs (11 hours ago)
 - 7e5d62f Update CLAUDE.md with latest changes (11 hours ago)
 - 6ca8f4d Fix critical partial trace bridge handling bug (11 hours ago)
-- b584699 Add chain mismatch detection with clear error messaging (15 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
