@@ -985,9 +985,18 @@ class BATSVisualizationD3 {
             .style('cursor', 'grab')
             .on('click', (event, d) => this.showNodeDetails(event, d))
             .call(d3.drag()
-                .on('start', (event, d) => this.dragStarted(event, d))
-                .on('drag', (event, d) => this.dragging(event, d))
-                .on('end', (event, d) => this.dragEnded(event, d)));
+                .on('start', (event, d) => {
+                    event.sourceEvent.stopPropagation();  // Prevent zoom/pan interference
+                    this.dragStarted(event, d);
+                })
+                .on('drag', (event, d) => {
+                    event.sourceEvent.stopPropagation();  // Prevent zoom/pan interference
+                    this.dragging(event, d);
+                })
+                .on('end', (event, d) => {
+                    event.sourceEvent.stopPropagation();  // Prevent zoom/pan interference
+                    this.dragEnded(event, d);
+                }));
 
         // Node circle
         nodeEnter.append('circle')
@@ -1045,15 +1054,16 @@ class BATSVisualizationD3 {
     }
 
     dragging(event, d) {
-        // Constrain movement to within the column (only vertical movement)
+        // Strictly constrain movement to vertical only within column
         const newY = event.y;
         const minY = 100;  // Top boundary (below header)
-        const maxY = this.config.height - 50;  // Bottom boundary (dynamic based on viewport)
+        const maxY = this.config.height - 250;  // Bottom boundary (above reconciliation boxes)
 
-        // Update node position (keep X the same, only change Y within column bounds)
+        // IMPORTANT: X position is LOCKED - never changes
+        // Only Y can change, and only within bounds
         d.y = Math.max(minY, Math.min(maxY, newY));
 
-        // Update node visual position
+        // Update node visual position - X is always d.x (original column position)
         d3.select(event.sourceEvent.target.parentNode)
             .attr('transform', `translate(${d.x}, ${d.y})`);
 
