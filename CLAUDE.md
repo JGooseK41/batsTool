@@ -3,17 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 06:01)
+## Latest Commit (Auto-updated: 2025-10-05 06:11)
 
-**Commit:** 192fe3fc42b71b626ec8dce5111a81c3ace02bb0
+**Commit:** a7b3b00d10ea930832e7e1013547b38b94bfda05
 **Author:** Your Name
-**Message:** Fix completed investigation loading - use same completion modal as normal workflow
+**Message:** Major refactor: Remove old duplicate tabs and implement new window visualization
 
-- When loading a completed investigation, show the same completion modal used during investigation
-- Remove references to non-existent analysis tab
-- Change 'Go to Analysis' button to 'View Investigation Results'
-- Use showEnhancedCompletionModal() consistently for completed investigations
-- Ensure loaded investigations follow same workflow as live investigations
+- Removed old duplicate tabs (wallet indexes, PK converter, flow diagram, reports, summary)
+- These were legacy features causing confusion with duplicate workflow paths
+- Implemented proper visualization that opens in new browser window/tab
+- Created generateVisualizationPage() to generate complete HTML for visualization
+- Visualization now includes canvas-based graph, reports, and export tabs
+- Modern workflow now consistent: completion modal → new window for visualization/reports
+- Cleaned up ~850 lines of duplicate/unused code
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -21,23 +23,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 40 ++++++++++++++++++++--------------------
- index.html | 22 +++++++++++++++-------
- 2 files changed, 35 insertions(+), 27 deletions(-)
+ CLAUDE.md                            |    41 +-
+ index.html                           |  1133 +-
+ index.html.backup-before-tab-removal | 37348 +++++++++++++++++++++++++++++++++
+ 3 files changed, 37635 insertions(+), 887 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 192fe3f Fix completed investigation loading - use same completion modal as normal workflow (1 second ago)
-- 60958ee Fix visualization engine substring error on undefined wallet addresses (7 minutes ago)
-- 1cfbb6f Fix write-off entries reopening when navigating between hops (12 minutes ago)
-- 90f4c59 Fix write-off entry display issues - properly collapse on creation (18 minutes ago)
-- 6482a44 Fix visualization engine errors by handling undefined wallet addresses (26 minutes ago)
-- 4046587 Fix terminal wallet summary double-counting in investigation complete modal (28 minutes ago)
-- 49f6064 Fix write-off entry collapsed display to show category, justification and details (29 minutes ago)
-- 77be354 Update CLAUDE.md (39 minutes ago)
-- 822d0c7 Add verification test page (39 minutes ago)
-- b7c10d2 Fix syntax error from broken template literal (41 minutes ago)
+- a7b3b00 Major refactor: Remove old duplicate tabs and implement new window visualization (0 seconds ago)
+- 192fe3f Fix completed investigation loading - use same completion modal as normal workflow (11 minutes ago)
+- 60958ee Fix visualization engine substring error on undefined wallet addresses (18 minutes ago)
+- 1cfbb6f Fix write-off entries reopening when navigating between hops (22 minutes ago)
+- 90f4c59 Fix write-off entry display issues - properly collapse on creation (28 minutes ago)
+- 6482a44 Fix visualization engine errors by handling undefined wallet addresses (36 minutes ago)
+- 4046587 Fix terminal wallet summary double-counting in investigation complete modal (38 minutes ago)
+- 49f6064 Fix write-off entry collapsed display to show category, justification and details (39 minutes ago)
+- 77be354 Update CLAUDE.md (49 minutes ago)
+- 822d0c7 Add verification test page (50 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

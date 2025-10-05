@@ -12565,32 +12565,42 @@ function addNewHop() {
         
         // Dashboard Functions
         function updateDashboard() {
-            // Update victim count
-            document.getElementById('dashStatVictims').textContent = investigation.victims.length;
+            // Only update dashboard if elements exist (they were removed with old tabs)
+            const victimsEl = document.getElementById('dashStatVictims');
+            const hopsEl = document.getElementById('dashStatHops');
+            const threadsEl = document.getElementById('dashStatThreads');
+            const terminalEl = document.getElementById('dashStatTerminal');
+
+            if (victimsEl) victimsEl.textContent = investigation.victims.length;
+            if (hopsEl) hopsEl.textContent = investigation.hops.length;
+
+            if (threadsEl || terminalEl) {
+                const threadStatus = checkAllThreadsTerminated();
+                if (threadsEl) threadsEl.textContent = threadStatus.activeThreads.length;
+                if (terminalEl) terminalEl.textContent = threadStatus.activeThreads.filter(t =>
+                    ['gray', 'purple', 'blue'].includes(t.toWalletType)
+                ).length;
+            }
             
-            // Update hop count
-            document.getElementById('dashStatHops').textContent = investigation.hops.length;
-            
-            // Update thread and terminal wallet counts
-            const threadStatus = checkAllThreadsTerminated();
-            document.getElementById('dashStatThreads').textContent = threadStatus.activeThreads.length;
-            document.getElementById('dashStatTerminal').textContent = threadStatus.activeThreads.filter(t => 
-                ['gray', 'purple', 'blue'].includes(t.toWalletType)
-            ).length;
-            
-            // Update ART progress bars
-            updateARTProgressBars();
-            
-            // Update thread status bar
-            updateThreadStatusBar(threadStatus);
-            
-            // Update hop jump menu
-            updateHopJumpMenu();
+            // Update ART progress bars if element exists
+            if (document.getElementById('artProgressBars')) {
+                updateARTProgressBars();
+            }
+
+            // Update thread status bar if element exists
+            if (document.getElementById('threadStatusBar')) {
+                updateThreadStatusBar(threadStatus);
+            }
+
+            // Update hop jump menu if element exists
+            if (document.getElementById('hopJumpMenu')) {
+                updateHopJumpMenu();
+            }
         }
         
         function updateThreadStatusBar(threadStatus) {
             const container = document.getElementById('threadStatusBar');
-            if (!container) return;
+            if (!container) return; // Exit if element doesn't exist
             
             container.innerHTML = '';
             
@@ -12699,6 +12709,7 @@ function addNewHop() {
         
         function updateARTProgressBars() {
             const container = document.getElementById('artProgressBars');
+            if (!container) return; // Exit if element doesn't exist
             container.innerHTML = '';
 
             if (!investigation.rootTotalConfirmed) {
@@ -12798,6 +12809,7 @@ function addNewHop() {
         
         function updateHopJumpMenu() {
             const menu = document.getElementById('hopJumpMenu');
+            if (!menu) return; // Exit if element doesn't exist
             menu.innerHTML = '<option value="">Jump to Hop...</option>';
             
             investigation.hops.forEach(hop => {
