@@ -162,11 +162,11 @@ class BATSVisualizationD3 {
 
         this.hopColumns.push(victimColumn);
 
-        // Build hop columns
+        // Build hop columns (wallet columns after each hop - the hop space itself is between columns)
         this.investigation.hops.forEach((hop, hopIndex) => {
             const hopColumn = {
                 hopNumber: hop.hopNumber,
-                title: `HOP ${hop.hopNumber}`,
+                title: 'WALLETS',  // Wallet columns are just labeled "WALLETS", the hop is the space before this column
                 nodes: [],
                 artBefore: hop.artAtStartByCurrency || {},
                 artAfter: {},

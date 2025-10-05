@@ -3,26 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 19:48)
+## Latest Commit (Auto-updated: 2025-10-05 19:49)
 
-**Commit:** c4b9a9c457f6d1308c2695d34c1c7d3d8b4d4680
+**Commit:** 137b27154bcedf2bd5d107d7d07654da615042c7
 **Author:** Your Name
-**Message:** Fix hop entry processing to skip misplaced entries
+**Message:** Fix first column title from 'VICTIMS' to 'RED WALLETS'
 
-Issue: BATS app stores some Hop 2 entries in Hop 1's entries array
-       with hopNumber: 2, causing entries to appear in wrong hop columns
+Clarification: The first column contains red wallets, which are the
+first wallets under criminal control (receiving stolen funds from victims),
+not the victim wallets themselves.
 
-Fix: Skip entries where entry.hopNumber !== hop.hopNumber
-     This ensures each entry is only processed in its correct hop
-
-Example from Miami Assist:
-- Hop 1 entries array contained Entry 8 with hopNumber: 2 (KuCoin terminal)
-- This was being processed as Hop 1, creating incorrect connections
-- Now properly skipped and only processed when Hop 2 is rendered
-
-Result:
-- P-2 (GluexRouter) now correctly receives from B-1, not Brown-1
-- P-1 (KuCoin) will now correctly receive from Brown-1 bridge outputs
+Changed: Column title from 'VICTIMS' to 'RED WALLETS'
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -30,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 70 +++++++++++++++++++++++++++---------------------
- bats-d3-visualization.js |  5 ++++
- 2 files changed, 45 insertions(+), 30 deletions(-)
+ CLAUDE.md                | 71 +++++++++++++++++++++---------------------------
+ bats-d3-visualization.js |  4 +--
+ 2 files changed, 33 insertions(+), 42 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c4b9a9c Fix hop entry processing to skip misplaced entries (1 second ago)
-- 5017875 Fix BATS data compatibility and bridge thread tracking (11 minutes ago)
-- fce015c Fix drag event handlers causing underlay movement (23 minutes ago)
-- f04b421 Fix brown wallet consolidation and add multi-thread edge grouping (26 minutes ago)
-- 8c49022 Fix Generate Reports button and add graph/reports navigation (36 minutes ago)
-- 28958bb Update CLAUDE.md with latest commit info (44 minutes ago)
-- a25501b Update CLAUDE.md with latest commit info (45 minutes ago)
-- 06715f7 Add note functionality to edges and wallets with right-click and hover (47 minutes ago)
-- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (50 minutes ago)
-- 9f94636 Fix thread connections from brown wallets to next hop (55 minutes ago)
+- 137b271 Fix first column title from 'VICTIMS' to 'RED WALLETS' (0 seconds ago)
+- c4b9a9c Fix hop entry processing to skip misplaced entries (84 seconds ago)
+- 5017875 Fix BATS data compatibility and bridge thread tracking (12 minutes ago)
+- fce015c Fix drag event handlers causing underlay movement (24 minutes ago)
+- f04b421 Fix brown wallet consolidation and add multi-thread edge grouping (27 minutes ago)
+- 8c49022 Fix Generate Reports button and add graph/reports navigation (38 minutes ago)
+- 28958bb Update CLAUDE.md with latest commit info (46 minutes ago)
+- a25501b Update CLAUDE.md with latest commit info (46 minutes ago)
+- 06715f7 Add note functionality to edges and wallets with right-click and hover (48 minutes ago)
+- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (51 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
