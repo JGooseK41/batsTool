@@ -893,15 +893,23 @@ class BATSVisualizationEngine {
 
         // Add victim nodes
         if (investigation.victims && Array.isArray(investigation.victims)) {
-            investigation.victims.forEach(victim => {
+            console.log(`Processing ${investigation.victims.length} victims`);
+            investigation.victims.forEach((victim, vIndex) => {
+                console.log(`Processing victim ${vIndex}:`, victim);
                 if (victim && victim.transactions && Array.isArray(victim.transactions)) {
+                    console.log(`  - Found ${victim.transactions.length} transactions`);
                     victim.transactions.forEach(tx => {
-                        if (!tx) return; // Skip null/undefined transactions
+                        if (!tx) {
+                            console.warn('  - Skipping null/undefined transaction');
+                            return;
+                        }
 
                         const nodeId = `victim_${nodeIdCounter++}`;
                         const walletAddress = tx.receivingWallet || tx.redWallet || 'Unknown';
                         const displayLabel = (walletAddress && typeof walletAddress === 'string' && walletAddress.length > 12) ?
                             walletAddress.substring(0, 8) + '...' : (walletAddress || 'Unknown');
+
+                        console.log(`  - Adding victim node: ${nodeId}, wallet: ${walletAddress}, amount: ${tx.amount} ${tx.currency}`);
 
                         this.graph.addNode(nodeId, {
                             type: 'victim',
@@ -912,16 +920,26 @@ class BATSVisualizationEngine {
                             data: tx
                         });
                     });
+                } else {
+                    console.warn(`  - Victim ${vIndex} has no transactions or invalid structure`);
                 }
             });
+        } else {
+            console.warn('No victims found or victims not an array');
         }
 
         // Add hop nodes
         if (investigation.hops && Array.isArray(investigation.hops)) {
+            console.log(`Processing ${investigation.hops.length} hops`);
             investigation.hops.forEach((hop, hopIndex) => {
+                console.log(`Processing hop ${hopIndex}:`, hop);
                 if (hop && hop.entries && Array.isArray(hop.entries)) {
-                    hop.entries.forEach(entry => {
-                        if (!entry) return; // Skip null/undefined entries
+                    console.log(`  - Found ${hop.entries.length} entries in hop ${hopIndex}`);
+                    hop.entries.forEach((entry, entryIndex) => {
+                        if (!entry) {
+                            console.warn(`  - Skipping null/undefined entry at index ${entryIndex}`);
+                            return;
+                        }
 
                         try {
                             const nodeId = `hop_${nodeIdCounter++}`;
@@ -931,6 +949,8 @@ class BATSVisualizationEngine {
                             const walletAddress = entry.toWallet || entry.walletAddress || 'Unknown';
                             const displayLabel = (walletAddress && typeof walletAddress === 'string' && walletAddress.length > 12) ?
                                 walletAddress.substring(0, 8) + '...' : (walletAddress || 'Unknown');
+
+                            console.log(`  - Adding ${nodeType} node: ${nodeId}, wallet: ${walletAddress}, amount: ${entry.amount} ${entry.currency}`);
 
                     this.graph.addNode(nodeId, {
                         type: nodeType,
@@ -971,14 +991,24 @@ class BATSVisualizationEngine {
             });
         }
 
+        // Log final graph state
+        console.log(`Graph loaded with ${this.graph.nodes.size} nodes and ${this.graph.edges.size} edges`);
+        console.log('Graph nodes:', Array.from(this.graph.nodes.entries()));
+        console.log('Graph edges:', Array.from(this.graph.edges.entries()));
+
         // Apply layout
+        console.log('Applying hierarchical layout...');
         this.applyLayout('hierarchical');
 
         // Render
+        console.log('Rendering graph...');
         this.render();
 
         // Fit to screen
+        console.log('Fitting to screen...');
         this.interaction.fitToScreen();
+
+        console.log('Visualization loading complete');
 
         } catch (error) {
             console.error('Error loading investigation into visualization:', error);

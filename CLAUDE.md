@@ -3,28 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 08:55)
+## Latest Commit (Auto-updated: 2025-10-05 08:56)
 
-**Commit:** 472c5b9d0da8b4751ae36f093585fb39bdf3b99a
+**Commit:** be3c798529465328897264e68693f34890e9a390
 **Author:** Your Name
-**Message:** Fix substring errors in visualization engine
-
-- Added robust null/undefined checks for victims and transactions
-- Added array type checking before forEach operations
-- Skip null/undefined transactions and entries
-- Prevents 'Cannot read properties of undefined' errors
-- Ensures visualization loads even with malformed data
+**Message:** Update CLAUDE.md with latest changes
 
 ### Changed Files:
 ```
- CLAUDE.md                    | 45 ++++++++++++++-----------------
- bats-visualization-engine.js | 64 +++++++++++++++++++++++++-------------------
- 2 files changed, 56 insertions(+), 53 deletions(-)
+ CLAUDE.md | 41 +++++++++++++++++++++--------------------
+ 1 file changed, 21 insertions(+), 20 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 472c5b9 Fix substring errors in visualization engine (0 seconds ago)
+- be3c798 Update CLAUDE.md with latest changes (1 second ago)
+- 472c5b9 Fix substring errors in visualization engine (42 seconds ago)
 - cba3b28 Add null checks to prevent crashes from removed tab elements (3 hours ago)
 - e963bb8 Fix dashboard update errors after tab removal (3 hours ago)
 - a7b3b00 Major refactor: Remove old duplicate tabs and implement new window visualization (3 hours ago)
@@ -33,7 +27,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 1cfbb6f Fix write-off entries reopening when navigating between hops (3 hours ago)
 - 90f4c59 Fix write-off entry display issues - properly collapse on creation (3 hours ago)
 - 6482a44 Fix visualization engine errors by handling undefined wallet addresses (3 hours ago)
-- 4046587 Fix terminal wallet summary double-counting in investigation complete modal (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
