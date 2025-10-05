@@ -13144,10 +13144,15 @@ function addNewHop() {
         
         // Render collapsible hop entry
         function renderCollapsibleHopEntry(entry, entryIndex, hop) {
-            // Initialize collapse state - start expanded for new entries
+            // Initialize collapse state
             const entryKey = `${hop.hopNumber}_${entry.id}`;
             if (window.entryCollapseState[entryKey] === undefined) {
-                window.entryCollapseState[entryKey] = false; // Start expanded
+                // For finalized entries (especially write-offs), default to collapsed
+                // For other entries, default to expanded
+                const isFinalized = entry.isFinalized || false;
+                const hasAmount = parseFloat(entry.amount) > 0;
+                // Collapse if: finalized OR (write-off with amount)
+                window.entryCollapseState[entryKey] = isFinalized || (entry.entryType === 'writeoff' && hasAmount);
             }
             const isCollapsed = window.entryCollapseState[entryKey];
 

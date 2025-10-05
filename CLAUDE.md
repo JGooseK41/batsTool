@@ -3,17 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 05:35)
+## Latest Commit (Auto-updated: 2025-10-05 05:43)
 
-**Commit:** 6482a441c4d16dd69c2b70e8e7407ab95af633ae
+**Commit:** 90f4c599a544f493a3727a2af0995f883bd0ebce
 **Author:** Your Name
-**Message:** Fix visualization engine errors by handling undefined wallet addresses
+**Message:** Fix write-off entry display issues - properly collapse on creation
 
-- Fixed substring error on undefined walletAddress by using toWallet field
-- Added proper error handling with try-catch in loadInvestigation
-- Handle missing or undefined data gracefully
-- Show user-friendly error message if visualization fails
-- Fixed field mappings (entryType, toWallet, exchangeName)
+- Write-off entries marked as isFinalized now show summary instead of form
+- Fixed collapsed state not applying immediately on creation
+- Increased timeout to ensure rendering completes before collapse
+- Hide Log Entry button for finalized entries
+- Display write-off details (category, justification) in read-only format when finalized
+- Improved console logging for debugging collapse behavior
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -21,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                    | 38 +++++++++++++++---------------
- bats-visualization-engine.js | 55 +++++++++++++++++++++++++++++++++++---------
- 2 files changed, 62 insertions(+), 31 deletions(-)
+ CLAUDE.md  | 39 ++++++++++++++--------------
+ index.html | 86 ++++++++++++++++++++++++++++++++++++++++----------------------
+ 2 files changed, 75 insertions(+), 50 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6482a44 Fix visualization engine errors by handling undefined wallet addresses (0 seconds ago)
-- 4046587 Fix terminal wallet summary double-counting in investigation complete modal (2 minutes ago)
-- 49f6064 Fix write-off entry collapsed display to show category, justification and details (3 minutes ago)
-- 77be354 Update CLAUDE.md (13 minutes ago)
-- 822d0c7 Add verification test page (14 minutes ago)
-- b7c10d2 Fix syntax error from broken template literal (15 minutes ago)
-- f634ff1 Final CLAUDE.md update (19 minutes ago)
-- dce59d7 Update CLAUDE.md with latest commit info (19 minutes ago)
-- 5b84f18 Add test results and documentation (19 minutes ago)
-- fbfd451 Add comprehensive workflow testing suite (7 hours ago)
+- 90f4c59 Fix write-off entry display issues - properly collapse on creation (1 second ago)
+- 6482a44 Fix visualization engine errors by handling undefined wallet addresses (8 minutes ago)
+- 4046587 Fix terminal wallet summary double-counting in investigation complete modal (10 minutes ago)
+- 49f6064 Fix write-off entry collapsed display to show category, justification and details (11 minutes ago)
+- 77be354 Update CLAUDE.md (21 minutes ago)
+- 822d0c7 Add verification test page (22 minutes ago)
+- b7c10d2 Fix syntax error from broken template literal (23 minutes ago)
+- f634ff1 Final CLAUDE.md update (27 minutes ago)
+- dce59d7 Update CLAUDE.md with latest commit info (27 minutes ago)
+- 5b84f18 Add test results and documentation (28 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
