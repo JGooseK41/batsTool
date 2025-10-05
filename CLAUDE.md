@@ -3,35 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 16:04)
+## Latest Commit (Auto-updated: 2025-10-05 16:06)
 
-**Commit:** bad4db4b9162d7336b190db04653b3dd5d9603fc
+**Commit:** 550d7872c92bce3f3105fe0f88843e92cc6ccfc4
 **Author:** Your Name
-**Message:** ACTUAL PERMANENT FIX: Create separate visualization.html file
+**Message:** Add setLayout method to BATSVisualizationEngine
 
-Replaced dynamic HTML generation with proper static file approach:
+The visualization.html buttons call vizEngine.setLayout() but this
+method didn't exist - only applyLayout() existed internally.
 
-**The Real Problem:**
-Dynamically generated popup HTML couldn't load bats-visualization-engine.js
-because window.open() with document.write() has no base URL context.
+Added setLayout(type) method that:
+1. Calls applyLayout(type) to reposition nodes
+2. Calls render() to redraw the canvas
+3. Calls fitToScreen() to show the full graph
 
-**The Actual Permanent Solution:**
-1. Created visualization.html as a separate deployed file
-2. Opens with window.open('visualization.html')
-3. Proper file paths work because it's a real HTML file
-4. Passes data via window.opener.investigation reference
-5. Clean, maintainable, proper separation of concerns
-
-**Benefits:**
-- Script src paths work correctly
-- No dynamic HTML generation complexity
-- Easy to debug and maintain
-- Proper file that can be tested independently
-- Standard web development pattern
-- No escaping, no injection, no syntax errors
-
-Removed 120+ lines of generateVisualizationPage() function.
-Added clean 140-line visualization.html file.
+This enables the layout switcher buttons (Hierarchical, Force-Directed,
+Tree) to work correctly.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -39,24 +26,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md          |  59 +++++++++++--------
- index.html         | 131 +------------------------------------------
- visualization.html | 162 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 199 insertions(+), 153 deletions(-)
+ CLAUDE.md                    | 67 +++++++++++++++++++++++---------------------
+ bats-visualization-engine.js |  7 +++++
+ 2 files changed, 42 insertions(+), 32 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (2 seconds ago)
-- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (6 minutes ago)
-- 9a70e89 Fix JSON embedding in popup using script type="application/json" (8 minutes ago)
-- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (9 minutes ago)
-- b711b09 Restore Canvas-based visualization engine with popup window (11 minutes ago)
-- c6811da Move flowdiagram-tab to correct location in main app container (18 minutes ago)
-- b5aee22 Strengthen cache-busting headers for immediate updates (24 minutes ago)
-- 4a9b6ef Add _headers file to force no-cache (29 minutes ago)
-- 99a759b Fix visualization from file load modal - close modal before switching tabs (31 minutes ago)
-- 8fd2498 Bump version to force cache invalidation (36 minutes ago)
+- 550d787 Add setLayout method to BATSVisualizationEngine (0 seconds ago)
+- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (2 minutes ago)
+- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (9 minutes ago)
+- 9a70e89 Fix JSON embedding in popup using script type="application/json" (11 minutes ago)
+- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (12 minutes ago)
+- b711b09 Restore Canvas-based visualization engine with popup window (13 minutes ago)
+- c6811da Move flowdiagram-tab to correct location in main app container (20 minutes ago)
+- b5aee22 Strengthen cache-busting headers for immediate updates (26 minutes ago)
+- 4a9b6ef Add _headers file to force no-cache (31 minutes ago)
+- 99a759b Fix visualization from file load modal - close modal before switching tabs (33 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

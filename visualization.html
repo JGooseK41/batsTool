@@ -77,9 +77,8 @@
 
     <div class="controls">
         <span style="font-weight: 600; margin-right: 10px;">Layout:</span>
-        <button class="btn-primary" onclick="changeLayout('hierarchical')">📊 Hierarchical</button>
-        <button class="btn-primary" onclick="changeLayout('force')">🔀 Force-Directed</button>
-        <button class="btn-primary" onclick="changeLayout('tree')">🌳 Tree</button>
+        <button class="btn-primary" onclick="changeLayout('hop-columns')">📊 Hop Columns</button>
+        <button class="btn-primary" onclick="changeLayout('sankey')">🌊 Sankey Diagram</button>
         <span style="flex: 1;"></span>
         <button class="btn-secondary" onclick="resetView()">🔄 Reset View</button>
         <button class="btn-secondary" onclick="fitToScreen()">📐 Fit to Screen</button>
@@ -88,17 +87,19 @@
     </div>
 
     <div id="vizCanvas">
-        <div id="loading">Initializing visualization engine...</div>
+        <div id="loading">Initializing D3 visualization engine...</div>
     </div>
 
-    <script src="bats-visualization-engine.js"></script>
+    <!-- D3.js Library -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="bats-d3-visualization.js"></script>
     <script>
         let vizEngine;
         let investigation;
 
         function initializeVisualization(data) {
             try {
-                console.log('🎨 Initializing Canvas visualization...');
+                console.log('🎨 Initializing D3 visualization...');
 
                 investigation = data;
 
@@ -112,11 +113,11 @@
                 const loading = document.getElementById('loading');
                 if (loading) loading.remove();
 
-                // Initialize engine
-                vizEngine = new BATSVisualizationEngine('vizCanvas');
+                // Initialize D3 engine
+                vizEngine = new BATSVisualizationD3('vizCanvas');
                 vizEngine.loadInvestigation(investigation);
 
-                console.log('✅ Visualization initialized');
+                console.log('✅ D3 Visualization initialized');
             } catch (error) {
                 console.error('Error initializing visualization:', error);
                 alert('Failed to initialize visualization: ' + error.message);
@@ -130,24 +131,26 @@
         }
 
         function resetView() {
-            if (vizEngine && vizEngine.renderer) {
-                vizEngine.renderer.resetView();
+            if (vizEngine) {
+                vizEngine.resetView();
             }
         }
 
         function fitToScreen() {
-            if (vizEngine && vizEngine.renderer) {
-                vizEngine.renderer.fitToScreen();
+            if (vizEngine) {
+                vizEngine.fitToView();
             }
         }
 
         function exportVisualization(format) {
             if (!vizEngine) return;
 
+            const filename = 'bats_visualization_' + (investigation.caseId || 'export');
+
             if (format === 'png') {
-                vizEngine.exportPNG('bats_visualization_' + (investigation.caseId || 'export') + '.png');
+                vizEngine.exportPNG(filename + '.png');
             } else if (format === 'svg') {
-                vizEngine.exportSVG('bats_visualization_' + (investigation.caseId || 'export') + '.svg');
+                vizEngine.exportSVG(filename + '.svg');
             }
         }
 
