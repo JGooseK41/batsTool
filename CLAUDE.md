@@ -3,21 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 16:32)
+## Latest Commit (Auto-updated: 2025-10-05 16:50)
 
-**Commit:** 2dfd7ff3524763bbd1544d65678ad37e0d9db41c
+**Commit:** 5ba1cdd739801bfdef2d715cb02a6d3ad6d48016
 **Author:** Your Name
-**Message:** Implement complete Sankey diagram visualization for BATS
+**Message:** Implement hop column T-account reconciliation system
 
-- Added full renderSankey() function with d3-sankey integration
-- Transform BATS nodes/edges to Sankey format (nodes array + links array)
-- Flow thickness proportional to transaction amounts
-- Color flows based on source node type (red/purple/brown/etc)
-- Interactive click handlers for nodes and links
-- Shows wallet IDs, amounts, currencies on diagram
-- Hover effects on nodes and flows
-- Copy address/tx hash to clipboard on click
-- Supports all BATS features: swaps, terminals, multi-currency
+- Wallet IDs now display in WHITE text INSIDE circles (B-1, P-2, etc.)
+- Increased column contrast: dark shading for wallet columns, light gold for hop spaces
+- Added hop headers showing ART (Adjusted Root Total) at top of each hop
+- Implemented full T-account reconciliation at bottom of hop columns:
+  * LEFT side: Terminated funds (terminals, write-offs, swap inputs)
+  * RIGHT side: Continuing funds (traces, swap outputs)
+  * Visual indicators: ⬤ purple for terminals, 🔄 for swaps, ✕ for write-offs, → for traces
+  * Shows up to 3 items per side with "...+N more" if overflow
+  * Balance indicator (✓ BALANCED or — No Data)
+
+Hop columns now function as proper ledger accounts tracking fund flows.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -25,25 +27,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                |  79 ++++++++--------
- bats-d3-visualization.js | 234 ++++++++++++++++++++++++++++++++++++++++++++++-
- d3-sankey.min.js         |   2 +
- visualization.html       |   1 +
- 4 files changed, 274 insertions(+), 42 deletions(-)
+ CLAUDE.md                |  68 +++++------
+ bats-d3-visualization.js | 309 +++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 328 insertions(+), 49 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2dfd7ff Implement complete Sankey diagram visualization for BATS (0 seconds ago)
-- 2e34fb4 Add interactive click handlers: view wallet details and thread notes (4 minutes ago)
-- 39243dc Add wallet IDs and increase spacing to prevent text overlap (5 minutes ago)
-- db3497d Add DEX/conversion nodes in hop spaces with dual-currency flow (8 minutes ago)
-- 623ed32 Redesign layout: Wallet columns with shaded backgrounds, hop spaces between (11 minutes ago)
-- ddceaf4 Fix CSP violation by using local D3.js instead of CDN (16 minutes ago)
-- 559f86a PROFESSIONAL REBUILD: D3.js visualization engine for BATS (18 minutes ago)
-- 550d787 Add setLayout method to BATSVisualizationEngine (26 minutes ago)
-- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (29 minutes ago)
-- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (35 minutes ago)
+- 5ba1cdd Implement hop column T-account reconciliation system (0 seconds ago)
+- 2dfd7ff Implement complete Sankey diagram visualization for BATS (17 minutes ago)
+- 2e34fb4 Add interactive click handlers: view wallet details and thread notes (21 minutes ago)
+- 39243dc Add wallet IDs and increase spacing to prevent text overlap (23 minutes ago)
+- db3497d Add DEX/conversion nodes in hop spaces with dual-currency flow (26 minutes ago)
+- 623ed32 Redesign layout: Wallet columns with shaded backgrounds, hop spaces between (29 minutes ago)
+- ddceaf4 Fix CSP violation by using local D3.js instead of CDN (34 minutes ago)
+- 559f86a PROFESSIONAL REBUILD: D3.js visualization engine for BATS (35 minutes ago)
+- 550d787 Add setLayout method to BATSVisualizationEngine (44 minutes ago)
+- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (46 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
