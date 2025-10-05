@@ -17337,7 +17337,11 @@ function getTotalTracedSummary() {
 
 // Generate standalone visualization page HTML
 function generateVisualizationPage() {
-    const investigationData = JSON.stringify(investigation);
+    // Safely encode investigation data to avoid template literal issues
+    const investigationData = JSON.stringify(investigation)
+        .replace(/\\/g, '\\\\')
+        .replace(/`/g, '\\`')
+        .replace(/\$/g, '\\$');
 
     return `<!DOCTYPE html>
 <html>
@@ -17449,9 +17453,9 @@ function generateVisualizationPage() {
             if (!vizEngine) return;
 
             if (format === 'png') {
-                vizEngine.exportPNG(\`bats_visualization_\${investigation.caseId || 'export'}.png\`);
+                vizEngine.exportPNG('bats_visualization_' + (investigation.caseId || 'export') + '.png');
             } else if (format === 'svg') {
-                vizEngine.exportSVG(\`bats_visualization_\${investigation.caseId || 'export'}.svg\`);
+                vizEngine.exportSVG('bats_visualization_' + (investigation.caseId || 'export') + '.svg');
             }
         }
 

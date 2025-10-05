@@ -3,19 +3,32 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 15:46)
+## Latest Commit (Auto-updated: 2025-10-05 15:53)
 
-**Commit:** c6811da9e9d0ad29b747af73b2eed7a7b049eb2a
+**Commit:** b711b090bbe37ca6e518403dc52869bf1bf9990d
 **Author:** Your Name
-**Message:** Move flowdiagram-tab to correct location in main app container
+**Message:** Restore Canvas-based visualization engine with popup window
 
-The flowdiagram-tab was placed outside the main app container at line
-17209, making it invisible to the DOM when the app was running. Moved
-it to line 1982, right after victims-tab, where all other main tabs
-are located (batsinfo-tab, casedetails-tab, victims-tab).
+Reverted to the proper Canvas visualization system with interactive
+controls as originally intended:
 
-This fixes the "Visualization container not found" error that occurred
-when loading investigations and clicking "Visualize Flow".
+**Changes:**
+1. Replaced DAG tab approach with popup window visualization
+2. Restored bats-visualization-engine.js (Canvas-based) as primary engine
+3. Added generateVisualizationPage() to create standalone viz window
+4. Updated proceedWithVisualizationFirst() to open in new window
+5. Removed flowdiagram-tab (visualization now in popup, not tab)
+6. Popup includes all interactive controls:
+   - Layout switchers (Hierarchical, Force-Directed, Tree)
+   - View controls (Reset View, Fit to Screen)
+   - Export options (PNG, SVG)
+   - Zoom and pan capabilities
+
+**Why:**
+The Canvas engine was the "new" advanced visualization system with
+interactive tools. The DAG system (flow-diagram-enhanced.js) was for
+static reports. Popup window keeps visualization separate from main
+investigation workflow as intended.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -23,22 +36,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ CLAUDE.md  |  43 ++++++++++------
+ index.html | 168 ++++++++++++++++++++++++++++++++++++++++++++++++++-----------
+ 2 files changed, 166 insertions(+), 45 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c6811da Move flowdiagram-tab to correct location in main app container (0 seconds ago)
-- b5aee22 Strengthen cache-busting headers for immediate updates (6 minutes ago)
-- 4a9b6ef Add _headers file to force no-cache (11 minutes ago)
-- 99a759b Fix visualization from file load modal - close modal before switching tabs (13 minutes ago)
-- 8fd2498 Bump version to force cache invalidation (18 minutes ago)
-- 3136165 Update CLAUDE.md with latest commit info (27 minutes ago)
-- 0d8a323 Fix root cause of visualization tab not activating properly (29 minutes ago)
-- 0b39905 Fix infinite loop in visualization initialization - add retry limit (30 minutes ago)
-- 9ca63d7 Fix file loading navigation and visualization tab timing issues (33 minutes ago)
-- 359623d Update CLAUDE.md with latest commit info (36 minutes ago)
+- b711b09 Restore Canvas-based visualization engine with popup window (0 seconds ago)
+- c6811da Move flowdiagram-tab to correct location in main app container (7 minutes ago)
+- b5aee22 Strengthen cache-busting headers for immediate updates (13 minutes ago)
+- 4a9b6ef Add _headers file to force no-cache (18 minutes ago)
+- 99a759b Fix visualization from file load modal - close modal before switching tabs (20 minutes ago)
+- 8fd2498 Bump version to force cache invalidation (25 minutes ago)
+- 3136165 Update CLAUDE.md with latest commit info (34 minutes ago)
+- 0d8a323 Fix root cause of visualization tab not activating properly (36 minutes ago)
+- 0b39905 Fix infinite loop in visualization initialization - add retry limit (37 minutes ago)
+- 9ca63d7 Fix file loading navigation and visualization tab timing issues (40 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
