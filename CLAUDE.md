@@ -3,30 +3,43 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 17:13)
+## Latest Commit (Auto-updated: 2025-10-05 17:17)
 
-**Commit:** 40a7058ae1af23cb39fd1223599bb1f9293cd2b3
+**Commit:** c6c0ef52bc805febe7b8679b5049427286c36948
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Fix script tag parsing in standalone HTML export template
+
+- Escaped </script> tags using concatenation (< + /script>)
+- Prevents browser from breaking out of template literal context
+- Fixes syntax errors and 404 on ${visualizationImage}
+- Template string now properly contained within JavaScript
+
+The issue was that </script> inside a template literal still gets
+parsed by the HTML parser, breaking the script execution.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 56 +++++++++++++++++++++++++++++++++++++-------------------
- 1 file changed, 37 insertions(+), 19 deletions(-)
+ CLAUDE.md          | 57 ++++++++++++++----------------------------------------
+ visualization.html |  9 +++++----
+ 2 files changed, 20 insertions(+), 46 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 40a7058 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 9716164 Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views (2 minutes ago)
-- bcd9d58 Fix template literal syntax errors in visualization.html (5 minutes ago)
-- 6a5c9af Update CLAUDE.md with latest commit info (8 minutes ago)
-- 696d416 Add standalone HTML and PDF export options (9 minutes ago)
-- 6585a9d Update CLAUDE.md with latest commit info (12 minutes ago)
-- bf1cfde Add drag-and-drop nodes and enhanced modal popups (14 minutes ago)
-- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (18 minutes ago)
-- 4293663 Fix amount parsing error in reconciliation display (19 minutes ago)
-- 3b9b6b0 Update CLAUDE.md with latest commit info (22 minutes ago)
+- c6c0ef5 Fix script tag parsing in standalone HTML export template (0 seconds ago)
+- 40a7058 Update CLAUDE.md with latest commit info (5 minutes ago)
+- 9716164 Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views (6 minutes ago)
+- bcd9d58 Fix template literal syntax errors in visualization.html (10 minutes ago)
+- 6a5c9af Update CLAUDE.md with latest commit info (12 minutes ago)
+- 696d416 Add standalone HTML and PDF export options (14 minutes ago)
+- 6585a9d Update CLAUDE.md with latest commit info (17 minutes ago)
+- bf1cfde Add drag-and-drop nodes and enhanced modal popups (18 minutes ago)
+- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (22 minutes ago)
+- 4293663 Fix amount parsing error in reconciliation display (24 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
