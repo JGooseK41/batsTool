@@ -1978,10 +1978,15 @@
                     
                 </div>
 
-    <!-- OLD TABS REMOVED: Wallet Indexes, PK Converter, Flow Diagram, Reports, Summary
+                <!-- Flow Diagram / Visualization Tab -->
+                <div id="flowdiagram-tab" class="tab-content">
+                    <div id="visualizationContainer" style="width: 100%; height: calc(100vh - 200px); position: relative; background: #f5f5f5;"></div>
+                </div>
+
+    <!-- OLD TABS REMOVED: Wallet Indexes, PK Converter, Old Flow Diagram, Reports, Summary
          These were duplicate/legacy features. The modern workflow uses:
          1. Enhanced completion modal when investigation completes
-         2. Visualization opens in new tab/window with canvas engine
+         2. Visualization uses new flowdiagram-tab with hop-centric DAG
          3. Reports integrated into the completion workflow
          The traces tab above is kept as it contains the main hop management functionality -->
 
@@ -17203,11 +17208,6 @@ function generateVisualizationPage() {
         <div id="canvas-container">
             <canvas id="visualization-canvas"></canvas>
         </div>
-    </div>
-
-    <!-- Flow Diagram / Visualization Tab -->
-    <div id="flowdiagram-tab" class="tab-content">
-        <div id="visualizationContainer" style="width: 100%; height: calc(100vh - 200px); position: relative; background: #f5f5f5;"></div>
     </div>
 
     <!-- Reports Tab -->
