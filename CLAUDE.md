@@ -3,22 +3,33 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 15:55)
+## Latest Commit (Auto-updated: 2025-10-05 15:57)
 
-**Commit:** 9a70e89dfbe1a1f77d3fa17662a27973716a232a
+**Commit:** 6bf9d2c96f9154e534d9fda3d48d2c1d3c30a7d9
 **Author:** Your Name
-**Message:** Fix JSON embedding in popup using script type="application/json"
+**Message:** PERMANENT FIX: Pass investigation data via window reference
 
-Replaced inline JavaScript variable with safer JSON script tag approach:
+Replaced all JSON embedding workarounds with proper window communication:
 
-- Changed from: const investigation = ${investigationData};
-- Changed to: <script type="application/json"> with JSON.parse()
-- This prevents all template literal and special character issues
-- JSON is treated as text content, not executable JavaScript
-- No escaping needed, completely safe from syntax errors
+**The Problem:**
+Embedding JSON in HTML causes syntax errors when JSON contains special
+characters, template literals, or script tags. Escaping is a workaround.
 
-This fixes "Unexpected end of input" and "Unexpected token" errors
-that occurred when complex investigation JSON broke JavaScript parsing.
+**The Permanent Solution:**
+1. Generate popup HTML without any investigation data
+2. Open popup window and get window reference
+3. Pass investigation object directly via window.initializeVisualization()
+4. No serialization, no escaping, no injection vulnerabilities
+
+**Benefits:**
+- No JSON parsing errors (data passed as JavaScript object)
+- No special character issues
+- No template literal conflicts
+- Clean separation of concerns
+- Better performance (no JSON serialization)
+- Works with any investigation data structure
+
+This is the proper way to pass data between windows.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -26,23 +37,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 62 +++++++++++++++++++++++++-------------------------------------
- index.html | 18 ++++++++++++------
- 2 files changed, 37 insertions(+), 43 deletions(-)
+ CLAUDE.md  | 46 ++++++++++++++++++++++++----------------------
+ index.html | 25 +++++++++----------------
+ 2 files changed, 33 insertions(+), 38 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9a70e89 Fix JSON embedding in popup using script type="application/json" (0 seconds ago)
-- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (62 seconds ago)
-- b711b09 Restore Canvas-based visualization engine with popup window (3 minutes ago)
-- c6811da Move flowdiagram-tab to correct location in main app container (10 minutes ago)
-- b5aee22 Strengthen cache-busting headers for immediate updates (15 minutes ago)
-- 4a9b6ef Add _headers file to force no-cache (20 minutes ago)
-- 99a759b Fix visualization from file load modal - close modal before switching tabs (23 minutes ago)
-- 8fd2498 Bump version to force cache invalidation (27 minutes ago)
-- 3136165 Update CLAUDE.md with latest commit info (37 minutes ago)
-- 0d8a323 Fix root cause of visualization tab not activating properly (38 minutes ago)
+- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (0 seconds ago)
+- 9a70e89 Fix JSON embedding in popup using script type="application/json" (2 minutes ago)
+- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (3 minutes ago)
+- b711b09 Restore Canvas-based visualization engine with popup window (4 minutes ago)
+- c6811da Move flowdiagram-tab to correct location in main app container (12 minutes ago)
+- b5aee22 Strengthen cache-busting headers for immediate updates (17 minutes ago)
+- 4a9b6ef Add _headers file to force no-cache (22 minutes ago)
+- 99a759b Fix visualization from file load modal - close modal before switching tabs (25 minutes ago)
+- 8fd2498 Bump version to force cache invalidation (29 minutes ago)
+- 3136165 Update CLAUDE.md with latest commit info (39 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
