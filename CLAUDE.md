@@ -3,16 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 05:49)
+## Latest Commit (Auto-updated: 2025-10-05 05:53)
 
-**Commit:** 1cfbb6f749b24ef47d0ca418b30e6366969421d8
+**Commit:** 60958ee3260962a56dc90bde5be7e5d780921e22
 **Author:** Your Name
-**Message:** Fix write-off entries reopening when navigating between hops
+**Message:** Fix visualization engine substring error on undefined wallet addresses
 
-- Finalized entries now default to collapsed state when rendering
-- Write-off entries with amounts stay collapsed between navigations
-- Only check collapse state once on initialization to preserve user preference
-- Prevent UI state reset when moving to next hop
+- Add type checking before calling substring on wallet addresses
+- Provide fallback value when wallet address is null/undefined
+- Add try-catch for individual entry processing to prevent one bad entry from breaking entire visualization
+- Improve error logging to identify problematic entries
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -20,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 43 ++++++++++++++++++++++---------------------
- index.html |  9 +++++++--
- 2 files changed, 29 insertions(+), 23 deletions(-)
+ CLAUDE.md                    | 42 ++++++++++++++++++++----------------------
+ bats-visualization-engine.js | 21 +++++++++++++--------
+ 2 files changed, 33 insertions(+), 30 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1cfbb6f Fix write-off entries reopening when navigating between hops (0 seconds ago)
-- 90f4c59 Fix write-off entry display issues - properly collapse on creation (6 minutes ago)
-- 6482a44 Fix visualization engine errors by handling undefined wallet addresses (14 minutes ago)
-- 4046587 Fix terminal wallet summary double-counting in investigation complete modal (16 minutes ago)
-- 49f6064 Fix write-off entry collapsed display to show category, justification and details (17 minutes ago)
-- 77be354 Update CLAUDE.md (27 minutes ago)
-- 822d0c7 Add verification test page (27 minutes ago)
-- b7c10d2 Fix syntax error from broken template literal (29 minutes ago)
-- f634ff1 Final CLAUDE.md update (33 minutes ago)
-- dce59d7 Update CLAUDE.md with latest commit info (33 minutes ago)
+- 60958ee Fix visualization engine substring error on undefined wallet addresses (0 seconds ago)
+- 1cfbb6f Fix write-off entries reopening when navigating between hops (5 minutes ago)
+- 90f4c59 Fix write-off entry display issues - properly collapse on creation (10 minutes ago)
+- 6482a44 Fix visualization engine errors by handling undefined wallet addresses (18 minutes ago)
+- 4046587 Fix terminal wallet summary double-counting in investigation complete modal (20 minutes ago)
+- 49f6064 Fix write-off entry collapsed display to show category, justification and details (22 minutes ago)
+- 77be354 Update CLAUDE.md (32 minutes ago)
+- 822d0c7 Add verification test page (32 minutes ago)
+- b7c10d2 Fix syntax error from broken template literal (34 minutes ago)
+- f634ff1 Final CLAUDE.md update (37 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

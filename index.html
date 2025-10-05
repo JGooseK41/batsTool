@@ -16823,8 +16823,8 @@ function showCaseStatusDashboard() {
                             ${status.analysisReady ? 'Ready to generate reports' : 'Complete hops first'}
                         </div>
                     </div>
-                    ${status.analysisReady ? 
-                        '<button class="btn btn-success btn-small" onclick="closeCaseStatusDashboard(); focusOnAnalysis()">View Analysis</button>' : 
+                    ${status.analysisReady ?
+                        '<button class="btn btn-success btn-small" onclick="closeCaseStatusDashboard(); showEnhancedCompletionModal()">View Results</button>' :
                         '<span style="color: #999;">Not Ready</span>'
                     }
                 </div>
@@ -16865,9 +16865,9 @@ function showCaseStatusDashboard() {
                     👁️ View Full Investigation
                 </button>
                 ${status.currentPhase === 'complete' ? `
-                    <button class="btn btn-primary" onclick="closeCaseStatusDashboard(); switchTab('analysis')"
+                    <button class="btn btn-primary" onclick="closeCaseStatusDashboard(); showEnhancedCompletionModal()"
                             style="margin-left: 10px; padding: 10px 20px;">
-                        📊 Go to Analysis
+                        📊 View Investigation Results
                     </button>
                 ` : ''}
             </div>
@@ -17127,7 +17127,8 @@ function scrollToHop(hopNumber) {
 }
 
 function focusOnAnalysis() {
-    document.getElementById('analysisTab').click();
+    // Show the completion modal instead of going to a non-existent analysis tab
+    showEnhancedCompletionModal();
 }
 
 function startHop1() {
@@ -28353,8 +28354,15 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             console.log('Investigation loaded successfully!');
             console.log('Available threads after loading:', investigation.availableThreads);
 
-            // Show case status dashboard instead of simple alert
-            showCaseStatusDashboard();
+            // Check if investigation is complete and show appropriate modal
+            const status = analyzeCaseStatus();
+            if (status.currentPhase === 'complete') {
+                // Show the completion modal for completed investigations
+                showEnhancedCompletionModal();
+            } else {
+                // Show case status dashboard for in-progress investigations
+                showCaseStatusDashboard();
+            }
             
         } catch (error) {
             console.error('Error loading file:', error);
