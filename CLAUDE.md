@@ -3,16 +3,11 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 17:24)
+## Latest Commit (Auto-updated: 2025-10-05 17:25)
 
-**Commit:** b17c965cdf9201cdbe27d0207cf6315b0d408617
+**Commit:** 5d7e9b18ee8027ce5f89a651f962a83bb20c02d0
 **Author:** Your Name
-**Message:** Fix template literal script tag parsing in standalone HTML export
-
-- Replace string concatenation method with placeholder replacement
-- Use SCRIPT_END placeholder that gets replaced with </script> after template creation
-- Prevents HTML parser from prematurely closing script tags in template literal
-- Resolves syntax errors at lines 266 and 348
+**Message:** Update CLAUDE.md with latest commit info
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -20,23 +15,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md          | 64 ++++++++++++++++++++++++++++++++++--------------------
- visualization.html | 12 +++++-----
- 2 files changed, 46 insertions(+), 30 deletions(-)
+ CLAUDE.md | 61 +++++++++++++++++++++----------------------------------------
+ 1 file changed, 21 insertions(+), 40 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b17c965 Fix template literal script tag parsing in standalone HTML export (0 seconds ago)
-- a121318 Consolidate export buttons into dropdown menu and add Save Changes button (4 minutes ago)
-- c6c0ef5 Fix script tag parsing in standalone HTML export template (7 minutes ago)
-- 40a7058 Update CLAUDE.md with latest commit info (11 minutes ago)
-- 9716164 Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views (13 minutes ago)
-- bcd9d58 Fix template literal syntax errors in visualization.html (16 minutes ago)
-- 6a5c9af Update CLAUDE.md with latest commit info (19 minutes ago)
-- 696d416 Add standalone HTML and PDF export options (21 minutes ago)
-- 6585a9d Update CLAUDE.md with latest commit info (24 minutes ago)
-- bf1cfde Add drag-and-drop nodes and enhanced modal popups (25 minutes ago)
+- 5d7e9b1 Update CLAUDE.md with latest commit info (0 seconds ago)
+- b17c965 Fix template literal script tag parsing in standalone HTML export (86 seconds ago)
+- a121318 Consolidate export buttons into dropdown menu and add Save Changes button (6 minutes ago)
+- c6c0ef5 Fix script tag parsing in standalone HTML export template (8 minutes ago)
+- 40a7058 Update CLAUDE.md with latest commit info (13 minutes ago)
+- 9716164 Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views (14 minutes ago)
+- bcd9d58 Fix template literal syntax errors in visualization.html (18 minutes ago)
+- 6a5c9af Update CLAUDE.md with latest commit info (20 minutes ago)
+- 696d416 Add standalone HTML and PDF export options (22 minutes ago)
+- 6585a9d Update CLAUDE.md with latest commit info (25 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

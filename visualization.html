@@ -262,9 +262,11 @@
             // Serialize investigation data
             const investigationJSON = JSON.stringify(investigation, null, 2);
 
-            // Create standalone HTML file
-            // Note: Using SCRIPT_END placeholder to avoid </script> tag parsing issues
-            const standaloneHTML = `<!DOCTYPE html>
+            // Create standalone HTML file by building it with string concatenation
+            // to avoid template literal parsing issues
+            const scriptClose = '<' + '/script>';
+            const standaloneHTML =
+`<!DOCTYPE html>
 <html>
 <head>
     <title>B.A.T.S. Investigation Visualization - ${investigation.caseId || 'Untitled'}</title>
@@ -345,22 +347,19 @@
 
     <script>
 // D3.js Library
-${d3Code}
-    SCRIPT_END
+` + d3Code + scriptClose + `
 
     <script>
 // D3 Sankey Plugin
-${d3SankeyCode}
-    SCRIPT_END
+` + d3SankeyCode + scriptClose + `
 
     <script>
 // B.A.T.S. Visualization Engine
-${vizEngineCode}
-    SCRIPT_END
+` + vizEngineCode + scriptClose + `
 
     <script>
         // Investigation Data
-        const investigation = ${investigationJSON};
+        const investigation = ` + investigationJSON + `;
 
         let vizEngine;
 
@@ -393,9 +392,9 @@ ${vizEngineCode}
         window.addEventListener('load', () => {
             initializeVisualization();
         });
-    SCRIPT_END
+    ` + scriptClose + `
 </body>
-</html>`.replace(/SCRIPT_END/g, '</script>');
+</html>`;
 
             // Create download
             const blob = new Blob([standaloneHTML], { type: 'text/html;charset=utf-8' });
