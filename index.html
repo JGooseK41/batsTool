@@ -17337,9 +17337,6 @@ function getTotalTracedSummary() {
 
 // Generate standalone visualization page HTML
 function generateVisualizationPage() {
-    // Use plain JSON.stringify - will be embedded in script type="application/json" tag
-    const investigationData = JSON.stringify(investigation, null, 2);
-
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -17421,24 +17418,16 @@ function generateVisualizationPage() {
 
     <div id="vizCanvas"></div>
 
-    <!-- Investigation data stored safely in JSON script tag -->
-    <script type="application/json" id="investigation-data">
-${investigationData}
-    </script>
-
     <script src="bats-visualization-engine.js"></script>
     <script>
         let vizEngine;
         let investigation;
 
-        function initializeVisualization() {
+        function initializeVisualization(data) {
             try {
                 console.log('🎨 Initializing Canvas visualization...');
 
-                // Load investigation data from JSON script tag
-                const dataElement = document.getElementById('investigation-data');
-                investigation = JSON.parse(dataElement.textContent);
-
+                investigation = data;
                 vizEngine = new BATSVisualizationEngine('vizCanvas');
                 vizEngine.loadInvestigation(investigation);
 
@@ -17464,9 +17453,6 @@ ${investigationData}
                 vizEngine.exportSVG('bats_visualization_' + (investigation.caseId || 'export') + '.svg');
             }
         }
-
-        // Initialize on load
-        window.addEventListener('load', initializeVisualization);
     </script>
 </body>
 </html>`;
@@ -17483,6 +17469,13 @@ function proceedWithVisualizationFirst() {
     if (newWindow) {
         newWindow.document.write(visualizationHTML);
         newWindow.document.close();
+
+        // Pass investigation data to the popup after it loads
+        newWindow.addEventListener('load', function() {
+            if (newWindow.initializeVisualization) {
+                newWindow.initializeVisualization(investigation);
+            }
+        });
     } else {
         alert('Popup blocked! Please allow popups for this site to view visualization.');
     }
