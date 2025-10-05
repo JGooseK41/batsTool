@@ -3,38 +3,41 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 18:58)
+## Latest Commit (Auto-updated: 2025-10-05 19:01)
 
-**Commit:** 2ac47a3f5031083bef471be2341b4408c1e574ca
+**Commit:** 06715f702191719bdb7ef1b5c153a48f6b0dd0c8
 **Author:** Your Name
-**Message:** Fix zoom behavior to prevent white space and keep graph/columns scaled together
+**Message:** Add note functionality to edges and wallets with right-click and hover
 
-Ensures graph always fills viewport and zooms/pans without showing white space.
+Users can now add notes to any wallet or edge, with visual indicators and tooltips.
 
-Changes:
-1. Graph and column backgrounds always scale together
-   - Both are in mainGroup which transforms together
-   - Zoom applies to entire mainGroup including backgrounds
+Features:
+1. Right-click context menu on wallets and edges
+   - Opens modal to add/edit/delete notes
+   - Clean, intuitive interface with textarea
+   - Save, Cancel, and Delete (if existing) buttons
 
-2. Constrained zoom bounds to prevent white space
-   - Min scale: 0.8 (allows slight zoom out but prevents excessive white space)
-   - Max scale: 4 (allows detailed zoom in)
-   - Dynamic translation constraints based on current scale
+2. Note storage in data objects
+   - Notes stored directly in node.note and edge.note
+   - Persists through re-renders
+   - Will be saved with investigation data
 
-3. Translation clamping algorithm
-   - At scale 1: content fills viewport perfectly (no translation needed)
-   - At scale < 1: restrict panning to prevent white space edges
-   - At scale > 1: allow panning to view zoomed areas
-   - Formulas: minTranslateX = width * (1 - scale), maxTranslateX = 0
-   - Same for Y axis
+3. Visual note indicators
+   - 📝 emoji appears on nodes with notes (top-right corner)
+   - 📝 emoji appears on edges with notes (next to amount label)
+   - Immediate visual feedback that note exists
 
-4. Modified fitToView() to not scale down
-   - Graph columns already extend to full viewport height
-   - Only centers content horizontally/vertically at scale 1
-   - No shrinking - graph always fills available space
+4. Hover tooltips for notes
+   - Hovering over wallet/edge with note shows tooltip
+   - Dark semi-transparent background for readability
+   - Positioned near cursor, max-width 300px
+   - Automatically hides on mouseout
 
-Result: Zoom in/out always shows full graph without white space.
-Columns and node network stay perfectly aligned at all zoom levels.
+Usage:
+- Right-click wallet or edge → Add Note modal appears
+- Enter text → Click Save
+- Hover over item with 📝 → See note in tooltip
+- Right-click again → Edit or Delete existing note
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -42,23 +45,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 58 +++++++++++++++++++++++++++++++++++-------------
- bats-d3-visualization.js | 48 ++++++++++++++++++++++++++++-----------
- 2 files changed, 78 insertions(+), 28 deletions(-)
+ CLAUDE.md                |  76 ++++++++++++-----------
+ bats-d3-visualization.js | 157 ++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 196 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (0 seconds ago)
-- 9f94636 Fix thread connections from brown wallets to next hop (5 minutes ago)
-- ca4dc39 Update CLAUDE.md with latest commit info (7 minutes ago)
-- 82952b6 Consolidate brown wallets by attribution instead of address (8 minutes ago)
-- c91a5d3 Fix brown wallet consolidation and positioning - complete rewrite (13 minutes ago)
-- 7005083 Fix brown wallet positioning and consolidation in D3 visualization (25 minutes ago)
-- 7da7783 Fix missing hops section - add to victims tab (53 minutes ago)
-- 0887cef Add comprehensive workflow test documentation and sample data (60 minutes ago)
-- e36e6bb Fix root total confirmation tab navigation (63 minutes ago)
-- fff08da Update CLAUDE.md with latest commit info (68 minutes ago)
+- 06715f7 Add note functionality to edges and wallets with right-click and hover (0 seconds ago)
+- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (3 minutes ago)
+- 9f94636 Fix thread connections from brown wallets to next hop (8 minutes ago)
+- ca4dc39 Update CLAUDE.md with latest commit info (10 minutes ago)
+- 82952b6 Consolidate brown wallets by attribution instead of address (11 minutes ago)
+- c91a5d3 Fix brown wallet consolidation and positioning - complete rewrite (16 minutes ago)
+- 7005083 Fix brown wallet positioning and consolidation in D3 visualization (28 minutes ago)
+- 7da7783 Fix missing hops section - add to victims tab (56 minutes ago)
+- 0887cef Add comprehensive workflow test documentation and sample data (63 minutes ago)
+- e36e6bb Fix root total confirmation tab navigation (66 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
