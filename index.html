@@ -3444,9 +3444,9 @@
                 navTabs.style.display = 'flex';
             }
 
-            // First, ensure all tabs are visible (in case they were hidden)
+            // First, hide all tabs and remove active state
             document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.style.display = '';
+                tab.style.display = 'none';
                 tab.classList.remove('active');
             });
             document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -36675,33 +36675,9 @@ To (RED Wallet): ${transfer.to}`;
         // ============================================
 
         // Initialize the BATS hop-centric flow diagram
-        function initializeGraphVisualization(retryCount = 0) {
+        function initializeGraphVisualization() {
             try {
                 console.log('🎨 Initializing BATS Flow Diagram...');
-
-                // Ensure flowdiagram tab is active first
-                const flowTab = document.getElementById('flowdiagram-tab');
-                if (!flowTab || !flowTab.classList.contains('active')) {
-                    if (retryCount < 10) {
-                        console.warn(`Flow diagram tab not active yet, retrying... (${retryCount + 1}/10)`);
-                        setTimeout(() => initializeGraphVisualization(retryCount + 1), 100);
-                        return;
-                    } else {
-                        console.error('Flow diagram tab failed to activate after 10 retries');
-                        // Force activate the tab
-                        document.querySelectorAll('.tab-content').forEach(t => {
-                            t.classList.remove('active');
-                            t.style.display = 'none';
-                        });
-                        if (flowTab) {
-                            flowTab.classList.add('active');
-                            flowTab.style.display = 'block';
-                        }
-                        // Try one more time after forcing activation
-                        setTimeout(() => initializeGraphVisualization(99), 200);
-                        return;
-                    }
-                }
 
                 // Ensure container exists
                 const container = document.getElementById('visualizationContainer');
