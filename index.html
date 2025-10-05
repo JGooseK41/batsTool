@@ -17337,11 +17337,8 @@ function getTotalTracedSummary() {
 
 // Generate standalone visualization page HTML
 function generateVisualizationPage() {
-    // Safely encode investigation data to avoid template literal issues
-    const investigationData = JSON.stringify(investigation)
-        .replace(/\\/g, '\\\\')
-        .replace(/`/g, '\\`')
-        .replace(/\$/g, '\\$');
+    // Use plain JSON.stringify - will be embedded in script type="application/json" tag
+    const investigationData = JSON.stringify(investigation, null, 2);
 
     return `<!DOCTYPE html>
 <html>
@@ -17424,14 +17421,23 @@ function generateVisualizationPage() {
 
     <div id="vizCanvas"></div>
 
+    <!-- Investigation data stored safely in JSON script tag -->
+    <script type="application/json" id="investigation-data">
+${investigationData}
+    </script>
+
     <script src="bats-visualization-engine.js"></script>
     <script>
         let vizEngine;
-        const investigation = ${investigationData};
+        let investigation;
 
         function initializeVisualization() {
             try {
                 console.log('🎨 Initializing Canvas visualization...');
+
+                // Load investigation data from JSON script tag
+                const dataElement = document.getElementById('investigation-data');
+                investigation = JSON.parse(dataElement.textContent);
 
                 vizEngine = new BATSVisualizationEngine('vizCanvas');
                 vizEngine.loadInvestigation(investigation);

@@ -3,32 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 15:53)
+## Latest Commit (Auto-updated: 2025-10-05 15:54)
 
-**Commit:** b711b090bbe37ca6e518403dc52869bf1bf9990d
+**Commit:** f5cf777fba3ad275c3af33e303a2967e080837de
 **Author:** Your Name
-**Message:** Restore Canvas-based visualization engine with popup window
+**Message:** Fix JavaScript syntax errors in popup visualization HTML
 
-Reverted to the proper Canvas visualization system with interactive
-controls as originally intended:
+Fixed template literal escaping issues that caused syntax errors:
 
-**Changes:**
-1. Replaced DAG tab approach with popup window visualization
-2. Restored bats-visualization-engine.js (Canvas-based) as primary engine
-3. Added generateVisualizationPage() to create standalone viz window
-4. Updated proceedWithVisualizationFirst() to open in new window
-5. Removed flowdiagram-tab (visualization now in popup, not tab)
-6. Popup includes all interactive controls:
-   - Layout switchers (Hierarchical, Force-Directed, Tree)
-   - View controls (Reset View, Fit to Screen)
-   - Export options (PNG, SVG)
-   - Zoom and pan capabilities
+1. Escaped backslashes, backticks, and dollar signs in JSON data
+2. Replaced template literals with string concatenation in popup code
+3. Prevents "Unexpected end of input" and "Unexpected token" errors
 
-**Why:**
-The Canvas engine was the "new" advanced visualization system with
-interactive tools. The DAG system (flow-diagram-enhanced.js) was for
-static reports. Popup window keeps visualization separate from main
-investigation workflow as intended.
+The investigation data is now properly escaped before being embedded
+in the generated popup HTML, preventing JavaScript parse errors.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -36,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  43 ++++++++++------
- index.html | 168 ++++++++++++++++++++++++++++++++++++++++++++++++++-----------
- 2 files changed, 166 insertions(+), 45 deletions(-)
+ CLAUDE.md  | 60 +++++++++++++++++++++++++++++++++++++-----------------------
+ index.html | 10 +++++++---
+ 2 files changed, 44 insertions(+), 26 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b711b09 Restore Canvas-based visualization engine with popup window (0 seconds ago)
-- c6811da Move flowdiagram-tab to correct location in main app container (7 minutes ago)
-- b5aee22 Strengthen cache-busting headers for immediate updates (13 minutes ago)
-- 4a9b6ef Add _headers file to force no-cache (18 minutes ago)
-- 99a759b Fix visualization from file load modal - close modal before switching tabs (20 minutes ago)
-- 8fd2498 Bump version to force cache invalidation (25 minutes ago)
-- 3136165 Update CLAUDE.md with latest commit info (34 minutes ago)
-- 0d8a323 Fix root cause of visualization tab not activating properly (36 minutes ago)
-- 0b39905 Fix infinite loop in visualization initialization - add retry limit (37 minutes ago)
-- 9ca63d7 Fix file loading navigation and visualization tab timing issues (40 minutes ago)
+- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (0 seconds ago)
+- b711b09 Restore Canvas-based visualization engine with popup window (2 minutes ago)
+- c6811da Move flowdiagram-tab to correct location in main app container (9 minutes ago)
+- b5aee22 Strengthen cache-busting headers for immediate updates (14 minutes ago)
+- 4a9b6ef Add _headers file to force no-cache (19 minutes ago)
+- 99a759b Fix visualization from file load modal - close modal before switching tabs (22 minutes ago)
+- 8fd2498 Bump version to force cache invalidation (26 minutes ago)
+- 3136165 Update CLAUDE.md with latest commit info (36 minutes ago)
+- 0d8a323 Fix root cause of visualization tab not activating properly (37 minutes ago)
+- 0b39905 Fix infinite loop in visualization initialization - add retry limit (39 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
