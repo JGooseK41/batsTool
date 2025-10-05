@@ -3,16 +3,38 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 16:55)
+## Latest Commit (Auto-updated: 2025-10-05 16:59)
 
-**Commit:** bb5dee7514023cdc1f8cda0064e25f73fd8cfd9e
+**Commit:** bf1cfdee5db5ebe45b6fa43244463c90db91a2a2
 **Author:** Your Name
-**Message:** Fix layer ordering: nodes and edges now visible above backgrounds
+**Message:** Add drag-and-drop nodes and enhanced modal popups
 
-- Created separate backgroundGroup for column shading, headers, reconciliation
-- Layer order now: backgrounds → edges → nodes → labels → art boxes
-- Prevents backgrounds from covering up wallet circles and connection threads
-- Fixes issue where no visuals were showing for wallet nodes or threads
+**Drag & Drop Features:**
+- Nodes can now be dragged vertically within their columns
+- Edges automatically update positions during drag
+- Constrained to vertical movement only (stays in column)
+- Cursor changes to grabbing during drag
+- All connected threads move with the node
+
+**Enhanced Wallet Modal:**
+- Professional popup modal with color-coded wallet ID badge
+- Full wallet address with copy button
+- Total incoming/outgoing funds display
+- List of all unique VTH notations connected to wallet
+- Wallet type and special flags (swap, terminal, etc.)
+- Click outside or Close button to dismiss
+
+**Enhanced Thread/Edge Modal:**
+- Comprehensive entry details in professional layout
+- Shows notation, amount, entry type
+- Source thread and destination wallet
+- Transaction hash with copy button
+- Timestamp if available
+- Special swap/conversion section with input→output display
+- Entry notes preserved and displayed
+- All metadata from hop entry visible
+
+Both modals replace simple alert() dialogs with rich, styled popups.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -20,23 +42,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 39 ++++++++++++++++++++++++---------------
- bats-d3-visualization.js | 15 ++++++++-------
- 2 files changed, 32 insertions(+), 22 deletions(-)
+ CLAUDE.md                |  39 +++---
+ bats-d3-visualization.js | 346 ++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 330 insertions(+), 55 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (0 seconds ago)
-- 4293663 Fix amount parsing error in reconciliation display (2 minutes ago)
-- 3b9b6b0 Update CLAUDE.md with latest commit info (4 minutes ago)
-- 5ba1cdd Implement hop column T-account reconciliation system (5 minutes ago)
-- 2dfd7ff Implement complete Sankey diagram visualization for BATS (23 minutes ago)
-- 2e34fb4 Add interactive click handlers: view wallet details and thread notes (27 minutes ago)
-- 39243dc Add wallet IDs and increase spacing to prevent text overlap (28 minutes ago)
-- db3497d Add DEX/conversion nodes in hop spaces with dual-currency flow (31 minutes ago)
-- 623ed32 Redesign layout: Wallet columns with shaded backgrounds, hop spaces between (34 minutes ago)
-- ddceaf4 Fix CSP violation by using local D3.js instead of CDN (39 minutes ago)
+- bf1cfde Add drag-and-drop nodes and enhanced modal popups (0 seconds ago)
+- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (4 minutes ago)
+- 4293663 Fix amount parsing error in reconciliation display (6 minutes ago)
+- 3b9b6b0 Update CLAUDE.md with latest commit info (8 minutes ago)
+- 5ba1cdd Implement hop column T-account reconciliation system (9 minutes ago)
+- 2dfd7ff Implement complete Sankey diagram visualization for BATS (27 minutes ago)
+- 2e34fb4 Add interactive click handlers: view wallet details and thread notes (30 minutes ago)
+- 39243dc Add wallet IDs and increase spacing to prevent text overlap (32 minutes ago)
+- db3497d Add DEX/conversion nodes in hop spaces with dual-currency flow (35 minutes ago)
+- 623ed32 Redesign layout: Wallet columns with shaded backgrounds, hop spaces between (38 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
