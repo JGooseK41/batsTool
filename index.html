@@ -1978,17 +1978,12 @@
                     
                 </div>
 
-                <!-- Flow Diagram / Visualization Tab -->
-                <div id="flowdiagram-tab" class="tab-content">
-                    <div id="visualizationContainer" style="width: 100%; height: calc(100vh - 200px); position: relative; background: #f5f5f5;"></div>
-                </div>
-
-    <!-- OLD TABS REMOVED: Wallet Indexes, PK Converter, Old Flow Diagram, Reports, Summary
+    <!-- OLD TABS REMOVED: Wallet Indexes, PK Converter, Flow Diagram, Reports, Summary
          These were duplicate/legacy features. The modern workflow uses:
          1. Enhanced completion modal when investigation completes
-         2. Visualization uses new flowdiagram-tab with hop-centric DAG
+         2. Visualization opens in popup window with Canvas-based interactive graph
          3. Reports integrated into the completion workflow
-         The traces tab above is kept as it contains the main hop management functionality -->
+         The investigation workflow uses 3 tabs: BATS Info, Case Details, and Victims/Transactions -->
 
     <!-- Root Total Confirmation Modal -->
     <div id="rootTotalModal" class="modal">
@@ -17340,31 +17335,146 @@ function getTotalTracedSummary() {
     return totals || 'No data';
 }
 
-// Proceed with visualization first, then reports
+// Generate standalone visualization page HTML
+function generateVisualizationPage() {
+    const investigationData = JSON.stringify(investigation);
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <title>B.A.T.S. Investigation Visualization - ${investigation.caseId || 'Untitled'}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; overflow: hidden; }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            color: #FFBF00;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+            color: #ffffff;
+            margin-top: 5px;
+        }
+        .controls {
+            background: white;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .controls button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .controls button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        #vizCanvas {
+            width: 100%;
+            height: calc(100vh - 160px);
+            position: relative;
+            background: #fafafa;
+        }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>B.A.T.S.</h1>
+            <p>Investigation Visualization: ${investigation.caseId || 'Untitled'}</p>
+        </div>
+    </div>
+
+    <div class="controls">
+        <span style="font-weight: 600; margin-right: 10px;">Layout:</span>
+        <button class="btn-primary" onclick="changeLayout('hierarchical')">📊 Hierarchical</button>
+        <button class="btn-primary" onclick="changeLayout('force')">🔀 Force-Directed</button>
+        <button class="btn-primary" onclick="changeLayout('tree')">🌳 Tree</button>
+        <span style="flex: 1;"></span>
+        <button class="btn-secondary" onclick="vizEngine.renderer.resetView()">🔄 Reset View</button>
+        <button class="btn-secondary" onclick="vizEngine.renderer.fitToScreen()">📐 Fit to Screen</button>
+        <button class="btn-success" onclick="exportVisualization('png')">📸 Export PNG</button>
+        <button class="btn-success" onclick="exportVisualization('svg')">📄 Export SVG</button>
+    </div>
+
+    <div id="vizCanvas"></div>
+
+    <script src="bats-visualization-engine.js"></script>
+    <script>
+        let vizEngine;
+        const investigation = ${investigationData};
+
+        function initializeVisualization() {
+            try {
+                console.log('🎨 Initializing Canvas visualization...');
+
+                vizEngine = new BATSVisualizationEngine('vizCanvas');
+                vizEngine.loadInvestigation(investigation);
+
+                console.log('✅ Visualization initialized');
+            } catch (error) {
+                console.error('Error initializing visualization:', error);
+                alert('Failed to initialize visualization: ' + error.message);
+            }
+        }
+
+        function changeLayout(type) {
+            if (vizEngine) {
+                vizEngine.setLayout(type);
+            }
+        }
+
+        function exportVisualization(format) {
+            if (!vizEngine) return;
+
+            if (format === 'png') {
+                vizEngine.exportPNG(\`bats_visualization_\${investigation.caseId || 'export'}.png\`);
+            } else if (format === 'svg') {
+                vizEngine.exportSVG(\`bats_visualization_\${investigation.caseId || 'export'}.svg\`);
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', initializeVisualization);
+    </script>
+</body>
+</html>`;
+}
+
+// Proceed with visualization first - opens in new window
 function proceedWithVisualizationFirst() {
     closeCompletionModal();
 
-    // Switch to the flow diagram tab instead of opening popup
-    if (typeof window.switchTab === 'function') {
-        window.switchTab('flowdiagram');
-    } else {
-        // Fallback: manually switch tabs
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.remove('active');
-            tab.style.display = 'none';
-        });
-        const flowTab = document.getElementById('flowdiagram-tab');
-        if (flowTab) {
-            flowTab.classList.add('active');
-            flowTab.style.display = 'block';
-        }
+    // Generate and open visualization in new window
+    const visualizationHTML = generateVisualizationPage();
+    const newWindow = window.open('', '_blank', 'width=1400,height=900');
 
-        // Initialize visualization after tab switch
-        setTimeout(() => {
-            if (typeof initializeGraphVisualization === 'function') {
-                initializeGraphVisualization();
-            }
-        }, 100);
+    if (newWindow) {
+        newWindow.document.write(visualizationHTML);
+        newWindow.document.close();
+    } else {
+        alert('Popup blocked! Please allow popups for this site to view visualization.');
     }
 }
 

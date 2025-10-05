@@ -3,31 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 15:28)
+## Latest Commit (Auto-updated: 2025-10-05 15:46)
 
-**Commit:** 8fd24983ae5ff8fe19e9ecdbd6af4d2e63f64380
+**Commit:** c6811da9e9d0ad29b747af73b2eed7a7b049eb2a
 **Author:** Your Name
-**Message:** Bump version to force cache invalidation
+**Message:** Move flowdiagram-tab to correct location in main app container
+
+The flowdiagram-tab was placed outside the main app container at line
+17209, making it invisible to the DOM when the app was running. Moved
+it to line 1982, right after victims-tab, where all other main tabs
+are located (batsinfo-tab, casedetails-tab, victims-tab).
+
+This fixes the "Visualization container not found" error that occurred
+when loading investigations and clicking "Visualize Flow".
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 49 +++++++++++++------------------------------------
- index.html |  2 +-
- 2 files changed, 14 insertions(+), 37 deletions(-)
+ index.html | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8fd2498 Bump version to force cache invalidation (0 seconds ago)
-- 3136165 Update CLAUDE.md with latest commit info (10 minutes ago)
-- 0d8a323 Fix root cause of visualization tab not activating properly (11 minutes ago)
-- 0b39905 Fix infinite loop in visualization initialization - add retry limit (12 minutes ago)
-- 9ca63d7 Fix file loading navigation and visualization tab timing issues (16 minutes ago)
-- 359623d Update CLAUDE.md with latest commit info (19 minutes ago)
-- 1087c48 Replace visualization system with proper BATS flow diagram engine (20 minutes ago)
-- 17f898e Fix visualization bugs: add missing writeoffs/swaps arrays to victim column and add safety check (26 minutes ago)
-- 4c95723 Fix visualization canvas sizing and add missing flowdiagram tab (37 minutes ago)
-- f5529fb Enable flow diagram visualization in training page (6 hours ago)
+- c6811da Move flowdiagram-tab to correct location in main app container (0 seconds ago)
+- b5aee22 Strengthen cache-busting headers for immediate updates (6 minutes ago)
+- 4a9b6ef Add _headers file to force no-cache (11 minutes ago)
+- 99a759b Fix visualization from file load modal - close modal before switching tabs (13 minutes ago)
+- 8fd2498 Bump version to force cache invalidation (18 minutes ago)
+- 3136165 Update CLAUDE.md with latest commit info (27 minutes ago)
+- 0d8a323 Fix root cause of visualization tab not activating properly (29 minutes ago)
+- 0b39905 Fix infinite loop in visualization initialization - add retry limit (30 minutes ago)
+- 9ca63d7 Fix file loading navigation and visualization tab timing issues (33 minutes ago)
+- 359623d Update CLAUDE.md with latest commit info (36 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
