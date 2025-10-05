@@ -3,48 +3,42 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-04 21:57)
+## Latest Commit (Auto-updated: 2025-10-04 22:02)
 
-**Commit:** 2363b87484dd4d43970e035d21715ebb5426e732
+**Commit:** ff05a2302d062049b81f7729065352f344af83d9
 **Author:** Your Name
-**Message:** Implement modern Canvas-based visualization engine
+**Message:** Simplify visualization to use modern engine exclusively
 
-Major overhaul of the visualization system with modular architecture:
+MAJOR CLEANUP:
+- Removed 3000+ lines of old SVG-based visualization code
+- Deleted all fallback visualization functions (DAG, simple flow, text-based)
+- Removed toggle/switching code between old and new engines
+- Cleaned up window function exports
 
-NEW FEATURES:
-- Canvas-based rendering for superior performance (60fps animations)
-- Multiple layout algorithms (hierarchical, force-directed, tree)
-- Smooth pan/zoom with mouse and touch support
-- Real-time interaction layer with node hover/click detection
-- Export system (PNG, SVG, JSON formats)
-- Progressive rendering with WebWorker support structure
-- Theme customization support
-- Minimap navigation capability
+SIMPLIFIED IMPLEMENTATION:
+- Modern Canvas-based engine is now the only visualization system
+- Direct integration without fallbacks or toggles
+- Clean, minimal API surface:
+  - initializeGraphVisualization()
+  - exportVisualization(format)
+  - changeLayout(type)
+- Simplified error handling with single error message function
 
-ARCHITECTURE IMPROVEMENTS:
-- Separated concerns: DataModel, Renderer, Interactions, Layouts
-- Immutable graph data structure with computed properties
-- Double buffering for flicker-free rendering
-- Camera system for world/screen coordinate transformation
-- Event-driven architecture with custom events
-- Fallback system preserves existing visualization if new engine fails
+BENEFITS:
+- Reduced code complexity by ~80%
+- Single visualization path makes debugging easier
+- No more confusion about which engine is running
+- Faster page load without redundant code
+- Cleaner maintenance going forward
 
-USER EXPERIENCE:
-- Toggle button to switch between classic and modern engines
-- Layout switcher for different graph perspectives
-- Export buttons for all major formats
-- Settings option to set preferred engine
-- Automatic fallback to classic view if modern engine fails
-- Preserved all existing functionality
+The modern engine provides:
+- Superior performance with Canvas rendering
+- Smooth zoom/pan interactions
+- Multiple layout algorithms
+- Professional export options
+- Better memory management
 
-PERFORMANCE:
-- Canvas rendering is 10x faster than SVG for large graphs
-- Efficient culling of off-screen nodes
-- Optimized edge rendering with quadratic curves
-- Adaptive quality based on zoom level
-
-The new engine is optional and users can toggle between old and new systems.
-All existing visualizations continue to work as before.
+All visualization features work through the modern engine now.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -52,24 +46,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                    |   40 +-
- bats-visualization-engine.js | 1029 ++++++++++++++++++++++++++++++++++++++++++
- index.html                   |  197 ++++++++
- 3 files changed, 1250 insertions(+), 16 deletions(-)
+ CLAUDE.md  |   71 +-
+ index.html | 3050 ++----------------------------------------------------------
+ 2 files changed, 125 insertions(+), 2996 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2363b87 Implement modern Canvas-based visualization engine (0 seconds ago)
-- d5ec88f Fix graph visualization with robust fallback system (8 minutes ago)
-- 8aca65b Fix terminal wallet attribution display in completion modal (13 minutes ago)
+- ff05a23 Simplify visualization to use modern engine exclusively (0 seconds ago)
+- 2363b87 Implement modern Canvas-based visualization engine (5 minutes ago)
+- d5ec88f Fix graph visualization with robust fallback system (13 minutes ago)
+- 8aca65b Fix terminal wallet attribution display in completion modal (18 minutes ago)
 - 19c6ed1 Fix critical graph visualization crash and add data protection (8 hours ago)
-- cbca4eb Update CLAUDE.md with latest changes (8 hours ago)
-- 854140a Standardize workflow completion for all closure types (8 hours ago)
+- cbca4eb Update CLAUDE.md with latest changes (9 hours ago)
+- 854140a Standardize workflow completion for all closure types (9 hours ago)
 - 5524d16 Redesign audit trail with hierarchical structure and proper conversion tracking (9 hours ago)
 - 1bfe8c9 Update CLAUDE.md with latest changes (11 hours ago)
 - 1dcea68 Remove incorrect auto-write-off of bridge/swap outputs (11 hours ago)
-- 7e5d62f Update CLAUDE.md with latest changes (11 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
