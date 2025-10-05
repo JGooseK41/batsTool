@@ -312,7 +312,7 @@ ${vizEngineCode}
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = \`BATS_\${investigation.caseId || 'Investigation'}_Standalone.html\`;
+            link.download = `BATS_${investigation.caseId || 'Investigation'}_Standalone.html`;
             link.click();
             URL.revokeObjectURL(url);
 
@@ -362,10 +362,10 @@ ${vizEngineCode}
             // Create PDF using simple HTML-to-print approach
             const printWindow = window.open('', '_blank');
 
-            const pdfHTML = \`<!DOCTYPE html>
+            const pdfHTML = `<!DOCTYPE html>
 <html>
 <head>
-    <title>B.A.T.S. Investigation Report - \${investigation.caseId || 'Untitled'}</title>
+    <title>B.A.T.S. Investigation Report - ${investigation.caseId || 'Untitled'}</title>
     <style>
         @media print {
             @page { size: landscape; margin: 1cm; }
@@ -394,29 +394,29 @@ ${vizEngineCode}
 
     <div class="header">
         <h1><span>B.A.T.S.</span> Investigation Report</h1>
-        <p>Block Audit Tracing Standard - Case ID: \${investigation.caseId || 'N/A'}</p>
-        <p>Generated: \${new Date().toLocaleString()}</p>
+        <p>Block Audit Tracing Standard - Case ID: ${investigation.caseId || 'N/A'}</p>
+        <p>Generated: ${new Date().toLocaleString()}</p>
     </div>
 
     <div class="info-grid">
         <div class="info-box">
             <h3>📊 Investigation Summary</h3>
-            <p><strong>Case ID:</strong> \${investigation.caseId || 'N/A'}</p>
-            <p><strong>Total Victims:</strong> \${investigation.victims?.length || 0}</p>
-            <p><strong>Total Hops:</strong> \${investigation.hops?.length || 0}</p>
-            <p><strong>Status:</strong> \${investigation.isCompleted ? 'Completed' : 'In Progress'}</p>
+            <p><strong>Case ID:</strong> ${investigation.caseId || 'N/A'}</p>
+            <p><strong>Total Victims:</strong> ${investigation.victims?.length || 0}</p>
+            <p><strong>Total Hops:</strong> ${investigation.hops?.length || 0}</p>
+            <p><strong>Status:</strong> ${investigation.isCompleted ? 'Completed' : 'In Progress'}</p>
         </div>
         <div class="info-box">
             <h3>💰 Financial Overview</h3>
             <p><strong>Root Total:</strong> Calculating...</p>
             <p><strong>Currencies Traced:</strong> Multiple</p>
-            <p><strong>Export Date:</strong> \${new Date().toLocaleDateString()}</p>
+            <p><strong>Export Date:</strong> ${new Date().toLocaleDateString()}</p>
         </div>
     </div>
 
     <div class="visualization">
         <h2 style="color: #2c3e50; margin-bottom: 15px;">Investigation Flow Visualization</h2>
-        <img src="\${visualizationImage}" alt="B.A.T.S. Visualization">
+        <img src="${visualizationImage}" alt="B.A.T.S. Visualization">
     </div>
 
     <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #ecf0f1; text-align: center; color: #7f8c8d; font-size: 12px;">
@@ -424,7 +424,7 @@ ${vizEngineCode}
         <p>🤖 Powered by Claude Code</p>
     </div>
 </body>
-</html>\`;
+</html>`;
 
             printWindow.document.write(pdfHTML);
             printWindow.document.close();
