@@ -137,8 +137,23 @@ class CanvasRenderer {
 
     resize() {
         const container = this.canvas.parentElement || document.body;
-        this.canvas.width = container.clientWidth;
-        this.canvas.height = container.clientHeight;
+        let width = container.clientWidth;
+        let height = container.clientHeight;
+
+        // Fallback if container has no size yet
+        if (width === 0 || height === 0) {
+            width = window.innerWidth - 40;
+            height = window.innerHeight - 200;
+        }
+
+        // Ensure minimum size
+        width = Math.max(width, 800);
+        height = Math.max(height, 600);
+
+        this.canvas.width = width;
+        this.canvas.height = height;
+
+        console.log(`Canvas resized to: ${width}x${height}`);
 
         if (this.offscreenCanvas) {
             this.offscreenCanvas.width = this.canvas.width;
@@ -1002,6 +1017,9 @@ class BATSVisualizationEngine {
 
         // Render
         console.log('Rendering graph...');
+        console.log('Canvas size:', this.canvas.width, 'x', this.canvas.height);
+        console.log('Canvas style:', this.canvas.style.width, 'x', this.canvas.style.height);
+        console.log('Container size:', this.container.clientWidth, 'x', this.container.clientHeight);
         this.render();
 
         // Fit to screen
