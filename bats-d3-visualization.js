@@ -1377,6 +1377,9 @@ class BATSVisualizationD3 {
         // Transform BATS data into Sankey format
         const sankeyData = this.transformToSankeyFormat();
 
+        console.log('📊 Sankey nodes:', sankeyData.nodes);
+        console.log('📊 Sankey links:', sankeyData.links);
+
         if (!sankeyData || sankeyData.nodes.length === 0) {
             console.error('No data available for Sankey diagram');
             return;
