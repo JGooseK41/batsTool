@@ -185,7 +185,8 @@ class BATSVisualizationD3 {
                                 target: swapNodeId,
                                 label: entry.notation || '',
                                 amount: parseFloat(entry.amount || 0),
-                                currency: entry.currency
+                                currency: entry.currency,
+                                entryData: entry  // Store full entry for details
                             });
                         }
                     }
@@ -216,7 +217,8 @@ class BATSVisualizationD3 {
                         target: outputNodeId,
                         label: `${outputNode.amount.toFixed(2)} ${outputNode.currency}`,
                         amount: outputNode.amount,
-                        currency: outputNode.currency
+                        currency: outputNode.currency,
+                        entryData: entry  // Store full entry for details
                     });
 
                     // Update ART with output currency
@@ -258,7 +260,8 @@ class BATSVisualizationD3 {
                                 target: nodeId,
                                 label: entry.notation || '',
                                 amount: node.amount,
-                                currency: node.currency
+                                currency: node.currency,
+                                entryData: entry  // Store full entry for details
                             });
                         }
                     }
@@ -522,7 +525,9 @@ class BATSVisualizationD3 {
 
         const edgeEnter = edges.enter()
             .append('g')
-            .attr('class', 'edge');
+            .attr('class', 'edge')
+            .style('cursor', 'pointer')
+            .on('click', (event, d) => this.showEdgeDetails(event, d));
 
         // Draw curved path
         edgeEnter.append('path')
@@ -583,7 +588,7 @@ class BATSVisualizationD3 {
             .attr('class', 'node')
             .attr('transform', d => `translate(${d.x}, ${d.y})`)
             .style('cursor', 'pointer')
-            .on('click', (event, d) => this.editNodeLabel(event, d));
+            .on('click', (event, d) => this.showNodeDetails(event, d));
 
         // Node circle
         nodeEnter.append('circle')
@@ -634,12 +639,53 @@ class BATSVisualizationD3 {
             .text(d => `${d.amount.toFixed(2)} ${d.currency}`);
     }
 
-    editNodeLabel(event, node) {
-        const newLabel = prompt(`Edit label for ${node.id}:`, node.walletLabel);
-        if (newLabel !== null && newLabel.trim() !== '') {
-            node.walletLabel = newLabel.trim();
-            this.render(); // Re-render to show updated label
+    showNodeDetails(event, node) {
+        const details = `
+Wallet ID: ${node.walletId}
+Thread Notation: ${node.label}
+Full Address: ${node.wallet}
+Amount: ${node.amount.toFixed(6)} ${node.currency}
+Type: ${node.type.charAt(0).toUpperCase() + node.type.slice(1)}
+${node.isSwap ? '\nSwap/Conversion Node' : ''}
+${node.isTerminal ? '\nTerminal Exchange' : ''}
+
+Click OK to copy full address to clipboard.
+        `.trim();
+
+        if (confirm(details)) {
+            navigator.clipboard.writeText(node.wallet);
+            alert('Address copied to clipboard!');
         }
+    }
+
+    showEdgeDetails(event, edge) {
+        if (!edge.entryData) {
+            alert('No entry data available for this edge.');
+            return;
+        }
+
+        const entry = edge.entryData;
+        const details = `
+═══════════════════════════════════
+THREAD DETAILS
+═══════════════════════════════════
+Notation: ${entry.notation || 'N/A'}
+Amount: ${edge.amount.toFixed(6)} ${edge.currency}
+
+Source Thread: ${entry.sourceThreadId || 'N/A'}
+Destination: ${entry.destinationWallet || 'N/A'}
+${entry.transactionHash ? `\nTx Hash: ${entry.transactionHash}` : ''}
+${entry.timestamp ? `\nTimestamp: ${entry.timestamp}` : ''}
+
+Entry Type: ${entry.entryType || 'trace'}
+${entry.walletType ? `Wallet Type: ${entry.walletType}` : ''}
+
+${entry.notes ? `\n───────────────────────────────────\nNOTES:\n${entry.notes}\n───────────────────────────────────` : ''}
+
+${entry.swapDetails ? `\n───────────────────────────────────\nSWAP DETAILS:\nPlatform: ${entry.swapPlatform || entry.swapDetails.platform || 'Unknown'}\nInput: ${entry.amount} ${entry.currency}\nOutput: ${entry.swapDetails.outputAmount || entry.outputAmount} ${entry.swapDetails.outputCurrency}\n───────────────────────────────────` : ''}
+        `.trim();
+
+        alert(details);
     }
 
     renderSankey() {
