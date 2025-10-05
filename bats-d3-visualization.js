@@ -716,12 +716,15 @@ class BATSVisualizationD3 {
             hopSpace.rightItems = rightItems;
         });
 
+        // Position reconciliation box near bottom of viewport (dynamic based on height)
+        const reconY = this.config.height - 200;
+
         // Main reconciliation box
         reconGroup.append('rect')
             .attr('x', d => d.leftX + 10)
-            .attr('y', 1350)
+            .attr('y', reconY)
             .attr('width', d => d.width - 20)
-            .attr('height', 120)
+            .attr('height', 150)
             .attr('fill', '#ecf0f1')
             .attr('stroke', '#2c3e50')
             .attr('stroke-width', 2)
@@ -730,28 +733,28 @@ class BATSVisualizationD3 {
         // Title
         reconGroup.append('text')
             .attr('x', d => d.x)
-            .attr('y', 1368)
+            .attr('y', reconY + 18)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '12px')
+            .attr('font-size', '14px')
             .attr('font-weight', 'bold')
             .attr('fill', '#2c3e50')
-            .text('RECONCILIATION');
+            .text('HOP RECONCILIATION');
 
         // Divider line (vertical center)
         reconGroup.append('line')
             .attr('x1', d => d.x)
-            .attr('y1', 1375)
+            .attr('y1', reconY + 25)
             .attr('x2', d => d.x)
-            .attr('y2', 1465)
+            .attr('y2', reconY + 145)
             .attr('stroke', '#34495e')
             .attr('stroke-width', 2);
 
         // Left header (TERMINATED)
         reconGroup.append('text')
             .attr('x', d => d.leftX + (d.width / 4))
-            .attr('y', 1390)
+            .attr('y', reconY + 40)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '10px')
+            .attr('font-size', '11px')
             .attr('font-weight', 'bold')
             .attr('fill', '#e74c3c')
             .text('TERMINATED');
@@ -759,19 +762,20 @@ class BATSVisualizationD3 {
         // Right header (CONTINUING)
         reconGroup.append('text')
             .attr('x', d => d.x + (d.width / 4))
-            .attr('y', 1390)
+            .attr('y', reconY + 40)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '10px')
+            .attr('font-size', '11px')
             .attr('font-weight', 'bold')
             .attr('fill', '#27ae60')
             .text('CONTINUING');
 
         // Left items (with visual indicators)
+        const self = this;
         reconGroup.each(function(d, i) {
             const group = d3.select(this);
             const leftItems = d.leftItems || [];
-            const startY = 1405;
-            const lineHeight = 12;
+            const startY = reconY + 55;
+            const lineHeight = 16;
 
             leftItems.slice(0, 3).forEach((item, idx) => {
                 // Visual indicator
@@ -811,8 +815,8 @@ class BATSVisualizationD3 {
         reconGroup.each(function(d, i) {
             const group = d3.select(this);
             const rightItems = d.rightItems || [];
-            const startY = 1405;
-            const lineHeight = 12;
+            const startY = reconY + 55;
+            const lineHeight = 16;
 
             rightItems.slice(0, 3).forEach((item, idx) => {
                 // Visual indicator

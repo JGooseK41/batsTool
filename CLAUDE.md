@@ -3,17 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 17:37)
+## Latest Commit (Auto-updated: 2025-10-05 17:40)
 
-**Commit:** 21c7c4c3a06a835920604eed59e969c4b99614fb
+**Commit:** 1f0a947de3f581c19ce802b5579c2c36863d1765
 **Author:** Your Name
-**Message:** Fix brown wallet ID assignment to reuse same ID for same address
+**Message:** Fix zoom behavior to keep columns and wallets in sync
 
-- Track wallet addresses to reuse same ID when same wallet appears multiple times
-- Detect internal swaps (same wallet doing conversion) and create single node
-- External swaps still create DEX node + output node as before
-- Prevents brown-1 → brown-2 for same wallet doing multiple conversions
-- All threads to same address now show same wallet ID (e.g., all → Br-1)
+- Move backgroundGroup back into zoomable mainGroup
+- Columns and wallet network now zoom together in unison
+- Maintains proper scale relationship during zoom/pan
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -21,23 +19,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                |  41 +++++-----
- bats-d3-visualization.js | 204 +++++++++++++++++++++++++++++++----------------
- 2 files changed, 156 insertions(+), 89 deletions(-)
+ CLAUDE.md                | 42 +++++++++++++++++++++---------------------
+ bats-d3-visualization.js | 14 ++++++++------
+ 2 files changed, 29 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 21c7c4c Fix brown wallet ID assignment to reuse same ID for same address (0 seconds ago)
-- 635460d Fix column backgrounds and drag constraints for visualization (4 minutes ago)
-- 98a9208 Use string concatenation instead of template literals for script tags (10 minutes ago)
-- 5d7e9b1 Update CLAUDE.md with latest commit info (12 minutes ago)
-- b17c965 Fix template literal script tag parsing in standalone HTML export (13 minutes ago)
-- a121318 Consolidate export buttons into dropdown menu and add Save Changes button (17 minutes ago)
-- c6c0ef5 Fix script tag parsing in standalone HTML export template (20 minutes ago)
-- 40a7058 Update CLAUDE.md with latest commit info (25 minutes ago)
-- 9716164 Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views (26 minutes ago)
-- bcd9d58 Fix template literal syntax errors in visualization.html (30 minutes ago)
+- 1f0a947 Fix zoom behavior to keep columns and wallets in sync (0 seconds ago)
+- 21c7c4c Fix brown wallet ID assignment to reuse same ID for same address (3 minutes ago)
+- 635460d Fix column backgrounds and drag constraints for visualization (7 minutes ago)
+- 98a9208 Use string concatenation instead of template literals for script tags (13 minutes ago)
+- 5d7e9b1 Update CLAUDE.md with latest commit info (15 minutes ago)
+- b17c965 Fix template literal script tag parsing in standalone HTML export (16 minutes ago)
+- a121318 Consolidate export buttons into dropdown menu and add Save Changes button (20 minutes ago)
+- c6c0ef5 Fix script tag parsing in standalone HTML export template (23 minutes ago)
+- 40a7058 Update CLAUDE.md with latest commit info (28 minutes ago)
+- 9716164 Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views (29 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
