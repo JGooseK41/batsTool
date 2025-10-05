@@ -3,35 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 17:20)
+## Latest Commit (Auto-updated: 2025-10-05 17:24)
 
-**Commit:** a121318c89a5873ab08bcb9f076e55e5da90af78
+**Commit:** b17c965cdf9201cdbe27d0207cf6315b0d408617
 **Author:** Your Name
-**Message:** Consolidate export buttons into dropdown menu and add Save Changes button
+**Message:** Fix template literal script tag parsing in standalone HTML export
 
-**UI Improvements:**
-- Combined 4 export buttons into single "📤 Export ▼" dropdown menu
-- Options: PNG, SVG, Standalone HTML, PDF Report
-- Cleaner toolbar with less clutter
-
-**New Feature: Save Changes Button (💾)**
-- Saves current node positions after manual dragging
-- Saves any label modifications
-- Updates investigation data in parent window
-- Fallback: Downloads updated JSON if no parent window
-
-**Dropdown Styling:**
-- Hover-activated dropdown menu
-- Clean white background with shadow
-- Smooth transitions
-- Proper z-index for overlay
-- Mobile-friendly design
-
-Button color coding:
-- Blue: Layout controls
-- Gray: View controls
-- Orange: Save (warning/important)
-- Green: Export
+- Replace string concatenation method with placeholder replacement
+- Use SCRIPT_END placeholder that gets replaced with </script> after template creation
+- Prevents HTML parser from prematurely closing script tags in template literal
+- Resolves syntax errors at lines 266 and 348
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -39,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md          | 43 +++++++++++++++++---------
- visualization.html | 90 +++++++++++++++++++++++++++++++++++++++++++++++++++---
- 2 files changed, 114 insertions(+), 19 deletions(-)
+ CLAUDE.md          | 64 ++++++++++++++++++++++++++++++++++--------------------
+ visualization.html | 12 +++++-----
+ 2 files changed, 46 insertions(+), 30 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a121318 Consolidate export buttons into dropdown menu and add Save Changes button (0 seconds ago)
-- c6c0ef5 Fix script tag parsing in standalone HTML export template (3 minutes ago)
-- 40a7058 Update CLAUDE.md with latest commit info (7 minutes ago)
-- 9716164 Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views (9 minutes ago)
-- bcd9d58 Fix template literal syntax errors in visualization.html (12 minutes ago)
-- 6a5c9af Update CLAUDE.md with latest commit info (15 minutes ago)
-- 696d416 Add standalone HTML and PDF export options (16 minutes ago)
-- 6585a9d Update CLAUDE.md with latest commit info (19 minutes ago)
-- bf1cfde Add drag-and-drop nodes and enhanced modal popups (21 minutes ago)
-- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (25 minutes ago)
+- b17c965 Fix template literal script tag parsing in standalone HTML export (0 seconds ago)
+- a121318 Consolidate export buttons into dropdown menu and add Save Changes button (4 minutes ago)
+- c6c0ef5 Fix script tag parsing in standalone HTML export template (7 minutes ago)
+- 40a7058 Update CLAUDE.md with latest commit info (11 minutes ago)
+- 9716164 Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views (13 minutes ago)
+- bcd9d58 Fix template literal syntax errors in visualization.html (16 minutes ago)
+- 6a5c9af Update CLAUDE.md with latest commit info (19 minutes ago)
+- 696d416 Add standalone HTML and PDF export options (21 minutes ago)
+- 6585a9d Update CLAUDE.md with latest commit info (24 minutes ago)
+- bf1cfde Add drag-and-drop nodes and enhanced modal popups (25 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
