@@ -3,15 +3,32 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 17:08)
+## Latest Commit (Auto-updated: 2025-10-05 17:11)
 
-**Commit:** bcd9d5834054557424081e8506ef3981e1b16896
+**Commit:** 971616458499ecfc5dc0d07c41f2f7af6649cb91
 **Author:** Your Name
-**Message:** Fix template literal syntax errors in visualization.html
+**Message:** Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views
 
-- Removed escaped backticks that were causing syntax errors
-- Changed \` to regular backticks for template literals
-- Fixes 500 server error on deployment
+**New Feature: Rotate View Button (🔄)**
+- Toggle between horizontal and vertical graph orientation
+- Horizontal: Standard left-to-right flow (victims → hops → terminals)
+- Vertical: Top-to-bottom flow for different viewing preference
+
+**Implementation:**
+- Added orientation state tracking ('horizontal' or 'vertical')
+- Swaps width/height dimensions when switching
+- Recalculates all node positions for chosen orientation
+- Horizontal: X = column position, Y = node spacing
+- Vertical: Y = column position, X = node spacing
+- Swap nodes repositioned correctly in both orientations
+
+**Technical Details:**
+- toggleOrientation() method swaps dimensions and re-renders
+- renderHopColumns() handles both orientations with separate logic
+- SVG viewBox updates to match new dimensions
+- Preserves all interactivity (drag, zoom, pan, click)
+
+Button added to visualization toolbar between layouts and view controls.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -19,23 +36,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md          | 55 +++++++++++++++---------------------------------------
- visualization.html | 24 ++++++++++++------------
- 2 files changed, 27 insertions(+), 52 deletions(-)
+ CLAUDE.md                |  39 +++++++++-------
+ bats-d3-visualization.js | 113 +++++++++++++++++++++++++++++++++--------------
+ visualization.html       |   9 +++-
+ 3 files changed, 113 insertions(+), 48 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bcd9d58 Fix template literal syntax errors in visualization.html (0 seconds ago)
-- 6a5c9af Update CLAUDE.md with latest commit info (3 minutes ago)
-- 696d416 Add standalone HTML and PDF export options (4 minutes ago)
-- 6585a9d Update CLAUDE.md with latest commit info (7 minutes ago)
-- bf1cfde Add drag-and-drop nodes and enhanced modal popups (9 minutes ago)
-- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (13 minutes ago)
-- 4293663 Fix amount parsing error in reconciliation display (15 minutes ago)
-- 3b9b6b0 Update CLAUDE.md with latest commit info (17 minutes ago)
-- 5ba1cdd Implement hop column T-account reconciliation system (18 minutes ago)
-- 2dfd7ff Implement complete Sankey diagram visualization for BATS (36 minutes ago)
+- 9716164 Add orientation toggle: horizontal (left-right) and vertical (top-bottom) views (0 seconds ago)
+- bcd9d58 Fix template literal syntax errors in visualization.html (3 minutes ago)
+- 6a5c9af Update CLAUDE.md with latest commit info (6 minutes ago)
+- 696d416 Add standalone HTML and PDF export options (8 minutes ago)
+- 6585a9d Update CLAUDE.md with latest commit info (11 minutes ago)
+- bf1cfde Add drag-and-drop nodes and enhanced modal popups (12 minutes ago)
+- bb5dee7 Fix layer ordering: nodes and edges now visible above backgrounds (16 minutes ago)
+- 4293663 Fix amount parsing error in reconciliation display (18 minutes ago)
+- 3b9b6b0 Update CLAUDE.md with latest commit info (20 minutes ago)
+- 5ba1cdd Implement hop column T-account reconciliation system (21 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
