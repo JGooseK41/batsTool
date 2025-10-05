@@ -122,10 +122,10 @@ class BATSVisualizationD3 {
         // Map to track wallet addresses to IDs (to reuse same ID for same wallet)
         this.walletAddressMap = new Map();
 
-        // Build victim column (Hop 0)
+        // Build red wallet column (Hop 0) - first wallets under criminal control
         const victimColumn = {
             hopNumber: 0,
-            title: 'VICTIMS',
+            title: 'RED WALLETS',
             nodes: [],
             artBefore: {},
             artAfter: {},

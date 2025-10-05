@@ -3,33 +3,26 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 19:37)
+## Latest Commit (Auto-updated: 2025-10-05 19:48)
 
-**Commit:** 50178753430e5705adbc7d71ea04a8ee1a0aa5d2
+**Commit:** c4b9a9c457f6d1308c2695d34c1c7d3d8b4d4680
 **Author:** Your Name
-**Message:** Fix BATS data compatibility and bridge thread tracking
+**Message:** Fix hop entry processing to skip misplaced entries
 
-Data Normalization:
-- Added field mapping for BATS app format (toWallet → destinationWallet)
-- Map toWalletType → walletType for proper color coding
-- Extract wallet labels from notes field
-- Map isTerminalWallet → isTerminal for purple wallet display
+Issue: BATS app stores some Hop 2 entries in Hop 1's entries array
+       with hopNumber: 2, causing entries to appear in wrong hop columns
 
-Bridge Thread Tracking:
-- Store bridge output internal IDs from availableThreads
-- Updated findSourceNode() to handle bridge_* internal IDs
-- Search brown wallet outputThreads for matching internal IDs
-- Properly link bridge outputs to next hop entries
+Fix: Skip entries where entry.hopNumber !== hop.hopNumber
+     This ensures each entry is only processed in its correct hop
 
-Bridge Amount Handling:
-- Use bridgeDetails.destinationAmount for output amounts
-- Use bridgeDetails.destinationAsset for output currency
-- Fallback to swapDetails for non-bridge conversions
+Example from Miami Assist:
+- Hop 1 entries array contained Entry 8 with hopNumber: 2 (KuCoin terminal)
+- This was being processed as Hop 1, creating incorrect connections
+- Now properly skipped and only processed when Hop 2 is rendered
 
-Issues Fixed:
-- Terminal wallets now display (purple nodes)
-- Bridge outputs properly connect to next hop
-- No more threads bypassing hops
+Result:
+- P-2 (GluexRouter) now correctly receives from B-1, not Brown-1
+- P-1 (KuCoin) will now correctly receive from Brown-1 bridge outputs
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -37,25 +30,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                             |   66 +-
- Miami Assist (6).bats                 | 1252 +++++++++++++++++++++++++++++++++
- Miami Assist (6).bats:Zone.Identifier |    3 +
- bats-d3-visualization.js              |   56 +-
- 4 files changed, 1339 insertions(+), 38 deletions(-)
+ CLAUDE.md                | 70 +++++++++++++++++++++++++++---------------------
+ bats-d3-visualization.js |  5 ++++
+ 2 files changed, 45 insertions(+), 30 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5017875 Fix BATS data compatibility and bridge thread tracking (0 seconds ago)
-- fce015c Fix drag event handlers causing underlay movement (11 minutes ago)
-- f04b421 Fix brown wallet consolidation and add multi-thread edge grouping (15 minutes ago)
-- 8c49022 Fix Generate Reports button and add graph/reports navigation (25 minutes ago)
-- 28958bb Update CLAUDE.md with latest commit info (33 minutes ago)
-- a25501b Update CLAUDE.md with latest commit info (34 minutes ago)
-- 06715f7 Add note functionality to edges and wallets with right-click and hover (36 minutes ago)
-- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (39 minutes ago)
-- 9f94636 Fix thread connections from brown wallets to next hop (44 minutes ago)
-- ca4dc39 Update CLAUDE.md with latest commit info (45 minutes ago)
+- c4b9a9c Fix hop entry processing to skip misplaced entries (1 second ago)
+- 5017875 Fix BATS data compatibility and bridge thread tracking (11 minutes ago)
+- fce015c Fix drag event handlers causing underlay movement (23 minutes ago)
+- f04b421 Fix brown wallet consolidation and add multi-thread edge grouping (26 minutes ago)
+- 8c49022 Fix Generate Reports button and add graph/reports navigation (36 minutes ago)
+- 28958bb Update CLAUDE.md with latest commit info (44 minutes ago)
+- a25501b Update CLAUDE.md with latest commit info (45 minutes ago)
+- 06715f7 Add note functionality to edges and wallets with right-click and hover (47 minutes ago)
+- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (50 minutes ago)
+- 9f94636 Fix thread connections from brown wallets to next hop (55 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
