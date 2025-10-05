@@ -12,15 +12,15 @@ class BATSVisualizationD3 {
 
         // Configuration
         this.config = {
-            width: 2400,
-            height: 1600,
-            margin: { top: 80, right: 50, bottom: 80, left: 50 },
-            walletColumnWidth: 200,  // Width of wallet columns
-            hopSpaceWidth: 300,      // Space between wallet columns (for edges/flow)
-            nodeRadius: 35,
-            verticalSpacing: 100,
-            artBoxHeight: 70,
-            artBoxWidth: 280,
+            width: 3000,
+            height: 1800,
+            margin: { top: 100, right: 80, bottom: 100, left: 80 },
+            walletColumnWidth: 220,  // Width of wallet columns
+            hopSpaceWidth: 400,      // Space between wallet columns (for edges/flow)
+            nodeRadius: 40,
+            verticalSpacing: 140,    // Increased from 100 to prevent overlap
+            artBoxHeight: 80,
+            artBoxWidth: 300,
             edgeCurvature: 0.4,
             colors: {
                 red: '#e74c3c',      // Victim
@@ -85,6 +85,18 @@ class BATSVisualizationD3 {
         this.hopColumns = [];
         this.nodeMap = new Map();
 
+        // Counters for wallet IDs by color type
+        this.walletCounters = {
+            red: 0,      // R-1, R-2
+            black: 0,    // B-1, B-2
+            purple: 0,   // P-1, P-2
+            brown: 0,    // Br-1, Br-2
+            gray: 0,     // G-1, G-2
+            blue: 0,     // BL-1, BL-2
+            orange: 0,   // O-1, O-2
+            green: 0     // GR-1, GR-2
+        };
+
         // Build victim column (Hop 0)
         const victimColumn = {
             hopNumber: 0,
@@ -99,12 +111,14 @@ class BATSVisualizationD3 {
         this.investigation.victims.forEach((victim, vIndex) => {
             victim.transactions.forEach((tx, tIndex) => {
                 const nodeId = `V${victim.id}-T${tx.id}`;
+                const colorType = 'red';
                 const node = {
                     id: nodeId,
                     label: `V${victim.id}-T${tx.id}`,
                     wallet: tx.receivingWallet,
                     walletLabel: tx.walletLabel || this.shortenAddress(tx.receivingWallet),
-                    type: 'red',
+                    walletId: this.generateWalletId(colorType),
+                    type: colorType,
                     amount: parseFloat(tx.amount),
                     currency: tx.currency === 'CUSTOM' ? tx.customCurrency : tx.currency,
                     column: 0,
@@ -144,12 +158,14 @@ class BATSVisualizationD3 {
                 // Handle swaps/conversions - create intermediate DEX node in hop space
                 if (entry.entryType === 'swap' || entry.walletType === 'brown' || entry.isBridge) {
                     const swapNodeId = `H${hop.hopNumber}-SWAP${entryIndex}`;
+                    const colorType = 'brown';
                     const swapNode = {
                         id: swapNodeId,
                         label: entry.swapPlatform || 'DEX',
                         wallet: entry.destinationWallet || 'Swap Contract',
                         walletLabel: entry.swapPlatform || 'Conversion',
-                        type: 'brown',
+                        walletId: this.generateWalletId(colorType),
+                        type: colorType,
                         amount: parseFloat(entry.amount || 0),
                         currency: entry.currency,
                         column: hopIndex + 0.5,  // Position in hop space (between columns)
@@ -176,12 +192,14 @@ class BATSVisualizationD3 {
 
                     // Create output node in destination column
                     const outputNodeId = `H${hop.hopNumber}-E${entryIndex}`;
+                    const outputColorType = entry.toWalletType || 'black';
                     const outputNode = {
                         id: outputNodeId,
                         label: entry.notation || outputNodeId,
                         wallet: entry.destinationWallet,
                         walletLabel: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
-                        type: entry.toWalletType || 'black',
+                        walletId: this.generateWalletId(outputColorType),
+                        type: outputColorType,
                         amount: entry.swapDetails ? parseFloat(entry.swapDetails.outputAmount || entry.outputAmount || 0) : parseFloat(entry.amount || 0),
                         currency: entry.swapDetails ? entry.swapDetails.outputCurrency : entry.currency,
                         column: hopIndex + 1,
@@ -208,12 +226,14 @@ class BATSVisualizationD3 {
                 } else {
                     // Regular trace entry
                     const nodeId = `H${hop.hopNumber}-E${entryIndex}`;
+                    const colorType = entry.walletType || 'black';
                     const node = {
                         id: nodeId,
                         label: entry.notation || nodeId,
                         wallet: entry.destinationWallet,
                         walletLabel: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
-                        type: entry.walletType || 'black',
+                        walletId: this.generateWalletId(colorType),
+                        type: colorType,
                         amount: parseFloat(entry.amount || 0),
                         currency: entry.currency,
                         column: hopIndex + 1,
@@ -288,6 +308,26 @@ class BATSVisualizationD3 {
         if (!address) return '';
         if (address.length <= 20) return address;
         return address.substring(0, 10) + '...' + address.substring(address.length - 8);
+    }
+
+    generateWalletId(colorType) {
+        // Increment counter for this color type
+        this.walletCounters[colorType]++;
+        const count = this.walletCounters[colorType];
+
+        // Generate prefix based on color
+        const prefixes = {
+            red: 'R',
+            black: 'B',
+            purple: 'P',
+            brown: 'Br',
+            gray: 'G',
+            blue: 'BL',
+            orange: 'O',
+            green: 'GR'
+        };
+
+        return `${prefixes[colorType] || 'U'}-${count}`;
     }
 
     render() {
@@ -558,26 +598,35 @@ class BATSVisualizationD3 {
                 d3.select(this).attr('stroke-width', 3);
             });
 
+        // Wallet ID (B-1, P-2, etc) - top label
+        nodeEnter.append('text')
+            .attr('y', -this.config.nodeRadius - 30)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '14px')
+            .attr('font-weight', 'bold')
+            .attr('fill', d => this.config.colors[d.type] || '#2c3e50')
+            .text(d => d.walletId);
+
         // Node label (V-T-H notation)
         nodeEnter.append('text')
-            .attr('y', -this.config.nodeRadius - 10)
+            .attr('y', -this.config.nodeRadius - 12)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '13px')
-            .attr('font-weight', 'bold')
+            .attr('font-size', '11px')
+            .attr('font-weight', '600')
             .attr('fill', '#2c3e50')
             .text(d => d.label);
 
         // Wallet address
         nodeEnter.append('text')
-            .attr('y', this.config.nodeRadius + 20)
+            .attr('y', this.config.nodeRadius + 22)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '10px')
+            .attr('font-size', '9px')
             .attr('fill', '#7f8c8d')
             .text(d => d.walletLabel);
 
         // Amount
         nodeEnter.append('text')
-            .attr('y', this.config.nodeRadius + 35)
+            .attr('y', this.config.nodeRadius + 38)
             .attr('text-anchor', 'middle')
             .attr('font-size', '11px')
             .attr('font-weight', 'bold')

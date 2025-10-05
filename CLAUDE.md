@@ -3,34 +3,45 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 16:21)
+## Latest Commit (Auto-updated: 2025-10-05 16:24)
 
-**Commit:** 623ed32391a2194da6da66e7f06642dd963452c1
+**Commit:** db3497df454933a3ef938d47cfc1e242997c9d70
 **Author:** Your Name
-**Message:** Redesign layout: Wallet columns with shaded backgrounds, hop spaces between
+**Message:** Add DEX/conversion nodes in hop spaces with dual-currency flow
 
-Major visual improvement to clarify structure:
+Major enhancement: Swaps/conversions now shown IN the hop space:
 
-**Before:** Columns split through wallet icons
-**After:** Distinct wallet columns + hop flow spaces
-
-**New Layout:**
-┌─────────┐   HOP 1    ┌─────────┐   HOP 2    ┌─────────┐
-│ VICTIMS │ ─────────> │ Wallets │ ─────────> │ Wallets │
-│ (pink)  │            │ (blue)  │            │ (blue)  │
-└─────────┘            └─────────┘            └─────────┘
+**Flow visualization:**
+```
+┌──────────┐    → HOP 1 →      ┌──────────┐
+│ VICTIMS  │                    │ Wallets  │
+│ [Victim] │─450 HYPE→[DEX]     │          │
+│   Red    │  V1-T1    Brown    │          │
+│          │         └─100 USDC→[Terminal] │
+│          │         V1-T1-H1    Purple    │
+└──────────┘                    └──────────┘
+```
 
 **Changes:**
-- Wallet columns: 200px wide with shaded backgrounds
-  - Victims column: Light pink (#ffe6e6)
-  - Other columns: Light blue (#e6f2ff)
-- Hop spaces: 300px between columns for edge flow
-- Hop labels: "→ HOP 1 →" centered in flow space
-- Subtle dashed guides mark column boundaries
-- Wallets stay cleanly within their columns
+- Swap/conversion nodes (brown) positioned in hop space
+- Two edges per swap: input currency → DEX → output currency
+- Edge labels show both V-T-H notation AND amount + currency
+- Notation in bold black, amount in green
+- Swap nodes vertically staggered if multiple in same hop
 
-This makes it crystal clear which wallets are in which
-investigation stage and where the hops occur.
+**Node color coding working:**
+- Red: Victims
+- Brown: DEX/Swap contracts
+- Purple: Terminal exchanges
+- Black: Regular trace
+- (Yellow, Blue, Gray, Orange, Green for other types)
+
+**Edge labels enhanced:**
+- Line 1: V-T-H notation (bold)
+- Line 2: Amount + currency (green)
+
+This clearly shows currency conversions happening within
+hops, not in destination wallets.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -38,23 +49,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                |  76 ++++++++++------------------
- bats-d3-visualization.js | 127 +++++++++++++++++++++++++++++++++--------------
- 2 files changed, 118 insertions(+), 85 deletions(-)
+ CLAUDE.md                |  60 ++++++++++-------
+ bats-d3-visualization.js | 164 ++++++++++++++++++++++++++++++++++++-----------
+ 2 files changed, 164 insertions(+), 60 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 623ed32 Redesign layout: Wallet columns with shaded backgrounds, hop spaces between (0 seconds ago)
-- ddceaf4 Fix CSP violation by using local D3.js instead of CDN (5 minutes ago)
-- 559f86a PROFESSIONAL REBUILD: D3.js visualization engine for BATS (7 minutes ago)
-- 550d787 Add setLayout method to BATSVisualizationEngine (15 minutes ago)
-- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (18 minutes ago)
-- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (24 minutes ago)
-- 9a70e89 Fix JSON embedding in popup using script type="application/json" (26 minutes ago)
-- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (27 minutes ago)
-- b711b09 Restore Canvas-based visualization engine with popup window (28 minutes ago)
-- c6811da Move flowdiagram-tab to correct location in main app container (35 minutes ago)
+- db3497d Add DEX/conversion nodes in hop spaces with dual-currency flow (0 seconds ago)
+- 623ed32 Redesign layout: Wallet columns with shaded backgrounds, hop spaces between (3 minutes ago)
+- ddceaf4 Fix CSP violation by using local D3.js instead of CDN (8 minutes ago)
+- 559f86a PROFESSIONAL REBUILD: D3.js visualization engine for BATS (10 minutes ago)
+- 550d787 Add setLayout method to BATSVisualizationEngine (18 minutes ago)
+- bad4db4 ACTUAL PERMANENT FIX: Create separate visualization.html file (20 minutes ago)
+- 6bf9d2c PERMANENT FIX: Pass investigation data via window reference (27 minutes ago)
+- 9a70e89 Fix JSON embedding in popup using script type="application/json" (28 minutes ago)
+- f5cf777 Fix JavaScript syntax errors in popup visualization HTML (29 minutes ago)
+- b711b09 Restore Canvas-based visualization engine with popup window (31 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
