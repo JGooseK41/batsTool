@@ -1340,7 +1340,30 @@ class BATSVisualizationD3 {
                         currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].sourceAmount += inputAmount;
 
                         // Track what happened to the OUTPUT currency
-                        if (entry.isTerminalWallet || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
+                        // Check if this conversion goes directly to terminal, or if we need to look ahead
+                        let isTerminated = entry.isTerminalWallet || entry.walletType === 'purple' || entry.toWalletType === 'purple';
+
+                        // If not directly terminal, check subsequent hops for where this output goes
+                        if (!isTerminated && entry.isBridge) {
+                            // Look for entries in next hops that consume this bridge output
+                            const entryId = entry.id;
+                            const nextHops = this.investigation.hops.slice(hopIndex + 1);
+
+                            for (const nextHop of nextHops) {
+                                for (const nextEntry of nextHop.entries) {
+                                    // Check if this entry sources from our bridge output
+                                    if (nextEntry.sourceThreadIds && nextEntry.sourceThreadIds.includes(`bridge_${entryId}_${outputCurrency}`)) {
+                                        if (nextEntry.isTerminalWallet || nextEntry.walletType === 'purple' || nextEntry.toWalletType === 'purple') {
+                                            isTerminated = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (isTerminated) break;
+                            }
+                        }
+
+                        if (isTerminated) {
                             currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].terminated += outputAmount;
                         } else {
                             currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].stillTracing += outputAmount;
@@ -1888,7 +1911,7 @@ class BATSVisualizationD3 {
                             .attr('y', nestedRightY)
                             .attr('font-size', '9px')
                             .attr('fill', '#9b59b6')
-                            .text(`Terminated`);
+                            .text(`Term.`);
                         nestedRightTotal = nestedAccount.terminated;
                     } else if (nestedAccount.stillTracing > 0) {
                         group.append('text')
@@ -1904,7 +1927,7 @@ class BATSVisualizationD3 {
                             .attr('y', nestedRightY)
                             .attr('font-size', '9px')
                             .attr('fill', '#27ae60')
-                            .text(`Tracing`);
+                            .text(`Trace`);
                         nestedRightTotal = nestedAccount.stillTracing;
                     }
 
