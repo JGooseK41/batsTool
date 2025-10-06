@@ -3,15 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 21:33)
+## Latest Commit (Auto-updated: 2025-10-05 21:37)
 
-**Commit:** 4d0e244fd571e0f8db95248548b13010790b9c0f
+**Commit:** 534ba1dfea1e9d57cf355f2993c3a5ed9973a2e4
 **Author:** Your Name
-**Message:** Fix getWalletColorType undefined error in deferred entry processing
+**Message:** Add detailed logging for bridge internal ID lookup
 
-- Replaced non-existent this.getWalletColorType() call with direct logic
-- Uses entry.walletType if available, otherwise purple for terminals, black for others
-- Matches pattern used in regular entry processing
+- Show availableThreads currency keys
+- Log each thread comparison with entryId and hopLevel
+- Show whether lookup was skipped and why
+- Will help diagnose why bridge output threads aren't being found
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -19,22 +20,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- bats-d3-visualization.js | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ bats-d3-visualization.js | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4d0e244 Fix getWalletColorType undefined error in deferred entry processing (0 seconds ago)
-- 142c4fe Add support for deferred cross-hop entries (bridge outputs to later hops) (3 minutes ago)
-- 687bef2 Fix Sankey to Hop Columns navigation (6 minutes ago)
-- 03070c6 Fix EXTERNAL swap path to extract bridge output currency from bridgeDetails (12 minutes ago)
-- 206ce46 Add swap type logging (internal vs external) (13 minutes ago)
-- bb122fa Add routing path logging to debug bridge entry processing (15 minutes ago)
-- f6844c1 Update CLAUDE.md with latest commit timestamp (17 minutes ago)
-- 663f469 Add bridge output currency logging (18 minutes ago)
-- 35f43f6 Update CLAUDE.md with latest commit timestamp (21 minutes ago)
-- 2066d7b Add comprehensive diagnostic logging for data validation (21 minutes ago)
+- 534ba1d Add detailed logging for bridge internal ID lookup (0 seconds ago)
+- 2467b04 Update CLAUDE.md with latest commit info (4 minutes ago)
+- 4d0e244 Fix getWalletColorType undefined error in deferred entry processing (4 minutes ago)
+- 142c4fe Add support for deferred cross-hop entries (bridge outputs to later hops) (7 minutes ago)
+- 687bef2 Fix Sankey to Hop Columns navigation (10 minutes ago)
+- 03070c6 Fix EXTERNAL swap path to extract bridge output currency from bridgeDetails (16 minutes ago)
+- 206ce46 Add swap type logging (internal vs external) (18 minutes ago)
+- bb122fa Add routing path logging to debug bridge entry processing (19 minutes ago)
+- f6844c1 Update CLAUDE.md with latest commit timestamp (21 minutes ago)
+- 663f469 Add bridge output currency logging (22 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
