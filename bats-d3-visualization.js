@@ -1071,9 +1071,6 @@ class BATSVisualizationD3 {
         // Draw hop space labels
         this.drawHopSpaceLabels();
 
-        // Draw ART boxes
-        this.drawARTBoxes();
-
         // Draw edges
         this.drawEdges();
 
@@ -1104,21 +1101,31 @@ class BATSVisualizationD3 {
             .attr('opacity', 0.12)  // Higher contrast
             .attr('rx', 8);
 
-        // Add wallet column titles with white stroke for readability
-        columns.enter()
-            .append('text')
-            .attr('x', d => d.x)
-            .attr('y', 40)
-            .attr('text-anchor', 'middle')
-            .attr('font-size', '16px')
-            .attr('font-weight', 'bold')
+        // Add wallet column headers - styled like ART boxes (blue/gold)
+        const headerGroup = columns.enter()
+            .append('g')
+            .attr('class', 'wallet-column-header');
+
+        // Header background box (same style as hop ART boxes)
+        headerGroup.append('rect')
+            .attr('x', d => d.x - this.config.walletColumnWidth / 2 + 10)
+            .attr('y', 20)
+            .attr('width', this.config.walletColumnWidth - 20)
+            .attr('height', 50)
             .attr('fill', '#2c3e50')
-            .style('paint-order', 'stroke')
-            .style('stroke', 'white')
-            .style('stroke-width', '4px')
-            .style('stroke-linecap', 'round')
-            .style('stroke-linejoin', 'round')
-            .text(d => d.title);
+            .attr('stroke', '#3498db')
+            .attr('stroke-width', 2)
+            .attr('rx', 5);
+
+        // Title text
+        headerGroup.append('text')
+            .attr('x', d => d.x)
+            .attr('y', 50)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '14px')
+            .attr('font-weight', 'bold')
+            .attr('fill', '#3498db')
+            .text(d => d.title.toUpperCase());
     }
 
     drawHopSpaceLabels() {
@@ -1162,19 +1169,8 @@ class BATSVisualizationD3 {
         // Draw hop reconciliation boxes
         this.drawHopReconciliation(hopSpaces);
 
-        const labels = this.backgroundGroup.selectAll('.hop-space-label')
-            .data(hopSpaces);
-
-        labels.enter()
-            .append('text')
-            .attr('class', 'hop-space-label')
-            .attr('x', d => d.x)
-            .attr('y', 115)  // Moved down to make room for header
-            .attr('text-anchor', 'middle')
-            .attr('font-size', '18px')
-            .attr('font-weight', 'bold')
-            .attr('fill', '#7f8c8d')
-            .text(d => `→ HOP ${d.hopNumber} CREATION →`);
+        // Draw ART boxes at bottom of hop creation columns (moved from wallet columns)
+        this.drawHopCreationARTBoxes(hopSpaces);
 
         // Draw subtle vertical guides at hop space boundaries
         const guides = this.backgroundGroup.selectAll('.hop-guide')
@@ -1194,7 +1190,7 @@ class BATSVisualizationD3 {
     }
 
     drawHopHeaders(hopSpaces) {
-        // Draw ART header at top of each hop column
+        // Draw ART header at top of each hop creation column
         const headers = this.backgroundGroup.selectAll('.hop-header')
             .data(hopSpaces);
 
@@ -1202,31 +1198,41 @@ class BATSVisualizationD3 {
             .append('g')
             .attr('class', 'hop-header');
 
-        // Header background box
+        // Header background box (taller to fit hop creation label)
         headerGroup.append('rect')
             .attr('x', d => d.leftX + 10)
-            .attr('y', 65)
+            .attr('y', 20)
             .attr('width', d => d.width - 20)
-            .attr('height', 45)
+            .attr('height', 70)
             .attr('fill', '#2c3e50')
             .attr('stroke', '#f39c12')
             .attr('stroke-width', 2)
             .attr('rx', 5);
 
-        // ART Title
+        // Hop Creation Title (top)
         headerGroup.append('text')
             .attr('x', d => d.x)
-            .attr('y', 82)
+            .attr('y', 38)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '11px')
+            .attr('font-size', '12px')
             .attr('font-weight', 'bold')
             .attr('fill', '#f39c12')
-            .text(d => `HOP ${d.hopNumber} - ART (Adjusted Root Total)`);
+            .text(d => `→ HOP ${d.hopNumber} CREATION →`);
 
-        // ART Values
+        // ART Label (middle)
         headerGroup.append('text')
             .attr('x', d => d.x)
-            .attr('y', 100)
+            .attr('y', 55)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '10px')
+            .attr('font-weight', 'bold')
+            .attr('fill', '#95a5a6')
+            .text('ART (Adjusted Root Total)');
+
+        // ART Values (bottom)
+        headerGroup.append('text')
+            .attr('x', d => d.x)
+            .attr('y', 75)
             .attr('text-anchor', 'middle')
             .attr('font-size', '13px')
             .attr('font-weight', 'bold')
@@ -1575,39 +1581,48 @@ class BATSVisualizationD3 {
         });
     }
 
-    drawARTBoxes() {
-        const artBoxes = this.artGroup.selectAll('.art-box')
-            .data(this.hopColumns);
+    drawHopCreationARTBoxes(hopSpaces) {
+        // Draw NEW ART boxes below T-account in hop creation columns
+        // These show the ART AFTER the hop completes
+        const artBoxes = this.backgroundGroup.selectAll('.hop-creation-art-box')
+            .data(hopSpaces);
 
-        const artEnter = artBoxes.enter()
+        const artGroup = artBoxes.enter()
             .append('g')
-            .attr('class', 'art-box')
-            .attr('transform', d => `translate(${d.x - this.config.artBoxWidth / 2}, 1480)`);
+            .attr('class', 'hop-creation-art-box');
 
-        artEnter.append('rect')
-            .attr('width', this.config.artBoxWidth)
-            .attr('height', this.config.artBoxHeight)
-            .attr('fill', '#ecf0f1')
-            .attr('stroke', '#34495e')
+        // Position below T-account reconciliation box
+        const boxY = this.config.height - this.reconBoxHeight - 130;
+
+        // Header background box (same style as other headers)
+        artGroup.append('rect')
+            .attr('x', d => d.leftX + 10)
+            .attr('y', boxY)
+            .attr('width', d => d.width - 20)
+            .attr('height', 60)
+            .attr('fill', '#2c3e50')
+            .attr('stroke', '#f39c12')
             .attr('stroke-width', 2)
             .attr('rx', 5);
 
-        artEnter.append('text')
-            .attr('x', this.config.artBoxWidth / 2)
-            .attr('y', 25)
+        // Label
+        artGroup.append('text')
+            .attr('x', d => d.x)
+            .attr('y', boxY + 20)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '14px')
+            .attr('font-size', '11px')
             .attr('font-weight', 'bold')
-            .attr('fill', '#2c3e50')
-            .text('ART (Adjusted Root Total)');
+            .attr('fill', '#f39c12')
+            .text('NEW ART (After Hop)');
 
-        artEnter.append('text')
-            .attr('x', this.config.artBoxWidth / 2)
-            .attr('y', 50)
+        // ART Values
+        artGroup.append('text')
+            .attr('x', d => d.x)
+            .attr('y', boxY + 45)
             .attr('text-anchor', 'middle')
             .attr('font-size', '13px')
-            .attr('fill', '#27ae60')
             .attr('font-weight', 'bold')
+            .attr('fill', '#ffffff')
             .text(d => {
                 const currencies = Object.keys(d.artAfter);
                 if (currencies.length === 0) return '0';
