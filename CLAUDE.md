@@ -3,23 +3,32 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 08:24)
+## Latest Commit (Auto-updated: 2025-10-06 08:31)
 
-**Commit:** bc167ab275d654409a2db0777abc176dcc7c83bd
+**Commit:** 9f48c458fc94b1819156e929e9da79447b60b9b2
 **Author:** Your Name
-**Message:** Use universal wallet index as master source of truth for wallet IDs
+**Message:** Resurrect audit trail and integrate wallet indexes into Reports tab
 
-- Visualization now checks investigation.universalWalletIndex first
-- Uses permanentId from universal index (assigned in order during tracing)
-- Falls back to session counter only if wallet not in index
-- Fixes issue where P-2 appeared before P-1 (out of order)
+- Added comprehensive Reports tab with proper sections:
+  - Case information header
+  - Universal Wallet Index (all wallets chronologically)
+  - Red Wallet Index (victim wallets)
+  - Purple Wallet Index (terminal/exchange wallets)
+  - Technical Audit Trail (complete transaction flow)
+  - Investigation Narrative section
 
-Wallet ID assignment priority:
-1. Universal wallet index (master source)
-2. Session cache (for reuse within visualization)
-3. New counter (fallback only)
+- Fixed "Skip to Reports" button to actually navigate to reports
+- Calls generateReportContent() to populate all sections
+- Technical audit trail shows hierarchical hop structure with:
+  - Initial stolen funds
+  - Each hop with entries, threads, conversions
+  - Terminal wallets and write-offs
+  - Complete V-T-H notation tracking
 
-Now wallet IDs appear in chronological order of first appearance in trace.
+- Wallet indexes displayed in styled tables
+- Ready for export to PDF/HTML
+
+Fixes blank reports tab and restores audit trail functionality.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -27,23 +36,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 64 ++++++++++++++++++++----------------------------
- bats-d3-visualization.js | 18 +++++++++++---
- 2 files changed, 41 insertions(+), 41 deletions(-)
+ CLAUDE.md  |  50 +++++++++---------
+ index.html | 167 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 190 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bc167ab Use universal wallet index as master source of truth for wallet IDs (0 seconds ago)
-- 7822eb6 Add visual separation to nested T-accounts for clarity (4 minutes ago)
-- 08bf82a Implement nested T-accounts with clear balance lines (15 minutes ago)
-- 9ecb32d Track both conversion and disposition of swapped assets in same hop (25 minutes ago)
-- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (27 minutes ago)
-- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (31 minutes ago)
-- 3c991d0 Revert edge routing back to smooth curves (41 minutes ago)
-- 56b4427 Change edge routing to use sharp angles instead of curves (64 minutes ago)
-- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (65 minutes ago)
-- d7a93e4 Fix edge group expansion - modal buttons now work correctly (69 minutes ago)
+- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (1 second ago)
+- bc167ab Use universal wallet index as master source of truth for wallet IDs (7 minutes ago)
+- 7822eb6 Add visual separation to nested T-accounts for clarity (11 minutes ago)
+- 08bf82a Implement nested T-accounts with clear balance lines (22 minutes ago)
+- 9ecb32d Track both conversion and disposition of swapped assets in same hop (33 minutes ago)
+- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (35 minutes ago)
+- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (39 minutes ago)
+- 3c991d0 Revert edge routing back to smooth curves (48 minutes ago)
+- 56b4427 Change edge routing to use sharp angles instead of curves (71 minutes ago)
+- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (73 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

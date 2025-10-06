@@ -1578,14 +1578,27 @@ class BATSVisualizationD3 {
                 for (const [nestedCurrency, nestedAccount] of Object.entries(account.nestedAccounts || {})) {
                     const nestedColor = getCurrencyColor(nestedCurrency);
 
-                    // Visual separator before nested account
-                    currentY += 5;
+                    // Calculate nested content height FIRST
+                    let dispositionCount = 0;
+                    if (nestedAccount.terminated > 0) dispositionCount++;
+                    if (nestedAccount.stillTracing > 0) dispositionCount++;
 
-                    // Background box for nested account
-                    const nestedBoxHeight = lineHeight * 4 + 20;
+                    const nestedHeaderHeight = 25;
+                    const nestedLabelsHeight = 15;
+                    const nestedContentHeight = lineHeight + 5; // One line for amounts
+                    const nestedBalanceHeight = 25;
+                    const nestedBoxPadding = 15;
+                    const nestedBoxHeight = nestedHeaderHeight + nestedLabelsHeight + nestedContentHeight + nestedBalanceHeight + nestedBoxPadding;
+
+                    // Visual separator before nested account
+                    currentY += 10;
+
+                    const nestedBoxStartY = currentY;
+
+                    // Background box for nested account (draw first, then content on top)
                     group.append('rect')
                         .attr('x', d.leftX + 30)
-                        .attr('y', currentY - 5)
+                        .attr('y', nestedBoxStartY)
                         .attr('width', d.width - 60)
                         .attr('height', nestedBoxHeight)
                         .attr('fill', '#f8f9fa')
@@ -1594,114 +1607,133 @@ class BATSVisualizationD3 {
                         .attr('stroke-dasharray', '4,4')
                         .attr('rx', 4);
 
+                    currentY += 8;
+
                     // Nested account header
                     group.append('text')
                         .attr('x', d.x)
-                        .attr('y', currentY + 15)
+                        .attr('y', currentY + 12)
                         .attr('text-anchor', 'middle')
-                        .attr('font-size', '11px')
+                        .attr('font-size', '10px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
                         .text(`↳ ${nestedCurrency} T-ACCOUNT (from conversion) ↲`);
-                    currentY += lineHeight + 5;
+
+                    currentY += nestedHeaderHeight;
 
                     // Vertical divider line for nested T-account
-                    const nestedDividerTop = currentY - 10;
-                    const nestedDividerBottom = currentY + lineHeight * 2 + 5;
+                    const dividerTop = currentY;
+                    const dividerBottom = currentY + nestedContentHeight + 10;
                     group.append('line')
                         .attr('x1', d.x)
-                        .attr('y1', nestedDividerTop)
+                        .attr('y1', dividerTop)
                         .attr('x2', d.x)
-                        .attr('y2', nestedDividerBottom)
+                        .attr('y2', dividerBottom)
                         .attr('stroke', nestedColor)
-                        .attr('stroke-width', 2);
+                        .attr('stroke-width', 1.5);
 
-                    // Left side label
+                    // Column headers
                     group.append('text')
-                        .attr('x', d.leftX + 40)
-                        .attr('y', currentY - 5)
+                        .attr('x', d.leftX + 45)
+                        .attr('y', currentY)
                         .attr('font-size', '8px')
                         .attr('fill', '#7f8c8d')
+                        .attr('font-weight', 'bold')
                         .text('FROM CONVERSION');
 
-                    // Right side label
                     group.append('text')
-                        .attr('x', d.x + 50)
-                        .attr('y', currentY - 5)
+                        .attr('x', d.x + 55)
+                        .attr('y', currentY)
                         .attr('font-size', '8px')
                         .attr('fill', '#7f8c8d')
+                        .attr('font-weight', 'bold')
                         .text('DISPOSITION');
 
-                    currentY += 8;
+                    currentY += nestedLabelsHeight;
 
-                    // Left: From conversion
+                    // Left: From conversion amount
                     group.append('text')
-                        .attr('x', d.leftX + 40)
+                        .attr('x', d.leftX + 45)
                         .attr('y', currentY)
                         .attr('font-size', '11px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
                         .text(`${nestedAccount.fromConversion.toFixed(2)}`);
 
-                    // Right: Disposition
+                    // Right: Disposition - compact single line or two lines
                     let nestedRightY = currentY;
                     let nestedRightTotal = 0;
 
-                    if (nestedAccount.terminated > 0) {
+                    if (nestedAccount.terminated > 0 && nestedAccount.stillTracing > 0) {
+                        // Both - show on two lines, smaller font
                         group.append('text')
-                            .attr('x', d.x + 50)
-                            .attr('y', nestedRightY)
+                            .attr('x', d.x + 55)
+                            .attr('y', nestedRightY - 5)
                             .attr('font-size', '9px')
                             .attr('fill', '#9b59b6')
                             .text(`Term: ${nestedAccount.terminated.toFixed(2)}`);
-                        nestedRightY += lineHeight - 5;
-                        nestedRightTotal += nestedAccount.terminated;
-                    }
 
-                    if (nestedAccount.stillTracing > 0) {
                         group.append('text')
-                            .attr('x', d.x + 50)
-                            .attr('y', nestedRightY)
+                            .attr('x', d.x + 55)
+                            .attr('y', nestedRightY + 8)
                             .attr('font-size', '9px')
                             .attr('fill', '#27ae60')
                             .text(`Trace: ${nestedAccount.stillTracing.toFixed(2)}`);
-                        nestedRightY += lineHeight - 5;
-                        nestedRightTotal += nestedAccount.stillTracing;
+
+                        nestedRightTotal = nestedAccount.terminated + nestedAccount.stillTracing;
+                    } else if (nestedAccount.terminated > 0) {
+                        group.append('text')
+                            .attr('x', d.x + 55)
+                            .attr('y', nestedRightY)
+                            .attr('font-size', '10px')
+                            .attr('fill', '#9b59b6')
+                            .text(`Terminated: ${nestedAccount.terminated.toFixed(2)}`);
+                        nestedRightTotal = nestedAccount.terminated;
+                    } else if (nestedAccount.stillTracing > 0) {
+                        group.append('text')
+                            .attr('x', d.x + 55)
+                            .attr('y', nestedRightY)
+                            .attr('font-size', '10px')
+                            .attr('fill', '#27ae60')
+                            .text(`Tracing: ${nestedAccount.stillTracing.toFixed(2)}`);
+                        nestedRightTotal = nestedAccount.stillTracing;
                     }
 
-                    currentY = Math.max(currentY + lineHeight, nestedRightY);
+                    currentY += nestedContentHeight;
 
                     // Balance line for nested account
-                    const nestedBalanceY = currentY;
+                    currentY += 5;
                     group.append('line')
-                        .attr('x1', d.leftX + 35)
-                        .attr('y1', nestedBalanceY)
-                        .attr('x2', d.leftX + d.width - 35)
-                        .attr('y2', nestedBalanceY)
+                        .attr('x1', d.leftX + 40)
+                        .attr('y1', currentY)
+                        .attr('x2', d.leftX + d.width - 40)
+                        .attr('y2', currentY)
                         .attr('stroke', nestedColor)
-                        .attr('stroke-width', 1)
-                        .attr('stroke-dasharray', '2,2');
+                        .attr('stroke-width', 1.5);
 
-                    currentY = nestedBalanceY + 12;
+                    currentY += 12;
 
+                    // Balance totals
                     const nestedBalanced = Math.abs(nestedAccount.fromConversion - nestedRightTotal) < 0.01;
+
                     group.append('text')
-                        .attr('x', d.leftX + 40)
+                        .attr('x', d.leftX + 45)
                         .attr('y', currentY)
-                        .attr('font-size', '9px')
+                        .attr('font-size', '10px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
                         .text(`${nestedAccount.fromConversion.toFixed(2)}`);
 
                     group.append('text')
-                        .attr('x', d.x + 50)
+                        .attr('x', d.x + 55)
                         .attr('y', currentY)
-                        .attr('font-size', '9px')
+                        .attr('font-size', '10px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedBalanced ? '#27ae60' : '#e74c3c')
                         .text(`${nestedRightTotal.toFixed(2)} ${nestedBalanced ? '✓' : '✗'}`);
 
-                    currentY += lineHeight + 5;
+                    // Move currentY to after the box
+                    currentY = nestedBoxStartY + nestedBoxHeight + 5;
                 }
 
                 currentY += accountSpacing;
