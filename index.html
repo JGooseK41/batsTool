@@ -4171,7 +4171,61 @@
 
             investigation.terminalWalletIndex.push(terminalRecord);
             console.log('Added to terminal wallet index:', terminalRecord);
+
+            // Rebuild universal wallet index to include this terminal wallet
+            buildUniversalWalletIndex();
+
             saveToStorage();
+        }
+
+        // Centralized function to add wallet to universal index
+        function addWalletToUniversalIndex(walletAddress, walletType, data = {}) {
+            if (!investigation.universalWalletIndex) {
+                investigation.universalWalletIndex = [];
+            }
+
+            // Check if wallet already exists
+            const existing = investigation.universalWalletIndex.find(w => w.address === walletAddress);
+            if (existing) {
+                console.log(`Wallet ${walletAddress.substring(0, 20)}... already in universal index as ${existing.permanentId}`);
+                return existing.permanentId;
+            }
+
+            // Generate permanent ID based on type
+            const typePrefix = {
+                'red': 'RED',
+                'purple': 'P',
+                'black': 'B',
+                'brown': 'Br',
+                'gray': 'G',
+                'blue': 'BL',
+                'orange': 'O',
+                'green': 'GR'
+            }[walletType] || 'U';
+
+            const countOfType = investigation.universalWalletIndex.filter(w => w.permanentType === walletType).length + 1;
+            const permanentId = `${typePrefix}-${countOfType}`;
+
+            const entry = {
+                id: permanentId,
+                permanentId: permanentId,
+                address: walletAddress,
+                permanentType: walletType,
+                currentStatus: walletType,
+                label: data.label || data.exchangeName || `${walletType.toUpperCase()} Wallet`,
+                totalAmount: data.amount || 0,
+                currencies: data.currencies || {},
+                exposureChain: data.exposureChain || [],
+                firstSeen: data.firstSeen || data.notation || 'Unknown',
+                statusHistory: [walletType],
+                isDestination: data.isDestination || false,
+                isSource: data.isSource || false,
+                notes: data.notes || ''
+            };
+
+            investigation.universalWalletIndex.push(entry);
+            console.log(`✅ Added to universal index: ${permanentId} (${entry.label}) - ${walletAddress.substring(0, 20)}...`);
+            return permanentId;
         }
 
         // Get Solana wallet attribution from known addresses and patterns

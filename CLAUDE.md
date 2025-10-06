@@ -3,42 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 12:28)
+## Latest Commit (Auto-updated: 2025-10-06 12:29)
 
-**Commit:** 24706708110e3ea2bd5fef4c5c153f6d8aa7f244
+**Commit:** fa2e014ccbdbe7a27bba0b7db272f9172a44c5df
 **Author:** Your Name
-**Message:** Add read-only notice to visualization window Reports tab
-
-- Added prominent orange banner indicating Reports tab is read-only
-- Banner explains this is a snapshot and changes must be made in main app
-- Prevents confusion about data sync between windows
-- Visual warning with lock icon for clarity
-
-Ensures users know visualization window Reports are not editable
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md  | 41 ++++++++++++++++++++---------------------
- index.html | 11 +++++++++++
- 2 files changed, 31 insertions(+), 21 deletions(-)
+ CLAUDE.md | 42 ++++++++++++++++++++++--------------------
+ 1 file changed, 22 insertions(+), 20 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2470670 Add read-only notice to visualization window Reports tab (0 seconds ago)
-- 7186c53 Add visualization button to Reports tab (6 minutes ago)
-- e9edfed Fix wallet indices showing correct data (7 minutes ago)
-- d3b3a69 Fix notation to deduplicate transaction numbers properly (10 minutes ago)
+- fa2e014 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 2470670 Add read-only notice to visualization window Reports tab (38 seconds ago)
+- 7186c53 Add visualization button to Reports tab (7 minutes ago)
+- e9edfed Fix wallet indices showing correct data (8 minutes ago)
+- d3b3a69 Fix notation to deduplicate transaction numbers properly (11 minutes ago)
 - 5191a3f Simplify complex notation display in audit trail (14 minutes ago)
-- e40cbcb Fix audit trail data presentation issues (15 minutes ago)
+- e40cbcb Fix audit trail data presentation issues (16 minutes ago)
 - 1ff2efc Add comprehensive printable report export function (22 minutes ago)
-- 8b1a48a Reorganize Reports tab with sub-tabs (25 minutes ago)
+- 8b1a48a Reorganize Reports tab with sub-tabs (26 minutes ago)
 - 39cd010 Show full transaction hashes and notes in audit trail (28 minutes ago)
-- 4491d84 Add debug logging to wallet index generation (29 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
