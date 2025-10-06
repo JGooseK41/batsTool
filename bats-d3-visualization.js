@@ -1340,14 +1340,14 @@ class BATSVisualizationD3 {
                         currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].sourceAmount += inputAmount;
 
                         // Track what happened to the OUTPUT currency
-                        if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
+                        if (entry.isTerminalWallet || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
                             currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].terminated += outputAmount;
                         } else {
                             currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].stillTracing += outputAmount;
                         }
                     }
 
-                } else if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
+                } else if (entry.isTerminalWallet || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
                     // Terminal wallet (no conversion)
                     if (currencyAccounts[currency]) {
                         currencyAccounts[currency].terminated += amount;
@@ -1507,26 +1507,6 @@ class BATSVisualizationD3 {
                     .attr('font-size', '10px')
                     .attr('fill', '#7f8c8d')
                     .text(`${currency}`);
-
-                // Show conversion OUT on left side if applicable (in parentheses per accounting notation)
-                let leftY = currentY + lineHeight;
-                if (account.converted > 0) {
-                    group.append('text')
-                        .attr('x', leftNumberX)
-                        .attr('y', leftY)
-                        .attr('text-anchor', 'end')
-                        .attr('font-size', '10px')
-                        .attr('fill', '#f39c12')
-                        .text(`(${account.converted.toFixed(2)})`);
-
-                    group.append('text')
-                        .attr('x', leftLabelX)
-                        .attr('y', leftY)
-                        .attr('font-size', '9px')
-                        .attr('fill', '#f39c12')
-                        .text(`Converted`);
-                    leftY += lineHeight;
-                }
 
                 // RIGHT: Disposition summary (right-aligned numbers with parentheses, followed by labels)
                 const rightNumberX = d.leftX + d.width - 120; // Right-align position
