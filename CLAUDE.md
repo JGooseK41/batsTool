@@ -3,20 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 20:56)
+## Latest Commit (Auto-updated: 2025-10-05 20:57)
 
-**Commit:** bdd219c81d2091feefdda04225fb4956c80396e6
+**Commit:** 79397fd248fd7fae089326e350c8ea181292a0c8
 **Author:** Your Name
-**Message:** Fix T-account reconciliation boxes to show all entries with dynamic sizing
+**Message:** Fix thread ID lookups by registering both notation and currency-suffixed variants
 
-- Remove 3-item limit and "more..." indicators
-- Calculate dynamic box height based on max number of entries
-- Show ALL terminated and continuing items in reconciliation
-- Adjust divider line height to match dynamic box
-- Update drag boundary to respect dynamic reconciliation box height
-- Store reconBoxHeight for reuse in drag constraints
+- Register victim threads as both V1-T1 and V1-T1_HYPE
+- Register hop entry notations with currency suffix for internal thread lookups
+- Support BATS internal thread format (V1-T1_CURRENCY) used in sourceThreadIds
+- Apply to all node registration points (victims, brown wallets, swap outputs, regular nodes)
 
-T-account reconciliation now displays complete financial picture with all entries visible.
+This fixes edge creation where BATS uses currency-suffixed thread IDs internally.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -24,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 46 ++++++++++++++++------------------
- bats-d3-visualization.js | 65 ++++++++++++++++++++++--------------------------
- 2 files changed, 52 insertions(+), 59 deletions(-)
+ CLAUDE.md                | 45 +++++++++++++++++++++++----------------------
+ bats-d3-visualization.js | 19 ++++++++++++++++++-
+ 2 files changed, 41 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bdd219c Fix T-account reconciliation boxes to show all entries with dynamic sizing (0 seconds ago)
-- 40177ab Add comprehensive logging for bridge output thread debugging (3 minutes ago)
-- a141c5c Fix brown wallet bridge output thread tracking for multi-currency conversions (6 minutes ago)
-- 86ebc33 Consolidate red wallet nodes by address instead of per-transaction (19 minutes ago)
-- 2332f18 Fix ART label terminology - change to 'Adjusted Root Total' (22 minutes ago)
-- 7b18011 Add white stroke to column titles for better readability (24 minutes ago)
-- e3cd1f3 Replace edge label backgrounds with text stroke for better readability (26 minutes ago)
-- 764bc88 Improve edge dragging and add undo/redo/reset functionality (40 minutes ago)
-- aa9f17f Add manual edge group collapse and fix text overlap issues (45 minutes ago)
-- f230763 Add Adjust Graph toggle mode for dragging nodes and edges (49 minutes ago)
+- 79397fd Fix thread ID lookups by registering both notation and currency-suffixed variants (0 seconds ago)
+- bdd219c Fix T-account reconciliation boxes to show all entries with dynamic sizing (89 seconds ago)
+- 40177ab Add comprehensive logging for bridge output thread debugging (4 minutes ago)
+- a141c5c Fix brown wallet bridge output thread tracking for multi-currency conversions (8 minutes ago)
+- 86ebc33 Consolidate red wallet nodes by address instead of per-transaction (20 minutes ago)
+- 2332f18 Fix ART label terminology - change to 'Adjusted Root Total' (24 minutes ago)
+- 7b18011 Add white stroke to column titles for better readability (25 minutes ago)
+- e3cd1f3 Replace edge label backgrounds with text stroke for better readability (27 minutes ago)
+- 764bc88 Improve edge dragging and add undo/redo/reset functionality (42 minutes ago)
+- aa9f17f Add manual edge group collapse and fix text overlap issues (47 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

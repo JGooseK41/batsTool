@@ -306,16 +306,20 @@ class BATSVisualizationD3 {
             };
 
             // Process entries
+            console.log(`Processing Hop ${hop.hopNumber} with ${hop.entries.length} entries`);
             hop.entries.forEach((entry, entryIndex) => {
                 if (entry.entryType === 'writeoff') {
+                    console.log(`  - Skipping writeoff entry ${entryIndex}`);
                     // Skip writeoffs for now (could add as special nodes later)
                     return;
                 }
 
                 // Skip entries that don't belong to this hop (BATS sometimes stores next hop entries in previous hop array)
                 if (entry.hopNumber && entry.hopNumber !== hop.hopNumber) {
+                    console.log(`  - Skipping entry ${entryIndex} (belongs to hop ${entry.hopNumber}, not ${hop.hopNumber})`);
                     return;
                 }
+                console.log(`  - Processing entry ${entryIndex}: ${entry.notation || entry.id}, type: ${entry.entryType}, walletType: ${entry.walletType}`);
 
                 // Normalize entry data - BATS app uses different field names
                 if (!entry.destinationWallet && entry.toWallet) {
@@ -652,7 +656,13 @@ class BATSVisualizationD3 {
             edges: this.edges.length,
             columns: this.hopColumns.length
         });
-        console.log('Sample edges:', this.edges.slice(0, 3));
+        console.log('All edges:', this.edges.map(e => ({
+            source: e.source,
+            target: e.target,
+            label: e.label,
+            amount: e.amount,
+            currency: e.currency
+        })));
     }
 
     findSourceNode(threadId, currentHop) {
