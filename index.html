@@ -3024,19 +3024,19 @@
                     html += `<div>`;
                     html += `<strong style="font-size: 16px;">📄 Entry ${entryIndex + 1}: ${entryType}${isCommingled ? ' (COMMINGLED)' : ''}</strong>`;
                     if (entry.notation) {
-                        // Simplify notation for display - convert (V1-T1,1,2,2,2,2) H2 to (V1-T1) H1→H2
+                        // Simplify notation for display - remove duplicate transaction numbers
+                        // Convert (V1-T1,1,2,2,2,2) H2 to (V1-T1,2) H2
                         let displayNotation = entry.notation;
-                        const complexPattern = /\(([^,]+),([,\d]+)\)\s*H(\d+)/;
+                        const complexPattern = /\(([^,]+),([,\d]+)\)(\s*H\d+.*)?/;
                         const match = displayNotation.match(complexPattern);
                         if (match) {
                             const victimTx = match[1]; // V1-T1
-                            const hops = match[2].split(',').map(h => parseInt(h)); // [1,2,2,2,2,2]
-                            const currentHop = match[3]; // 2
+                            const txNumbers = match[2].split(',').map(n => parseInt(n)); // [1,2,2,2,2,2]
+                            const hopSuffix = match[3] || ''; // H2
 
-                            // Get unique hop sequence
-                            const uniqueHops = [...new Set(hops)];
-                            const hopPath = uniqueHops.join('→H');
-                            displayNotation = `(${victimTx}) H${hopPath}→H${currentHop}`;
+                            // Get unique transaction numbers and sort them
+                            const uniqueTxs = [...new Set(txNumbers)].sort((a, b) => a - b);
+                            displayNotation = `(${victimTx},${uniqueTxs.join(',')})${hopSuffix}`;
                         }
                         html += ` <span style="color: #7f8c8d; margin-left: 10px;">${displayNotation}</span>`;
                     }
@@ -30503,25 +30503,34 @@ function downloadFile(content, filename, mimeType) {
 function autoGenerateNotationFromSource(hopNumber, entryId, sourceThreadId) {
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     const entry = hop.entries.find(e => e.id === entryId);
-    
+
     console.log(` Auto-generating notation from source: ${sourceThreadId}`);
-    
-    // Parse the source thread ID (e.g., "V1-T1" or "V1-T1-H2" or "V(1)-T(1)-H1")
+
+    // Parse the source thread ID (e.g., "V1-T1" or "V1-T1-H2" or "V(1)-T(1)-H1" or "V(1,2)-T(1,2,2)")
     const match = sourceThreadId.match(/^V([^-]+)-T([^-]+)/);
     if (match) {
         let victimPart = match[1];
         let transactionPart = match[2];
-        
+
         console.log(` Parsed victim: ${victimPart}, transaction: ${transactionPart}`);
-        
-        // If the parts are simple numbers, add parentheses
-        if (/^\d+$/.test(victimPart)) {
-            victimPart = `(${victimPart})`;
-        }
-        if (/^\d+$/.test(transactionPart)) {
-            transactionPart = `(${transactionPart})`;
-        }
-        
+
+        // Parse and deduplicate numbers from parenthesized format like (1,2,2,2)
+        const parseAndDedupe = (part) => {
+            // Extract all numbers from formats like: (1), (1)(2), (1,2,2,2)
+            const numbers = part.match(/\d+/g);
+            if (numbers) {
+                // Get unique numbers and sort
+                const unique = [...new Set(numbers.map(n => parseInt(n)))].sort((a, b) => a - b);
+                return unique.map(n => `(${n})`).join('');
+            }
+            return part;
+        };
+
+        victimPart = parseAndDedupe(victimPart);
+        transactionPart = parseAndDedupe(transactionPart);
+
+        console.log(` Deduplicated - victim: ${victimPart}, transaction: ${transactionPart}`);
+
         // Auto-fill notation fields
         entry.victimNumbers = victimPart;
         entry.transactionNumbers = transactionPart;
