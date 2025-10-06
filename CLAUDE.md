@@ -3,30 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 12:35)
+## Latest Commit (Auto-updated: 2025-10-06 14:45)
 
-**Commit:** c6dddb8674db62b2df504c988f6075c8701df29b
+**Commit:** 5dd14d831b2aaecf955ea09832b5d404b8198cf9
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 43 ++++++++++++++++++++++++++++---------------
- 1 file changed, 28 insertions(+), 15 deletions(-)
+ CLAUDE.md | 43 +++++++++++++++----------------------------
+ 1 file changed, 15 insertions(+), 28 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c6dddb8 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 4c57a13 Ensure all wallets are added to universal wallet index (68 seconds ago)
-- fa2e014 Update CLAUDE.md with latest commit info (6 minutes ago)
-- 2470670 Add read-only notice to visualization window Reports tab (7 minutes ago)
-- 7186c53 Add visualization button to Reports tab (13 minutes ago)
-- e9edfed Fix wallet indices showing correct data (14 minutes ago)
-- d3b3a69 Fix notation to deduplicate transaction numbers properly (17 minutes ago)
-- 5191a3f Simplify complex notation display in audit trail (20 minutes ago)
-- e40cbcb Fix audit trail data presentation issues (22 minutes ago)
-- 1ff2efc Add comprehensive printable report export function (29 minutes ago)
+- 5dd14d8 Update CLAUDE.md with latest commit info (1 second ago)
+- c6dddb8 Update CLAUDE.md with latest commit info (2 hours ago)
+- 4c57a13 Ensure all wallets are added to universal wallet index (2 hours ago)
+- fa2e014 Update CLAUDE.md with latest commit info (2 hours ago)
+- 2470670 Add read-only notice to visualization window Reports tab (2 hours ago)
+- 7186c53 Add visualization button to Reports tab (2 hours ago)
+- e9edfed Fix wallet indices showing correct data (2 hours ago)
+- d3b3a69 Fix notation to deduplicate transaction numbers properly (2 hours ago)
+- 5191a3f Simplify complex notation display in audit trail (3 hours ago)
+- e40cbcb Fix audit trail data presentation issues (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

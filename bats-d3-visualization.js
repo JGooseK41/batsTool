@@ -1496,6 +1496,18 @@ class BATSVisualizationD3 {
                     .attr('fill', color)
                     .text(`${account.beginningBalance.toFixed(2)}`);
 
+                // Show conversion OUT on left side if applicable
+                let leftY = currentY + lineHeight;
+                if (account.converted > 0) {
+                    group.append('text')
+                        .attr('x', d.leftX + 20)
+                        .attr('y', leftY)
+                        .attr('font-size', '10px')
+                        .attr('fill', '#f39c12')
+                        .text(`(Converted: ${account.converted.toFixed(2)})`);
+                    leftY += lineHeight;
+                }
+
                 // RIGHT: Disposition summary
                 let rightY = currentY;
                 let rightTotal = 0;
@@ -1544,7 +1556,8 @@ class BATSVisualizationD3 {
                     rightTotal += account.writeOffs;
                 }
 
-                currentY = Math.max(currentY + lineHeight, rightY);
+                // Advance currentY to whichever column is taller, plus extra spacing
+                currentY = Math.max(leftY, rightY) + lineHeight;
 
                 // BALANCE LINE FOR MAIN ACCOUNT
                 const balanceY = currentY + 5;
@@ -1719,24 +1732,24 @@ class BATSVisualizationD3 {
 
                     currentY += nestedContentHeight;
 
-                    // Balance line for nested account
+                    // Balance line for nested account (position it inside the box)
                     currentY += 5;
+                    const nestedBalanceLineY = nestedBoxStartY + nestedBoxHeight - 25;
                     group.append('line')
                         .attr('x1', d.leftX + 40)
-                        .attr('y1', currentY)
+                        .attr('y1', nestedBalanceLineY)
                         .attr('x2', d.leftX + d.width - 40)
-                        .attr('y2', currentY)
+                        .attr('y2', nestedBalanceLineY)
                         .attr('stroke', nestedColor)
                         .attr('stroke-width', 1.5);
 
-                    currentY += 12;
-
-                    // Balance totals
+                    // Balance totals (positioned just below the line, inside the box)
                     const nestedBalanced = Math.abs(nestedAccount.fromConversion - nestedRightTotal) < 0.01;
+                    const balanceTotalY = nestedBalanceLineY + 12;
 
                     group.append('text')
                         .attr('x', d.leftX + 45)
-                        .attr('y', currentY)
+                        .attr('y', balanceTotalY)
                         .attr('font-size', '10px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
@@ -1744,7 +1757,7 @@ class BATSVisualizationD3 {
 
                     group.append('text')
                         .attr('x', d.x + 55)
-                        .attr('y', currentY)
+                        .attr('y', balanceTotalY)
                         .attr('font-size', '10px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedBalanced ? '#27ae60' : '#e74c3c')
