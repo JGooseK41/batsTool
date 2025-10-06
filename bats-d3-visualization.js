@@ -318,6 +318,22 @@ class BATSVisualizationD3 {
         this.hopColumns.push(victimColumn);
 
         // Build hop columns (wallet columns after each hop - the hop space itself is between columns)
+        // First pass: collect entries that belong to later hops (cross-hop entries from bridges)
+        const deferredEntries = new Map(); // hopNumber -> array of entries
+
+        this.investigation.hops.forEach((hop, hopIndex) => {
+            hop.entries.forEach((entry, entryIndex) => {
+                if (entry.hopNumber && entry.hopNumber !== hop.hopNumber) {
+                    // This entry belongs to a different hop, defer it
+                    const targetHop = entry.hopNumber;
+                    if (!deferredEntries.has(targetHop)) {
+                        deferredEntries.set(targetHop, []);
+                    }
+                    deferredEntries.get(targetHop).push(entry);
+                }
+            });
+        });
+
         this.investigation.hops.forEach((hop, hopIndex) => {
             const hopColumn = {
                 hopNumber: hop.hopNumber,
@@ -337,9 +353,9 @@ class BATSVisualizationD3 {
                     return;
                 }
 
-                // Skip entries that don't belong to this hop (BATS sometimes stores next hop entries in previous hop array)
+                // Skip entries that don't belong to this hop (will be processed later as deferred)
                 if (entry.hopNumber && entry.hopNumber !== hop.hopNumber) {
-                    console.log(`  - Skipping entry ${entryIndex} (belongs to hop ${entry.hopNumber}, not ${hop.hopNumber})`);
+                    console.log(`  - Deferring entry ${entryIndex} (belongs to hop ${entry.hopNumber}, not ${hop.hopNumber})`);
                     return;
                 }
                 console.log(`  - Processing entry ${entryIndex}: ${entry.notation || entry.id}, type: ${entry.entryType}, walletType: ${entry.walletType}, toWalletType: ${entry.toWalletType}, isBridge: ${entry.isBridge}`);
@@ -460,6 +476,11 @@ class BATSVisualizationD3 {
                         // Also register with currency suffix for thread lookups
                         if (entry.notation && entry.currency) {
                             this.nodeMap.set(`${entry.notation}_${entry.currency}`, brownNode);
+                        }
+                        // IMPORTANT: Also register by internal bridge ID so deferred entries can find it
+                        if (internalId) {
+                            this.nodeMap.set(internalId, brownNode);
+                            console.log(`  [Bridge] Registered brown wallet by internal ID: ${internalId}`);
                         }
 
                         // Edge: Source → Brown wallet (input currency)
@@ -683,6 +704,83 @@ class BATSVisualizationD3 {
                     }
                 }
             });
+
+            // Process deferred entries that belong to this hop (from previous hops' arrays)
+            if (deferredEntries.has(hop.hopNumber)) {
+                const deferred = deferredEntries.get(hop.hopNumber);
+                console.log(`Processing ${deferred.length} deferred entries for Hop ${hop.hopNumber}`);
+
+                deferred.forEach((entry, entryIndex) => {
+                    console.log(`  - Processing deferred entry: ${entry.notation || entry.id}, type: ${entry.entryType}, amount: ${entry.amount} ${entry.currency}`);
+
+                    // Normalize entry data
+                    if (!entry.destinationWallet && entry.toWallet) {
+                        entry.destinationWallet = entry.toWallet;
+                    }
+                    if (!entry.walletType && entry.toWalletType) {
+                        entry.walletType = entry.toWalletType;
+                    }
+                    if (!entry.walletLabel && entry.notes) {
+                        const labelMatch = entry.notes.match(/Terminal wallet: ([^\n]+)/);
+                        if (labelMatch) {
+                            entry.walletLabel = labelMatch[1];
+                        }
+                    }
+                    if (entry.isTerminalWallet && !entry.isTerminal) {
+                        entry.isTerminal = entry.isTerminalWallet;
+                    }
+
+                    // Create destination node
+                    const colorType = this.getWalletColorType(entry.walletType, entry.isTerminal);
+                    const walletId = this.generateWalletId(colorType, entry.destinationWallet || `deferred-${entryIndex}`);
+                    const nodeId = `H${hop.hopNumber}-${walletId}`;
+
+                    const node = {
+                        id: nodeId,
+                        wallet: entry.destinationWallet || '',
+                        walletLabel: entry.walletLabel || this.shortenAddress(entry.destinationWallet),
+                        walletId: walletId,
+                        type: colorType,
+                        amount: parseFloat(entry.amount || 0),
+                        currency: entry.currency || 'UNKNOWN',
+                        column: hop.hopNumber,
+                        notation: entry.notation,
+                        isTerminal: entry.isTerminal || false
+                    };
+
+                    this.nodes.push(node);
+                    hopColumn.nodes.push(node);
+                    this.nodeMap.set(nodeId, node);
+
+                    // Create edges from source threads (typically bridge output threads)
+                    const sourceThreadIds = entry.sourceThreadIds ||
+                                          entry.multipleSourceInternalIds ||
+                                          [entry.sourceThreadId].filter(Boolean);
+
+                    if (sourceThreadIds && sourceThreadIds.length > 0) {
+                        console.log(`    - Source threads for deferred entry:`, sourceThreadIds);
+                        sourceThreadIds.forEach(threadId => {
+                            // Look for this thread in available threads or as output thread on brown wallets
+                            const sourceNode = this.findSourceNode(threadId, hopIndex);
+                            console.log(`      - Looking for thread "${threadId}":`, sourceNode ? `Found ${sourceNode.id}` : 'NOT FOUND');
+
+                            if (sourceNode) {
+                                // Get individual amount if available
+                                const individualAmount = entry.individualSourceAssignments?.[threadId] || (node.amount / sourceThreadIds.length);
+
+                                this.edges.push({
+                                    source: sourceNode.id,
+                                    target: nodeId,
+                                    label: entry.notation || '',
+                                    amount: individualAmount,
+                                    currency: entry.currency,
+                                    entryData: entry
+                                });
+                            }
+                        });
+                    }
+                });
+            }
 
             this.hopColumns.push(hopColumn);
         });
