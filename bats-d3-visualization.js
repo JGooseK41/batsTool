@@ -2086,15 +2086,15 @@ class BATSVisualizationD3 {
     }
 
     buildCustomCurvePath(x1, y1, x2, y2, controlPoint) {
-        // Build path with sharp angles using straight line segments
+        // Build curve with single control point (quadratic bezier)
         if (!controlPoint) {
             // Default simple curve
             const mx = (x1 + x2) / 2;
             return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
         }
 
-        // Two straight line segments meeting at control point
-        return `M ${x1} ${y1} L ${controlPoint.x} ${controlPoint.y} L ${x2} ${y2}`;
+        // Quadratic bezier through single control point
+        return `M ${x1} ${y1} Q ${controlPoint.x} ${controlPoint.y}, ${x2} ${y2}`;
     }
 
     updateEdgePaths(edgeData) {
