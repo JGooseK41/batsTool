@@ -3,16 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 16:10)
+## Latest Commit (Auto-updated: 2025-10-06 16:13)
 
-**Commit:** 7b79e621cea7537347bda298d2349d2561842aa2
+**Commit:** a9e875c1d031d27736d31fbe2a2c3e4229d040b3
 **Author:** Your Name
-**Message:** Fix leftY undefined error after removing left side conversion display
+**Message:** Fix nestedLabelsHeight and nestedContentHeight undefined errors
 
-- Replace leftY reference with currentY + lineHeight calculation
-- Left side now only has beginning balance (one line)
-- Right side has multiple disposition lines (rightY tracks height)
-- Advance to taller column before drawing balance line
+- Add missing height constants for nested T-account layout
+- nestedLabelsHeight: 15px for column headers
+- nestedContentHeight: 20px for main content area
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -20,23 +19,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 41 +++++++++++++++++++----------------------
- bats-d3-visualization.js |  3 ++-
- 2 files changed, 21 insertions(+), 23 deletions(-)
+ CLAUDE.md                | 36 +++++++++++++++++-------------------
+ bats-d3-visualization.js |  2 ++
+ 2 files changed, 19 insertions(+), 19 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7b79e62 Fix leftY undefined error after removing left side conversion display (0 seconds ago)
-- eaa003c Fix T-account conversion display and terminal wallet detection (2 minutes ago)
-- 536f979 Add callout arrow connecting conversion to nested T-account (9 minutes ago)
-- b4f7289 Apply accounting notation and improve T-account readability (23 minutes ago)
-- fba0d29 Update CLAUDE.md with latest commit info (38 minutes ago)
-- 4c7e376 Improve T-account reconciliation layout and clarity (51 minutes ago)
-- 5dd14d8 Update CLAUDE.md with latest commit info (85 minutes ago)
+- a9e875c Fix nestedLabelsHeight and nestedContentHeight undefined errors (0 seconds ago)
+- 7b79e62 Fix leftY undefined error after removing left side conversion display (2 minutes ago)
+- eaa003c Fix T-account conversion display and terminal wallet detection (4 minutes ago)
+- 536f979 Add callout arrow connecting conversion to nested T-account (11 minutes ago)
+- b4f7289 Apply accounting notation and improve T-account readability (26 minutes ago)
+- fba0d29 Update CLAUDE.md with latest commit info (40 minutes ago)
+- 4c7e376 Improve T-account reconciliation layout and clarity (54 minutes ago)
+- 5dd14d8 Update CLAUDE.md with latest commit info (87 minutes ago)
 - c6dddb8 Update CLAUDE.md with latest commit info (4 hours ago)
 - 4c57a13 Ensure all wallets are added to universal wallet index (4 hours ago)
-- fa2e014 Update CLAUDE.md with latest commit info (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

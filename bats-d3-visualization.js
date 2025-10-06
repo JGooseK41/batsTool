@@ -1709,14 +1709,17 @@ class BATSVisualizationD3 {
                     const nestedLabelsHeight = 15; // Height for column headers
                     const nestedContentHeight = 20; // Height for main content area
 
-                    // Draw horizontal divider line above new T-account
-                    group.append('line')
-                        .attr('x1', d.leftX + 20)
-                        .attr('y1', currentY)
-                        .attr('x2', d.leftX + d.width - 20)
-                        .attr('y2', currentY)
+                    // Draw background box for nested T-account
+                    group.append('rect')
+                        .attr('x', d.leftX + 20)
+                        .attr('y', nestedBoxStartY)
+                        .attr('width', d.width - 40)
+                        .attr('height', nestedBoxHeight)
+                        .attr('fill', '#f8f9fa')
                         .attr('stroke', nestedColor)
-                        .attr('stroke-width', 2);
+                        .attr('stroke-width', 1.5)
+                        .attr('stroke-dasharray', '4,4')
+                        .attr('rx', 4);
 
                     currentY += 5;
 
@@ -1763,8 +1766,9 @@ class BATSVisualizationD3 {
                     currentY += nestedLabelsHeight;
 
                     // Left: From conversion amount with source reference (right-aligned)
-                    const nestedLeftX = d.x - 60;
-                    const nestedLeftLabelX = d.x - 50;
+                    // Keep within box boundaries (box starts at d.leftX + 20)
+                    const nestedLeftX = d.x - 20;
+                    const nestedLeftLabelX = d.x - 10;
 
                     group.append('text')
                         .attr('x', nestedLeftX)
@@ -1794,8 +1798,9 @@ class BATSVisualizationD3 {
                     }
 
                     // Right: Disposition - compact with right-aligned numbers and parentheses
-                    const nestedRightX = d.leftX + d.width - 70;
-                    const nestedRightLabelX = d.leftX + d.width - 60;
+                    // Keep within box boundaries (box ends at d.leftX + d.width - 20)
+                    const nestedRightX = d.leftX + d.width - 50;
+                    const nestedRightLabelX = d.leftX + d.width - 40;
                     let nestedRightY = currentY;
                     let nestedRightTotal = 0;
 
@@ -1882,11 +1887,12 @@ class BATSVisualizationD3 {
                     // Balance totals (positioned just below the line, inside the box, right-aligned)
                     const nestedBalanced = Math.abs(nestedAccount.fromConversion - nestedRightTotal) < 0.01;
                     const balanceTotalY = nestedBalanceLineY + 12;
-                    const nestedLeftNumX = d.x - 60;
-                    const nestedRightNumX = d.leftX + d.width - 70;
+                    // Use box boundaries for balance totals to keep them inside
+                    const nestedLeftBalanceX = d.x - 20;
+                    const nestedRightBalanceX = d.leftX + d.width - 60;
 
                     group.append('text')
-                        .attr('x', nestedLeftNumX)
+                        .attr('x', nestedLeftBalanceX)
                         .attr('y', balanceTotalY)
                         .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
@@ -1895,7 +1901,7 @@ class BATSVisualizationD3 {
                         .text(`${nestedAccount.fromConversion.toFixed(2)}`);
 
                     group.append('text')
-                        .attr('x', nestedRightNumX)
+                        .attr('x', nestedRightBalanceX)
                         .attr('y', balanceTotalY)
                         .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
