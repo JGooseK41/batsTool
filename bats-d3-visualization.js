@@ -613,35 +613,7 @@ class BATSVisualizationD3 {
                                 console.log(`  [Bridge] Skipping lookup: isBridge=${entry.isBridge}, hasAvailableThreads=${!!this.investigation.availableThreads}`);
                             }
 
-                            // Create output node in hop COMPLETION column (not hop creation space)
-                            const outputNodeId = internalId || `H${hop.hopNumber}-BRIDGE-${entryIndex}`;
-                            const outputNode = {
-                                id: outputNodeId,
-                                label: entry.notation || outputNodeId,
-                                wallet: entry.destinationWallet,
-                                walletLabel: `${outputCurrency} Output`,
-                                walletId: this.generateWalletId('brown', outputCurrency),
-                                type: 'brown',
-                                amount: outputAmount,
-                                currency: outputCurrency,
-                                column: hop.hopNumber,  // Put in hop COMPLETION column
-                                notation: entry.notation,
-                                isBridgeOutput: true
-                            };
-
-                            this.nodes.push(outputNode);
-                            hopColumn.nodes.push(outputNode);
-                            this.nodeMap.set(outputNodeId, outputNode);
-
-                            // Register with notation for thread lookups
-                            if (entry.notation) {
-                                this.nodeMap.set(entry.notation, outputNode);
-                                if (outputCurrency) {
-                                    this.nodeMap.set(`${entry.notation}_${outputCurrency}`, outputNode);
-                                }
-                            }
-
-                            // Track the output thread on swap node for display
+                            // Track the output thread on swap node for display (internal to brown wallet)
                             if (!swapNode.outputThreads) swapNode.outputThreads = [];
                             swapNode.outputThreads.push({
                                 notation: entry.notation,
@@ -650,15 +622,11 @@ class BATSVisualizationD3 {
                                 currency: outputCurrency
                             });
 
-                            // Create edge from swap node to output node
-                            this.edges.push({
-                                source: swapNode.id,
-                                target: outputNodeId,
-                                label: `${entry.notation || ''} (${entry.amount} ${entry.currency} → ${outputAmount} ${outputCurrency})`,
-                                amount: outputAmount,
-                                currency: outputCurrency,
-                                entryData: entry
-                            });
+                            // Register swap node by internal ID so deferred entries can find it
+                            if (internalId) {
+                                this.nodeMap.set(internalId, swapNode);
+                                console.log(`  [Bridge] Registered swap node ${swapNode.id} by internal ID ${internalId}`);
+                            }
 
                             // Update ART with output currency
                             hopColumn.artAfter[outputCurrency] = (hopColumn.artAfter[outputCurrency] || 0) + outputAmount;

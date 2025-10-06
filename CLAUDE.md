@@ -3,17 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 21:53)
+## Latest Commit (Auto-updated: 2025-10-05 21:56)
 
-**Commit:** c8b29615f68b5f77df661013d6ee8012c5aa4a6e
+**Commit:** 63784253ae62b52c7ebf38dec6449148c6146223
 **Author:** Your Name
-**Message:** Place deferred bridge output entries in source hop, not target hopNumber
+**Message:** Fix duplicate sourceThreadIds declaration causing syntax error
 
-- Bridge outputs don't create new hops (swaps don't count as hops)
-- Deferred entries from bridge outputs now placed in same hop as the bridge
-- Looks up source thread hopLevel from availableThreads to determine placement
-- KuCoin terminal now correctly appears in Hop 1 COMPLETION, not Hop 2
-- Node added to correct hop column based on source, not entry.hopNumber
+- Removed second declaration at line 848
+- Reuse sourceThreadIds variable from line 799
+- Fixes 'Identifier sourceThreadIds has already been declared' error
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -21,22 +19,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- bats-d3-visualization.js | 35 ++++++++++++++++++++++++++++++++---
- 1 file changed, 32 insertions(+), 3 deletions(-)
+ bats-d3-visualization.js | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c8b2961 Place deferred bridge output entries in source hop, not target hopNumber (0 seconds ago)
-- 8f2abe3 Update CLAUDE.md (6 minutes ago)
-- ca5056d Create bridge output nodes in hop COMPLETION column instead of just tracking on swap node (7 minutes ago)
-- f9c3f5c Update CLAUDE.md (12 minutes ago)
-- 099b263 Add bridge internal ID lookup to EXTERNAL swap brown-to-brown path (12 minutes ago)
-- 40ffd81 Add bridge condition check logging to diagnose lookup skip (14 minutes ago)
-- b0679f0 Update CLAUDE.md (15 minutes ago)
-- 534ba1d Add detailed logging for bridge internal ID lookup (15 minutes ago)
-- 2467b04 Update CLAUDE.md with latest commit info (19 minutes ago)
-- 4d0e244 Fix getWalletColorType undefined error in deferred entry processing (20 minutes ago)
+- 6378425 Fix duplicate sourceThreadIds declaration causing syntax error (0 seconds ago)
+- 4745104 Update CLAUDE.md (2 minutes ago)
+- c8b2961 Place deferred bridge output entries in source hop, not target hopNumber (3 minutes ago)
+- 8f2abe3 Update CLAUDE.md (9 minutes ago)
+- ca5056d Create bridge output nodes in hop COMPLETION column instead of just tracking on swap node (10 minutes ago)
+- f9c3f5c Update CLAUDE.md (15 minutes ago)
+- 099b263 Add bridge internal ID lookup to EXTERNAL swap brown-to-brown path (15 minutes ago)
+- 40ffd81 Add bridge condition check logging to diagnose lookup skip (17 minutes ago)
+- b0679f0 Update CLAUDE.md (18 minutes ago)
+- 534ba1d Add detailed logging for bridge internal ID lookup (18 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
