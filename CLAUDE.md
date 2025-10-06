@@ -3,17 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 21:40)
+## Latest Commit (Auto-updated: 2025-10-05 21:46)
 
-**Commit:** 099b26379eb17052f8f2491db4195b93a42f8d60
+**Commit:** ca5056d1ba388f82fe0e3fbc9de20b5ca6d7dd3c
 **Author:** Your Name
-**Message:** Add bridge internal ID lookup to EXTERNAL swap brown-to-brown path
+**Message:** Create bridge output nodes in hop COMPLETION column instead of just tracking on swap node
 
-- Bridge entries with toWalletType=brown were taking a different code path
-- This path didn't have internal ID lookup, causing deferred entries to fail
-- Now adds internal ID lookup and registration in both code paths
-- Stores internalId in output thread for findSourceNode to match
-- Registers brown wallet in nodeMap by internal bridge ID
+- Bridge outputs now create actual nodes in hop completion column (e.g., column 1 for Hop 1)
+- Prevents direct edges from Hop 1 creation to Hop 2 completion (skipping Hop 1 completion)
+- Each bridge output gets a brown node showing USDC sitting in Hop 1 completion
+- Deferred entries will now connect FROM these output nodes, not from the swap node
+- Edges: Red → Brown (swap) → Brown (output) → Purple (terminal)
+- Uses internal bridge ID as node ID for proper deferred entry lookup
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -21,22 +22,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- bats-d3-visualization.js | 35 ++++++++++++++++++++++++++++++++++-
- 1 file changed, 34 insertions(+), 1 deletion(-)
+ bats-d3-visualization.js | 58 ++++++++++++++++++++++++++++++++++--------------
+ 1 file changed, 41 insertions(+), 17 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 099b263 Add bridge internal ID lookup to EXTERNAL swap brown-to-brown path (0 seconds ago)
-- 40ffd81 Add bridge condition check logging to diagnose lookup skip (82 seconds ago)
-- b0679f0 Update CLAUDE.md (3 minutes ago)
-- 534ba1d Add detailed logging for bridge internal ID lookup (3 minutes ago)
-- 2467b04 Update CLAUDE.md with latest commit info (7 minutes ago)
-- 4d0e244 Fix getWalletColorType undefined error in deferred entry processing (7 minutes ago)
-- 142c4fe Add support for deferred cross-hop entries (bridge outputs to later hops) (10 minutes ago)
-- 687bef2 Fix Sankey to Hop Columns navigation (14 minutes ago)
-- 03070c6 Fix EXTERNAL swap path to extract bridge output currency from bridgeDetails (19 minutes ago)
-- 206ce46 Add swap type logging (internal vs external) (21 minutes ago)
+- ca5056d Create bridge output nodes in hop COMPLETION column instead of just tracking on swap node (0 seconds ago)
+- f9c3f5c Update CLAUDE.md (5 minutes ago)
+- 099b263 Add bridge internal ID lookup to EXTERNAL swap brown-to-brown path (5 minutes ago)
+- 40ffd81 Add bridge condition check logging to diagnose lookup skip (6 minutes ago)
+- b0679f0 Update CLAUDE.md (8 minutes ago)
+- 534ba1d Add detailed logging for bridge internal ID lookup (8 minutes ago)
+- 2467b04 Update CLAUDE.md with latest commit info (12 minutes ago)
+- 4d0e244 Fix getWalletColorType undefined error in deferred entry processing (12 minutes ago)
+- 142c4fe Add support for deferred cross-hop entries (bridge outputs to later hops) (15 minutes ago)
+- 687bef2 Fix Sankey to Hop Columns navigation (19 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
