@@ -3,16 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 17:43)
+## Latest Commit (Auto-updated: 2025-10-06 17:44)
 
-**Commit:** 1348d90118971050f1f299b763327949e29c37f2
+**Commit:** 2254e66578592e97624ad547c80055c1b23aca04
 **Author:** Your Name
-**Message:** Fix T-account box height calculation to include full nested account height
+**Message:** Fix nested T-account currency label color to match amount
 
-- Update nested account height from 100px to 173px per account
-- Includes visual separator (15px), arrow text (18px), conversion box (45px), and nested T-account (95px)
-- Prevents nested T-accounts from extending beyond scrollable area
-- Box height now accurately reflects actual rendered content
+- Change currency label from gray (#7f8c8d) to nestedColor (currency color)
+- Left side now consistently shows currency color (e.g., blue for USDC)
+- Right side shows status colors (purple for terminated, green for tracing)
+- Both amount and currency label now use same color on left side
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -20,15 +20,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 41 +++++++++++++++++++++++------------------
- bats-d3-visualization.js | 11 ++++++++---
- 2 files changed, 31 insertions(+), 21 deletions(-)
+ CLAUDE.md                | 44 ++++++++++++++++++++------------------------
+ bats-d3-visualization.js |  2 +-
+ 2 files changed, 21 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1348d90 Fix T-account box height calculation to include full nested account height (0 seconds ago)
-- 9dbd3e4 Add background box to nested T-account and fix text positioning (86 minutes ago)
+- 2254e66 Fix nested T-account currency label color to match amount (0 seconds ago)
+- 1348d90 Fix T-account box height calculation to include full nested account height (60 seconds ago)
+- 9dbd3e4 Add background box to nested T-account and fix text positioning (87 minutes ago)
 - a9e875c Fix nestedLabelsHeight and nestedContentHeight undefined errors (2 hours ago)
 - 7b79e62 Fix leftY undefined error after removing left side conversion display (2 hours ago)
 - eaa003c Fix T-account conversion display and terminal wallet detection (2 hours ago)
@@ -36,7 +37,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - b4f7289 Apply accounting notation and improve T-account readability (2 hours ago)
 - fba0d29 Update CLAUDE.md with latest commit info (2 hours ago)
 - 4c7e376 Improve T-account reconciliation layout and clarity (2 hours ago)
-- 5dd14d8 Update CLAUDE.md with latest commit info (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

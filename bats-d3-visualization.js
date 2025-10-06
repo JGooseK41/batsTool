@@ -1729,6 +1729,17 @@ class BATSVisualizationD3 {
                     currentY += 5;
 
                     // Currency header for nested T-account
+                    // Add background rect to hide vertical line behind text
+                    const headerText = `━━ ${nestedCurrency} ━━`;
+                    const headerWidth = headerText.length * 8; // Approximate width
+                    group.append('rect')
+                        .attr('x', d.x - headerWidth / 2)
+                        .attr('y', currentY + 2)
+                        .attr('width', headerWidth)
+                        .attr('height', 14)
+                        .attr('fill', '#f8f9fa')
+                        .attr('rx', 2);
+
                     group.append('text')
                         .attr('x', d.x)
                         .attr('y', currentY + 12)
@@ -1736,7 +1747,7 @@ class BATSVisualizationD3 {
                         .attr('font-size', '11px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
-                        .text(`━━ ${nestedCurrency} ━━`);
+                        .text(headerText);
 
                     currentY += 20;
 
