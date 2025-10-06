@@ -3015,11 +3015,14 @@
                     // Entry container with hierarchy
                     html += `<div style="margin-bottom: 20px; border-left: 4px solid ${borderColor}; padding-left: 15px;">`;
 
+                    // Check if commingled (notation contains multiple sources)
+                    const isCommingled = entry.notation && (entry.notation.includes(',') || (entry.notation.match(/\(/g) || []).length > 1);
+
                     // Entry header
-                    html += `<div style="background: ${bgColor}; padding: 12px; border-radius: 5px; margin-bottom: 10px;">`;
+                    html += `<div style="background: ${bgColor}; padding: 12px; border-radius: 5px; margin-bottom: 10px; ${isCommingled ? 'border: 2px dashed #e67e22;' : ''}">`;
                     html += `<div style="display: flex; justify-content: space-between; align-items: center;">`;
                     html += `<div>`;
-                    html += `<strong style="font-size: 16px;">📄 Entry ${entryIndex + 1}: ${entryType}</strong>`;
+                    html += `<strong style="font-size: 16px;">📄 Entry ${entryIndex + 1}: ${entryType}${isCommingled ? ' (COMMINGLED)' : ''}</strong>`;
                     if (entry.notation) {
                         html += ` <span style="color: #7f8c8d; margin-left: 10px;">${entry.notation}</span>`;
                     }
@@ -3074,11 +3077,14 @@
                         html += `<div style="margin-left: 20px; margin-top: 15px; background: #ffe4b5; padding: 10px; border-radius: 5px;">`;
                         html += `<strong>🔄 Conversion Output:</strong> `;
 
+                        let outputShown = false;
+
                         // Check for bridge output in notes
                         if (entry.notes && entry.notes.includes('[BRIDGE OUTPUT]')) {
                             const outputMatch = entry.notes.match(/Output Amount: ([\d,\.]+) (\w+)/);
                             if (outputMatch) {
                                 html += `${outputMatch[1]} ${outputMatch[2]}`;
+                                outputShown = true;
 
                                 // Check if this created new threads
                                 const outputThreads = investigation.sourceThreadsIndex?.filter(t =>
@@ -3099,9 +3105,25 @@
                                     html += `</div>`;
                                 }
                             }
-                        } else if (entry.swapDetails) {
-                            html += `${entry.swapDetails.outputAmount} ${entry.swapDetails.outputCurrency}`;
                         }
+
+                        // Check swapDetails
+                        if (!outputShown && entry.swapDetails && entry.swapDetails.outputAmount) {
+                            html += `${entry.swapDetails.outputAmount.toLocaleString()} ${entry.swapDetails.outputCurrency}`;
+                            outputShown = true;
+                        }
+
+                        // Check bridgeDetails
+                        if (!outputShown && entry.bridgeDetails && entry.bridgeDetails.destinationAmount) {
+                            html += `${entry.bridgeDetails.destinationAmount.toLocaleString()} ${entry.bridgeDetails.destinationAsset}`;
+                            outputShown = true;
+                        }
+
+                        // Fallback if no output found
+                        if (!outputShown) {
+                            html += `<span style="color: #e74c3c; font-style: italic;">Output amount not recorded</span>`;
+                        }
+
                         html += `</div>`;
                     }
 
@@ -3138,6 +3160,7 @@
                 // Group totals by currency and track conversions
                 const currencyFlows = {};
                 const conversions = [];
+                const createdCurrencies = {}; // Track currencies created from conversions
 
                 Object.keys(hopART).forEach(currency => {
                     currencyFlows[currency] = {
@@ -3145,49 +3168,77 @@
                         terminal: 0,
                         writeoff: 0,
                         continuing: 0,
-                        converted: 0
+                        converted: 0,
+                        createdFromConversion: 0
                     };
                 });
 
                 terminalEntries.forEach(e => {
                     const curr = e.currency;
-                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0 };
+                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0, createdFromConversion: 0 };
                     currencyFlows[curr].terminal += parseFloat(e.amount);
                 });
 
                 writeoffEntries.forEach(e => {
                     const curr = e.currency;
-                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0 };
+                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0, createdFromConversion: 0 };
                     currencyFlows[curr].writeoff += parseFloat(e.amount);
                 });
 
                 conversionEntries.forEach(e => {
                     const curr = e.currency;
-                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0 };
+                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0, createdFromConversion: 0 };
                     currencyFlows[curr].converted += parseFloat(e.amount);
 
-                    // Track conversion details
+                    // Track conversion details and output currency
                     if (e.notes && e.notes.includes('[BRIDGE OUTPUT]')) {
                         const outputMatch = e.notes.match(/Output Amount: ([\d,\.]+) (\w+)/);
                         if (outputMatch) {
+                            const outputAmount = parseFloat(outputMatch[1].replace(/,/g, ''));
+                            const outputCurr = outputMatch[2];
                             conversions.push({
                                 from: `${parseFloat(e.amount).toLocaleString()} ${curr}`,
-                                to: `${outputMatch[1]} ${outputMatch[2]}`,
+                                to: `${outputMatch[1]} ${outputCurr}`,
                                 notation: e.notation
                             });
+                            // Track that this currency was created from conversion
+                            if (!currencyFlows[outputCurr]) {
+                                currencyFlows[outputCurr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0, createdFromConversion: 0 };
+                            }
+                            currencyFlows[outputCurr].createdFromConversion += outputAmount;
                         }
                     } else if (e.swapDetails) {
+                        const outputAmount = parseFloat(e.swapDetails.outputAmount);
+                        const outputCurr = e.swapDetails.outputCurrency;
                         conversions.push({
                             from: `${parseFloat(e.amount).toLocaleString()} ${curr}`,
-                            to: `${e.swapDetails.outputAmount} ${e.swapDetails.outputCurrency}`,
+                            to: `${e.swapDetails.outputAmount} ${outputCurr}`,
                             notation: e.notation
                         });
+                        // Track that this currency was created from conversion
+                        if (!currencyFlows[outputCurr]) {
+                            currencyFlows[outputCurr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0, createdFromConversion: 0 };
+                        }
+                        currencyFlows[outputCurr].createdFromConversion += outputAmount;
+                    } else if (e.bridgeDetails) {
+                        const outputAmount = parseFloat(e.bridgeDetails.destinationAmount);
+                        const outputCurr = e.bridgeDetails.destinationAsset;
+                        conversions.push({
+                            from: `${parseFloat(e.amount).toLocaleString()} ${curr}`,
+                            to: `${outputAmount.toLocaleString()} ${outputCurr}`,
+                            notation: e.notation
+                        });
+                        // Track that this currency was created from conversion
+                        if (!currencyFlows[outputCurr]) {
+                            currencyFlows[outputCurr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0, createdFromConversion: 0 };
+                        }
+                        currencyFlows[outputCurr].createdFromConversion += outputAmount;
                     }
                 });
 
                 continuingEntries.forEach(e => {
                     const curr = e.currency;
-                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0 };
+                    if (!currencyFlows[curr]) currencyFlows[curr] = { opening: 0, terminal: 0, writeoff: 0, continuing: 0, converted: 0, createdFromConversion: 0 };
                     currencyFlows[curr].continuing += parseFloat(e.amount);
                 });
 
@@ -3198,10 +3249,23 @@
                 html += '<div>';
                 html += '<strong>Fund Movements:</strong>';
                 Object.entries(currencyFlows).forEach(([currency, flows]) => {
-                    if (flows.opening > 0 || flows.terminal > 0 || flows.writeoff > 0 || flows.continuing > 0 || flows.converted > 0) {
+                    if (flows.opening > 0 || flows.terminal > 0 || flows.writeoff > 0 || flows.continuing > 0 || flows.converted > 0 || flows.createdFromConversion > 0) {
                         html += `<div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">`;
                         html += `<strong>${currency}:</strong><br>`;
-                        html += `Starting: ${flows.opening.toLocaleString()}<br>`;
+
+                        // Show opening balance if exists
+                        if (flows.opening > 0) {
+                            html += `Starting: ${flows.opening.toLocaleString()}<br>`;
+                        }
+
+                        // Show created from conversion if exists
+                        if (flows.createdFromConversion > 0) {
+                            html += `<span style="color: #f39c12;">+ Created from conversion: ${flows.createdFromConversion.toLocaleString()}</span><br>`;
+                        }
+
+                        // Calculate total available (opening + created)
+                        const totalAvailable = flows.opening + flows.createdFromConversion;
+
                         if (flows.terminal > 0) {
                             html += `<span style="color: #9b59b6;">→ To Exchanges: ${flows.terminal.toLocaleString()}</span><br>`;
                         }
@@ -3214,9 +3278,11 @@
                         if (flows.continuing > 0) {
                             html += `<span style="color: #27ae60;">→ Continuing: ${flows.continuing.toLocaleString()}</span><br>`;
                         }
-                        const remaining = flows.opening - flows.terminal - flows.writeoff - flows.converted - flows.continuing;
+
+                        // Calculate remaining based on total available
+                        const remaining = totalAvailable - flows.terminal - flows.writeoff - flows.converted - flows.continuing;
                         if (Math.abs(remaining) > 0.01) {
-                            html += `<strong>Unaccounted: ${remaining.toLocaleString()}</strong>`;
+                            html += `<strong style="color: #e74c3c;">⚠ Unaccounted: ${remaining.toLocaleString()}</strong>`;
                         }
                         html += `</div>`;
                     }

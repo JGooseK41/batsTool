@@ -3,20 +3,24 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 12:03)
+## Latest Commit (Auto-updated: 2025-10-06 12:06)
 
-**Commit:** 8b1a48ac73d9f817105addb82f7949b49d99d9f9
+**Commit:** 1ff2efc73a963b04142ab43fec52cc50d53c4974
 **Author:** Your Name
-**Message:** Reorganize Reports tab with sub-tabs
+**Message:** Add comprehensive printable report export function
 
-- Add three sub-tabs: Audit Trail, Wallet Indexes, Narrative
-- Audit Trail: Technical transaction flow analysis
-- Wallet Indexes: Switchable views for Universal, Red, Purple indexes
-- Narrative: Editable textarea for investigator notes
-- Case info moved to compact header
-- Narrative auto-saves to investigation.metadata
-- Add switchReportTab() and showWalletIndex() functions
-- Add saveNarrative() and loadNarrative() functions
+- Cover page with case info, agency, investigator, case type, summary
+- Table of contents page
+- Section 1: Universal Wallet Index (all wallets chronologically)
+- Section 2: Red Wallet Index (victim wallets)
+- Section 3: Purple Wallet Index (terminal wallets)
+- Section 4: Investigation Narrative (investigator notes)
+- Section 5: Technical Audit Trail (complete transaction flow)
+- Professional print-ready styling with page breaks
+- Exports as standalone HTML file
+- Includes full transaction hashes and notes
+- "For Law Enforcement Use Only" footer
+- Instructions to Print to PDF from browser
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -24,23 +28,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  31 ++++++-----
- index.html | 180 ++++++++++++++++++++++++++++++++++++++++++++++++++++---------
- 2 files changed, 172 insertions(+), 39 deletions(-)
+ CLAUDE.md  |  36 +++---
+ index.html | 383 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 402 insertions(+), 17 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8b1a48a Reorganize Reports tab with sub-tabs (0 seconds ago)
-- 39cd010 Show full transaction hashes and notes in audit trail (3 minutes ago)
-- 4491d84 Add debug logging to wallet index generation (4 minutes ago)
-- ab4ead4 Add Reports tab to main application container (6 minutes ago)
-- f1c0ad1 Add debug logging to proceedDirectlyToReports() (9 minutes ago)
+- 1ff2efc Add comprehensive printable report export function (0 seconds ago)
+- 8b1a48a Reorganize Reports tab with sub-tabs (3 minutes ago)
+- 39cd010 Show full transaction hashes and notes in audit trail (6 minutes ago)
+- 4491d84 Add debug logging to wallet index generation (7 minutes ago)
+- ab4ead4 Add Reports tab to main application container (9 minutes ago)
+- f1c0ad1 Add debug logging to proceedDirectlyToReports() (12 minutes ago)
 - 6090769 Add null safety checks to generateReportContent() (3 hours ago)
 - 2730194 Fix syntax error - remove orphaned code block (3 hours ago)
 - 8780908 Update CLAUDE.md with latest commit info (3 hours ago)
 - ced4655 Add source currency reference to nested T-accounts (3 hours ago)
-- c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
