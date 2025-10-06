@@ -393,25 +393,32 @@ class BATSVisualizationD3 {
                         // For bridges, find the internal ID from availableThreads
                         let internalId = null;
                         if (entry.isBridge && this.investigation.availableThreads) {
+                            console.log(`  [Bridge] Looking for internal ID for entry ${entry.id}, hop ${hop.hopNumber}, notation ${entry.notation}`);
                             // Search through available threads to find matching bridge output
                             for (const currency in this.investigation.availableThreads) {
                                 for (const threadId in this.investigation.availableThreads[currency]) {
                                     const thread = this.investigation.availableThreads[currency][threadId];
                                     if (thread.entryId === entry.id && thread.hopLevel === hop.hopNumber) {
                                         internalId = thread.internalId;
+                                        console.log(`  [Bridge] Found internal ID: ${internalId} for ${currency}`);
                                         break;
                                     }
                                 }
                                 if (internalId) break;
                             }
+                            if (!internalId) {
+                                console.log(`  [Bridge] NO internal ID found for entry ${entry.id}, hop ${hop.hopNumber}`);
+                            }
                         }
 
-                        brownNode.outputThreads.push({
+                        const outputThread = {
                             notation: entry.notation,
                             internalId: internalId, // Store internal bridge output ID for lookup
                             amount: outputAmount,
                             currency: outputCurrency
-                        });
+                        };
+                        console.log(`  [Bridge] Adding output thread to brown wallet ${brownWalletKey}:`, outputThread);
+                        brownNode.outputThreads.push(outputThread);
 
                         // Register this as a thread source for next hop to connect to
                         this.nodeMap.set(entry.notation, brownNode);
@@ -597,9 +604,11 @@ class BATSVisualizationD3 {
                                           (entry.sourceThreadId ? [entry.sourceThreadId] : []);
 
                     if (sourceThreadIds.length > 0) {
+                        console.log(`Processing entry ${entry.notation}: sourceThreadIds =`, sourceThreadIds);
                         // Handle multiple source threads
                         sourceThreadIds.forEach(threadId => {
                             const sourceThread = this.findSourceNode(threadId, hopIndex);
+                            console.log(`  - Looking for thread "${threadId}":`, sourceThread ? `Found ${sourceThread.id}` : 'NOT FOUND');
                             if (sourceThread) {
                                 // Get individual amount if available (for convergence entries)
                                 const individualAmount = entry.individualSourceAssignments?.[threadId] || (node.amount / sourceThreadIds.length);
@@ -626,6 +635,7 @@ class BATSVisualizationD3 {
             edges: this.edges.length,
             columns: this.hopColumns.length
         });
+        console.log('Sample edges:', this.edges.slice(0, 3));
     }
 
     findSourceNode(threadId, currentHop) {
@@ -637,6 +647,7 @@ class BATSVisualizationD3 {
 
         // Check if it's a bridge output thread ID (e.g., bridge_3_USDC_1759657824768_xks0aq)
         if (threadId.startsWith('bridge_')) {
+            console.log(`  [findSourceNode] Bridge thread lookup for "${threadId}"`);
             // Find the brown wallet that created this bridge output
             // Bridge outputs come from hop entries with isBridge=true
             for (let [id, node] of this.nodeMap) {
@@ -644,10 +655,18 @@ class BATSVisualizationD3 {
                     // Check if any output thread has this internal ID
                     const match = node.outputThreads.find(t => t.internalId === threadId || t.notation === threadId);
                     if (match) {
+                        console.log(`  [findSourceNode] Found brown wallet ${node.id} with outputThread:`, match);
                         return node;
                     }
                 }
             }
+            console.log(`  [findSourceNode] No brown wallet found with bridge output "${threadId}"`);
+            console.log(`  [findSourceNode] Available brown wallets:`,
+                Array.from(this.nodeMap.values()).filter(n => n.type === 'brown').map(n => ({
+                    id: n.id,
+                    outputThreads: n.outputThreads
+                }))
+            );
         }
 
         // Parse thread ID to find source node
