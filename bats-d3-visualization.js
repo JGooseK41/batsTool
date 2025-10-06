@@ -2194,7 +2194,7 @@ class BATSVisualizationD3 {
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="this.getRootNode().host.remove()" style="flex: 1; padding: 12px; background: #95a5a6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                <button id="keepCollapsedBtn" style="flex: 1; padding: 12px; background: #95a5a6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
                     Keep Collapsed
                 </button>
                 <button id="expandEdgeGroupBtn" style="flex: 1; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
@@ -2205,8 +2205,13 @@ class BATSVisualizationD3 {
 
         document.body.appendChild(modal);
 
+        // Add keep collapsed button handler
+        modal.querySelector('#keepCollapsedBtn').onclick = () => {
+            modal.remove();
+        };
+
         // Add expand button handler
-        document.getElementById('expandEdgeGroupBtn').onclick = () => {
+        modal.querySelector('#expandEdgeGroupBtn').onclick = () => {
             if (edgeGroup.threadCount > 5) {
                 // For >5 threads: add to expanded set
                 this.expandedEdgeGroups.add(edgeGroup.groupKey);
