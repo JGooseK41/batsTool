@@ -584,8 +584,8 @@ class BATSVisualizationD3 {
                         console.log(`  [EXTERNAL swap output] Entry ${entry.notation}: output=${outputAmount} ${outputCurrency}`);
 
                         if (outputColorType === 'brown') {
-                            // Output is also brown (e.g., bridge to new chain) - NO new wallet node
-                            // The swap node handles both input and output
+                            // Output is also brown (e.g., bridge to new chain)
+                            // Create an output node in the hop COMPLETION column to hold the converted currency
 
                             // For bridges, find the internal ID from availableThreads
                             let internalId = null;
@@ -613,28 +613,52 @@ class BATSVisualizationD3 {
                                 console.log(`  [Bridge] Skipping lookup: isBridge=${entry.isBridge}, hasAvailableThreads=${!!this.investigation.availableThreads}`);
                             }
 
-                            // Track the output thread
+                            // Create output node in hop COMPLETION column (not hop creation space)
+                            const outputNodeId = internalId || `H${hop.hopNumber}-BRIDGE-${entryIndex}`;
+                            const outputNode = {
+                                id: outputNodeId,
+                                label: entry.notation || outputNodeId,
+                                wallet: entry.destinationWallet,
+                                walletLabel: `${outputCurrency} Output`,
+                                walletId: this.generateWalletId('brown', outputCurrency),
+                                type: 'brown',
+                                amount: outputAmount,
+                                currency: outputCurrency,
+                                column: hop.hopNumber,  // Put in hop COMPLETION column
+                                notation: entry.notation,
+                                isBridgeOutput: true
+                            };
+
+                            this.nodes.push(outputNode);
+                            hopColumn.nodes.push(outputNode);
+                            this.nodeMap.set(outputNodeId, outputNode);
+
+                            // Register with notation for thread lookups
+                            if (entry.notation) {
+                                this.nodeMap.set(entry.notation, outputNode);
+                                if (outputCurrency) {
+                                    this.nodeMap.set(`${entry.notation}_${outputCurrency}`, outputNode);
+                                }
+                            }
+
+                            // Track the output thread on swap node for display
                             if (!swapNode.outputThreads) swapNode.outputThreads = [];
                             swapNode.outputThreads.push({
                                 notation: entry.notation,
-                                internalId: internalId,  // Store internal bridge output ID for lookup
+                                internalId: internalId,
                                 amount: outputAmount,
                                 currency: outputCurrency
                             });
 
-                            // Register this notation as pointing to the brown wallet for next hop
-                            if (entry.notation) {
-                                this.nodeMap.set(entry.notation, swapNode);
-                                // Also register with currency suffix for thread lookups
-                                if (outputCurrency) {
-                                    this.nodeMap.set(`${entry.notation}_${outputCurrency}`, swapNode);
-                                }
-                            }
-                            // IMPORTANT: Also register by internal bridge ID so deferred entries can find it
-                            if (internalId) {
-                                this.nodeMap.set(internalId, swapNode);
-                                console.log(`  [Bridge] Registered brown wallet by internal ID: ${internalId}`);
-                            }
+                            // Create edge from swap node to output node
+                            this.edges.push({
+                                source: swapNode.id,
+                                target: outputNodeId,
+                                label: `${entry.notation || ''} (${entry.amount} ${entry.currency} → ${outputAmount} ${outputCurrency})`,
+                                amount: outputAmount,
+                                currency: outputCurrency,
+                                entryData: entry
+                            });
 
                             // Update ART with output currency
                             hopColumn.artAfter[outputCurrency] = (hopColumn.artAfter[outputCurrency] || 0) + outputAmount;
