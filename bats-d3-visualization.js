@@ -1057,21 +1057,31 @@ class BATSVisualizationD3 {
                         currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
                         label: `Write-off: ${entry.reason || 'Unknown'}`
                     });
-                } else if (entry.entryType === 'swap') {
-                    // Swap input on left, output on right
+                } else if (entry.isBridge || entry.entryType === 'swap' || (entry.swapDetails && entry.swapDetails.outputCurrency)) {
+                    // Bridge or swap: input consumed on left, output continues on right
+                    const inputAmount = parseFloat(entry.amount || entry.swapDetails?.inputAmount || 0);
+                    const inputCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                    const outputAmount = parseFloat(entry.bridgeDetails?.destinationAmount || entry.swapDetails?.outputAmount || 0);
+                    const outputCurrency = entry.bridgeDetails?.destinationAsset || entry.swapDetails?.outputCurrency || inputCurrency;
+
+                    // Input consumed (left side)
                     leftItems.push({
-                        type: 'swap-in',
-                        amount: parseFloat(entry.inputAmount) || 0,
-                        currency: entry.inputCurrency,
-                        label: `Swap: ${entry.inputCurrency} → ${entry.outputCurrency}`
+                        type: 'conversion-in',
+                        amount: inputAmount,
+                        currency: inputCurrency,
+                        label: `${inputCurrency} → ${outputCurrency}`,
+                        notation: entry.notation
                     });
+
+                    // Output continues (right side)
                     rightItems.push({
-                        type: 'swap-out',
-                        amount: parseFloat(entry.outputAmount) || 0,
-                        currency: entry.outputCurrency,
-                        label: `Converted to ${entry.outputCurrency}`
+                        type: 'conversion-out',
+                        amount: outputAmount,
+                        currency: outputCurrency,
+                        label: `${inputAmount} ${inputCurrency} → ${outputAmount} ${outputCurrency}`,
+                        notation: entry.notation
                     });
-                } else if (entry.isTerminal || entry.walletType === 'purple') {
+                } else if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
                     // Terminal wallet - goes on left
                     leftItems.push({
                         type: 'terminal',
@@ -1081,7 +1091,7 @@ class BATSVisualizationD3 {
                         notation: entry.notation
                     });
                 } else {
-                    // Continuing trace - goes on right
+                    // Continuing trace - goes on right (no conversion)
                     rightItems.push({
                         type: 'trace',
                         amount: parseFloat(entry.amount) || 0,
@@ -1175,9 +1185,10 @@ class BATSVisualizationD3 {
             leftItems.forEach((item, idx) => {
                 // Visual indicator
                 const icon = item.type === 'terminal' ? '⬤' :
-                           item.type === 'swap-in' ? '🔄' : '✕';
+                           item.type === 'conversion-in' ? '🔄' :
+                           item.type === 'write-off' ? '✕' : '−';
                 const iconColor = item.type === 'terminal' ? '#9b59b6' :
-                                item.type === 'swap-in' ? '#8B4513' : '#e74c3c';
+                                item.type === 'conversion-in' ? '#8B4513' : '#e74c3c';
 
                 group.append('text')
                     .attr('x', d.leftX + 15)
@@ -1191,7 +1202,7 @@ class BATSVisualizationD3 {
                     .attr('y', startY + idx * lineHeight)
                     .attr('font-size', '9px')
                     .attr('fill', '#2c3e50')
-                    .text(`- ${item.amount.toFixed(2)} ${item.currency}`);
+                    .text(`− ${item.amount.toFixed(2)} ${item.currency}`);
             });
         });
 
@@ -1203,7 +1214,8 @@ class BATSVisualizationD3 {
 
             rightItems.forEach((item, idx) => {
                 // Visual indicator
-                const icon = item.type === 'trace' ? '→' : '🔄';
+                const icon = item.type === 'trace' ? '→' :
+                           item.type === 'conversion-out' ? '🔄' : '+';
                 const iconColor = item.type === 'trace' ? '#27ae60' : '#8B4513';
 
                 group.append('text')
