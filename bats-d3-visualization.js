@@ -1280,7 +1280,7 @@ class BATSVisualizationD3 {
             const terminated = {};      // Purple wallets, off-ramped
             const stillTracing = {};    // Black wallets continuing
             const writeOffs = {};       // Write-offs
-            const converted = {};       // Output currencies from swaps/bridges
+            const converted = {};       // Input currencies that were swapped
 
             // Process each entry to categorize disposition
             hop.entries.forEach(entry => {
@@ -1292,19 +1292,17 @@ class BATSVisualizationD3 {
                     writeOffs[currency] = (writeOffs[currency] || 0) + amount;
 
                 } else if (entry.isBridge || entry.entryType === 'swap' || (entry.swapDetails && entry.swapDetails.outputCurrency)) {
-                    // Conversion: consume input currency, create output currency
+                    // Conversion: The INPUT currency was consumed and converted
                     const inputAmount = parseFloat(entry.amount || entry.swapDetails?.inputAmount || 0);
                     const inputCurrency = currency;
                     const outputAmount = parseFloat(entry.bridgeDetails?.destinationAmount || entry.swapDetails?.outputAmount || 0);
                     const outputCurrency = entry.bridgeDetails?.destinationAsset || entry.swapDetails?.outputCurrency || inputCurrency;
 
-                    // Input consumed (subtract from ART balance on left)
-                    // Output created goes to either terminated or stillTracing
-                    if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
-                        terminated[outputCurrency] = (terminated[outputCurrency] || 0) + outputAmount;
-                    } else {
-                        stillTracing[outputCurrency] = (stillTracing[outputCurrency] || 0) + outputAmount;
-                    }
+                    // Track the INPUT currency as "converted" (this balances the left side)
+                    converted[inputCurrency] = (converted[inputCurrency] || 0) + inputAmount;
+
+                    // The OUTPUT currency becomes new ART (shown in stillTracing or terminated for NEXT hop's context)
+                    // For THIS hop's T-account, we only care about the input being converted
 
                 } else if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
                     // Terminal wallet (no conversion)
@@ -1319,6 +1317,7 @@ class BATSVisualizationD3 {
             hopSpace.terminated = terminated;
             hopSpace.stillTracing = stillTracing;
             hopSpace.writeOffs = writeOffs;
+            hopSpace.converted = converted;
         });
 
         // Calculate dynamic height based on currency counts
@@ -1331,8 +1330,9 @@ class BATSVisualizationD3 {
             const artCurrencies = Object.keys(d.artBefore || {}).length;
             const terminatedCurrencies = Object.keys(d.terminated || {}).length;
             const tracingCurrencies = Object.keys(d.stillTracing || {}).length;
+            const convertedCurrencies = Object.keys(d.converted || {}).length;
             const writeOffCurrencies = Object.keys(d.writeOffs || {}).length;
-            return Math.max(artCurrencies, terminatedCurrencies + tracingCurrencies + writeOffCurrencies + 2); // +2 for category headers
+            return Math.max(artCurrencies, terminatedCurrencies + tracingCurrencies + convertedCurrencies + writeOffCurrencies + 3); // +3 for category headers
         });
 
         const boxHeight = headerHeight + (maxCurrencies * lineHeight) + (sectionSpacing * 3) + bottomPadding;
@@ -1480,7 +1480,30 @@ class BATSVisualizationD3 {
                 }
             }
 
-            // Section 3: Write-offs
+            // Section 3: Converted
+            if (Object.keys(d.converted || {}).length > 0) {
+                group.append('text')
+                    .attr('x', d.x + 20)
+                    .attr('y', rightY)
+                    .attr('font-size', '10px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', '#f39c12')
+                    .text('CONVERTED:');
+                rightY += lineHeight;
+
+                for (const [currency, amount] of Object.entries(d.converted)) {
+                    const color = getCurrencyColor(currency);
+                    group.append('text')
+                        .attr('x', d.x + 35)
+                        .attr('y', rightY)
+                        .attr('font-size', '11px')
+                        .attr('fill', color)
+                        .text(`${amount.toFixed(2)} ${currency}`);
+                    rightY += lineHeight;
+                }
+            }
+
+            // Section 4: Write-offs
             if (Object.keys(d.writeOffs || {}).length > 0) {
                 group.append('text')
                     .attr('x', d.x + 20)
@@ -1526,7 +1549,7 @@ class BATSVisualizationD3 {
             // Verify each currency
             let verifyY = bottomY + 28;
             for (const [currency, artAmount] of Object.entries(artBefore)) {
-                const dispositionTotal = (d.terminated[currency] || 0) + (d.stillTracing[currency] || 0) + (d.writeOffs[currency] || 0);
+                const dispositionTotal = (d.terminated[currency] || 0) + (d.stillTracing[currency] || 0) + (d.converted[currency] || 0) + (d.writeOffs[currency] || 0);
                 const isBalanced = Math.abs(artAmount - dispositionTotal) < 0.01;
 
                 group.append('text')
