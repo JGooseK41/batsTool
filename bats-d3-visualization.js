@@ -1839,9 +1839,10 @@ class BATSVisualizationD3 {
                 .attr('id', 'arrowhead')
                 .attr('markerWidth', 8)
                 .attr('markerHeight', 8)
-                .attr('refX', 8)
+                .attr('refX', 0)
                 .attr('refY', 4)
                 .attr('orient', 'auto')
+                .attr('markerUnits', 'userSpaceOnUse')
                 .append('polygon')
                 .attr('points', '0 0, 8 4, 0 8')
                 .attr('fill', '#95a5a6');
@@ -1851,9 +1852,10 @@ class BATSVisualizationD3 {
                 .attr('id', 'arrowhead-thick')
                 .attr('markerWidth', 10)
                 .attr('markerHeight', 10)
-                .attr('refX', 10)
+                .attr('refX', 0)
                 .attr('refY', 5)
                 .attr('orient', 'auto')
+                .attr('markerUnits', 'userSpaceOnUse')
                 .append('polygon')
                 .attr('points', '0 0, 10 5, 0 10')
                 .attr('fill', '#34495e');
