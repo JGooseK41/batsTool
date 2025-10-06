@@ -1340,10 +1340,11 @@ class BATSVisualizationD3 {
             hopSpace.rightTotals = rightTotals;
         });
 
-        // Calculate dynamic height based on rows + totals
+        // Calculate dynamic height based on rows + totals + verification
         const lineHeight = 16;
         const headerHeight = 60;
         const totalsSectionHeight = 40;  // Space for totals at bottom
+        const verificationHeight = 50;   // Space for verification section
         const bottomPadding = 10;
 
         const maxRows = d3.max(hopSpaces, d => (d.reconRows || []).length);
@@ -1352,8 +1353,9 @@ class BATSVisualizationD3 {
             const rightCurrencies = Object.keys(d.rightTotals || {}).length;
             return Math.max(leftCurrencies, rightCurrencies);
         });
+        const maxVerificationLines = d3.max(hopSpaces, d => Object.keys(d.artBefore || {}).length);
 
-        const boxHeight = headerHeight + (maxRows * lineHeight) + totalsSectionHeight + (maxTotalLines * 14) + bottomPadding;
+        const boxHeight = headerHeight + (maxRows * lineHeight) + totalsSectionHeight + (maxTotalLines * 14) + verificationHeight + (maxVerificationLines * 14) + bottomPadding;
 
         // Store box height for drag boundary calculations
         this.reconBoxHeight = boxHeight;
@@ -1411,6 +1413,25 @@ class BATSVisualizationD3 {
             .attr('fill', '#27ae60')
             .text('CONTINUING');
 
+        // Currency color mapping for visual distinction
+        const getCurrencyColor = (currency) => {
+            const colors = {
+                'HYPE': '#e74c3c',     // Red
+                'USDC': '#3498db',     // Blue
+                'ETH': '#9b59b6',      // Purple
+                'BTC': '#f39c12',      // Orange
+                'USDT': '#16a085',     // Teal
+                'BNB': '#f1c40f',      // Yellow
+                'MATIC': '#8e44ad',    // Dark Purple
+                'SOL': '#1abc9c',      // Turquoise
+                'AVAX': '#e67e22',     // Carrot
+                'ARB': '#2980b9',      // Belize Blue
+                'OP': '#c0392b',       // Pomegranate
+                'TRX': '#d35400'       // Pumpkin
+            };
+            return colors[currency] || '#34495e';  // Default dark gray
+        };
+
         // Render rows (paired left-right entries)
         reconGroup.each(function(d, i) {
             const group = d3.select(this);
@@ -1427,6 +1448,7 @@ class BATSVisualizationD3 {
                                row.left.type === 'write-off' ? '✕' : '−';
                     const iconColor = row.left.type === 'terminal' ? '#9b59b6' :
                                     row.left.type === 'conversion-in' ? '#8B4513' : '#e74c3c';
+                    const currencyColor = getCurrencyColor(row.left.currency);
 
                     group.append('text')
                         .attr('x', d.leftX + 15)
@@ -1439,7 +1461,8 @@ class BATSVisualizationD3 {
                         .attr('x', d.leftX + 30)
                         .attr('y', yPos)
                         .attr('font-size', '9px')
-                        .attr('fill', '#2c3e50')
+                        .attr('font-weight', 'bold')
+                        .attr('fill', currencyColor)
                         .text(`− ${row.left.amount.toFixed(2)} ${row.left.currency}`);
                 }
 
@@ -1448,6 +1471,7 @@ class BATSVisualizationD3 {
                     const icon = row.right.type === 'trace' ? '→' :
                                row.right.type === 'conversion-out' ? '🔄' : '+';
                     const iconColor = row.right.type === 'trace' ? '#27ae60' : '#8B4513';
+                    const currencyColor = getCurrencyColor(row.right.currency);
 
                     group.append('text')
                         .attr('x', d.x + 15)
@@ -1460,7 +1484,8 @@ class BATSVisualizationD3 {
                         .attr('x', d.x + 30)
                         .attr('y', yPos)
                         .attr('font-size', '9px')
-                        .attr('fill', '#2c3e50')
+                        .attr('font-weight', 'bold')
+                        .attr('fill', currencyColor)
                         .text(`+ ${row.right.amount.toFixed(2)} ${row.right.currency}`);
                 }
             });
@@ -1488,12 +1513,13 @@ class BATSVisualizationD3 {
             // LEFT totals (terminated/consumed)
             let leftIdx = 0;
             for (const [currency, total] of Object.entries(d.leftTotals || {})) {
+                const currencyColor = getCurrencyColor(currency);
                 group.append('text')
                     .attr('x', d.leftX + 30)
                     .attr('y', totalsStartY + (leftIdx * 14))
-                    .attr('font-size', '10px')
+                    .attr('font-size', '11px')
                     .attr('font-weight', 'bold')
-                    .attr('fill', '#e74c3c')
+                    .attr('fill', currencyColor)
                     .text(`− ${total.toFixed(2)} ${currency}`);
                 leftIdx++;
             }
@@ -1501,14 +1527,50 @@ class BATSVisualizationD3 {
             // RIGHT totals (continuing/created)
             let rightIdx = 0;
             for (const [currency, total] of Object.entries(d.rightTotals || {})) {
+                const currencyColor = getCurrencyColor(currency);
                 group.append('text')
                     .attr('x', d.x + 30)
                     .attr('y', totalsStartY + (rightIdx * 14))
-                    .attr('font-size', '10px')
+                    .attr('font-size', '11px')
                     .attr('font-weight', 'bold')
-                    .attr('fill', '#27ae60')
+                    .attr('fill', currencyColor)
                     .text(`+ ${total.toFixed(2)} ${currency}`);
                 rightIdx++;
+            }
+
+            // Verification check: ART IN = LEFT + RIGHT totals for each currency
+            const verifyY = totalsStartY + (Math.max(leftIdx, rightIdx) * 14) + 20;
+
+            group.append('text')
+                .attr('x', d.x)
+                .attr('y', verifyY)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '10px')
+                .attr('font-weight', 'bold')
+                .attr('fill', '#7f8c8d')
+                .text('VERIFICATION');
+
+            // Check each currency from ART
+            let verifyIdx = 0;
+            const artBefore = d.artBefore || {};
+
+            for (const [currency, artAmount] of Object.entries(artBefore)) {
+                const leftTotal = d.leftTotals[currency] || 0;
+                const rightTotal = d.rightTotals[currency] || 0;
+                const totalAccounted = leftTotal + rightTotal;
+                const isBalanced = Math.abs(artAmount - totalAccounted) < 0.01;
+                const currencyColor = getCurrencyColor(currency);
+
+                group.append('text')
+                    .attr('x', d.x)
+                    .attr('y', verifyY + 15 + (verifyIdx * 14))
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '9px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', isBalanced ? '#27ae60' : '#e74c3c')
+                    .text(`${isBalanced ? '✓' : '✗'} ${currency}: ${artAmount.toFixed(2)} ${isBalanced ? '=' : '≠'} ${totalAccounted.toFixed(2)}`);
+
+                verifyIdx++;
             }
         });
     }

@@ -3,16 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 05:11)
+## Latest Commit (Auto-updated: 2025-10-06 05:25)
 
-**Commit:** f5b7506477b7b2e0afa61edc0bb0eeab716c0f8a
+**Commit:** 1f1ebb1f6b37da07a61deed75d06b1f7f44edddf
 **Author:** Your Name
-**Message:** Register red wallet nodes in nodeMap for edge rendering
+**Message:** Improve T-account reconciliation with paired rows and totals
 
-- Red wallet nodes now registered by their ID in nodeMap
-- Fixes issue where edges from red wallets weren't rendering
-- Edge lookup (drawEdges) can now find red wallet source nodes
-- Edges 1-7 (RED → destinations) will now display correctly
+- Conversions now appear on same row (left: input, right: output)
+- Write-offs and terminals show only on left with blank right side
+- Continuing traces show only on right with blank left side
+- Added subtotals by currency at bottom of each side
+- Divider lines separate entries from totals
+- Fixes issue where unrelated entries appeared on same line
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -20,23 +22,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 39 +++++++++++++++++++++------------------
- bats-d3-visualization.js |  3 +++
- 2 files changed, 24 insertions(+), 18 deletions(-)
+ CLAUDE.md                |  31 +++---
+ bats-d3-visualization.js | 271 ++++++++++++++++++++++++++++-------------------
+ index.html               |  81 ++++++++++----
+ 3 files changed, 234 insertions(+), 149 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f5b7506 Register red wallet nodes in nodeMap for edge rendering (0 seconds ago)
-- 6d8d517 Remove brown output node creation for bridge conversions (8 minutes ago)
+- 1f1ebb1 Improve T-account reconciliation with paired rows and totals (0 seconds ago)
+- f5b7506 Register red wallet nodes in nodeMap for edge rendering (14 minutes ago)
+- 6d8d517 Remove brown output node creation for bridge conversions (22 minutes ago)
 - 6378425 Fix duplicate sourceThreadIds declaration causing syntax error (7 hours ago)
-- 4745104 Update CLAUDE.md (7 hours ago)
-- c8b2961 Place deferred bridge output entries in source hop, not target hopNumber (7 hours ago)
-- 8f2abe3 Update CLAUDE.md (7 hours ago)
-- ca5056d Create bridge output nodes in hop COMPLETION column instead of just tracking on swap node (7 hours ago)
+- 4745104 Update CLAUDE.md (8 hours ago)
+- c8b2961 Place deferred bridge output entries in source hop, not target hopNumber (8 hours ago)
+- 8f2abe3 Update CLAUDE.md (8 hours ago)
+- ca5056d Create bridge output nodes in hop COMPLETION column instead of just tracking on swap node (8 hours ago)
 - f9c3f5c Update CLAUDE.md (8 hours ago)
 - 099b263 Add bridge internal ID lookup to EXTERNAL swap brown-to-brown path (8 hours ago)
-- 40ffd81 Add bridge condition check logging to diagnose lookup skip (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
