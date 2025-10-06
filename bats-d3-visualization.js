@@ -2327,6 +2327,39 @@ class BATSVisualizationD3 {
                     </span>
                 </div>
 
+                ${node.type === 'red' && node.threads ? `
+                    <div style="margin-bottom: 20px;">
+                        <strong style="color: #7f8c8d;">Victim Transactions:</strong>
+                        <div style="margin-top: 10px;">
+                            ${node.threads.map(thread => `
+                                <div style="background: #ffebee; padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid #e74c3c;">
+                                    <div style="margin-bottom: 6px;">
+                                        <span style="font-weight: bold; color: #e74c3c;">${thread.id}</span>
+                                        <span style="color: #7f8c8d; margin-left: 10px;">
+                                            ${thread.amount.toFixed(6)} ${thread.currency}
+                                        </span>
+                                    </div>
+                                    ${thread.transaction.transactionHash ? `
+                                        <div style="font-size: 11px; color: #7f8c8d; margin-bottom: 4px;">TX Hash:</div>
+                                        <div style="background: white; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 11px; word-break: break-all; color: #2c3e50;">
+                                            ${thread.transaction.transactionHash}
+                                        </div>
+                                        <button onclick="navigator.clipboard.writeText('${thread.transaction.transactionHash}').then(() => alert('TX hash copied!'))"
+                                                style="margin-top: 6px; padding: 4px 10px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600;">
+                                            📋 Copy TX Hash
+                                        </button>
+                                    ` : '<div style="font-size: 11px; color: #95a5a6; font-style: italic;">No transaction hash recorded</div>'}
+                                    ${thread.transaction.timestamp ? `
+                                        <div style="font-size: 11px; color: #7f8c8d; margin-top: 6px;">
+                                            Timestamp: ${new Date(thread.transaction.timestamp).toLocaleString()}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
                 <div style="margin-bottom: 20px;">
                     <strong style="color: #7f8c8d;">Connected Thread Notations:</strong>
                     <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 5px; font-family: monospace; color: #2c3e50;">
