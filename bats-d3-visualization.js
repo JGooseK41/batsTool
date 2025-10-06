@@ -11,6 +11,7 @@ class BATSVisualizationD3 {
         this.layoutMode = 'hop-columns'; // 'hop-columns' or 'sankey'
         this.orientation = 'horizontal'; // 'horizontal' or 'vertical'
         this.expandedEdgeGroups = new Set(); // Track which edge groups are manually expanded (>5 auto-collapse)
+        this.adjustMode = false; // When true, enables dragging wallets and edges
 
         // Configuration
         this.config = {
@@ -42,6 +43,47 @@ class BATSVisualizationD3 {
     initializeSVG() {
         // Clear container
         this.container.innerHTML = '';
+
+        // Create control panel for adjust mode toggle
+        const controlPanel = document.createElement('div');
+        controlPanel.style.cssText = `
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        `;
+
+        // Adjust Graph toggle button
+        this.adjustButton = document.createElement('button');
+        this.adjustButton.textContent = '🔧 Adjust Graph';
+        this.adjustButton.style.cssText = `
+            padding: 12px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        `;
+        this.adjustButton.onmouseover = () => {
+            if (!this.adjustMode) {
+                this.adjustButton.style.background = '#2980b9';
+            }
+        };
+        this.adjustButton.onmouseout = () => {
+            if (!this.adjustMode) {
+                this.adjustButton.style.background = '#3498db';
+            }
+        };
+        this.adjustButton.onclick = () => this.toggleAdjustMode();
+
+        controlPanel.appendChild(this.adjustButton);
+        this.container.appendChild(controlPanel);
 
         // Create SVG
         this.svg = d3.select(this.container)
@@ -1157,11 +1199,15 @@ class BATSVisualizationD3 {
             .attr('class', 'edge')
             .style('cursor', 'pointer')
             .on('click', (event, d) => {
-                if (d.isGroup && d.threadCount > 1) {
-                    this.toggleEdgeGroup(d);
-                } else {
-                    this.showEdgeDetails(event, d);
+                // Only trigger group expand/collapse or details if not dragging
+                if (!d.wasDragging) {
+                    if (d.isGroup && d.threadCount > 1) {
+                        this.toggleEdgeGroup(d);
+                    } else {
+                        this.showEdgeDetails(event, d);
+                    }
                 }
+                d.wasDragging = false;
             })
             .on('contextmenu', (event, d) => {
                 event.preventDefault();
@@ -1178,8 +1224,9 @@ class BATSVisualizationD3 {
                 this.hideNoteTooltip();
             });
 
-        // Draw curved path
+        // Draw invisible wide path for easier dragging (only when adjust mode is on)
         edgeEnter.append('path')
+            .attr('class', 'edge-drag-target')
             .attr('d', d => {
                 let x1 = d.source.x + this.config.nodeRadius;
                 let y1 = d.source.y;
@@ -1188,11 +1235,48 @@ class BATSVisualizationD3 {
 
                 // Apply offset for expanded multi-thread edges
                 if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
-                    const spacing = 15; // pixels between parallel edges
+                    const spacing = 15;
                     const totalHeight = (d.threadCount - 1) * spacing;
                     const offset = -totalHeight / 2 + d.threadIndex * spacing;
                     y1 += offset;
                     y2 += offset;
+                }
+
+                // Use custom control points if they exist
+                if (d.controlPoints && d.controlPoints.length > 0) {
+                    return this.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoints);
+                }
+
+                const mx = (x1 + x2) / 2;
+                return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+            })
+            .attr('fill', 'none')
+            .attr('stroke', 'transparent')
+            .attr('stroke-width', 20)
+            .style('cursor', 'pointer')
+            .style('pointer-events', 'all');
+
+        // Draw visible curved path
+        edgeEnter.append('path')
+            .attr('class', 'edge-visible-path')
+            .attr('d', d => {
+                let x1 = d.source.x + this.config.nodeRadius;
+                let y1 = d.source.y;
+                let x2 = d.target.x - this.config.nodeRadius;
+                let y2 = d.target.y;
+
+                // Apply offset for expanded multi-thread edges
+                if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
+                    const spacing = 15;
+                    const totalHeight = (d.threadCount - 1) * spacing;
+                    const offset = -totalHeight / 2 + d.threadIndex * spacing;
+                    y1 += offset;
+                    y2 += offset;
+                }
+
+                // Use custom control points if they exist
+                if (d.controlPoints && d.controlPoints.length > 0) {
+                    return this.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoints);
                 }
 
                 const mx = (x1 + x2) / 2;
@@ -1202,7 +1286,8 @@ class BATSVisualizationD3 {
             .attr('stroke', d => d.isCollapsed ? '#34495e' : '#95a5a6')
             .attr('stroke-width', d => d.isCollapsed ? Math.min(8, 2 + d.threadCount) : 2)
             .attr('marker-end', 'url(#arrowhead)')
-            .attr('opacity', d => d.isCollapsed ? 0.8 : 1);
+            .attr('opacity', d => d.isCollapsed ? 0.8 : 1)
+            .style('pointer-events', 'none');
 
         // Add arrow marker definition
         this.svg.append('defs')
@@ -1273,7 +1358,7 @@ class BATSVisualizationD3 {
             .append('g')
             .attr('class', 'node')
             .attr('transform', d => `translate(${d.x}, ${d.y})`)
-            .style('cursor', 'grab')
+            .style('cursor', 'pointer')
             .on('click', (event, d) => this.showNodeDetails(event, d))
             .on('contextmenu', (event, d) => {
                 event.preventDefault();
@@ -1286,22 +1371,7 @@ class BATSVisualizationD3 {
             })
             .on('mouseout', () => {
                 this.hideNoteTooltip();
-            })
-            .call(d3.drag()
-                .on('start', function(event, d) {
-                    event.sourceEvent.stopPropagation();  // Prevent zoom/pan interference
-                    d3.select(this).style('cursor', 'grabbing');
-                    d.isDragging = true;
-                })
-                .on('drag', (event, d) => {
-                    event.sourceEvent.stopPropagation();  // Prevent zoom/pan interference
-                    this.dragging(event, d);
-                })
-                .on('end', function(event, d) {
-                    event.sourceEvent.stopPropagation();  // Prevent zoom/pan interference
-                    d3.select(this).style('cursor', 'grab');
-                    d.isDragging = false;
-                }));
+            });
 
         // Node circle
         nodeEnter.append('circle')
@@ -1383,6 +1453,115 @@ class BATSVisualizationD3 {
 
         // Update all connected edges
         this.updateEdges();
+    }
+
+    dragEdge(event, d) {
+        // Get the drag position in SVG coordinates
+        const [mouseX, mouseY] = d3.pointer(event, this.svg.node());
+
+        // Initialize controlPoints array if it doesn't exist
+        if (!d.controlPoints) {
+            d.controlPoints = [];
+        }
+
+        // Calculate position along the edge (0 to 1)
+        const x1 = d.source.x + this.config.nodeRadius;
+        const x2 = d.target.x - this.config.nodeRadius;
+        const t = (mouseX - x1) / (x2 - x1);
+
+        // Clamp t between 0.1 and 0.9 to keep control points away from endpoints
+        const clampedT = Math.max(0.1, Math.min(0.9, t));
+
+        // Find if there's already a control point near this position
+        const threshold = 0.1; // 10% of edge length
+        let controlPoint = d.controlPoints.find(cp => Math.abs(cp.t - clampedT) < threshold);
+
+        if (!controlPoint) {
+            // Create new control point
+            controlPoint = { t: clampedT, x: mouseX, y: mouseY };
+            d.controlPoints.push(controlPoint);
+            // Sort by t value
+            d.controlPoints.sort((a, b) => a.t - b.t);
+        } else {
+            // Update existing control point
+            controlPoint.x = mouseX;
+            controlPoint.y = mouseY;
+        }
+
+        // Update edge paths
+        this.updateEdgePaths(d);
+    }
+
+    buildCustomCurvePath(x1, y1, x2, y2, controlPoints) {
+        // Build a smooth curve through multiple control points
+        if (!controlPoints || controlPoints.length === 0) {
+            // Default simple curve
+            const mx = (x1 + x2) / 2;
+            return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+        }
+
+        // Start path
+        let path = `M ${x1} ${y1}`;
+
+        if (controlPoints.length === 1) {
+            // Single control point - use quadratic bezier
+            const cp = controlPoints[0];
+            path += ` Q ${cp.x} ${cp.y}, ${x2} ${y2}`;
+        } else {
+            // Multiple control points - create smooth curve through all points
+            // Use catmull-rom or just chain cubic beziers
+            for (let i = 0; i <= controlPoints.length; i++) {
+                const startX = i === 0 ? x1 : controlPoints[i - 1].x;
+                const startY = i === 0 ? y1 : controlPoints[i - 1].y;
+                const endX = i === controlPoints.length ? x2 : controlPoints[i].x;
+                const endY = i === controlPoints.length ? y2 : controlPoints[i].y;
+
+                // Smooth control points
+                const cx1 = startX + (endX - startX) * 0.33;
+                const cy1 = startY + (endY - startY) * 0.33;
+                const cx2 = startX + (endX - startX) * 0.67;
+                const cy2 = startY + (endY - startY) * 0.67;
+
+                if (i === 0) {
+                    path += ` C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`;
+                } else {
+                    path += ` S ${cx2} ${cy2}, ${endX} ${endY}`;
+                }
+            }
+        }
+
+        return path;
+    }
+
+    updateEdgePaths(edgeData) {
+        // Update specific edge's path
+        const self = this;
+        this.edgesGroup.selectAll('.edge').each(function(d) {
+            if (d === edgeData) {
+                const edgeGroup = d3.select(this);
+
+                let x1 = d.source.x + 40;
+                let y1 = d.source.y;
+                let x2 = d.target.x - 40;
+                let y2 = d.target.y;
+
+                // Apply offset for expanded multi-thread edges
+                if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
+                    const spacing = 15;
+                    const totalHeight = (d.threadCount - 1) * spacing;
+                    const offset = -totalHeight / 2 + d.threadIndex * spacing;
+                    y1 += offset;
+                    y2 += offset;
+                }
+
+                const newPath = edgeData.controlPoints && edgeData.controlPoints.length > 0
+                    ? self.buildCustomCurvePath(x1, y1, x2, y2, edgeData.controlPoints)
+                    : `M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`;
+
+                edgeGroup.select('.edge-drag-target').attr('d', newPath);
+                edgeGroup.select('.edge-visible-path').attr('d', newPath);
+            }
+        });
     }
 
     toggleEdgeGroup(edgeGroup) {
@@ -1474,17 +1653,36 @@ class BATSVisualizationD3 {
 
     updateEdges() {
         // Update edge paths to follow node positions
-        this.edgesGroup.selectAll('.edge')
-            .select('path')
-            .attr('d', d => {
-                const x1 = d.source.x + this.config.nodeRadius;
-                const y1 = d.source.y;
-                const x2 = d.target.x - this.config.nodeRadius;
-                const y2 = d.target.y;
-                const mx = (x1 + x2) / 2;
+        const self = this;
+        this.edgesGroup.selectAll('.edge').each(function(d) {
+            const edgeGroup = d3.select(this);
 
-                return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
-            });
+            let x1 = d.source.x + 40;
+            let y1 = d.source.y;
+            let x2 = d.target.x - 40;
+            let y2 = d.target.y;
+
+            // Apply offset for expanded multi-thread edges
+            if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
+                const spacing = 15;
+                const totalHeight = (d.threadCount - 1) * spacing;
+                const offset = -totalHeight / 2 + d.threadIndex * spacing;
+                y1 += offset;
+                y2 += offset;
+            }
+
+            // Use custom control points if they exist
+            let pathData;
+            if (d.controlPoints && d.controlPoints.length > 0) {
+                pathData = self.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoints);
+            } else {
+                const mx = (x1 + x2) / 2;
+                pathData = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+            }
+
+            edgeGroup.select('.edge-drag-target').attr('d', pathData);
+            edgeGroup.select('.edge-visible-path').attr('d', pathData);
+        });
 
         // Update edge notation labels
         this.edgesGroup.selectAll('.edge')
@@ -2155,7 +2353,12 @@ Click OK to copy transaction hash to clipboard.
             deleteBtn.onclick = () => {
                 delete data.note;
                 document.body.removeChild(modal);
-                this.render(); // Re-render to update display
+                // Just update the visual display, don't rebuild entire visualization
+                if (type === 'node') {
+                    this.updateNodeNoteIndicators();
+                } else {
+                    this.updateEdgeNoteIndicators();
+                }
             };
         }
 
@@ -2168,7 +2371,12 @@ Click OK to copy transaction hash to clipboard.
                 delete data.note;
             }
             document.body.removeChild(modal);
-            this.render(); // Re-render to update display
+            // Just update the visual display, don't rebuild entire visualization
+            if (type === 'node') {
+                this.updateNodeNoteIndicators();
+            } else {
+                this.updateEdgeNoteIndicators();
+            }
         };
 
         // Close on background click
@@ -2216,5 +2424,125 @@ Click OK to copy transaction hash to clipboard.
             document.body.removeChild(this.noteTooltip);
             this.noteTooltip = null;
         }
+    }
+
+    updateNodeNoteIndicators() {
+        // Update note indicators on nodes without rebuilding the entire visualization
+        this.nodesGroup.selectAll('.node').each(function(d) {
+            const nodeGroup = d3.select(this);
+
+            // Remove existing note indicator if any
+            nodeGroup.select('.note-indicator').remove();
+
+            // Add note indicator if node has a note
+            if (d.note) {
+                nodeGroup.append('text')
+                    .attr('class', 'note-indicator')
+                    .attr('x', 25)
+                    .attr('y', -25)
+                    .attr('font-size', '20px')
+                    .style('pointer-events', 'none')
+                    .text('📝');
+            }
+        });
+    }
+
+    updateEdgeNoteIndicators() {
+        // Update note indicators on edges without rebuilding the entire visualization
+        this.edgesGroup.selectAll('.edge').each(function(d) {
+            const edgeGroup = d3.select(this);
+
+            // Remove existing note indicator if any
+            edgeGroup.select('.edge-note-indicator').remove();
+
+            // Add note indicator if edge has a note
+            if (d.note) {
+                const midX = (d.source.x + d.target.x) / 2;
+                const midY = (d.source.y + d.target.y) / 2;
+
+                edgeGroup.append('text')
+                    .attr('class', 'edge-note-indicator')
+                    .attr('x', midX + 10)
+                    .attr('y', midY - 10)
+                    .attr('font-size', '16px')
+                    .style('pointer-events', 'none')
+                    .text('📝');
+            }
+        });
+    }
+
+    toggleAdjustMode() {
+        this.adjustMode = !this.adjustMode;
+
+        if (this.adjustMode) {
+            // Enable adjust mode
+            this.adjustButton.textContent = '✓ Done Adjusting';
+            this.adjustButton.style.background = '#27ae60';
+            this.adjustButton.style.transform = 'scale(1.05)';
+
+            // Enable dragging on nodes and edges
+            this.enableDragging();
+        } else {
+            // Disable adjust mode
+            this.adjustButton.textContent = '🔧 Adjust Graph';
+            this.adjustButton.style.background = '#3498db';
+            this.adjustButton.style.transform = 'scale(1)';
+
+            // Disable dragging
+            this.disableDragging();
+        }
+    }
+
+    enableDragging() {
+        // Enable node dragging
+        this.nodesGroup.selectAll('.node')
+            .style('cursor', 'grab')
+            .call(d3.drag()
+                .on('start', function(event, d) {
+                    event.sourceEvent.stopPropagation();
+                    d3.select(this).style('cursor', 'grabbing');
+                    d.isDragging = true;
+                })
+                .on('drag', (event, d) => {
+                    event.sourceEvent.stopPropagation();
+                    this.dragging(event, d);
+                })
+                .on('end', function(event, d) {
+                    event.sourceEvent.stopPropagation();
+                    d3.select(this).style('cursor', 'grab');
+                    d.isDragging = false;
+                }));
+
+        // Enable edge dragging
+        this.edgesGroup.selectAll('.edge-drag-target')
+            .style('cursor', 'move')
+            .call(d3.drag()
+                .on('start', (event, d) => {
+                    event.sourceEvent.stopPropagation();
+                    d.isDraggingEdge = true;
+                })
+                .on('drag', (event, d) => {
+                    event.sourceEvent.stopPropagation();
+                    this.dragEdge(event, d);
+                })
+                .on('end', (event, d) => {
+                    event.sourceEvent.stopPropagation();
+                    if (d.isDraggingEdge) {
+                        d.wasDragging = true;
+                    }
+                    d.isDraggingEdge = false;
+                }));
+    }
+
+    disableDragging() {
+        // Disable node dragging
+        this.nodesGroup.selectAll('.node')
+            .style('cursor', 'pointer')
+            .on('.drag', null); // Remove drag handlers
+
+        // Disable edge dragging
+        this.edgesGroup.selectAll('.edge-drag-target')
+            .style('cursor', 'pointer')
+            .on('.drag', null); // Remove drag handlers
     }
 }
