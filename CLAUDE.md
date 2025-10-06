@@ -3,30 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 21:16)
+## Latest Commit (Auto-updated: 2025-10-05 21:18)
 
-**Commit:** f6844c10e2d64efc6461d19c7f8544d970c3cc30
+**Commit:** bb122fad3be0c498402c5beb7b9a2ff523a9dc92
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit timestamp
+**Message:** Add routing path logging to debug bridge entry processing
 
 ### Changed Files:
 ```
- CLAUDE.md | 31 ++++++++++++++++---------------
- 1 file changed, 16 insertions(+), 15 deletions(-)
+ CLAUDE.md                | 31 +++++++++++++++----------------
+ bats-d3-visualization.js |  3 +++
+ 2 files changed, 18 insertions(+), 16 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f6844c1 Update CLAUDE.md with latest commit timestamp (0 seconds ago)
-- 663f469 Add bridge output currency logging (44 seconds ago)
-- 35f43f6 Update CLAUDE.md with latest commit timestamp (4 minutes ago)
-- 2066d7b Add comprehensive diagnostic logging for data validation (4 minutes ago)
-- 8c72136 Update CLAUDE.md with latest commit timestamp (8 minutes ago)
-- f531c98 Fix T-account reconciliation to properly show currency conversions (9 minutes ago)
-- 9978fa4 Add detailed edge and entry logging for debugging (13 minutes ago)
-- 3199134 Update column labels for clearer flow visualization (15 minutes ago)
-- 612e0fe Add detailed logging for entry processing and edge creation (17 minutes ago)
-- 79397fd Fix thread ID lookups by registering both notation and currency-suffixed variants (19 minutes ago)
+- bb122fa Add routing path logging to debug bridge entry processing (0 seconds ago)
+- f6844c1 Update CLAUDE.md with latest commit timestamp (2 minutes ago)
+- 663f469 Add bridge output currency logging (3 minutes ago)
+- 35f43f6 Update CLAUDE.md with latest commit timestamp (6 minutes ago)
+- 2066d7b Add comprehensive diagnostic logging for data validation (6 minutes ago)
+- 8c72136 Update CLAUDE.md with latest commit timestamp (10 minutes ago)
+- f531c98 Fix T-account reconciliation to properly show currency conversions (11 minutes ago)
+- 9978fa4 Add detailed edge and entry logging for debugging (15 minutes ago)
+- 3199134 Update column labels for clearer flow visualization (17 minutes ago)
+- 612e0fe Add detailed logging for entry processing and edge creation (19 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

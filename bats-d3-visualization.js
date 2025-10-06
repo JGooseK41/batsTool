@@ -371,7 +371,10 @@ class BATSVisualizationD3 {
                     const isInternalSwap = entry.walletType === 'brown' && entry.toWalletType === 'brown' &&
                                           entry.destinationWallet && entry.destinationWallet === entry.swapPlatform;
 
+                    console.log(`  [Swap type] isInternalSwap=${isInternalSwap}, destWallet=${entry.destinationWallet?.substring(0,20)}, swapPlatform=${entry.swapPlatform?.substring(0,20)}`);
+
                     if (isInternalSwap) {
+                        console.log(`  [Swap type] → INTERNAL swap (brown in hop space only)`);
                         // Internal conversion - brown wallet exists ONLY in hop space
                         // Consolidate by attribution/label, not address
                         const attribution = entry.walletLabel || this.shortenAddress(entry.destinationWallet);
@@ -487,6 +490,7 @@ class BATSVisualizationD3 {
                         hopColumn.artAfter[outputCurrency] = (hopColumn.artAfter[outputCurrency] || 0) + outputAmount;
 
                     } else {
+                        console.log(`  [Swap type] → EXTERNAL swap (DEX/bridge)`);
                         // External swap - brown wallet in hop space, consolidate by attribution
                         const swapWalletAddress = entry.swapPlatform || entry.destinationWallet;
                         const attribution = entry.swapPlatform || 'DEX';
