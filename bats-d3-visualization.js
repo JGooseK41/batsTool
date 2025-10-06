@@ -1072,15 +1072,31 @@ class BATSVisualizationD3 {
             hopSpace.rightItems = rightItems;
         });
 
-        // Position reconciliation box near bottom of viewport (dynamic based on height)
-        const reconY = this.config.height - 200;
+        // Calculate dynamic height based on max items
+        const lineHeight = 16;
+        const headerHeight = 60;
+        const bottomPadding = 20;
 
-        // Main reconciliation box
+        const maxItems = d3.max(hopSpaces, d => {
+            const leftCount = (d.leftItems || []).length;
+            const rightCount = (d.rightItems || []).length;
+            return Math.max(leftCount, rightCount);
+        });
+
+        const boxHeight = headerHeight + (maxItems * lineHeight) + bottomPadding;
+
+        // Store box height for drag boundary calculations
+        this.reconBoxHeight = boxHeight;
+
+        // Position reconciliation box near bottom of viewport (dynamic based on calculated height)
+        const reconY = this.config.height - boxHeight - 50;
+
+        // Main reconciliation box (dynamic height)
         reconGroup.append('rect')
             .attr('x', d => d.leftX + 10)
             .attr('y', reconY)
             .attr('width', d => d.width - 20)
-            .attr('height', 150)
+            .attr('height', boxHeight)
             .attr('fill', '#ecf0f1')
             .attr('stroke', '#2c3e50')
             .attr('stroke-width', 2)
@@ -1096,12 +1112,12 @@ class BATSVisualizationD3 {
             .attr('fill', '#2c3e50')
             .text('HOP RECONCILIATION');
 
-        // Divider line (vertical center)
+        // Divider line (vertical center) - use dynamic height
         reconGroup.append('line')
             .attr('x1', d => d.x)
             .attr('y1', reconY + 25)
             .attr('x2', d => d.x)
-            .attr('y2', reconY + 145)
+            .attr('y2', reconY + boxHeight - 5)
             .attr('stroke', '#34495e')
             .attr('stroke-width', 2);
 
@@ -1125,15 +1141,14 @@ class BATSVisualizationD3 {
             .attr('fill', '#27ae60')
             .text('CONTINUING');
 
-        // Left items (with visual indicators)
+        // Left items (with visual indicators) - SHOW ALL ITEMS
         const self = this;
         reconGroup.each(function(d, i) {
             const group = d3.select(this);
             const leftItems = d.leftItems || [];
             const startY = reconY + 55;
-            const lineHeight = 16;
 
-            leftItems.slice(0, 3).forEach((item, idx) => {
+            leftItems.forEach((item, idx) => {
                 // Visual indicator
                 const icon = item.type === 'terminal' ? '⬤' :
                            item.type === 'swap-in' ? '🔄' : '✕';
@@ -1154,27 +1169,15 @@ class BATSVisualizationD3 {
                     .attr('fill', '#2c3e50')
                     .text(`- ${item.amount.toFixed(2)} ${item.currency}`);
             });
-
-            // "More..." indicator if there are more items
-            if (leftItems.length > 3) {
-                group.append('text')
-                    .attr('x', d.leftX + 30)
-                    .attr('y', startY + 3 * lineHeight)
-                    .attr('font-size', '8px')
-                    .attr('fill', '#7f8c8d')
-                    .attr('font-style', 'italic')
-                    .text(`... +${leftItems.length - 3} more`);
-            }
         });
 
-        // Right items (with visual indicators)
+        // Right items (with visual indicators) - SHOW ALL ITEMS
         reconGroup.each(function(d, i) {
             const group = d3.select(this);
             const rightItems = d.rightItems || [];
             const startY = reconY + 55;
-            const lineHeight = 16;
 
-            rightItems.slice(0, 3).forEach((item, idx) => {
+            rightItems.forEach((item, idx) => {
                 // Visual indicator
                 const icon = item.type === 'trace' ? '→' : '🔄';
                 const iconColor = item.type === 'trace' ? '#27ae60' : '#8B4513';
@@ -1193,17 +1196,6 @@ class BATSVisualizationD3 {
                     .attr('fill', '#2c3e50')
                     .text(`+ ${item.amount.toFixed(2)} ${item.currency}`);
             });
-
-            // "More..." indicator if there are more items
-            if (rightItems.length > 3) {
-                group.append('text')
-                    .attr('x', d.x + 30)
-                    .attr('y', startY + 3 * lineHeight)
-                    .attr('font-size', '8px')
-                    .attr('fill', '#7f8c8d')
-                    .attr('font-style', 'italic')
-                    .text(`... +${rightItems.length - 3} more`);
-            }
         });
 
         // Balance indicator
@@ -1622,7 +1614,10 @@ class BATSVisualizationD3 {
         // Column headers are at y=150 with height=60, so min should be 150 + 60 + nodeRadius
         const columnHeaderBottom = 150 + 60;  // Column header y + height
         const minY = columnHeaderBottom + this.config.nodeRadius + 10;  // Add padding below header
-        const maxY = this.config.height - 250;  // Bottom boundary (above reconciliation boxes)
+
+        // Calculate dynamic bottom boundary based on reconciliation box height
+        const reconBoxHeight = this.reconBoxHeight || 200;  // Use stored height or default
+        const maxY = this.config.height - reconBoxHeight - 70;  // Bottom boundary (above reconciliation boxes)
 
         // IMPORTANT: X position is LOCKED - never changes
         // Only Y can change, and only within bounds

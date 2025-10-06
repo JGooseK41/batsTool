@@ -3,21 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 20:50)
+## Latest Commit (Auto-updated: 2025-10-05 20:53)
 
-**Commit:** a141c5c4eaedb93b6e4be8d764a95b193ad59338
+**Commit:** 40177abe8835d408a32b38344b15cb2cf007d202
 **Author:** Your Name
-**Message:** Fix brown wallet bridge output thread tracking for multi-currency conversions
+**Message:** Add comprehensive logging for bridge output thread debugging
 
-- Handle multiple source thread IDs (multipleSourceInternalIds, sourceThreadIds)
-- Support bridge output internal IDs (bridge_X_CURRENCY_...)
-- Use individualSourceAssignments for convergence entries
-- Apply fix to all three edge creation locations (internal swap, external swap, standard trace)
+- Log bridge internal ID lookups from availableThreads
+- Log output thread creation for brown wallets
+- Log findSourceNode bridge thread searches
+- Log source thread ID processing for all entries
+- Show sample edges and edge count in build summary
 
-This fixes visualization of HYPE → USDC conversions through bridge wallets where:
-- 5 HYPE threads enter Brown-1 (deBridge Finance) in Hop 1
-- Bridge converts to USDC with internal thread IDs
-- USDC threads properly connect to Purple-1 (KuCoin) terminal in Hop 2
+This will help diagnose why USDC bridge output threads aren't appearing in visualization.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -25,23 +23,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                |  41 +++++++++----------
- bats-d3-visualization.js | 101 ++++++++++++++++++++++++++++++-----------------
- 2 files changed, 85 insertions(+), 57 deletions(-)
+ CLAUDE.md                | 45 ++++++++++++++++++++++++---------------------
+ bats-d3-visualization.js | 23 +++++++++++++++++++++--
+ 2 files changed, 45 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a141c5c Fix brown wallet bridge output thread tracking for multi-currency conversions (1 second ago)
-- 86ebc33 Consolidate red wallet nodes by address instead of per-transaction (13 minutes ago)
-- 2332f18 Fix ART label terminology - change to 'Adjusted Root Total' (16 minutes ago)
-- 7b18011 Add white stroke to column titles for better readability (18 minutes ago)
-- e3cd1f3 Replace edge label backgrounds with text stroke for better readability (20 minutes ago)
-- 764bc88 Improve edge dragging and add undo/redo/reset functionality (34 minutes ago)
-- aa9f17f Add manual edge group collapse and fix text overlap issues (39 minutes ago)
-- f230763 Add Adjust Graph toggle mode for dragging nodes and edges (43 minutes ago)
-- b4ad91d Fix wallet column titles - change from 'HOP N' to 'WALLETS' (59 minutes ago)
-- 137b271 Fix first column title from 'VICTIMS' to 'RED WALLETS' (60 minutes ago)
+- 40177ab Add comprehensive logging for bridge output thread debugging (0 seconds ago)
+- a141c5c Fix brown wallet bridge output thread tracking for multi-currency conversions (3 minutes ago)
+- 86ebc33 Consolidate red wallet nodes by address instead of per-transaction (16 minutes ago)
+- 2332f18 Fix ART label terminology - change to 'Adjusted Root Total' (20 minutes ago)
+- 7b18011 Add white stroke to column titles for better readability (21 minutes ago)
+- e3cd1f3 Replace edge label backgrounds with text stroke for better readability (23 minutes ago)
+- 764bc88 Improve edge dragging and add undo/redo/reset functionality (38 minutes ago)
+- aa9f17f Add manual edge group collapse and fix text overlap issues (42 minutes ago)
+- f230763 Add Adjust Graph toggle mode for dragging nodes and edges (47 minutes ago)
+- b4ad91d Fix wallet column titles - change from 'HOP N' to 'WALLETS' (62 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
