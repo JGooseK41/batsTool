@@ -586,10 +586,38 @@ class BATSVisualizationD3 {
                         if (outputColorType === 'brown') {
                             // Output is also brown (e.g., bridge to new chain) - NO new wallet node
                             // The swap node handles both input and output
-                            // Just track the output thread
+
+                            // For bridges, find the internal ID from availableThreads
+                            let internalId = null;
+                            if (entry.isBridge && this.investigation.availableThreads) {
+                                console.log(`  [Bridge] Looking for internal ID for entry id=${entry.id}, hop=${hop.hopNumber}, notation=${entry.notation}`);
+                                console.log(`  [Bridge] availableThreads keys:`, Object.keys(this.investigation.availableThreads));
+                                // Search through available threads to find matching bridge output
+                                for (const currency in this.investigation.availableThreads) {
+                                    console.log(`  [Bridge] Checking currency ${currency}, ${Object.keys(this.investigation.availableThreads[currency]).length} threads`);
+                                    for (const threadId in this.investigation.availableThreads[currency]) {
+                                        const thread = this.investigation.availableThreads[currency][threadId];
+                                        console.log(`  [Bridge]   Thread ${threadId}: entryId=${thread.entryId}, hopLevel=${thread.hopLevel} (looking for entryId=${entry.id}, hopLevel=${hop.hopNumber})`);
+                                        if (thread.entryId === entry.id && thread.hopLevel === hop.hopNumber) {
+                                            internalId = thread.internalId;
+                                            console.log(`  [Bridge] ✓ Found internal ID: ${internalId} for ${currency}`);
+                                            break;
+                                        }
+                                    }
+                                    if (internalId) break;
+                                }
+                                if (!internalId) {
+                                    console.log(`  [Bridge] ✗ NO internal ID found for entry ${entry.id}, hop ${hop.hopNumber}`);
+                                }
+                            } else {
+                                console.log(`  [Bridge] Skipping lookup: isBridge=${entry.isBridge}, hasAvailableThreads=${!!this.investigation.availableThreads}`);
+                            }
+
+                            // Track the output thread
                             if (!swapNode.outputThreads) swapNode.outputThreads = [];
                             swapNode.outputThreads.push({
                                 notation: entry.notation,
+                                internalId: internalId,  // Store internal bridge output ID for lookup
                                 amount: outputAmount,
                                 currency: outputCurrency
                             });
@@ -601,6 +629,11 @@ class BATSVisualizationD3 {
                                 if (outputCurrency) {
                                     this.nodeMap.set(`${entry.notation}_${outputCurrency}`, swapNode);
                                 }
+                            }
+                            // IMPORTANT: Also register by internal bridge ID so deferred entries can find it
+                            if (internalId) {
+                                this.nodeMap.set(internalId, swapNode);
+                                console.log(`  [Bridge] Registered brown wallet by internal ID: ${internalId}`);
                             }
 
                             // Update ART with output currency
