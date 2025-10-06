@@ -796,7 +796,7 @@ class BATSVisualizationD3 {
             .attr('opacity', 0.12)  // Higher contrast
             .attr('rx', 8);
 
-        // Add wallet column titles
+        // Add wallet column titles with white stroke for readability
         columns.enter()
             .append('text')
             .attr('x', d => d.x)
@@ -805,6 +805,11 @@ class BATSVisualizationD3 {
             .attr('font-size', '16px')
             .attr('font-weight', 'bold')
             .attr('fill', '#2c3e50')
+            .style('paint-order', 'stroke')
+            .style('stroke', 'white')
+            .style('stroke-width', '4px')
+            .style('stroke-linecap', 'round')
+            .style('stroke-linejoin', 'round')
             .text(d => d.title);
     }
 
