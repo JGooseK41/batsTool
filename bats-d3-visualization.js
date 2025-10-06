@@ -1330,11 +1330,14 @@ class BATSVisualizationD3 {
                             currencyAccounts[inputCurrency].nestedAccounts[outputCurrency] = {
                                 fromConversion: 0,
                                 terminated: 0,
-                                stillTracing: 0
+                                stillTracing: 0,
+                                sourceAmount: 0,  // Track input amount
+                                sourceCurrency: inputCurrency  // Track input currency
                             };
                         }
 
                         currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].fromConversion += outputAmount;
+                        currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].sourceAmount += inputAmount;
 
                         // Track what happened to the OUTPUT currency
                         if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
@@ -1583,9 +1586,10 @@ class BATSVisualizationD3 {
                     if (nestedAccount.terminated > 0) dispositionCount++;
                     if (nestedAccount.stillTracing > 0) dispositionCount++;
 
+                    const hasSourceReference = nestedAccount.sourceAmount && nestedAccount.sourceCurrency;
                     const nestedHeaderHeight = 25;
                     const nestedLabelsHeight = 15;
-                    const nestedContentHeight = lineHeight + 5; // One line for amounts
+                    const nestedContentHeight = lineHeight + (hasSourceReference ? 12 : 0) + 5; // Extra height if source reference exists
                     const nestedBalanceHeight = 25;
                     const nestedBoxPadding = 15;
                     const nestedBoxHeight = nestedHeaderHeight + nestedLabelsHeight + nestedContentHeight + nestedBalanceHeight + nestedBoxPadding;
@@ -1651,7 +1655,11 @@ class BATSVisualizationD3 {
 
                     currentY += nestedLabelsHeight;
 
-                    // Left: From conversion amount
+                    // Left: From conversion amount with source reference
+                    const sourceText = nestedAccount.sourceAmount && nestedAccount.sourceCurrency
+                        ? ` (${nestedAccount.sourceAmount.toFixed(2)} ${nestedAccount.sourceCurrency})`
+                        : '';
+
                     group.append('text')
                         .attr('x', d.leftX + 45)
                         .attr('y', currentY)
@@ -1659,6 +1667,16 @@ class BATSVisualizationD3 {
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
                         .text(`${nestedAccount.fromConversion.toFixed(2)}`);
+
+                    // Add source reference in parentheses below if available
+                    if (sourceText) {
+                        group.append('text')
+                            .attr('x', d.leftX + 45)
+                            .attr('y', currentY + 12)
+                            .attr('font-size', '8px')
+                            .attr('fill', '#7f8c8d')
+                            .text(sourceText);
+                    }
 
                     // Right: Disposition - compact single line or two lines
                     let nestedRightY = currentY;

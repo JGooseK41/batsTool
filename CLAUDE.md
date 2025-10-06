@@ -3,32 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 08:31)
+## Latest Commit (Auto-updated: 2025-10-06 08:36)
 
-**Commit:** 9f48c458fc94b1819156e929e9da79447b60b9b2
+**Commit:** c539fd1804dbd582b1a6b3abf740b7deef42b7a9
 **Author:** Your Name
-**Message:** Resurrect audit trail and integrate wallet indexes into Reports tab
+**Message:** Clean up nested T-account layout - eliminate overlapping text and lines
 
-- Added comprehensive Reports tab with proper sections:
-  - Case information header
-  - Universal Wallet Index (all wallets chronologically)
-  - Red Wallet Index (victim wallets)
-  - Purple Wallet Index (terminal/exchange wallets)
-  - Technical Audit Trail (complete transaction flow)
-  - Investigation Narrative section
-
-- Fixed "Skip to Reports" button to actually navigate to reports
-- Calls generateReportContent() to populate all sections
-- Technical audit trail shows hierarchical hop structure with:
-  - Initial stolen funds
-  - Each hop with entries, threads, conversions
-  - Terminal wallets and write-offs
-  - Complete V-T-H notation tracking
-
-- Wallet indexes displayed in styled tables
-- Ready for export to PDF/HTML
-
-Fixes blank reports tab and restores audit trail functionality.
+- Pre-calculate nested box height before rendering any elements
+- Use fixed spacing variables for consistent layout
+- Draw background rectangle first, then content on top
+- Position vertical divider correctly without overlapping text
+- Add proper column headers at smaller font size
+- Compact disposition display (two lines if both term and trace)
+- Balance line positioned after content with proper spacing
+- Track currentY properly to prevent overlap with next element
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -36,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  50 +++++++++---------
- index.html | 167 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 190 insertions(+), 27 deletions(-)
+ CLAUDE.md                |  59 ++++++++++++----------
+ bats-d3-visualization.js | 126 +++++++++++++++++++++++++++++------------------
+ 2 files changed, 113 insertions(+), 72 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (1 second ago)
-- bc167ab Use universal wallet index as master source of truth for wallet IDs (7 minutes ago)
-- 7822eb6 Add visual separation to nested T-accounts for clarity (11 minutes ago)
-- 08bf82a Implement nested T-accounts with clear balance lines (22 minutes ago)
-- 9ecb32d Track both conversion and disposition of swapped assets in same hop (33 minutes ago)
-- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (35 minutes ago)
-- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (39 minutes ago)
-- 3c991d0 Revert edge routing back to smooth curves (48 minutes ago)
-- 56b4427 Change edge routing to use sharp angles instead of curves (71 minutes ago)
-- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (73 minutes ago)
+- c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (0 seconds ago)
+- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (5 minutes ago)
+- bc167ab Use universal wallet index as master source of truth for wallet IDs (12 minutes ago)
+- 7822eb6 Add visual separation to nested T-accounts for clarity (16 minutes ago)
+- 08bf82a Implement nested T-accounts with clear balance lines (27 minutes ago)
+- 9ecb32d Track both conversion and disposition of swapped assets in same hop (37 minutes ago)
+- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (39 minutes ago)
+- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (43 minutes ago)
+- 3c991d0 Revert edge routing back to smooth curves (53 minutes ago)
+- 56b4427 Change edge routing to use sharp angles instead of curves (76 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
