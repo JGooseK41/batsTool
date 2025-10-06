@@ -417,18 +417,27 @@ class BATSVisualizationD3 {
                         this.nodeMap.set(entry.notation, brownNode);
 
                         // Edge: Source → Brown wallet (input currency)
-                        if (entry.sourceThreadId) {
-                            const sourceThread = this.findSourceNode(entry.sourceThreadId, hopIndex);
-                            if (sourceThread) {
-                                this.edges.push({
-                                    source: sourceThread.id,
-                                    target: brownWalletKey,
-                                    label: `${entry.notation || ''} (${parseFloat(entry.amount || 0)} ${entry.currency} → ${outputAmount} ${outputCurrency})`,
-                                    amount: parseFloat(entry.amount || 0),
-                                    currency: entry.currency,
-                                    entryData: entry
-                                });
-                            }
+                        // Check for multiple source thread IDs (convergence or bridge outputs)
+                        const sourceThreadIds = entry.multipleSourceInternalIds || entry.sourceThreadIds ||
+                                              (entry.sourceThreadId ? [entry.sourceThreadId] : []);
+
+                        if (sourceThreadIds.length > 0) {
+                            sourceThreadIds.forEach(threadId => {
+                                const sourceThread = this.findSourceNode(threadId, hopIndex);
+                                if (sourceThread) {
+                                    // Get individual amount if available (for convergence entries)
+                                    const individualAmount = entry.individualSourceAssignments?.[threadId] || (parseFloat(entry.amount || 0) / sourceThreadIds.length);
+
+                                    this.edges.push({
+                                        source: sourceThread.id,
+                                        target: brownWalletKey,
+                                        label: `${entry.notation || ''} (${individualAmount} ${entry.currency} → ${outputAmount} ${outputCurrency})`,
+                                        amount: individualAmount,
+                                        currency: entry.currency,
+                                        entryData: entry
+                                    });
+                                }
+                            });
                         }
 
                         // Update ART with output currency
@@ -468,18 +477,27 @@ class BATSVisualizationD3 {
                         }
 
                         // Edge 1: Source → DEX (input currency)
-                        if (entry.sourceThreadId) {
-                            const sourceThread = this.findSourceNode(entry.sourceThreadId, hopIndex);
-                            if (sourceThread) {
-                                this.edges.push({
-                                    source: sourceThread.id,
-                                    target: swapNodeKey,
-                                    label: entry.notation || '',
-                                    amount: parseFloat(entry.amount || 0),
-                                    currency: entry.currency,
-                                    entryData: entry
-                                });
-                            }
+                        // Check for multiple source thread IDs (convergence or bridge outputs)
+                        const sourceThreadIds = entry.multipleSourceInternalIds || entry.sourceThreadIds ||
+                                              (entry.sourceThreadId ? [entry.sourceThreadId] : []);
+
+                        if (sourceThreadIds.length > 0) {
+                            sourceThreadIds.forEach(threadId => {
+                                const sourceThread = this.findSourceNode(threadId, hopIndex);
+                                if (sourceThread) {
+                                    // Get individual amount if available (for convergence entries)
+                                    const individualAmount = entry.individualSourceAssignments?.[threadId] || (parseFloat(entry.amount || 0) / sourceThreadIds.length);
+
+                                    this.edges.push({
+                                        source: sourceThread.id,
+                                        target: swapNodeKey,
+                                        label: entry.notation || '',
+                                        amount: individualAmount,
+                                        currency: entry.currency,
+                                        entryData: entry
+                                    });
+                                }
+                            });
                         }
 
                         // Check if output is also brown (same entity, possibly new chain/address)
@@ -574,19 +592,28 @@ class BATSVisualizationD3 {
                     hopColumn.artAfter[currency] = (hopColumn.artAfter[currency] || 0) + node.amount;
 
                     // Create edges from source threads
-                    if (entry.sourceThreadId) {
-                        // Find source node
-                        const sourceThread = this.findSourceNode(entry.sourceThreadId, hopIndex);
-                        if (sourceThread) {
-                            this.edges.push({
-                                source: sourceThread.id,
-                                target: nodeId,
-                                label: entry.notation || '',
-                                amount: node.amount,
-                                currency: node.currency,
-                                entryData: entry  // Store full entry for details
-                            });
-                        }
+                    // Check for multiple source thread IDs (convergence or bridge outputs)
+                    const sourceThreadIds = entry.multipleSourceInternalIds || entry.sourceThreadIds ||
+                                          (entry.sourceThreadId ? [entry.sourceThreadId] : []);
+
+                    if (sourceThreadIds.length > 0) {
+                        // Handle multiple source threads
+                        sourceThreadIds.forEach(threadId => {
+                            const sourceThread = this.findSourceNode(threadId, hopIndex);
+                            if (sourceThread) {
+                                // Get individual amount if available (for convergence entries)
+                                const individualAmount = entry.individualSourceAssignments?.[threadId] || (node.amount / sourceThreadIds.length);
+
+                                this.edges.push({
+                                    source: sourceThread.id,
+                                    target: nodeId,
+                                    label: entry.notation || '',
+                                    amount: individualAmount,
+                                    currency: node.currency,
+                                    entryData: entry  // Store full entry for details
+                                });
+                            }
+                        });
                     }
                 }
             });

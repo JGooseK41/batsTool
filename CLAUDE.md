@@ -3,17 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 19:49)
+## Latest Commit (Auto-updated: 2025-10-05 20:37)
 
-**Commit:** 137b27154bcedf2bd5d107d7d07654da615042c7
+**Commit:** 86ebc332ec93f5eeb3ce817eeb03dabe48686ce2
 **Author:** Your Name
-**Message:** Fix first column title from 'VICTIMS' to 'RED WALLETS'
+**Message:** Consolidate red wallet nodes by address instead of per-transaction
 
-Clarification: The first column contains red wallets, which are the
-first wallets under criminal control (receiving stolen funds from victims),
-not the victim wallets themselves.
+- Red wallets now show one node per address, not one per transaction
+- Multiple threads (V1-T1, V1-T2, etc) from same wallet consolidated
+- Label shows thread count (e.g., "3 threads")
+- Amount shows total across all threads, handles multiple currencies
+- All threads properly registered for edge connections
 
-Changed: Column title from 'VICTIMS' to 'RED WALLETS'
+This fixes duplicate red wallet icons in visualization.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -21,23 +23,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 71 +++++++++++++++++++++---------------------------
- bats-d3-visualization.js |  4 +--
- 2 files changed, 33 insertions(+), 42 deletions(-)
+ bats-d3-visualization.js | 99 ++++++++++++++++++++++++++++++++++++------------
+ 1 file changed, 74 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 137b271 Fix first column title from 'VICTIMS' to 'RED WALLETS' (0 seconds ago)
-- c4b9a9c Fix hop entry processing to skip misplaced entries (84 seconds ago)
-- 5017875 Fix BATS data compatibility and bridge thread tracking (12 minutes ago)
-- fce015c Fix drag event handlers causing underlay movement (24 minutes ago)
-- f04b421 Fix brown wallet consolidation and add multi-thread edge grouping (27 minutes ago)
-- 8c49022 Fix Generate Reports button and add graph/reports navigation (38 minutes ago)
-- 28958bb Update CLAUDE.md with latest commit info (46 minutes ago)
-- a25501b Update CLAUDE.md with latest commit info (46 minutes ago)
-- 06715f7 Add note functionality to edges and wallets with right-click and hover (48 minutes ago)
-- 2ac47a3 Fix zoom behavior to prevent white space and keep graph/columns scaled together (51 minutes ago)
+- 86ebc33 Consolidate red wallet nodes by address instead of per-transaction (0 seconds ago)
+- 2332f18 Fix ART label terminology - change to 'Adjusted Root Total' (4 minutes ago)
+- 7b18011 Add white stroke to column titles for better readability (5 minutes ago)
+- e3cd1f3 Replace edge label backgrounds with text stroke for better readability (7 minutes ago)
+- 764bc88 Improve edge dragging and add undo/redo/reset functionality (21 minutes ago)
+- aa9f17f Add manual edge group collapse and fix text overlap issues (26 minutes ago)
+- f230763 Add Adjust Graph toggle mode for dragging nodes and edges (30 minutes ago)
+- b4ad91d Fix wallet column titles - change from 'HOP N' to 'WALLETS' (46 minutes ago)
+- 137b271 Fix first column title from 'VICTIMS' to 'RED WALLETS' (47 minutes ago)
+- c4b9a9c Fix hop entry processing to skip misplaced entries (49 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
