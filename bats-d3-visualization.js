@@ -1372,27 +1372,7 @@ class BATSVisualizationD3 {
             .attr('points', '0 0, 10 3, 0 6')
             .attr('fill', '#95a5a6');
 
-        // Add background rect for edge notation label
-        edgeEnter.append('rect')
-            .attr('class', 'edge-label-bg')
-            .attr('x', d => (d.source.x + d.target.x) / 2 - 40)
-            .attr('y', d => {
-                const baseY = (d.source.y + d.target.y) / 2 - 32;
-                if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
-                    const spacing = 15;
-                    const totalHeight = (d.threadCount - 1) * spacing;
-                    const offset = -totalHeight / 2 + d.threadIndex * spacing;
-                    return baseY + offset;
-                }
-                return baseY;
-            })
-            .attr('width', 80)
-            .attr('height', 14)
-            .attr('fill', 'white')
-            .attr('opacity', 0.9)
-            .attr('rx', 3);
-
-        // Add edge label with notation (or thread count for collapsed)
+        // Add edge label with notation (or thread count for collapsed) - with text shadow for readability
         edgeEnter.append('text')
             .attr('x', d => (d.source.x + d.target.x) / 2)
             .attr('y', d => {
@@ -1410,29 +1390,14 @@ class BATSVisualizationD3 {
             .attr('fill', '#2c3e50')
             .attr('font-weight', 'bold')
             .style('pointer-events', 'none')
+            .style('paint-order', 'stroke')
+            .style('stroke', 'white')
+            .style('stroke-width', '3px')
+            .style('stroke-linecap', 'round')
+            .style('stroke-linejoin', 'round')
             .text(d => d.isCollapsed ? `${d.threadCount} threads` : d.label);
 
-        // Add background rect for amount label
-        edgeEnter.append('rect')
-            .attr('class', 'edge-amount-bg')
-            .attr('x', d => (d.source.x + d.target.x) / 2 - 45)
-            .attr('y', d => {
-                const baseY = (d.source.y + d.target.y) / 2 - 14;
-                if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
-                    const spacing = 15;
-                    const totalHeight = (d.threadCount - 1) * spacing;
-                    const offset = -totalHeight / 2 + d.threadIndex * spacing;
-                    return baseY + offset;
-                }
-                return baseY;
-            })
-            .attr('width', 90)
-            .attr('height', 13)
-            .attr('fill', 'white')
-            .attr('opacity', 0.9)
-            .attr('rx', 3);
-
-        // Add edge amount + currency label
+        // Add edge amount + currency label - with text shadow for readability
         edgeEnter.append('text')
             .attr('x', d => (d.source.x + d.target.x) / 2)
             .attr('y', d => {
@@ -1450,6 +1415,11 @@ class BATSVisualizationD3 {
             .attr('fill', '#27ae60')
             .attr('font-weight', '600')
             .style('pointer-events', 'none')
+            .style('paint-order', 'stroke')
+            .style('stroke', 'white')
+            .style('stroke-width', '3px')
+            .style('stroke-linecap', 'round')
+            .style('stroke-linejoin', 'round')
             .text(d => `${d.amount.toFixed(2)} ${d.currency}`);
 
         // Add note indicator for edges
