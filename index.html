@@ -17609,6 +17609,7 @@ function showQuickExportMenu() {
 
 // Skip directly to reports
 function proceedDirectlyToReports() {
+    console.log('proceedDirectlyToReports called');
     closeCompletionModal();
 
     // Show the reports tab
@@ -17618,9 +17619,13 @@ function proceedDirectlyToReports() {
     });
 
     const reportsTab = document.getElementById('reports-tab');
+    console.log('Reports tab element:', reportsTab);
     if (reportsTab) {
         reportsTab.style.display = 'block';
         reportsTab.classList.add('active');
+        console.log('Reports tab shown');
+    } else {
+        console.error('Reports tab not found in DOM!');
     }
 
     // Activate the reports nav tab
@@ -17639,7 +17644,9 @@ function proceedDirectlyToReports() {
     }
 
     // Generate report content
+    console.log('Generating report content...');
     generateReportContent();
+    console.log('Report content generation complete');
 }
 
 function generateReportContent() {
