@@ -1276,11 +1276,20 @@ class BATSVisualizationD3 {
             const hop = hopSpace.hopData;
             const artBefore = hopSpace.artBefore || {};
 
-            // RIGHT SIDE: Disposition categories
-            const terminated = {};      // Purple wallets, off-ramped
-            const stillTracing = {};    // Black wallets continuing
-            const writeOffs = {};       // Write-offs
-            const converted = {};       // Input currencies that were swapped
+            // Build separate T-accounts for each currency
+            const currencyAccounts = {};
+
+            // Initialize accounts for each currency in ART
+            for (const currency of Object.keys(artBefore)) {
+                currencyAccounts[currency] = {
+                    beginningBalance: artBefore[currency],
+                    terminated: 0,
+                    stillTracing: 0,
+                    writeOffs: 0,
+                    converted: 0,
+                    nestedAccounts: {}  // For currencies created from conversions
+                };
+            }
 
             // Process each entry to categorize disposition
             hop.entries.forEach(entry => {
@@ -1289,7 +1298,9 @@ class BATSVisualizationD3 {
 
                 if (entry.entryType === 'writeoff') {
                     // Write-off
-                    writeOffs[currency] = (writeOffs[currency] || 0) + amount;
+                    if (currencyAccounts[currency]) {
+                        currencyAccounts[currency].writeOffs += amount;
+                    }
 
                 } else if (entry.isBridge || entry.entryType === 'swap' || (entry.swapDetails && entry.swapDetails.outputCurrency)) {
                     // Conversion: The INPUT currency was consumed and converted
@@ -1298,50 +1309,70 @@ class BATSVisualizationD3 {
                     const outputAmount = parseFloat(entry.bridgeDetails?.destinationAmount || entry.swapDetails?.outputAmount || 0);
                     const outputCurrency = entry.bridgeDetails?.destinationAsset || entry.swapDetails?.outputCurrency || inputCurrency;
 
-                    // Track the INPUT currency as "converted" (this balances the left side)
-                    converted[inputCurrency] = (converted[inputCurrency] || 0) + inputAmount;
+                    // Track the INPUT currency as "converted" in main account
+                    if (currencyAccounts[inputCurrency]) {
+                        currencyAccounts[inputCurrency].converted += inputAmount;
 
-                    // ALSO track what happened to the OUTPUT currency in THIS hop
-                    // If it's terminated (purple wallet), it goes to terminated
-                    // If it continues, it goes to stillTracing
-                    if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
-                        terminated[outputCurrency] = (terminated[outputCurrency] || 0) + outputAmount;
-                    } else {
-                        stillTracing[outputCurrency] = (stillTracing[outputCurrency] || 0) + outputAmount;
+                        // Create nested account for OUTPUT currency
+                        if (!currencyAccounts[inputCurrency].nestedAccounts[outputCurrency]) {
+                            currencyAccounts[inputCurrency].nestedAccounts[outputCurrency] = {
+                                fromConversion: 0,
+                                terminated: 0,
+                                stillTracing: 0
+                            };
+                        }
+
+                        currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].fromConversion += outputAmount;
+
+                        // Track what happened to the OUTPUT currency
+                        if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
+                            currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].terminated += outputAmount;
+                        } else {
+                            currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].stillTracing += outputAmount;
+                        }
                     }
 
                 } else if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
                     // Terminal wallet (no conversion)
-                    terminated[currency] = (terminated[currency] || 0) + amount;
+                    if (currencyAccounts[currency]) {
+                        currencyAccounts[currency].terminated += amount;
+                    }
 
                 } else {
                     // Continuing trace (no conversion)
-                    stillTracing[currency] = (stillTracing[currency] || 0) + amount;
+                    if (currencyAccounts[currency]) {
+                        currencyAccounts[currency].stillTracing += amount;
+                    }
                 }
             });
 
-            hopSpace.terminated = terminated;
-            hopSpace.stillTracing = stillTracing;
-            hopSpace.writeOffs = writeOffs;
-            hopSpace.converted = converted;
+            hopSpace.currencyAccounts = currencyAccounts;
         });
 
-        // Calculate dynamic height based on currency counts
+        // Calculate dynamic height based on currency accounts
         const lineHeight = 20;
         const headerHeight = 80;
-        const sectionSpacing = 15;
+        const accountSpacing = 30;
+        const nestedAccountSpacing = 25;
         const bottomPadding = 15;
 
-        const maxCurrencies = d3.max(hopSpaces, d => {
-            const artCurrencies = Object.keys(d.artBefore || {}).length;
-            const terminatedCurrencies = Object.keys(d.terminated || {}).length;
-            const tracingCurrencies = Object.keys(d.stillTracing || {}).length;
-            const convertedCurrencies = Object.keys(d.converted || {}).length;
-            const writeOffCurrencies = Object.keys(d.writeOffs || {}).length;
-            return Math.max(artCurrencies, terminatedCurrencies + tracingCurrencies + convertedCurrencies + writeOffCurrencies + 3); // +3 for category headers
+        const maxHeight = d3.max(hopSpaces, d => {
+            let height = 0;
+            const accounts = d.currencyAccounts || {};
+
+            for (const [currency, account] of Object.entries(accounts)) {
+                // Main account: header + entries + balance line
+                height += accountSpacing + (4 * lineHeight); // Header, entries, totals, balance
+
+                // Nested accounts
+                const nestedCount = Object.keys(account.nestedAccounts || {}).length;
+                height += nestedCount * (nestedAccountSpacing + (3 * lineHeight)); // Each nested account
+            }
+
+            return height;
         });
 
-        const boxHeight = headerHeight + (maxCurrencies * lineHeight) + (sectionSpacing * 3) + bottomPadding;
+        const boxHeight = headerHeight + maxHeight + bottomPadding;
 
         // Store box height for drag boundary calculations
         this.reconBoxHeight = boxHeight;
@@ -1418,156 +1449,203 @@ class BATSVisualizationD3 {
             return colors[currency] || '#34495e';
         };
 
-        // Render T-account entries
+        // Render nested T-account entries
         reconGroup.each(function(d) {
             const group = d3.select(this);
             let currentY = reconY + 65;
 
-            // LEFT SIDE: Beginning Balance (ART)
-            const artBefore = d.artBefore || {};
-            for (const [currency, amount] of Object.entries(artBefore)) {
+            const accounts = d.currencyAccounts || {};
+
+            // Render each currency T-account
+            for (const [currency, account] of Object.entries(accounts)) {
                 const color = getCurrencyColor(currency);
+                const accountStartY = currentY;
+
+                // CURRENCY HEADER
                 group.append('text')
-                    .attr('x', d.leftX + 20)
+                    .attr('x', d.x)
                     .attr('y', currentY)
+                    .attr('text-anchor', 'middle')
                     .attr('font-size', '12px')
                     .attr('font-weight', 'bold')
                     .attr('fill', color)
-                    .text(`${amount.toFixed(2)} ${currency}`);
+                    .text(`━━ ${currency} ━━`);
                 currentY += lineHeight;
-            }
 
-            // RIGHT SIDE: Disposition
-            let rightY = reconY + 65;
+                // LEFT: Beginning Balance
+                group.append('text')
+                    .attr('x', d.leftX + 20)
+                    .attr('y', currentY)
+                    .attr('font-size', '11px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', color)
+                    .text(`${account.beginningBalance.toFixed(2)}`);
 
-            // Section 1: Terminated
-            if (Object.keys(d.terminated || {}).length > 0) {
+                // RIGHT: Disposition summary
+                let rightY = currentY;
+                let rightTotal = 0;
+
+                if (account.terminated > 0) {
+                    group.append('text')
+                        .attr('x', d.x + 20)
+                        .attr('y', rightY)
+                        .attr('font-size', '10px')
+                        .attr('fill', '#9b59b6')
+                        .text(`Terminated: ${account.terminated.toFixed(2)}`);
+                    rightY += lineHeight;
+                    rightTotal += account.terminated;
+                }
+
+                if (account.stillTracing > 0) {
+                    group.append('text')
+                        .attr('x', d.x + 20)
+                        .attr('y', rightY)
+                        .attr('font-size', '10px')
+                        .attr('fill', '#27ae60')
+                        .text(`Still Tracing: ${account.stillTracing.toFixed(2)}`);
+                    rightY += lineHeight;
+                    rightTotal += account.stillTracing;
+                }
+
+                if (account.converted > 0) {
+                    group.append('text')
+                        .attr('x', d.x + 20)
+                        .attr('y', rightY)
+                        .attr('font-size', '10px')
+                        .attr('fill', '#f39c12')
+                        .text(`Converted: ${account.converted.toFixed(2)}`);
+                    rightY += lineHeight;
+                    rightTotal += account.converted;
+                }
+
+                if (account.writeOffs > 0) {
+                    group.append('text')
+                        .attr('x', d.x + 20)
+                        .attr('y', rightY)
+                        .attr('font-size', '10px')
+                        .attr('fill', '#e74c3c')
+                        .text(`Write-offs: ${account.writeOffs.toFixed(2)}`);
+                    rightY += lineHeight;
+                    rightTotal += account.writeOffs;
+                }
+
+                currentY = Math.max(currentY + lineHeight, rightY);
+
+                // BALANCE LINE FOR MAIN ACCOUNT
+                const balanceY = currentY + 5;
+                group.append('line')
+                    .attr('x1', d.leftX + 15)
+                    .attr('y1', balanceY)
+                    .attr('x2', d.leftX + d.width - 15)
+                    .attr('y2', balanceY)
+                    .attr('stroke', color)
+                    .attr('stroke-width', 2);
+
+                currentY = balanceY + 15;
+
+                const isBalanced = Math.abs(account.beginningBalance - rightTotal) < 0.01;
+                group.append('text')
+                    .attr('x', d.leftX + 20)
+                    .attr('y', currentY)
+                    .attr('font-size', '11px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', color)
+                    .text(`${account.beginningBalance.toFixed(2)}`);
+
                 group.append('text')
                     .attr('x', d.x + 20)
-                    .attr('y', rightY)
-                    .attr('font-size', '10px')
-                    .attr('font-weight', 'bold')
-                    .attr('fill', '#9b59b6')
-                    .text('TERMINATED:');
-                rightY += lineHeight;
-
-                for (const [currency, amount] of Object.entries(d.terminated)) {
-                    const color = getCurrencyColor(currency);
-                    group.append('text')
-                        .attr('x', d.x + 35)
-                        .attr('y', rightY)
-                        .attr('font-size', '11px')
-                        .attr('fill', color)
-                        .text(`${amount.toFixed(2)} ${currency}`);
-                    rightY += lineHeight;
-                }
-            }
-
-            // Section 2: Still Tracing
-            if (Object.keys(d.stillTracing || {}).length > 0) {
-                group.append('text')
-                    .attr('x', d.x + 20)
-                    .attr('y', rightY)
-                    .attr('font-size', '10px')
-                    .attr('font-weight', 'bold')
-                    .attr('fill', '#27ae60')
-                    .text('STILL TRACING:');
-                rightY += lineHeight;
-
-                for (const [currency, amount] of Object.entries(d.stillTracing)) {
-                    const color = getCurrencyColor(currency);
-                    group.append('text')
-                        .attr('x', d.x + 35)
-                        .attr('y', rightY)
-                        .attr('font-size', '11px')
-                        .attr('fill', color)
-                        .text(`${amount.toFixed(2)} ${currency}`);
-                    rightY += lineHeight;
-                }
-            }
-
-            // Section 3: Converted
-            if (Object.keys(d.converted || {}).length > 0) {
-                group.append('text')
-                    .attr('x', d.x + 20)
-                    .attr('y', rightY)
-                    .attr('font-size', '10px')
-                    .attr('font-weight', 'bold')
-                    .attr('fill', '#f39c12')
-                    .text('CONVERTED:');
-                rightY += lineHeight;
-
-                for (const [currency, amount] of Object.entries(d.converted)) {
-                    const color = getCurrencyColor(currency);
-                    group.append('text')
-                        .attr('x', d.x + 35)
-                        .attr('y', rightY)
-                        .attr('font-size', '11px')
-                        .attr('fill', color)
-                        .text(`${amount.toFixed(2)} ${currency}`);
-                    rightY += lineHeight;
-                }
-            }
-
-            // Section 4: Write-offs
-            if (Object.keys(d.writeOffs || {}).length > 0) {
-                group.append('text')
-                    .attr('x', d.x + 20)
-                    .attr('y', rightY)
-                    .attr('font-size', '10px')
-                    .attr('font-weight', 'bold')
-                    .attr('fill', '#e74c3c')
-                    .text('WRITE-OFFS:');
-                rightY += lineHeight;
-
-                for (const [currency, amount] of Object.entries(d.writeOffs)) {
-                    const color = getCurrencyColor(currency);
-                    group.append('text')
-                        .attr('x', d.x + 35)
-                        .attr('y', rightY)
-                        .attr('font-size', '11px')
-                        .attr('fill', color)
-                        .text(`${amount.toFixed(2)} ${currency}`);
-                    rightY += lineHeight;
-                }
-            }
-
-            // Bottom divider line
-            const bottomY = reconY + boxHeight - 30;
-            group.append('line')
-                .attr('x1', d.leftX + 15)
-                .attr('y1', bottomY)
-                .attr('x2', d.leftX + d.width - 15)
-                .attr('y2', bottomY)
-                .attr('stroke', '#34495e')
-                .attr('stroke-width', 2);
-
-            // Verification: Check balance
-            group.append('text')
-                .attr('x', d.x)
-                .attr('y', bottomY + 15)
-                .attr('text-anchor', 'middle')
-                .attr('font-size', '10px')
-                .attr('font-weight', 'bold')
-                .attr('fill', '#7f8c8d')
-                .text('BALANCE CHECK');
-
-            // Verify each currency
-            let verifyY = bottomY + 28;
-            for (const [currency, artAmount] of Object.entries(artBefore)) {
-                const dispositionTotal = (d.terminated[currency] || 0) + (d.stillTracing[currency] || 0) + (d.converted[currency] || 0) + (d.writeOffs[currency] || 0);
-                const isBalanced = Math.abs(artAmount - dispositionTotal) < 0.01;
-
-                group.append('text')
-                    .attr('x', d.x)
-                    .attr('y', verifyY)
-                    .attr('text-anchor', 'middle')
-                    .attr('font-size', '9px')
+                    .attr('y', currentY)
+                    .attr('font-size', '11px')
                     .attr('font-weight', 'bold')
                     .attr('fill', isBalanced ? '#27ae60' : '#e74c3c')
-                    .text(`${isBalanced ? '✓' : '✗'} ${currency}: ${artAmount.toFixed(2)} = ${dispositionTotal.toFixed(2)}`);
+                    .text(`${rightTotal.toFixed(2)} ${isBalanced ? '✓' : '✗'}`);
 
-                verifyY += 12;
+                currentY += lineHeight + 10;
+
+                // NESTED ACCOUNTS (for converted currencies)
+                for (const [nestedCurrency, nestedAccount] of Object.entries(account.nestedAccounts || {})) {
+                    const nestedColor = getCurrencyColor(nestedCurrency);
+
+                    // Indented nested account
+                    group.append('text')
+                        .attr('x', d.x + 40)
+                        .attr('y', currentY)
+                        .attr('font-size', '11px')
+                        .attr('font-weight', 'bold')
+                        .attr('fill', nestedColor)
+                        .text(`└→ ${nestedCurrency} (from conversion)`);
+                    currentY += lineHeight;
+
+                    // Left: From conversion
+                    group.append('text')
+                        .attr('x', d.leftX + 40)
+                        .attr('y', currentY)
+                        .attr('font-size', '10px')
+                        .attr('fill', nestedColor)
+                        .text(`${nestedAccount.fromConversion.toFixed(2)}`);
+
+                    // Right: Disposition
+                    let nestedRightY = currentY;
+                    let nestedRightTotal = 0;
+
+                    if (nestedAccount.terminated > 0) {
+                        group.append('text')
+                            .attr('x', d.x + 50)
+                            .attr('y', nestedRightY)
+                            .attr('font-size', '9px')
+                            .attr('fill', '#9b59b6')
+                            .text(`Term: ${nestedAccount.terminated.toFixed(2)}`);
+                        nestedRightY += lineHeight - 5;
+                        nestedRightTotal += nestedAccount.terminated;
+                    }
+
+                    if (nestedAccount.stillTracing > 0) {
+                        group.append('text')
+                            .attr('x', d.x + 50)
+                            .attr('y', nestedRightY)
+                            .attr('font-size', '9px')
+                            .attr('fill', '#27ae60')
+                            .text(`Trace: ${nestedAccount.stillTracing.toFixed(2)}`);
+                        nestedRightY += lineHeight - 5;
+                        nestedRightTotal += nestedAccount.stillTracing;
+                    }
+
+                    currentY = Math.max(currentY + lineHeight, nestedRightY);
+
+                    // Balance line for nested account
+                    const nestedBalanceY = currentY;
+                    group.append('line')
+                        .attr('x1', d.leftX + 35)
+                        .attr('y1', nestedBalanceY)
+                        .attr('x2', d.leftX + d.width - 35)
+                        .attr('y2', nestedBalanceY)
+                        .attr('stroke', nestedColor)
+                        .attr('stroke-width', 1)
+                        .attr('stroke-dasharray', '2,2');
+
+                    currentY = nestedBalanceY + 12;
+
+                    const nestedBalanced = Math.abs(nestedAccount.fromConversion - nestedRightTotal) < 0.01;
+                    group.append('text')
+                        .attr('x', d.leftX + 40)
+                        .attr('y', currentY)
+                        .attr('font-size', '9px')
+                        .attr('font-weight', 'bold')
+                        .attr('fill', nestedColor)
+                        .text(`${nestedAccount.fromConversion.toFixed(2)}`);
+
+                    group.append('text')
+                        .attr('x', d.x + 50)
+                        .attr('y', currentY)
+                        .attr('font-size', '9px')
+                        .attr('font-weight', 'bold')
+                        .attr('fill', nestedBalanced ? '#27ae60' : '#e74c3c')
+                        .text(`${nestedRightTotal.toFixed(2)} ${nestedBalanced ? '✓' : '✗'}`);
+
+                    currentY += lineHeight + 5;
+                }
+
+                currentY += accountSpacing;
             }
         });
     }
