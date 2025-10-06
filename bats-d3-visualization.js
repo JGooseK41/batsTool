@@ -1174,7 +1174,7 @@ class BATSVisualizationD3 {
             .attr('font-size', '14px')
             .attr('font-weight', 'bold')
             .attr('fill', '#2c3e50')
-            .text('ART (Available Running Total)');
+            .text('ART (Adjusted Root Total)');
 
         artEnter.append('text')
             .attr('x', this.config.artBoxWidth / 2)
