@@ -3,20 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 08:36)
+## Latest Commit (Auto-updated: 2025-10-06 08:39)
 
-**Commit:** c539fd1804dbd582b1a6b3abf740b7deef42b7a9
+**Commit:** ced4655689ea117be7c6ed0a27d90673c3fdb1c7
 **Author:** Your Name
-**Message:** Clean up nested T-account layout - eliminate overlapping text and lines
+**Message:** Add source currency reference to nested T-accounts
 
-- Pre-calculate nested box height before rendering any elements
-- Use fixed spacing variables for consistent layout
-- Draw background rectangle first, then content on top
-- Position vertical divider correctly without overlapping text
-- Add proper column headers at smaller font size
-- Compact disposition display (two lines if both term and trace)
-- Balance line positioned after content with proper spacing
-- Track currentY properly to prevent overlap with next element
+- Track sourceAmount and sourceCurrency in nested account data
+- Display source reference in parentheses on left side
+  (e.g., "44,000 USDC (989 HYPE)")
+- Add smaller text below showing source currency conversion
+- Adjust box height calculation to accommodate source reference
+- Shows exact traceability from original asset to converted asset
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -24,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                |  59 ++++++++++++----------
- bats-d3-visualization.js | 126 +++++++++++++++++++++++++++++------------------
- 2 files changed, 113 insertions(+), 72 deletions(-)
+ CLAUDE.md                | 60 +++++++++++++++++++-----------------------------
+ bats-d3-visualization.js | 24 ++++++++++++++++---
+ 2 files changed, 45 insertions(+), 39 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (0 seconds ago)
-- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (5 minutes ago)
-- bc167ab Use universal wallet index as master source of truth for wallet IDs (12 minutes ago)
-- 7822eb6 Add visual separation to nested T-accounts for clarity (16 minutes ago)
-- 08bf82a Implement nested T-accounts with clear balance lines (27 minutes ago)
-- 9ecb32d Track both conversion and disposition of swapped assets in same hop (37 minutes ago)
-- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (39 minutes ago)
-- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (43 minutes ago)
-- 3c991d0 Revert edge routing back to smooth curves (53 minutes ago)
-- 56b4427 Change edge routing to use sharp angles instead of curves (76 minutes ago)
+- ced4655 Add source currency reference to nested T-accounts (0 seconds ago)
+- c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (3 minutes ago)
+- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (8 minutes ago)
+- bc167ab Use universal wallet index as master source of truth for wallet IDs (15 minutes ago)
+- 7822eb6 Add visual separation to nested T-accounts for clarity (19 minutes ago)
+- 08bf82a Implement nested T-accounts with clear balance lines (30 minutes ago)
+- 9ecb32d Track both conversion and disposition of swapped assets in same hop (41 minutes ago)
+- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (43 minutes ago)
+- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (47 minutes ago)
+- 3c991d0 Revert edge routing back to smooth curves (56 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
