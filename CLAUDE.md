@@ -3,16 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 11:57)
+## Latest Commit (Auto-updated: 2025-10-06 11:59)
 
-**Commit:** ab4ead4c0d71600e5e80875b1b3c3589d5ca8a56
+**Commit:** 4491d8466739333b8a76729bd0cd5edd1a3bd377
 **Author:** Your Name
-**Message:** Add Reports tab to main application container
+**Message:** Add debug logging to wallet index generation
 
-- Reports tab was only in visualization popup, not main app
-- Added reports-tab div with all sections to main tab container
-- Includes case info, wallet indexes, audit trail, and narrative
-- Now proceedDirectlyToReports() will find the DOM element
+- Log universalWalletIndex contents
+- Log wallets array length
+- Help diagnose why indexes may be empty
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -20,15 +19,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 39 ++++++++++++++++++++-------------------
- index.html | 60 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 80 insertions(+), 19 deletions(-)
+ CLAUDE.md  | 24 ++++++++++++------------
+ index.html |  2 ++
+ 2 files changed, 14 insertions(+), 12 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ab4ead4 Add Reports tab to main application container (0 seconds ago)
-- f1c0ad1 Add debug logging to proceedDirectlyToReports() (3 minutes ago)
+- 4491d84 Add debug logging to wallet index generation (0 seconds ago)
+- ab4ead4 Add Reports tab to main application container (2 minutes ago)
+- f1c0ad1 Add debug logging to proceedDirectlyToReports() (4 minutes ago)
 - 6090769 Add null safety checks to generateReportContent() (3 hours ago)
 - 2730194 Fix syntax error - remove orphaned code block (3 hours ago)
 - 8780908 Update CLAUDE.md with latest commit info (3 hours ago)
@@ -36,7 +36,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (3 hours ago)
 - 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (3 hours ago)
 - bc167ab Use universal wallet index as master source of truth for wallet IDs (4 hours ago)
-- 7822eb6 Add visual separation to nested T-accounts for clarity (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
