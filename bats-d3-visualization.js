@@ -1255,79 +1255,105 @@ class BATSVisualizationD3 {
             if (!hopSpace.hopData) return;
 
             const hop = hopSpace.hopData;
-            const leftItems = [];  // Terminated/Write-offs/Conversion inputs
-            const rightItems = [];  // Continuing/Conversion outputs
+            const pairedRows = [];  // Rows with both left and right entries (conversions)
+            const leftOnlyRows = [];  // Rows with only left entries (terminals, write-offs)
+            const rightOnlyRows = [];  // Rows with only right entries (continuing traces)
+
+            // Totals by currency
+            const leftTotals = {};  // Terminated/consumed
+            const rightTotals = {};  // Continuing/created
 
             // Process entries to categorize
             hop.entries.forEach(entry => {
+                const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                const amount = parseFloat(entry.amount) || 0;
+
                 if (entry.entryType === 'writeoff') {
-                    leftItems.push({
-                        type: 'write-off',
-                        amount: parseFloat(entry.amount) || 0,
-                        currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
-                        label: `Write-off: ${entry.reason || 'Unknown'}`
+                    // Write-off: left side only
+                    leftOnlyRows.push({
+                        left: {
+                            type: 'write-off',
+                            amount: amount,
+                            currency: currency,
+                            label: `Write-off: ${entry.reason || 'Unknown'}`
+                        },
+                        right: null
                     });
+                    leftTotals[currency] = (leftTotals[currency] || 0) + amount;
+
                 } else if (entry.isBridge || entry.entryType === 'swap' || (entry.swapDetails && entry.swapDetails.outputCurrency)) {
-                    // Bridge or swap: input consumed on left, output continues on right
+                    // Conversion/Bridge: paired row (left = input consumed, right = output created)
                     const inputAmount = parseFloat(entry.amount || entry.swapDetails?.inputAmount || 0);
-                    const inputCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                    const inputCurrency = currency;
                     const outputAmount = parseFloat(entry.bridgeDetails?.destinationAmount || entry.swapDetails?.outputAmount || 0);
                     const outputCurrency = entry.bridgeDetails?.destinationAsset || entry.swapDetails?.outputCurrency || inputCurrency;
 
-                    // Input consumed (left side)
-                    leftItems.push({
-                        type: 'conversion-in',
-                        amount: inputAmount,
-                        currency: inputCurrency,
-                        label: `${inputCurrency} → ${outputCurrency}`,
-                        notation: entry.notation
+                    pairedRows.push({
+                        left: {
+                            type: 'conversion-in',
+                            amount: inputAmount,
+                            currency: inputCurrency,
+                            label: `${entry.notation || ''}`
+                        },
+                        right: {
+                            type: 'conversion-out',
+                            amount: outputAmount,
+                            currency: outputCurrency,
+                            label: `${entry.notation || ''}`
+                        }
                     });
 
-                    // Output continues (right side)
-                    rightItems.push({
-                        type: 'conversion-out',
-                        amount: outputAmount,
-                        currency: outputCurrency,
-                        label: `${inputAmount} ${inputCurrency} → ${outputAmount} ${outputCurrency}`,
-                        notation: entry.notation
-                    });
+                    leftTotals[inputCurrency] = (leftTotals[inputCurrency] || 0) + inputAmount;
+                    rightTotals[outputCurrency] = (rightTotals[outputCurrency] || 0) + outputAmount;
+
                 } else if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
-                    // Terminal wallet - goes on left
-                    leftItems.push({
-                        type: 'terminal',
-                        amount: parseFloat(entry.amount) || 0,
-                        currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
-                        label: `Terminal: ${entry.walletLabel || 'Exchange'}`,
-                        notation: entry.notation
+                    // Terminal wallet: left side only
+                    leftOnlyRows.push({
+                        left: {
+                            type: 'terminal',
+                            amount: amount,
+                            currency: currency,
+                            label: `${entry.notation || 'Terminal'}`
+                        },
+                        right: null
                     });
+                    leftTotals[currency] = (leftTotals[currency] || 0) + amount;
+
                 } else {
-                    // Continuing trace - goes on right (no conversion)
-                    rightItems.push({
-                        type: 'trace',
-                        amount: parseFloat(entry.amount) || 0,
-                        currency: entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency,
-                        label: entry.notation || `Trace to H${hop.hopNumber + 1}`,
-                        notation: entry.notation
+                    // Continuing trace: right side only
+                    rightOnlyRows.push({
+                        left: null,
+                        right: {
+                            type: 'trace',
+                            amount: amount,
+                            currency: currency,
+                            label: entry.notation || `To H${hop.hopNumber + 1}`
+                        }
                     });
+                    rightTotals[currency] = (rightTotals[currency] || 0) + amount;
                 }
             });
 
-            hopSpace.leftItems = leftItems;
-            hopSpace.rightItems = rightItems;
+            // Combine all rows: paired first, then left-only, then right-only
+            hopSpace.reconRows = [...pairedRows, ...leftOnlyRows, ...rightOnlyRows];
+            hopSpace.leftTotals = leftTotals;
+            hopSpace.rightTotals = rightTotals;
         });
 
-        // Calculate dynamic height based on max items
+        // Calculate dynamic height based on rows + totals
         const lineHeight = 16;
         const headerHeight = 60;
-        const bottomPadding = 20;
+        const totalsSectionHeight = 40;  // Space for totals at bottom
+        const bottomPadding = 10;
 
-        const maxItems = d3.max(hopSpaces, d => {
-            const leftCount = (d.leftItems || []).length;
-            const rightCount = (d.rightItems || []).length;
-            return Math.max(leftCount, rightCount);
+        const maxRows = d3.max(hopSpaces, d => (d.reconRows || []).length);
+        const maxTotalLines = d3.max(hopSpaces, d => {
+            const leftCurrencies = Object.keys(d.leftTotals || {}).length;
+            const rightCurrencies = Object.keys(d.rightTotals || {}).length;
+            return Math.max(leftCurrencies, rightCurrencies);
         });
 
-        const boxHeight = headerHeight + (maxItems * lineHeight) + bottomPadding;
+        const boxHeight = headerHeight + (maxRows * lineHeight) + totalsSectionHeight + (maxTotalLines * 14) + bottomPadding;
 
         // Store box height for drag boundary calculations
         this.reconBoxHeight = boxHeight;
@@ -1385,81 +1411,106 @@ class BATSVisualizationD3 {
             .attr('fill', '#27ae60')
             .text('CONTINUING');
 
-        // Left items (with visual indicators) - SHOW ALL ITEMS
-        const self = this;
+        // Render rows (paired left-right entries)
         reconGroup.each(function(d, i) {
             const group = d3.select(this);
-            const leftItems = d.leftItems || [];
+            const rows = d.reconRows || [];
             const startY = reconY + 55;
 
-            leftItems.forEach((item, idx) => {
-                // Visual indicator
-                const icon = item.type === 'terminal' ? '⬤' :
-                           item.type === 'conversion-in' ? '🔄' :
-                           item.type === 'write-off' ? '✕' : '−';
-                const iconColor = item.type === 'terminal' ? '#9b59b6' :
-                                item.type === 'conversion-in' ? '#8B4513' : '#e74c3c';
+            rows.forEach((row, idx) => {
+                const yPos = startY + idx * lineHeight;
 
-                group.append('text')
-                    .attr('x', d.leftX + 15)
-                    .attr('y', startY + idx * lineHeight)
-                    .attr('font-size', '10px')
-                    .attr('fill', iconColor)
-                    .text(icon);
+                // LEFT side (terminated/consumed)
+                if (row.left) {
+                    const icon = row.left.type === 'terminal' ? '⬤' :
+                               row.left.type === 'conversion-in' ? '🔄' :
+                               row.left.type === 'write-off' ? '✕' : '−';
+                    const iconColor = row.left.type === 'terminal' ? '#9b59b6' :
+                                    row.left.type === 'conversion-in' ? '#8B4513' : '#e74c3c';
 
+                    group.append('text')
+                        .attr('x', d.leftX + 15)
+                        .attr('y', yPos)
+                        .attr('font-size', '10px')
+                        .attr('fill', iconColor)
+                        .text(icon);
+
+                    group.append('text')
+                        .attr('x', d.leftX + 30)
+                        .attr('y', yPos)
+                        .attr('font-size', '9px')
+                        .attr('fill', '#2c3e50')
+                        .text(`− ${row.left.amount.toFixed(2)} ${row.left.currency}`);
+                }
+
+                // RIGHT side (continuing/created)
+                if (row.right) {
+                    const icon = row.right.type === 'trace' ? '→' :
+                               row.right.type === 'conversion-out' ? '🔄' : '+';
+                    const iconColor = row.right.type === 'trace' ? '#27ae60' : '#8B4513';
+
+                    group.append('text')
+                        .attr('x', d.x + 15)
+                        .attr('y', yPos)
+                        .attr('font-size', '10px')
+                        .attr('fill', iconColor)
+                        .text(icon);
+
+                    group.append('text')
+                        .attr('x', d.x + 30)
+                        .attr('y', yPos)
+                        .attr('font-size', '9px')
+                        .attr('fill', '#2c3e50')
+                        .text(`+ ${row.right.amount.toFixed(2)} ${row.right.currency}`);
+                }
+            });
+
+            // Divider line before totals
+            const totalsStartY = startY + (rows.length * lineHeight) + 10;
+            group.append('line')
+                .attr('x1', d.leftX + 15)
+                .attr('y1', totalsStartY - 5)
+                .attr('x2', d.x - 15)
+                .attr('y2', totalsStartY - 5)
+                .attr('stroke', '#34495e')
+                .attr('stroke-width', 1)
+                .attr('stroke-dasharray', '3,3');
+
+            group.append('line')
+                .attr('x1', d.x + 15)
+                .attr('y1', totalsStartY - 5)
+                .attr('x2', d.leftX + d.width - 15)
+                .attr('y2', totalsStartY - 5)
+                .attr('stroke', '#34495e')
+                .attr('stroke-width', 1)
+                .attr('stroke-dasharray', '3,3');
+
+            // LEFT totals (terminated/consumed)
+            let leftIdx = 0;
+            for (const [currency, total] of Object.entries(d.leftTotals || {})) {
                 group.append('text')
                     .attr('x', d.leftX + 30)
-                    .attr('y', startY + idx * lineHeight)
-                    .attr('font-size', '9px')
-                    .attr('fill', '#2c3e50')
-                    .text(`− ${item.amount.toFixed(2)} ${item.currency}`);
-            });
-        });
-
-        // Right items (with visual indicators) - SHOW ALL ITEMS
-        reconGroup.each(function(d, i) {
-            const group = d3.select(this);
-            const rightItems = d.rightItems || [];
-            const startY = reconY + 55;
-
-            rightItems.forEach((item, idx) => {
-                // Visual indicator
-                const icon = item.type === 'trace' ? '→' :
-                           item.type === 'conversion-out' ? '🔄' : '+';
-                const iconColor = item.type === 'trace' ? '#27ae60' : '#8B4513';
-
-                group.append('text')
-                    .attr('x', d.x + 15)
-                    .attr('y', startY + idx * lineHeight)
+                    .attr('y', totalsStartY + (leftIdx * 14))
                     .attr('font-size', '10px')
-                    .attr('fill', iconColor)
-                    .text(icon);
+                    .attr('font-weight', 'bold')
+                    .attr('fill', '#e74c3c')
+                    .text(`− ${total.toFixed(2)} ${currency}`);
+                leftIdx++;
+            }
 
+            // RIGHT totals (continuing/created)
+            let rightIdx = 0;
+            for (const [currency, total] of Object.entries(d.rightTotals || {})) {
                 group.append('text')
                     .attr('x', d.x + 30)
-                    .attr('y', startY + idx * lineHeight)
-                    .attr('font-size', '9px')
-                    .attr('fill', '#2c3e50')
-                    .text(`+ ${item.amount.toFixed(2)} ${item.currency}`);
-            });
+                    .attr('y', totalsStartY + (rightIdx * 14))
+                    .attr('font-size', '10px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', '#27ae60')
+                    .text(`+ ${total.toFixed(2)} ${currency}`);
+                rightIdx++;
+            }
         });
-
-        // Balance indicator
-        reconGroup.append('text')
-            .attr('x', d => d.x)
-            .attr('y', 1460)
-            .attr('text-anchor', 'middle')
-            .attr('font-size', '9px')
-            .attr('font-weight', 'bold')
-            .attr('fill', d => {
-                // Check if balanced
-                const artTotal = Object.values(d.artBefore || {}).reduce((sum, val) => sum + val, 0);
-                return artTotal > 0 ? '#27ae60' : '#95a5a6';
-            })
-            .text(d => {
-                const artTotal = Object.values(d.artBefore || {}).reduce((sum, val) => sum + val, 0);
-                return artTotal > 0 ? `✓ BALANCED` : '— No Data';
-            });
     }
 
     drawARTBoxes() {

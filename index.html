@@ -7002,8 +7002,41 @@
     
     console.log('Complete integration initialized');
 }
-function handleLoadFile() {
+async function handleLoadFile() {
     console.log('Load file button clicked');
+
+    // Try to use File System Access API if available
+    if ('showOpenFilePicker' in window) {
+        try {
+            const [handle] = await window.showOpenFilePicker({
+                types: [{
+                    description: 'BATS Investigation Files',
+                    accept: { 'application/json': ['.bats', '.json'] }
+                }],
+                multiple: false
+            });
+
+            // Store the file handle for future saves
+            fileHandle = handle;
+
+            // Read the file
+            const file = await handle.getFile();
+            const content = await file.text();
+
+            // Process the file content (reuse existing logic)
+            processLoadedFile(content);
+            return;
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('User cancelled file selection');
+                return;
+            }
+            console.error('File System Access API error:', error);
+            // Fall back to traditional method
+        }
+    }
+
+    // Fall back to traditional file input method
     const fileInput = document.getElementById('fileInput');
     if (fileInput) {
         console.log('File input found, triggering click');
@@ -27836,20 +27869,10 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             downloadFile(dataStr, filename, 'application/json');
         }
 
-        function loadInvestigation(event) {
-    const file = event.target.files[0];
-    if (!file) {
-        console.log('No file selected');
-        return;
-    }
-
-    console.log('Starting file load:', file.name, 'Size:', file.size, 'Type:', file.type);
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            console.log('File read successfully, parsing JSON...');
-            const content = e.target.result;
+        function processLoadedFile(content) {
+            try {
+                console.log('Processing loaded file content...');
+                console.log('File read successfully, parsing JSON...');
             
             // Parse JSON
             const loadedData = JSON.parse(content);
@@ -27928,9 +27951,6 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 }, 500);
             }
 
-            // Clear the file input to allow re-loading the same file
-            event.target.value = '';
-
             console.log('Investigation loaded successfully!');
             console.log('Available threads after loading:', investigation.availableThreads);
 
@@ -27948,16 +27968,31 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 // Show case status dashboard for in-progress investigations
                 showCaseStatusDashboard();
             }
-            
+
         } catch (error) {
             console.error('Error loading file:', error);
             alert('Error loading file: ' + error.message);
-            
-            // Clear the file input on error too
-            event.target.value = '';
         }
+    }
+
+        function loadInvestigation(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        console.log('No file selected');
+        return;
+    }
+
+    console.log('Starting file load:', file.name, 'Size:', file.size, 'Type:', file.type);
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        processLoadedFile(content);
+
+        // Clear the file input to allow re-loading the same file
+        event.target.value = '';
     };
-    
+
     reader.onerror = function() {
         console.error('File reading failed');
         alert('Failed to read the file. Please try again.');
