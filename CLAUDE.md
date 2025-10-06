@@ -3,19 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 12:18)
+## Latest Commit (Auto-updated: 2025-10-06 12:21)
 
-**Commit:** d3b3a695c2922caf45d5a7a2eddaa8dbeaeb078e
+**Commit:** e9edfed38c395e0ae27f046676e035b6ddd820d3
 **Author:** Your Name
-**Message:** Fix notation to deduplicate transaction numbers properly
+**Message:** Fix wallet indices showing correct data
 
-- Notation (V1-T1,1,2,2,2,2) now correctly shows as (V1-T1,1,2)
-- Prevents duplicate transaction numbers from accumulating through convergence
-- autoGenerateNotationFromSource now deduplicates parsed numbers
-- Display simplification shows unique transactions only
-- Notation represents which victims/transactions, not lineage
-
-Fixes root cause of confusing notation issue
+- Changed red wallet index label from "Victim Wallets" to "Bad Actor Wallets"
+- Fixed red wallet index to use correct fields (vtNotation, walletId, amount, currency)
+- Fixed purple wallet index to use terminalWalletIndex instead of filtering universalWalletIndex
+- Purple index now shows exchange name, address, amount, notation, and hop number
+- All wallet indices now display actual data instead of undefined
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -23,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 40 +++++++++++++++++++---------------------
- index.html | 51 ++++++++++++++++++++++++++++++---------------------
- 2 files changed, 49 insertions(+), 42 deletions(-)
+ CLAUDE.md  | 41 +++++++++++++++++++++--------------------
+ index.html | 38 +++++++++++++++++++++-----------------
+ 2 files changed, 42 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d3b3a69 Fix notation to deduplicate transaction numbers properly (1 second ago)
-- 5191a3f Simplify complex notation display in audit trail (4 minutes ago)
-- e40cbcb Fix audit trail data presentation issues (5 minutes ago)
-- 1ff2efc Add comprehensive printable report export function (12 minutes ago)
-- 8b1a48a Reorganize Reports tab with sub-tabs (15 minutes ago)
-- 39cd010 Show full transaction hashes and notes in audit trail (18 minutes ago)
-- 4491d84 Add debug logging to wallet index generation (19 minutes ago)
-- ab4ead4 Add Reports tab to main application container (21 minutes ago)
-- f1c0ad1 Add debug logging to proceedDirectlyToReports() (24 minutes ago)
-- 6090769 Add null safety checks to generateReportContent() (4 hours ago)
+- e9edfed Fix wallet indices showing correct data (0 seconds ago)
+- d3b3a69 Fix notation to deduplicate transaction numbers properly (3 minutes ago)
+- 5191a3f Simplify complex notation display in audit trail (6 minutes ago)
+- e40cbcb Fix audit trail data presentation issues (8 minutes ago)
+- 1ff2efc Add comprehensive printable report export function (15 minutes ago)
+- 8b1a48a Reorganize Reports tab with sub-tabs (18 minutes ago)
+- 39cd010 Show full transaction hashes and notes in audit trail (20 minutes ago)
+- 4491d84 Add debug logging to wallet index generation (22 minutes ago)
+- ab4ead4 Add Reports tab to main application container (24 minutes ago)
+- f1c0ad1 Add debug logging to proceedDirectlyToReports() (27 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
