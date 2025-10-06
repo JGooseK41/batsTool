@@ -3,21 +3,23 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 08:20)
+## Latest Commit (Auto-updated: 2025-10-06 08:24)
 
-**Commit:** 7822eb6204f3d5986bf2408699f3203bc6b73bc8
+**Commit:** bc167ab275d654409a2db0777abc176dcc7c83bd
 **Author:** Your Name
-**Message:** Add visual separation to nested T-accounts for clarity
+**Message:** Use universal wallet index as master source of truth for wallet IDs
 
-- Dashed border box around nested accounts (light gray background)
-- Clear header: "↳ USDC T-ACCOUNT (from conversion) ↲"
-- Vertical divider line in center (matches currency color)
-- Left/right labels: "FROM CONVERSION" and "DISPOSITION"
-- Increased spacing between main and nested accounts
-- Larger font for nested account balances
+- Visualization now checks investigation.universalWalletIndex first
+- Uses permanentId from universal index (assigned in order during tracing)
+- Falls back to session counter only if wallet not in index
+- Fixes issue where P-2 appeared before P-1 (out of order)
 
-Makes it immediately clear that nested account is a separate T-account
-showing what happened to the converted currency.
+Wallet ID assignment priority:
+1. Universal wallet index (master source)
+2. Session cache (for reuse within visualization)
+3. New counter (fallback only)
+
+Now wallet IDs appear in chronological order of first appearance in trace.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -25,23 +27,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 63 +++++++++++++++++++++++++++++-------------------
- bats-d3-visualization.js | 59 ++++++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 91 insertions(+), 31 deletions(-)
+ CLAUDE.md                | 64 ++++++++++++++++++++----------------------------
+ bats-d3-visualization.js | 18 +++++++++++---
+ 2 files changed, 41 insertions(+), 41 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7822eb6 Add visual separation to nested T-accounts for clarity (0 seconds ago)
-- 08bf82a Implement nested T-accounts with clear balance lines (12 minutes ago)
-- 9ecb32d Track both conversion and disposition of swapped assets in same hop (22 minutes ago)
-- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (24 minutes ago)
-- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (28 minutes ago)
-- 3c991d0 Revert edge routing back to smooth curves (37 minutes ago)
-- 56b4427 Change edge routing to use sharp angles instead of curves (60 minutes ago)
-- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (62 minutes ago)
-- d7a93e4 Fix edge group expansion - modal buttons now work correctly (66 minutes ago)
-- fc14ec5 Fix arrowhead positioning - edges now terminate at arrow base (67 minutes ago)
+- bc167ab Use universal wallet index as master source of truth for wallet IDs (0 seconds ago)
+- 7822eb6 Add visual separation to nested T-accounts for clarity (4 minutes ago)
+- 08bf82a Implement nested T-accounts with clear balance lines (15 minutes ago)
+- 9ecb32d Track both conversion and disposition of swapped assets in same hop (25 minutes ago)
+- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (27 minutes ago)
+- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (31 minutes ago)
+- 3c991d0 Revert edge routing back to smooth curves (41 minutes ago)
+- 56b4427 Change edge routing to use sharp angles instead of curves (64 minutes ago)
+- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (65 minutes ago)
+- d7a93e4 Fix edge group expansion - modal buttons now work correctly (69 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

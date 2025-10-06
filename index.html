@@ -17288,11 +17288,59 @@ function generateVisualizationPage() {
     <!-- Reports Tab -->
     <div id="reports-tab" class="tab-content">
         <div class="controls">
-            <button class="btn-secondary" onclick="navigateToGraph()">📊 Go to Graph</button>
+            <button class="btn-secondary" onclick="switchTab('visualization')">📊 Go to Graph</button>
             <span style="flex: 1;"></span>
-            <button class="btn-success" onclick="exportFormat('pdf')">📄 Export PDF</button>
+            <button class="btn-success" onclick="exportCompleteReport()">📄 Export Complete Report</button>
         </div>
-        <div id="reports-container"></div>
+
+        <div id="reports-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+            <!-- Report Sections -->
+            <div style="margin-bottom: 40px;">
+                <h1 style="color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 15px;">Investigation Report</h1>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <strong>Case ID:</strong> <span id="report-case-id"></span><br>
+                    <strong>Investigator:</strong> <span id="report-investigator"></span><br>
+                    <strong>Date:</strong> <span id="report-date"></span>
+                </div>
+            </div>
+
+            <!-- Wallet Indexes Section -->
+            <div style="margin-bottom: 40px;">
+                <h2 style="color: #2c3e50; border-bottom: 2px solid #e74c3c; padding-bottom: 10px;">📋 Wallet Indexes</h2>
+
+                <!-- Universal Wallet Index -->
+                <div style="margin: 20px 0;">
+                    <h3 style="color: #34495e;">Universal Wallet Index</h3>
+                    <div id="report-universal-index" style="overflow-x: auto;"></div>
+                </div>
+
+                <!-- Red Wallet Index -->
+                <div style="margin: 20px 0;">
+                    <h3 style="color: #e74c3c;">Red Wallet Index (Victim Wallets)</h3>
+                    <div id="report-red-index" style="overflow-x: auto;"></div>
+                </div>
+
+                <!-- Purple Wallet Index -->
+                <div style="margin: 20px 0;">
+                    <h3 style="color: #9b59b6;">Purple Wallet Index (Terminal/Exchange Wallets)</h3>
+                    <div id="report-purple-index" style="overflow-x: auto;"></div>
+                </div>
+            </div>
+
+            <!-- Technical Audit Trail -->
+            <div style="margin-bottom: 40px;">
+                <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">🔍 Technical Audit Trail</h2>
+                <div id="report-technical-content" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- Narrative Section -->
+            <div style="margin-bottom: 40px;">
+                <h2 style="color: #2c3e50; border-bottom: 2px solid #27ae60; padding-bottom: 10px;">📝 Investigation Narrative</h2>
+                <div id="report-narrative-content" style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; min-height: 200px;">
+                    <p style="color: #7f8c8d; font-style: italic;">Write your investigation narrative here. This section is for summarizing findings, methodologies, and conclusions.</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Export Tab -->
@@ -17589,6 +17637,119 @@ function proceedDirectlyToReports() {
     if (navTabs) {
         navTabs.style.display = 'flex';
     }
+
+    // Generate report content
+    generateReportContent();
+}
+
+function generateReportContent() {
+    // Update case info
+    document.getElementById('report-case-id').textContent = investigation.caseId || 'N/A';
+    document.getElementById('report-investigator').textContent = investigation.investigator || 'N/A';
+    document.getElementById('report-date').textContent = investigation.dateOpened || new Date().toISOString().split('T')[0];
+
+    // Generate wallet indexes
+    generateReportUniversalIndex();
+    generateReportRedIndex();
+    generateReportPurpleIndex();
+
+    // Generate technical audit trail
+    generateTechnicalAuditTrail();
+}
+
+function generateReportUniversalIndex() {
+    const container = document.getElementById('report-universal-index');
+    if (!container) return;
+
+    const wallets = investigation.universalWalletIndex || [];
+    if (wallets.length === 0) {
+        container.innerHTML = '<p style="color: #7f8c8d; font-style: italic;">No wallets in index</p>';
+        return;
+    }
+
+    let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+    html += '<thead><tr style="background: #34495e; color: white;">';
+    html += '<th style="padding: 10px; text-align: left;">Wallet ID</th>';
+    html += '<th style="padding: 10px; text-align: left;">Type</th>';
+    html += '<th style="padding: 10px; text-align: left;">Address</th>';
+    html += '<th style="padding: 10px; text-align: left;">First Seen</th>';
+    html += '</tr></thead><tbody>';
+
+    wallets.forEach((wallet, index) => {
+        const bgColor = index % 2 === 0 ? '#f8f9fa' : '#ffffff';
+        html += `<tr style="background: ${bgColor};">`;
+        html += `<td style="padding: 8px;"><strong>${wallet.permanentId}</strong></td>`;
+        html += `<td style="padding: 8px;">${wallet.permanentType}</td>`;
+        html += `<td style="padding: 8px; font-family: monospace; font-size: 11px;">${wallet.address}</td>`;
+        html += `<td style="padding: 8px;">${wallet.firstSeen || 'N/A'}</td>`;
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function generateReportRedIndex() {
+    const container = document.getElementById('report-red-index');
+    if (!container) return;
+
+    const redWallets = investigation.redWalletIndex || [];
+    if (redWallets.length === 0) {
+        container.innerHTML = '<p style="color: #7f8c8d; font-style: italic;">No victim wallets</p>';
+        return;
+    }
+
+    let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+    html += '<thead><tr style="background: #e74c3c; color: white;">';
+    html += '<th style="padding: 10px; text-align: left;">Wallet ID</th>';
+    html += '<th style="padding: 10px; text-align: left;">Victim</th>';
+    html += '<th style="padding: 10px; text-align: left;">Address</th>';
+    html += '<th style="padding: 10px; text-align: left;">Total Received</th>';
+    html += '</tr></thead><tbody>';
+
+    redWallets.forEach((wallet, index) => {
+        const bgColor = index % 2 === 0 ? '#ffebee' : '#ffffff';
+        html += `<tr style="background: ${bgColor};">`;
+        html += `<td style="padding: 8px;"><strong>${wallet.walletId}</strong></td>`;
+        html += `<td style="padding: 8px;">${wallet.victimName}</td>`;
+        html += `<td style="padding: 8px; font-family: monospace; font-size: 11px;">${wallet.walletAddress}</td>`;
+        html += `<td style="padding: 8px;">${wallet.totalAmount} ${wallet.currency}</td>`;
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function generateReportPurpleIndex() {
+    const container = document.getElementById('report-purple-index');
+    if (!container) return;
+
+    const purpleWallets = (investigation.universalWalletIndex || []).filter(w => w.permanentType === 'purple');
+    if (purpleWallets.length === 0) {
+        container.innerHTML = '<p style="color: #7f8c8d; font-style: italic;">No terminal/exchange wallets</p>';
+        return;
+    }
+
+    let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+    html += '<thead><tr style="background: #9b59b6; color: white;">';
+    html += '<th style="padding: 10px; text-align: left;">Wallet ID</th>';
+    html += '<th style="padding: 10px; text-align: left;">Address</th>';
+    html += '<th style="padding: 10px; text-align: left;">First Seen</th>';
+    html += '</tr></thead><tbody>';
+
+    purpleWallets.forEach((wallet, index) => {
+        const bgColor = index % 2 === 0 ? '#f3e5ff' : '#ffffff';
+        html += `<tr style="background: ${bgColor};">`;
+        html += `<td style="padding: 8px;"><strong>${wallet.permanentId}</strong></td>`;
+        html += `<td style="padding: 8px; font-family: monospace; font-size: 11px;">${wallet.address}</td>`;
+        html += `<td style="padding: 8px;">${wallet.firstSeen || 'N/A'}</td>`;
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
 
     // Generate the reports
     generateReports();
