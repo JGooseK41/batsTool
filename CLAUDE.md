@@ -3,26 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 07:52)
+## Latest Commit (Auto-updated: 2025-10-06 07:56)
 
-**Commit:** 0885f15616c89bbc2d1bc6a25690be6490b38c09
+**Commit:** f0a04dfabc87d63f43f8e60f640e881e787dd646
 **Author:** Your Name
-**Message:** Redesign hop reconciliation using forensic accounting T-account principles
+**Message:** Fix T-account balance - add CONVERTED section to track swapped currencies
 
-- LEFT SIDE: Beginning Balance (ART at start of hop)
-- RIGHT SIDE: Disposition (what happened to the funds)
-  - TERMINATED: Purple wallets, off-ramped to exchanges
-  - STILL TRACING: Black wallets continuing to next hop
-  - WRITE-OFFS: Lost or unrecoverable funds
+- Added CONVERTED category to show input currencies that were swapped
+- Now properly balances: LEFT (ART) = RIGHT (Terminated + Still Tracing + Converted + Write-offs)
+- When 1290 HYPE is swapped to USDC, shows 1290 HYPE as CONVERTED on right side
+- Balance check now includes converted currencies in verification
+- Updated height calculation to account for converted currencies section
+- Color-coded orange (#f39c12) for conversions
 
-- Clean categorical layout with proper accounting structure
-- Currency-coded amounts with color distinction
-- Balance verification at bottom (ART = Total Disposition)
-- Removed overlapping text and confusing paired rows
-- Clear visual hierarchy with section headers
-- All text properly spaced and centered within lanes
-
-Forensic accounting approach makes fund flow crystal clear.
+Fixes the core accounting issue where swaps weren't properly balancing the T-account.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -30,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                |  34 +++--
- bats-d3-visualization.js | 364 ++++++++++++++++++++---------------------------
- 2 files changed, 173 insertions(+), 225 deletions(-)
+ CLAUDE.md                | 47 +++++++++++++++++++++++++++++------------------
+ bats-d3-visualization.js | 47 +++++++++++++++++++++++++++++++++++------------
+ 2 files changed, 64 insertions(+), 30 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (0 seconds ago)
-- 3c991d0 Revert edge routing back to smooth curves (9 minutes ago)
-- 56b4427 Change edge routing to use sharp angles instead of curves (32 minutes ago)
-- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (34 minutes ago)
-- d7a93e4 Fix edge group expansion - modal buttons now work correctly (38 minutes ago)
-- fc14ec5 Fix arrowhead positioning - edges now terminate at arrow base (39 minutes ago)
-- 966e9bb Improve edge visual clarity with sharper arrows and better node connections (45 minutes ago)
-- d92e2d6 Rename 'HOP CREATION' to 'HOP CONSTRUCTION' (52 minutes ago)
-- f1118ae Fix zoom/pan loss after clicking wallet and closing modal (53 minutes ago)
-- 8508344 Preserve manual node positions when switching between views (2 hours ago)
+- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (0 seconds ago)
+- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (4 minutes ago)
+- 3c991d0 Revert edge routing back to smooth curves (13 minutes ago)
+- 56b4427 Change edge routing to use sharp angles instead of curves (36 minutes ago)
+- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (38 minutes ago)
+- d7a93e4 Fix edge group expansion - modal buttons now work correctly (42 minutes ago)
+- fc14ec5 Fix arrowhead positioning - edges now terminate at arrow base (43 minutes ago)
+- 966e9bb Improve edge visual clarity with sharper arrows and better node connections (49 minutes ago)
+- d92e2d6 Rename 'HOP CREATION' to 'HOP CONSTRUCTION' (56 minutes ago)
+- f1118ae Fix zoom/pan loss after clicking wallet and closing modal (57 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

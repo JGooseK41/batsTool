@@ -1301,8 +1301,14 @@ class BATSVisualizationD3 {
                     // Track the INPUT currency as "converted" (this balances the left side)
                     converted[inputCurrency] = (converted[inputCurrency] || 0) + inputAmount;
 
-                    // The OUTPUT currency becomes new ART (shown in stillTracing or terminated for NEXT hop's context)
-                    // For THIS hop's T-account, we only care about the input being converted
+                    // ALSO track what happened to the OUTPUT currency in THIS hop
+                    // If it's terminated (purple wallet), it goes to terminated
+                    // If it continues, it goes to stillTracing
+                    if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
+                        terminated[outputCurrency] = (terminated[outputCurrency] || 0) + outputAmount;
+                    } else {
+                        stillTracing[outputCurrency] = (stillTracing[outputCurrency] || 0) + outputAmount;
+                    }
 
                 } else if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
                     // Terminal wallet (no conversion)
