@@ -1483,6 +1483,17 @@ class BATSVisualizationD3 {
                 const accountStartY = currentY;
 
                 // CURRENCY HEADER
+                // Add background rect to hide vertical line behind text
+                const mainHeaderText = `━━ ${currency} ━━`;
+                const mainHeaderWidth = mainHeaderText.length * 8.5; // Approximate width for 12px font
+                group.append('rect')
+                    .attr('x', d.x - mainHeaderWidth / 2)
+                    .attr('y', currentY - 10)
+                    .attr('width', mainHeaderWidth)
+                    .attr('height', 16)
+                    .attr('fill', '#ecf0f1')
+                    .attr('rx', 2);
+
                 group.append('text')
                     .attr('x', d.x)
                     .attr('y', currentY)
@@ -1490,7 +1501,7 @@ class BATSVisualizationD3 {
                     .attr('font-size', '12px')
                     .attr('font-weight', 'bold')
                     .attr('fill', color)
-                    .text(`━━ ${currency} ━━`);
+                    .text(mainHeaderText);
                 currentY += lineHeight;
 
                 // LEFT: Beginning Balance (right-aligned number, followed by description)
@@ -1650,14 +1661,24 @@ class BATSVisualizationD3 {
                     const conversionBoxY = currentY;
                     const conversionBoxHeight = 35;
 
-                    // Arrow pointing down
+                    // Arrow pointing down with background
+                    const arrowText = '↓ Creates New Currency ↓';
+                    const arrowTextWidth = arrowText.length * 8.5;
+                    group.append('rect')
+                        .attr('x', d.x - arrowTextWidth / 2)
+                        .attr('y', conversionBoxY - 10)
+                        .attr('width', arrowTextWidth)
+                        .attr('height', 16)
+                        .attr('fill', '#ecf0f1')
+                        .attr('rx', 2);
+
                     group.append('text')
                         .attr('x', d.x)
                         .attr('y', conversionBoxY)
                         .attr('text-anchor', 'middle')
                         .attr('font-size', '12px')
                         .attr('fill', '#f39c12')
-                        .text('↓ Creates New Currency ↓');
+                        .text(arrowText);
 
                     currentY += 18;
 

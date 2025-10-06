@@ -3,16 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 17:44)
+## Latest Commit (Auto-updated: 2025-10-06 17:45)
 
-**Commit:** 2254e66578592e97624ad547c80055c1b23aca04
+**Commit:** a375131e0ece41c467472b29ea808840b649c771
 **Author:** Your Name
-**Message:** Fix nested T-account currency label color to match amount
+**Message:** Add background rectangle behind nested T-account currency header
 
-- Change currency label from gray (#7f8c8d) to nestedColor (currency color)
-- Left side now consistently shows currency color (e.g., blue for USDC)
-- Right side shows status colors (purple for terminated, green for tracing)
-- Both amount and currency label now use same color on left side
+- Currency header text now has background rect to block vertical divider line
+- Background matches nested box color (#f8f9fa)
+- Width calculated based on text length
+- Header remains centered and readable without line showing through
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -20,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 44 ++++++++++++++++++++------------------------
- bats-d3-visualization.js |  2 +-
- 2 files changed, 21 insertions(+), 25 deletions(-)
+ CLAUDE.md                | 26 +++++++++++++-------------
+ bats-d3-visualization.js | 13 ++++++++++++-
+ 2 files changed, 25 insertions(+), 14 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2254e66 Fix nested T-account currency label color to match amount (0 seconds ago)
-- 1348d90 Fix T-account box height calculation to include full nested account height (60 seconds ago)
-- 9dbd3e4 Add background box to nested T-account and fix text positioning (87 minutes ago)
+- a375131 Add background rectangle behind nested T-account currency header (0 seconds ago)
+- 2254e66 Fix nested T-account currency label color to match amount (86 seconds ago)
+- 1348d90 Fix T-account box height calculation to include full nested account height (2 minutes ago)
+- 9dbd3e4 Add background box to nested T-account and fix text positioning (88 minutes ago)
 - a9e875c Fix nestedLabelsHeight and nestedContentHeight undefined errors (2 hours ago)
 - 7b79e62 Fix leftY undefined error after removing left side conversion display (2 hours ago)
 - eaa003c Fix T-account conversion display and terminal wallet detection (2 hours ago)
 - 536f979 Add callout arrow connecting conversion to nested T-account (2 hours ago)
 - b4f7289 Apply accounting notation and improve T-account readability (2 hours ago)
 - fba0d29 Update CLAUDE.md with latest commit info (2 hours ago)
-- 4c7e376 Improve T-account reconciliation layout and clarity (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
