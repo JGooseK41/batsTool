@@ -17732,7 +17732,9 @@ function generateReportUniversalIndex() {
     const container = document.getElementById('report-universal-index');
     if (!container) return;
 
+    console.log('Universal Wallet Index:', investigation.universalWalletIndex);
     const wallets = investigation.universalWalletIndex || [];
+    console.log('Wallets array length:', wallets.length);
     if (wallets.length === 0) {
         container.innerHTML = '<p style="color: #7f8c8d; font-style: italic;">No wallets in index</p>';
         return;
