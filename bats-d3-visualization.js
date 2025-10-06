@@ -1788,7 +1788,7 @@ class BATSVisualizationD3 {
                         .attr('x', nestedLeftLabelX)
                         .attr('y', currentY)
                         .attr('font-size', '9px')
-                        .attr('fill', '#7f8c8d')
+                        .attr('fill', nestedColor)
                         .text(`${nestedCurrency}`);
 
                     // Add source reference in parentheses below if available

@@ -3,20 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 16:17)
+## Latest Commit (Auto-updated: 2025-10-06 17:43)
 
-**Commit:** 9dbd3e405796615faab9ffa616a60e7cd43b3389
+**Commit:** 1348d90118971050f1f299b763327949e29c37f2
 **Author:** Your Name
-**Message:** Add background box to nested T-account and fix text positioning
+**Message:** Fix T-account box height calculation to include full nested account height
 
-- Add light gray background box with dashed border for nested T-account
-- Adjust all text X positions to stay within box boundaries
-- Left side: d.x - 20 (was d.x - 60)
-- Right side: d.leftX + d.width - 50 (was - 70)
-- Balance totals also adjusted to stay inside box
-- Box boundaries: d.leftX + 20 to d.leftX + d.width - 20
-
-All nested T-account elements now contained within visible box.
+- Update nested account height from 100px to 173px per account
+- Includes visual separator (15px), arrow text (18px), conversion box (45px), and nested T-account (95px)
+- Prevents nested T-accounts from extending beyond scrollable area
+- Box height now accurately reflects actual rendered content
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -24,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 35 +++++++++++++++++------------------
- bats-d3-visualization.js | 36 +++++++++++++++++++++---------------
- 2 files changed, 38 insertions(+), 33 deletions(-)
+ CLAUDE.md                | 41 +++++++++++++++++++++++------------------
+ bats-d3-visualization.js | 11 ++++++++---
+ 2 files changed, 31 insertions(+), 21 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9dbd3e4 Add background box to nested T-account and fix text positioning (0 seconds ago)
-- a9e875c Fix nestedLabelsHeight and nestedContentHeight undefined errors (5 minutes ago)
-- 7b79e62 Fix leftY undefined error after removing left side conversion display (7 minutes ago)
-- eaa003c Fix T-account conversion display and terminal wallet detection (9 minutes ago)
-- 536f979 Add callout arrow connecting conversion to nested T-account (16 minutes ago)
-- b4f7289 Apply accounting notation and improve T-account readability (30 minutes ago)
-- fba0d29 Update CLAUDE.md with latest commit info (45 minutes ago)
-- 4c7e376 Improve T-account reconciliation layout and clarity (58 minutes ago)
-- 5dd14d8 Update CLAUDE.md with latest commit info (2 hours ago)
-- c6dddb8 Update CLAUDE.md with latest commit info (4 hours ago)
+- 1348d90 Fix T-account box height calculation to include full nested account height (0 seconds ago)
+- 9dbd3e4 Add background box to nested T-account and fix text positioning (86 minutes ago)
+- a9e875c Fix nestedLabelsHeight and nestedContentHeight undefined errors (2 hours ago)
+- 7b79e62 Fix leftY undefined error after removing left side conversion display (2 hours ago)
+- eaa003c Fix T-account conversion display and terminal wallet detection (2 hours ago)
+- 536f979 Add callout arrow connecting conversion to nested T-account (2 hours ago)
+- b4f7289 Apply accounting notation and improve T-account readability (2 hours ago)
+- fba0d29 Update CLAUDE.md with latest commit info (2 hours ago)
+- 4c7e376 Improve T-account reconciliation layout and clarity (2 hours ago)
+- 5dd14d8 Update CLAUDE.md with latest commit info (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
