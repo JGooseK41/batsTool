@@ -3,30 +3,44 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 21:08)
+## Latest Commit (Auto-updated: 2025-10-05 21:12)
 
-**Commit:** 8c72136286b30945ff61ddf2db83b34deb7c71a8
+**Commit:** 2066d7bb55fad29d452b8ed32a5572ef0310a27f
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit timestamp
+**Message:** Add comprehensive diagnostic logging for data validation
+
+- Log complete investigation data structure (victims, transactions, hops, entries)
+- Show bridge details and currency conversions in data
+- List all created nodes with types, columns, threads, and output threads
+- List all created edges with readable format
+
+This logging will help identify if issues are from:
+1. Bad data in the investigation file
+2. Bad processing logic in the visualization
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 46 ++++++++++++++++++++++++++--------------------
- 1 file changed, 26 insertions(+), 20 deletions(-)
+ CLAUDE.md                | 47 +++++++++++++++--------------------------------
+ bats-d3-visualization.js | 37 ++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 51 insertions(+), 33 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8c72136 Update CLAUDE.md with latest commit timestamp (0 seconds ago)
-- f531c98 Fix T-account reconciliation to properly show currency conversions (60 seconds ago)
-- 9978fa4 Add detailed edge and entry logging for debugging (5 minutes ago)
-- 3199134 Update column labels for clearer flow visualization (7 minutes ago)
-- 612e0fe Add detailed logging for entry processing and edge creation (9 minutes ago)
-- 79397fd Fix thread ID lookups by registering both notation and currency-suffixed variants (11 minutes ago)
-- bdd219c Fix T-account reconciliation boxes to show all entries with dynamic sizing (12 minutes ago)
-- 40177ab Add comprehensive logging for bridge output thread debugging (15 minutes ago)
-- a141c5c Fix brown wallet bridge output thread tracking for multi-currency conversions (18 minutes ago)
-- 86ebc33 Consolidate red wallet nodes by address instead of per-transaction (31 minutes ago)
+- 2066d7b Add comprehensive diagnostic logging for data validation (0 seconds ago)
+- 8c72136 Update CLAUDE.md with latest commit timestamp (4 minutes ago)
+- f531c98 Fix T-account reconciliation to properly show currency conversions (5 minutes ago)
+- 9978fa4 Add detailed edge and entry logging for debugging (9 minutes ago)
+- 3199134 Update column labels for clearer flow visualization (11 minutes ago)
+- 612e0fe Add detailed logging for entry processing and edge creation (13 minutes ago)
+- 79397fd Fix thread ID lookups by registering both notation and currency-suffixed variants (14 minutes ago)
+- bdd219c Fix T-account reconciliation boxes to show all entries with dynamic sizing (16 minutes ago)
+- 40177ab Add comprehensive logging for bridge output thread debugging (19 minutes ago)
+- a141c5c Fix brown wallet bridge output thread tracking for multi-currency conversions (22 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
