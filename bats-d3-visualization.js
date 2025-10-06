@@ -1566,21 +1566,68 @@ class BATSVisualizationD3 {
                 for (const [nestedCurrency, nestedAccount] of Object.entries(account.nestedAccounts || {})) {
                     const nestedColor = getCurrencyColor(nestedCurrency);
 
-                    // Indented nested account
+                    // Visual separator before nested account
+                    currentY += 5;
+
+                    // Background box for nested account
+                    const nestedBoxHeight = lineHeight * 4 + 20;
+                    group.append('rect')
+                        .attr('x', d.leftX + 30)
+                        .attr('y', currentY - 5)
+                        .attr('width', d.width - 60)
+                        .attr('height', nestedBoxHeight)
+                        .attr('fill', '#f8f9fa')
+                        .attr('stroke', nestedColor)
+                        .attr('stroke-width', 1.5)
+                        .attr('stroke-dasharray', '4,4')
+                        .attr('rx', 4);
+
+                    // Nested account header
                     group.append('text')
-                        .attr('x', d.x + 40)
-                        .attr('y', currentY)
+                        .attr('x', d.x)
+                        .attr('y', currentY + 15)
+                        .attr('text-anchor', 'middle')
                         .attr('font-size', '11px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
-                        .text(`└→ ${nestedCurrency} (from conversion)`);
-                    currentY += lineHeight;
+                        .text(`↳ ${nestedCurrency} T-ACCOUNT (from conversion) ↲`);
+                    currentY += lineHeight + 5;
+
+                    // Vertical divider line for nested T-account
+                    const nestedDividerTop = currentY - 10;
+                    const nestedDividerBottom = currentY + lineHeight * 2 + 5;
+                    group.append('line')
+                        .attr('x1', d.x)
+                        .attr('y1', nestedDividerTop)
+                        .attr('x2', d.x)
+                        .attr('y2', nestedDividerBottom)
+                        .attr('stroke', nestedColor)
+                        .attr('stroke-width', 2);
+
+                    // Left side label
+                    group.append('text')
+                        .attr('x', d.leftX + 40)
+                        .attr('y', currentY - 5)
+                        .attr('font-size', '8px')
+                        .attr('fill', '#7f8c8d')
+                        .text('FROM CONVERSION');
+
+                    // Right side label
+                    group.append('text')
+                        .attr('x', d.x + 50)
+                        .attr('y', currentY - 5)
+                        .attr('font-size', '8px')
+                        .attr('fill', '#7f8c8d')
+                        .text('DISPOSITION');
+
+                    currentY += 8;
 
                     // Left: From conversion
                     group.append('text')
                         .attr('x', d.leftX + 40)
                         .attr('y', currentY)
-                        .attr('font-size', '10px')
+                        .attr('font-size', '11px')
+                        .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
                         .text(`${nestedAccount.fromConversion.toFixed(2)}`);
 
