@@ -2049,8 +2049,8 @@
 
                             <!-- Red Wallet Index -->
                             <div id="wallet-index-red" class="wallet-index-view" style="display: none;">
-                                <h3 style="color: #e74c3c;">Red Wallet Index (Victim Wallets)</h3>
-                                <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 15px;">Wallets belonging to victims that received stolen funds.</p>
+                                <h3 style="color: #e74c3c;">Red Wallet Index (Bad Actor Wallets)</h3>
+                                <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 15px;">First bad actor wallets that directly received stolen funds from victims.</p>
                                 <div id="report-red-index" style="overflow-x: auto;"></div>
                             </div>
 
@@ -17506,7 +17506,7 @@ function generateVisualizationPage() {
 
                 <!-- Red Wallet Index -->
                 <div style="margin: 20px 0;">
-                    <h3 style="color: #e74c3c;">Red Wallet Index (Victim Wallets)</h3>
+                    <h3 style="color: #e74c3c;">Red Wallet Index (Bad Actor Wallets)</h3>
                     <div id="report-red-index" style="overflow-x: auto;"></div>
                 </div>
 
@@ -18226,7 +18226,7 @@ function generatePrintableReport() {
 
 <div class="toc">
     <div class="toc-item"><strong>1.</strong> Universal Wallet Index</div>
-    <div class="toc-item"><strong>2.</strong> Red Wallet Index (Victim Wallets)</div>
+    <div class="toc-item"><strong>2.</strong> Red Wallet Index (Bad Actor Wallets)</div>
     <div class="toc-item"><strong>3.</strong> Purple Wallet Index (Terminal Wallets)</div>
     <div class="toc-item"><strong>4.</strong> Investigation Narrative</div>
     <div class="toc-item"><strong>5.</strong> Technical Audit Trail</div>
@@ -18369,25 +18369,25 @@ function generateReportRedIndex() {
 
     const redWallets = investigation.redWalletIndex || [];
     if (redWallets.length === 0) {
-        container.innerHTML = '<p style="color: #7f8c8d; font-style: italic;">No victim wallets</p>';
+        container.innerHTML = '<p style="color: #7f8c8d; font-style: italic;">No bad actor wallets</p>';
         return;
     }
 
     let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
     html += '<thead><tr style="background: #e74c3c; color: white;">';
     html += '<th style="padding: 10px; text-align: left;">Wallet ID</th>';
-    html += '<th style="padding: 10px; text-align: left;">Victim</th>';
+    html += '<th style="padding: 10px; text-align: left;">V-T Notation</th>';
     html += '<th style="padding: 10px; text-align: left;">Address</th>';
-    html += '<th style="padding: 10px; text-align: left;">Total Received</th>';
+    html += '<th style="padding: 10px; text-align: left;">Amount Received</th>';
     html += '</tr></thead><tbody>';
 
     redWallets.forEach((wallet, index) => {
         const bgColor = index % 2 === 0 ? '#ffebee' : '#ffffff';
         html += `<tr style="background: ${bgColor};">`;
-        html += `<td style="padding: 8px;"><strong>${wallet.walletId}</strong></td>`;
-        html += `<td style="padding: 8px;">${wallet.victimName}</td>`;
-        html += `<td style="padding: 8px; font-family: monospace; font-size: 11px;">${wallet.walletAddress}</td>`;
-        html += `<td style="padding: 8px;">${wallet.totalAmount} ${wallet.currency}</td>`;
+        html += `<td style="padding: 8px;"><strong>${wallet.walletId || 'N/A'}</strong></td>`;
+        html += `<td style="padding: 8px;">${wallet.vtNotation || 'N/A'}</td>`;
+        html += `<td style="padding: 8px; font-family: monospace; font-size: 11px;">${wallet.walletAddress || 'N/A'}</td>`;
+        html += `<td style="padding: 8px;">${(wallet.amount || 0).toLocaleString()} ${wallet.currency || ''}</td>`;
         html += '</tr>';
     });
 
@@ -18399,7 +18399,7 @@ function generateReportPurpleIndex() {
     const container = document.getElementById('report-purple-index');
     if (!container) return;
 
-    const purpleWallets = (investigation.universalWalletIndex || []).filter(w => w.permanentType === 'purple');
+    const purpleWallets = investigation.terminalWalletIndex || [];
     if (purpleWallets.length === 0) {
         container.innerHTML = '<p style="color: #7f8c8d; font-style: italic;">No terminal/exchange wallets</p>';
         return;
@@ -18407,17 +18407,21 @@ function generateReportPurpleIndex() {
 
     let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
     html += '<thead><tr style="background: #9b59b6; color: white;">';
-    html += '<th style="padding: 10px; text-align: left;">Wallet ID</th>';
+    html += '<th style="padding: 10px; text-align: left;">Exchange</th>';
     html += '<th style="padding: 10px; text-align: left;">Address</th>';
-    html += '<th style="padding: 10px; text-align: left;">First Seen</th>';
+    html += '<th style="padding: 10px; text-align: left;">Amount</th>';
+    html += '<th style="padding: 10px; text-align: left;">Notation</th>';
+    html += '<th style="padding: 10px; text-align: left;">Hop</th>';
     html += '</tr></thead><tbody>';
 
     purpleWallets.forEach((wallet, index) => {
         const bgColor = index % 2 === 0 ? '#f3e5ff' : '#ffffff';
         html += `<tr style="background: ${bgColor};">`;
-        html += `<td style="padding: 8px;"><strong>${wallet.permanentId}</strong></td>`;
-        html += `<td style="padding: 8px; font-family: monospace; font-size: 11px;">${wallet.address}</td>`;
-        html += `<td style="padding: 8px;">${wallet.firstSeen || 'N/A'}</td>`;
+        html += `<td style="padding: 8px;"><strong>${wallet.exchangeName || wallet.walletLabel || 'Unknown'}</strong></td>`;
+        html += `<td style="padding: 8px; font-family: monospace; font-size: 11px;">${wallet.walletAddress || wallet.toWallet || 'N/A'}</td>`;
+        html += `<td style="padding: 8px;">${(wallet.amount || 0).toLocaleString()} ${wallet.currency || ''}</td>`;
+        html += `<td style="padding: 8px;">${wallet.notation || 'N/A'}</td>`;
+        html += `<td style="padding: 8px;">H${wallet.hopNumber || 'N/A'}</td>`;
         html += '</tr>';
     });
 
