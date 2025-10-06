@@ -283,8 +283,9 @@ class BATSVisualizationD3 {
                 redWallet.totalAmount += txAmount;
                 redWallet.currencies[txCurrency] = (redWallet.currencies[txCurrency] || 0) + txAmount;
 
-                // Register thread ID for edge connections
+                // Register thread ID for edge connections (both with and without currency suffix)
                 this.nodeMap.set(threadId, redWallet);
+                this.nodeMap.set(`${threadId}_${txCurrency}`, redWallet);  // Also register with currency suffix
 
                 // Update ART
                 victimColumn.artAfter[txCurrency] = (victimColumn.artAfter[txCurrency] || 0) + txAmount;
@@ -422,6 +423,10 @@ class BATSVisualizationD3 {
 
                         // Register this as a thread source for next hop to connect to
                         this.nodeMap.set(entry.notation, brownNode);
+                        // Also register with currency suffix for thread lookups
+                        if (entry.notation && entry.currency) {
+                            this.nodeMap.set(`${entry.notation}_${entry.currency}`, brownNode);
+                        }
 
                         // Edge: Source → Brown wallet (input currency)
                         // Check for multiple source thread IDs (convergence or bridge outputs)
@@ -526,6 +531,10 @@ class BATSVisualizationD3 {
                             // Register this notation as pointing to the brown wallet for next hop
                             if (entry.notation) {
                                 this.nodeMap.set(entry.notation, swapNode);
+                                // Also register with currency suffix for thread lookups
+                                if (outputCurrency) {
+                                    this.nodeMap.set(`${entry.notation}_${outputCurrency}`, swapNode);
+                                }
                             }
 
                             // Update ART with output currency
@@ -552,6 +561,10 @@ class BATSVisualizationD3 {
                             // Also register by notation for next hop lookups
                             if (entry.notation) {
                                 this.nodeMap.set(entry.notation, outputNode);
+                                // Also register with currency suffix for thread lookups
+                                if (outputNode.currency) {
+                                    this.nodeMap.set(`${entry.notation}_${outputNode.currency}`, outputNode);
+                                }
                             }
 
                             // Edge 2: DEX → Output (output currency)
@@ -592,6 +605,10 @@ class BATSVisualizationD3 {
                     // Also register by notation for next hop lookups
                     if (entry.notation) {
                         this.nodeMap.set(entry.notation, node);
+                        // Also register with currency suffix for thread lookups
+                        if (node.currency) {
+                            this.nodeMap.set(`${entry.notation}_${node.currency}`, node);
+                        }
                     }
 
                     // Update ART
