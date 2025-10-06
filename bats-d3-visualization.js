@@ -794,9 +794,32 @@ class BATSVisualizationD3 {
                     }
 
                     // Create destination node
+                    // For bridge output entries, place in the SAME hop as the bridge (swaps don't count as hops)
+                    // Find which hop the source threads are from
+                    const sourceThreadIds = entry.sourceThreadIds ||
+                                          entry.multipleSourceInternalIds ||
+                                          [entry.sourceThreadId].filter(Boolean);
+
+                    // Determine target hop based on source - if sources are bridge outputs, they're in the same hop
+                    let targetHop = hop.hopNumber;
+                    if (sourceThreadIds && sourceThreadIds.length > 0 && sourceThreadIds[0].startsWith('bridge_')) {
+                        // Bridge outputs - find which hop they're from by checking availableThreads
+                        for (const currency in this.investigation.availableThreads || {}) {
+                            for (const threadId in this.investigation.availableThreads[currency]) {
+                                if (sourceThreadIds.includes(threadId)) {
+                                    const thread = this.investigation.availableThreads[currency][threadId];
+                                    targetHop = thread.hopLevel;
+                                    console.log(`  - Deferred entry sources from Hop ${targetHop} (bridge outputs)`);
+                                    break;
+                                }
+                            }
+                            if (targetHop !== hop.hopNumber) break;
+                        }
+                    }
+
                     const colorType = entry.walletType || (entry.isTerminal ? 'purple' : 'black');
                     const walletId = this.generateWalletId(colorType, entry.destinationWallet || `deferred-${entryIndex}`);
-                    const nodeId = `H${hop.hopNumber}-${walletId}`;
+                    const nodeId = `H${targetHop}-${walletId}`;
 
                     const node = {
                         id: nodeId,
@@ -806,13 +829,19 @@ class BATSVisualizationD3 {
                         type: colorType,
                         amount: parseFloat(entry.amount || 0),
                         currency: entry.currency || 'UNKNOWN',
-                        column: hop.hopNumber,
+                        column: targetHop,  // Use target hop, not entry.hopNumber
                         notation: entry.notation,
                         isTerminal: entry.isTerminal || false
                     };
 
                     this.nodes.push(node);
-                    hopColumn.nodes.push(node);
+                    // Add to the correct hop column (might be different from current hop if bridge output)
+                    const targetHopColumn = this.hopColumns.find(col => col.hopNumber === targetHop);
+                    if (targetHopColumn) {
+                        targetHopColumn.nodes.push(node);
+                    } else {
+                        hopColumn.nodes.push(node);  // Fallback to current hop
+                    }
                     this.nodeMap.set(nodeId, node);
 
                     // Create edges from source threads (typically bridge output threads)
