@@ -13,6 +13,8 @@ class BATSVisualizationD3 {
         this.expandedEdgeGroups = new Set(); // Track which edge groups are manually expanded (>5 auto-collapse)
         this.collapsedEdgeGroups = new Set(); // Track which edge groups are manually collapsed (<5)
         this.adjustMode = false; // When true, enables dragging wallets and edges
+        this.undoStack = []; // Stack for undo operations
+        this.redoStack = []; // Stack for redo operations
 
         // Configuration
         this.config = {
@@ -56,6 +58,61 @@ class BATSVisualizationD3 {
             gap: 10px;
         `;
 
+        // Undo button
+        this.undoButton = document.createElement('button');
+        this.undoButton.textContent = '↶ Undo';
+        this.undoButton.style.cssText = `
+            padding: 12px 20px;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            opacity: 0.5;
+        `;
+        this.undoButton.onclick = () => this.undo();
+        this.undoButton.disabled = true;
+
+        // Redo button
+        this.redoButton = document.createElement('button');
+        this.redoButton.textContent = '↷ Redo';
+        this.redoButton.style.cssText = `
+            padding: 12px 20px;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            opacity: 0.5;
+        `;
+        this.redoButton.onclick = () => this.redo();
+        this.redoButton.disabled = true;
+
+        // Reset button
+        this.resetButton = document.createElement('button');
+        this.resetButton.textContent = '⟲ Reset';
+        this.resetButton.style.cssText = `
+            padding: 12px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        `;
+        this.resetButton.onclick = () => this.resetLayout();
+
         // Adjust Graph toggle button
         this.adjustButton = document.createElement('button');
         this.adjustButton.textContent = '🔧 Adjust Graph';
@@ -83,6 +140,9 @@ class BATSVisualizationD3 {
         };
         this.adjustButton.onclick = () => this.toggleAdjustMode();
 
+        controlPanel.appendChild(this.undoButton);
+        controlPanel.appendChild(this.redoButton);
+        controlPanel.appendChild(this.resetButton);
         controlPanel.appendChild(this.adjustButton);
         this.container.appendChild(controlPanel);
 
@@ -1252,9 +1312,9 @@ class BATSVisualizationD3 {
                     y2 += offset;
                 }
 
-                // Use custom control points if they exist
-                if (d.controlPoints && d.controlPoints.length > 0) {
-                    return this.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoints);
+                // Use custom control point if it exists
+                if (d.controlPoint) {
+                    return this.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoint);
                 }
 
                 const mx = (x1 + x2) / 2;
@@ -1284,9 +1344,9 @@ class BATSVisualizationD3 {
                     y2 += offset;
                 }
 
-                // Use custom control points if they exist
-                if (d.controlPoints && d.controlPoints.length > 0) {
-                    return this.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoints);
+                // Use custom control point if it exists
+                if (d.controlPoint) {
+                    return this.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoint);
                 }
 
                 const mx = (x1 + x2) / 2;
@@ -1508,81 +1568,46 @@ class BATSVisualizationD3 {
     }
 
     dragEdge(event, d) {
-        // Get the drag position in SVG coordinates
+        // Simplified edge dragging - single midpoint control with constraints
         const [mouseX, mouseY] = d3.pointer(event, this.svg.node());
 
-        // Initialize controlPoints array if it doesn't exist
-        if (!d.controlPoints) {
-            d.controlPoints = [];
-        }
-
-        // Calculate position along the edge (0 to 1)
         const x1 = d.source.x + this.config.nodeRadius;
+        const y1 = d.source.y;
         const x2 = d.target.x - this.config.nodeRadius;
-        const t = (mouseX - x1) / (x2 - x1);
+        const y2 = d.target.y;
 
-        // Clamp t between 0.1 and 0.9 to keep control points away from endpoints
-        const clampedT = Math.max(0.1, Math.min(0.9, t));
+        // Calculate natural midpoint
+        const naturalMidX = (x1 + x2) / 2;
+        const naturalMidY = (y1 + y2) / 2;
 
-        // Find if there's already a control point near this position
-        const threshold = 0.1; // 10% of edge length
-        let controlPoint = d.controlPoints.find(cp => Math.abs(cp.t - clampedT) < threshold);
+        // Constrain how far the control point can move from natural position
+        // Allow vertical movement up to 200px, horizontal up to 100px
+        const maxVerticalOffset = 200;
+        const maxHorizontalOffset = 100;
 
-        if (!controlPoint) {
-            // Create new control point
-            controlPoint = { t: clampedT, x: mouseX, y: mouseY };
-            d.controlPoints.push(controlPoint);
-            // Sort by t value
-            d.controlPoints.sort((a, b) => a.t - b.t);
-        } else {
-            // Update existing control point
-            controlPoint.x = mouseX;
-            controlPoint.y = mouseY;
-        }
+        const offsetX = Math.max(-maxHorizontalOffset, Math.min(maxHorizontalOffset, mouseX - naturalMidX));
+        const offsetY = Math.max(-maxVerticalOffset, Math.min(maxVerticalOffset, mouseY - naturalMidY));
+
+        // Store the single control point
+        d.controlPoint = {
+            x: naturalMidX + offsetX,
+            y: naturalMidY + offsetY
+        };
 
         // Update edge paths
         this.updateEdgePaths(d);
     }
 
-    buildCustomCurvePath(x1, y1, x2, y2, controlPoints) {
-        // Build a smooth curve through multiple control points
-        if (!controlPoints || controlPoints.length === 0) {
+    buildCustomCurvePath(x1, y1, x2, y2, controlPoint) {
+        // Build curve with single control point (quadratic bezier)
+        if (!controlPoint) {
             // Default simple curve
             const mx = (x1 + x2) / 2;
             return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
         }
 
-        // Start path
-        let path = `M ${x1} ${y1}`;
-
-        if (controlPoints.length === 1) {
-            // Single control point - use quadratic bezier
-            const cp = controlPoints[0];
-            path += ` Q ${cp.x} ${cp.y}, ${x2} ${y2}`;
-        } else {
-            // Multiple control points - create smooth curve through all points
-            // Use catmull-rom or just chain cubic beziers
-            for (let i = 0; i <= controlPoints.length; i++) {
-                const startX = i === 0 ? x1 : controlPoints[i - 1].x;
-                const startY = i === 0 ? y1 : controlPoints[i - 1].y;
-                const endX = i === controlPoints.length ? x2 : controlPoints[i].x;
-                const endY = i === controlPoints.length ? y2 : controlPoints[i].y;
-
-                // Smooth control points
-                const cx1 = startX + (endX - startX) * 0.33;
-                const cy1 = startY + (endY - startY) * 0.33;
-                const cx2 = startX + (endX - startX) * 0.67;
-                const cy2 = startY + (endY - startY) * 0.67;
-
-                if (i === 0) {
-                    path += ` C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`;
-                } else {
-                    path += ` S ${cx2} ${cy2}, ${endX} ${endY}`;
-                }
-            }
-        }
-
-        return path;
+        // Quadratic bezier through single control point
+        return `M ${x1} ${y1} Q ${controlPoint.x} ${controlPoint.y}, ${x2} ${y2}`;
     }
 
     updateEdgePaths(edgeData) {
@@ -1606,8 +1631,8 @@ class BATSVisualizationD3 {
                     y2 += offset;
                 }
 
-                const newPath = edgeData.controlPoints && edgeData.controlPoints.length > 0
-                    ? self.buildCustomCurvePath(x1, y1, x2, y2, edgeData.controlPoints)
+                const newPath = edgeData.controlPoint
+                    ? self.buildCustomCurvePath(x1, y1, x2, y2, edgeData.controlPoint)
                     : `M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`;
 
                 edgeGroup.select('.edge-drag-target').attr('d', newPath);
@@ -1735,10 +1760,10 @@ class BATSVisualizationD3 {
                 y2 += offset;
             }
 
-            // Use custom control points if they exist
+            // Use custom control point if it exists
             let pathData;
-            if (d.controlPoints && d.controlPoints.length > 0) {
-                pathData = self.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoints);
+            if (d.controlPoint) {
+                pathData = self.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoint);
             } else {
                 const mx = (x1 + x2) / 2;
                 pathData = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
@@ -2564,6 +2589,8 @@ Click OK to copy transaction hash to clipboard.
     }
 
     enableDragging() {
+        const self = this;
+
         // Enable node dragging
         this.nodesGroup.selectAll('.node')
             .style('cursor', 'grab')
@@ -2581,6 +2608,8 @@ Click OK to copy transaction hash to clipboard.
                     event.sourceEvent.stopPropagation();
                     d3.select(this).style('cursor', 'grab');
                     d.isDragging = false;
+                    // Save state for undo
+                    self.saveState();
                 }));
 
         // Enable edge dragging
@@ -2601,6 +2630,8 @@ Click OK to copy transaction hash to clipboard.
                         d.wasDragging = true;
                     }
                     d.isDraggingEdge = false;
+                    // Save state for undo
+                    self.saveState();
                 }));
     }
 
@@ -2614,5 +2645,142 @@ Click OK to copy transaction hash to clipboard.
         this.edgesGroup.selectAll('.edge-drag-target')
             .style('cursor', 'pointer')
             .on('.drag', null); // Remove drag handlers
+    }
+
+    saveState() {
+        // Save current state for undo
+        const state = {
+            nodes: this.nodes.map(n => ({
+                id: n.id,
+                x: n.x,
+                y: n.y
+            })),
+            edges: this.edges.map(e => ({
+                id: `${e.source.id}-${e.target.id}-${e.label}`,
+                controlPoint: e.controlPoint ? { ...e.controlPoint } : null
+            }))
+        };
+        this.undoStack.push(state);
+        // Clear redo stack when new action is taken
+        this.redoStack = [];
+        this.updateUndoRedoButtons();
+    }
+
+    undo() {
+        if (this.undoStack.length === 0) return;
+
+        // Save current state to redo stack
+        const currentState = {
+            nodes: this.nodes.map(n => ({
+                id: n.id,
+                x: n.x,
+                y: n.y
+            })),
+            edges: this.edges.map(e => ({
+                id: `${e.source.id}-${e.target.id}-${e.label}`,
+                controlPoint: e.controlPoint ? { ...e.controlPoint } : null
+            }))
+        };
+        this.redoStack.push(currentState);
+
+        // Restore previous state
+        const previousState = this.undoStack.pop();
+        this.restoreState(previousState);
+        this.updateUndoRedoButtons();
+    }
+
+    redo() {
+        if (this.redoStack.length === 0) return;
+
+        // Save current state to undo stack
+        const currentState = {
+            nodes: this.nodes.map(n => ({
+                id: n.id,
+                x: n.x,
+                y: n.y
+            })),
+            edges: this.edges.map(e => ({
+                id: `${e.source.id}-${e.target.id}-${e.label}`,
+                controlPoint: e.controlPoint ? { ...e.controlPoint } : null
+            }))
+        };
+        this.undoStack.push(currentState);
+
+        // Restore redo state
+        const nextState = this.redoStack.pop();
+        this.restoreState(nextState);
+        this.updateUndoRedoButtons();
+    }
+
+    restoreState(state) {
+        // Restore node positions
+        state.nodes.forEach(savedNode => {
+            const node = this.nodes.find(n => n.id === savedNode.id);
+            if (node) {
+                node.x = savedNode.x;
+                node.y = savedNode.y;
+            }
+        });
+
+        // Restore edge control points
+        state.edges.forEach(savedEdge => {
+            const edge = this.edges.find(e =>
+                `${e.source.id}-${e.target.id}-${e.label}` === savedEdge.id
+            );
+            if (edge) {
+                edge.controlPoint = savedEdge.controlPoint;
+            }
+        });
+
+        // Redraw
+        this.nodesGroup.selectAll('.node')
+            .attr('transform', d => `translate(${d.x}, ${d.y})`);
+        this.updateEdges();
+    }
+
+    resetLayout() {
+        // Clear all custom positions and control points
+        this.nodes.forEach(node => {
+            // Reset to original position (recalculate from scratch)
+            delete node.x;
+            delete node.y;
+        });
+
+        this.edges.forEach(edge => {
+            delete edge.controlPoint;
+        });
+
+        // Clear undo/redo stacks
+        this.undoStack = [];
+        this.redoStack = [];
+
+        // Rebuild and re-render
+        this.buildDataStructure();
+        this.render();
+        this.updateUndoRedoButtons();
+    }
+
+    updateUndoRedoButtons() {
+        // Update undo button
+        if (this.undoStack.length > 0) {
+            this.undoButton.disabled = false;
+            this.undoButton.style.opacity = '1';
+            this.undoButton.style.cursor = 'pointer';
+        } else {
+            this.undoButton.disabled = true;
+            this.undoButton.style.opacity = '0.5';
+            this.undoButton.style.cursor = 'not-allowed';
+        }
+
+        // Update redo button
+        if (this.redoStack.length > 0) {
+            this.redoButton.disabled = false;
+            this.redoButton.style.opacity = '1';
+            this.redoButton.style.cursor = 'pointer';
+        } else {
+            this.redoButton.disabled = true;
+            this.redoButton.style.opacity = '0.5';
+            this.redoButton.style.cursor = 'not-allowed';
+        }
     }
 }
