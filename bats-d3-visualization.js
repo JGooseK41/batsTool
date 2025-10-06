@@ -947,16 +947,28 @@ class BATSVisualizationD3 {
     }
 
     generateWalletId(colorType, walletAddress = null) {
-        // If we have a wallet address, check if we've already assigned an ID to it
+        // FIRST: Check universalWalletIndex from investigation data (master source of truth)
+        if (walletAddress && this.investigation?.universalWalletIndex) {
+            const walletEntry = this.investigation.universalWalletIndex.find(w =>
+                w.address === walletAddress
+            );
+            if (walletEntry && walletEntry.permanentId) {
+                console.log(`✓ Using permanent ID ${walletEntry.permanentId} from universal wallet index for ${walletAddress.substring(0, 20)}...`);
+                return walletEntry.permanentId;
+            }
+        }
+
+        // SECOND: If we have a wallet address, check if we've already assigned an ID to it in this session
         if (walletAddress && this.walletAddressMap) {
             const key = walletAddress + ':' + colorType;
             const existingId = this.walletAddressMap.get(key);
             if (existingId) {
-                console.log(`♻️ Reusing wallet ID ${existingId} for ${colorType} wallet ${walletAddress.substring(0, 20)}...`);
+                console.log(`♻️ Reusing session wallet ID ${existingId} for ${colorType} wallet ${walletAddress.substring(0, 20)}...`);
                 return existingId;
             }
         }
 
+        // THIRD: Generate new ID (fallback for addresses not in universal index)
         // Increment counter for this color type
         this.walletCounters[colorType]++;
         const count = this.walletCounters[colorType];
@@ -979,7 +991,7 @@ class BATSVisualizationD3 {
         if (walletAddress && this.walletAddressMap) {
             const key = walletAddress + ':' + colorType;
             this.walletAddressMap.set(key, walletId);
-            console.log(`🆕 Created new wallet ID ${walletId} for ${colorType} wallet ${walletAddress.substring(0, 20)}...`);
+            console.log(`🆕 Created new wallet ID ${walletId} for ${colorType} wallet ${walletAddress.substring(0, 20)}... (not in universal index)`);
         }
 
         return walletId;

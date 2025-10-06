@@ -3,33 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 08:09)
+## Latest Commit (Auto-updated: 2025-10-06 08:20)
 
-**Commit:** 08bf82a86092d87dc56f307904a80728eba27079
+**Commit:** 7822eb6204f3d5986bf2408699f3203bc6b73bc8
 **Author:** Your Name
-**Message:** Implement nested T-accounts with clear balance lines
+**Message:** Add visual separation to nested T-accounts for clarity
 
-Structure:
-- Main T-account for each original currency (e.g., HYPE)
-  - LEFT: Beginning balance (1290 HYPE)
-  - RIGHT: Disposition (Terminated, Still Tracing, Converted, Write-offs)
-  - BALANCE LINE: 1290 = 1290 ✓
+- Dashed border box around nested accounts (light gray background)
+- Clear header: "↳ USDC T-ACCOUNT (from conversion) ↲"
+- Vertical divider line in center (matches currency color)
+- Left/right labels: "FROM CONVERSION" and "DISPOSITION"
+- Increased spacing between main and nested accounts
+- Larger font for nested account balances
 
-- Nested T-account for converted currencies (e.g., USDC from HYPE)
-  - Indented under parent currency
-  - LEFT: From conversion (44179 USDC)
-  - RIGHT: Disposition (Terminated or Still Tracing)
-  - BALANCE LINE: 44179 = 44179 ✓
-
-Key features:
-- Color-coded currency headers
-- Bold balance lines at bottom of each account
-- Green ✓ if balanced, red ✗ if not
-- Clear visual hierarchy showing conversion flow
-- Each account balances independently
-
-Example: 1290 HYPE → 44179 USDC (terminated)
-Shows both: HYPE converted AND USDC terminated in same hop
+Makes it immediately clear that nested account is a separate T-account
+showing what happened to the converted currency.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -37,23 +25,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                |  46 +++---
- bats-d3-visualization.js | 360 ++++++++++++++++++++++++++++-------------------
- 2 files changed, 242 insertions(+), 164 deletions(-)
+ CLAUDE.md                | 63 +++++++++++++++++++++++++++++-------------------
+ bats-d3-visualization.js | 59 ++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 91 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 08bf82a Implement nested T-accounts with clear balance lines (0 seconds ago)
-- 9ecb32d Track both conversion and disposition of swapped assets in same hop (10 minutes ago)
-- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (12 minutes ago)
-- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (16 minutes ago)
-- 3c991d0 Revert edge routing back to smooth curves (26 minutes ago)
-- 56b4427 Change edge routing to use sharp angles instead of curves (49 minutes ago)
-- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (50 minutes ago)
-- d7a93e4 Fix edge group expansion - modal buttons now work correctly (54 minutes ago)
-- fc14ec5 Fix arrowhead positioning - edges now terminate at arrow base (56 minutes ago)
-- 966e9bb Improve edge visual clarity with sharper arrows and better node connections (62 minutes ago)
+- 7822eb6 Add visual separation to nested T-accounts for clarity (0 seconds ago)
+- 08bf82a Implement nested T-accounts with clear balance lines (12 minutes ago)
+- 9ecb32d Track both conversion and disposition of swapped assets in same hop (22 minutes ago)
+- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (24 minutes ago)
+- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (28 minutes ago)
+- 3c991d0 Revert edge routing back to smooth curves (37 minutes ago)
+- 56b4427 Change edge routing to use sharp angles instead of curves (60 minutes ago)
+- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (62 minutes ago)
+- d7a93e4 Fix edge group expansion - modal buttons now work correctly (66 minutes ago)
+- fc14ec5 Fix arrowhead positioning - edges now terminate at arrow base (67 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
