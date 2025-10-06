@@ -319,7 +319,7 @@ class BATSVisualizationD3 {
                     console.log(`  - Skipping entry ${entryIndex} (belongs to hop ${entry.hopNumber}, not ${hop.hopNumber})`);
                     return;
                 }
-                console.log(`  - Processing entry ${entryIndex}: ${entry.notation || entry.id}, type: ${entry.entryType}, walletType: ${entry.walletType}`);
+                console.log(`  - Processing entry ${entryIndex}: ${entry.notation || entry.id}, type: ${entry.entryType}, walletType: ${entry.walletType}, toWalletType: ${entry.toWalletType}, isBridge: ${entry.isBridge}`);
 
                 // Normalize entry data - BATS app uses different field names
                 if (!entry.destinationWallet && entry.toWallet) {
@@ -656,13 +656,10 @@ class BATSVisualizationD3 {
             edges: this.edges.length,
             columns: this.hopColumns.length
         });
-        console.log('All edges:', this.edges.map(e => ({
-            source: e.source,
-            target: e.target,
-            label: e.label,
-            amount: e.amount,
-            currency: e.currency
-        })));
+        console.log('All edges created:');
+        this.edges.forEach((e, i) => {
+            console.log(`  ${i + 1}. ${e.source} → ${e.target} | ${e.label} | ${e.amount} ${e.currency}`);
+        });
     }
 
     findSourceNode(threadId, currentHop) {
