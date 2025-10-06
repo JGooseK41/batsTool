@@ -1787,18 +1787,32 @@ class BATSVisualizationD3 {
         edgeEnter.append('path')
             .attr('class', 'edge-visible-path')
             .attr('d', d => {
-                let x1 = d.source.x + this.config.nodeRadius;
-                let y1 = d.source.y;
-                let x2 = d.target.x - this.config.nodeRadius;
-                let y2 = d.target.y;
+                // Calculate proper node edge points with padding for arrow
+                const dx = d.target.x - d.source.x;
+                const dy = d.target.y - d.source.y;
+                const angle = Math.atan2(dy, dx);
+
+                // Start point: edge of source node
+                let x1 = d.source.x + Math.cos(angle) * this.config.nodeRadius;
+                let y1 = d.source.y + Math.sin(angle) * this.config.nodeRadius;
+
+                // End point: edge of target node (with extra padding for arrow)
+                const arrowPadding = d.isCollapsed ? 16 : 14;
+                let x2 = d.target.x - Math.cos(angle) * (this.config.nodeRadius + arrowPadding);
+                let y2 = d.target.y - Math.sin(angle) * (this.config.nodeRadius + arrowPadding);
 
                 // Apply offset for expanded multi-thread edges
                 if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
                     const spacing = 15;
                     const totalHeight = (d.threadCount - 1) * spacing;
                     const offset = -totalHeight / 2 + d.threadIndex * spacing;
-                    y1 += offset;
-                    y2 += offset;
+
+                    // Apply offset perpendicular to edge direction
+                    const perpAngle = angle + Math.PI / 2;
+                    x1 += Math.cos(perpAngle) * offset;
+                    y1 += Math.sin(perpAngle) * offset;
+                    x2 += Math.cos(perpAngle) * offset;
+                    y2 += Math.sin(perpAngle) * offset;
                 }
 
                 // Use custom control point if it exists
@@ -1806,28 +1820,46 @@ class BATSVisualizationD3 {
                     return this.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoint);
                 }
 
+                // Create smooth bezier curve
                 const mx = (x1 + x2) / 2;
                 return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
             })
             .attr('fill', 'none')
             .attr('stroke', d => d.isCollapsed ? '#34495e' : '#95a5a6')
-            .attr('stroke-width', d => d.isCollapsed ? Math.min(8, 2 + d.threadCount) : 2)
-            .attr('marker-end', 'url(#arrowhead)')
-            .attr('opacity', d => d.isCollapsed ? 0.8 : 1)
+            .attr('stroke-width', d => d.isCollapsed ? Math.min(10, 3 + d.threadCount * 0.5) : 2.5)
+            .attr('marker-end', d => d.isCollapsed ? 'url(#arrowhead-thick)' : 'url(#arrowhead)')
+            .attr('opacity', d => d.isCollapsed ? 0.9 : 1)
+            .attr('stroke-linecap', 'round')
             .style('pointer-events', 'none');
 
-        // Add arrow marker definition
-        this.svg.append('defs')
-            .append('marker')
-            .attr('id', 'arrowhead')
-            .attr('markerWidth', 10)
-            .attr('markerHeight', 10)
-            .attr('refX', 9)
-            .attr('refY', 3)
-            .attr('orient', 'auto')
-            .append('polygon')
-            .attr('points', '0 0, 10 3, 0 6')
-            .attr('fill', '#95a5a6');
+        // Add arrow marker definitions (only once)
+        if (!this.svg.select('defs').node()) {
+            const defs = this.svg.append('defs');
+
+            // Standard arrowhead (for single edges and expanded groups)
+            defs.append('marker')
+                .attr('id', 'arrowhead')
+                .attr('markerWidth', 12)
+                .attr('markerHeight', 12)
+                .attr('refX', 11)
+                .attr('refY', 6)
+                .attr('orient', 'auto')
+                .append('polygon')
+                .attr('points', '0 0, 12 6, 0 12')
+                .attr('fill', '#95a5a6');
+
+            // Thicker arrowhead for collapsed groups
+            defs.append('marker')
+                .attr('id', 'arrowhead-thick')
+                .attr('markerWidth', 14)
+                .attr('markerHeight', 14)
+                .attr('refX', 13)
+                .attr('refY', 7)
+                .attr('orient', 'auto')
+                .append('polygon')
+                .attr('points', '0 0, 14 7, 0 14')
+                .attr('fill', '#34495e');
+        }
 
         // Add edge label with notation (or thread count for collapsed) - with text shadow for readability
         edgeEnter.append('text')

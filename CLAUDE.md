@@ -3,17 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 06:59)
+## Latest Commit (Auto-updated: 2025-10-06 07:00)
 
-**Commit:** f1118aebcad306704421f82b006d84513bc69fec
+**Commit:** d92e2d6d7d57444be1dc778a01894d9ab77fb838
 **Author:** Your Name
-**Message:** Fix zoom/pan loss after clicking wallet and closing modal
+**Message:** Rename 'HOP CREATION' to 'HOP CONSTRUCTION'
 
-- Re-enable zoom behavior after modal closes
-- Prevents loss of pan/zoom functionality
-- Both close button and background click now properly restore zoom
-- Added defaultPrevented check to prevent click during drag
-- Ensures smooth interaction between modals and graph navigation
+- Updated header text in hop space columns
+- Changed from '→ HOP X CREATION →' to '→ HOP X CONSTRUCTION →'
+- More accurate terminology for the construction phase
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -21,23 +19,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 40 ++++++++++++++++++++--------------------
- bats-d3-visualization.js | 20 +++++++++++++++++---
- 2 files changed, 37 insertions(+), 23 deletions(-)
+ CLAUDE.md                | 42 +++++++++++++++++++++---------------------
+ bats-d3-visualization.js |  4 ++--
+ 2 files changed, 23 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f1118ae Fix zoom/pan loss after clicking wallet and closing modal (0 seconds ago)
-- 8508344 Preserve manual node positions when switching between views (73 minutes ago)
+- d92e2d6 Rename 'HOP CREATION' to 'HOP CONSTRUCTION' (0 seconds ago)
+- f1118ae Fix zoom/pan loss after clicking wallet and closing modal (35 seconds ago)
+- 8508344 Preserve manual node positions when switching between views (74 minutes ago)
 - 186f9a7 Fix switching from Sankey back to Hop Columns view (76 minutes ago)
-- 7a05754 Add victim transactions list to red wallet info modal (78 minutes ago)
-- 5a79270 Redesign column headers for uniform blue/gold styling (80 minutes ago)
-- 9bcf4d8 Fix wallet info panel to show correct currencies for conversions (87 minutes ago)
+- 7a05754 Add victim transactions list to red wallet info modal (79 minutes ago)
+- 5a79270 Redesign column headers for uniform blue/gold styling (81 minutes ago)
+- 9bcf4d8 Fix wallet info panel to show correct currencies for conversions (88 minutes ago)
 - fe23ab8 Add currency color coding and verification to T-account reconciliation (2 hours ago)
 - 1f1ebb1 Improve T-account reconciliation with paired rows and totals (2 hours ago)
 - f5b7506 Register red wallet nodes in nodeMap for edge rendering (2 hours ago)
-- 6d8d517 Remove brown output node creation for bridge conversions (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
