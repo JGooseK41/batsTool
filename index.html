@@ -17643,10 +17643,14 @@ function proceedDirectlyToReports() {
 }
 
 function generateReportContent() {
-    // Update case info
-    document.getElementById('report-case-id').textContent = investigation.caseId || 'N/A';
-    document.getElementById('report-investigator').textContent = investigation.investigator || 'N/A';
-    document.getElementById('report-date').textContent = investigation.dateOpened || new Date().toISOString().split('T')[0];
+    // Update case info with safety checks
+    const caseIdEl = document.getElementById('report-case-id');
+    const investigatorEl = document.getElementById('report-investigator');
+    const dateEl = document.getElementById('report-date');
+
+    if (caseIdEl) caseIdEl.textContent = investigation.caseId || 'N/A';
+    if (investigatorEl) investigatorEl.textContent = investigation.investigator || 'N/A';
+    if (dateEl) dateEl.textContent = investigation.dateOpened || new Date().toISOString().split('T')[0];
 
     // Generate wallet indexes
     generateReportUniversalIndex();

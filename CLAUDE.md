@@ -3,30 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 08:40)
+## Latest Commit (Auto-updated: 2025-10-06 08:41)
 
-**Commit:** 87809084c30050a6f50a5566fa722407e7e007c5
+**Commit:** 2730194499887bfd2eb31ea0b75d3d5ed994cb1e
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Fix syntax error - remove orphaned code block
+
+- Remove duplicate generateReports() call outside function scope
+- Remove orphaned addReportGuidanceBanner() call
+- Fix unexpected '}' syntax error at line 17761
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 46 ++++++++++++++++++++++------------------------
- 1 file changed, 22 insertions(+), 24 deletions(-)
+ CLAUDE.md  | 40 ++++++++++++++--------------------------
+ index.html |  9 ---------
+ 2 files changed, 14 insertions(+), 35 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8780908 Update CLAUDE.md with latest commit info (1 second ago)
-- ced4655 Add source currency reference to nested T-accounts (52 seconds ago)
-- c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (4 minutes ago)
-- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (9 minutes ago)
-- bc167ab Use universal wallet index as master source of truth for wallet IDs (16 minutes ago)
-- 7822eb6 Add visual separation to nested T-accounts for clarity (20 minutes ago)
-- 08bf82a Implement nested T-accounts with clear balance lines (31 minutes ago)
-- 9ecb32d Track both conversion and disposition of swapped assets in same hop (41 minutes ago)
-- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (44 minutes ago)
-- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (48 minutes ago)
+- 2730194 Fix syntax error - remove orphaned code block (0 seconds ago)
+- 8780908 Update CLAUDE.md with latest commit info (64 seconds ago)
+- ced4655 Add source currency reference to nested T-accounts (2 minutes ago)
+- c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (5 minutes ago)
+- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (10 minutes ago)
+- bc167ab Use universal wallet index as master source of truth for wallet IDs (17 minutes ago)
+- 7822eb6 Add visual separation to nested T-accounts for clarity (21 minutes ago)
+- 08bf82a Implement nested T-accounts with clear balance lines (32 minutes ago)
+- 9ecb32d Track both conversion and disposition of swapped assets in same hop (43 minutes ago)
+- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (45 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
