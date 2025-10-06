@@ -3,15 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-05 21:56)
+## Latest Commit (Auto-updated: 2025-10-06 05:03)
 
-**Commit:** 63784253ae62b52c7ebf38dec6449148c6146223
+**Commit:** 6d8d5172d328a989970de25cd31c60f4156593db
 **Author:** Your Name
-**Message:** Fix duplicate sourceThreadIds declaration causing syntax error
+**Message:** Remove brown output node creation for bridge conversions
 
-- Removed second declaration at line 848
-- Reuse sourceThreadIds variable from line 799
-- Fixes 'Identifier sourceThreadIds has already been declared' error
+- Brown-to-brown bridge outputs (HYPE→USDC) no longer create separate nodes
+- Output threads tracked internally on single brown wallet via outputThreads
+- Register brown wallet by internal bridge IDs for deferred entry lookup
+- Fixes issue where 5 brown wallets appeared in Hop 1 completion
+- KuCoin terminal now receives USDC directly from brown wallet in Hop 1
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -19,22 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- bats-d3-visualization.js | 6 +-----
- 1 file changed, 1 insertion(+), 5 deletions(-)
+ CLAUDE.md                | 38 ++++++++++++++++++--------------------
+ bats-d3-visualization.js | 44 ++++++--------------------------------------
+ 2 files changed, 24 insertions(+), 58 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6378425 Fix duplicate sourceThreadIds declaration causing syntax error (0 seconds ago)
-- 4745104 Update CLAUDE.md (2 minutes ago)
-- c8b2961 Place deferred bridge output entries in source hop, not target hopNumber (3 minutes ago)
-- 8f2abe3 Update CLAUDE.md (9 minutes ago)
-- ca5056d Create bridge output nodes in hop COMPLETION column instead of just tracking on swap node (10 minutes ago)
-- f9c3f5c Update CLAUDE.md (15 minutes ago)
-- 099b263 Add bridge internal ID lookup to EXTERNAL swap brown-to-brown path (15 minutes ago)
-- 40ffd81 Add bridge condition check logging to diagnose lookup skip (17 minutes ago)
-- b0679f0 Update CLAUDE.md (18 minutes ago)
-- 534ba1d Add detailed logging for bridge internal ID lookup (18 minutes ago)
+- 6d8d517 Remove brown output node creation for bridge conversions (0 seconds ago)
+- 6378425 Fix duplicate sourceThreadIds declaration causing syntax error (7 hours ago)
+- 4745104 Update CLAUDE.md (7 hours ago)
+- c8b2961 Place deferred bridge output entries in source hop, not target hopNumber (7 hours ago)
+- 8f2abe3 Update CLAUDE.md (7 hours ago)
+- ca5056d Create bridge output nodes in hop COMPLETION column instead of just tracking on swap node (7 hours ago)
+- f9c3f5c Update CLAUDE.md (7 hours ago)
+- 099b263 Add bridge internal ID lookup to EXTERNAL swap brown-to-brown path (7 hours ago)
+- 40ffd81 Add bridge condition check logging to diagnose lookup skip (7 hours ago)
+- b0679f0 Update CLAUDE.md (7 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

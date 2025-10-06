@@ -287,6 +287,9 @@ class BATSVisualizationD3 {
                     redWalletMap.set(walletAddress, redWallet);
                     victimColumn.nodes.push(redWallet);
                     this.nodes.push(redWallet);
+
+                    // Register red wallet node by its ID for edge lookups
+                    this.nodeMap.set(redWallet.id, redWallet);
                 }
 
                 // Add this transaction as a thread
