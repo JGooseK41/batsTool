@@ -235,31 +235,59 @@ class BATSVisualizationD3 {
             columnIndex: 0
         };
 
-        // Add victim nodes
+        // Add victim nodes - consolidate by wallet address
+        const redWalletMap = new Map(); // Track red wallets by address
+
         this.investigation.victims.forEach((victim, vIndex) => {
             victim.transactions.forEach((tx, tIndex) => {
-                const nodeId = `V${victim.id}-T${tx.id}`;
-                const colorType = 'red';
-                const node = {
-                    id: nodeId,
-                    label: `V${victim.id}-T${tx.id}`,
-                    wallet: tx.receivingWallet,
-                    walletLabel: tx.walletLabel || this.shortenAddress(tx.receivingWallet),
-                    walletId: this.generateWalletId(colorType, tx.receivingWallet),
-                    type: colorType,
-                    amount: parseFloat(tx.amount),
-                    currency: tx.currency === 'CUSTOM' ? tx.customCurrency : tx.currency,
-                    column: 0,
-                    isVictim: true
-                };
+                const walletAddress = tx.receivingWallet;
+                const threadId = `V${victim.id}-T${tx.id}`;
 
-                victimColumn.nodes.push(node);
-                this.nodes.push(node);
-                this.nodeMap.set(nodeId, node);
+                // Get or create red wallet node for this address
+                let redWallet = redWalletMap.get(walletAddress);
+
+                if (!redWallet) {
+                    const colorType = 'red';
+                    redWallet = {
+                        id: `RED-${walletAddress}`,
+                        wallet: walletAddress,
+                        walletLabel: tx.walletLabel || this.shortenAddress(walletAddress),
+                        walletId: this.generateWalletId(colorType, walletAddress),
+                        type: colorType,
+                        column: 0,
+                        isVictim: true,
+                        threads: [], // Track all threads (transactions) going through this wallet
+                        totalAmount: 0,
+                        currencies: {}
+                    };
+
+                    redWalletMap.set(walletAddress, redWallet);
+                    victimColumn.nodes.push(redWallet);
+                    this.nodes.push(redWallet);
+                }
+
+                // Add this transaction as a thread
+                const txCurrency = tx.currency === 'CUSTOM' ? tx.customCurrency : tx.currency;
+                const txAmount = parseFloat(tx.amount);
+
+                redWallet.threads.push({
+                    id: threadId,
+                    label: threadId,
+                    amount: txAmount,
+                    currency: txCurrency,
+                    victim: victim,
+                    transaction: tx
+                });
+
+                // Update wallet totals
+                redWallet.totalAmount += txAmount;
+                redWallet.currencies[txCurrency] = (redWallet.currencies[txCurrency] || 0) + txAmount;
+
+                // Register thread ID for edge connections
+                this.nodeMap.set(threadId, redWallet);
 
                 // Update ART
-                const currency = node.currency;
-                victimColumn.artAfter[currency] = (victimColumn.artAfter[currency] || 0) + node.amount;
+                victimColumn.artAfter[txCurrency] = (victimColumn.artAfter[txCurrency] || 0) + txAmount;
             });
         });
 
@@ -1483,14 +1511,20 @@ class BATSVisualizationD3 {
             .style('pointer-events', 'none')
             .text(d => d.walletId);
 
-        // Node label (V-T-H notation)
+        // Node label (V-T-H notation or thread count for red wallets)
         nodeEnter.append('text')
             .attr('y', -this.config.nodeRadius - 12)
             .attr('text-anchor', 'middle')
             .attr('font-size', '11px')
             .attr('font-weight', '600')
             .attr('fill', '#2c3e50')
-            .text(d => d.label);
+            .text(d => {
+                // For red wallets with multiple threads, show thread count
+                if (d.type === 'red' && d.threads && d.threads.length > 0) {
+                    return `${d.threads.length} thread${d.threads.length > 1 ? 's' : ''}`;
+                }
+                return d.label || '';
+            });
 
         // Note indicator (small icon if note exists)
         nodeEnter.append('text')
@@ -1509,14 +1543,29 @@ class BATSVisualizationD3 {
             .attr('fill', '#7f8c8d')
             .text(d => d.walletLabel);
 
-        // Amount
+        // Amount - show totals for red wallets with multiple currencies
         nodeEnter.append('text')
             .attr('y', this.config.nodeRadius + 38)
             .attr('text-anchor', 'middle')
             .attr('font-size', '11px')
             .attr('font-weight', 'bold')
             .attr('fill', '#27ae60')
-            .text(d => `${d.amount.toFixed(2)} ${d.currency}`);
+            .text(d => {
+                // For red wallets with multiple threads/currencies, show all
+                if (d.type === 'red' && d.currencies) {
+                    const currencyEntries = Object.entries(d.currencies);
+                    if (currencyEntries.length === 1) {
+                        const [currency, amount] = currencyEntries[0];
+                        return `${amount.toFixed(2)} ${currency}`;
+                    } else if (currencyEntries.length > 1) {
+                        return currencyEntries.map(([currency, amount]) =>
+                            `${amount.toFixed(2)} ${currency}`
+                        ).join(', ');
+                    }
+                }
+                // Default for other wallet types
+                return `${(d.amount || 0).toFixed(2)} ${d.currency || ''}`;
+            });
     }
 
     dragging(event, d) {
