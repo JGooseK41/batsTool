@@ -17751,15 +17751,6 @@ function generateReportPurpleIndex() {
     container.innerHTML = html;
 }
 
-    // Generate the reports
-    generateReports();
-
-    // Add guidance banner
-    setTimeout(() => {
-        addReportGuidanceBanner();
-    }, 500);
-}
-
 // Generate flow visualization if not already defined
 function generateFlowVisualization() {
     if (typeof initializeGraphVisualization === 'function') {

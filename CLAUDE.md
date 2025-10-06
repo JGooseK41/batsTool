@@ -3,42 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 08:39)
+## Latest Commit (Auto-updated: 2025-10-06 08:40)
 
-**Commit:** ced4655689ea117be7c6ed0a27d90673c3fdb1c7
+**Commit:** 87809084c30050a6f50a5566fa722407e7e007c5
 **Author:** Your Name
-**Message:** Add source currency reference to nested T-accounts
-
-- Track sourceAmount and sourceCurrency in nested account data
-- Display source reference in parentheses on left side
-  (e.g., "44,000 USDC (989 HYPE)")
-- Add smaller text below showing source currency conversion
-- Adjust box height calculation to accommodate source reference
-- Shows exact traceability from original asset to converted asset
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md                | 60 +++++++++++++++++++-----------------------------
- bats-d3-visualization.js | 24 ++++++++++++++++---
- 2 files changed, 45 insertions(+), 39 deletions(-)
+ CLAUDE.md | 46 ++++++++++++++++++++++------------------------
+ 1 file changed, 22 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ced4655 Add source currency reference to nested T-accounts (0 seconds ago)
-- c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (3 minutes ago)
-- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (8 minutes ago)
-- bc167ab Use universal wallet index as master source of truth for wallet IDs (15 minutes ago)
-- 7822eb6 Add visual separation to nested T-accounts for clarity (19 minutes ago)
-- 08bf82a Implement nested T-accounts with clear balance lines (30 minutes ago)
+- 8780908 Update CLAUDE.md with latest commit info (1 second ago)
+- ced4655 Add source currency reference to nested T-accounts (52 seconds ago)
+- c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (4 minutes ago)
+- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (9 minutes ago)
+- bc167ab Use universal wallet index as master source of truth for wallet IDs (16 minutes ago)
+- 7822eb6 Add visual separation to nested T-accounts for clarity (20 minutes ago)
+- 08bf82a Implement nested T-accounts with clear balance lines (31 minutes ago)
 - 9ecb32d Track both conversion and disposition of swapped assets in same hop (41 minutes ago)
-- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (43 minutes ago)
-- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (47 minutes ago)
-- 3c991d0 Revert edge routing back to smooth curves (56 minutes ago)
+- f0a04df Fix T-account balance - add CONVERTED section to track swapped currencies (44 minutes ago)
+- 0885f15 Redesign hop reconciliation using forensic accounting T-account principles (48 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
