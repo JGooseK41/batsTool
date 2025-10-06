@@ -3,16 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 07:15)
+## Latest Commit (Auto-updated: 2025-10-06 07:19)
 
-**Commit:** d7a93e4bcd3a8c9ee631352561e2a4a6cd327dbb
+**Commit:** 3b6db8e28869bb6dc188335ae4f15a001bbac804
 **Author:** Your Name
-**Message:** Fix edge group expansion - modal buttons now work correctly
+**Message:** Fix arrowhead connection - edge paths now terminate at arrow center
 
-- Fixed "Keep Collapsed" button using proper querySelector and onclick
-- Changed from broken inline onclick to proper event handler
-- Both "Keep Collapsed" and "Expand Group" buttons now function
-- Modal closes properly on both button clicks
+- Changed refX from 8/10 to 0 for both arrowheads
+- Edge paths now end at back center of arrow triangle
+- Added markerUnits='userSpaceOnUse' for consistent sizing
+- Fixes disconnected triangle issue when nodes are at tight angles
+- Both standard and thick arrowheads connect properly
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -20,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 41 ++++++++++++++++++++---------------------
- bats-d3-visualization.js |  9 +++++++--
- 2 files changed, 27 insertions(+), 23 deletions(-)
+ CLAUDE.md                | 36 +++++++++++++++++-------------------
+ bats-d3-visualization.js |  6 ++++--
+ 2 files changed, 21 insertions(+), 21 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d7a93e4 Fix edge group expansion - modal buttons now work correctly (0 seconds ago)
-- fc14ec5 Fix arrowhead positioning - edges now terminate at arrow base (2 minutes ago)
-- 966e9bb Improve edge visual clarity with sharper arrows and better node connections (8 minutes ago)
-- d92e2d6 Rename 'HOP CREATION' to 'HOP CONSTRUCTION' (15 minutes ago)
-- f1118ae Fix zoom/pan loss after clicking wallet and closing modal (15 minutes ago)
-- 8508344 Preserve manual node positions when switching between views (89 minutes ago)
+- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (0 seconds ago)
+- d7a93e4 Fix edge group expansion - modal buttons now work correctly (4 minutes ago)
+- fc14ec5 Fix arrowhead positioning - edges now terminate at arrow base (5 minutes ago)
+- 966e9bb Improve edge visual clarity with sharper arrows and better node connections (12 minutes ago)
+- d92e2d6 Rename 'HOP CREATION' to 'HOP CONSTRUCTION' (19 minutes ago)
+- f1118ae Fix zoom/pan loss after clicking wallet and closing modal (19 minutes ago)
+- 8508344 Preserve manual node positions when switching between views (2 hours ago)
 - 186f9a7 Fix switching from Sankey back to Hop Columns view (2 hours ago)
 - 7a05754 Add victim transactions list to red wallet info modal (2 hours ago)
 - 5a79270 Redesign column headers for uniform blue/gold styling (2 hours ago)
-- 9bcf4d8 Fix wallet info panel to show correct currencies for conversions (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
