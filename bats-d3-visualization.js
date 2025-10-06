@@ -11,6 +11,7 @@ class BATSVisualizationD3 {
         this.layoutMode = 'hop-columns'; // 'hop-columns' or 'sankey'
         this.orientation = 'horizontal'; // 'horizontal' or 'vertical'
         this.expandedEdgeGroups = new Set(); // Track which edge groups are manually expanded (>5 auto-collapse)
+        this.collapsedEdgeGroups = new Set(); // Track which edge groups are manually collapsed (<5)
         this.adjustMode = false; // When true, enables dragging wallets and edges
 
         // Configuration
@@ -1155,9 +1156,18 @@ class BATSVisualizationD3 {
                 // Multiple edges - check if should be collapsed
                 const groupKey = key;
                 // Auto-collapse if >5 threads, unless user explicitly expanded
-                // Or if <5 threads, collapse only if user explicitly collapsed (via right-click future feature)
+                // For <5 threads, collapse only if user explicitly collapsed
                 const isExpanded = this.expandedEdgeGroups?.has(groupKey);
-                const isCollapsed = edges.length > 5 ? !isExpanded : false; // >5: collapsed by default, <5: expanded by default
+                const isManuallyCollapsed = this.collapsedEdgeGroups?.has(groupKey);
+
+                let isCollapsed;
+                if (edges.length > 5) {
+                    // >5 threads: collapsed by default, unless user expanded
+                    isCollapsed = !isExpanded;
+                } else {
+                    // <=5 threads: expanded by default, unless user collapsed
+                    isCollapsed = isManuallyCollapsed;
+                }
 
                 if (isCollapsed) {
                     // Collapsed group - show as single thick edge
@@ -1302,6 +1312,26 @@ class BATSVisualizationD3 {
             .attr('points', '0 0, 10 3, 0 6')
             .attr('fill', '#95a5a6');
 
+        // Add background rect for edge notation label
+        edgeEnter.append('rect')
+            .attr('class', 'edge-label-bg')
+            .attr('x', d => (d.source.x + d.target.x) / 2 - 40)
+            .attr('y', d => {
+                const baseY = (d.source.y + d.target.y) / 2 - 32;
+                if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
+                    const spacing = 15;
+                    const totalHeight = (d.threadCount - 1) * spacing;
+                    const offset = -totalHeight / 2 + d.threadIndex * spacing;
+                    return baseY + offset;
+                }
+                return baseY;
+            })
+            .attr('width', 80)
+            .attr('height', 14)
+            .attr('fill', 'white')
+            .attr('opacity', 0.9)
+            .attr('rx', 3);
+
         // Add edge label with notation (or thread count for collapsed)
         edgeEnter.append('text')
             .attr('x', d => (d.source.x + d.target.x) / 2)
@@ -1319,7 +1349,28 @@ class BATSVisualizationD3 {
             .attr('font-size', '11px')
             .attr('fill', '#2c3e50')
             .attr('font-weight', 'bold')
+            .style('pointer-events', 'none')
             .text(d => d.isCollapsed ? `${d.threadCount} threads` : d.label);
+
+        // Add background rect for amount label
+        edgeEnter.append('rect')
+            .attr('class', 'edge-amount-bg')
+            .attr('x', d => (d.source.x + d.target.x) / 2 - 45)
+            .attr('y', d => {
+                const baseY = (d.source.y + d.target.y) / 2 - 14;
+                if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
+                    const spacing = 15;
+                    const totalHeight = (d.threadCount - 1) * spacing;
+                    const offset = -totalHeight / 2 + d.threadIndex * spacing;
+                    return baseY + offset;
+                }
+                return baseY;
+            })
+            .attr('width', 90)
+            .attr('height', 13)
+            .attr('fill', 'white')
+            .attr('opacity', 0.9)
+            .attr('rx', 3);
 
         // Add edge amount + currency label
         edgeEnter.append('text')
@@ -1338,6 +1389,7 @@ class BATSVisualizationD3 {
             .attr('font-size', '10px')
             .attr('fill', '#27ae60')
             .attr('font-weight', '600')
+            .style('pointer-events', 'none')
             .text(d => `${d.amount.toFixed(2)} ${d.currency}`);
 
         // Add note indicator for edges
@@ -1568,11 +1620,17 @@ class BATSVisualizationD3 {
         const groupKey = edgeGroup.groupKey;
 
         if (edgeGroup.isCollapsed) {
-            // Show modal with thread details before expanding
+            // Expanding - show modal with thread details
             this.showEdgeGroupModal(edgeGroup);
         } else {
-            // Collapse the group - remove from expanded set (will auto-collapse if >5)
-            this.expandedEdgeGroups.delete(groupKey);
+            // Collapsing
+            if (edgeGroup.threadCount > 5) {
+                // For >5 threads: remove from expanded set (will auto-collapse)
+                this.expandedEdgeGroups.delete(groupKey);
+            } else {
+                // For <=5 threads: add to collapsed set
+                this.collapsedEdgeGroups.add(groupKey);
+            }
             // Redraw edges to reflect the change
             this.edgesGroup.selectAll('.edge').remove();
             this.drawEdges();
@@ -1639,7 +1697,13 @@ class BATSVisualizationD3 {
 
         // Add expand button handler
         document.getElementById('expandEdgeGroupBtn').onclick = () => {
-            this.expandedEdgeGroups.add(edgeGroup.groupKey);
+            if (edgeGroup.threadCount > 5) {
+                // For >5 threads: add to expanded set
+                this.expandedEdgeGroups.add(edgeGroup.groupKey);
+            } else {
+                // For <=5 threads: remove from collapsed set
+                this.collapsedEdgeGroups.delete(edgeGroup.groupKey);
+            }
             this.edgesGroup.selectAll('.edge').remove();
             this.drawEdges();
             modal.remove();
@@ -2480,6 +2544,9 @@ Click OK to copy transaction hash to clipboard.
             this.adjustButton.style.background = '#27ae60';
             this.adjustButton.style.transform = 'scale(1.05)';
 
+            // Disable zoom/pan so dragging nodes/edges works
+            this.svg.on('.zoom', null);
+
             // Enable dragging on nodes and edges
             this.enableDragging();
         } else {
@@ -2490,6 +2557,9 @@ Click OK to copy transaction hash to clipboard.
 
             // Disable dragging
             this.disableDragging();
+
+            // Re-enable zoom/pan for navigation
+            this.svg.call(this.zoom);
         }
     }
 
