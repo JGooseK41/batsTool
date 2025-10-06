@@ -3,17 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 17:46)
+## Latest Commit (Auto-updated: 2025-10-06 17:56)
 
-**Commit:** 4ad536a6d1701a992b0f5eccda96c51fff6956e9
+**Commit:** 9383da16d3caec96d3dad4d38e7f591f941cc3d4
 **Author:** Your Name
-**Message:** Add background rectangles to all T-account headers crossing vertical divider
+**Message:** Fix nested T-account to detect terminal destinations in future hops
 
-- Main T-account currency header (e.g., "━━ HYPE ━━")
-- "Creates New Currency" arrow text
-- Both now have light gray background (#ecf0f1) to block divider line
-- Width calculated based on text length
-- All centered text over vertical lines now readable
+- Look ahead to subsequent hops to determine if bridge outputs reach terminals
+- Check sourceThreadIds for bridge outputs to track final destination
+- Nested accounts now correctly show terminated vs tracing status
+- Shortened labels: "Tracing" → "Trace", "Terminated" → "Term." to fit in box
+- Fixes issue where USDC from HYPE conversion shows as tracing when actually terminated
+
+Bridge outputs that go to terminal wallets in later hops now properly
+show as terminated in the hop where conversion occurred.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -21,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 28 ++++++++++++++--------------
- bats-d3-visualization.js | 27 ++++++++++++++++++++++++---
- 2 files changed, 38 insertions(+), 17 deletions(-)
+ CLAUDE.md                | 29 +++++++++++++++--------------
+ bats-d3-visualization.js | 29 ++++++++++++++++++++++++++---
+ 2 files changed, 41 insertions(+), 17 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4ad536a Add background rectangles to all T-account headers crossing vertical divider (0 seconds ago)
-- a375131 Add background rectangle behind nested T-account currency header (58 seconds ago)
-- 2254e66 Fix nested T-account currency label color to match amount (2 minutes ago)
-- 1348d90 Fix T-account box height calculation to include full nested account height (3 minutes ago)
-- 9dbd3e4 Add background box to nested T-account and fix text positioning (89 minutes ago)
+- 9383da1 Fix nested T-account to detect terminal destinations in future hops (1 second ago)
+- 4ad536a Add background rectangles to all T-account headers crossing vertical divider (10 minutes ago)
+- a375131 Add background rectangle behind nested T-account currency header (11 minutes ago)
+- 2254e66 Fix nested T-account currency label color to match amount (12 minutes ago)
+- 1348d90 Fix T-account box height calculation to include full nested account height (13 minutes ago)
+- 9dbd3e4 Add background box to nested T-account and fix text positioning (2 hours ago)
 - a9e875c Fix nestedLabelsHeight and nestedContentHeight undefined errors (2 hours ago)
 - 7b79e62 Fix leftY undefined error after removing left side conversion display (2 hours ago)
 - eaa003c Fix T-account conversion display and terminal wallet detection (2 hours ago)
 - 536f979 Add callout arrow connecting conversion to nested T-account (2 hours ago)
-- b4f7289 Apply accounting notation and improve T-account readability (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

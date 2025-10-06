@@ -1282,7 +1282,7 @@ class BATSVisualizationD3 {
             .attr('class', 'hop-reconciliation');
 
         // Calculate reconciliation data for each hop
-        hopSpaces.forEach(hopSpace => {
+        hopSpaces.forEach((hopSpace, hopIndex) => {
             if (!hopSpace.hopData) return;
 
             const hop = hopSpace.hopData;
