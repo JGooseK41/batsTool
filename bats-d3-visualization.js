@@ -418,6 +418,8 @@ class BATSVisualizationD3 {
                         const outputCurrency = entry.bridgeDetails ? entry.bridgeDetails.destinationAsset || entry.bridgeDetails.toCurrency :
                                              (entry.swapDetails ? entry.swapDetails.outputCurrency : entry.currency);
 
+                        console.log(`  [Bridge output] Entry ${entry.notation}: input=${entry.amount} ${entry.currency}, output=${outputAmount} ${outputCurrency}`);
+
                         // For bridges, find the internal ID from availableThreads
                         let internalId = null;
                         if (entry.isBridge && this.investigation.availableThreads) {
