@@ -3,30 +3,44 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 14:45)
+## Latest Commit (Auto-updated: 2025-10-06 15:19)
 
-**Commit:** 5dd14d831b2aaecf955ea09832b5d404b8198cf9
+**Commit:** 4c7e376f917b0a9394530d6a41dcf83c8a4016c5
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Improve T-account reconciliation layout and clarity
+
+- Fixed text overlapping lines by properly calculating column heights
+- Nested T-accounts now stay within their boundary boxes
+- Balance lines positioned at bottom of nested boxes (not overflowing)
+- Added conversion display on LEFT side showing what was converted out
+- currentY now advances past both left and right columns properly
+- Better spacing between elements prevents visual clutter
+
+T-accounts are now more orderly and communicate information clearly
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 43 +++++++++++++++----------------------------
- 1 file changed, 15 insertions(+), 28 deletions(-)
+ CLAUDE.md                | 28 ++++++++++++++--------------
+ bats-d3-visualization.js | 31 ++++++++++++++++++++++---------
+ 2 files changed, 36 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5dd14d8 Update CLAUDE.md with latest commit info (1 second ago)
-- c6dddb8 Update CLAUDE.md with latest commit info (2 hours ago)
-- 4c57a13 Ensure all wallets are added to universal wallet index (2 hours ago)
-- fa2e014 Update CLAUDE.md with latest commit info (2 hours ago)
-- 2470670 Add read-only notice to visualization window Reports tab (2 hours ago)
-- 7186c53 Add visualization button to Reports tab (2 hours ago)
-- e9edfed Fix wallet indices showing correct data (2 hours ago)
-- d3b3a69 Fix notation to deduplicate transaction numbers properly (2 hours ago)
+- 4c7e376 Improve T-account reconciliation layout and clarity (0 seconds ago)
+- 5dd14d8 Update CLAUDE.md with latest commit info (34 minutes ago)
+- c6dddb8 Update CLAUDE.md with latest commit info (3 hours ago)
+- 4c57a13 Ensure all wallets are added to universal wallet index (3 hours ago)
+- fa2e014 Update CLAUDE.md with latest commit info (3 hours ago)
+- 2470670 Add read-only notice to visualization window Reports tab (3 hours ago)
+- 7186c53 Add visualization button to Reports tab (3 hours ago)
+- e9edfed Fix wallet indices showing correct data (3 hours ago)
+- d3b3a69 Fix notation to deduplicate transaction numbers properly (3 hours ago)
 - 5191a3f Simplify complex notation display in audit trail (3 hours ago)
-- e40cbcb Fix audit trail data presentation issues (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
