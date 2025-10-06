@@ -731,7 +731,7 @@ class BATSVisualizationD3 {
                     }
 
                     // Create destination node
-                    const colorType = this.getWalletColorType(entry.walletType, entry.isTerminal);
+                    const colorType = entry.walletType || (entry.isTerminal ? 'purple' : 'black');
                     const walletId = this.generateWalletId(colorType, entry.destinationWallet || `deferred-${entryIndex}`);
                     const nodeId = `H${hop.hopNumber}-${walletId}`;
 
