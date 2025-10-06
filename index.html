@@ -17847,6 +17847,389 @@ function loadNarrative() {
     }
 }
 
+// Export complete investigation report in printable format
+function exportCompleteReport() {
+    // Generate complete HTML report
+    const reportHTML = generatePrintableReport();
+
+    // Create blob and download
+    const blob = new Blob([reportHTML], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `BATS_Report_${investigation.caseId || 'Investigation'}_${new Date().toISOString().split('T')[0]}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    // Show success message
+    alert('Report exported successfully! Open the HTML file in your browser and use Print to PDF.');
+}
+
+function generatePrintableReport() {
+    const caseId = investigation.caseId || 'N/A';
+    const investigator = investigation.investigator || 'N/A';
+    const agency = investigation.agency || 'N/A';
+    const caseType = investigation.caseType || 'N/A';
+    const dateOpened = investigation.dateOpened || new Date().toISOString().split('T')[0];
+    const summary = investigation.summary || 'No summary provided';
+    const narrative = (investigation.metadata && investigation.metadata.narrative) || 'No narrative provided';
+
+    // Get wallet indexes HTML
+    const universalIndexHTML = document.getElementById('report-universal-index').innerHTML || '<p>No wallets</p>';
+    const redIndexHTML = document.getElementById('report-red-index').innerHTML || '<p>No victim wallets</p>';
+    const purpleIndexHTML = document.getElementById('report-purple-index').innerHTML || '<p>No terminal wallets</p>';
+
+    // Get technical audit trail HTML
+    const auditTrailHTML = document.getElementById('report-technical-content').innerHTML || '<p>No audit trail</p>';
+
+    // Calculate totals
+    const rootTotals = investigation.confirmedRootTotalsByCurrency || {};
+    const rootTotalsDisplay = Object.entries(rootTotals)
+        .map(([curr, amt]) => `${amt.toLocaleString()} ${curr}`)
+        .join(' + ') || 'N/A';
+
+    const hopCount = investigation.hops ? investigation.hops.length : 0;
+    const victimCount = investigation.victims ? investigation.victims.length : 0;
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B.A.T.S. Investigation Report - ${caseId}</title>
+    <style>
+        @media print {
+            .page-break { page-break-before: always; }
+            body { margin: 0; }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 0.5in;
+            background: white;
+        }
+
+        .cover-page {
+            text-align: center;
+            padding: 2in 0;
+            min-height: 9in;
+        }
+
+        .cover-title {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 4px solid #3498db;
+            padding-bottom: 20px;
+        }
+
+        .cover-subtitle {
+            font-size: 24px;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+        }
+
+        .cover-case-id {
+            font-size: 32px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin: 40px 0;
+            padding: 20px;
+            border: 3px solid #e74c3c;
+            display: inline-block;
+        }
+
+        .cover-info {
+            text-align: left;
+            max-width: 500px;
+            margin: 40px auto;
+            font-size: 16px;
+        }
+
+        .cover-info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .cover-info td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .cover-info td:first-child {
+            font-weight: bold;
+            width: 40%;
+        }
+
+        .cover-footer {
+            position: absolute;
+            bottom: 1in;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .subsection-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #34495e;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 13px;
+        }
+
+        table th {
+            background: #34495e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        table td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .narrative-text {
+            white-space: pre-wrap;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .toc {
+            margin: 40px 0;
+        }
+
+        .toc-item {
+            padding: 10px 0;
+            border-bottom: 1px dotted #bdc3c7;
+            font-size: 16px;
+        }
+
+        .toc-item strong {
+            color: #2c3e50;
+        }
+
+        .index-description {
+            font-size: 14px;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            word-break: break-all;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #3498db;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 24px;
+        }
+
+        .header .case-info {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover-page">
+    <div class="cover-title">B.A.T.S. Investigation Report</div>
+    <div class="cover-subtitle">Blockchain Asset Tracing Standard</div>
+
+    <div class="cover-case-id">Case #${caseId}</div>
+
+    <div class="cover-info">
+        <table>
+            <tr>
+                <td>Investigation Agency:</td>
+                <td>${agency}</td>
+            </tr>
+            <tr>
+                <td>Lead Investigator:</td>
+                <td>${investigator}</td>
+            </tr>
+            <tr>
+                <td>Case Type:</td>
+                <td>${caseType}</td>
+            </tr>
+            <tr>
+                <td>Date Opened:</td>
+                <td>${dateOpened}</td>
+            </tr>
+            <tr>
+                <td>Report Generated:</td>
+                <td>${new Date().toLocaleString()}</td>
+            </tr>
+            <tr>
+                <td>Total Traced:</td>
+                <td>${rootTotalsDisplay}</td>
+            </tr>
+            <tr>
+                <td>Victims:</td>
+                <td>${victimCount}</td>
+            </tr>
+            <tr>
+                <td>Hops Traced:</td>
+                <td>${hopCount}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="margin-top: 60px; padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; text-align: left;">
+        <strong style="color: #856404;">Case Summary:</strong>
+        <p style="margin-top: 10px; color: #333;">${summary}</p>
+    </div>
+
+    <div class="cover-footer">
+        <strong>CONFIDENTIAL INVESTIGATION REPORT</strong><br>
+        For Law Enforcement Use Only
+    </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="page-break"></div>
+<div class="header">
+    <h1>Table of Contents</h1>
+    <div class="case-info">Case #${caseId} | ${investigator}</div>
+</div>
+
+<div class="toc">
+    <div class="toc-item"><strong>1.</strong> Universal Wallet Index</div>
+    <div class="toc-item"><strong>2.</strong> Red Wallet Index (Victim Wallets)</div>
+    <div class="toc-item"><strong>3.</strong> Purple Wallet Index (Terminal Wallets)</div>
+    <div class="toc-item"><strong>4.</strong> Investigation Narrative</div>
+    <div class="toc-item"><strong>5.</strong> Technical Audit Trail</div>
+</div>
+
+<!-- UNIVERSAL WALLET INDEX -->
+<div class="page-break"></div>
+<div class="header">
+    <h1>Section 1: Universal Wallet Index</h1>
+    <div class="case-info">Case #${caseId} | ${investigator}</div>
+</div>
+
+<p class="index-description">
+    Complete chronological record of all blockchain addresses encountered during this investigation,
+    listed in order of first appearance during the trace.
+</p>
+
+${universalIndexHTML}
+
+<!-- RED WALLET INDEX -->
+<div class="page-break"></div>
+<div class="header">
+    <h1>Section 2: Red Wallet Index</h1>
+    <div class="case-info">Case #${caseId} | ${investigator}</div>
+</div>
+
+<p class="index-description">
+    Blockchain addresses belonging to identified victims that received stolen or illicit funds.
+    These represent the initial entry points of traced assets.
+</p>
+
+${redIndexHTML}
+
+<!-- PURPLE WALLET INDEX -->
+<div class="page-break"></div>
+<div class="header">
+    <h1>Section 3: Purple Wallet Index</h1>
+    <div class="case-info">Case #${caseId} | ${investigator}</div>
+</div>
+
+<p class="index-description">
+    Terminal destinations including cryptocurrency exchange deposit addresses and other endpoints
+    where traced funds cannot be followed further without additional investigative tools.
+</p>
+
+${purpleIndexHTML}
+
+<!-- NARRATIVE -->
+<div class="page-break"></div>
+<div class="header">
+    <h1>Section 4: Investigation Narrative</h1>
+    <div class="case-info">Case #${caseId} | ${investigator}</div>
+</div>
+
+<div class="narrative-text">${narrative}</div>
+
+<!-- TECHNICAL AUDIT TRAIL -->
+<div class="page-break"></div>
+<div class="header">
+    <h1>Section 5: Technical Audit Trail</h1>
+    <div class="case-info">Case #${caseId} | ${investigator}</div>
+</div>
+
+<p class="index-description">
+    Detailed transaction-by-transaction flow analysis documenting the movement of traced assets
+    through the blockchain, including all transaction hashes, timestamps, and allocations.
+</p>
+
+${auditTrailHTML}
+
+<!-- FOOTER -->
+<div style="margin-top: 60px; padding: 20px; background: #f8f9fa; border-top: 2px solid #bdc3c7; text-align: center; font-size: 12px; color: #7f8c8d;">
+    <p><strong>Report Generated:</strong> ${new Date().toLocaleString()}</p>
+    <p><strong>Generated with:</strong> B.A.T.S. (Blockchain Asset Tracing Standard) Tool</p>
+    <p style="margin-top: 15px; font-size: 10px;">
+        This report contains confidential law enforcement information. Unauthorized disclosure is prohibited.
+    </p>
+</div>
+
+</body>
+</html>`;
+}
+
 function generateReportContent() {
     // Update case info with safety checks
     const caseIdEl = document.getElementById('report-case-id');

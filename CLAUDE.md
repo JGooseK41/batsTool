@@ -3,18 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 12:01)
+## Latest Commit (Auto-updated: 2025-10-06 12:03)
 
-**Commit:** 39cd010759713b10d093cad7e5ee1b2fe96606af
+**Commit:** 8b1a48ac73d9f817105addb82f7949b49d99d9f9
 **Author:** Your Name
-**Message:** Show full transaction hashes and notes in audit trail
+**Message:** Reorganize Reports tab with sub-tabs
 
-- Remove truncation of transaction hashes (was showing only first/last 20 chars)
-- Remove truncation of wallet addresses
-- Display full hashes with word-break for readability
-- Add entry notes display with highlighted box
-- Add wallet label display
-- Support both txHash and transactionHash field names
+- Add three sub-tabs: Audit Trail, Wallet Indexes, Narrative
+- Audit Trail: Technical transaction flow analysis
+- Wallet Indexes: Switchable views for Universal, Red, Purple indexes
+- Narrative: Editable textarea for investigator notes
+- Case info moved to compact header
+- Narrative auto-saves to investigation.metadata
+- Add switchReportTab() and showWalletIndex() functions
+- Add saveNarrative() and loadNarrative() functions
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -22,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 25 ++++++++++++-------------
- index.html | 16 ++++++++++++----
- 2 files changed, 24 insertions(+), 17 deletions(-)
+ CLAUDE.md  |  31 ++++++-----
+ index.html | 180 ++++++++++++++++++++++++++++++++++++++++++++++++++++---------
+ 2 files changed, 172 insertions(+), 39 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 39cd010 Show full transaction hashes and notes in audit trail (0 seconds ago)
-- 4491d84 Add debug logging to wallet index generation (2 minutes ago)
-- ab4ead4 Add Reports tab to main application container (4 minutes ago)
-- f1c0ad1 Add debug logging to proceedDirectlyToReports() (6 minutes ago)
+- 8b1a48a Reorganize Reports tab with sub-tabs (0 seconds ago)
+- 39cd010 Show full transaction hashes and notes in audit trail (3 minutes ago)
+- 4491d84 Add debug logging to wallet index generation (4 minutes ago)
+- ab4ead4 Add Reports tab to main application container (6 minutes ago)
+- f1c0ad1 Add debug logging to proceedDirectlyToReports() (9 minutes ago)
 - 6090769 Add null safety checks to generateReportContent() (3 hours ago)
 - 2730194 Fix syntax error - remove orphaned code block (3 hours ago)
 - 8780908 Update CLAUDE.md with latest commit info (3 hours ago)
 - ced4655 Add source currency reference to nested T-accounts (3 hours ago)
 - c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (3 hours ago)
-- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
