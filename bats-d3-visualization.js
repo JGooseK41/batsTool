@@ -844,11 +844,7 @@ class BATSVisualizationD3 {
                     }
                     this.nodeMap.set(nodeId, node);
 
-                    // Create edges from source threads (typically bridge output threads)
-                    const sourceThreadIds = entry.sourceThreadIds ||
-                                          entry.multipleSourceInternalIds ||
-                                          [entry.sourceThreadId].filter(Boolean);
-
+                    // Create edges from source threads (already extracted above)
                     if (sourceThreadIds && sourceThreadIds.length > 0) {
                         console.log(`    - Source threads for deferred entry:`, sourceThreadIds);
                         sourceThreadIds.forEach(threadId => {
