@@ -996,10 +996,16 @@ class BATSVisualizationD3 {
     renderHopColumns() {
         console.log(`Rendering hop-centric column layout (${this.orientation})...`);
 
-        // Clear existing content from all subgroups (important when switching from Sankey view)
-        this.backgroundGroup.selectAll('*').remove();
-        this.edgesGroup.selectAll('*').remove();
-        this.nodesGroup.selectAll('*').remove();
+        // Clear ALL content from mainGroup (important when switching from Sankey view)
+        // Sankey removes subgroups, so we need to recreate them
+        this.mainGroup.selectAll('*').remove();
+
+        // Recreate the layer groups in the correct z-order
+        this.backgroundGroup = this.mainGroup.append('g').attr('class', 'backgrounds');
+        this.edgesGroup = this.mainGroup.append('g').attr('class', 'edges');
+        this.nodesGroup = this.mainGroup.append('g').attr('class', 'nodes');
+        this.labelsGroup = this.mainGroup.append('g').attr('class', 'labels');
+        this.artGroup = this.mainGroup.append('g').attr('class', 'art-boxes');
 
         if (this.orientation === 'horizontal') {
             // Horizontal layout (left-to-right)
