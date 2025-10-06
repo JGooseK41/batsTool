@@ -1221,7 +1221,7 @@ class BATSVisualizationD3 {
             .attr('stroke-width', 2)
             .attr('rx', 5);
 
-        // Hop Creation Title (top)
+        // Hop Construction Title (top)
         headerGroup.append('text')
             .attr('x', d => d.x)
             .attr('y', 38)
@@ -1229,7 +1229,7 @@ class BATSVisualizationD3 {
             .attr('font-size', '12px')
             .attr('font-weight', 'bold')
             .attr('fill', '#f39c12')
-            .text(d => `→ HOP ${d.hopNumber} CREATION →`);
+            .text(d => `→ HOP ${d.hopNumber} CONSTRUCTION →`);
 
         // ART Label (middle)
         headerGroup.append('text')
