@@ -1377,17 +1377,18 @@ class BATSVisualizationD3 {
 
             for (const [currency, account] of Object.entries(accounts)) {
                 // Main account: header + entries + balance line
-                height += accountSpacing + (4 * lineHeight); // Header, entries, totals, balance
+                height += accountSpacing + (5 * lineHeight); // Header, beginning balance, conversions, entries, totals, balance
 
-                // Nested accounts
+                // Nested accounts - more accurate calculation
                 const nestedCount = Object.keys(account.nestedAccounts || {}).length;
-                height += nestedCount * (nestedAccountSpacing + (3 * lineHeight)); // Each nested account
+                // Each nested account: header(25) + labels(15) + content(20) + balance(25) + padding(15) = 100
+                height += nestedCount * 100;
             }
 
             return height;
         });
 
-        const boxHeight = headerHeight + maxHeight + bottomPadding;
+        const boxHeight = Math.min(headerHeight + maxHeight + bottomPadding, this.config.height - 100);
 
         // Store box height for drag boundary calculations
         this.reconBoxHeight = boxHeight;
@@ -1487,71 +1488,125 @@ class BATSVisualizationD3 {
                     .text(`━━ ${currency} ━━`);
                 currentY += lineHeight;
 
-                // LEFT: Beginning Balance
+                // LEFT: Beginning Balance (right-aligned number, followed by description)
+                const leftNumberX = d.x - 120; // Right-align position for numbers
+                const leftLabelX = d.x - 110; // Label starts after number
+
                 group.append('text')
-                    .attr('x', d.leftX + 20)
+                    .attr('x', leftNumberX)
                     .attr('y', currentY)
+                    .attr('text-anchor', 'end')
                     .attr('font-size', '11px')
                     .attr('font-weight', 'bold')
                     .attr('fill', color)
                     .text(`${account.beginningBalance.toFixed(2)}`);
 
-                // Show conversion OUT on left side if applicable
+                group.append('text')
+                    .attr('x', leftLabelX)
+                    .attr('y', currentY)
+                    .attr('font-size', '10px')
+                    .attr('fill', '#7f8c8d')
+                    .text(`${currency}`);
+
+                // Show conversion OUT on left side if applicable (in parentheses per accounting notation)
                 let leftY = currentY + lineHeight;
                 if (account.converted > 0) {
                     group.append('text')
-                        .attr('x', d.leftX + 20)
+                        .attr('x', leftNumberX)
                         .attr('y', leftY)
+                        .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
                         .attr('fill', '#f39c12')
-                        .text(`(Converted: ${account.converted.toFixed(2)})`);
+                        .text(`(${account.converted.toFixed(2)})`);
+
+                    group.append('text')
+                        .attr('x', leftLabelX)
+                        .attr('y', leftY)
+                        .attr('font-size', '9px')
+                        .attr('fill', '#f39c12')
+                        .text(`Converted`);
                     leftY += lineHeight;
                 }
 
-                // RIGHT: Disposition summary
+                // RIGHT: Disposition summary (right-aligned numbers with parentheses, followed by labels)
+                const rightNumberX = d.leftX + d.width - 120; // Right-align position
+                const rightLabelX = d.leftX + d.width - 110; // Label after number
+
                 let rightY = currentY;
                 let rightTotal = 0;
 
                 if (account.terminated > 0) {
                     group.append('text')
-                        .attr('x', d.x + 20)
+                        .attr('x', rightNumberX)
                         .attr('y', rightY)
+                        .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
                         .attr('fill', '#9b59b6')
-                        .text(`Terminated: ${account.terminated.toFixed(2)}`);
+                        .text(`(${account.terminated.toFixed(2)})`);
+
+                    group.append('text')
+                        .attr('x', rightLabelX)
+                        .attr('y', rightY)
+                        .attr('font-size', '9px')
+                        .attr('fill', '#9b59b6')
+                        .text(`Terminated`);
                     rightY += lineHeight;
                     rightTotal += account.terminated;
                 }
 
                 if (account.stillTracing > 0) {
                     group.append('text')
-                        .attr('x', d.x + 20)
+                        .attr('x', rightNumberX)
                         .attr('y', rightY)
+                        .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
                         .attr('fill', '#27ae60')
-                        .text(`Still Tracing: ${account.stillTracing.toFixed(2)}`);
+                        .text(`(${account.stillTracing.toFixed(2)})`);
+
+                    group.append('text')
+                        .attr('x', rightLabelX)
+                        .attr('y', rightY)
+                        .attr('font-size', '9px')
+                        .attr('fill', '#27ae60')
+                        .text(`Still Tracing`);
                     rightY += lineHeight;
                     rightTotal += account.stillTracing;
                 }
 
                 if (account.converted > 0) {
                     group.append('text')
-                        .attr('x', d.x + 20)
+                        .attr('x', rightNumberX)
                         .attr('y', rightY)
+                        .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
                         .attr('fill', '#f39c12')
-                        .text(`Converted: ${account.converted.toFixed(2)}`);
+                        .text(`(${account.converted.toFixed(2)})`);
+
+                    group.append('text')
+                        .attr('x', rightLabelX)
+                        .attr('y', rightY)
+                        .attr('font-size', '9px')
+                        .attr('fill', '#f39c12')
+                        .text(`Converted`);
                     rightY += lineHeight;
                     rightTotal += account.converted;
                 }
 
                 if (account.writeOffs > 0) {
                     group.append('text')
-                        .attr('x', d.x + 20)
+                        .attr('x', rightNumberX)
                         .attr('y', rightY)
+                        .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
                         .attr('fill', '#e74c3c')
-                        .text(`Write-offs: ${account.writeOffs.toFixed(2)}`);
+                        .text(`(${account.writeOffs.toFixed(2)})`);
+
+                    group.append('text')
+                        .attr('x', rightLabelX)
+                        .attr('y', rightY)
+                        .attr('font-size', '9px')
+                        .attr('fill', '#e74c3c')
+                        .text(`Write-offs`);
                     rightY += lineHeight;
                     rightTotal += account.writeOffs;
                 }
@@ -1572,21 +1627,26 @@ class BATSVisualizationD3 {
                 currentY = balanceY + 15;
 
                 const isBalanced = Math.abs(account.beginningBalance - rightTotal) < 0.01;
+
+                // Left total (right-aligned)
                 group.append('text')
-                    .attr('x', d.leftX + 20)
+                    .attr('x', leftNumberX)
                     .attr('y', currentY)
+                    .attr('text-anchor', 'end')
                     .attr('font-size', '11px')
                     .attr('font-weight', 'bold')
                     .attr('fill', color)
                     .text(`${account.beginningBalance.toFixed(2)}`);
 
+                // Right total (right-aligned with parentheses)
                 group.append('text')
-                    .attr('x', d.x + 20)
+                    .attr('x', rightNumberX)
                     .attr('y', currentY)
+                    .attr('text-anchor', 'end')
                     .attr('font-size', '11px')
                     .attr('font-weight', 'bold')
                     .attr('fill', isBalanced ? '#27ae60' : '#e74c3c')
-                    .text(`${rightTotal.toFixed(2)} ${isBalanced ? '✓' : '✗'}`);
+                    .text(`(${rightTotal.toFixed(2)}) ${isBalanced ? '✓' : '✗'}`);
 
                 currentY += lineHeight + 10;
 
@@ -1668,65 +1728,107 @@ class BATSVisualizationD3 {
 
                     currentY += nestedLabelsHeight;
 
-                    // Left: From conversion amount with source reference
-                    const sourceText = nestedAccount.sourceAmount && nestedAccount.sourceCurrency
-                        ? ` (${nestedAccount.sourceAmount.toFixed(2)} ${nestedAccount.sourceCurrency})`
-                        : '';
+                    // Left: From conversion amount with source reference (right-aligned)
+                    const nestedLeftX = d.x - 60;
+                    const nestedLeftLabelX = d.x - 50;
 
                     group.append('text')
-                        .attr('x', d.leftX + 45)
+                        .attr('x', nestedLeftX)
                         .attr('y', currentY)
+                        .attr('text-anchor', 'end')
                         .attr('font-size', '11px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
                         .text(`${nestedAccount.fromConversion.toFixed(2)}`);
 
+                    group.append('text')
+                        .attr('x', nestedLeftLabelX)
+                        .attr('y', currentY)
+                        .attr('font-size', '9px')
+                        .attr('fill', '#7f8c8d')
+                        .text(`${nestedCurrency}`);
+
                     // Add source reference in parentheses below if available
-                    if (sourceText) {
+                    if (nestedAccount.sourceAmount && nestedAccount.sourceCurrency) {
                         group.append('text')
-                            .attr('x', d.leftX + 45)
+                            .attr('x', nestedLeftX)
                             .attr('y', currentY + 12)
+                            .attr('text-anchor', 'end')
                             .attr('font-size', '8px')
                             .attr('fill', '#7f8c8d')
-                            .text(sourceText);
+                            .text(`(from ${nestedAccount.sourceAmount.toFixed(2)} ${nestedAccount.sourceCurrency})`);
                     }
 
-                    // Right: Disposition - compact single line or two lines
+                    // Right: Disposition - compact with right-aligned numbers and parentheses
+                    const nestedRightX = d.leftX + d.width - 70;
+                    const nestedRightLabelX = d.leftX + d.width - 60;
                     let nestedRightY = currentY;
                     let nestedRightTotal = 0;
 
                     if (nestedAccount.terminated > 0 && nestedAccount.stillTracing > 0) {
                         // Both - show on two lines, smaller font
                         group.append('text')
-                            .attr('x', d.x + 55)
+                            .attr('x', nestedRightX)
                             .attr('y', nestedRightY - 5)
+                            .attr('text-anchor', 'end')
                             .attr('font-size', '9px')
                             .attr('fill', '#9b59b6')
-                            .text(`Term: ${nestedAccount.terminated.toFixed(2)}`);
+                            .text(`(${nestedAccount.terminated.toFixed(2)})`);
 
                         group.append('text')
-                            .attr('x', d.x + 55)
+                            .attr('x', nestedRightLabelX)
+                            .attr('y', nestedRightY - 5)
+                            .attr('font-size', '8px')
+                            .attr('fill', '#9b59b6')
+                            .text(`Term.`);
+
+                        group.append('text')
+                            .attr('x', nestedRightX)
                             .attr('y', nestedRightY + 8)
+                            .attr('text-anchor', 'end')
                             .attr('font-size', '9px')
                             .attr('fill', '#27ae60')
-                            .text(`Trace: ${nestedAccount.stillTracing.toFixed(2)}`);
+                            .text(`(${nestedAccount.stillTracing.toFixed(2)})`);
+
+                        group.append('text')
+                            .attr('x', nestedRightLabelX)
+                            .attr('y', nestedRightY + 8)
+                            .attr('font-size', '8px')
+                            .attr('fill', '#27ae60')
+                            .text(`Trace`);
 
                         nestedRightTotal = nestedAccount.terminated + nestedAccount.stillTracing;
                     } else if (nestedAccount.terminated > 0) {
                         group.append('text')
-                            .attr('x', d.x + 55)
+                            .attr('x', nestedRightX)
                             .attr('y', nestedRightY)
+                            .attr('text-anchor', 'end')
                             .attr('font-size', '10px')
                             .attr('fill', '#9b59b6')
-                            .text(`Terminated: ${nestedAccount.terminated.toFixed(2)}`);
+                            .text(`(${nestedAccount.terminated.toFixed(2)})`);
+
+                        group.append('text')
+                            .attr('x', nestedRightLabelX)
+                            .attr('y', nestedRightY)
+                            .attr('font-size', '9px')
+                            .attr('fill', '#9b59b6')
+                            .text(`Terminated`);
                         nestedRightTotal = nestedAccount.terminated;
                     } else if (nestedAccount.stillTracing > 0) {
                         group.append('text')
-                            .attr('x', d.x + 55)
+                            .attr('x', nestedRightX)
                             .attr('y', nestedRightY)
+                            .attr('text-anchor', 'end')
                             .attr('font-size', '10px')
                             .attr('fill', '#27ae60')
-                            .text(`Tracing: ${nestedAccount.stillTracing.toFixed(2)}`);
+                            .text(`(${nestedAccount.stillTracing.toFixed(2)})`);
+
+                        group.append('text')
+                            .attr('x', nestedRightLabelX)
+                            .attr('y', nestedRightY)
+                            .attr('font-size', '9px')
+                            .attr('fill', '#27ae60')
+                            .text(`Tracing`);
                         nestedRightTotal = nestedAccount.stillTracing;
                     }
 
@@ -1743,25 +1845,29 @@ class BATSVisualizationD3 {
                         .attr('stroke', nestedColor)
                         .attr('stroke-width', 1.5);
 
-                    // Balance totals (positioned just below the line, inside the box)
+                    // Balance totals (positioned just below the line, inside the box, right-aligned)
                     const nestedBalanced = Math.abs(nestedAccount.fromConversion - nestedRightTotal) < 0.01;
                     const balanceTotalY = nestedBalanceLineY + 12;
+                    const nestedLeftNumX = d.x - 60;
+                    const nestedRightNumX = d.leftX + d.width - 70;
 
                     group.append('text')
-                        .attr('x', d.leftX + 45)
+                        .attr('x', nestedLeftNumX)
                         .attr('y', balanceTotalY)
+                        .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
                         .text(`${nestedAccount.fromConversion.toFixed(2)}`);
 
                     group.append('text')
-                        .attr('x', d.x + 55)
+                        .attr('x', nestedRightNumX)
                         .attr('y', balanceTotalY)
+                        .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedBalanced ? '#27ae60' : '#e74c3c')
-                        .text(`${nestedRightTotal.toFixed(2)} ${nestedBalanced ? '✓' : '✗'}`);
+                        .text(`(${nestedRightTotal.toFixed(2)}) ${nestedBalanced ? '✓' : '✗'}`);
 
                     // Move currentY to after the box
                     currentY = nestedBoxStartY + nestedBoxHeight + 5;
