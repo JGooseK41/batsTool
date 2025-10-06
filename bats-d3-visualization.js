@@ -1787,7 +1787,7 @@ class BATSVisualizationD3 {
         edgeEnter.append('path')
             .attr('class', 'edge-visible-path')
             .attr('d', d => {
-                // Calculate proper node edge points with padding for arrow
+                // Calculate proper node edge points
                 const dx = d.target.x - d.source.x;
                 const dy = d.target.y - d.source.y;
                 const angle = Math.atan2(dy, dx);
@@ -1796,10 +1796,9 @@ class BATSVisualizationD3 {
                 let x1 = d.source.x + Math.cos(angle) * this.config.nodeRadius;
                 let y1 = d.source.y + Math.sin(angle) * this.config.nodeRadius;
 
-                // End point: edge of target node (with extra padding for arrow)
-                const arrowPadding = d.isCollapsed ? 16 : 14;
-                let x2 = d.target.x - Math.cos(angle) * (this.config.nodeRadius + arrowPadding);
-                let y2 = d.target.y - Math.sin(angle) * (this.config.nodeRadius + arrowPadding);
+                // End point: just to edge of target node (arrow will extend from here)
+                let x2 = d.target.x - Math.cos(angle) * this.config.nodeRadius;
+                let y2 = d.target.y - Math.sin(angle) * this.config.nodeRadius;
 
                 // Apply offset for expanded multi-thread edges
                 if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
@@ -1826,10 +1825,9 @@ class BATSVisualizationD3 {
             })
             .attr('fill', 'none')
             .attr('stroke', d => d.isCollapsed ? '#34495e' : '#95a5a6')
-            .attr('stroke-width', d => d.isCollapsed ? Math.min(10, 3 + d.threadCount * 0.5) : 2.5)
+            .attr('stroke-width', d => d.isCollapsed ? Math.min(10, 3 + d.threadCount * 0.5) : 2)
             .attr('marker-end', d => d.isCollapsed ? 'url(#arrowhead-thick)' : 'url(#arrowhead)')
             .attr('opacity', d => d.isCollapsed ? 0.9 : 1)
-            .attr('stroke-linecap', 'round')
             .style('pointer-events', 'none');
 
         // Add arrow marker definitions (only once)
@@ -1839,25 +1837,25 @@ class BATSVisualizationD3 {
             // Standard arrowhead (for single edges and expanded groups)
             defs.append('marker')
                 .attr('id', 'arrowhead')
-                .attr('markerWidth', 12)
-                .attr('markerHeight', 12)
-                .attr('refX', 11)
-                .attr('refY', 6)
+                .attr('markerWidth', 8)
+                .attr('markerHeight', 8)
+                .attr('refX', 8)
+                .attr('refY', 4)
                 .attr('orient', 'auto')
                 .append('polygon')
-                .attr('points', '0 0, 12 6, 0 12')
+                .attr('points', '0 0, 8 4, 0 8')
                 .attr('fill', '#95a5a6');
 
             // Thicker arrowhead for collapsed groups
             defs.append('marker')
                 .attr('id', 'arrowhead-thick')
-                .attr('markerWidth', 14)
-                .attr('markerHeight', 14)
-                .attr('refX', 13)
-                .attr('refY', 7)
+                .attr('markerWidth', 10)
+                .attr('markerHeight', 10)
+                .attr('refX', 10)
+                .attr('refY', 5)
                 .attr('orient', 'auto')
                 .append('polygon')
-                .attr('points', '0 0, 14 7, 0 14')
+                .attr('points', '0 0, 10 5, 0 10')
                 .attr('fill', '#34495e');
         }
 

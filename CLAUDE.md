@@ -3,15 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 07:00)
+## Latest Commit (Auto-updated: 2025-10-06 07:07)
 
-**Commit:** d92e2d6d7d57444be1dc778a01894d9ab77fb838
+**Commit:** 966e9bbe6018e45e00b78921033794a630f5009e
 **Author:** Your Name
-**Message:** Rename 'HOP CREATION' to 'HOP CONSTRUCTION'
+**Message:** Improve edge visual clarity with sharper arrows and better node connections
 
-- Updated header text in hop space columns
-- Changed from '→ HOP X CREATION →' to '→ HOP X CONSTRUCTION →'
-- More accurate terminology for the construction phase
+- Larger, sharper arrowheads (12x12 standard, 14x14 for thick edges)
+- Proper trigonometric calculation for edge-node intersection points
+- Arrow padding (14-16px) prevents overlap with nodes
+- Perpendicular offsets for multi-thread edges to reduce visual clutter
+- Increased stroke width (2.5px for single threads, scaling for collapsed)
+- Rounded line caps for smoother appearance
+- Fixed invisible drag target paths to match visible path geometry
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -19,23 +23,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 42 +++++++++++++++++++++---------------------
- bats-d3-visualization.js |  4 ++--
- 2 files changed, 23 insertions(+), 23 deletions(-)
+ CLAUDE.md                | 32 ++++++++++-----------
+ bats-d3-visualization.js | 74 ++++++++++++++++++++++++++++++++++--------------
+ 2 files changed, 68 insertions(+), 38 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d92e2d6 Rename 'HOP CREATION' to 'HOP CONSTRUCTION' (0 seconds ago)
-- f1118ae Fix zoom/pan loss after clicking wallet and closing modal (35 seconds ago)
-- 8508344 Preserve manual node positions when switching between views (74 minutes ago)
-- 186f9a7 Fix switching from Sankey back to Hop Columns view (76 minutes ago)
-- 7a05754 Add victim transactions list to red wallet info modal (79 minutes ago)
-- 5a79270 Redesign column headers for uniform blue/gold styling (81 minutes ago)
-- 9bcf4d8 Fix wallet info panel to show correct currencies for conversions (88 minutes ago)
+- 966e9bb Improve edge visual clarity with sharper arrows and better node connections (1 second ago)
+- d92e2d6 Rename 'HOP CREATION' to 'HOP CONSTRUCTION' (7 minutes ago)
+- f1118ae Fix zoom/pan loss after clicking wallet and closing modal (8 minutes ago)
+- 8508344 Preserve manual node positions when switching between views (81 minutes ago)
+- 186f9a7 Fix switching from Sankey back to Hop Columns view (83 minutes ago)
+- 7a05754 Add victim transactions list to red wallet info modal (86 minutes ago)
+- 5a79270 Redesign column headers for uniform blue/gold styling (88 minutes ago)
+- 9bcf4d8 Fix wallet info panel to show correct currencies for conversions (2 hours ago)
 - fe23ab8 Add currency color coding and verification to T-account reconciliation (2 hours ago)
 - 1f1ebb1 Improve T-account reconciliation with paired rows and totals (2 hours ago)
-- f5b7506 Register red wallet nodes in nodeMap for edge rendering (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
