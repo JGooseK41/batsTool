@@ -298,7 +298,7 @@ class BATSVisualizationD3 {
         this.investigation.hops.forEach((hop, hopIndex) => {
             const hopColumn = {
                 hopNumber: hop.hopNumber,
-                title: 'WALLETS',  // Wallet columns are just labeled "WALLETS", the hop is the space before this column
+                title: `HOP ${hop.hopNumber} COMPLETION`,  // Wallet columns show where hop funds land/complete
                 nodes: [],
                 artBefore: hop.artAtStartByCurrency || {},
                 artAfter: {},
@@ -967,7 +967,7 @@ class BATSVisualizationD3 {
             .attr('font-size', '18px')
             .attr('font-weight', 'bold')
             .attr('fill', '#7f8c8d')
-            .text(d => `→ HOP ${d.hopNumber} →`);
+            .text(d => `→ HOP ${d.hopNumber} CREATION →`);
 
         // Draw subtle vertical guides at hop space boundaries
         const guides = this.backgroundGroup.selectAll('.hop-guide')
