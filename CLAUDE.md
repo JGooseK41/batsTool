@@ -3,17 +3,15 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 07:20)
+## Latest Commit (Auto-updated: 2025-10-06 07:43)
 
-**Commit:** 56b4427fc45732315bcc25e5757a289d56e71241
+**Commit:** 3c991d0a577826df05b9ffeda66dcaf53f06651c
 **Author:** Your Name
-**Message:** Change edge routing to use sharp angles instead of curves
+**Message:** Revert edge routing back to smooth curves
 
-- Modified buildCustomCurvePath to use straight line segments (L commands)
-- Edges now form distinct angles at control points
-- Changed from quadratic bezier (Q) to two straight lines (L)
-- Creates cleaner visual separation when manually routing edges
-- Path format: M start L controlPoint L end
+- Changed back from straight lines (L) to quadratic bezier (Q)
+- Straight line angles didn't work well for edge routing
+- Restored smooth curve behavior when dragging edges
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -21,23 +19,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 35 ++++++++++++++++++-----------------
+ CLAUDE.md                | 36 ++++++++++++++++++------------------
  bats-d3-visualization.js |  6 +++---
- 2 files changed, 21 insertions(+), 20 deletions(-)
+ 2 files changed, 21 insertions(+), 21 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 56b4427 Change edge routing to use sharp angles instead of curves (0 seconds ago)
-- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (2 minutes ago)
-- d7a93e4 Fix edge group expansion - modal buttons now work correctly (6 minutes ago)
-- fc14ec5 Fix arrowhead positioning - edges now terminate at arrow base (7 minutes ago)
-- 966e9bb Improve edge visual clarity with sharper arrows and better node connections (13 minutes ago)
-- d92e2d6 Rename 'HOP CREATION' to 'HOP CONSTRUCTION' (20 minutes ago)
-- f1118ae Fix zoom/pan loss after clicking wallet and closing modal (21 minutes ago)
+- 3c991d0 Revert edge routing back to smooth curves (0 seconds ago)
+- 56b4427 Change edge routing to use sharp angles instead of curves (23 minutes ago)
+- 3b6db8e Fix arrowhead connection - edge paths now terminate at arrow center (24 minutes ago)
+- d7a93e4 Fix edge group expansion - modal buttons now work correctly (28 minutes ago)
+- fc14ec5 Fix arrowhead positioning - edges now terminate at arrow base (30 minutes ago)
+- 966e9bb Improve edge visual clarity with sharper arrows and better node connections (36 minutes ago)
+- d92e2d6 Rename 'HOP CREATION' to 'HOP CONSTRUCTION' (43 minutes ago)
+- f1118ae Fix zoom/pan loss after clicking wallet and closing modal (44 minutes ago)
 - 8508344 Preserve manual node positions when switching between views (2 hours ago)
 - 186f9a7 Fix switching from Sankey back to Hop Columns view (2 hours ago)
-- 7a05754 Add victim transactions list to red wallet info modal (2 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

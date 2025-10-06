@@ -1261,6 +1261,7 @@ class BATSVisualizationD3 {
 
     drawHopReconciliation(hopSpaces) {
         // Draw T-account reconciliation at bottom of each hop column
+        // Using forensic accounting principles: LEFT = Opening Balance, RIGHT = Disposition
         const recon = this.backgroundGroup.selectAll('.hop-reconciliation')
             .data(hopSpaces);
 
@@ -1273,107 +1274,68 @@ class BATSVisualizationD3 {
             if (!hopSpace.hopData) return;
 
             const hop = hopSpace.hopData;
-            const pairedRows = [];  // Rows with both left and right entries (conversions)
-            const leftOnlyRows = [];  // Rows with only left entries (terminals, write-offs)
-            const rightOnlyRows = [];  // Rows with only right entries (continuing traces)
+            const artBefore = hopSpace.artBefore || {};
 
-            // Totals by currency
-            const leftTotals = {};  // Terminated/consumed
-            const rightTotals = {};  // Continuing/created
+            // RIGHT SIDE: Disposition categories
+            const terminated = {};      // Purple wallets, off-ramped
+            const stillTracing = {};    // Black wallets continuing
+            const writeOffs = {};       // Write-offs
+            const converted = {};       // Output currencies from swaps/bridges
 
-            // Process entries to categorize
+            // Process each entry to categorize disposition
             hop.entries.forEach(entry => {
                 const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
                 const amount = parseFloat(entry.amount) || 0;
 
                 if (entry.entryType === 'writeoff') {
-                    // Write-off: left side only
-                    leftOnlyRows.push({
-                        left: {
-                            type: 'write-off',
-                            amount: amount,
-                            currency: currency,
-                            label: `Write-off: ${entry.reason || 'Unknown'}`
-                        },
-                        right: null
-                    });
-                    leftTotals[currency] = (leftTotals[currency] || 0) + amount;
+                    // Write-off
+                    writeOffs[currency] = (writeOffs[currency] || 0) + amount;
 
                 } else if (entry.isBridge || entry.entryType === 'swap' || (entry.swapDetails && entry.swapDetails.outputCurrency)) {
-                    // Conversion/Bridge: paired row (left = input consumed, right = output created)
+                    // Conversion: consume input currency, create output currency
                     const inputAmount = parseFloat(entry.amount || entry.swapDetails?.inputAmount || 0);
                     const inputCurrency = currency;
                     const outputAmount = parseFloat(entry.bridgeDetails?.destinationAmount || entry.swapDetails?.outputAmount || 0);
                     const outputCurrency = entry.bridgeDetails?.destinationAsset || entry.swapDetails?.outputCurrency || inputCurrency;
 
-                    pairedRows.push({
-                        left: {
-                            type: 'conversion-in',
-                            amount: inputAmount,
-                            currency: inputCurrency,
-                            label: `${entry.notation || ''}`
-                        },
-                        right: {
-                            type: 'conversion-out',
-                            amount: outputAmount,
-                            currency: outputCurrency,
-                            label: `${entry.notation || ''}`
-                        }
-                    });
-
-                    leftTotals[inputCurrency] = (leftTotals[inputCurrency] || 0) + inputAmount;
-                    rightTotals[outputCurrency] = (rightTotals[outputCurrency] || 0) + outputAmount;
+                    // Input consumed (subtract from ART balance on left)
+                    // Output created goes to either terminated or stillTracing
+                    if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
+                        terminated[outputCurrency] = (terminated[outputCurrency] || 0) + outputAmount;
+                    } else {
+                        stillTracing[outputCurrency] = (stillTracing[outputCurrency] || 0) + outputAmount;
+                    }
 
                 } else if (entry.isTerminal || entry.walletType === 'purple' || entry.toWalletType === 'purple') {
-                    // Terminal wallet: left side only
-                    leftOnlyRows.push({
-                        left: {
-                            type: 'terminal',
-                            amount: amount,
-                            currency: currency,
-                            label: `${entry.notation || 'Terminal'}`
-                        },
-                        right: null
-                    });
-                    leftTotals[currency] = (leftTotals[currency] || 0) + amount;
+                    // Terminal wallet (no conversion)
+                    terminated[currency] = (terminated[currency] || 0) + amount;
 
                 } else {
-                    // Continuing trace: right side only
-                    rightOnlyRows.push({
-                        left: null,
-                        right: {
-                            type: 'trace',
-                            amount: amount,
-                            currency: currency,
-                            label: entry.notation || `To H${hop.hopNumber + 1}`
-                        }
-                    });
-                    rightTotals[currency] = (rightTotals[currency] || 0) + amount;
+                    // Continuing trace (no conversion)
+                    stillTracing[currency] = (stillTracing[currency] || 0) + amount;
                 }
             });
 
-            // Combine all rows: paired first, then left-only, then right-only
-            hopSpace.reconRows = [...pairedRows, ...leftOnlyRows, ...rightOnlyRows];
-            hopSpace.leftTotals = leftTotals;
-            hopSpace.rightTotals = rightTotals;
+            hopSpace.terminated = terminated;
+            hopSpace.stillTracing = stillTracing;
+            hopSpace.writeOffs = writeOffs;
         });
 
-        // Calculate dynamic height based on rows + totals + verification
-        const lineHeight = 16;
-        const headerHeight = 60;
-        const totalsSectionHeight = 40;  // Space for totals at bottom
-        const verificationHeight = 50;   // Space for verification section
-        const bottomPadding = 10;
+        // Calculate dynamic height based on currency counts
+        const lineHeight = 20;
+        const headerHeight = 80;
+        const sectionSpacing = 15;
+        const bottomPadding = 15;
 
-        const maxRows = d3.max(hopSpaces, d => (d.reconRows || []).length);
-        const maxTotalLines = d3.max(hopSpaces, d => {
-            const leftCurrencies = Object.keys(d.leftTotals || {}).length;
-            const rightCurrencies = Object.keys(d.rightTotals || {}).length;
-            return Math.max(leftCurrencies, rightCurrencies);
+        const maxCurrencies = d3.max(hopSpaces, d => {
+            const artCurrencies = Object.keys(d.artBefore || {}).length;
+            const terminatedCurrencies = Object.keys(d.terminated || {}).length;
+            const tracingCurrencies = Object.keys(d.stillTracing || {}).length;
+            const writeOffCurrencies = Object.keys(d.writeOffs || {}).length;
+            return Math.max(artCurrencies, terminatedCurrencies + tracingCurrencies + writeOffCurrencies + 2); // +2 for category headers
         });
-        const maxVerificationLines = d3.max(hopSpaces, d => Object.keys(d.artBefore || {}).length);
 
-        const boxHeight = headerHeight + (maxRows * lineHeight) + totalsSectionHeight + (maxTotalLines * 14) + verificationHeight + (maxVerificationLines * 14) + bottomPadding;
+        const boxHeight = headerHeight + (maxCurrencies * lineHeight) + (sectionSpacing * 3) + bottomPadding;
 
         // Store box height for drag boundary calculations
         this.reconBoxHeight = boxHeight;
@@ -1395,200 +1357,188 @@ class BATSVisualizationD3 {
         // Title
         reconGroup.append('text')
             .attr('x', d => d.x)
-            .attr('y', reconY + 18)
+            .attr('y', reconY + 20)
             .attr('text-anchor', 'middle')
             .attr('font-size', '14px')
             .attr('font-weight', 'bold')
             .attr('fill', '#2c3e50')
-            .text('HOP RECONCILIATION');
+            .text('HOP T-ACCOUNT RECONCILIATION');
 
-        // Divider line (vertical center) - use dynamic height
+        // Divider line (vertical center)
         reconGroup.append('line')
             .attr('x1', d => d.x)
-            .attr('y1', reconY + 25)
+            .attr('y1', reconY + 30)
             .attr('x2', d => d.x)
-            .attr('y2', reconY + boxHeight - 5)
+            .attr('y2', reconY + boxHeight - 10)
             .attr('stroke', '#34495e')
             .attr('stroke-width', 2);
 
-        // Left header (TERMINATED)
+        // Left header (BEGINNING BALANCE)
         reconGroup.append('text')
             .attr('x', d => d.leftX + (d.width / 4))
-            .attr('y', reconY + 40)
+            .attr('y', reconY + 45)
             .attr('text-anchor', 'middle')
             .attr('font-size', '11px')
             .attr('font-weight', 'bold')
-            .attr('fill', '#e74c3c')
-            .text('TERMINATED');
+            .attr('fill', '#3498db')
+            .text('BEGINNING BALANCE (ART)');
 
-        // Right header (CONTINUING)
+        // Right header (DISPOSITION)
         reconGroup.append('text')
             .attr('x', d => d.x + (d.width / 4))
-            .attr('y', reconY + 40)
+            .attr('y', reconY + 45)
             .attr('text-anchor', 'middle')
             .attr('font-size', '11px')
             .attr('font-weight', 'bold')
-            .attr('fill', '#27ae60')
-            .text('CONTINUING');
+            .attr('fill', '#2c3e50')
+            .text('DISPOSITION');
 
-        // Currency color mapping for visual distinction
+        // Header divider line
+        reconGroup.append('line')
+            .attr('x1', d => d.leftX + 15)
+            .attr('y1', reconY + 50)
+            .attr('x2', d => d.leftX + d.width - 15)
+            .attr('y2', reconY + 50)
+            .attr('stroke', '#34495e')
+            .attr('stroke-width', 1);
+
+        // Currency color mapping
         const getCurrencyColor = (currency) => {
             const colors = {
-                'HYPE': '#e74c3c',     // Red
-                'USDC': '#3498db',     // Blue
-                'ETH': '#9b59b6',      // Purple
-                'BTC': '#f39c12',      // Orange
-                'USDT': '#16a085',     // Teal
-                'BNB': '#f1c40f',      // Yellow
-                'MATIC': '#8e44ad',    // Dark Purple
-                'SOL': '#1abc9c',      // Turquoise
-                'AVAX': '#e67e22',     // Carrot
-                'ARB': '#2980b9',      // Belize Blue
-                'OP': '#c0392b',       // Pomegranate
-                'TRX': '#d35400'       // Pumpkin
+                'HYPE': '#e74c3c', 'USDC': '#3498db', 'ETH': '#9b59b6', 'BTC': '#f39c12',
+                'USDT': '#16a085', 'BNB': '#f1c40f', 'MATIC': '#8e44ad', 'SOL': '#1abc9c',
+                'AVAX': '#e67e22', 'ARB': '#2980b9', 'OP': '#c0392b', 'TRX': '#d35400'
             };
-            return colors[currency] || '#34495e';  // Default dark gray
+            return colors[currency] || '#34495e';
         };
 
-        // Render rows (paired left-right entries)
-        reconGroup.each(function(d, i) {
+        // Render T-account entries
+        reconGroup.each(function(d) {
             const group = d3.select(this);
-            const rows = d.reconRows || [];
-            const startY = reconY + 55;
+            let currentY = reconY + 65;
 
-            rows.forEach((row, idx) => {
-                const yPos = startY + idx * lineHeight;
+            // LEFT SIDE: Beginning Balance (ART)
+            const artBefore = d.artBefore || {};
+            for (const [currency, amount] of Object.entries(artBefore)) {
+                const color = getCurrencyColor(currency);
+                group.append('text')
+                    .attr('x', d.leftX + 20)
+                    .attr('y', currentY)
+                    .attr('font-size', '12px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', color)
+                    .text(`${amount.toFixed(2)} ${currency}`);
+                currentY += lineHeight;
+            }
 
-                // LEFT side (terminated/consumed)
-                if (row.left) {
-                    const icon = row.left.type === 'terminal' ? '⬤' :
-                               row.left.type === 'conversion-in' ? '🔄' :
-                               row.left.type === 'write-off' ? '✕' : '−';
-                    const iconColor = row.left.type === 'terminal' ? '#9b59b6' :
-                                    row.left.type === 'conversion-in' ? '#8B4513' : '#e74c3c';
-                    const currencyColor = getCurrencyColor(row.left.currency);
+            // RIGHT SIDE: Disposition
+            let rightY = reconY + 65;
 
+            // Section 1: Terminated
+            if (Object.keys(d.terminated || {}).length > 0) {
+                group.append('text')
+                    .attr('x', d.x + 20)
+                    .attr('y', rightY)
+                    .attr('font-size', '10px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', '#9b59b6')
+                    .text('TERMINATED:');
+                rightY += lineHeight;
+
+                for (const [currency, amount] of Object.entries(d.terminated)) {
+                    const color = getCurrencyColor(currency);
                     group.append('text')
-                        .attr('x', d.leftX + 15)
-                        .attr('y', yPos)
-                        .attr('font-size', '10px')
-                        .attr('fill', iconColor)
-                        .text(icon);
-
-                    group.append('text')
-                        .attr('x', d.leftX + 30)
-                        .attr('y', yPos)
-                        .attr('font-size', '9px')
-                        .attr('font-weight', 'bold')
-                        .attr('fill', currencyColor)
-                        .text(`− ${row.left.amount.toFixed(2)} ${row.left.currency}`);
+                        .attr('x', d.x + 35)
+                        .attr('y', rightY)
+                        .attr('font-size', '11px')
+                        .attr('fill', color)
+                        .text(`${amount.toFixed(2)} ${currency}`);
+                    rightY += lineHeight;
                 }
+            }
 
-                // RIGHT side (continuing/created)
-                if (row.right) {
-                    const icon = row.right.type === 'trace' ? '→' :
-                               row.right.type === 'conversion-out' ? '🔄' : '+';
-                    const iconColor = row.right.type === 'trace' ? '#27ae60' : '#8B4513';
-                    const currencyColor = getCurrencyColor(row.right.currency);
+            // Section 2: Still Tracing
+            if (Object.keys(d.stillTracing || {}).length > 0) {
+                group.append('text')
+                    .attr('x', d.x + 20)
+                    .attr('y', rightY)
+                    .attr('font-size', '10px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', '#27ae60')
+                    .text('STILL TRACING:');
+                rightY += lineHeight;
 
+                for (const [currency, amount] of Object.entries(d.stillTracing)) {
+                    const color = getCurrencyColor(currency);
                     group.append('text')
-                        .attr('x', d.x + 15)
-                        .attr('y', yPos)
-                        .attr('font-size', '10px')
-                        .attr('fill', iconColor)
-                        .text(icon);
-
-                    group.append('text')
-                        .attr('x', d.x + 30)
-                        .attr('y', yPos)
-                        .attr('font-size', '9px')
-                        .attr('font-weight', 'bold')
-                        .attr('fill', currencyColor)
-                        .text(`+ ${row.right.amount.toFixed(2)} ${row.right.currency}`);
+                        .attr('x', d.x + 35)
+                        .attr('y', rightY)
+                        .attr('font-size', '11px')
+                        .attr('fill', color)
+                        .text(`${amount.toFixed(2)} ${currency}`);
+                    rightY += lineHeight;
                 }
-            });
+            }
 
-            // Divider line before totals
-            const totalsStartY = startY + (rows.length * lineHeight) + 10;
+            // Section 3: Write-offs
+            if (Object.keys(d.writeOffs || {}).length > 0) {
+                group.append('text')
+                    .attr('x', d.x + 20)
+                    .attr('y', rightY)
+                    .attr('font-size', '10px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', '#e74c3c')
+                    .text('WRITE-OFFS:');
+                rightY += lineHeight;
+
+                for (const [currency, amount] of Object.entries(d.writeOffs)) {
+                    const color = getCurrencyColor(currency);
+                    group.append('text')
+                        .attr('x', d.x + 35)
+                        .attr('y', rightY)
+                        .attr('font-size', '11px')
+                        .attr('fill', color)
+                        .text(`${amount.toFixed(2)} ${currency}`);
+                    rightY += lineHeight;
+                }
+            }
+
+            // Bottom divider line
+            const bottomY = reconY + boxHeight - 30;
             group.append('line')
                 .attr('x1', d.leftX + 15)
-                .attr('y1', totalsStartY - 5)
-                .attr('x2', d.x - 15)
-                .attr('y2', totalsStartY - 5)
-                .attr('stroke', '#34495e')
-                .attr('stroke-width', 1)
-                .attr('stroke-dasharray', '3,3');
-
-            group.append('line')
-                .attr('x1', d.x + 15)
-                .attr('y1', totalsStartY - 5)
+                .attr('y1', bottomY)
                 .attr('x2', d.leftX + d.width - 15)
-                .attr('y2', totalsStartY - 5)
+                .attr('y2', bottomY)
                 .attr('stroke', '#34495e')
-                .attr('stroke-width', 1)
-                .attr('stroke-dasharray', '3,3');
+                .attr('stroke-width', 2);
 
-            // LEFT totals (terminated/consumed)
-            let leftIdx = 0;
-            for (const [currency, total] of Object.entries(d.leftTotals || {})) {
-                const currencyColor = getCurrencyColor(currency);
-                group.append('text')
-                    .attr('x', d.leftX + 30)
-                    .attr('y', totalsStartY + (leftIdx * 14))
-                    .attr('font-size', '11px')
-                    .attr('font-weight', 'bold')
-                    .attr('fill', currencyColor)
-                    .text(`− ${total.toFixed(2)} ${currency}`);
-                leftIdx++;
-            }
-
-            // RIGHT totals (continuing/created)
-            let rightIdx = 0;
-            for (const [currency, total] of Object.entries(d.rightTotals || {})) {
-                const currencyColor = getCurrencyColor(currency);
-                group.append('text')
-                    .attr('x', d.x + 30)
-                    .attr('y', totalsStartY + (rightIdx * 14))
-                    .attr('font-size', '11px')
-                    .attr('font-weight', 'bold')
-                    .attr('fill', currencyColor)
-                    .text(`+ ${total.toFixed(2)} ${currency}`);
-                rightIdx++;
-            }
-
-            // Verification check: ART IN = LEFT + RIGHT totals for each currency
-            const verifyY = totalsStartY + (Math.max(leftIdx, rightIdx) * 14) + 20;
-
+            // Verification: Check balance
             group.append('text')
                 .attr('x', d.x)
-                .attr('y', verifyY)
+                .attr('y', bottomY + 15)
                 .attr('text-anchor', 'middle')
                 .attr('font-size', '10px')
                 .attr('font-weight', 'bold')
                 .attr('fill', '#7f8c8d')
-                .text('VERIFICATION');
+                .text('BALANCE CHECK');
 
-            // Check each currency from ART
-            let verifyIdx = 0;
-            const artBefore = d.artBefore || {};
-
+            // Verify each currency
+            let verifyY = bottomY + 28;
             for (const [currency, artAmount] of Object.entries(artBefore)) {
-                const leftTotal = d.leftTotals[currency] || 0;
-                const rightTotal = d.rightTotals[currency] || 0;
-                const totalAccounted = leftTotal + rightTotal;
-                const isBalanced = Math.abs(artAmount - totalAccounted) < 0.01;
-                const currencyColor = getCurrencyColor(currency);
+                const dispositionTotal = (d.terminated[currency] || 0) + (d.stillTracing[currency] || 0) + (d.writeOffs[currency] || 0);
+                const isBalanced = Math.abs(artAmount - dispositionTotal) < 0.01;
 
                 group.append('text')
                     .attr('x', d.x)
-                    .attr('y', verifyY + 15 + (verifyIdx * 14))
+                    .attr('y', verifyY)
                     .attr('text-anchor', 'middle')
                     .attr('font-size', '9px')
                     .attr('font-weight', 'bold')
                     .attr('fill', isBalanced ? '#27ae60' : '#e74c3c')
-                    .text(`${isBalanced ? '✓' : '✗'} ${currency}: ${artAmount.toFixed(2)} ${isBalanced ? '=' : '≠'} ${totalAccounted.toFixed(2)}`);
+                    .text(`${isBalanced ? '✓' : '✗'} ${currency}: ${artAmount.toFixed(2)} = ${dispositionTotal.toFixed(2)}`);
 
-                verifyIdx++;
+                verifyY += 12;
             }
         });
     }
