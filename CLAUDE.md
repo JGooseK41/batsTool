@@ -3,18 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 05:25)
+## Latest Commit (Auto-updated: 2025-10-06 05:27)
 
-**Commit:** 1f1ebb1f6b37da07a61deed75d06b1f7f44edddf
+**Commit:** fe23ab89967394244aa0d029f822360a629f0981
 **Author:** Your Name
-**Message:** Improve T-account reconciliation with paired rows and totals
+**Message:** Add currency color coding and verification to T-account reconciliation
 
-- Conversions now appear on same row (left: input, right: output)
-- Write-offs and terminals show only on left with blank right side
-- Continuing traces show only on right with blank left side
-- Added subtotals by currency at bottom of each side
-- Divider lines separate entries from totals
-- Fixes issue where unrelated entries appeared on same line
+- Each currency now displays in distinct color (HYPE=red, USDC=blue, ETH=purple, etc.)
+- Currency totals at bottom use same color scheme for easy identification
+- Added VERIFICATION section at bottom showing ART balance check
+- Shows ✓ or ✗ for each currency: ART IN = LEFT + RIGHT totals
+- Visual confirmation that all funds are fully accounted for
+- Makes multi-currency reconciliation much easier to verify
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -22,24 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                |  31 +++---
- bats-d3-visualization.js | 271 ++++++++++++++++++++++++++++-------------------
- index.html               |  81 ++++++++++----
- 3 files changed, 234 insertions(+), 149 deletions(-)
+ CLAUDE.md                | 37 ++++++++++++-----------
+ bats-d3-visualization.js | 78 +++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 90 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1f1ebb1 Improve T-account reconciliation with paired rows and totals (0 seconds ago)
-- f5b7506 Register red wallet nodes in nodeMap for edge rendering (14 minutes ago)
-- 6d8d517 Remove brown output node creation for bridge conversions (22 minutes ago)
-- 6378425 Fix duplicate sourceThreadIds declaration causing syntax error (7 hours ago)
+- fe23ab8 Add currency color coding and verification to T-account reconciliation (0 seconds ago)
+- 1f1ebb1 Improve T-account reconciliation with paired rows and totals (2 minutes ago)
+- f5b7506 Register red wallet nodes in nodeMap for edge rendering (16 minutes ago)
+- 6d8d517 Remove brown output node creation for bridge conversions (24 minutes ago)
+- 6378425 Fix duplicate sourceThreadIds declaration causing syntax error (8 hours ago)
 - 4745104 Update CLAUDE.md (8 hours ago)
 - c8b2961 Place deferred bridge output entries in source hop, not target hopNumber (8 hours ago)
 - 8f2abe3 Update CLAUDE.md (8 hours ago)
 - ca5056d Create bridge output nodes in hop COMPLETION column instead of just tracking on swap node (8 hours ago)
 - f9c3f5c Update CLAUDE.md (8 hours ago)
-- 099b263 Add bridge internal ID lookup to EXTERNAL swap brown-to-brown path (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

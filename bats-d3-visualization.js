@@ -2205,14 +2205,22 @@ class BATSVisualizationD3 {
     }
 
     showNodeDetails(event, node) {
-        // Calculate total funds through this wallet
-        const totalIncoming = this.edges
-            .filter(e => e.target === node.id)
-            .reduce((sum, e) => sum + e.amount, 0);
+        // Calculate total funds through this wallet by currency
+        const incomingByCurrency = {};
+        const outgoingByCurrency = {};
 
-        const totalOutgoing = this.edges
-            .filter(e => e.source === node.id)
-            .reduce((sum, e) => sum + e.amount, 0);
+        this.edges.forEach(e => {
+            if (e.target === node.id) {
+                incomingByCurrency[e.currency] = (incomingByCurrency[e.currency] || 0) + e.amount;
+            }
+            if (e.source === node.id) {
+                outgoingByCurrency[e.currency] = (outgoingByCurrency[e.currency] || 0) + e.amount;
+            }
+        });
+
+        // For backward compatibility, calculate single totals using node's primary currency
+        const totalIncoming = incomingByCurrency[node.currency] || 0;
+        const totalOutgoing = outgoingByCurrency[node.currency] || Object.values(outgoingByCurrency).reduce((sum, val) => sum + val, 0);
 
         // Get unique VTH notations for this wallet
         const vthNotations = new Set();
@@ -2283,11 +2291,15 @@ class BATSVisualizationD3 {
                 <div style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                     <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
                         <div style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">TOTAL INCOMING</div>
-                        <div style="color: #27ae60; font-size: 20px; font-weight: bold;">${totalIncoming.toFixed(6)} ${node.currency}</div>
+                        ${Object.entries(incomingByCurrency).map(([curr, amt]) =>
+                            `<div style="color: #27ae60; font-size: ${Object.keys(incomingByCurrency).length > 1 ? '16px' : '20px'}; font-weight: bold;">${amt.toFixed(6)} ${curr}</div>`
+                        ).join('')}
                     </div>
                     <div style="background: #ffebee; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c;">
                         <div style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">TOTAL OUTGOING</div>
-                        <div style="color: #e74c3c; font-size: 20px; font-weight: bold;">${totalOutgoing.toFixed(6)} ${node.currency}</div>
+                        ${Object.entries(outgoingByCurrency).map(([curr, amt]) =>
+                            `<div style="color: #e74c3c; font-size: ${Object.keys(outgoingByCurrency).length > 1 ? '16px' : '20px'}; font-weight: bold;">${amt.toFixed(6)} ${curr}</div>`
+                        ).join('')}
                     </div>
                 </div>
 
