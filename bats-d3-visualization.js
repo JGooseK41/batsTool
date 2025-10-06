@@ -1379,10 +1379,15 @@ class BATSVisualizationD3 {
                 // Main account: header + entries + balance line
                 height += accountSpacing + (5 * lineHeight); // Header, beginning balance, conversions, entries, totals, balance
 
-                // Nested accounts - more accurate calculation
+                // Nested accounts - include conversion box and nested T-account
                 const nestedCount = Object.keys(account.nestedAccounts || {}).length;
-                // Each nested account: header(25) + labels(15) + content(20) + balance(25) + padding(15) = 100
-                height += nestedCount * 100;
+                // Each nested account:
+                // - Visual separator (15px)
+                // - Arrow text (18px)
+                // - Conversion box (35px + 10px margin)
+                // - Nested T-account box (95px)
+                // = 173px per nested account
+                height += nestedCount * 173;
             }
 
             return height;

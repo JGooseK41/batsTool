@@ -3,15 +3,20 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 16:13)
+## Latest Commit (Auto-updated: 2025-10-06 16:17)
 
-**Commit:** a9e875c1d031d27736d31fbe2a2c3e4229d040b3
+**Commit:** 9dbd3e405796615faab9ffa616a60e7cd43b3389
 **Author:** Your Name
-**Message:** Fix nestedLabelsHeight and nestedContentHeight undefined errors
+**Message:** Add background box to nested T-account and fix text positioning
 
-- Add missing height constants for nested T-account layout
-- nestedLabelsHeight: 15px for column headers
-- nestedContentHeight: 20px for main content area
+- Add light gray background box with dashed border for nested T-account
+- Adjust all text X positions to stay within box boundaries
+- Left side: d.x - 20 (was d.x - 60)
+- Right side: d.leftX + d.width - 50 (was - 70)
+- Balance totals also adjusted to stay inside box
+- Box boundaries: d.leftX + 20 to d.leftX + d.width - 20
+
+All nested T-account elements now contained within visible box.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -19,23 +24,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 36 +++++++++++++++++-------------------
- bats-d3-visualization.js |  2 ++
- 2 files changed, 19 insertions(+), 19 deletions(-)
+ CLAUDE.md                | 35 +++++++++++++++++------------------
+ bats-d3-visualization.js | 36 +++++++++++++++++++++---------------
+ 2 files changed, 38 insertions(+), 33 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a9e875c Fix nestedLabelsHeight and nestedContentHeight undefined errors (0 seconds ago)
-- 7b79e62 Fix leftY undefined error after removing left side conversion display (2 minutes ago)
-- eaa003c Fix T-account conversion display and terminal wallet detection (4 minutes ago)
-- 536f979 Add callout arrow connecting conversion to nested T-account (11 minutes ago)
-- b4f7289 Apply accounting notation and improve T-account readability (26 minutes ago)
-- fba0d29 Update CLAUDE.md with latest commit info (40 minutes ago)
-- 4c7e376 Improve T-account reconciliation layout and clarity (54 minutes ago)
-- 5dd14d8 Update CLAUDE.md with latest commit info (87 minutes ago)
+- 9dbd3e4 Add background box to nested T-account and fix text positioning (0 seconds ago)
+- a9e875c Fix nestedLabelsHeight and nestedContentHeight undefined errors (5 minutes ago)
+- 7b79e62 Fix leftY undefined error after removing left side conversion display (7 minutes ago)
+- eaa003c Fix T-account conversion display and terminal wallet detection (9 minutes ago)
+- 536f979 Add callout arrow connecting conversion to nested T-account (16 minutes ago)
+- b4f7289 Apply accounting notation and improve T-account readability (30 minutes ago)
+- fba0d29 Update CLAUDE.md with latest commit info (45 minutes ago)
+- 4c7e376 Improve T-account reconciliation layout and clarity (58 minutes ago)
+- 5dd14d8 Update CLAUDE.md with latest commit info (2 hours ago)
 - c6dddb8 Update CLAUDE.md with latest commit info (4 hours ago)
-- 4c57a13 Ensure all wallets are added to universal wallet index (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
