@@ -363,7 +363,9 @@ class BATSVisualizationD3 {
                 }
 
                 // Handle swaps/conversions
+                console.log(`  [Routing] Entry ${entry.notation}: entryType=${entry.entryType}, walletType=${entry.walletType}, isBridge=${entry.isBridge}`);
                 if (entry.entryType === 'swap' || entry.walletType === 'brown' || entry.isBridge) {
+                    console.log(`  [Routing] → Taking SWAP/BRIDGE path`);
                     // Check if this is an internal swap (same wallet doing the conversion)
                     // or if it's going to another brown/service wallet
                     const isInternalSwap = entry.walletType === 'brown' && entry.toWalletType === 'brown' &&
@@ -612,6 +614,7 @@ class BATSVisualizationD3 {
                     }
 
                 } else {
+                    console.log(`  [Routing] → Taking REGULAR TRACE path`);
                     // Regular trace entry
                     const nodeId = `H${hop.hopNumber}-E${entryIndex}`;
                     const colorType = entry.walletType || 'black';
