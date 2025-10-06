@@ -195,6 +195,29 @@ class BATSVisualizationD3 {
 
     loadInvestigation(investigation) {
         console.log('Loading investigation into D3 visualization:', investigation);
+
+        // Log investigation structure for debugging
+        console.log('=== INVESTIGATION DATA STRUCTURE ===');
+        console.log('Victims:', investigation.victims?.length || 0);
+        investigation.victims?.forEach((v, i) => {
+            console.log(`  Victim ${v.id}: ${v.name}, ${v.transactions?.length || 0} transactions`);
+            v.transactions?.forEach((tx, j) => {
+                console.log(`    T${tx.id}: ${tx.amount} ${tx.currency}`);
+            });
+        });
+
+        console.log('Hops:', investigation.hops?.length || 0);
+        investigation.hops?.forEach((hop, i) => {
+            console.log(`  Hop ${hop.hopNumber}: ${hop.entries?.length || 0} entries`);
+            hop.entries?.forEach((entry, j) => {
+                console.log(`    Entry ${j}: ${entry.notation}, amount: ${entry.amount} ${entry.currency}, isBridge: ${entry.isBridge}, toWalletType: ${entry.toWalletType}`);
+                if (entry.bridgeDetails) {
+                    console.log(`      Bridge: ${entry.bridgeDetails.destinationAmount} ${entry.bridgeDetails.destinationAsset}`);
+                }
+            });
+        });
+        console.log('=== END INVESTIGATION DATA ===\n');
+
         this.investigation = investigation;
 
         // Build data structure
@@ -656,10 +679,22 @@ class BATSVisualizationD3 {
             edges: this.edges.length,
             columns: this.hopColumns.length
         });
-        console.log('All edges created:');
+        console.log('\n=== EDGES CREATED ===');
         this.edges.forEach((e, i) => {
             console.log(`  ${i + 1}. ${e.source} → ${e.target} | ${e.label} | ${e.amount} ${e.currency}`);
         });
+
+        console.log('\n=== NODES CREATED ===');
+        this.nodes.forEach((n, i) => {
+            console.log(`  ${i + 1}. ${n.id} (${n.type}) | ${n.walletLabel || n.label} | Column ${n.column}`);
+            if (n.threads?.length > 0) {
+                console.log(`     Threads: ${n.threads.map(t => t.id).join(', ')}`);
+            }
+            if (n.outputThreads?.length > 0) {
+                console.log(`     Output threads: ${n.outputThreads.map(t => `${t.notation} (${t.currency})`).join(', ')}`);
+            }
+        });
+        console.log('=== END BUILD DATA ===\n');
     }
 
     findSourceNode(threadId, currentHop) {
