@@ -3,19 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 05:41)
+## Latest Commit (Auto-updated: 2025-10-06 05:44)
 
-**Commit:** 7a05754e743c1af0d17995ed718be26c87532d69
+**Commit:** 186f9a7f707fee97fadf471cc3bb1c074e53923f
 **Author:** Your Name
-**Message:** Add victim transactions list to red wallet info modal
+**Message:** Fix switching from Sankey back to Hop Columns view
 
-- Clicking red wallet now shows "Victim Transactions" section
-- Displays all transactions going into that wallet
-- Shows thread ID (V1-T1), amount, and currency for each
-- Includes transaction hash with copy button
-- Shows timestamp when available
-- Styled with red accent boxes matching wallet type
-- Only appears for red (victim) wallets
+- renderSankey clears mainGroup which removes all subgroups
+- renderHopColumns now recreates subgroups after clearing mainGroup
+- Ensures clean state when switching between visualization modes
+- Fixes issue where Hop Columns button did nothing after viewing Sankey
+- Subgroups recreated in correct z-order (backgrounds, edges, nodes, labels, art)
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -23,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 37 ++++++++++++++++++++-----------------
- bats-d3-visualization.js | 33 +++++++++++++++++++++++++++++++++
- 2 files changed, 53 insertions(+), 17 deletions(-)
+ CLAUDE.md                | 41 ++++++++++++++++++++---------------------
+ bats-d3-visualization.js | 14 ++++++++++----
+ 2 files changed, 30 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7a05754 Add victim transactions list to red wallet info modal (0 seconds ago)
-- 5a79270 Redesign column headers for uniform blue/gold styling (2 minutes ago)
-- 9bcf4d8 Fix wallet info panel to show correct currencies for conversions (9 minutes ago)
-- fe23ab8 Add currency color coding and verification to T-account reconciliation (14 minutes ago)
-- 1f1ebb1 Improve T-account reconciliation with paired rows and totals (16 minutes ago)
-- f5b7506 Register red wallet nodes in nodeMap for edge rendering (30 minutes ago)
-- 6d8d517 Remove brown output node creation for bridge conversions (38 minutes ago)
+- 186f9a7 Fix switching from Sankey back to Hop Columns view (0 seconds ago)
+- 7a05754 Add victim transactions list to red wallet info modal (3 minutes ago)
+- 5a79270 Redesign column headers for uniform blue/gold styling (4 minutes ago)
+- 9bcf4d8 Fix wallet info panel to show correct currencies for conversions (12 minutes ago)
+- fe23ab8 Add currency color coding and verification to T-account reconciliation (17 minutes ago)
+- 1f1ebb1 Improve T-account reconciliation with paired rows and totals (19 minutes ago)
+- f5b7506 Register red wallet nodes in nodeMap for edge rendering (33 minutes ago)
+- 6d8d517 Remove brown output node creation for bridge conversions (40 minutes ago)
 - 6378425 Fix duplicate sourceThreadIds declaration causing syntax error (8 hours ago)
 - 4745104 Update CLAUDE.md (8 hours ago)
-- c8b2961 Place deferred bridge output entries in source hop, not target hopNumber (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

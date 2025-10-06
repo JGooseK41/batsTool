@@ -1021,8 +1021,11 @@ class BATSVisualizationD3 {
                 const startY = Math.max(200, (this.config.height - totalHeight) / 2);  // Ensure starts below header
 
                 column.nodes.forEach((node, nodeIndex) => {
-                    node.x = column.x;
-                    node.y = startY + nodeIndex * this.config.verticalSpacing;
+                    // Only recalculate position if not manually positioned
+                    if (!node.manuallyPositioned) {
+                        node.x = column.x;
+                        node.y = startY + nodeIndex * this.config.verticalSpacing;
+                    }
                 });
             });
 
@@ -1052,8 +1055,11 @@ class BATSVisualizationD3 {
                 const startX = (this.config.width - totalWidth) / 2;
 
                 column.nodes.forEach((node, nodeIndex) => {
-                    node.y = column.y;
-                    node.x = startX + nodeIndex * this.config.verticalSpacing;
+                    // Only recalculate position if not manually positioned
+                    if (!node.manuallyPositioned) {
+                        node.y = column.y;
+                        node.x = startX + nodeIndex * this.config.verticalSpacing;
+                    }
                 });
             });
 
@@ -3098,6 +3104,8 @@ Click OK to copy transaction hash to clipboard.
                     event.sourceEvent.stopPropagation();
                     d3.select(this).style('cursor', 'grab');
                     d.isDragging = false;
+                    // Mark as manually positioned so it's preserved when switching views
+                    d.manuallyPositioned = true;
                     // Save state for undo
                     self.saveState();
                 }));
