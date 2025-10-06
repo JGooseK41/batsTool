@@ -3,30 +3,43 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 12:29)
+## Latest Commit (Auto-updated: 2025-10-06 12:34)
 
-**Commit:** fa2e014ccbdbe7a27bba0b7db272f9172a44c5df
+**Commit:** 4c57a1353dfce2da393a01558b66fe29baeb533d
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Ensure all wallets are added to universal wallet index
+
+- Added centralized addWalletToUniversalIndex() function
+- Terminal wallets now trigger buildUniversalWalletIndex() when added
+- Fixes visualization showing inconsistent wallet IDs (P-1 vs P-2)
+- Universal wallet index is now truly universal - includes all wallet types
+- Visualization will now use consistent IDs from universal index
+
+Fixes issue where terminal wallets were only in terminalWalletIndex
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 42 ++++++++++++++++++++++--------------------
- 1 file changed, 22 insertions(+), 20 deletions(-)
+ CLAUDE.md  | 36 ++++++++++++------------------------
+ index.html | 54 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 66 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- fa2e014 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 2470670 Add read-only notice to visualization window Reports tab (38 seconds ago)
-- 7186c53 Add visualization button to Reports tab (7 minutes ago)
-- e9edfed Fix wallet indices showing correct data (8 minutes ago)
-- d3b3a69 Fix notation to deduplicate transaction numbers properly (11 minutes ago)
-- 5191a3f Simplify complex notation display in audit trail (14 minutes ago)
-- e40cbcb Fix audit trail data presentation issues (16 minutes ago)
-- 1ff2efc Add comprehensive printable report export function (22 minutes ago)
-- 8b1a48a Reorganize Reports tab with sub-tabs (26 minutes ago)
-- 39cd010 Show full transaction hashes and notes in audit trail (28 minutes ago)
+- 4c57a13 Ensure all wallets are added to universal wallet index (0 seconds ago)
+- fa2e014 Update CLAUDE.md with latest commit info (5 minutes ago)
+- 2470670 Add read-only notice to visualization window Reports tab (6 minutes ago)
+- 7186c53 Add visualization button to Reports tab (12 minutes ago)
+- e9edfed Fix wallet indices showing correct data (13 minutes ago)
+- d3b3a69 Fix notation to deduplicate transaction numbers properly (16 minutes ago)
+- 5191a3f Simplify complex notation display in audit trail (19 minutes ago)
+- e40cbcb Fix audit trail data presentation issues (21 minutes ago)
+- 1ff2efc Add comprehensive printable report export function (28 minutes ago)
+- 8b1a48a Reorganize Reports tab with sub-tabs (31 minutes ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
