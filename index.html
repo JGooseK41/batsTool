@@ -17484,6 +17484,17 @@ function generateVisualizationPage() {
             <button class="btn-success" onclick="exportCompleteReport()">📄 Export Complete Report</button>
         </div>
 
+        <!-- Read-Only Notice -->
+        <div style="background: linear-gradient(135deg, #f39c12, #e67e22); color: white; padding: 15px 20px; margin: 20px auto; max-width: 1200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 24px;">🔒</span>
+                <div>
+                    <strong style="font-size: 16px;">Read-Only View</strong>
+                    <p style="margin: 5px 0 0 0; opacity: 0.95; font-size: 14px;">This is a snapshot of the investigation. To make changes, return to the main app window.</p>
+                </div>
+            </div>
+        </div>
+
         <div id="reports-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
             <!-- Report Sections -->
             <div style="margin-bottom: 40px;">
