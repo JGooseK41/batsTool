@@ -3,15 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 08:44)
+## Latest Commit (Auto-updated: 2025-10-06 11:55)
 
-**Commit:** 60907692f1c7bb4fcd59bedcc67f8b3331402a7a
+**Commit:** f1c0ad15fdbd8aa20ec2f30256d302dfe8d13430
 **Author:** Your Name
-**Message:** Add null safety checks to generateReportContent()
+**Message:** Add debug logging to proceedDirectlyToReports()
 
-- Check for element existence before setting textContent
-- Prevents "Cannot set properties of null" error
-- Fixes blank reports tab issue when loaded from file
+- Log when function is called
+- Log reports tab element existence
+- Log content generation steps
+- Help diagnose blank reports tab issue
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -19,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 39 ++++++++++++++++++++++++---------------
- index.html | 12 ++++++++----
- 2 files changed, 32 insertions(+), 19 deletions(-)
+ CLAUDE.md  | 38 +++++++++++++++++++-------------------
+ index.html |  7 +++++++
+ 2 files changed, 26 insertions(+), 19 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6090769 Add null safety checks to generateReportContent() (0 seconds ago)
-- 2730194 Fix syntax error - remove orphaned code block (2 minutes ago)
-- 8780908 Update CLAUDE.md with latest commit info (4 minutes ago)
-- ced4655 Add source currency reference to nested T-accounts (4 minutes ago)
-- c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (8 minutes ago)
-- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (12 minutes ago)
-- bc167ab Use universal wallet index as master source of truth for wallet IDs (20 minutes ago)
-- 7822eb6 Add visual separation to nested T-accounts for clarity (23 minutes ago)
-- 08bf82a Implement nested T-accounts with clear balance lines (35 minutes ago)
-- 9ecb32d Track both conversion and disposition of swapped assets in same hop (45 minutes ago)
+- f1c0ad1 Add debug logging to proceedDirectlyToReports() (0 seconds ago)
+- 6090769 Add null safety checks to generateReportContent() (3 hours ago)
+- 2730194 Fix syntax error - remove orphaned code block (3 hours ago)
+- 8780908 Update CLAUDE.md with latest commit info (3 hours ago)
+- ced4655 Add source currency reference to nested T-accounts (3 hours ago)
+- c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (3 hours ago)
+- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (3 hours ago)
+- bc167ab Use universal wallet index as master source of truth for wallet IDs (4 hours ago)
+- 7822eb6 Add visual separation to nested T-accounts for clarity (4 hours ago)
+- 08bf82a Implement nested T-accounts with clear balance lines (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
