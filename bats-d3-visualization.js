@@ -549,8 +549,12 @@ class BATSVisualizationD3 {
 
                         // Check if output is also brown (same entity, possibly new chain/address)
                         const outputColorType = entry.toWalletType || 'black';
-                        const outputAmount = entry.swapDetails ? parseFloat(entry.swapDetails.outputAmount || entry.outputAmount || 0) : parseFloat(entry.amount || 0);
-                        const outputCurrency = entry.swapDetails ? entry.swapDetails.outputCurrency : entry.currency;
+                        const outputAmount = entry.bridgeDetails ? parseFloat(entry.bridgeDetails.destinationAmount || entry.bridgeDetails.toAmount || 0) :
+                                           (entry.swapDetails ? parseFloat(entry.swapDetails.outputAmount || entry.outputAmount || 0) : parseFloat(entry.amount || 0));
+                        const outputCurrency = entry.bridgeDetails ? (entry.bridgeDetails.destinationAsset || entry.bridgeDetails.toCurrency) :
+                                             (entry.swapDetails ? entry.swapDetails.outputCurrency : entry.currency);
+
+                        console.log(`  [EXTERNAL swap output] Entry ${entry.notation}: output=${outputAmount} ${outputCurrency}`);
 
                         if (outputColorType === 'brown') {
                             // Output is also brown (e.g., bridge to new chain) - NO new wallet node
