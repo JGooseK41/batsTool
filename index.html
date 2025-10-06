@@ -3024,7 +3024,21 @@
                     html += `<div>`;
                     html += `<strong style="font-size: 16px;">📄 Entry ${entryIndex + 1}: ${entryType}${isCommingled ? ' (COMMINGLED)' : ''}</strong>`;
                     if (entry.notation) {
-                        html += ` <span style="color: #7f8c8d; margin-left: 10px;">${entry.notation}</span>`;
+                        // Simplify notation for display - convert (V1-T1,1,2,2,2,2) H2 to (V1-T1) H1→H2
+                        let displayNotation = entry.notation;
+                        const complexPattern = /\(([^,]+),([,\d]+)\)\s*H(\d+)/;
+                        const match = displayNotation.match(complexPattern);
+                        if (match) {
+                            const victimTx = match[1]; // V1-T1
+                            const hops = match[2].split(',').map(h => parseInt(h)); // [1,2,2,2,2,2]
+                            const currentHop = match[3]; // 2
+
+                            // Get unique hop sequence
+                            const uniqueHops = [...new Set(hops)];
+                            const hopPath = uniqueHops.join('→H');
+                            displayNotation = `(${victimTx}) H${hopPath}→H${currentHop}`;
+                        }
+                        html += ` <span style="color: #7f8c8d; margin-left: 10px;">${displayNotation}</span>`;
                     }
                     html += `</div>`;
                     html += `<div style="font-size: 18px; font-weight: bold;">${parseFloat(entry.amount).toLocaleString()} ${entry.currency}</div>`;
