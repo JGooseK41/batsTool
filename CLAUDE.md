@@ -3,17 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 05:44)
+## Latest Commit (Auto-updated: 2025-10-06 05:46)
 
-**Commit:** 186f9a7f707fee97fadf471cc3bb1c074e53923f
+**Commit:** 8508344fae40815fc3c1eb5a833858d8222ffdbc
 **Author:** Your Name
-**Message:** Fix switching from Sankey back to Hop Columns view
+**Message:** Preserve manual node positions when switching between views
 
-- renderSankey clears mainGroup which removes all subgroups
-- renderHopColumns now recreates subgroups after clearing mainGroup
-- Ensures clean state when switching between visualization modes
-- Fixes issue where Hop Columns button did nothing after viewing Sankey
-- Subgroups recreated in correct z-order (backgrounds, edges, nodes, labels, art)
+- Nodes now marked as 'manuallyPositioned' when dragged
+- Manual positions preserved when switching Sankey ↔ Hop Columns
+- Only auto-calculate positions for nodes not manually adjusted
+- Prevents losing carefully arranged layouts when exploring views
+- Works in both horizontal and vertical orientations
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -21,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 41 ++++++++++++++++++++---------------------
- bats-d3-visualization.js | 14 ++++++++++----
- 2 files changed, 30 insertions(+), 25 deletions(-)
+ CLAUDE.md                | 40 +++++++++++++++++++---------------------
+ bats-d3-visualization.js | 16 ++++++++++++----
+ 2 files changed, 31 insertions(+), 25 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 186f9a7 Fix switching from Sankey back to Hop Columns view (0 seconds ago)
-- 7a05754 Add victim transactions list to red wallet info modal (3 minutes ago)
-- 5a79270 Redesign column headers for uniform blue/gold styling (4 minutes ago)
-- 9bcf4d8 Fix wallet info panel to show correct currencies for conversions (12 minutes ago)
-- fe23ab8 Add currency color coding and verification to T-account reconciliation (17 minutes ago)
-- 1f1ebb1 Improve T-account reconciliation with paired rows and totals (19 minutes ago)
-- f5b7506 Register red wallet nodes in nodeMap for edge rendering (33 minutes ago)
-- 6d8d517 Remove brown output node creation for bridge conversions (40 minutes ago)
+- 8508344 Preserve manual node positions when switching between views (0 seconds ago)
+- 186f9a7 Fix switching from Sankey back to Hop Columns view (2 minutes ago)
+- 7a05754 Add victim transactions list to red wallet info modal (5 minutes ago)
+- 5a79270 Redesign column headers for uniform blue/gold styling (7 minutes ago)
+- 9bcf4d8 Fix wallet info panel to show correct currencies for conversions (14 minutes ago)
+- fe23ab8 Add currency color coding and verification to T-account reconciliation (19 minutes ago)
+- 1f1ebb1 Improve T-account reconciliation with paired rows and totals (21 minutes ago)
+- f5b7506 Register red wallet nodes in nodeMap for edge rendering (35 minutes ago)
+- 6d8d517 Remove brown output node creation for bridge conversions (43 minutes ago)
 - 6378425 Fix duplicate sourceThreadIds declaration causing syntax error (8 hours ago)
-- 4745104 Update CLAUDE.md (8 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

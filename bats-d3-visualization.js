@@ -1898,7 +1898,11 @@ class BATSVisualizationD3 {
             .attr('class', 'node')
             .attr('transform', d => `translate(${d.x}, ${d.y})`)
             .style('cursor', 'pointer')
-            .on('click', (event, d) => this.showNodeDetails(event, d))
+            .on('click', (event, d) => {
+                // Don't interfere with dragging or zooming
+                if (event.defaultPrevented) return;
+                this.showNodeDetails(event, d);
+            })
             .on('contextmenu', (event, d) => {
                 event.preventDefault();
                 this.showAddNoteModal(event, d, 'node');
@@ -2379,16 +2383,26 @@ class BATSVisualizationD3 {
                     </div>
                 </div>
 
-                <button onclick="this.parentElement.parentElement.remove()"
+                <button id="closeModalBtn"
                         style="width: 100%; padding: 12px; background: #34495e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px;">
                     Close
                 </button>
             </div>
         `;
 
+        // Helper function to close modal and re-enable zoom
+        const closeModal = () => {
+            modal.remove();
+            // Re-enable zoom/pan after modal closes
+            this.svg.call(this.zoom);
+        };
+
+        // Close button handler
+        modal.querySelector('#closeModalBtn').onclick = closeModal;
+
         // Close on background click
         modal.onclick = (e) => {
-            if (e.target === modal) modal.remove();
+            if (e.target === modal) closeModal();
         };
 
         document.body.appendChild(modal);
