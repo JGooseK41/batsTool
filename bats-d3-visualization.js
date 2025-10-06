@@ -1706,6 +1706,8 @@ class BATSVisualizationD3 {
                     // NEW T-ACCOUNT for converted currency
                     const nestedBoxStartY = currentY;
                     const nestedBoxHeight = 95;
+                    const nestedLabelsHeight = 15; // Height for column headers
+                    const nestedContentHeight = 20; // Height for main content area
 
                     // Draw horizontal divider line above new T-account
                     group.append('line')

@@ -3,18 +3,16 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 16:08)
+## Latest Commit (Auto-updated: 2025-10-06 16:10)
 
-**Commit:** eaa003c9f2b2586ae0cffbbb2415ab6507616a5a
+**Commit:** 7b79e621cea7537347bda298d2349d2561842aa2
 **Author:** Your Name
-**Message:** Fix T-account conversion display and terminal wallet detection
+**Message:** Fix leftY undefined error after removing left side conversion display
 
-- Remove "Converted" from left side of T-account (only appears on right as consumed)
-- Fix terminal wallet detection: use isTerminalWallet instead of isTerminal
-- Nested T-accounts now correctly show terminated vs tracing for converted funds
-- Left side shows only beginning balance, right side shows all dispositions
-
-Converted amounts are consumed (right side only), not incoming funds.
+- Replace leftY reference with currentY + lineHeight calculation
+- Left side now only has beginning balance (one line)
+- Right side has multiple disposition lines (rightY tracks height)
+- Advance to taller column before drawing balance line
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -22,23 +20,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 44 ++++++++++++++++++++++----------------------
- bats-d3-visualization.js | 24 ++----------------------
- 2 files changed, 24 insertions(+), 44 deletions(-)
+ CLAUDE.md                | 41 +++++++++++++++++++----------------------
+ bats-d3-visualization.js |  3 ++-
+ 2 files changed, 21 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- eaa003c Fix T-account conversion display and terminal wallet detection (0 seconds ago)
-- 536f979 Add callout arrow connecting conversion to nested T-account (7 minutes ago)
-- b4f7289 Apply accounting notation and improve T-account readability (21 minutes ago)
-- fba0d29 Update CLAUDE.md with latest commit info (36 minutes ago)
-- 4c7e376 Improve T-account reconciliation layout and clarity (50 minutes ago)
-- 5dd14d8 Update CLAUDE.md with latest commit info (83 minutes ago)
+- 7b79e62 Fix leftY undefined error after removing left side conversion display (0 seconds ago)
+- eaa003c Fix T-account conversion display and terminal wallet detection (2 minutes ago)
+- 536f979 Add callout arrow connecting conversion to nested T-account (9 minutes ago)
+- b4f7289 Apply accounting notation and improve T-account readability (23 minutes ago)
+- fba0d29 Update CLAUDE.md with latest commit info (38 minutes ago)
+- 4c7e376 Improve T-account reconciliation layout and clarity (51 minutes ago)
+- 5dd14d8 Update CLAUDE.md with latest commit info (85 minutes ago)
 - c6dddb8 Update CLAUDE.md with latest commit info (4 hours ago)
 - 4c57a13 Ensure all wallets are added to universal wallet index (4 hours ago)
 - fa2e014 Update CLAUDE.md with latest commit info (4 hours ago)
-- 2470670 Add read-only notice to visualization window Reports tab (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
