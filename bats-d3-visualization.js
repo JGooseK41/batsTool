@@ -1573,7 +1573,9 @@ class BATSVisualizationD3 {
                     rightTotal += account.stillTracing;
                 }
 
+                let convertedLineY = null; // Store Y position for callout arrow
                 if (account.converted > 0) {
+                    convertedLineY = rightY; // Store position for arrow
                     group.append('text')
                         .attr('x', rightNumberX)
                         .attr('y', rightY)
@@ -1650,57 +1652,106 @@ class BATSVisualizationD3 {
 
                 currentY += lineHeight + 10;
 
-                // NESTED ACCOUNTS (for converted currencies)
+                // NESTED ACCOUNTS (for converted currencies) - Option 3: Stacked with conversion box
                 for (const [nestedCurrency, nestedAccount] of Object.entries(account.nestedAccounts || {})) {
                     const nestedColor = getCurrencyColor(nestedCurrency);
+                    const sourceCurrency = nestedAccount.sourceCurrency || currency;
 
-                    // Calculate nested content height FIRST
-                    let dispositionCount = 0;
-                    if (nestedAccount.terminated > 0) dispositionCount++;
-                    if (nestedAccount.stillTracing > 0) dispositionCount++;
+                    // Visual separator
+                    currentY += 15;
 
-                    const hasSourceReference = nestedAccount.sourceAmount && nestedAccount.sourceCurrency;
-                    const nestedHeaderHeight = 25;
-                    const nestedLabelsHeight = 15;
-                    const nestedContentHeight = lineHeight + (hasSourceReference ? 12 : 0) + 5; // Extra height if source reference exists
-                    const nestedBalanceHeight = 25;
-                    const nestedBoxPadding = 15;
-                    const nestedBoxHeight = nestedHeaderHeight + nestedLabelsHeight + nestedContentHeight + nestedBalanceHeight + nestedBoxPadding;
+                    // CONVERSION BOX - shows the exchange formula
+                    const conversionBoxY = currentY;
+                    const conversionBoxHeight = 35;
 
-                    // Visual separator before nested account
-                    currentY += 10;
+                    // Arrow pointing down
+                    group.append('text')
+                        .attr('x', d.x)
+                        .attr('y', conversionBoxY)
+                        .attr('text-anchor', 'middle')
+                        .attr('font-size', '12px')
+                        .attr('fill', '#f39c12')
+                        .text('↓ Creates New Currency ↓');
 
-                    const nestedBoxStartY = currentY;
+                    currentY += 18;
 
-                    // Background box for nested account (draw first, then content on top)
+                    // Conversion formula box
                     group.append('rect')
-                        .attr('x', d.leftX + 30)
-                        .attr('y', nestedBoxStartY)
-                        .attr('width', d.width - 60)
-                        .attr('height', nestedBoxHeight)
-                        .attr('fill', '#f8f9fa')
+                        .attr('x', d.leftX + 40)
+                        .attr('y', currentY)
+                        .attr('width', d.width - 80)
+                        .attr('height', conversionBoxHeight)
+                        .attr('fill', '#fff3cd')
+                        .attr('stroke', '#f39c12')
+                        .attr('stroke-width', 2)
+                        .attr('rx', 6);
+
+                    // Conversion formula text
+                    group.append('text')
+                        .attr('x', d.x)
+                        .attr('y', currentY + 22)
+                        .attr('text-anchor', 'middle')
+                        .attr('font-size', '12px')
+                        .attr('font-weight', 'bold')
+                        .attr('fill', '#856404')
+                        .text(`${nestedAccount.sourceAmount.toFixed(2)} ${sourceCurrency} → ${nestedAccount.fromConversion.toFixed(2)} ${nestedCurrency}`);
+
+                    currentY += conversionBoxHeight + 10;
+
+                    // CALLOUT ARROW: Connect "Converted" line to nested T-account deposit
+                    if (convertedLineY) {
+                        const arrowStartX = rightLabelX + 70; // Start after "Converted" label text
+                        const arrowStartY = convertedLineY;
+                        const arrowMidX = d.leftX + d.width - 15; // Move out to right margin
+                        const arrowEndX = d.x - 80; // End at left side of nested T-account
+                        const arrowEndY = currentY + 45; // Point to where nested deposit will be
+
+                        // Draw path that avoids overlapping text
+                        const arrowPath = `M ${arrowStartX},${arrowStartY}
+                                           L ${arrowMidX},${arrowStartY}
+                                           L ${arrowMidX},${arrowEndY}
+                                           L ${arrowEndX},${arrowEndY}`;
+
+                        group.append('path')
+                            .attr('d', arrowPath)
+                            .attr('stroke', '#f39c12')
+                            .attr('stroke-width', 1.5)
+                            .attr('stroke-dasharray', '4,4')
+                            .attr('fill', 'none')
+                            .attr('opacity', 0.8)
+                            .attr('marker-end', 'url(#arrow-converted)');
+                    }
+
+                    // NEW T-ACCOUNT for converted currency
+                    const nestedBoxStartY = currentY;
+                    const nestedBoxHeight = 95;
+
+                    // Draw horizontal divider line above new T-account
+                    group.append('line')
+                        .attr('x1', d.leftX + 20)
+                        .attr('y1', currentY)
+                        .attr('x2', d.leftX + d.width - 20)
+                        .attr('y2', currentY)
                         .attr('stroke', nestedColor)
-                        .attr('stroke-width', 1.5)
-                        .attr('stroke-dasharray', '4,4')
-                        .attr('rx', 4);
+                        .attr('stroke-width', 2);
 
-                    currentY += 8;
+                    currentY += 5;
 
-                    // Nested account header
+                    // Currency header for nested T-account
                     group.append('text')
                         .attr('x', d.x)
                         .attr('y', currentY + 12)
                         .attr('text-anchor', 'middle')
-                        .attr('font-size', '10px')
+                        .attr('font-size', '11px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
-                        .text(`↳ ${nestedCurrency} T-ACCOUNT (from conversion) ↲`);
+                        .text(`━━ ${nestedCurrency} ━━`);
 
-                    currentY += nestedHeaderHeight;
+                    currentY += 20;
 
                     // Vertical divider line for nested T-account
                     const dividerTop = currentY;
-                    const dividerBottom = currentY + nestedContentHeight + 10;
+                    const dividerBottom = currentY + 60;
                     group.append('line')
                         .attr('x1', d.x)
                         .attr('y1', dividerTop)
@@ -2144,6 +2195,19 @@ class BATSVisualizationD3 {
                 .append('polygon')
                 .attr('points', '0 0, 10 5, 0 10')
                 .attr('fill', '#34495e');
+
+            // Conversion callout arrowhead (orange for currency conversions)
+            defs.append('marker')
+                .attr('id', 'arrow-converted')
+                .attr('markerWidth', 10)
+                .attr('markerHeight', 10)
+                .attr('refX', 10)
+                .attr('refY', 5)
+                .attr('orient', 'auto')
+                .attr('markerUnits', 'userSpaceOnUse')
+                .append('polygon')
+                .attr('points', '0 0, 10 5, 0 10')
+                .attr('fill', '#f39c12');
         }
 
         // Add edge label with notation (or thread count for collapsed) - with text shadow for readability

@@ -3,30 +3,45 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 15:32)
+## Latest Commit (Auto-updated: 2025-10-06 15:47)
 
-**Commit:** fba0d29eb4afa7df807701d3c374b687185a1349
+**Commit:** b4f72896ae00b27812d12b3c7e041c9adc548500
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Apply accounting notation and improve T-account readability
+
+- Numbers now right-aligned like math problems for easy visual addition
+- Consumed amounts shown in parentheses per standard accounting notation
+- Left side: 1290.00 HYPE | Right side: (1290.00) Terminated
+- Numbers followed by descriptions for better readability
+- T-account box height capped at viewport height - 100px to prevent overflow
+- More accurate nested account height calculation (100px per nested account)
+- All numbers use consistent right-alignment for professional appearance
+
+T-accounts now follow standard accounting principles and fit on screen
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 42 ++++++++++++++++++++++++++++--------------
- 1 file changed, 28 insertions(+), 14 deletions(-)
+ CLAUDE.md                |  30 ++------
+ bats-d3-visualization.js | 190 ++++++++++++++++++++++++++++++++++++-----------
+ 2 files changed, 156 insertions(+), 64 deletions(-)
 ```
 
 ## Recent Commits History
 
-- fba0d29 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 4c7e376 Improve T-account reconciliation layout and clarity (14 minutes ago)
-- 5dd14d8 Update CLAUDE.md with latest commit info (47 minutes ago)
+- b4f7289 Apply accounting notation and improve T-account readability (0 seconds ago)
+- fba0d29 Update CLAUDE.md with latest commit info (15 minutes ago)
+- 4c7e376 Improve T-account reconciliation layout and clarity (28 minutes ago)
+- 5dd14d8 Update CLAUDE.md with latest commit info (62 minutes ago)
 - c6dddb8 Update CLAUDE.md with latest commit info (3 hours ago)
 - 4c57a13 Ensure all wallets are added to universal wallet index (3 hours ago)
 - fa2e014 Update CLAUDE.md with latest commit info (3 hours ago)
 - 2470670 Add read-only notice to visualization window Reports tab (3 hours ago)
 - 7186c53 Add visualization button to Reports tab (3 hours ago)
 - e9edfed Fix wallet indices showing correct data (3 hours ago)
-- d3b3a69 Fix notation to deduplicate transaction numbers properly (3 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
