@@ -3,15 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 11:59)
+## Latest Commit (Auto-updated: 2025-10-06 12:01)
 
-**Commit:** 4491d8466739333b8a76729bd0cd5edd1a3bd377
+**Commit:** 39cd010759713b10d093cad7e5ee1b2fe96606af
 **Author:** Your Name
-**Message:** Add debug logging to wallet index generation
+**Message:** Show full transaction hashes and notes in audit trail
 
-- Log universalWalletIndex contents
-- Log wallets array length
-- Help diagnose why indexes may be empty
+- Remove truncation of transaction hashes (was showing only first/last 20 chars)
+- Remove truncation of wallet addresses
+- Display full hashes with word-break for readability
+- Add entry notes display with highlighted box
+- Add wallet label display
+- Support both txHash and transactionHash field names
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -19,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 24 ++++++++++++------------
- index.html |  2 ++
- 2 files changed, 14 insertions(+), 12 deletions(-)
+ CLAUDE.md  | 25 ++++++++++++-------------
+ index.html | 16 ++++++++++++----
+ 2 files changed, 24 insertions(+), 17 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4491d84 Add debug logging to wallet index generation (0 seconds ago)
-- ab4ead4 Add Reports tab to main application container (2 minutes ago)
-- f1c0ad1 Add debug logging to proceedDirectlyToReports() (4 minutes ago)
+- 39cd010 Show full transaction hashes and notes in audit trail (0 seconds ago)
+- 4491d84 Add debug logging to wallet index generation (2 minutes ago)
+- ab4ead4 Add Reports tab to main application container (4 minutes ago)
+- f1c0ad1 Add debug logging to proceedDirectlyToReports() (6 minutes ago)
 - 6090769 Add null safety checks to generateReportContent() (3 hours ago)
 - 2730194 Fix syntax error - remove orphaned code block (3 hours ago)
 - 8780908 Update CLAUDE.md with latest commit info (3 hours ago)
 - ced4655 Add source currency reference to nested T-accounts (3 hours ago)
 - c539fd1 Clean up nested T-account layout - eliminate overlapping text and lines (3 hours ago)
-- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (3 hours ago)
-- bc167ab Use universal wallet index as master source of truth for wallet IDs (4 hours ago)
+- 9f48c45 Resurrect audit trail and integrate wallet indexes into Reports tab (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
