@@ -1594,7 +1594,8 @@ class BATSVisualizationD3 {
                 }
 
                 // Advance currentY to whichever column is taller, plus extra spacing
-                currentY = Math.max(leftY, rightY) + lineHeight;
+                // Left side only has beginning balance (at currentY), right side may have multiple lines (rightY)
+                currentY = Math.max(currentY + lineHeight, rightY) + lineHeight;
 
                 // BALANCE LINE FOR MAIN ACCOUNT
                 const balanceY = currentY + 5;

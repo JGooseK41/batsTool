@@ -3,21 +3,18 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 16:01)
+## Latest Commit (Auto-updated: 2025-10-06 16:08)
 
-**Commit:** 536f979fc0379b35ae7f539aba468ff4deebfba5
+**Commit:** eaa003c9f2b2586ae0cffbbb2415ab6507616a5a
 **Author:** Your Name
-**Message:** Add callout arrow connecting conversion to nested T-account
+**Message:** Fix T-account conversion display and terminal wallet detection
 
-- Store Y position of "Converted" line in original T-account
-- Draw dashed orange arrow from right side conversion to left side nested deposit
-- Arrow routes cleanly after "Converted" label text to avoid overlap
-- Added arrow marker definition (#arrow-converted) in orange (#f39c12)
-- 80% opacity and 1.5px stroke for subtle visual guidance
-- Arrow path: horizontal after text → down right margin → horizontal to deposit
+- Remove "Converted" from left side of T-account (only appears on right as consumed)
+- Fix terminal wallet detection: use isTerminalWallet instead of isTerminal
+- Nested T-accounts now correctly show terminated vs tracing for converted funds
+- Left side shows only beginning balance, right side shows all dispositions
 
-Implements Option 3 nested T-account layout with visual flow indicator
-showing how consumed conversions create new currency T-accounts.
+Converted amounts are consumed (right side only), not incoming funds.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -25,23 +22,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                |  33 +++++++++----
- bats-d3-visualization.js | 124 +++++++++++++++++++++++++++++++++++------------
- 2 files changed, 118 insertions(+), 39 deletions(-)
+ CLAUDE.md                | 44 ++++++++++++++++++++++----------------------
+ bats-d3-visualization.js | 24 ++----------------------
+ 2 files changed, 24 insertions(+), 44 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 536f979 Add callout arrow connecting conversion to nested T-account (0 seconds ago)
-- b4f7289 Apply accounting notation and improve T-account readability (14 minutes ago)
-- fba0d29 Update CLAUDE.md with latest commit info (29 minutes ago)
-- 4c7e376 Improve T-account reconciliation layout and clarity (42 minutes ago)
-- 5dd14d8 Update CLAUDE.md with latest commit info (76 minutes ago)
-- c6dddb8 Update CLAUDE.md with latest commit info (3 hours ago)
-- 4c57a13 Ensure all wallets are added to universal wallet index (3 hours ago)
+- eaa003c Fix T-account conversion display and terminal wallet detection (0 seconds ago)
+- 536f979 Add callout arrow connecting conversion to nested T-account (7 minutes ago)
+- b4f7289 Apply accounting notation and improve T-account readability (21 minutes ago)
+- fba0d29 Update CLAUDE.md with latest commit info (36 minutes ago)
+- 4c7e376 Improve T-account reconciliation layout and clarity (50 minutes ago)
+- 5dd14d8 Update CLAUDE.md with latest commit info (83 minutes ago)
+- c6dddb8 Update CLAUDE.md with latest commit info (4 hours ago)
+- 4c57a13 Ensure all wallets are added to universal wallet index (4 hours ago)
 - fa2e014 Update CLAUDE.md with latest commit info (4 hours ago)
 - 2470670 Add read-only notice to visualization window Reports tab (4 hours ago)
-- 7186c53 Add visualization button to Reports tab (4 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
