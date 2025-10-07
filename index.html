@@ -18888,24 +18888,51 @@ function confirmSmartAllocation() {
         
         // Apply Sequential Hop Rule: find the highest hop number among converging paths
         let maxSourceHopNumber = 0;
+        let allSourcesAreBridgeOutputs = true;
+        let bridgeOutputHopNumber = null;
+
         allocation.allocations.forEach(alloc => {
-            const threadMatch = alloc.threadId.match(/-H(\d+)$/);
-            if (threadMatch) {
-                const sourceHopNumber = parseInt(threadMatch[1]);
-                maxSourceHopNumber = Math.max(maxSourceHopNumber, sourceHopNumber);
+            // Check if this is a bridge output thread (starts with "bridge_")
+            const isBridgeOutput = alloc.threadId.startsWith('bridge_');
+
+            if (!isBridgeOutput) {
+                allSourcesAreBridgeOutputs = false;
             }
+
+            // Extract hop number from notation or bridge ID
+            let sourceHopNumber = 0;
+            if (isBridgeOutput) {
+                // Bridge outputs don't have -H notation, they're created in the current hop
+                // Extract from the entry ID part: bridge_{entryId}_{currency}_{timestamp}_{random}
+                // The entry belongs to the current hop being edited
+                sourceHopNumber = entry.hopNumber || 1;
+                bridgeOutputHopNumber = sourceHopNumber;
+            } else {
+                const threadMatch = alloc.threadId.match(/-H(\d+)$/);
+                if (threadMatch) {
+                    sourceHopNumber = parseInt(threadMatch[1]);
+                }
+            }
+            maxSourceHopNumber = Math.max(maxSourceHopNumber, sourceHopNumber);
         });
-        
-        // The convergence output should be at maxHop + 1
+
+        // The convergence output should be at maxHop + 1 ONLY if sources are from different hops
+        // If all sources are bridge outputs from the SAME hop, stay in that hop (no hop increment for swaps/conversions)
         if (investigation.tracingMethod === 'PIFO') {
-            // For PIFO, we track the highest hop number and add 1
-            entry.hopNumber = maxSourceHopNumber + 1;
-            
-            // Show notification about Sequential Hop Rule application
-            showNotification(
-                `Sequential Hop Rule applied: Convergence of ${allocation.allocations.length} sources at hop ${entry.hopNumber}`,
-                'info'
-            );
+            if (allSourcesAreBridgeOutputs && bridgeOutputHopNumber !== null) {
+                // Bridge outputs consumed in same hop = no hop increment
+                entry.hopNumber = bridgeOutputHopNumber;
+                console.log(`ℹ️ Bridge outputs consumed in same hop ${entry.hopNumber} - no hop increment`);
+            } else {
+                // Normal convergence from different threads/hops = apply Sequential Hop Rule
+                entry.hopNumber = maxSourceHopNumber + 1;
+
+                // Show notification about Sequential Hop Rule application
+                showNotification(
+                    `Sequential Hop Rule applied: Convergence of ${allocation.allocations.length} sources at hop ${entry.hopNumber}`,
+                    'info'
+                );
+            }
         }
         
         entry.convergenceData = {

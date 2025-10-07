@@ -3,19 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-07 03:43)
+## Latest Commit (Auto-updated: 2025-10-07 03:45)
 
-**Commit:** 0fc3f433c3c8f4f26604ebddd55a0eafbe381ccb
+**Commit:** f75b411be7bf057ce5db17c6918af27b06de597a
 **Author:** Your Name
-**Message:** Fix bridge output matching to use startsWith for sourceThreadIds
+**Message:** Check same hop for terminal destinations, not future hops
 
-- sourceThreadIds format: bridge_{entryId}_{currency}_{timestamp}_{random}
-- Changed from exact match to startsWith pattern matching
-- Now correctly detects when bridge outputs reach terminal wallets
-- Uses .some() to check array of sourceThreadIds
+- Changed from looking at subsequent hops to checking same hop entries
+- Deferred entries (e.g., H2 entries in Hop 1 array) are in same hop
+- Bridge outputs that go to terminal in same hop now correctly detected
+- Prevents premature terminal marking before funds actually reach destination
 
-Nested T-accounts now properly show terminated status for bridge
-outputs that go to terminal wallets in subsequent hops.
+Nested T-accounts now show terminated when deferred entries in same
+hop reach terminal wallets, not when looking ahead to future hops.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -23,14 +23,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 35 +++++++++++++++--------------------
- bats-d3-visualization.js |  8 ++++++--
- 2 files changed, 21 insertions(+), 22 deletions(-)
+ CLAUDE.md                | 42 +++++++++++++++++++++++-------------------
+ bats-d3-visualization.js | 32 ++++++++++++++------------------
+ 2 files changed, 37 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0fc3f43 Fix bridge output matching to use startsWith for sourceThreadIds (0 seconds ago)
+- f75b411 Check same hop for terminal destinations, not future hops (0 seconds ago)
+- 0fc3f43 Fix bridge output matching to use startsWith for sourceThreadIds (2 minutes ago)
 - a0203ee Fix hopIndex undefined error in forEach loop (10 hours ago)
 - 9383da1 Fix nested T-account to detect terminal destinations in future hops (10 hours ago)
 - 4ad536a Add background rectangles to all T-account headers crossing vertical divider (10 hours ago)
@@ -39,7 +40,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 1348d90 Fix T-account box height calculation to include full nested account height (10 hours ago)
 - 9dbd3e4 Add background box to nested T-account and fix text positioning (11 hours ago)
 - a9e875c Fix nestedLabelsHeight and nestedContentHeight undefined errors (12 hours ago)
-- 7b79e62 Fix leftY undefined error after removing left side conversion display (12 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
