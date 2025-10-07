@@ -3,15 +3,19 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-06 17:58)
+## Latest Commit (Auto-updated: 2025-10-07 03:43)
 
-**Commit:** a0203ee0ff04bae4cdc1bc93c7be0e796b122280
+**Commit:** 0fc3f433c3c8f4f26604ebddd55a0eafbe381ccb
 **Author:** Your Name
-**Message:** Fix hopIndex undefined error in forEach loop
+**Message:** Fix bridge output matching to use startsWith for sourceThreadIds
 
-- Add index parameter to hopSpaces.forEach callback
-- hopIndex now available for looking ahead to subsequent hops
-- Fixes "hopIndex is not defined" error in terminal detection logic
+- sourceThreadIds format: bridge_{entryId}_{currency}_{timestamp}_{random}
+- Changed from exact match to startsWith pattern matching
+- Now correctly detects when bridge outputs reach terminal wallets
+- Uses .some() to check array of sourceThreadIds
+
+Nested T-accounts now properly show terminated status for bridge
+outputs that go to terminal wallets in subsequent hops.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -19,23 +23,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 37 ++++++++++++++++++++-----------------
- bats-d3-visualization.js |  2 +-
- 2 files changed, 21 insertions(+), 18 deletions(-)
+ CLAUDE.md                | 35 +++++++++++++++--------------------
+ bats-d3-visualization.js |  8 ++++++--
+ 2 files changed, 21 insertions(+), 22 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a0203ee Fix hopIndex undefined error in forEach loop (0 seconds ago)
-- 9383da1 Fix nested T-account to detect terminal destinations in future hops (2 minutes ago)
-- 4ad536a Add background rectangles to all T-account headers crossing vertical divider (12 minutes ago)
-- a375131 Add background rectangle behind nested T-account currency header (13 minutes ago)
-- 2254e66 Fix nested T-account currency label color to match amount (14 minutes ago)
-- 1348d90 Fix T-account box height calculation to include full nested account height (15 minutes ago)
-- 9dbd3e4 Add background box to nested T-account and fix text positioning (2 hours ago)
-- a9e875c Fix nestedLabelsHeight and nestedContentHeight undefined errors (2 hours ago)
-- 7b79e62 Fix leftY undefined error after removing left side conversion display (2 hours ago)
-- eaa003c Fix T-account conversion display and terminal wallet detection (2 hours ago)
+- 0fc3f43 Fix bridge output matching to use startsWith for sourceThreadIds (0 seconds ago)
+- a0203ee Fix hopIndex undefined error in forEach loop (10 hours ago)
+- 9383da1 Fix nested T-account to detect terminal destinations in future hops (10 hours ago)
+- 4ad536a Add background rectangles to all T-account headers crossing vertical divider (10 hours ago)
+- a375131 Add background rectangle behind nested T-account currency header (10 hours ago)
+- 2254e66 Fix nested T-account currency label color to match amount (10 hours ago)
+- 1348d90 Fix T-account box height calculation to include full nested account height (10 hours ago)
+- 9dbd3e4 Add background box to nested T-account and fix text positioning (11 hours ago)
+- a9e875c Fix nestedLabelsHeight and nestedContentHeight undefined errors (12 hours ago)
+- 7b79e62 Fix leftY undefined error after removing left side conversion display (12 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

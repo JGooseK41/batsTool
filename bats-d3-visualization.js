@@ -1340,30 +1340,26 @@ class BATSVisualizationD3 {
                         currencyAccounts[inputCurrency].nestedAccounts[outputCurrency].sourceAmount += inputAmount;
 
                         // Track what happened to the OUTPUT currency
-                        // Check if this conversion goes directly to terminal, or if we need to look ahead
+                        // Check if this conversion goes directly to terminal, or check same hop for deferred entries
                         let isTerminated = entry.isTerminalWallet || entry.walletType === 'purple' || entry.toWalletType === 'purple';
 
-                        // If not directly terminal, check subsequent hops for where this output goes
+                        // If not directly terminal, check SAME hop for deferred entries that consume this bridge output
                         if (!isTerminated && entry.isBridge) {
-                            // Look for entries in next hops that consume this bridge output
                             const entryId = entry.id;
-                            const nextHops = this.investigation.hops.slice(hopIndex + 1);
 
-                            for (const nextHop of nextHops) {
-                                for (const nextEntry of nextHop.entries) {
-                                    // Check if this entry sources from our bridge output
-                                    // sourceThreadIds format: bridge_${entryId}_${currency}_${timestamp}_${random}
-                                    if (nextEntry.sourceThreadIds) {
-                                        const matchesBridge = nextEntry.sourceThreadIds.some(threadId =>
-                                            threadId.startsWith(`bridge_${entryId}_${outputCurrency}_`)
-                                        );
-                                        if (matchesBridge && (nextEntry.isTerminalWallet || nextEntry.walletType === 'purple' || nextEntry.toWalletType === 'purple')) {
-                                            isTerminated = true;
-                                            break;
-                                        }
+                            // Check all entries in the SAME hop (including deferred entries)
+                            for (const sameHopEntry of hop.entries) {
+                                // Check if this entry sources from our bridge output
+                                // sourceThreadIds format: bridge_${entryId}_${currency}_${timestamp}_${random}
+                                if (sameHopEntry.sourceThreadIds) {
+                                    const matchesBridge = sameHopEntry.sourceThreadIds.some(threadId =>
+                                        threadId.startsWith(`bridge_${entryId}_${outputCurrency}_`)
+                                    );
+                                    if (matchesBridge && (sameHopEntry.isTerminalWallet || sameHopEntry.walletType === 'purple' || sameHopEntry.toWalletType === 'purple')) {
+                                        isTerminated = true;
+                                        break;
                                     }
                                 }
-                                if (isTerminated) break;
                             }
                         }
 
