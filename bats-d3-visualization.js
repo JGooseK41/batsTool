@@ -1352,8 +1352,12 @@ class BATSVisualizationD3 {
                             for (const nextHop of nextHops) {
                                 for (const nextEntry of nextHop.entries) {
                                     // Check if this entry sources from our bridge output
-                                    if (nextEntry.sourceThreadIds && nextEntry.sourceThreadIds.includes(`bridge_${entryId}_${outputCurrency}`)) {
-                                        if (nextEntry.isTerminalWallet || nextEntry.walletType === 'purple' || nextEntry.toWalletType === 'purple') {
+                                    // sourceThreadIds format: bridge_${entryId}_${currency}_${timestamp}_${random}
+                                    if (nextEntry.sourceThreadIds) {
+                                        const matchesBridge = nextEntry.sourceThreadIds.some(threadId =>
+                                            threadId.startsWith(`bridge_${entryId}_${outputCurrency}_`)
+                                        );
+                                        if (matchesBridge && (nextEntry.isTerminalWallet || nextEntry.walletType === 'purple' || nextEntry.toWalletType === 'purple')) {
                                             isTerminated = true;
                                             break;
                                         }
