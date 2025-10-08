@@ -3,20 +3,17 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-07 03:50)
+## Latest Commit (Auto-updated: 2025-10-08 05:48)
 
-**Commit:** d3306b61ab26e5e82ba2b1ec092ddd3e3b725129
+**Commit:** 93d4bf3d4c6d73c7989593af37fbf68ca5d89a58
 **Author:** Your Name
-**Message:** Fix hop increment for bridge output convergence - swaps don't create hops
+**Message:** Reposition ART box to appear below T-account instead of above
 
-- Bridge outputs consumed in same hop no longer increment hop number
-- Sequential Hop Rule only applies to convergence from different hops
-- Check if all sources are bridge outputs (start with "bridge_")
-- If yes, stay in same hop (e.g., H1 not H2)
-- Currency conversions/swaps within a hop don't create new hops in B.A.T.S.
-
-Fixes issue where USDC created from HYPE swaps in Hop 1 and going to
-terminal wallet was incorrectly marked as H2 instead of staying H1.
+- Changed ART box Y position from above T-account to below
+- T-account ends at config.height - 50
+- ART box now starts at config.height - 40 (10px gap)
+- Flow: Starting ART (top) → T-account (middle) → New ART (bottom)
+- Maintains same styling, only position changed
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -24,23 +21,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 28 ++++++++++++++--------------
- index.html | 55 +++++++++++++++++++++++++++++++++++++++++--------------
- 2 files changed, 55 insertions(+), 28 deletions(-)
+ CLAUDE.md                | 33 +++++++++++++++++----------------
+ bats-d3-visualization.js |  3 ++-
+ 2 files changed, 19 insertions(+), 17 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d3306b6 Fix hop increment for bridge output convergence - swaps don't create hops (1 second ago)
-- f75b411 Check same hop for terminal destinations, not future hops (5 minutes ago)
-- 0fc3f43 Fix bridge output matching to use startsWith for sourceThreadIds (7 minutes ago)
-- a0203ee Fix hopIndex undefined error in forEach loop (10 hours ago)
-- 9383da1 Fix nested T-account to detect terminal destinations in future hops (10 hours ago)
-- 4ad536a Add background rectangles to all T-account headers crossing vertical divider (10 hours ago)
-- a375131 Add background rectangle behind nested T-account currency header (10 hours ago)
-- 2254e66 Fix nested T-account currency label color to match amount (10 hours ago)
-- 1348d90 Fix T-account box height calculation to include full nested account height (10 hours ago)
-- 9dbd3e4 Add background box to nested T-account and fix text positioning (12 hours ago)
+- 93d4bf3 Reposition ART box to appear below T-account instead of above (0 seconds ago)
+- d3306b6 Fix hop increment for bridge output convergence - swaps don't create hops (26 hours ago)
+- f75b411 Check same hop for terminal destinations, not future hops (26 hours ago)
+- 0fc3f43 Fix bridge output matching to use startsWith for sourceThreadIds (26 hours ago)
+- a0203ee Fix hopIndex undefined error in forEach loop (2 days ago)
+- 9383da1 Fix nested T-account to detect terminal destinations in future hops (2 days ago)
+- 4ad536a Add background rectangles to all T-account headers crossing vertical divider (2 days ago)
+- a375131 Add background rectangle behind nested T-account currency header (2 days ago)
+- 2254e66 Fix nested T-account currency label color to match amount (2 days ago)
+- 1348d90 Fix T-account box height calculation to include full nested account height (2 days ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
