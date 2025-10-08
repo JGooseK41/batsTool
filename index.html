@@ -15393,33 +15393,12 @@ function finalizeHop(hopNumber) {
     // Use the remaining amounts from validation (which already accounts for swaps)
     const remainingByCurrency = validation.remainingByCurrency || {};
 
-    // CRITICAL FIX: Also check for ANY available threads that could be used in next hop
-    // This catches threads from previous hops that are still active but weren't in this hop's starting ART
-    const availableForNextHop = getAvailableSourcesForHop(hopNumber + 1, null);
-    const untracedThreads = availableForNextHop.filter(thread =>
-        thread.availableAmount > 0.01 &&
-        thread.hopLevel <= hopNumber && // Only threads from this hop or earlier
-        !thread.threadId.startsWith('bridge_') // Exclude bridge outputs (already checked above)
-    );
-
-    console.log(`Available threads for next hop (H${hopNumber + 1}):`, availableForNextHop);
-    console.log(`Untraced threads still active:`, untracedThreads);
-
-    // Add untraced thread amounts to remainingByCurrency
-    const expandedRemainingByCurrency = { ...remainingByCurrency };
-    untracedThreads.forEach(thread => {
-        if (!expandedRemainingByCurrency[thread.currency]) {
-            expandedRemainingByCurrency[thread.currency] = 0;
-        }
-        expandedRemainingByCurrency[thread.currency] += thread.availableAmount;
-    });
-
     // Check if hop is truly balanced (no remaining unallocated threads)
-    const totalRemaining = Object.values(expandedRemainingByCurrency).reduce((sum, amt) => sum + Math.abs(amt), 0);
+    const totalRemaining = Object.values(remainingByCurrency).reduce((sum, amt) => sum + Math.abs(amt), 0);
     const isBalanced = totalRemaining < 0.01;
 
     console.log(`Finalizing Hop ${hopNumber}: Total remaining = ${totalRemaining}, Is balanced = ${isBalanced}`);
-    console.log(`Remaining by currency (expanded):`, expandedRemainingByCurrency);
+    console.log(`Remaining by currency:`, remainingByCurrency);
 
     if (isBalanced) {
         // Skip finalization modal if already balanced - go straight to completion
@@ -15429,7 +15408,7 @@ function finalizeHop(hopNumber) {
         // Show finalization only if there are unbalanced amounts
         console.log(`⚠️ Hop ${hopNumber} has unbalanced amounts - showing finalization options`);
         const walletsWithRemainingFunds = analyzeUntracedBalances(hop);
-        showHopFinalizationSummary(hop, expandedRemainingByCurrency, walletsWithRemainingFunds);
+        showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemainingFunds);
     }
 }
 
@@ -16717,43 +16696,26 @@ function checkHopCompletionStatus(hop) {
 
     const validation = validateHopCompletion(hop.hopNumber);
 
-    // CRITICAL FIX: Check ALL available threads by looking at the universal threads database directly
-    // This catches threads from ANY previous hop that are still active, not just the immediate previous hop
-    buildAvailableThreadsIndex(); // Ensure threads are up to date
+    // NEW APPROACH: Check if there are any available threads remaining
+    // This properly handles swaps where the currency changes
+    // IMPORTANT: We need to check threads for NEXT hop (hop + 1)
+    // BUT also check same-hop conversion outputs (bridges/swaps) that haven't been allocated yet
+    const nextHopThreads = getAvailableSourcesForHop(hop.hopNumber + 1, null);
 
+    // Also check for unallocated same-hop conversion outputs
+    // These are bridge/swap outputs created in the current hop that need to be traced
     const allAvailableThreads = [];
 
-    // Scan the universal threads database for ANY threads with available amounts
-    for (const currency in investigation.availableThreads || {}) {
-        for (const threadKey in investigation.availableThreads[currency]) {
-            const thread = investigation.availableThreads[currency][threadKey];
-
-            // Calculate actual available amount
-            const availableAmount = getMaxAssignableAmount(
-                thread.internalId || threadKey,
-                currency
-            );
-
-            // Include this thread if:
-            // 1. It has available amount > 0.01
-            // 2. It's from the current hop or earlier (hopLevel <= hop.hopNumber)
-            // 3. It's not a terminal thread (terminal threads shouldn't be traced further)
-            if (availableAmount > 0.01 &&
-                thread.hopLevel <= hop.hopNumber &&
-                !thread.isTerminal) {
-
-                console.log(`Active thread found: ${thread.notation || threadKey} - ${availableAmount} ${currency} (hopLevel: ${thread.hopLevel}, current hop: ${hop.hopNumber})`);
-
-                allAvailableThreads.push({
-                    threadId: thread.notation || threadKey,
-                    availableAmount: availableAmount,
-                    currency: currency,
-                    hopLevel: thread.hopLevel,
-                    sourceType: thread.sourceType
-                });
-            }
+    // Add all threads that would be available for the next hop
+    nextHopThreads.forEach(thread => {
+        // Check if this is a same-hop conversion output from the CURRENT hop
+        // These need to be allocated before the hop can be finalized
+        if ((thread.sourceType === 'bridge_output' || thread.sourceType === 'swap_output') &&
+            thread.hopLevel === hop.hopNumber) {
+            console.log(`Found unallocated ${thread.sourceType} in current hop: ${thread.threadId} - ${thread.availableAmount} ${thread.currency}`);
         }
-    }
+        allAvailableThreads.push(thread);
+    });
 
     // Calculate total available across all currencies
     let totalAvailable = 0;
@@ -16772,7 +16734,6 @@ function checkHopCompletionStatus(hop) {
     const fullyAccounted = totalAvailable < 0.01; // Allow small rounding differences
 
     console.log(`Hop ${hop.hopNumber} completion check: ${totalAvailable} remaining across all currencies`, availableByCurrency);
-    console.log(`Threads still active:`, allAvailableThreads);
     
     // Show notification if fully accounted
     if (fullyAccounted && hop.entries.length > 0) {
