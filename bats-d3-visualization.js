@@ -1989,7 +1989,8 @@ class BATSVisualizationD3 {
             .attr('class', 'hop-creation-art-box');
 
         // Position below T-account reconciliation box
-        const boxY = this.config.height - this.reconBoxHeight - 130;
+        // T-account ends at: this.config.height - 50
+        const boxY = this.config.height - 40; // 10px gap below T-account
 
         // Header background box (same style as other headers)
         artGroup.append('rect')
