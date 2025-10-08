@@ -12213,11 +12213,19 @@ function exportRedWalletIndexCSV() {
                 });
                 
                 // Add amounts from trace outputs that continue to next hop
+                // CRITICAL FIX: Only add back NON-TERMINAL traces
+                // Terminal wallets don't create threads for the next hop
                 lastHop.entries.forEach(entry => {
                     if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0) {
                         // CRITICAL: Skip bridges with logged outputs - they consumed the original currency
                         if (entry.isBridge && entry.bridgeOutputLogged) {
                             console.log(`Skipping bridge ${entry.notation} from ART - consumed ${entry.currency} and created ${entry.bridgeDetails?.destinationAsset}`);
+                            return; // Don't add this back to ART
+                        }
+
+                        // CRITICAL FIX: Skip terminal wallets - they don't create threads for next hop
+                        if (entry.isTerminalWallet || entry.toWalletType === 'purple' || entry.toWalletType === 'gray') {
+                            console.log(`Skipping terminal wallet ${entry.notation} from ART - funds arrived at terminal`);
                             return; // Don't add this back to ART
                         }
 
