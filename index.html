@@ -10670,7 +10670,7 @@ function updateFormFieldsFromInvestigation() {
         function renderVictims() {
     const container = document.getElementById('victimsList');
     container.innerHTML = '';
-    
+
     // Show/hide instructions based on victim count
     const instructionsDiv = document.getElementById('victimInstructions');
     if (instructionsDiv) {
@@ -10680,9 +10680,11 @@ function updateFormFieldsFromInvestigation() {
             instructionsDiv.style.display = 'block';
         }
     }
-    
-    // First, sort all transactions chronologically
-    sortTransactionsChronologically();
+
+    // CONDITIONAL: Only enforce chronological sorting for PIFO method
+    if (investigation.tracingMethod === 'PIFO') {
+        sortTransactionsChronologically();
+    }
 
     investigation.victims.forEach(victim => {
         const victimDiv = document.createElement('div');
@@ -10985,34 +10987,39 @@ function updateFormFieldsFromInvestigation() {
         alert(`ERROR:  Cannot generate root total: Missing receiving wallet addresses for the following transactions:\n\n${missingWallets.join(', ')}\n\nPlease add receiving wallet addresses for all transactions with amounts before confirming your root total.`);
         return;
     }
-    
-    // Check chronological order for each victim
+
+    // CONDITIONAL: Check chronological order ONLY for PIFO method
     const chronologyErrors = [];
-    investigation.victims.forEach(victim => {
-        const error = validateTransactionChronology(victim);
-        if (error) {
-            chronologyErrors.push(error);
+    if (investigation.tracingMethod === 'PIFO') {
+        investigation.victims.forEach(victim => {
+            const error = validateTransactionChronology(victim);
+            if (error) {
+                chronologyErrors.push(error);
+            }
+        });
+
+        if (chronologyErrors.length > 0) {
+            const shouldFix = confirm(`❌ Transaction chronology errors detected!\n\n${chronologyErrors.join('\n\n')}\n\nTransactions must be in chronological order for PIFO compliance.\n\nWould you like to automatically fix the order for all victims?\n\nClick OK to reorder all transactions chronologically.\nClick Cancel to fix manually.`);
+
+            if (shouldFix) {
+                // Fix order for all victims with errors
+                investigation.victims.forEach(victim => {
+                    const error = validateTransactionChronology(victim);
+                    if (error) {
+                        fixVictimTransactionOrder(victim.id);
+                    }
+                });
+
+                // Try to generate root total again - using longer delay to avoid race conditions
+                setTimeout(() => generateRootTotal(), 500);
+                return;
+            } else {
+                return;
+            }
         }
-    });
-    
-    if (chronologyErrors.length > 0) {
-        const shouldFix = confirm(`❌ Transaction chronology errors detected!\n\n${chronologyErrors.join('\n\n')}\n\nTransactions must be in chronological order for PIFO compliance.\n\nWould you like to automatically fix the order for all victims?\n\nClick OK to reorder all transactions chronologically.\nClick Cancel to fix manually.`);
-        
-        if (shouldFix) {
-            // Fix order for all victims with errors
-            investigation.victims.forEach(victim => {
-                const error = validateTransactionChronology(victim);
-                if (error) {
-                    fixVictimTransactionOrder(victim.id);
-                }
-            });
-            
-            // Try to generate root total again - using longer delay to avoid race conditions
-            setTimeout(() => generateRootTotal(), 500);
-            return;
-        } else {
-            return;
-        }
+    } else if (investigation.tracingMethod === 'LIBR') {
+        // LIBR: Chronological order is informational, not enforced
+        console.log('LIBR method selected - chronological ordering is optional for victim transactions');
     }
     
     const totalsByCurrency = {};
@@ -15413,10 +15420,50 @@ function finalizeHop(hopNumber) {
         console.log(`✅ Hop ${hopNumber} is balanced - proceeding to completion`);
         completeHopAndProceed(hop);
     } else {
-        // Show finalization only if there are unbalanced amounts
-        console.log(`⚠️ Hop ${hopNumber} has unbalanced amounts - showing finalization options`);
-        const walletsWithRemainingFunds = analyzeUntracedBalances(hop);
-        showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemainingFunds);
+        // CONDITIONAL: Different behavior based on tracing method
+        if (investigation.tracingMethod === 'PIFO') {
+            // PIFO: Must be balanced before finalization
+            console.log(`⚠️ PIFO method: Hop ${hopNumber} has unbalanced amounts - showing finalization options`);
+            const walletsWithRemainingFunds = analyzeUntracedBalances(hop);
+            showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemainingFunds);
+        } else if (investigation.tracingMethod === 'LIBR') {
+            // LIBR: Allow finalization with remaining funds (they stay in wallet per LIBR methodology)
+            console.log(`ℹ️ LIBR method: Hop ${hopNumber} has remaining funds - this is expected per LIBR methodology`);
+
+            const remainingList = Object.entries(remainingByCurrency)
+                .map(([curr, amt]) => `  • ${amt.toLocaleString()} ${curr}`)
+                .join('\n');
+
+            const confirmLIBR = confirm(
+                `⚠️ LIBR Method: Remaining Funds in Hop ${hopNumber}\n\n` +
+                `The following funds remain untraced:\n\n${remainingList}\n\n` +
+                `Per LIBR methodology, these funds remain in their current wallets ` +
+                `until the wallet balance drops below the deposited criminal proceeds.\n\n` +
+                `Document in notes: "LIBR applied - balance analysis shows funds remain above traced amount"\n\n` +
+                `Proceed with finalization?`
+            );
+
+            if (confirmLIBR) {
+                // Add LIBR documentation to hop
+                if (!hop.librNotes) hop.librNotes = [];
+                hop.librNotes.push({
+                    timestamp: new Date().toISOString(),
+                    hopNumber: hopNumber,
+                    remainingByCurrency: remainingByCurrency,
+                    note: `LIBR applied: ${Object.entries(remainingByCurrency)
+                        .map(([c, a]) => `${a.toLocaleString()} ${c}`).join(', ')} ` +
+                        `remains in wallet(s) - balance analysis indicates criminal proceeds not yet depleted per Lowest Intermediate Balance Rule.`
+                });
+
+                console.log(`📝 LIBR documentation added to Hop ${hopNumber}:`, hop.librNotes[hop.librNotes.length - 1]);
+
+                completeHopAndProceed(hop);
+            } else {
+                // User cancelled - show finalization summary
+                const walletsWithRemainingFunds = analyzeUntracedBalances(hop);
+                showHopFinalizationSummary(hop, remainingByCurrency, walletsWithRemainingFunds);
+            }
+        }
     }
 }
 
@@ -22021,11 +22068,34 @@ function showHopWizardStep(step) {
                     </div>
                 `}
             </div>
+
+            ${investigation.tracingMethod === 'LIBR' && availableThreads.length > 0 ? `
+                <div style="background: #fff8e1; border: 2px solid #ffc107; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                    <h4 style="color: #f57c00; margin-top: 0;">⚖️ LIBR Method Active</h4>
+                    <p style="margin-bottom: 15px;">
+                        Use the Lowest Intermediate Balance Rule to analyze wallet balances
+                        and determine which transactions to follow.
+                    </p>
+
+                    <button onclick="launchLIBRAnalyzerFromWizard()" class="btn btn-secondary" style="width: 100%;">
+                        📊 Analyze Wallet Balance (LIBR)
+                    </button>
+
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 13px;">
+                        <strong>LIBR allows you to:</strong>
+                        <ul style="margin: 5px 0; padding-left: 20px;">
+                            <li>Skip earlier transactions if wallet balance never dropped</li>
+                            <li>Select specific transaction where balance dropped below proceeds</li>
+                            <li>Leave threads unallocated if funds remain above threshold</li>
+                        </ul>
+                    </div>
+                </div>
+            ` : ''}
         `;
-        
+
         nextBtn.disabled = wizardData.selectedThreads.length === 0;
         nextBtn.textContent = 'Next';
-        
+
     } else if (step === 2) {
         // Step 2: Allocate amounts
 
@@ -34821,6 +34891,515 @@ async function lookupBitcoinTransaction(txHash) {
     
     throw new Error('Failed to fetch Bitcoin transaction');
 }
+
+// ====================================================================
+// LIBR (Lowest Intermediate Balance Rule) - Balance Tracking Functions
+// CONDITIONAL: These functions only execute when investigation.tracingMethod === 'LIBR'
+// ====================================================================
+
+async function fetchCompleteTransactionHistory(address, blockchain, currency) {
+    console.log(`📊 [LIBR] Fetching complete transaction history for ${address} on ${blockchain}`);
+
+    const config = window.blockchainAPIs[blockchain];
+    if (!config) {
+        throw new Error(`No API configuration for blockchain: ${blockchain}`);
+    }
+
+    const apiKey = config.apiKey || localStorage.getItem(`bats_${blockchain}_api_key`) || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+    const allTxs = [];
+    let page = 1;
+    let hasMore = true;
+
+    // For Ethereum/EVM chains
+    if (config.addressApiUrl) {
+        while (hasMore && page <= 10) { // Limit to 10 pages (100k txs max)
+            try {
+                const url = `${config.addressApiUrl}${address}&startblock=0&endblock=99999999&page=${page}&offset=10000&sort=asc&apikey=${apiKey}`;
+
+                console.log(`Fetching page ${page}...`);
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.status === '1' && data.result && Array.isArray(data.result)) {
+                    allTxs.push(...data.result);
+                    hasMore = data.result.length === 10000;
+                    page++;
+
+                    // Rate limiting: wait 200ms between requests
+                    if (hasMore) await new Promise(resolve => setTimeout(resolve, 200));
+                } else {
+                    console.log(`No more results or API error: ${data.message || 'unknown'}`);
+                    hasMore = false;
+                }
+            } catch (err) {
+                console.error(`Failed to fetch page ${page}:`, err);
+                hasMore = false;
+            }
+        }
+    }
+    // For Bitcoin
+    else if (blockchain === 'bitcoin') {
+        try {
+            const url = `https://blockchain.info/rawaddr/${address}?limit=10000`;
+            console.log(`Fetching Bitcoin transaction history...`);
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.txs) {
+                allTxs.push(...data.txs.map(tx => ({
+                    timeStamp: tx.time,
+                    hash: tx.hash,
+                    from: tx.inputs[0]?.prev_out?.addr || '',
+                    to: '', // Bitcoin has multiple outputs
+                    value: '0', // Will calculate from outputs
+                    isError: '0',
+                    rawTx: tx
+                })));
+            }
+        } catch (err) {
+            console.error('Failed to fetch Bitcoin transaction history:', err);
+            throw err;
+        }
+    }
+
+    console.log(`✅ [LIBR] Fetched ${allTxs.length} transactions for ${address}`);
+
+    // Cache the results in investigation object
+    if (!investigation.librWalletAnalysis) investigation.librWalletAnalysis = {};
+    const walletKey = `${blockchain}_${address.toLowerCase()}`;
+    if (!investigation.librWalletAnalysis[walletKey]) {
+        investigation.librWalletAnalysis[walletKey] = {};
+    }
+    investigation.librWalletAnalysis[walletKey].transactionHistory = allTxs;
+    investigation.librWalletAnalysis[walletKey].lastFetched = new Date().toISOString();
+
+    saveToStorage();
+
+    return allTxs;
+}
+
+function calculateRunningBalance(address, transactions, blockchain, startingBalance = 0) {
+    console.log(`📊 [LIBR] Calculating running balance for ${address} (${transactions.length} transactions)`);
+
+    let balance = startingBalance;
+    const balanceHistory = [];
+    const lowerAddress = address.toLowerCase();
+
+    // Sort transactions chronologically
+    const sortedTxs = [...transactions].sort((a, b) => {
+        const timeA = parseInt(a.timeStamp) || 0;
+        const timeB = parseInt(b.timeStamp) || 0;
+        return timeA - timeB;
+    });
+
+    for (const tx of sortedTxs) {
+        let amount = 0;
+        let type = 'unknown';
+
+        if (blockchain === 'bitcoin' && tx.rawTx) {
+            // Bitcoin UTXO calculation
+            // Check outputs going TO this address
+            for (const output of tx.rawTx.out || []) {
+                if (output.addr === address) {
+                    amount += output.value / 100000000; // Satoshis to BTC
+                    type = 'inbound';
+                }
+            }
+            // Check inputs coming FROM this address
+            for (const input of tx.rawTx.inputs || []) {
+                if (input.prev_out && input.prev_out.addr === address) {
+                    amount -= input.prev_out.value / 100000000;
+                    type = 'outbound';
+                }
+            }
+            balance += amount; // Amount is already positive or negative
+        } else {
+            // Ethereum/EVM calculation
+            const isInbound = tx.to?.toLowerCase() === lowerAddress;
+            const isOutbound = tx.from?.toLowerCase() === lowerAddress;
+
+            if (isInbound) {
+                amount = parseFloat(tx.value) / 1e18; // Wei to ETH
+                type = 'inbound';
+                balance += amount;
+            } else if (isOutbound) {
+                amount = parseFloat(tx.value) / 1e18;
+                type = 'outbound';
+                balance -= amount;
+
+                // Also subtract gas fee
+                if (tx.gasUsed && tx.gasPrice) {
+                    const gasFee = (parseInt(tx.gasUsed) * parseInt(tx.gasPrice)) / 1e18;
+                    balance -= gasFee;
+                }
+            }
+        }
+
+        balanceHistory.push({
+            timestamp: parseInt(tx.timeStamp) * 1000, // Convert to milliseconds
+            txHash: tx.hash,
+            type: type,
+            amount: Math.abs(amount),
+            balance: Math.max(0, balance), // Don't allow negative balances
+            blockNumber: tx.blockNumber,
+            isError: tx.isError === '1'
+        });
+    }
+
+    console.log(`✅ [LIBR] Calculated ${balanceHistory.length} balance snapshots`);
+    return balanceHistory;
+}
+
+function findLIBRTransactionPoint(balanceHistory, criminalProceedsAmount, criminalProceedsTimestamp) {
+    console.log(`📊 [LIBR] Finding transaction point: ${criminalProceedsAmount} at ${new Date(criminalProceedsTimestamp).toISOString()}`);
+
+    // Only look at transactions AFTER criminal proceeds were deposited
+    const relevantHistory = balanceHistory.filter(h => h.timestamp >= criminalProceedsTimestamp);
+
+    if (relevantHistory.length === 0) {
+        return {
+            analysis: 'No transactions found after criminal proceeds deposit',
+            firstTransactionToFollow: null,
+            lowestIntermediateBalance: null,
+            balanceDroppedBelowProceeds: false,
+            proceedsRemainInWallet: true,
+            currentBalance: 0,
+            transactionsAnalyzed: 0
+        };
+    }
+
+    let lowestBalance = Infinity;
+    let firstDropTx = null;
+    let balanceNeverDropped = true;
+
+    for (const entry of relevantHistory) {
+        // Track lowest balance
+        if (entry.balance < lowestBalance) {
+            lowestBalance = entry.balance;
+        }
+
+        // Find first outbound transaction where balance drops below proceeds
+        if (entry.type === 'outbound' &&
+            entry.balance < criminalProceedsAmount &&
+            !firstDropTx) {
+            firstDropTx = entry;
+            balanceNeverDropped = false;
+        }
+    }
+
+    const currentBalance = relevantHistory[relevantHistory.length - 1]?.balance || 0;
+
+    const result = {
+        analysis: balanceNeverDropped ?
+            'Balance never dropped below criminal proceeds - funds remain in wallet' :
+            `Balance dropped below proceeds at transaction ${firstDropTx.txHash.substring(0, 20)}...`,
+        firstTransactionToFollow: firstDropTx,
+        lowestIntermediateBalance: lowestBalance,
+        balanceDroppedBelowProceeds: !balanceNeverDropped,
+        proceedsRemainInWallet: balanceNeverDropped,
+        currentBalance: currentBalance,
+        transactionsAnalyzed: relevantHistory.length
+    };
+
+    console.log(`✅ [LIBR] Analysis complete:`, result.analysis);
+    return result;
+}
+
+// End of LIBR Balance Tracking Functions
+// ====================================================================
+
+// ====================================================================
+// LIBR UI Functions
+// CONDITIONAL: These functions only execute when investigation.tracingMethod === 'LIBR'
+// ====================================================================
+
+async function showLIBRBalanceTracker(walletAddress, criminalProceedsAmount, criminalProceedsDate, currency, blockchain) {
+    console.log(`📊 [LIBR] Opening Balance Tracker for ${walletAddress}`);
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'librBalanceModal';
+    modal.style.zIndex = '10000';
+
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 1000px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>⚖️ LIBR Balance Analysis</h2>
+                <button onclick="closeLIBRBalanceModal()" class="btn-close" style="font-size: 24px; border: none; background: none; cursor: pointer;">✕</button>
+            </div>
+
+            <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin-top: 0;">Wallet Address</h4>
+                <p style="font-family: monospace; word-break: break-all; margin-bottom: 15px;">${walletAddress}</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <strong>Criminal Proceeds Deposited:</strong><br>
+                        ${criminalProceedsAmount.toLocaleString()} ${currency}
+                    </div>
+                    <div>
+                        <strong>Deposit Date:</strong><br>
+                        ${new Date(criminalProceedsDate).toLocaleString()}
+                    </div>
+                </div>
+                <p style="margin: 15px 0 0 0; padding: 10px; background: #fff; border-radius: 4px;">
+                    <strong>📜 LIBR Rule:</strong> Only follow outbound transactions when wallet balance
+                    drops below ${criminalProceedsAmount.toLocaleString()} ${currency}
+                </p>
+            </div>
+
+            <div id="librLoadingIndicator" style="text-align: center; padding: 40px;">
+                <div style="font-size: 48px;">⏳</div>
+                <p>Fetching transaction history from ${blockchain} blockchain...</p>
+                <p style="color: #666; font-size: 14px;">This may take a moment for wallets with many transactions</p>
+            </div>
+
+            <div id="librAnalysisResults" style="display: none;">
+                <!-- Will be populated after analysis -->
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button onclick="closeLIBRBalanceModal()" class="btn btn-secondary">Close</button>
+                <button id="librApplyButton" onclick="applyLIBRSelection()" class="btn btn-primary" style="display: none;">
+                    Apply LIBR Selection
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Perform analysis
+    try {
+        await performLIBRAnalysis(walletAddress, criminalProceedsAmount, criminalProceedsDate, currency, blockchain);
+    } catch (err) {
+        document.getElementById('librLoadingIndicator').innerHTML = `
+            <div style="color: #d32f2f;">
+                <div style="font-size: 48px;">⚠️</div>
+                <p>Failed to fetch transaction history</p>
+                <p style="color: #666; font-size: 14px;">${err.message}</p>
+                <button onclick="closeLIBRBalanceModal()" class="btn btn-secondary" style="margin-top: 20px;">Close</button>
+            </div>
+        `;
+    }
+}
+
+async function performLIBRAnalysis(walletAddress, criminalProceedsAmount, criminalProceedsDate, currency, blockchain) {
+    console.log(`📊 [LIBR] Performing analysis for ${walletAddress}`);
+
+    // Fetch transaction history
+    const txHistory = await fetchCompleteTransactionHistory(walletAddress, blockchain, currency);
+
+    // Calculate running balance
+    const balanceHistory = calculateRunningBalance(walletAddress, txHistory, blockchain);
+
+    // Find LIBR transaction point
+    const librAnalysis = findLIBRTransactionPoint(
+        balanceHistory,
+        criminalProceedsAmount,
+        new Date(criminalProceedsDate).getTime()
+    );
+
+    // Store analysis in investigation object
+    const walletKey = `${blockchain}_${walletAddress.toLowerCase()}`;
+    if (!investigation.librWalletAnalysis) investigation.librWalletAnalysis = {};
+    if (!investigation.librWalletAnalysis[walletKey]) {
+        investigation.librWalletAnalysis[walletKey] = {};
+    }
+
+    investigation.librWalletAnalysis[walletKey] = {
+        ...investigation.librWalletAnalysis[walletKey],
+        address: walletAddress,
+        blockchain: blockchain,
+        currency: currency,
+        criminalProceedsAmount: criminalProceedsAmount,
+        criminalProceedsDate: criminalProceedsDate,
+        balanceHistory: balanceHistory,
+        librAnalysis: librAnalysis,
+        lastAnalyzed: new Date().toISOString()
+    };
+
+    saveToStorage();
+
+    // Display results
+    displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProceedsAmount, criminalProceedsDate, currency);
+}
+
+function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProceedsAmount, criminalProceedsDate, currency) {
+    const loadingDiv = document.getElementById('librLoadingIndicator');
+    const resultsDiv = document.getElementById('librAnalysisResults');
+
+    if (loadingDiv) loadingDiv.style.display = 'none';
+    if (resultsDiv) resultsDiv.style.display = 'block';
+
+    const statusColor = librAnalysis.balanceDroppedBelowProceeds ? '#4caf50' : '#ff9800';
+    const statusIcon = librAnalysis.balanceDroppedBelowProceeds ? '✅' : '⚠️';
+    const statusText = librAnalysis.balanceDroppedBelowProceeds ?
+        'Balance Dropped Below Proceeds' :
+        'Proceeds Remain in Wallet';
+
+    const filteredHistory = balanceHistory.filter(h => h.timestamp >= new Date(criminalProceedsDate).getTime());
+    const tableRows = filteredHistory.map(h => {
+        const belowThreshold = h.balance < criminalProceedsAmount;
+        const isFirstDrop = librAnalysis.firstTransactionToFollow?.txHash === h.txHash;
+        return `
+            <tr style="background: ${isFirstDrop ? '#e3f2fd' : 'white'};">
+                <td style="padding: 8px; border-bottom: 1px solid #eee; font-size: 12px;">
+                    ${new Date(h.timestamp).toLocaleString()}
+                </td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                    <span style="padding: 2px 8px; border-radius: 4px; background: ${h.type === 'inbound' ? '#4caf5022' : '#f4433622'}; color: ${h.type === 'inbound' ? '#4caf50' : '#f44336'};">
+                        ${h.type === 'inbound' ? '📥 In' : '📤 Out'}
+                    </span>
+                </td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-family: monospace;">
+                    ${h.amount.toFixed(6)}
+                </td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-family: monospace; font-weight: bold; color: ${belowThreshold ? '#f44336' : '#4caf50'};">
+                    ${h.balance.toFixed(6)}
+                </td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">
+                    ${isFirstDrop ? '🎯 <strong>START HERE</strong>' : belowThreshold ? '✅ Follow' : '⏭️ Skip'}
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    resultsDiv.innerHTML = `
+        <div style="background: ${statusColor}22; border: 2px solid ${statusColor}; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="margin-top: 0; color: ${statusColor};">${statusIcon} ${statusText}</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <div>
+                    <strong>Lowest Balance:</strong><br>
+                    ${librAnalysis.lowestIntermediateBalance?.toFixed(6) || 'N/A'} ${currency}
+                </div>
+                <div>
+                    <strong>Current Balance:</strong><br>
+                    ${librAnalysis.currentBalance?.toFixed(6) || 'N/A'} ${currency}
+                </div>
+                <div>
+                    <strong>Transactions Analyzed:</strong><br>
+                    ${librAnalysis.transactionsAnalyzed}
+                </div>
+            </div>
+        </div>
+
+        ${librAnalysis.balanceDroppedBelowProceeds ? `
+            <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin-bottom: 20px;">
+                <h4 style="margin-top: 0;">📍 First Transaction to Follow</h4>
+                <p style="margin-bottom: 10px;">Per LIBR methodology, begin tracing at:</p>
+                <div style="background: white; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px;">
+                    <strong>TX Hash:</strong> ${librAnalysis.firstTransactionToFollow.txHash}<br>
+                    <strong>Date:</strong> ${new Date(librAnalysis.firstTransactionToFollow.timestamp).toLocaleString()}<br>
+                    <strong>Balance After:</strong> ${librAnalysis.firstTransactionToFollow.balance.toFixed(6)} ${currency}<br>
+                    <strong>Amount:</strong> ${librAnalysis.firstTransactionToFollow.amount.toFixed(6)} ${currency}
+                </div>
+            </div>
+        ` : `
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px;">
+                <h4 style="margin-top: 0;">💰 Proceeds Remain in Wallet</h4>
+                <p>The wallet balance has never dropped below ${criminalProceedsAmount.toLocaleString()} ${currency}.</p>
+                <p style="margin-bottom: 0;">Per LIBR methodology, the criminal proceeds remain in this wallet and should not be traced further at this time.</p>
+            </div>
+        `}
+
+        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="position: sticky; top: 0; background: #f5f5f5; z-index: 1;">
+                    <tr>
+                        <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Date</th>
+                        <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Type</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Amount</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Balance After</th>
+                        <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">LIBR Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    // Show apply button if balance dropped
+    const applyButton = document.getElementById('librApplyButton');
+    if (librAnalysis.balanceDroppedBelowProceeds && applyButton) {
+        applyButton.style.display = 'inline-block';
+    }
+}
+
+function closeLIBRBalanceModal() {
+    const modal = document.getElementById('librBalanceModal');
+    if (modal) modal.remove();
+}
+
+function applyLIBRSelection() {
+    // This will be enhanced in Phase 3 to pre-fill transaction data
+    showNotification('LIBR analysis complete. Use the identified transaction for your trace.', 'info');
+    closeLIBRBalanceModal();
+}
+
+// Helper function to launch LIBR analyzer from wizard or other contexts
+async function analyzeLIBRForWallet(walletAddress, proceedsAmount, proceedsDate, currency, blockchain) {
+    // CONDITIONAL: Only execute if LIBR method is selected
+    if (investigation.tracingMethod !== 'LIBR') {
+        alert('LIBR Balance Tracker is only available when using LIBR methodology.\\n\\nYour current investigation uses PIFO method.');
+        return;
+    }
+
+    await showLIBRBalanceTracker(walletAddress, proceedsAmount, proceedsDate, currency, blockchain);
+}
+
+// Helper function to launch LIBR analyzer from hop wizard
+async function launchLIBRAnalyzerFromWizard() {
+    // Get wizard data
+    const wizardData = window.hopWizardData;
+    if (!wizardData || !wizardData.selectedThreads || wizardData.selectedThreads.length === 0) {
+        alert('Please select at least one thread first.');
+        return;
+    }
+
+    // Get the first selected thread to determine wallet and amount
+    const availableThreads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+    const selectedThread = availableThreads.find(t =>
+        wizardData.selectedThreads.includes(t.threadId) ||
+        wizardData.selectedInternalIds?.includes(t.internalId)
+    );
+
+    if (!selectedThread) {
+        alert('Could not find thread information. Please try again.');
+        return;
+    }
+
+    // Determine wallet address (the source wallet from the thread)
+    const walletAddress = selectedThread.lastReceivingWallet || selectedThread.sourceWallet;
+    if (!walletAddress) {
+        alert('Could not determine wallet address for LIBR analysis.');
+        return;
+    }
+
+    // Determine blockchain
+    const blockchain = selectedThread.chainId || 'ethereum';
+
+    // Determine currency and amount
+    const currency = selectedThread.currency;
+    const proceedsAmount = selectedThread.availableAmount;
+
+    // Determine deposit date (use thread creation date or current time)
+    const proceedsDate = selectedThread.threadEndDate || selectedThread.createdAt || new Date().toISOString();
+
+    console.log(`🚀 Launching LIBR analyzer from wizard:`, {
+        walletAddress,
+        proceedsAmount,
+        currency,
+        blockchain,
+        proceedsDate
+    });
+
+    await analyzeLIBRForWallet(walletAddress, proceedsAmount, proceedsDate, currency, blockchain);
+}
+
+// End of LIBR UI Functions
+// ====================================================================
 
 async function lookupTronTransaction(txHash) {
     const config = window.blockchainAPIs.tron;
