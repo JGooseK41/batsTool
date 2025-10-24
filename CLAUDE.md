@@ -3,17 +3,52 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-08 05:48)
+## Latest Commit (Auto-updated: 2025-10-24 06:41)
 
-**Commit:** 93d4bf3d4c6d73c7989593af37fbf68ca5d89a58
+**Commit:** eb192ed7eec8f7e8b648924673d8281e93c06f1e
 **Author:** Your Name
-**Message:** Reposition ART box to appear below T-account instead of above
+**Message:** Add LIBR (Lowest Intermediate Balance Rule) tracing method support
 
-- Changed ART box Y position from above T-account to below
-- T-account ends at config.height - 50
-- ART box now starts at config.height - 40 (10px gap)
-- Flow: Starting ART (top) → T-account (middle) → New ART (bottom)
-- Maintains same styling, only position changed
+Implement complete LIBR methodology as alternative to PIFO, controlled by
+investigation.tracingMethod selection during case setup. PIFO behavior
+remains completely unchanged when selected.
+
+**Phase 1: Conditional Constraints**
+- Made chronological sorting conditional (PIFO only)
+- Made chronology validation conditional (PIFO enforces, LIBR optional)
+- Allow hop finalization with remaining threads for LIBR
+- Add LIBR documentation notes when threads remain unallocated
+
+**Phase 2: API Balance Tracking**
+- Added Etherscan API integration for Ethereum transaction history
+- Added Blockchain.info API integration for Bitcoin transaction history
+- Implemented running balance calculation (UTXO for Bitcoin, account for ETH)
+- Created LIBR transaction point finder (identifies when balance drops)
+- Added data caching in investigation.librWalletAnalysis
+
+**Phase 3: UI Integration**
+- Added LIBR balance analyzer modal with loading states
+- Created interactive transaction table with LIBR status indicators
+- Added "Analyze Wallet Balance" button in hop wizard (LIBR only)
+- Display analysis results with balance drop identification
+- Professional UI with color-coded transaction statuses
+
+**Documentation**
+- DEMO-PIFO.md: Step-by-step verification PIFO unchanged
+- DEMO-LIBR.md: Complete LIBR feature demonstration guide
+- API-DATA-FOR-LIBR.md: API capabilities and integration details
+- LIBR-IMPLEMENTATION-PLAN.md: Original analysis and blockers
+- LIBR-REVISED-IMPLEMENTATION-PLAN.md: Updated plan with automation
+- LIBR-IMPLEMENTATION-COMPLETE.md: Final implementation summary
+- LIBR-UI-FUNCTIONS.js: Reference implementation code
+
+**Key Features**
+- Real-time blockchain balance tracking via public APIs
+- Automated identification of first transaction to follow
+- Transaction skipping when balance never drops below proceeds
+- Flexible hop finalization with LIBR documentation
+- Rate limiting and pagination for high-activity wallets
+- Complete backwards compatibility with PIFO methodology
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -21,23 +56,29 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md                | 33 +++++++++++++++++----------------
- bats-d3-visualization.js |  3 ++-
- 2 files changed, 19 insertions(+), 17 deletions(-)
+ API-DATA-FOR-LIBR.md                | 504 +++++++++++++++++++++++++
+ DEMO-LIBR.md                        | 457 +++++++++++++++++++++++
+ DEMO-PIFO.md                        | 225 +++++++++++
+ LIBR-IMPLEMENTATION-COMPLETE.md     | 499 +++++++++++++++++++++++++
+ LIBR-IMPLEMENTATION-PLAN.md         | 361 ++++++++++++++++++
+ LIBR-REVISED-IMPLEMENTATION-PLAN.md | 725 ++++++++++++++++++++++++++++++++++++
+ LIBR-UI-FUNCTIONS.js                | 243 ++++++++++++
+ index.html                          | 651 ++++++++++++++++++++++++++++++--
+ 8 files changed, 3629 insertions(+), 36 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 93d4bf3 Reposition ART box to appear below T-account instead of above (0 seconds ago)
-- d3306b6 Fix hop increment for bridge output convergence - swaps don't create hops (26 hours ago)
-- f75b411 Check same hop for terminal destinations, not future hops (26 hours ago)
-- 0fc3f43 Fix bridge output matching to use startsWith for sourceThreadIds (26 hours ago)
-- a0203ee Fix hopIndex undefined error in forEach loop (2 days ago)
-- 9383da1 Fix nested T-account to detect terminal destinations in future hops (2 days ago)
-- 4ad536a Add background rectangles to all T-account headers crossing vertical divider (2 days ago)
-- a375131 Add background rectangle behind nested T-account currency header (2 days ago)
-- 2254e66 Fix nested T-account currency label color to match amount (2 days ago)
-- 1348d90 Fix T-account box height calculation to include full nested account height (2 days ago)
+- eb192ed Add LIBR (Lowest Intermediate Balance Rule) tracing method support (0 seconds ago)
+- ad5bf5c Fix getCurrentART to exclude terminal wallets from next hop ART (2 weeks ago)
+- d9d1ded Revert "Fix hop auto-close bug when multiple threads are active" (2 weeks ago)
+- b9556f9 Fix hop auto-close bug when multiple threads are active (2 weeks ago)
+- 2a9a1a2 Update CLAUDE.md with latest commit info (2 weeks ago)
+- 93d4bf3 Reposition ART box to appear below T-account instead of above (2 weeks ago)
+- d3306b6 Fix hop increment for bridge output convergence - swaps don't create hops (2 weeks ago)
+- f75b411 Check same hop for terminal destinations, not future hops (2 weeks ago)
+- 0fc3f43 Fix bridge output matching to use startsWith for sourceThreadIds (2 weeks ago)
+- a0203ee Fix hopIndex undefined error in forEach loop (3 weeks ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
