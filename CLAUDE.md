@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-25 19:57)
 
-**Commit:** a10a472410affeb01cac8c95cb2b66613cceb3a8
+**Commit:** b34b458d7c39597a364c80d5c4f27212aaa45414
 **Author:** Your Name
-**Message:** Auto-sync
+**Message:** Sync
 
 ### Changed Files:
 ```
- CLAUDE.md | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ CLAUDE.md | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a10a472 Auto-sync (0 seconds ago)
-- 255b2fd Sync (6 seconds ago)
-- 9d9da64 Final sync (12 seconds ago)
-- 52ed888 Sync CLAUDE.md (17 seconds ago)
-- ffbdab1 Update CLAUDE.md (21 seconds ago)
-- 50f3ad3 Fix performance issue and auto-cap thread allocations (28 seconds ago)
+- b34b458 Sync (0 seconds ago)
+- a10a472 Auto-sync (6 seconds ago)
+- 255b2fd Sync (12 seconds ago)
+- 9d9da64 Final sync (18 seconds ago)
+- 52ed888 Sync CLAUDE.md (23 seconds ago)
+- ffbdab1 Update CLAUDE.md (27 seconds ago)
+- 50f3ad3 Fix performance issue and auto-cap thread allocations (34 seconds ago)
 - 7d605bf Sync (5 hours ago)
 - 5df232c Sync (5 hours ago)
 - 7073c23 Auto-sync CLAUDE.md (5 hours ago)
-- eaa867e Final CLAUDE.md sync (5 hours ago)
 
 ## Key Features
 
