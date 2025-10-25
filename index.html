@@ -1908,7 +1908,7 @@
                                                        style="width: 20px; height: 20px; cursor: pointer;">
                                                 <strong style="font-size: 16px; color: #2c3e50;">PIFO (Default)</strong>
                                             </div>
-                                            <button type="button" onclick="showMethodologyInfo('PIFO'); event.stopPropagation();"
+                                            <button type="button" onclick="event.stopPropagation(); showMethodologyInfo('PIFO');"
                                                     style="background: #2196f3; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; font-size: 14px;"
                                                     title="Click for detailed explanation">ℹ️</button>
                                         </div>
@@ -1931,7 +1931,7 @@
                                                        style="width: 20px; height: 20px; cursor: pointer;">
                                                 <strong style="font-size: 16px; color: #2c3e50;">LIBR</strong>
                                             </div>
-                                            <button type="button" onclick="showMethodologyInfo('LIBR'); event.stopPropagation();"
+                                            <button type="button" onclick="event.stopPropagation(); showMethodologyInfo('LIBR');"
                                                     style="background: #ff9800; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; font-size: 14px;"
                                                     title="Click for detailed explanation">ℹ️</button>
                                         </div>
@@ -29388,7 +29388,6 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
         // Update tracing method (PIFO vs LIBR)
         function updateTracingMethod(method) {
             investigation.tracingMethod = method;
-            saveToUndoHistory();
 
             // Show warning if switching methods mid-investigation
             if (investigation.hops.length > 0) {
