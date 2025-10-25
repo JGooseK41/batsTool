@@ -5,20 +5,21 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-25 19:56)
 
-**Commit:** ffbdab1dee8022cc81b655db6c5ef760b90d8bc9
+**Commit:** 52ed88859dd8dd7266143f14165bbc7540afa989
 **Author:** Your Name
-**Message:** Update CLAUDE.md
+**Message:** Sync CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md | 67 +++++++++++++++++++++++++++++++++++++++++++++++++--------------
- 1 file changed, 52 insertions(+), 15 deletions(-)
+ CLAUDE.md | 49 ++++++-------------------------------------------
+ 1 file changed, 6 insertions(+), 43 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ffbdab1 Update CLAUDE.md (0 seconds ago)
-- 50f3ad3 Fix performance issue and auto-cap thread allocations (7 seconds ago)
+- 52ed888 Sync CLAUDE.md (0 seconds ago)
+- ffbdab1 Update CLAUDE.md (4 seconds ago)
+- 50f3ad3 Fix performance issue and auto-cap thread allocations (11 seconds ago)
 - 7d605bf Sync (5 hours ago)
 - 5df232c Sync (5 hours ago)
 - 7073c23 Auto-sync CLAUDE.md (5 hours ago)
@@ -26,7 +27,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 6e584eb Sync CLAUDE.md (5 hours ago)
 - f8bfb8b Update CLAUDE.md with latest commit info (5 hours ago)
 - ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (5 hours ago)
-- 15a2b2b Implement Phase 1: Bitcoin change address detection in LIBR results (7 hours ago)
 
 ## Key Features
 
