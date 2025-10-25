@@ -3,30 +3,75 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 09:13)
+## Latest Commit (Auto-updated: 2025-10-25 12:40)
 
-**Commit:** 7589e3e3a9d4a36fc9e05dbf18f71a21e9ea0db9
+**Commit:** 15a2b2b6e9a2801027d5ffd6f4c9fa8e9bd261b5
 **Author:** Your Name
-**Message:** Sync
+**Message:** Implement Phase 1: Bitcoin change address detection in LIBR results
+
+MAJOR FEATURE: Automatic change detection with visual warnings
+
+Change Detection Heuristics (7 methods):
+1. Same address as sender (100 points) - definitive change
+2. Round amount heuristic - payments are typically round numbers
+3. Many decimal places - change has exact dust amounts
+4. Output order - change often comes last in 2-output transactions
+5. Address type matching - change uses same script type (P2PKH, P2SH, bc1)
+6. Amount comparison - change often smaller than payment
+7. Perfect change calculation - matches inputs minus other output minus fee
+
+Scoring System:
+- Score >= 80: High confidence (red indicator)
+- Score >= 50: Medium confidence (orange indicator)
+- Score < 50: Low confidence (yellow indicator)
+
+Visual Warnings in LIBR Results:
+⚠️ CHANGE ADDRESS DETECTED box shows:
+- Number of flagged outputs
+- Each output's amount and address
+- Change score with color-coding
+- Specific reasons for flagging
+- Recommendation to review before accepting
+
+Console Logging:
+- Shows detected change outputs with scores
+- Lists reasons for each flagged output
+- Helps investigator understand detection logic
+
+Example Warning:
+"⚠️ CHANGE ADDRESS DETECTED
+Output #2: 0.69950000 BTC
+Score: 75
+🔍 Many decimal places • Second of two outputs • Same address type
+
+💡 Recommendation: Review transaction outputs before accepting.
+If this is change to a different wallet address, consider
+deferring this decision and manually clustering the addresses."
+
+This is Phase 1 (detection only). Future phases:
+- Phase 2: Manual cluster creation
+- Phase 3: Cluster-aware LIBR analysis
+
+Investigator maintains full control - system flags, human decides.
 
 ### Changed Files:
 ```
- CLAUDE.md | 34 +++++++---------------------------
- 1 file changed, 7 insertions(+), 27 deletions(-)
+ index.html | 169 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 169 insertions(+)
 ```
 
 ## Recent Commits History
 
-- 7589e3e Sync (0 seconds ago)
-- e9507e4 Update CLAUDE.md (7 seconds ago)
-- c6b62b5 Remove GitHub repository link from methodology info modals (18 seconds ago)
-- 5ac855a Final sync (5 minutes ago)
-- d475954 Sync (5 minutes ago)
-- 0d06cbd Update CLAUDE.md (5 minutes ago)
-- a437c61 Add missing CSS for modal-overlay to display info modals as popups (5 minutes ago)
-- 9ce7f3f Auto-sync (30 minutes ago)
-- e781bed Final (30 minutes ago)
-- 6b9faba Sync (31 minutes ago)
+- 15a2b2b Implement Phase 1: Bitcoin change address detection in LIBR results (0 seconds ago)
+- 9f10344 Fix Bitcoin UTXO change address handling in LIBR balance calculation (7 minutes ago)
+- baf7a93 Implement hop entry creation with PIFO allocations for LIBR Accept function (11 minutes ago)
+- 7cbe030 Implement LIBR calculator with PIFO allocations and investigator decisions (14 minutes ago)
+- f3928c3 Add PIFO allocation calculator and prep for decision options (48 minutes ago)
+- 8818581 Add Red Wallets Dashboard for LIBR methodology (48 minutes ago)
+- 762e5e4 Fix LIBR workflow and transaction history display (3 hours ago)
+- 360cb19 Final CLAUDE.md sync (3 hours ago)
+- 7589e3e Sync (3 hours ago)
+- e9507e4 Update CLAUDE.md (3 hours ago)
 
 ## Key Features
 

@@ -3530,9 +3530,56 @@
             const terminalIndex = investigation.terminalWalletIndex || [];
 
             let html = '<div style="margin-bottom: 20px; padding: 15px; background: #f0ebf5; border: 2px solid #9b59b6; border-radius: 8px;">';
-            html += '<p style="margin: 0; color: #6c2e8a;"><strong>⚖️ Legal Process Note:</strong> This index contains transaction hashes and timestamps for use in legal proceedings and exchange subpoenas.</p>';
+            html += '<p style="margin: 0; color: #6c2e8a;"><strong>⚖️ Legal Process Note:</strong> This index contains transaction hashes and timestamps for use in legal proceedings and exchange subpoenas. Click on any exchange name to see detailed drill-down and export options for legal process requests.</p>';
             html += '</div>';
 
+            // Group by exchange for summary view
+            const byExchange = {};
+            terminalIndex.forEach(entry => {
+                const exchangeName = entry.exchangeName || 'Unknown';
+                if (!byExchange[exchangeName]) {
+                    byExchange[exchangeName] = [];
+                }
+                byExchange[exchangeName].push(entry);
+            });
+
+            // Create summary table with clickable exchange names
+            html += '<div style="margin-bottom: 30px;">';
+            html += '<h3 style="color: #9b59b6; margin-bottom: 15px;">📊 Summary by Exchange</h3>';
+            html += '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<thead><tr style="background: #9b59b6; color: white;">';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Exchange</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Total Arrivals</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Total Amount</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Actions</th>';
+            html += '</tr></thead><tbody>';
+
+            Object.entries(byExchange).forEach(([exchangeName, entries]) => {
+                const totalsByCurrency = {};
+                entries.forEach(entry => {
+                    if (!totalsByCurrency[entry.currency]) {
+                        totalsByCurrency[entry.currency] = 0;
+                    }
+                    totalsByCurrency[entry.currency] += entry.amount;
+                });
+
+                const totalsDisplay = Object.entries(totalsByCurrency)
+                    .map(([curr, amt]) => amt.toLocaleString() + ' ' + curr)
+                    .join(', ');
+
+                html += '<tr>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6; font-weight: bold; color: #9b59b6; cursor: pointer;" onclick="showTerminalWalletDrilldown(\'' + exchangeName.replace(/'/g, "\\'") + '\')">' + exchangeName + ' 🔍</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6;">' + entries.length + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6;">' + totalsDisplay + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6;"><button class="btn btn-sm btn-primary" onclick="exportExchangeTransactionsToExcel(\'' + exchangeName.replace(/'/g, "\\'") + '\')">📄 Export for Legal Process</button></td>';
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            html += '</div>';
+
+            // Full detailed table
+            html += '<h3 style="color: #9b59b6; margin-bottom: 15px;">📋 All Terminal Wallet Arrivals</h3>';
             html += '<table style="width: 100%; border-collapse: collapse;">';
             html += '<thead><tr style="background: #9b59b6; color: white;">';
             html += '<th style="padding: 12px; border: 1px solid #dee2e6;">Exchange</th>';
@@ -3556,14 +3603,14 @@
                 }
 
                 html += '<tr>';
-                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.exchangeName || 'Unknown'}</td>`;
-                html += `<td style="padding: 10px; border: 1px solid #dee2e6; font-family: monospace; font-size: 11px; word-break: break-all;">${entry.toWallet || entry.walletAddress || 'N/A'}</td>`;
-                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.amount.toLocaleString()}</td>`;
-                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.currency}</td>`;
-                html += `<td style="padding: 10px; border: 1px solid #dee2e6; font-family: monospace; font-size: 11px; word-break: break-all;">${entry.txHash || 'Not recorded'}</td>`;
-                html += `<td style="padding: 10px; border: 1px solid #dee2e6; font-size: 12px;">${dateTimeDisplay}</td>`;
-                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">${entry.notation}</td>`;
-                html += `<td style="padding: 10px; border: 1px solid #dee2e6;">H${entry.hopNumber}</td>`;
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6;">' + (entry.exchangeName || 'Unknown') + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6; font-family: monospace; font-size: 11px; word-break: break-all;">' + (entry.toWallet || entry.walletAddress || 'N/A') + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6;">' + entry.amount.toLocaleString() + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6;">' + entry.currency + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6; font-family: monospace; font-size: 11px; word-break: break-all;">' + (entry.txHash || 'Not recorded') + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6; font-size: 12px;">' + dateTimeDisplay + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6;">' + entry.notation + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6;">H' + entry.hopNumber + '</td>';
                 html += '</tr>';
             });
 
@@ -3573,14 +3620,232 @@
             html += '<div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-left: 4px solid #9b59b6;">';
             html += '<p style="margin: 0 0 10px 0; font-weight: bold;">📋 Export Instructions:</p>';
             html += '<ul style="margin: 0; padding-left: 20px;">';
-            html += '<li>Use "Export Terminal Wallet Report" for legal process submissions</li>';
-            html += '<li>Transaction hashes can be used for exchange subpoenas</li>';
+            html += '<li>Click on an exchange name to see detailed drill-down view</li>';
+            html += '<li>Use "Export for Legal Process" to generate exchange-specific Excel sheets for subpoenas</li>';
+            html += '<li>Each export includes entity name, sending wallet, receiving wallet, date/time, amount, and transaction hash</li>';
+            html += '<li>Transaction hashes can be used for exchange subpoenas and legal process requests</li>';
             html += '<li>Timestamps are preserved in UTC for international coordination</li>';
             html += '</ul>';
             html += '</div>';
 
             container.innerHTML = html;
         }
+
+        // Show drill-down modal for specific exchange
+        window.showTerminalWalletDrilldown = function(exchangeName) {
+            console.log('🔍 [Terminal Wallet Drill-Down] Opening drill-down for exchange:', exchangeName);
+
+            const terminalIndex = investigation.terminalWalletIndex || [];
+            const exchangeEntries = terminalIndex.filter(entry =>
+                (entry.exchangeName || 'Unknown') === exchangeName
+            );
+
+            if (exchangeEntries.length === 0) {
+                alert('No terminal wallet entries found for ' + exchangeName);
+                return;
+            }
+
+            // Sort by date (newest first)
+            exchangeEntries.sort((a, b) => {
+                const dateA = a.timestamp ? new Date(a.timestamp) : new Date(0);
+                const dateB = b.timestamp ? new Date(b.timestamp) : new Date(0);
+                return dateB - dateA;
+            });
+
+            // Calculate totals
+            const totalsByCurrency = {};
+            exchangeEntries.forEach(entry => {
+                if (!totalsByCurrency[entry.currency]) {
+                    totalsByCurrency[entry.currency] = 0;
+                }
+                totalsByCurrency[entry.currency] += entry.amount;
+            });
+
+            const totalsDisplay = Object.entries(totalsByCurrency)
+                .map(([curr, amt]) => amt.toLocaleString() + ' ' + curr)
+                .join(', ');
+
+            let html = '<div id="terminalDrilldownModal" class="modal show">';
+            html += '<div class="modal-content" style="max-width: 95%; width: 1200px;">';
+
+            // Header
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #9b59b6;">';
+            html += '<div>';
+            html += '<h2 style="margin: 0; color: #9b59b6;">⚖️ ' + exchangeName + ' - Legal Process Export</h2>';
+            html += '<p style="margin: 5px 0 0 0; color: #666;">Total Arrivals: ' + exchangeEntries.length + ' | Total Amount: ' + totalsDisplay + '</p>';
+            html += '</div>';
+            html += '<button onclick="closeTerminalDrilldownModal()" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #999;">&times;</button>';
+            html += '</div>';
+
+            // Legal process note
+            html += '<div style="margin-bottom: 20px; padding: 15px; background: #fff3e0; border: 2px solid #ff9800; border-radius: 8px;">';
+            html += '<p style="margin: 0; color: #e65100;"><strong>📋 Legal Process Ready:</strong> This drill-down shows all threads arriving at ' + exchangeName + '. Use the export button below to generate an Excel/CSV file formatted for subpoena and legal process requests.</p>';
+            html += '</div>';
+
+            // Export button
+            html += '<div style="margin-bottom: 20px; text-align: right;">';
+            html += '<button class="btn btn-primary" onclick="exportExchangeTransactionsToExcel(\'' + exchangeName.replace(/'/g, "\\'") + '\')" style="padding: 12px 24px; font-size: 16px;">';
+            html += '📄 Export ' + exchangeName + ' for Legal Process';
+            html += '</button>';
+            html += '</div>';
+
+            // Detailed transactions table
+            html += '<div style="max-height: 500px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px;">';
+            html += '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<thead style="position: sticky; top: 0; background: #9b59b6; color: white; z-index: 10;">';
+            html += '<tr>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Entity Name</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Sending Wallet</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Receiving Wallet</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Date/Time (UTC)</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Amount</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Transaction Hash</th>';
+            html += '<th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Thread</th>';
+            html += '</tr>';
+            html += '</thead>';
+            html += '<tbody>';
+
+            exchangeEntries.forEach((entry, index) => {
+                // Format the timestamp
+                let dateTimeDisplay = 'N/A';
+                if (entry.timestamp) {
+                    const date = new Date(entry.timestamp);
+                    dateTimeDisplay = date.toISOString().replace('T', ' ').replace('Z', ' UTC');
+                } else if (entry.datetime) {
+                    dateTimeDisplay = entry.datetime + ' ' + (entry.timezone || 'UTC');
+                }
+
+                const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
+
+                html += '<tr style="background: ' + bgColor + ';">';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6; font-weight: bold;">' + (entry.exchangeName || 'Unknown') + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6; font-family: monospace; font-size: 11px; word-break: break-all;">' + (entry.fromWallet || 'N/A') + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6; font-family: monospace; font-size: 11px; word-break: break-all;">' + (entry.toWallet || entry.walletAddress || 'N/A') + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6; font-size: 12px; white-space: nowrap;">' + dateTimeDisplay + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6; font-weight: bold; white-space: nowrap;">' + entry.amount.toLocaleString() + ' ' + entry.currency + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6; font-family: monospace; font-size: 11px; word-break: break-all;">' + (entry.txHash || 'Not recorded') + '</td>';
+                html += '<td style="padding: 10px; border: 1px solid #dee2e6;">' + entry.notation + '</td>';
+                html += '</tr>';
+            });
+
+            html += '</tbody>';
+            html += '</table>';
+            html += '</div>';
+
+            // Footer info
+            html += '<div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-left: 4px solid #9b59b6;">';
+            html += '<p style="margin: 0 0 5px 0; font-weight: bold;">📌 Legal Process Information:</p>';
+            html += '<ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 14px;">';
+            html += '<li>Each row represents one thread (victim transaction path) arriving at this exchange</li>';
+            html += '<li>Transaction hashes can be submitted with subpoenas to identify account holders</li>';
+            html += '<li>All timestamps are in UTC for international coordination</li>';
+            html += '<li>Case ID: ' + (investigation.caseId || 'Not specified') + '</li>';
+            html += '<li>Report Generated: ' + new Date().toISOString().replace('T', ' ').replace('Z', ' UTC') + '</li>';
+            html += '</ul>';
+            html += '</div>';
+
+            html += '</div></div>';
+
+            createCenteredModal('terminalDrilldownModal', html);
+        };
+
+        // Close terminal wallet drill-down modal
+        window.closeTerminalDrilldownModal = function() {
+            const modal = document.getElementById('terminalDrilldownModal');
+            if (modal) {
+                modal.remove();
+            }
+        };
+
+        // Export exchange-specific transactions to Excel for legal process
+        window.exportExchangeTransactionsToExcel = function(exchangeName) {
+            console.log('📄 [Terminal Wallet Export] Exporting transactions for:', exchangeName);
+
+            const terminalIndex = investigation.terminalWalletIndex || [];
+            const exchangeEntries = terminalIndex.filter(entry =>
+                (entry.exchangeName || 'Unknown') === exchangeName
+            );
+
+            if (exchangeEntries.length === 0) {
+                alert('No terminal wallet entries found for ' + exchangeName);
+                return;
+            }
+
+            // Sort by date (oldest first for legal process chronological order)
+            exchangeEntries.sort((a, b) => {
+                const dateA = a.timestamp ? new Date(a.timestamp) : new Date(0);
+                const dateB = b.timestamp ? new Date(b.timestamp) : new Date(0);
+                return dateA - dateB;
+            });
+
+            // Create CSV content with comprehensive header
+            let csvContent = '';
+
+            // Add case information header
+            csvContent += 'LEGAL PROCESS REQUEST - TERMINAL WALLET TRANSACTIONS\n';
+            csvContent += 'Case ID:,' + (investigation.caseId || 'Not specified') + '\n';
+            csvContent += 'Investigator:,' + (investigation.investigator || 'Not specified') + '\n';
+            csvContent += 'Agency:,' + (investigation.agency || 'Not specified') + '\n';
+            csvContent += 'Report Generated:,' + new Date().toISOString().replace('T', ' ').replace('Z', ' UTC') + '\n';
+            csvContent += 'Exchange/Entity:,' + exchangeName + '\n';
+            csvContent += 'Total Transactions:,' + exchangeEntries.length + '\n';
+            csvContent += '\n';
+
+            // Add column headers
+            csvContent += 'Entity Name,Sending Wallet Address,Receiving (Terminal) Wallet Address,Date/Time (UTC),Amount,Currency,Transaction Hash,Thread Notation,Hop Number,Case ID\n';
+
+            // Add data rows
+            exchangeEntries.forEach(entry => {
+                // Format the timestamp
+                let dateTimeDisplay = 'N/A';
+                if (entry.timestamp) {
+                    const date = new Date(entry.timestamp);
+                    dateTimeDisplay = date.toISOString().replace('T', ' ').replace('Z', ' UTC');
+                } else if (entry.datetime) {
+                    dateTimeDisplay = entry.datetime + ' ' + (entry.timezone || 'UTC');
+                }
+
+                // CSV row with proper escaping
+                const entityName = (entry.exchangeName || 'Unknown').replace(/"/g, '""');
+                const sendingWallet = (entry.fromWallet || 'N/A').replace(/"/g, '""');
+                const receivingWallet = (entry.toWallet || entry.walletAddress || 'N/A').replace(/"/g, '""');
+                const dateTime = dateTimeDisplay.replace(/"/g, '""');
+                const amount = entry.amount;
+                const currency = entry.currency.replace(/"/g, '""');
+                const txHash = (entry.txHash || 'Not recorded').replace(/"/g, '""');
+                const notation = entry.notation.replace(/"/g, '""');
+                const hopNumber = entry.hopNumber || 'N/A';
+                const caseId = (investigation.caseId || 'Not specified').replace(/"/g, '""');
+
+                csvContent += '"' + entityName + '","' + sendingWallet + '","' + receivingWallet + '","' + dateTime + '",' + amount + ',"' + currency + '","' + txHash + '","' + notation + '",' + hopNumber + ',"' + caseId + '"\n';
+            });
+
+            // Add summary footer
+            csvContent += '\n';
+            csvContent += 'SUMMARY\n';
+            const totalsByCurrency = {};
+            exchangeEntries.forEach(entry => {
+                if (!totalsByCurrency[entry.currency]) {
+                    totalsByCurrency[entry.currency] = 0;
+                }
+                totalsByCurrency[entry.currency] += entry.amount;
+            });
+
+            Object.entries(totalsByCurrency).forEach(([currency, total]) => {
+                csvContent += 'Total ' + currency + ':,' + total.toLocaleString() + '\n';
+            });
+
+            // Generate filename
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const safeExchangeName = exchangeName.replace(/[^a-zA-Z0-9]/g, '_');
+            const filename = 'Legal_Process_' + safeExchangeName + '_' + (investigation.caseId || 'Case').replace(/[^a-zA-Z0-9]/g, '_') + '_' + timestamp + '.csv';
+
+            // Download the file
+            downloadFile(csvContent, filename, 'text/csv');
+
+            showNotification('✅ Legal process export generated: ' + filename, 'success');
+            console.log('✅ [Terminal Wallet Export] Export completed:', filename);
+        };
 
         // Update Cover Page
         function updateCoverPage() {
