@@ -1038,16 +1038,32 @@
     display: flex;
 }
 
+/* Modal Overlay (for dynamically created modals) */
+.modal-overlay {
+    display: flex;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
 .modal-content {
     background-color: white;
     margin: auto;
-    padding: 0;
-    border-radius: 8px;
+    padding: 30px;
+    border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     position: relative;
     animation: modalSlideIn 0.3s ease;
     max-height: 90vh;
     overflow-y: auto;
+    max-width: 90vw;
 }
 
 @keyframes modalSlideIn {
