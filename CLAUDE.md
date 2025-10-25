@@ -3,75 +3,69 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 12:40)
+## Latest Commit (Auto-updated: 2025-10-25 15:05)
 
-**Commit:** 15a2b2b6e9a2801027d5ffd6f4c9fa8e9bd261b5
+**Commit:** ca2de8f62d4dc9b7fd6447d2f8d823d94cb9a1a8
 **Author:** Your Name
-**Message:** Implement Phase 1: Bitcoin change address detection in LIBR results
+**Message:** Add terminal wallet drill-down and legal process export for exchange subpoenas
 
-MAJOR FEATURE: Automatic change detection with visual warnings
+MAJOR FEATURE: Exchange-specific transaction exports for legal process requests
 
-Change Detection Heuristics (7 methods):
-1. Same address as sender (100 points) - definitive change
-2. Round amount heuristic - payments are typically round numbers
-3. Many decimal places - change has exact dust amounts
-4. Output order - change often comes last in 2-output transactions
-5. Address type matching - change uses same script type (P2PKH, P2SH, bc1)
-6. Amount comparison - change often smaller than payment
-7. Perfect change calculation - matches inputs minus other output minus fee
+Terminal Wallet Index Enhancements:
+- Summary by Exchange table with clickable drill-down
+- Shows total arrivals and amounts per exchange
+- One-click access to detailed transaction views
 
-Scoring System:
-- Score >= 80: High confidence (red indicator)
-- Score >= 50: Medium confidence (orange indicator)
-- Score < 50: Low confidence (yellow indicator)
+Drill-Down Modal Features:
+- Click any exchange name to see all transactions
+- Detailed table with all legal process columns
+- Scrollable view with sticky headers
+- Export button within modal for convenience
+- Case information and timestamps included
 
-Visual Warnings in LIBR Results:
-⚠️ CHANGE ADDRESS DETECTED box shows:
-- Number of flagged outputs
-- Each output's amount and address
-- Change score with color-coding
-- Specific reasons for flagging
-- Recommendation to review before accepting
+Legal Process Export (CSV/Excel):
+- Per-exchange export for subpoena submissions
+- Comprehensive header with case details
+- Columns: Entity Name, Sending Wallet, Receiving Wallet,
+  Date/Time (UTC), Amount, Currency, Transaction Hash,
+  Thread Notation, Hop Number, Case ID
+- One row per thread arriving at terminal wallet
+- Chronological ordering (oldest first)
+- Summary footer with totals by currency
+- Professional filename: Legal_Process_[Exchange]_[CaseID]_[Timestamp].csv
 
-Console Logging:
-- Shows detected change outputs with scores
-- Lists reasons for each flagged output
-- Helps investigator understand detection logic
+Export Format Example:
+"Binance","0x1234...","0x5678...","2025-01-15 10:30:00 UTC",50000,"USDT","0xabc...","(V1-T1) H3",3,"ABC-2025-001"
 
-Example Warning:
-"⚠️ CHANGE ADDRESS DETECTED
-Output #2: 0.69950000 BTC
-Score: 75
-🔍 Many decimal places • Second of two outputs • Same address type
+Use Cases:
+- Generate clean exports per exchange for subpoenas
+- Submit transaction hashes to identify account holders
+- Legal process documentation and evidence submission
+- International coordination with UTC timestamps
 
-💡 Recommendation: Review transaction outputs before accepting.
-If this is change to a different wallet address, consider
-deferring this decision and manually clustering the addresses."
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-This is Phase 1 (detection only). Future phases:
-- Phase 2: Manual cluster creation
-- Phase 3: Cluster-aware LIBR analysis
-
-Investigator maintains full control - system flags, human decides.
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 169 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 169 insertions(+)
+ CLAUDE.md  |  75 ++++++++++++----
+ index.html | 287 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 336 insertions(+), 26 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 15a2b2b Implement Phase 1: Bitcoin change address detection in LIBR results (0 seconds ago)
-- 9f10344 Fix Bitcoin UTXO change address handling in LIBR balance calculation (7 minutes ago)
-- baf7a93 Implement hop entry creation with PIFO allocations for LIBR Accept function (11 minutes ago)
-- 7cbe030 Implement LIBR calculator with PIFO allocations and investigator decisions (14 minutes ago)
-- f3928c3 Add PIFO allocation calculator and prep for decision options (48 minutes ago)
-- 8818581 Add Red Wallets Dashboard for LIBR methodology (48 minutes ago)
-- 762e5e4 Fix LIBR workflow and transaction history display (3 hours ago)
-- 360cb19 Final CLAUDE.md sync (3 hours ago)
-- 7589e3e Sync (3 hours ago)
-- e9507e4 Update CLAUDE.md (3 hours ago)
+- ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (0 seconds ago)
+- 15a2b2b Implement Phase 1: Bitcoin change address detection in LIBR results (2 hours ago)
+- 9f10344 Fix Bitcoin UTXO change address handling in LIBR balance calculation (3 hours ago)
+- baf7a93 Implement hop entry creation with PIFO allocations for LIBR Accept function (3 hours ago)
+- 7cbe030 Implement LIBR calculator with PIFO allocations and investigator decisions (3 hours ago)
+- f3928c3 Add PIFO allocation calculator and prep for decision options (3 hours ago)
+- 8818581 Add Red Wallets Dashboard for LIBR methodology (3 hours ago)
+- 762e5e4 Fix LIBR workflow and transaction history display (6 hours ago)
+- 360cb19 Final CLAUDE.md sync (6 hours ago)
+- 7589e3e Sync (6 hours ago)
 
 ## Key Features
 
