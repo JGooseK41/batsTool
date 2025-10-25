@@ -18092,7 +18092,7 @@ function generateVisualizationPage() {
             }
 
             const mode = filterUI.currentMode;
-            console.log(`Applying ${mode} filter with ${filterUI.selectedItems.size} selected items:`,
+            console.log('Applying ' + mode + ' filter with ' + filterUI.selectedItems.size + ' selected items:',
                         Array.from(filterUI.selectedItems));
 
             const combinedNodes = new Set();
@@ -18121,17 +18121,17 @@ function generateVisualizationPage() {
                 filter: {
                     type: mode,
                     selectedItems: Array.from(filterUI.selectedItems),
-                    description: `${filterUI.selectedItems.size} ${mode}${filterUI.selectedItems.size > 1 ? 's' : ''} selected`
+                    description: filterUI.selectedItems.size + ' ' + mode + (filterUI.selectedItems.size > 1 ? 's' : '') + ' selected'
                 }
             };
 
             visualizationEngine.render();
             visualizationEngine.interaction.fitToScreen();
 
-            showActiveFilterBadge(`${filterUI.selectedItems.size} ${mode}${filterUI.selectedItems.size > 1 ? 's' : ''}`);
+            showActiveFilterBadge(filterUI.selectedItems.size + ' ' + mode + (filterUI.selectedItems.size > 1 ? 's' : ''));
             closeFilterModal();
 
-            console.log(`Filter applied: ${combinedNodes.size} nodes, ${combinedEdges.size} edges visible`);
+            console.log('Filter applied: ' + combinedNodes.size + ' nodes, ' + combinedEdges.size + ' edges visible');
         }
 
         // Save current view
@@ -18152,7 +18152,7 @@ function generateVisualizationPage() {
                 mode: filterUI.currentMode,
                 selectedItems: Array.from(filterUI.selectedItems),
                 createdAt: new Date().toISOString(),
-                description: `${filterUI.selectedItems.size} ${filterUI.currentMode}${filterUI.selectedItems.size > 1 ? 's' : ''}`
+                description: filterUI.selectedItems.size + ' ' + filterUI.currentMode + (filterUI.selectedItems.size > 1 ? 's' : '')
             };
 
             filterUI.savedViews.push(savedView);
@@ -18160,7 +18160,7 @@ function generateVisualizationPage() {
             refreshSavedViewsList();
             updateQuickLoadDropdown();
 
-            alert(`View "${viewName}" saved successfully!`);
+            alert('View "' + viewName + '" saved successfully!');
         }
 
         // Load saved view
@@ -18180,7 +18180,7 @@ function generateVisualizationPage() {
 
             applySelectedFilter();
 
-            console.log(`Loaded saved view: ${view.name}`);
+            console.log('Loaded saved view: ' + view.name);
         }
 
         // Quick load from dropdown
@@ -18196,7 +18196,7 @@ function generateVisualizationPage() {
             const view = filterUI.savedViews.find(v => v.id === viewId);
             if (!view) return;
 
-            if (!confirm(`Delete saved view "${view.name}"?`)) {
+            if (!confirm('Delete saved view "' + view.name + '"?')) {
                 return;
             }
 
@@ -18222,7 +18222,7 @@ function generateVisualizationPage() {
 
                 const viewName = filterUI.currentViewName || 'filtered-view';
                 const timestamp = new Date().toISOString().slice(0, 10);
-                a.download = `${investigation.caseNumber}_${viewName}_${timestamp}.png`;
+                a.download = investigation.caseNumber + '_' + viewName + '_' + timestamp + '.png';
 
                 a.click();
                 URL.revokeObjectURL(url);
@@ -18278,31 +18278,17 @@ function generateVisualizationPage() {
 
                 const createdDate = new Date(view.createdAt).toLocaleDateString();
 
-                viewDiv.innerHTML = `
-                    <div style="flex: 1;">
-                        <strong>${view.name}</strong><br>
-                        <span style="font-size: 12px; color: #666;">
-                            ${view.description} • Created ${createdDate}
-                        </span>
-                    </div>
-                    <div style="display: flex; gap: 5px;">
-                        <button onclick="loadSavedView('${view.id}')"
-                                class="btn btn-sm btn-primary"
-                                style="padding: 5px 10px; font-size: 12px;">
-                            Load
-                        </button>
-                        <button onclick="exportSavedView('${view.id}')"
-                                class="btn btn-sm btn-secondary"
-                                style="padding: 5px 10px; font-size: 12px;">
-                            Export
-                        </button>
-                        <button onclick="deleteSavedView('${view.id}')"
-                                class="btn btn-sm btn-danger"
-                                style="padding: 5px 10px; font-size: 12px;">
-                            Delete
-                        </button>
-                    </div>
-                `;
+                viewDiv.innerHTML = '<div style="flex: 1;">' +
+                    '<strong>' + view.name + '</strong><br>' +
+                    '<span style="font-size: 12px; color: #666;">' +
+                    view.description + ' • Created ' + createdDate +
+                    '</span>' +
+                    '</div>' +
+                    '<div style="display: flex; gap: 5px;">' +
+                    '<button onclick="loadSavedView(\'' + view.id + '\')" class="btn btn-sm btn-primary" style="padding: 5px 10px; font-size: 12px;">Load</button>' +
+                    '<button onclick="exportSavedView(\'' + view.id + '\')" class="btn btn-sm btn-secondary" style="padding: 5px 10px; font-size: 12px;">Export</button>' +
+                    '<button onclick="deleteSavedView(\'' + view.id + '\')" class="btn btn-sm btn-danger" style="padding: 5px 10px; font-size: 12px;">Delete</button>' +
+                    '</div>';
 
                 listDiv.appendChild(viewDiv);
             });
