@@ -36125,6 +36125,30 @@ async function performLIBRAnalysis(walletAddress, criminalProceedsAmount, crimin
         new Date(criminalProceedsDate).getTime()
     );
 
+    // For Bitcoin: Run change detection on identified outbound transactions
+    if (blockchain === 'bitcoin' && librAnalysis.transactionsToFollow && librAnalysis.transactionsToFollow.length > 0) {
+        console.log('🔍 [LIBR] Running change detection on ' + librAnalysis.transactionsToFollow.length + ' Bitcoin transactions...');
+
+        for (const tx of librAnalysis.transactionsToFollow) {
+            // Find the full transaction data with rawTx
+            const fullTx = txHistory.find(t => t.hash === tx.txHash);
+
+            if (fullTx && fullTx.rawTx) {
+                const changeAnalysis = detectChangeOutputs(fullTx, walletAddress);
+                tx.changeDetection = changeAnalysis;
+
+                if (changeAnalysis.hasChange) {
+                    const changeOutputs = changeAnalysis.outputs.filter(o => o.isLikelyChange);
+                    console.log('⚠️ [LIBR] TX ' + tx.txHash.substring(0, 10) + '... has ' + changeOutputs.length + ' potential change output(s)');
+                    changeOutputs.forEach(output => {
+                        console.log('   Output ' + output.index + ': ' + output.amount.toFixed(8) + ' BTC to ' + output.address.substring(0, 20) + '...');
+                        console.log('   Change score: ' + output.changeScore + ' | Reasons: ' + output.changeReasons.join(', '));
+                    });
+                }
+            }
+        }
+    }
+
     // Get red wallet deposits for PIFO allocation display
     let redWalletDeposits = [];
     if (window.librRedWallets) {
@@ -36312,6 +36336,44 @@ function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProcee
 
             const txDataJson = JSON.stringify(txData).replace(/"/g, '&quot;');
 
+            // Build change detection warning if applicable
+            let changeWarningHTML = '';
+            if (tx.changeDetection && tx.changeDetection.hasChange) {
+                const changeOutputs = tx.changeDetection.outputs.filter(o => o.isLikelyChange);
+                if (changeOutputs.length > 0) {
+                    changeWarningHTML = '<div style="background: #fff3e0; border: 2px solid #ff9800; padding: 12px; border-radius: 4px; margin-bottom: 12px;">' +
+                        '<div style="display: flex; align-items: center; margin-bottom: 8px;">' +
+                        '<strong style="color: #e65100; font-size: 14px;">⚠️ CHANGE ADDRESS DETECTED</strong>' +
+                        '</div>' +
+                        '<p style="margin: 0 0 10px 0; font-size: 13px; color: #666;">' +
+                        'This transaction has ' + changeOutputs.length + ' output(s) that may be change addresses. ' +
+                        'The balance calculation may be incorrect if change went to a different address in the same wallet.' +
+                        '</p>';
+
+                    changeOutputs.forEach(output => {
+                        const scoreColor = output.changeScore >= 80 ? '#d32f2f' : output.changeScore >= 50 ? '#f57c00' : '#ff9800';
+                        changeWarningHTML += '<div style="background: white; padding: 8px; border-radius: 4px; margin: 8px 0; border-left: 3px solid ' + scoreColor + ';">' +
+                            '<div style="font-size: 12px; margin-bottom: 4px;">' +
+                            '<strong>Output #' + (output.index + 1) + ':</strong> ' + output.amount.toFixed(8) + ' ' + currency +
+                            ' <span style="background: ' + scoreColor + '22; color: ' + scoreColor + '; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px;">' +
+                            'Score: ' + output.changeScore + '</span>' +
+                            '</div>' +
+                            '<div style="font-family: monospace; font-size: 11px; color: #666; margin-bottom: 4px;">' +
+                            output.address.substring(0, 35) + '...' +
+                            '</div>' +
+                            '<div style="font-size: 11px; color: #666;">' +
+                            '🔍 ' + output.changeReasons.join(' • ') +
+                            '</div>' +
+                            '</div>';
+                    });
+
+                    changeWarningHTML += '<div style="margin-top: 10px; padding: 8px; background: #e3f2fd; border-radius: 4px; font-size: 12px;">' +
+                        '<strong>💡 Recommendation:</strong> Review transaction outputs before accepting. ' +
+                        'If this is change to a different wallet address, consider deferring this decision and manually clustering the addresses.' +
+                        '</div></div>';
+                }
+            }
+
             transactionsToFollowHTML += '<div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: ' + (index === 0 ? '3px solid #2196f3' : '2px solid #ddd') + ';">' +
                 '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">' +
                 '<strong style="color: #2196f3; font-size: 16px;">' + (index === 0 ? '🎯 Transaction #1 (Start Here)' : '📍 Transaction #' + (index + 1)) + '</strong>' +
@@ -36323,6 +36385,7 @@ function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProcee
                 '<strong>TX Amount:</strong> ' + tx.amount.toFixed(6) + ' ' + currency + ' | ' +
                 '<strong>Balance After:</strong> ' + tx.balanceAfter.toFixed(6) + ' ' + currency +
                 '</div>' +
+                changeWarningHTML +
                 '<div style="background: #fff3cd; padding: 10px; border-radius: 4px; border-left: 3px solid #ffc107; margin-bottom: 12px;">' +
                 '<strong style="color: #f57c00;">📊 PIFO Allocation (Calculated):</strong>' +
                 allocationHTML +
@@ -36878,6 +36941,112 @@ function calculatePIFOAllocation(tracedAmount, deposits) {
         totalAllocated: tracedAmount,
         unallocatedAmount: remaining > 0.000001 ? remaining : 0
     };
+}
+
+// Detect potential change outputs in Bitcoin transactions
+function detectChangeOutputs(tx, sourceAddress) {
+    if (!tx.rawTx || !tx.rawTx.out) {
+        return { outputs: [], hasChange: false };
+    }
+
+    const outputs = tx.rawTx.out.map((output, index) => {
+        const address = output.addr || '';
+        const amount = (output.value || 0) / 100000000; // Satoshis to BTC
+
+        let changeScore = 0;
+        let changeReasons = [];
+
+        // 1. Same address as sender (100% change)
+        if (address && sourceAddress && address.toLowerCase() === sourceAddress.toLowerCase()) {
+            changeScore = 100;
+            changeReasons.push('Returns to sender address');
+            return { index, address, amount, changeScore, changeReasons, isLikelyChange: true };
+        }
+
+        // 2. Round amount heuristic (payments are often round)
+        const isRoundAmount = amount % 1 === 0 || amount % 0.1 === 0 || amount % 0.01 === 0;
+        const amountStr = amount.toFixed(8);
+        const decimalPart = amountStr.split('.')[1];
+        const hasManySigFigs = decimalPart && decimalPart.replace(/0+$/, '').length > 4;
+
+        if (hasManySigFigs) {
+            changeScore += 30;
+            changeReasons.push('Many decimal places (typical of change)');
+        } else if (!isRoundAmount) {
+            changeScore += 20;
+            changeReasons.push('Non-round amount');
+        }
+
+        // 3. Output order heuristic (change often comes last in Bitcoin)
+        if (tx.rawTx.out.length === 2 && index === 1) {
+            changeScore += 15;
+            changeReasons.push('Second of two outputs');
+        }
+
+        // 4. Address type matching (change often uses same script type)
+        if (sourceAddress) {
+            const sourcePrefix = sourceAddress.substring(0, 3);
+            const destPrefix = address.substring(0, 3);
+
+            const sameType = sourcePrefix === destPrefix ||
+                            (sourceAddress.startsWith('bc1') && address.startsWith('bc1'));
+
+            if (sameType) {
+                changeScore += 10;
+                changeReasons.push('Same address type as sender');
+            }
+        }
+
+        // 5. Amount comparison (change is often smaller in 2-output transactions)
+        if (tx.rawTx.out.length === 2) {
+            const otherOutput = tx.rawTx.out[1 - index];
+            const otherAmount = (otherOutput.value || 0) / 100000000;
+
+            if (amount < otherAmount * 0.5) {
+                changeScore += 10;
+                changeReasons.push('Smaller than other output');
+            }
+        }
+
+        // 6. Calculate total inputs
+        let totalInputs = 0;
+        if (tx.rawTx.inputs) {
+            totalInputs = tx.rawTx.inputs.reduce((sum, input) => {
+                return sum + ((input.prev_out?.value || 0) / 100000000);
+            }, 0);
+        }
+
+        // 7. Perfect change calculation
+        if (tx.rawTx.out.length === 2 && totalInputs > 0) {
+            const otherOutput = tx.rawTx.out[1 - index];
+            const otherAmount = (otherOutput.value || 0) / 100000000;
+            const estimatedFee = 0.0001; // Very rough estimate
+            const expectedChange = totalInputs - otherAmount - estimatedFee;
+
+            if (expectedChange > 0) {
+                const difference = Math.abs(expectedChange - amount);
+                if (difference < expectedChange * 0.1) {
+                    changeScore += 25;
+                    changeReasons.push('Matches expected change calculation');
+                }
+            }
+        }
+
+        const isLikelyChange = changeScore >= 50; // Threshold for flagging
+
+        return {
+            index,
+            address,
+            amount,
+            changeScore,
+            changeReasons,
+            isLikelyChange
+        };
+    });
+
+    const hasChange = outputs.some(o => o.isLikelyChange);
+
+    return { outputs, hasChange };
 }
 
 // Helper function to launch LIBR analyzer from wizard or other contexts
