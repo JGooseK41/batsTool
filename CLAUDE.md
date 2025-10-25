@@ -5,20 +5,21 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-25 15:05)
 
-**Commit:** f8bfb8bb0084689a93227faa169c3533d3586a7b
+**Commit:** 6e584eb9fb10f797ef68259c2f443dae4fa75f27
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Sync CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md | 114 +++++++++++++++++++++++++++++---------------------------------
- 1 file changed, 54 insertions(+), 60 deletions(-)
+ CLAUDE.md | 51 ++++++---------------------------------------------
+ 1 file changed, 6 insertions(+), 45 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f8bfb8b Update CLAUDE.md with latest commit info (0 seconds ago)
-- ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (15 seconds ago)
+- 6e584eb Sync CLAUDE.md (0 seconds ago)
+- f8bfb8b Update CLAUDE.md with latest commit info (9 seconds ago)
+- ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (24 seconds ago)
 - 15a2b2b Implement Phase 1: Bitcoin change address detection in LIBR results (2 hours ago)
 - 9f10344 Fix Bitcoin UTXO change address handling in LIBR balance calculation (3 hours ago)
 - baf7a93 Implement hop entry creation with PIFO allocations for LIBR Accept function (3 hours ago)
@@ -26,7 +27,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - f3928c3 Add PIFO allocation calculator and prep for decision options (3 hours ago)
 - 8818581 Add Red Wallets Dashboard for LIBR methodology (3 hours ago)
 - 762e5e4 Fix LIBR workflow and transaction history display (6 hours ago)
-- 360cb19 Final CLAUDE.md sync (6 hours ago)
 
 ## Key Features
 
