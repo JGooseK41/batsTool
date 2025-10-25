@@ -17900,7 +17900,7 @@ function generateVisualizationPage() {
         // Helper to get localStorage key safely
         function getSavedViewsStorageKey() {
             const caseId = investigation.caseNumber || 'default';
-            return `bats_saved_views_${caseId}`;
+            return 'bats_saved_views_' + caseId;
         }
 
         // Initialize filter UI
