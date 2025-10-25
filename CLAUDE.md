@@ -3,30 +3,57 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 08:29)
+## Latest Commit (Auto-updated: 2025-10-25 08:34)
 
-**Commit:** 3ba11f0ec2d22de0b6c4bcc24647a93fe975ce54
+**Commit:** c9bbf3476912308deac1de31933bbd7bd4b874a8
 **Author:** Your Name
-**Message:** Sync CLAUDE.md
+**Message:** Fix methodology info buttons and remove undefined function call
+
+Fixes two critical issues with the methodology selection UI:
+
+1. Info buttons not working - Fixed event propagation
+   - Moved event.stopPropagation() to execute BEFORE function call
+   - Prevents label click from triggering when clicking info button
+   - Now both PIFO and LIBR info modals open correctly
+
+2. Removed undefined saveToUndoHistory() call
+   - Function was being called but never defined
+   - Caused ReferenceError when selecting tracing method
+   - Removed call from updateTracingMethod() function
+
+Changes:
+- Line 29391: Removed saveToUndoHistory() call
+- Line 1911: Fixed PIFO info button onclick order
+- Line 1934: Fixed LIBR info button onclick order
+
+Now investigators can successfully:
+- Click info buttons to see methodology details
+- Select PIFO or LIBR without console errors
+- View comprehensive explanation modals
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ CLAUDE.md  | 18 +++++++++---------
+ index.html |  5 ++---
+ 2 files changed, 11 insertions(+), 12 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3ba11f0 Sync CLAUDE.md (0 seconds ago)
-- a7ae877 Final CLAUDE.md update (7 seconds ago)
-- 57da2a2 Update CLAUDE.md with latest commit (18 seconds ago)
-- 1c5dec4 Auto-update CLAUDE.md with latest commit info (31 seconds ago)
-- 1fb0f7f Enhance methodology selection UI with prominent display and info modals (2 minutes ago)
-- 910e904 Add LIBR verification modal for transparency and user control (6 minutes ago)
-- 44cc303 Implement multi-thread LIBR with PIFO ordering (15 minutes ago)
-- f85718c Add ability to add LIBR transactions directly to existing hops (36 minutes ago)
-- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (46 minutes ago)
-- b454671 Fix LIBR modal display and implement proper iterative LIBR algorithm (10 hours ago)
+- c9bbf34 Fix methodology info buttons and remove undefined function call (0 seconds ago)
+- 3ba11f0 Sync CLAUDE.md (5 minutes ago)
+- a7ae877 Final CLAUDE.md update (5 minutes ago)
+- 57da2a2 Update CLAUDE.md with latest commit (5 minutes ago)
+- 1c5dec4 Auto-update CLAUDE.md with latest commit info (5 minutes ago)
+- 1fb0f7f Enhance methodology selection UI with prominent display and info modals (7 minutes ago)
+- 910e904 Add LIBR verification modal for transparency and user control (11 minutes ago)
+- 44cc303 Implement multi-thread LIBR with PIFO ordering (20 minutes ago)
+- f85718c Add ability to add LIBR transactions directly to existing hops (41 minutes ago)
+- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (50 minutes ago)
 
 ## Key Features
 
