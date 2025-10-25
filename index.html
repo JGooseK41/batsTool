@@ -11281,14 +11281,31 @@ function updateFormFieldsFromInvestigation() {
                 // Force re-render hops to show ready state
                 renderHops();
 
-                // Show success message with clear next steps
+                // Show success message with clear next steps based on methodology
                 setTimeout(() => {
-                    alert('✅ Root Total Confirmed!\n\n' +
-                          'Your investigation baseline has been established.\n\n' +
-                          '🎯 NEXT STEP:\n' +
-                          'Scroll down to the "Trace Documentation" section below.\n' +
-                          'Click "Create Hop 1" to start tracking where the funds went from the RED wallets.\n\n' +
-                          'Hop 1 = First movement of funds AFTER leaving the RED wallets');
+                    if (investigation.tracingMethod === 'LIBR') {
+                        // LIBR workflow: Prompt to analyze victim wallets
+                        const shouldAnalyze = confirm('✅ Root Total Confirmed!\n\n' +
+                              'Your investigation baseline has been established.\n\n' +
+                              '🔶 LIBR METHODOLOGY:\n' +
+                              'Next, you should analyze the victim wallet(s) to determine if the criminal proceeds are still there or have moved.\n\n' +
+                              '📊 Would you like to analyze the victim wallet balances now?');
+
+                        if (shouldAnalyze) {
+                            // Trigger LIBR analysis for all victim wallets
+                            analyzeLIBRForVictimWallets();
+                        } else {
+                            alert('You can run LIBR analysis later from the "Trace Documentation" section.\n\nClick "Create Hop 1" when ready to start tracking.');
+                        }
+                    } else {
+                        // PIFO workflow: Standard message
+                        alert('✅ Root Total Confirmed!\n\n' +
+                              'Your investigation baseline has been established.\n\n' +
+                              '🎯 NEXT STEP:\n' +
+                              'Scroll down to the "Trace Documentation" section below.\n' +
+                              'Click "Create Hop 1" to start tracking where the funds went from the RED wallets.\n\n' +
+                              'Hop 1 = First movement of funds AFTER leaving the RED wallets');
+                    }
                 }, 300);
             } catch (error) {
                 console.error('Error switching to victims tab:', error);
@@ -36086,6 +36103,12 @@ async function performLIBRAnalysis(walletAddress, criminalProceedsAmount, crimin
 }
 
 function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProceedsAmount, criminalProceedsDate, currency, walletAddress, blockchain) {
+    console.log('📊 [LIBR] Displaying results:', {
+        balanceHistoryLength: balanceHistory?.length || 0,
+        criminalProceedsDate,
+        librAnalysis
+    });
+
     const loadingDiv = document.getElementById('librLoadingIndicator');
     const resultsDiv = document.getElementById('librAnalysisResults');
 
@@ -36098,7 +36121,12 @@ function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProcee
         'Balance Dropped Below Proceeds' :
         'Proceeds Remain in Wallet';
 
-    const filteredHistory = balanceHistory.filter(h => h.timestamp >= new Date(criminalProceedsDate).getTime());
+    const criminalProceedsTimestamp = new Date(criminalProceedsDate).getTime();
+    console.log('🔍 [LIBR] Filtering history. Criminal proceeds timestamp:', new Date(criminalProceedsTimestamp).toISOString());
+
+    const filteredHistory = balanceHistory.filter(h => h.timestamp >= criminalProceedsTimestamp);
+
+    console.log(`📊 [LIBR] Filtered history: ${filteredHistory.length} transactions (from ${balanceHistory.length} total)`);
 
     // Create a map of transactions to follow for quick lookup
     const txHashesToFollow = new Set((librAnalysis.transactionsToFollow || []).map(t => t.txHash));
@@ -36128,6 +36156,8 @@ function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProcee
             (isFirstDrop ? '🎯 <strong>1st TRACE</strong>' : isTracedTx ? '✅ <strong>TRACE</strong>' : '⏭️ Skip') +
             '</td></tr>';
     }).join('');
+
+    console.log(`📊 [LIBR] Generated ${filteredHistory.length} table rows. HTML length: ${tableRows.length} characters`);
 
     // Find which hop this wallet belongs to (if any)
     let targetHopNumber = null;
@@ -36404,10 +36434,10 @@ function showLIBRVerificationModal(walletAddress, balanceHistory, librAnalysis, 
     document.body.appendChild(modal);
 }
 
-function closeLIBRVerificationModal() {
+window.closeLIBRVerificationModal = function() {
     const modal = document.getElementById('librVerificationModal');
     if (modal) modal.remove();
-}
+};
 
 // Helper to open verification modal from main LIBR modal
 function openLIBRVerificationFromModal() {
@@ -36474,8 +36504,22 @@ async function launchLIBRAnalyzerFromWizard() {
     const currency = selectedThread.currency;
     const proceedsAmount = selectedThread.availableAmount;
 
-    // Determine deposit date (use thread creation date or current time)
-    const proceedsDate = selectedThread.threadEndDate || selectedThread.createdAt || new Date().toISOString();
+    // Determine deposit date - get the actual victim transaction date
+    let proceedsDate;
+    if (selectedThread.victimIndex !== undefined && selectedThread.transactionIndex !== undefined) {
+        // Get the actual victim transaction
+        const victim = investigation.victims[selectedThread.victimIndex];
+        if (victim && victim.transactions && victim.transactions[selectedThread.transactionIndex]) {
+            proceedsDate = victim.transactions[selectedThread.transactionIndex].date;
+            console.log('📅 [LIBR] Using victim transaction date:', proceedsDate);
+        }
+    }
+
+    // Fallback to thread dates or current time
+    if (!proceedsDate) {
+        proceedsDate = selectedThread.threadEndDate || selectedThread.createdAt || new Date().toISOString();
+        console.log('⚠️ [LIBR] Using fallback date (thread/current):', proceedsDate);
+    }
 
     console.log(`🚀 Launching LIBR analyzer from wizard:`, {
         walletAddress,
@@ -36486,6 +36530,110 @@ async function launchLIBRAnalyzerFromWizard() {
     });
 
     await analyzeLIBRForWallet(walletAddress, proceedsAmount, proceedsDate, currency, blockchain);
+}
+
+// Helper function to analyze all victim wallets for LIBR methodology
+async function analyzeLIBRForVictimWallets() {
+    console.log('🔶 [LIBR] Analyzing all victim wallets...');
+
+    if (!investigation.victims || investigation.victims.length === 0) {
+        alert('No victim transactions found. Please add victim transactions first.');
+        return;
+    }
+
+    // Collect all unique victim wallet addresses with their transaction details
+    const victimWallets = [];
+
+    investigation.victims.forEach((victim, victimIndex) => {
+        victim.transactions.forEach((tx, txIndex) => {
+            // Get the destination wallet (where criminal proceeds were deposited)
+            const walletAddress = tx.destinationWallet;
+            if (!walletAddress) return;
+
+            // Check if we already have this wallet
+            const existing = victimWallets.find(w =>
+                w.address.toLowerCase() === walletAddress.toLowerCase() &&
+                w.blockchain === tx.blockchain &&
+                w.currency === tx.currency
+            );
+
+            if (existing) {
+                // Add to existing wallet's proceeds
+                existing.proceedsAmount += parseFloat(tx.amount || 0);
+                existing.transactions.push({
+                    victimIndex,
+                    txIndex,
+                    amount: parseFloat(tx.amount || 0),
+                    date: tx.date
+                });
+                // Use earliest date
+                if (new Date(tx.date) < new Date(existing.proceedsDate)) {
+                    existing.proceedsDate = tx.date;
+                }
+            } else {
+                // New wallet
+                victimWallets.push({
+                    address: walletAddress,
+                    blockchain: tx.blockchain,
+                    currency: tx.currency,
+                    proceedsAmount: parseFloat(tx.amount || 0),
+                    proceedsDate: tx.date,
+                    transactions: [{
+                        victimIndex,
+                        txIndex,
+                        amount: parseFloat(tx.amount || 0),
+                        date: tx.date
+                    }]
+                });
+            }
+        });
+    });
+
+    if (victimWallets.length === 0) {
+        alert('No victim wallet addresses found. Please ensure victim transactions have destination wallets specified.');
+        return;
+    }
+
+    console.log(`📊 [LIBR] Found ${victimWallets.length} unique victim wallet(s) to analyze`);
+
+    // Analyze each wallet sequentially
+    for (let i = 0; i < victimWallets.length; i++) {
+        const wallet = victimWallets[i];
+
+        console.log(`📊 [LIBR] Analyzing wallet ${i + 1}/${victimWallets.length}: ${wallet.address}`);
+
+        try {
+            await analyzeLIBRForWallet(
+                wallet.address,
+                wallet.proceedsAmount,
+                wallet.proceedsDate,
+                wallet.currency,
+                wallet.blockchain
+            );
+
+            // Wait for user to close the modal before proceeding to next wallet
+            // The modal is already shown by analyzeLIBRForWallet
+
+            // If there are more wallets, we'll wait for them to close current modal
+            if (i < victimWallets.length - 1) {
+                await new Promise(resolve => {
+                    // Wait for modal to be closed
+                    const checkModal = setInterval(() => {
+                        const modal = document.getElementById('librBalanceModal');
+                        if (!modal) {
+                            clearInterval(checkModal);
+                            resolve();
+                        }
+                    }, 500);
+                });
+            }
+        } catch (err) {
+            console.error(`❌ [LIBR] Failed to analyze wallet ${wallet.address}:`, err);
+            alert(`Failed to analyze wallet ${wallet.address}:\n\n${err.message}\n\nContinuing with next wallet...`);
+        }
+    }
+
+    console.log('✅ [LIBR] Completed analysis of all victim wallets');
 }
 
 // ====================================================================
