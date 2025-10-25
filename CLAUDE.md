@@ -3,79 +3,224 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-24 22:24)
+## Latest Commit (Auto-updated: 2025-10-25 07:43)
 
-**Commit:** b454671012df4689f4eb54b5ed0788075561ee82
+**Commit:** 5064e3f5b4c8f3a1792b6d6240b9fbaf0806dbc7
 **Author:** Your Name
-**Message:** Fix LIBR modal display and implement proper iterative LIBR algorithm
+**Message:** Implement comprehensive LIBR Monitoring Dashboard
 
-PART 1: Fixed Template Literal Syntax Errors
-- Removed ALL template literals from LIBR section (lines 35548-36020)
-- Replaced with string concatenation for browser compatibility
-- Fixed 20+ instances in:
-  * fetchCompleteTransactionHistory()
-  * calculateRunningBalance()
-  * findLIBRTransactionPoint()
-  * showLIBRBalanceTracker()
-  * displayLIBRAnalysisResults()
-- Modal now displays correctly
+Adds complete monitoring infrastructure for LIBR methodology, allowing users
+to track and re-analyze wallets containing untraced criminal proceeds.
 
-PART 2: Implemented Proper Iterative LIBR Algorithm
-Previously: Only found FIRST transaction where balance dropped below proceeds
-Now: Properly implements LIBR methodology by:
+## Core Monitoring Functions (lines 36084-36489)
 
-1. Starting with initial criminal proceeds amount (e.g., $100K)
-2. Finding FIRST outbound transaction where balance drops below $100K
-3. Calculating how much of the proceeds went into that transaction
-4. Creating thread with traced amount
-5. Reducing tracked amount to the new balance (e.g., $75K remaining)
-6. CONTINUING to monitor for next drop below $75K
-7. Repeating until all proceeds traced or determined to remain in wallet
+### getAllMonitoredWallets()
+- Scans all hops for entries with type 'libr_wallet_status'
+- Returns array of monitored wallets with hop context
+- Used throughout dashboard for wallet enumeration
 
-Algorithm Details:
-- trackedAmount starts at criminalProceedsAmount
-- For each outbound transaction where balance < trackedAmount:
-  * Calculate tracedInThisTx = min(tx.amount, trackedAmount - balance)
-  * Add transaction to transactionsToFollow array
-  * Update trackedAmount = balance (the new threshold)
-  * Continue monitoring
-- Stops when trackedAmount reaches near-zero or no more drops
+### daysSinceAnalysis() & getMonitoringStatus()
+- Calculate freshness of last analysis
+- Return color-coded status indicators:
+  * ✅ Green (<7 days) - Fresh
+  * ⚠️ Orange (7-30 days) - Needs review
+  * 🔴 Red (>30 days) - Urgent review needed
 
-UI Improvements:
-- Shows ALL transactions that need to be followed (not just first)
-- Displays traced amount for each transaction
-- Shows remaining proceeds amount in wallet
-- Transaction table highlights ALL traced transactions
-- Numbered list of transactions to follow in order
-- Color-coded: First transaction gets blue border, all get "TRACE" badge
+### updateMonitoredWallet()
+- Updates monitored entry after re-analysis
+- Adjusts remainingProceeds based on new traces
+- Appends timestamped notes documenting changes
+- Saves to storage automatically
 
-New Return Fields:
-- transactionsToFollow: Array of ALL transactions containing proceeds
-- totalTransactionsToTrace: Count of transactions to follow
-- remainingProceedsInWallet: Amount still in wallet after all drops
-- Each transaction includes: txHash, amount, tracedAmount, balanceBefore, balanceAfter
+### jumpToHopForMonitoredWallet()
+- Switches to Hops tab
+- Scrolls to specific hop
+- Applies highlight-flash animation for 2 seconds
+- Smooth user navigation from dashboard to hop
 
-This is the correct LIBR methodology as described by the user.
+## Dashboard UI (showLIBRMonitoringDashboard)
+
+**Main Features:**
+- Full-screen modal with wallet cards
+- Each card shows:
+  * Wallet address (copyable, monospace)
+  * Blockchain and currency
+  * Monitored amount (prominently displayed)
+  * Last analyzed timestamp with status icon
+  * Original deposit vs traced vs remaining breakdown
+  * Percentage remaining visualization
+- Action buttons per wallet:
+  * 🔄 Re-analyze Now - Launch LIBR analysis
+  * 📊 View Hop - Jump to hop in investigation
+- Summary footer:
+  * Total monitored wallets count
+  * Total value by currency
+  * Wallets needing review count with warning
+
+## Single Wallet Re-analysis
+
+**reanalyzeSingleMonitoredWallet():**
+- Launches LIBR balance tracker with current monitored amount as threshold
+- Uses last analyzed date as starting point for new analysis
+- Opens familiar LIBR modal for transaction selection
+- User can add new entries to existing hop directly
+
+## Batch Operations
+
+### reanalyzeAllMonitoredWallets()
+**Progress Modal:**
+- Shows real-time progress: "Analyzing 0xABC... (2 of 5)"
+- Animated progress bar
+- Fetches complete transaction history for each wallet
+- Runs LIBR analysis with monitored amount as threshold
+- Handles errors gracefully per wallet
+
+**Results Collection:**
+- Success + New Activity: Transactions to follow found
+- Success + Stable: No new outbound transactions
+- Failed: Error occurred during analysis
+
+### showBatchResultsSummary()
+**Results Modal Sections:**
+
+1. **Summary Cards** (top):
+   - New Activity count (orange)
+   - Stable count (green)
+   - Failed count (red)
+
+2. **Wallets with New Activity** (priority section):
+   - Orange highlighted cards
+   - Shows new transaction count
+   - Total traced amount from new TXs
+   - Remaining amount after new traces
+   - Buttons: "View Details" and "Add to Hop X"
+
+3. **Stable Wallets** (collapsible):
+   - One-line entries
+   - "No new activity" badge
+   - Balance unchanged confirmation
+
+4. **Failed Analysis** (errors):
+   - Red highlighted
+   - Error message displayed
+   - Helps troubleshoot API issues
+
+## Quick Access Banner (lines 13844-13877)
+
+**Location:** Top of Hops view (only when LIBR method active)
+
+**Conditional Display:**
+- Only shows if tracingMethod === 'LIBR'
+- Only shows if monitored wallets exist
+
+**Banner Content:**
+- Left side:
+  * "👁️ LIBR Method Active" header
+  * Wallet count and total monitored value
+  * Warning if wallets need review
+- Right side:
+  * "View Monitored Wallets" button
+  * "Re-analyze All" button
+
+**Visual Design:**
+- Blue gradient background
+- Responsive flexbox layout
+- Wraps on mobile
+- Clear call-to-action
+
+## CSS Animations (lines 803-823)
+
+**@keyframes highlight-flash:**
+- Smooth yellow flash animation
+- 0% → 25% → 50% → 75% → 100%
+- White → Light yellow → Bright yellow → Light yellow → White
+- 2-second duration, ease-in-out
+
+**.highlight-flash class:**
+- Applied when jumping to hop from dashboard
+- Helps user see which hop was navigated to
+- Removes automatically after animation
+
+## Integration Points
+
+1. **With existing LIBR analysis:**
+   - Re-uses showLIBRBalanceTracker()
+   - Passes monitored amount as new threshold
+   - Seamless workflow continuation
+
+2. **With hop navigation:**
+   - Uses existing switchTab('hops')
+   - Scrolls to hop element by ID
+   - Highlights with animation
+
+3. **With storage:**
+   - Updates investigation.hops entries
+   - Calls saveToStorage() after updates
+   - Maintains data integrity
+
+## User Workflow
+
+**Scenario: User wants to check monitored wallets**
+
+1. Navigate to Hops tab
+2. See banner: "3 wallets monitored (1 needs review)"
+3. Click "View Monitored Wallets"
+4. Dashboard opens showing all 3 wallets
+5. Wallet #1 shows ⚠️ (14 days old)
+6. Click "🔄 Re-analyze Now" on Wallet #1
+7. LIBR modal opens with new analysis
+8. Shows 2 new outbound transactions found
+9. User clicks "Add to Hop 1" for first TX
+10. Returns to hop view, entry added
+11. Dashboard auto-updates monitored amount
+
+**Scenario: Bulk check after 1 month**
+
+1. Click "🔄 Re-analyze All" from banner
+2. Progress modal: "Analyzing 3 wallets..."
+3. Results summary appears:
+   - 1 wallet with new activity 🔔
+   - 2 wallets stable ✅
+4. Click "Add to Hop 2" for active wallet
+5. Manually add transactions to hop
+6. Monitored amounts automatically reduced
+
+## Benefits
+
+- ✅ Central location to view all monitored wallets
+- ✅ Visual indicators show which need attention
+- ✅ One-click re-analysis saves time
+- ✅ Batch mode for periodic review
+- ✅ Seamless integration with existing workflow
+- ✅ No data entry required (auto-updates)
+- ✅ Clear visibility of LIBR method status
+
+## Files Modified
+
+- index.html:
+  * Lines 36084-36489: LIBR monitoring functions
+  * Lines 13844-13877: Hops view banner injection
+  * Lines 803-823: CSS highlight-flash animation
 
 ### Changed Files:
 ```
- CLAUDE.md  |  94 +++++------------
- index.html | 349 ++++++++++++++++++++++++++++++++-----------------------------
- 2 files changed, 211 insertions(+), 232 deletions(-)
+ CLAUDE.md  |  92 ++++++++----
+ index.html | 464 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 527 insertions(+), 29 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b454671 Fix LIBR modal display and implement proper iterative LIBR algorithm (0 seconds ago)
-- cee9bb2 Remove ALL remaining template literals from filter section - COMPLETE FIX (23 minutes ago)
-- e55e076 Replace all template literals with string concatenation in filter section (32 minutes ago)
-- cbf5661 Fix template literal syntax error - use string concatenation instead (37 minutes ago)
-- 65d5419 Fix critical bugs and migrate API keys to environment variables (44 minutes ago)
-- 96ee49a Add provenance-based visualization filtering with multi-select and saved views (2 hours ago)
-- 2035a72 Update CLAUDE.md with latest commit info (16 hours ago)
-- 2c960c0 Update CLAUDE.md with latest commit info (16 hours ago)
-- eb192ed Add LIBR (Lowest Intermediate Balance Rule) tracing method support (16 hours ago)
-- ad5bf5c Fix getCurrentART to exclude terminal wallets from next hop ART (2 weeks ago)
+- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (0 seconds ago)
+- b454671 Fix LIBR modal display and implement proper iterative LIBR algorithm (9 hours ago)
+- cee9bb2 Remove ALL remaining template literals from filter section - COMPLETE FIX (10 hours ago)
+- e55e076 Replace all template literals with string concatenation in filter section (10 hours ago)
+- cbf5661 Fix template literal syntax error - use string concatenation instead (10 hours ago)
+- 65d5419 Fix critical bugs and migrate API keys to environment variables (10 hours ago)
+- 96ee49a Add provenance-based visualization filtering with multi-select and saved views (11 hours ago)
+- 2035a72 Update CLAUDE.md with latest commit info (25 hours ago)
+- 2c960c0 Update CLAUDE.md with latest commit info (25 hours ago)
+- eb192ed Add LIBR (Lowest Intermediate Balance Rule) tracing method support (25 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens

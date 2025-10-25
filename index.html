@@ -35956,10 +35956,10 @@ async function performLIBRAnalysis(walletAddress, criminalProceedsAmount, crimin
     saveToStorage();
 
     // Display results
-    displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProceedsAmount, criminalProceedsDate, currency);
+    displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProceedsAmount, criminalProceedsDate, currency, walletAddress, blockchain);
 }
 
-function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProceedsAmount, criminalProceedsDate, currency) {
+function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProceedsAmount, criminalProceedsDate, currency, walletAddress, blockchain) {
     const loadingDiv = document.getElementById('librLoadingIndicator');
     const resultsDiv = document.getElementById('librAnalysisResults');
 
@@ -36003,6 +36003,25 @@ function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProcee
             '</td></tr>';
     }).join('');
 
+    // Find which hop this wallet belongs to (if any)
+    let targetHopNumber = null;
+    if (investigation.hops && walletAddress) {
+        for (let i = 0; i < investigation.hops.length; i++) {
+            const hop = investigation.hops[i];
+            if (hop.entries) {
+                const hasMonitoredEntry = hop.entries.some(e =>
+                    e.type === 'libr_wallet_status' &&
+                    e.walletAddress &&
+                    e.walletAddress.toLowerCase() === walletAddress.toLowerCase()
+                );
+                if (hasMonitoredEntry) {
+                    targetHopNumber = i + 1;
+                    break;
+                }
+            }
+        }
+    }
+
     // Build transactions to follow HTML
     let transactionsToFollowHTML = '';
     if (librAnalysis.balanceDroppedBelowProceeds && librAnalysis.transactionsToFollow && librAnalysis.transactionsToFollow.length > 0) {
@@ -36011,17 +36030,40 @@ function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProcee
             '<p style="margin-bottom: 15px;">Per LIBR methodology, trace these transactions in order:</p>';
 
         librAnalysis.transactionsToFollow.forEach((tx, index) => {
+            // Prepare data for action buttons
+            const txData = {
+                txHash: tx.txHash,
+                timestamp: tx.timestamp,
+                amount: tx.amount,
+                tracedAmount: tx.tracedAmount,
+                balanceAfter: tx.balanceAfter,
+                balanceBefore: tx.balanceBefore,
+                blockNumber: tx.blockNumber,
+                walletAddress: walletAddress,
+                blockchain: blockchain,
+                currency: currency,
+                hopNumber: targetHopNumber,
+                remainingInWallet: librAnalysis.remainingProceedsInWallet
+            };
+
+            const txDataJson = JSON.stringify(txData).replace(/"/g, '&quot;');
+
             transactionsToFollowHTML += '<div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 10px; border: ' + (index === 0 ? '2px solid #2196f3' : '1px solid #ddd') + ';">' +
                 '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">' +
                 '<strong style="color: #2196f3;">' + (index === 0 ? '🎯 #1 (Start Here)' : '#' + (index + 1)) + '</strong>' +
                 '<span style="background: #4caf50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">⚖️ ' + tx.tracedAmount.toFixed(6) + ' ' + currency + ' traced</span>' +
                 '</div>' +
-                '<div style="font-family: monospace; font-size: 11px; color: #666;">' +
+                '<div style="font-family: monospace; font-size: 11px; color: #666; margin-bottom: 10px;">' +
                 '<strong>TX Hash:</strong> ' + tx.txHash.substring(0, 20) + '...' + tx.txHash.substring(tx.txHash.length - 10) + '<br>' +
                 '<strong>Date:</strong> ' + new Date(tx.timestamp).toLocaleString() + '<br>' +
                 '<strong>TX Amount:</strong> ' + tx.amount.toFixed(6) + ' ' + currency + '<br>' +
                 '<strong>Balance After:</strong> ' + tx.balanceAfter.toFixed(6) + ' ' + currency +
-                '</div></div>';
+                '</div>' +
+                '<div style="display: flex; gap: 10px;">' +
+                '<button onclick="followLIBRTransaction(' + txDataJson + ')" class="btn btn-primary" style="flex: 1;">✅ Follow & Trace</button>' +
+                (targetHopNumber ? '<button onclick="markAsMonitoredOnly(' + txDataJson + ')" class="btn btn-secondary" style="flex: 1;">👁️ Monitor Only</button>' : '') +
+                '</div>' +
+                '</div>';
         });
 
         // Show remaining amount if any
@@ -36543,6 +36585,132 @@ function closeBatchResults() {
 }
 
 // End of LIBR Monitoring Dashboard Functions
+// ====================================================================
+
+// ====================================================================
+// LIBR Transaction Action Functions
+// ====================================================================
+
+// Follow a LIBR transaction by adding it to the appropriate hop
+function followLIBRTransaction(txData) {
+    console.log('✅ Following LIBR transaction:', txData.txHash);
+
+    if (!txData.hopNumber) {
+        alert('Cannot determine which hop this transaction belongs to.\n\nPlease add it manually through the hop wizard.');
+        return;
+    }
+
+    const hop = investigation.hops[txData.hopNumber - 1];
+    if (!hop) {
+        alert('Hop ' + txData.hopNumber + ' not found.');
+        return;
+    }
+
+    // Add outbound entry to the hop
+    const newEntry = {
+        type: 'outbound',
+        txHash: txData.txHash,
+        timestamp: txData.timestamp,
+        datetime: new Date(txData.timestamp).toLocaleString(),
+        fromWallet: txData.walletAddress,
+        toWallet: '', // Will be filled by user or blockchain lookup
+        amount: txData.tracedAmount, // Use traced amount, not full TX amount
+        currency: txData.currency,
+        blockchain: txData.blockchain,
+        notes: 'LIBR: Traced ' + txData.tracedAmount.toFixed(6) + ' ' + txData.currency + ' from monitored wallet.\nBalance dropped to ' + txData.balanceAfter.toFixed(6) + ' ' + txData.currency,
+        isError: '0',
+        methodId: '',
+        gasPrice: '',
+        gasUsed: '',
+        blockNumber: txData.blockNumber || ''
+    };
+
+    // Add entry to hop
+    if (!hop.entries) hop.entries = [];
+    hop.entries.push(newEntry);
+
+    // Update monitored wallet entry
+    const monitoredEntry = hop.entries.find(e =>
+        e.type === 'libr_wallet_status' &&
+        e.walletAddress &&
+        e.walletAddress.toLowerCase() === txData.walletAddress.toLowerCase()
+    );
+
+    if (monitoredEntry) {
+        // Reduce remaining proceeds
+        monitoredEntry.remainingProceeds = txData.remainingInWallet;
+        monitoredEntry.lastAnalyzed = new Date().toISOString();
+
+        const today = new Date().toLocaleDateString();
+        const updateNote = '[' + today + '] Traced ' + txData.tracedAmount.toFixed(6) + ' ' + txData.currency + ' via ' + txData.txHash;
+        monitoredEntry.notes = monitoredEntry.notes ? monitoredEntry.notes + '\n' + updateNote : updateNote;
+    } else {
+        // Create monitored entry if it doesn't exist
+        const remainingEntry = {
+            type: 'libr_wallet_status',
+            walletAddress: txData.walletAddress,
+            blockchain: txData.blockchain,
+            currency: txData.currency,
+            remainingProceeds: txData.remainingInWallet,
+            originalProceeds: txData.tracedAmount + txData.remainingInWallet,
+            lastAnalyzed: new Date().toISOString(),
+            notes: 'LIBR monitored wallet. Traced ' + txData.tracedAmount.toFixed(6) + ' ' + txData.currency + ', ' + txData.remainingInWallet.toFixed(6) + ' remains.'
+        };
+        hop.entries.push(remainingEntry);
+    }
+
+    // Save and refresh
+    saveToStorage();
+    renderHops();
+
+    // Close LIBR modal
+    closeLIBRBalanceModal();
+
+    // Show success notification
+    showNotification('✅ Transaction added to Hop ' + txData.hopNumber + '\n' + txData.tracedAmount.toFixed(6) + ' ' + txData.currency + ' traced', 'success');
+
+    // Jump to the hop
+    setTimeout(() => {
+        jumpToHopForMonitoredWallet(txData.hopNumber);
+    }, 500);
+}
+
+// Mark transaction as monitored only (don't trace yet)
+function markAsMonitoredOnly(txData) {
+    console.log('👁️ Marking transaction as monitored only:', txData.txHash);
+
+    if (!txData.hopNumber) {
+        alert('Cannot determine which hop this transaction belongs to.');
+        return;
+    }
+
+    const hop = investigation.hops[txData.hopNumber - 1];
+    if (!hop) {
+        alert('Hop ' + txData.hopNumber + ' not found.');
+        return;
+    }
+
+    // Update monitored wallet entry with note about untraced transaction
+    const monitoredEntry = hop.entries.find(e =>
+        e.type === 'libr_wallet_status' &&
+        e.walletAddress &&
+        e.walletAddress.toLowerCase() === txData.walletAddress.toLowerCase()
+    );
+
+    if (monitoredEntry) {
+        const today = new Date().toLocaleDateString();
+        const note = '[' + today + '] Identified but not traced: ' + txData.tracedAmount.toFixed(6) + ' ' + txData.currency + ' in TX ' + txData.txHash.substring(0, 10) + '...';
+        monitoredEntry.notes = monitoredEntry.notes ? monitoredEntry.notes + '\n' + note : note;
+
+        saveToStorage();
+        renderHops();
+        closeLIBRBalanceModal();
+
+        showNotification('Transaction marked as monitored but not traced.\nYou can trace it later if needed.', 'info');
+    }
+}
+
+// End of LIBR Transaction Action Functions
 // ====================================================================
 
 // End of LIBR UI Functions
