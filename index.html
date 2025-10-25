@@ -1908,7 +1908,7 @@
                                                        style="width: 20px; height: 20px; cursor: pointer;">
                                                 <strong style="font-size: 16px; color: #2c3e50;">PIFO (Default)</strong>
                                             </div>
-                                            <button type="button" onclick="event.stopPropagation(); showMethodologyInfo('PIFO');"
+                                            <button type="button" onclick="event.preventDefault(); event.stopPropagation(); showMethodologyInfo('PIFO'); return false;"
                                                     style="background: #2196f3; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; font-size: 14px;"
                                                     title="Click for detailed explanation">ℹ️</button>
                                         </div>
@@ -1931,7 +1931,7 @@
                                                        style="width: 20px; height: 20px; cursor: pointer;">
                                                 <strong style="font-size: 16px; color: #2c3e50;">LIBR</strong>
                                             </div>
-                                            <button type="button" onclick="event.stopPropagation(); showMethodologyInfo('LIBR');"
+                                            <button type="button" onclick="event.preventDefault(); event.stopPropagation(); showMethodologyInfo('LIBR'); return false;"
                                                     style="background: #ff9800; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; font-size: 14px;"
                                                     title="Click for detailed explanation">ℹ️</button>
                                         </div>
@@ -29404,8 +29404,10 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             }
         }
 
-        // Show detailed methodology information modal
-        function showMethodologyInfo(method) {
+        // Show detailed methodology information modal (global)
+        window.showMethodologyInfo = function(method) {
+            console.log('📋 Opening methodology info for:', method);
+
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
             modal.id = 'methodologyInfoModal';
@@ -29472,10 +29474,10 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             document.body.appendChild(modal);
         }
 
-        function closeMethodologyInfoModal() {
+        window.closeMethodologyInfoModal = function() {
             const modal = document.getElementById('methodologyInfoModal');
             if (modal) modal.remove();
-        }
+        };
         
         // Apply LIBR (Lowest Intermediate Balance Rule) when needed
         function applyLIBRMethod(walletAddress, startTime, endTime) {
