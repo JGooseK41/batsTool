@@ -35867,21 +35867,45 @@ function calculateRunningBalance(address, transactions, blockchain, startingBala
                 continue;
             }
 
-            // Check outputs going TO this address
+            // Calculate net amount for this address
+            let outputsToAddress = 0;
+            let inputsFromAddress = 0;
+
+            // Check outputs going TO this address (including change)
             for (const output of tx.rawTx.out || []) {
                 if (output && output.addr === address && output.value != null) {
-                    amount += output.value / 100000000; // Satoshis to BTC
-                    type = 'inbound';
+                    outputsToAddress += output.value / 100000000; // Satoshis to BTC
                 }
             }
+
             // Check inputs coming FROM this address
             for (const input of tx.rawTx.inputs || []) {
                 if (input && input.prev_out && input.prev_out.addr === address && input.prev_out.value != null) {
-                    amount -= input.prev_out.value / 100000000;
-                    type = 'outbound';
+                    inputsFromAddress += input.prev_out.value / 100000000;
                 }
             }
-            balance += amount; // Amount is already positive or negative
+
+            // Calculate net amount (positive = received more, negative = sent more)
+            amount = outputsToAddress - inputsFromAddress;
+
+            // Determine type based on NET direction, not loop order
+            if (amount > 0.00000001) {
+                type = 'inbound'; // Net inflow (received more than sent)
+            } else if (amount < -0.00000001) {
+                type = 'outbound'; // Net outflow (sent more than received, including change back)
+
+                // Log when change is detected (outbound with return to same address)
+                if (outputsToAddress > 0 && inputsFromAddress > 0) {
+                    console.log('🔄 [LIBR] Change detected in TX ' + tx.hash.substring(0, 10) + '... | ' +
+                               'Inputs: ' + inputsFromAddress.toFixed(8) + ' | ' +
+                               'Outputs (change): ' + outputsToAddress.toFixed(8) + ' | ' +
+                               'Net outflow: ' + Math.abs(amount).toFixed(8));
+                }
+            } else {
+                type = 'self-transfer'; // Net zero (consolidation or exact return)
+            }
+
+            balance += amount;
         } else {
             // Ethereum/EVM calculation
             const isInbound = tx.to?.toLowerCase() === lowerAddress;
