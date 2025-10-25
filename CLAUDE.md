@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-25 15:05)
 
-**Commit:** eaa867e4f3cba09e0dacea53625292dbf10bc657
+**Commit:** 7073c23b0431c8c1ddf4b79a19927ee9276242fb
 **Author:** Your Name
-**Message:** Final CLAUDE.md sync
+**Message:** Auto-sync CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ CLAUDE.md | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 ```
 
 ## Recent Commits History
 
-- eaa867e Final CLAUDE.md sync (0 seconds ago)
-- 6e584eb Sync CLAUDE.md (6 seconds ago)
-- f8bfb8b Update CLAUDE.md with latest commit info (15 seconds ago)
-- ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (30 seconds ago)
+- 7073c23 Auto-sync CLAUDE.md (0 seconds ago)
+- eaa867e Final CLAUDE.md sync (4 seconds ago)
+- 6e584eb Sync CLAUDE.md (10 seconds ago)
+- f8bfb8b Update CLAUDE.md with latest commit info (19 seconds ago)
+- ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (34 seconds ago)
 - 15a2b2b Implement Phase 1: Bitcoin change address detection in LIBR results (2 hours ago)
 - 9f10344 Fix Bitcoin UTXO change address handling in LIBR balance calculation (3 hours ago)
 - baf7a93 Implement hop entry creation with PIFO allocations for LIBR Accept function (3 hours ago)
 - 7cbe030 Implement LIBR calculator with PIFO allocations and investigator decisions (3 hours ago)
 - f3928c3 Add PIFO allocation calculator and prep for decision options (3 hours ago)
-- 8818581 Add Red Wallets Dashboard for LIBR methodology (3 hours ago)
 
 ## Key Features
 
