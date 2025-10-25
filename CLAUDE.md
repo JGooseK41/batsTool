@@ -3,69 +3,69 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 08:23)
+## Latest Commit (Auto-updated: 2025-10-25 08:27)
 
-**Commit:** 910e90408086a0c76008eff3cf88cf9cba6b10e8
+**Commit:** 1fb0f7fbd0b089a96d79c6309e9a255f98995e0e
 **Author:** Your Name
-**Message:** Add LIBR verification modal for transparency and user control
+**Message:** Enhance methodology selection UI with prominent display and info modals
 
-Provides optional feature to view complete transaction history of
-LIBR-analyzed wallets, allowing investigators to verify the analysis
-against block explorer data for audit trails and quality assurance.
+Makes the critical PIFO vs LIBR methodology selection more prominent
+in the case creation page and provides comprehensive guidance through
+interactive information modals to help investigators choose correctly.
 
-Features:
-- Full transaction history display (Date, Type, Credit, Debit, Balance, TX Hash)
-- Color-coded highlights:
-  * Green: Source thread deposits (criminal proceeds)
-  * Yellow: LIBR-identified outbound transactions (new threads)
-- Clickable transaction hashes linking to block explorers
-- 1000 transaction safety limit with warning banner
-- Suggests block explorer for wallets with extensive history
+Visual Enhancements:
+- Prominent blue gradient section with border and shadow
+- Centered heading: "⚖️ Select Tracing Methodology"
+- Side-by-side card layout with hover effects
+- Color-coded cards: PIFO (Blue #2196f3), LIBR (Orange #ff9800)
+- Cards lift and glow on hover for better interactivity
+- Larger radio buttons (20px) for easier selection
+
+Each Method Card Shows:
+- Full methodology name and terminology
+- Brief one-line description
+- Color-coded "Best for" callout box
+- Info button (ℹ️) in top-right corner
+- Hover effects (transform, border color, shadow)
+
+Information Modals (showMethodologyInfo):
+Comprehensive explanation modals with:
+- Overview paragraph explaining the methodology
+- Common use cases (5 examples per method)
+- Step-by-step workflow diagram
+- "When to use" guidance
+- Detailed example scenario
+- Link to documentation
+- Color-coded sections matching method
+
+PIFO Modal Content:
+- Immediate movement assumption methodology
+- Best for 90%+ of investigations
+- Use cases: Romance scams, investment fraud, ransomware, theft, BEC
+- Example: 10 BTC split into two 5 BTC payments, both traced
+- Recommended for rapid fund movement scenarios
+
+LIBR Modal Content:
+- Balance monitoring and drop detection
+- Arrests asset flow, fewer wallets, strategic concentration
+- Use cases: Stablecoins, wallet seizure, private key recovery
+- Example: 50K USDT in 150K wallet, balance drop triggers
+- Best for stablecoin cases and seizure scenarios
 
 Implementation:
-- showLIBRVerificationModal() - Main verification display function
-  * Filters to show transactions from source deposit onwards
-  * Identifies and highlights source deposits and LIBR-detected TXs
-  * Truncates to 1000 transactions if necessary
-  * Generates block explorer links (Etherscan/Blockchain.com)
+- showMethodologyInfo(method) - Creates method-specific modal
+- closeMethodologyInfoModal() - Cleanup function
+- Enhanced case setup form (lines 1893-1952)
+- Info button click handlers with event.stopPropagation()
+- Responsive grid layout
 
-- openLIBRVerificationFromModal() - Helper to launch modal
-  * Retrieves data from window.librVerificationData
-  * Opens verification modal with stored analysis data
-
-- Updated displayLIBRAnalysisResults() to:
-  * Show "View Verification Details" button
-  * Store analysis data in window.librVerificationData
-  * Make verification optional (user control)
-
-- Updated LIBR modal button layout:
-  * Added verification button on left side
-  * Maintains existing Close and Apply buttons on right
-
-Verification Table Shows:
-- Date/Time in local format
-- Type (Inbound/Outbound) with icons
-- Credit amounts (green text)
-- Debit amounts (red text)
-- Running balance (bold)
-- TX hash (abbreviated with link)
-
-Safety Features:
-- If > 1000 transactions: shows warning, truncates to last 1000
-- Advises user to get full records from block explorer
-- Provides direct links to Etherscan and Blockchain.com
-
-Use Cases:
-- Audit trail documentation for court proceedings
-- Cross-check LIBR analysis with manual review
-- Training demonstrations of LIBR methodology
-- Quality assurance before creating threads
-- Identify when full block explorer export needed
-
-User Control:
-Optional feature - investigators choose when to view.
-Does not interfere with normal LIBR workflow.
-Accessed via button in LIBR analysis results.
+Benefits:
+- Clear decision making for investigators
+- Comprehensive guidance without overwhelming
+- Visual hierarchy ensures prominence
+- Interactive learning through optional modals
+- Professional appearance increases confidence
+- Reduces methodology selection errors
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -73,90 +73,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 425 ++++++++++++++++++-------------------------------------------
- index.html | 189 ++++++++++++++++++++++++++-
- 2 files changed, 314 insertions(+), 300 deletions(-)
+ CLAUDE.md  | 256 ++++++++++++++++++++++++++++++-------------------------------
+ index.html | 150 +++++++++++++++++++++++++++++++-----
+ 2 files changed, 257 insertions(+), 149 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 910e904 Add LIBR verification modal for transparency and user control (1 second ago)
-- 44cc303 Implement multi-thread LIBR with PIFO ordering (9 minutes ago)
-- f85718c Add ability to add LIBR transactions directly to existing hops (30 minutes ago)
-- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (39 minutes ago)
+- 1fb0f7f Enhance methodology selection UI with prominent display and info modals (1 second ago)
+- 910e904 Add LIBR verification modal for transparency and user control (4 minutes ago)
+- 44cc303 Implement multi-thread LIBR with PIFO ordering (13 minutes ago)
+- f85718c Add ability to add LIBR transactions directly to existing hops (34 minutes ago)
+- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (44 minutes ago)
 - b454671 Fix LIBR modal display and implement proper iterative LIBR algorithm (10 hours ago)
 - cee9bb2 Remove ALL remaining template literals from filter section - COMPLETE FIX (10 hours ago)
 - e55e076 Replace all template literals with string concatenation in filter section (11 hours ago)
 - cbf5661 Fix template literal syntax error - use string concatenation instead (11 hours ago)
 - 65d5419 Fix critical bugs and migrate API keys to environment variables (11 hours ago)
-- 96ee49a Add provenance-based visualization filtering with multi-select and saved views (12 hours ago)
-
-## Enhanced Methodology Selection UI (New Feature - Session 3)
-
-### Overview
-
-Made the PIFO vs LIBR methodology selection more prominent in the case creation page and added comprehensive information modals to help investigators choose the right approach for their investigation.
-
-### Visual Enhancements
-
-**Prominent Display:**
-- Blue gradient background with border and shadow
-- Centered heading: "⚖️ Select Tracing Methodology"
-- Side-by-side card layout with hover effects
-- Color-coded: PIFO (Blue) and LIBR (Orange)
-- Cards lift and glow on hover for better interactivity
-
-**Each Method Card Shows:**
-- Radio button with larger size (20px)
-- Method name and full terminology
-- Brief one-line description
-- Color-coded "Best for" callout box
-- Info button (ℹ️) for detailed explanation
-
-### Information Modals (lines 29408-29479)
-
-**Click ℹ️ button to see:**
-
-**PIFO Modal:**
-- **Overview**: Full paragraph explaining PIFO methodology, immediate movement assumption, rapid tracing through multiple hops
-- **Common Use Cases**: Romance scams, investment fraud, ransomware, theft, BEC
-- **Workflow**: Step-by-step process flow
-- **When To Use**: 90%+ of investigations, rapid movement, clear chain of custody
-- **Example Scenario**: 10 BTC split into two 5 BTC payments, both traced
-
-**LIBR Modal:**
-- **Overview**: Balance monitoring approach, arrests asset flow, fewer wallets, stablecoin focus
-- **Common Use Cases**: Stablecoin cases, wallet seizure scenarios, private key recovery, long-term monitoring
-- **Workflow**: Balance drop detection process
-- **When To Use**: Stablecoins (freeze/burn), wallet access potential, strategic concentration
-- **Example Scenario**: 50K USDT in 150K wallet, balance drops tracked, LIBR triggers
-
-### Implementation
-
-**`showMethodologyInfo(method)` (lines 29408-29474)**
-- Creates modal with method-specific content
-- Color-coded headers and sections
-- Comprehensive explanation in digestible sections
-- Link to documentation
-- Close button
-
-**UI Updates (lines 1893-1952)**
-- Gradient background (#e3f2fd to #bbdefb)
-- 3px blue border with shadow
-- Grid layout for cards
-- Hover effects (transform, shadow, border color)
-- Info buttons positioned in top-right of each card
-- Warning banner about consistency
-
-### Benefits
-
-✅ **Clear Decision Making** - Investigators understand which method to use
-✅ **Comprehensive Guidance** - Detailed explanations with examples
-✅ **Visual Hierarchy** - Prominent placement ensures it's not overlooked
-✅ **Interactive Learning** - Optional info modals don't overwhelm
-✅ **Professional Appearance** - Polished UI increases user confidence
-
----
 
 ## Key Features
 
