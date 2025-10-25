@@ -3,30 +3,67 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 08:34)
+## Latest Commit (Auto-updated: 2025-10-25 08:42)
 
-**Commit:** 279d82e7f5eea8c7bba9711a58afa246699c1fb5
+**Commit:** 2c5afb2c9bd740f7c3fa41779baa86b27221271d
 **Author:** Your Name
-**Message:** Sync
+**Message:** Fix methodology info buttons - make functions global and prevent event bubbling
+
+Final fix for info button click handlers that weren't opening modals.
+
+Issues Fixed:
+1. Functions not globally accessible
+   - Changed from: function showMethodologyInfo()
+   - Changed to: window.showMethodologyInfo = function()
+   - Ensures function is available in global scope for onclick handlers
+
+2. Label click event interference
+   - Button is inside <label> element
+   - Label was consuming click events
+   - Added event.preventDefault() to stop default label behavior
+   - Added return false for additional safety
+
+3. Added console logging for debugging
+   - Logs when modal opens: "Opening methodology info for: PIFO/LIBR"
+   - Helps verify function is being called
+
+Changes:
+- Line 29408: Made showMethodologyInfo globally accessible
+- Line 29475: Made closeMethodologyInfoModal globally accessible
+- Line 29409: Added console.log for debugging
+- Line 1911: Enhanced PIFO button handler with preventDefault + stopPropagation + return false
+- Line 1934: Enhanced LIBR button handler with preventDefault + stopPropagation + return false
+
+Now button clicks will:
+1. Prevent default label behavior (preventDefault)
+2. Stop event from bubbling to label (stopPropagation)
+3. Return false as additional safeguard
+4. Call global window.showMethodologyInfo() function
+5. Open methodology explanation modal
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ CLAUDE.md  | 18 +++++++++---------
+ index.html | 14 ++++++++------
+ 2 files changed, 17 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 279d82e Sync (0 seconds ago)
-- 14d9678 Auto-sync CLAUDE.md (6 seconds ago)
-- ccfcf29 Final sync (13 seconds ago)
-- 8dc0ee6 Update CLAUDE.md (18 seconds ago)
-- c9bbf34 Fix methodology info buttons and remove undefined function call (33 seconds ago)
-- 3ba11f0 Sync CLAUDE.md (5 minutes ago)
-- a7ae877 Final CLAUDE.md update (5 minutes ago)
-- 57da2a2 Update CLAUDE.md with latest commit (5 minutes ago)
-- 1c5dec4 Auto-update CLAUDE.md with latest commit info (6 minutes ago)
-- 1fb0f7f Enhance methodology selection UI with prominent display and info modals (7 minutes ago)
+- 2c5afb2 Fix methodology info buttons - make functions global and prevent event bubbling (0 seconds ago)
+- 279d82e Sync (8 minutes ago)
+- 14d9678 Auto-sync CLAUDE.md (8 minutes ago)
+- ccfcf29 Final sync (8 minutes ago)
+- 8dc0ee6 Update CLAUDE.md (8 minutes ago)
+- c9bbf34 Fix methodology info buttons and remove undefined function call (8 minutes ago)
+- 3ba11f0 Sync CLAUDE.md (13 minutes ago)
+- a7ae877 Final CLAUDE.md update (13 minutes ago)
+- 57da2a2 Update CLAUDE.md with latest commit (13 minutes ago)
+- 1c5dec4 Auto-update CLAUDE.md with latest commit info (13 minutes ago)
 
 ## Key Features
 
