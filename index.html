@@ -4448,7 +4448,7 @@
             try {
                 // ALWAYS CHECK ARKHAM FIRST - IT'S OUR PRIMARY SOURCE FOR ALL CHAINS
                 console.log(`🔍 Checking Arkham Intelligence for address: ${address}`);
-                const arkhamApiKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
+                const arkhamApiKey = window.apiKeys?.arkham || 'd377a526-c9ea-4cb6-a647-775559583ff6';
 
                 if (arkhamApiKey) {
                     try {
@@ -4982,7 +4982,7 @@
 
                 // Try Arkham Intelligence API first
                 // Use the same key as in address search
-                const arkhamApiKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
+                const arkhamApiKey = window.apiKeys?.arkham || 'd377a526-c9ea-4cb6-a647-775559583ff6';
 
                 if (arkhamApiKey) {
                     try {
@@ -5881,6 +5881,12 @@
             return null;
         };
         
+        // Global API keys storage
+        // Make it globally accessible for other functions
+        window.apiKeys = {
+            arkham: 'd377a526-c9ea-4cb6-a647-775559583ff6'  // Default, will be overridden from env vars or localStorage
+        };
+
         // Blockchain API configurations
         // Make it globally accessible for other functions
         const blockchainAPIs = window.blockchainAPIs = {
@@ -17891,12 +17897,18 @@ function generateVisualizationPage() {
             currentViewName: null
         };
 
+        // Helper to get localStorage key safely
+        function getSavedViewsStorageKey() {
+            const caseId = investigation.caseNumber || 'default';
+            return `bats_saved_views_${caseId}`;
+        }
+
         // Initialize filter UI
         function initializeFilterUI() {
             if (!visualizationEngine || !visualizationEngine.provenanceIndex) return;
 
             // Load saved views from localStorage
-            const savedViewsJson = localStorage.getItem(`bats_saved_views_${investigation.caseNumber}`);
+            const savedViewsJson = localStorage.getItem(getSavedViewsStorageKey());
             if (savedViewsJson) {
                 try {
                     filterUI.savedViews = JSON.parse(savedViewsJson);
@@ -18330,7 +18342,7 @@ function generateVisualizationPage() {
         // Save to localStorage
         function saveSavedViewsToStorage() {
             localStorage.setItem(
-                `bats_saved_views_${investigation.caseNumber}`,
+                getSavedViewsStorageKey(),
                 JSON.stringify(filterUI.savedViews)
             );
         }
@@ -28315,7 +28327,7 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
 
         async function checkArkhamSwapData(txHash, txData, chain) {
             try {
-                const arkhamApiKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
+                const arkhamApiKey = window.apiKeys?.arkham || 'd377a526-c9ea-4cb6-a647-775559583ff6';
                 if (!arkhamApiKey) return;
 
                 console.log('Checking Arkham for swap data on transaction:', txHash);
@@ -32492,18 +32504,69 @@ document.addEventListener('DOMContentLoaded', function() {
     loadApiSettingsOnStartup();
 });
 
-function loadApiSettingsOnStartup() {
-    // Load saved API keys
+async function loadApiSettingsOnStartup() {
+    // Priority order for API keys:
+    // 1. Netlify environment variables (production - most secure)
+    // 2. localStorage (user override in Settings)
+    // 3. Hardcoded defaults (fallback for local dev)
+
+    // Try to load from Netlify environment variables first
+    try {
+        const response = await fetch('/.netlify/functions/get-api-keys');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.keys) {
+                console.log('✅ Loaded API keys from Netlify environment variables');
+
+                // Apply environment variable keys if they exist
+                if (data.keys.etherscan) {
+                    blockchainAPIs.ethereum.apiKey = data.keys.etherscan;
+                    // Update all EVM chains
+                    if (blockchainAPIs.base) blockchainAPIs.base.apiKey = data.keys.etherscan;
+                    if (blockchainAPIs.arbitrum) blockchainAPIs.arbitrum.apiKey = data.keys.etherscan;
+                    if (blockchainAPIs.optimism) blockchainAPIs.optimism.apiKey = data.keys.etherscan;
+                    if (blockchainAPIs.polygon) blockchainAPIs.polygon.apiKey = data.keys.etherscan;
+                    if (blockchainAPIs.bsc) blockchainAPIs.bsc.apiKey = data.keys.etherscan;
+                }
+                if (data.keys.blockchain) blockchainAPIs.bitcoin.apiKey = data.keys.blockchain;
+                if (data.keys.trongrid) blockchainAPIs.tron.apiKey = data.keys.trongrid;
+                if (data.keys.solana) blockchainAPIs.solana.apiUrl = data.keys.solana;
+                if (data.keys.arkham) window.apiKeys.arkham = data.keys.arkham;
+
+                // Still check localStorage for user overrides
+                const savedEtherscan = localStorage.getItem('bats_etherscan_api_key');
+                const savedBlockchain = localStorage.getItem('bats_blockchain_api_key');
+                const savedTrongrid = localStorage.getItem('bats_trongrid_api_key');
+                const savedSolanaRpc = localStorage.getItem('bats_solana_rpc_endpoint');
+                const savedArkham = localStorage.getItem('bats_arkham_api_key');
+
+                if (savedEtherscan) blockchainAPIs.ethereum.apiKey = savedEtherscan;
+                if (savedBlockchain) blockchainAPIs.bitcoin.apiKey = savedBlockchain;
+                if (savedTrongrid) blockchainAPIs.tron.apiKey = savedTrongrid;
+                if (savedSolanaRpc) blockchainAPIs.solana.apiUrl = savedSolanaRpc;
+                if (savedArkham) window.apiKeys.arkham = savedArkham;
+
+                return;
+            }
+        }
+    } catch (error) {
+        // Silently fall through to localStorage/defaults
+        console.log('ℹ️  Netlify environment not available, using localStorage or defaults');
+    }
+
+    // Fallback: Load from localStorage (if user has configured custom keys)
     const savedEtherscan = localStorage.getItem('bats_etherscan_api_key');
     const savedBlockchain = localStorage.getItem('bats_blockchain_api_key');
     const savedTrongrid = localStorage.getItem('bats_trongrid_api_key');
     const savedSolanaRpc = localStorage.getItem('bats_solana_rpc_endpoint');
-    
-    // Update blockchain API configurations
+    const savedArkham = localStorage.getItem('bats_arkham_api_key');
+
+    // Update blockchain API configurations (otherwise uses hardcoded defaults)
     if (savedEtherscan) blockchainAPIs.ethereum.apiKey = savedEtherscan;
     if (savedBlockchain) blockchainAPIs.bitcoin.apiKey = savedBlockchain;
     if (savedTrongrid) blockchainAPIs.tron.apiKey = savedTrongrid;
     if (savedSolanaRpc) blockchainAPIs.solana.apiUrl = savedSolanaRpc;
+    if (savedArkham) window.apiKeys.arkham = savedArkham;
 }
 
 // PK Converter Functions
@@ -33132,7 +33195,7 @@ async function searchBitcoinAddresses(searchType, pattern) {
     try {
         // Check if we have Arkham API key for partial searches
         // Use the same default key that's used elsewhere in the tool
-        const arkhamKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
+        const arkhamKey = window.apiKeys?.arkham || 'd377a526-c9ea-4cb6-a647-775559583ff6';
 
         // Determine pattern length for validation
         const effectivePatternLength = (typeof pattern === 'object' && pattern.prefix)
@@ -33659,7 +33722,7 @@ async function searchEVMAddresses(chain, searchType, pattern) {
         if (pattern.match(/^0x[a-fA-F0-9]{40}$/i)) {
             console.log('Complete address detected, trying Arkham first...');
             try {
-                const arkhamKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
+                const arkhamKey = window.apiKeys?.arkham || 'd377a526-c9ea-4cb6-a647-775559583ff6';
 
                 // Try multiple Arkham endpoints (with tags for enhanced data)
                 const arkhamEndpoints = [
@@ -34506,7 +34569,7 @@ async function checkAllAttributions(address) {
 
 async function checkArkhamAttribution(address) {
     // Use embedded API key or user override
-    const apiKey = localStorage.getItem('bats_arkham_api_key') || 'd377a526-c9ea-4cb6-a647-775559583ff6';
+    const apiKey = window.apiKeys?.arkham || 'd377a526-c9ea-4cb6-a647-775559583ff6';
     const autoCheck = localStorage.getItem('bats_arkham_auto_check') !== 'false';
     
     if (!autoCheck) {
@@ -35525,6 +35588,11 @@ async function fetchCompleteTransactionHistory(address, blockchain, currency) {
 
                 console.log(`Fetching page ${page}...`);
                 const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+                }
+
                 const data = await response.json();
 
                 if (data.status === '1' && data.result && Array.isArray(data.result)) {
@@ -35550,6 +35618,11 @@ async function fetchCompleteTransactionHistory(address, blockchain, currency) {
             const url = `https://blockchain.info/rawaddr/${address}?limit=10000`;
             console.log(`Fetching Bitcoin transaction history...`);
             const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`Bitcoin API request failed: ${response.status} ${response.statusText}`);
+            }
+
             const data = await response.json();
 
             if (data.txs) {
@@ -35565,7 +35638,7 @@ async function fetchCompleteTransactionHistory(address, blockchain, currency) {
             }
         } catch (err) {
             console.error('Failed to fetch Bitcoin transaction history:', err);
-            throw err;
+            throw new Error(`Failed to fetch Bitcoin transaction history: ${err.message}`);
         }
     }
 
@@ -35603,18 +35676,23 @@ function calculateRunningBalance(address, transactions, blockchain, startingBala
         let amount = 0;
         let type = 'unknown';
 
-        if (blockchain === 'bitcoin' && tx.rawTx) {
+        if (blockchain === 'bitcoin') {
             // Bitcoin UTXO calculation
+            if (!tx.rawTx) {
+                console.warn(`Bitcoin transaction ${tx.hash} missing rawTx data, skipping balance calculation`);
+                continue;
+            }
+
             // Check outputs going TO this address
             for (const output of tx.rawTx.out || []) {
-                if (output.addr === address) {
+                if (output && output.addr === address && output.value != null) {
                     amount += output.value / 100000000; // Satoshis to BTC
                     type = 'inbound';
                 }
             }
             // Check inputs coming FROM this address
             for (const input of tx.rawTx.inputs || []) {
-                if (input.prev_out && input.prev_out.addr === address) {
+                if (input && input.prev_out && input.prev_out.addr === address && input.prev_out.value != null) {
                     amount -= input.prev_out.value / 100000000;
                     type = 'outbound';
                 }

@@ -905,7 +905,21 @@ class BATSVisualizationEngine {
 
             // Validate investigation data
             if (!investigation) {
-                console.warn('No investigation data provided');
+                const errorMsg = 'No investigation data provided. Please load a .bats file or create a new investigation.';
+                console.error(errorMsg);
+                alert(errorMsg);
+                throw new Error(errorMsg);
+            }
+
+            // Validate investigation has data to visualize
+            const hasVictims = investigation.victims && Array.isArray(investigation.victims) && investigation.victims.length > 0;
+            const hasHops = investigation.hops && Array.isArray(investigation.hops) && investigation.hops.length > 0;
+            const hasThreads = investigation.availableThreads && Object.keys(investigation.availableThreads).length > 0;
+
+            if (!hasVictims && !hasHops && !hasThreads) {
+                const errorMsg = 'Investigation appears to be empty. No victims, hops, or threads to visualize.';
+                console.warn(errorMsg);
+                alert(errorMsg);
                 return;
             }
 
@@ -925,7 +939,7 @@ class BATSVisualizationEngine {
             let edgeIdCounter = 0;
 
             // INDEX STEP 1: Index all threads from investigation.availableThreads
-            if (investigation.availableThreads) {
+            if (investigation.availableThreads && Object.keys(investigation.availableThreads).length > 0) {
                 for (const currency in investigation.availableThreads) {
                     for (const internalId in investigation.availableThreads[currency]) {
                         const thread = investigation.availableThreads[currency][internalId];
@@ -966,6 +980,8 @@ class BATSVisualizationEngine {
                         }
                     }
                 }
+            } else {
+                console.warn('⚠️  No availableThreads data found in investigation. Filtering features will be limited.');
             }
 
             console.log('✅ Indexed', this.provenanceIndex.threads.size, 'threads');
