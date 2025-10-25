@@ -1890,29 +1890,64 @@
                                 <div style="font-size: 12px; color: #666; margin-top: 5px;">This will be included in the final report</div>
                             </div>
                             
-                            <!-- Tracing Method Selection -->
-                            <div class="form-group" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
-                                <label style="font-weight: bold; margin-bottom: 10px; display: block;">Tracing Method</label>
-                                <div style="display: flex; gap: 20px; align-items: flex-start;">
-                                    <label style="flex: 1; cursor: pointer;">
-                                        <input type="radio" name="tracingMethod" value="PIFO" checked onchange="updateTracingMethod('PIFO')">
-                                        <strong>PIFO (Default)</strong> - Proceeds In First Out
-                                        <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                                            When traced funds enter a wallet, the very next outbound transaction contains those funds. 
-                                            Best for rapid fund movement scenarios.
+                            <!-- Tracing Method Selection - PROMINENT -->
+                            <div class="form-group" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 25px; border-radius: 12px; margin-top: 25px; border: 3px solid #2196f3; box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);">
+                                <div style="text-align: center; margin-bottom: 20px;">
+                                    <h3 style="color: #1565c0; margin: 0 0 5px 0; font-size: 20px;">⚖️ Select Tracing Methodology</h3>
+                                    <p style="color: #666; font-size: 13px; margin: 0;">Critical Decision: Choose the methodology that best fits your investigation type</p>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                    <!-- PIFO Option -->
+                                    <label style="cursor: pointer; background: white; padding: 20px; border-radius: 8px; border: 3px solid #ddd; transition: all 0.3s; position: relative;"
+                                           onmouseover="this.style.borderColor='#2196f3'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(33, 150, 243, 0.3)'"
+                                           onmouseout="this.style.borderColor='#ddd'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <input type="radio" name="tracingMethod" value="PIFO" checked onchange="updateTracingMethod('PIFO')"
+                                                       style="width: 20px; height: 20px; cursor: pointer;">
+                                                <strong style="font-size: 16px; color: #2c3e50;">PIFO (Default)</strong>
+                                            </div>
+                                            <button type="button" onclick="showMethodologyInfo('PIFO'); event.stopPropagation();"
+                                                    style="background: #2196f3; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; font-size: 14px;"
+                                                    title="Click for detailed explanation">ℹ️</button>
+                                        </div>
+                                        <div style="color: #1976d2; font-size: 13px; font-weight: 600; margin-bottom: 8px;">Proceeds In, First Out</div>
+                                        <div style="font-size: 13px; color: #555; line-height: 1.5;">
+                                            Next outbound transaction after deposit contains the traced funds. Best for rapid movement scenarios and most investigations.
+                                        </div>
+                                        <div style="margin-top: 12px; padding: 8px; background: #e8f5e9; border-radius: 4px; font-size: 12px; color: #2e7d32;">
+                                            ✅ <strong>Best for:</strong> Most fraud cases, rapid fund movement
                                         </div>
                                     </label>
-                                    <label style="flex: 1; cursor: pointer;">
-                                        <input type="radio" name="tracingMethod" value="LIBR" onchange="updateTracingMethod('LIBR')">
-                                        <strong>LIBR</strong> - Lowest Intermediate Balance Rule
-                                        <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                                            Arrests asset flow, keeping funds in fewer wallets closer to RED wallet.
-                                            Use for stablecoin burn/reissue or when wallet access may be obtained.
+
+                                    <!-- LIBR Option -->
+                                    <label style="cursor: pointer; background: white; padding: 20px; border-radius: 8px; border: 3px solid #ddd; transition: all 0.3s; position: relative;"
+                                           onmouseover="this.style.borderColor='#ff9800'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(255, 152, 0, 0.3)'"
+                                           onmouseout="this.style.borderColor='#ddd'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <input type="radio" name="tracingMethod" value="LIBR" onchange="updateTracingMethod('LIBR')"
+                                                       style="width: 20px; height: 20px; cursor: pointer;">
+                                                <strong style="font-size: 16px; color: #2c3e50;">LIBR</strong>
+                                            </div>
+                                            <button type="button" onclick="showMethodologyInfo('LIBR'); event.stopPropagation();"
+                                                    style="background: #ff9800; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; font-size: 14px;"
+                                                    title="Click for detailed explanation">ℹ️</button>
+                                        </div>
+                                        <div style="color: #f57c00; font-size: 13px; font-weight: 600; margin-bottom: 8px;">Lowest Intermediate Balance Rule</div>
+                                        <div style="font-size: 13px; color: #555; line-height: 1.5;">
+                                            Arrests asset flow, keeping funds in fewer wallets. Monitors balance drops to identify outbound proceeds.
+                                        </div>
+                                        <div style="margin-top: 12px; padding: 8px; background: #fff3cd; border-radius: 4px; font-size: 12px; color: #f57c00;">
+                                            ⚡ <strong>Best for:</strong> Stablecoin cases, wallet seizure scenarios
                                         </div>
                                     </label>
                                 </div>
-                                <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 10px; margin-top: 15px; font-size: 12px;">
-                                    <strong>⚠️ Important:</strong> Once chosen, maintain the same method throughout your investigation for consistency.
+
+                                <div style="background: #fff; border: 2px solid #ffc107; border-radius: 6px; padding: 15px; margin-top: 20px; text-align: center;">
+                                    <strong style="color: #f57c00;">⚠️ Important:</strong>
+                                    <span style="color: #2c3e50;"> Once chosen, maintain the same method throughout your investigation for consistency and legal defensibility.</span>
                                 </div>
                             </div>
                             
@@ -29354,20 +29389,93 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
         function updateTracingMethod(method) {
             investigation.tracingMethod = method;
             saveToUndoHistory();
-            
+
             // Show warning if switching methods mid-investigation
             if (investigation.hops.length > 0) {
-                const warning = method === 'LIBR' ? 
+                const warning = method === 'LIBR' ?
                     'LIBR method selected: This will arrest asset flow and keep funds in fewer wallets closer to the RED wallet. Useful for stablecoin burn/reissue strategies or when private key access may be obtained. Ensure consistency throughout your investigation.' :
                     'Switched back to PIFO (default method). Ensure all previous entries follow PIFO methodology.';
                 showNotification(warning, 'info');
             }
-            
+
             // Update any UI elements that might display the method
             const methodDisplay = document.getElementById('currentTracingMethod');
             if (methodDisplay) {
                 methodDisplay.textContent = method;
             }
+        }
+
+        // Show detailed methodology information modal
+        function showMethodologyInfo(method) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'methodologyInfoModal';
+            modal.style.zIndex = '10000';
+
+            let title, color, description, useCases, workflow, whenToUse, example;
+
+            if (method === 'PIFO') {
+                title = '📘 PIFO Methodology';
+                color = '#2196f3';
+                description = 'PIFO (Proceeds In, First Out) is the default tracing methodology where criminal proceeds are assumed to move immediately upon entering a wallet. When traced funds are deposited into a commingled wallet, the very next outbound transaction is presumed to contain those criminal proceeds. This method creates more hops and follows funds through rapid movement patterns, making it ideal for most cryptocurrency fraud investigations where assets move quickly through multiple wallets.';
+                useCases = ['Romance scams with rapid fund movement', 'Investment fraud where funds are quickly dispersed', 'Ransomware payments moving through mixing services', 'Most cryptocurrency theft cases', 'Business email compromise with immediate transfers'];
+                workflow = 'Criminal proceeds enter wallet → Next outbound transaction contains those proceeds → Create new hop → Repeat for each wallet in the chain';
+                whenToUse = 'Use PIFO when funds move rapidly through wallets, when there is frequent transaction activity, or when following a clear chain of custody through multiple intermediaries. This is the recommended methodology for 90%+ of cryptocurrency investigations.';
+                example = 'Victim sends 10 BTC to scammer wallet. One hour later, scammer sends 5 BTC to Exchange A and 5 BTC to Wallet B. Under PIFO, both outbound transactions contain the victim\'s proceeds and should be traced as separate hops.';
+            } else {
+                title = '🔶 LIBR Methodology';
+                color = '#ff9800';
+                description = 'LIBR (Lowest Intermediate Balance Rule) arrests the flow of criminal proceeds by keeping them in fewer wallets closer to the initial RED wallet. Instead of assuming immediate movement, LIBR monitors wallet balances and only creates new threads when the balance drops below the amount of criminal proceeds held. This methodology is particularly powerful for stablecoin investigations where funds might be burned and reissued, or when there is a possibility of wallet seizure or private key recovery.';
+                useCases = ['Stablecoin cases (USDT, USDC) where burn/reissue is possible', 'Investigations where wallet seizure may be feasible', 'Cases where private key access might be obtained', 'Wallets with both criminal and legitimate funds commingled', 'Long-term monitoring scenarios'];
+                workflow = 'Criminal proceeds enter wallet → Monitor balance continuously → When balance drops below proceeds amount, identify outbound transactions → Create threads only for balance drops → Wallet remains monitored until proceeds consumed';
+                whenToUse = 'Use LIBR when dealing with stablecoins that can be frozen/burned, when there is potential for wallet access or seizure, or when you want to minimize the number of wallets holding criminal proceeds for strategic law enforcement action. LIBR keeps assets concentrated rather than dispersed.';
+                example = 'Victim sends 50,000 USDT to scammer wallet that already holds 100,000 USDT (total: 150,000). Scammer sends 30,000 USDT to Exchange A. Balance is now 120,000 - still above the 50,000 criminal proceeds, so NO hop is created yet. The 50,000 USDT remains monitored in the original wallet. Later, scammer sends 80,000 USDT out, dropping balance to 40,000 (below 50,000). Now LIBR identifies this transaction and creates a new thread for the 10,000 USDT of criminal proceeds that moved.';
+            }
+
+            modal.innerHTML = '<div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">' +
+                '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid ' + color + ';">' +
+                '<h2 style="color: ' + color + '; margin: 0;">' + title + '</h2>' +
+                '<button onclick="closeMethodologyInfoModal()" class="btn-close" style="font-size: 24px; border: none; background: none; cursor: pointer;">✕</button>' +
+                '</div>' +
+
+                '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid ' + color + '; margin-bottom: 20px;">' +
+                '<h3 style="color: ' + color + '; margin-top: 0;">Overview</h3>' +
+                '<p style="line-height: 1.7; color: #2c3e50; margin: 0;">' + description + '</p>' +
+                '</div>' +
+
+                '<div style="background: white; padding: 20px; border-radius: 8px; border: 2px solid #e0e0e0; margin-bottom: 20px;">' +
+                '<h3 style="color: #2c3e50; margin-top: 0;">📋 Common Use Cases</h3>' +
+                '<ul style="line-height: 1.8; color: #555;">' +
+                useCases.map(uc => '<li>' + uc + '</li>').join('') +
+                '</ul></div>' +
+
+                '<div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">' +
+                '<h3 style="color: #2e7d32; margin-top: 0;">🔄 Workflow</h3>' +
+                '<p style="line-height: 1.7; color: #2c3e50; margin: 0; font-family: monospace; font-size: 14px;">' + workflow + '</p>' +
+                '</div>' +
+
+                '<div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">' +
+                '<h3 style="color: #f57c00; margin-top: 0;">💡 When To Use</h3>' +
+                '<p style="line-height: 1.7; color: #2c3e50; margin: 0;">' + whenToUse + '</p>' +
+                '</div>' +
+
+                '<div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">' +
+                '<h3 style="color: #1976d2; margin-top: 0;">📝 Example Scenario</h3>' +
+                '<p style="line-height: 1.7; color: #2c3e50; margin: 0; font-style: italic;">' + example + '</p>' +
+                '</div>' +
+
+                '<div style="text-align: center; padding: 20px; background: #f5f5f5; border-radius: 8px;">' +
+                '<p style="margin: 0 0 15px 0; color: #666; font-size: 14px;">Need more information?</p>' +
+                '<button onclick="window.open(\'https://github.com/JGooseK41/batsTool\', \'_blank\')" class="btn btn-secondary" style="margin-right: 10px;">View Documentation</button>' +
+                '<button onclick="closeMethodologyInfoModal()" class="btn btn-primary">Got It, Close</button>' +
+                '</div></div>';
+
+            document.body.appendChild(modal);
+        }
+
+        function closeMethodologyInfoModal() {
+            const modal = document.getElementById('methodologyInfoModal');
+            if (modal) modal.remove();
         }
         
         // Apply LIBR (Lowest Intermediate Balance Rule) when needed

@@ -3,48 +3,69 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 08:14)
+## Latest Commit (Auto-updated: 2025-10-25 08:23)
 
-**Commit:** 44cc3038235a831f4e93bb96e6d7552e0dbc3857
+**Commit:** 910e90408086a0c76008eff3cf88cf9cba6b10e8
 **Author:** Your Name
-**Message:** Implement multi-thread LIBR with PIFO ordering
+**Message:** Add LIBR verification modal for transparency and user control
 
-Enables proper tracking of multiple criminal proceeds threads entering
-the same wallet, with automatic chronological consumption tracking.
+Provides optional feature to view complete transaction history of
+LIBR-analyzed wallets, allowing investigators to verify the analysis
+against block explorer data for audit trails and quality assurance.
 
-Key Features:
-- Thread queue structure with PIFO ordering (oldest first)
-- Monitor only ONE thread at a time (simplifies LIBR analysis)
-- Auto-advance to next thread when current consumed
-- Document total values of all threads for accounting
-- Backwards compatible with existing single-thread entries
+Features:
+- Full transaction history display (Date, Type, Credit, Debit, Balance, TX Hash)
+- Color-coded highlights:
+  * Green: Source thread deposits (criminal proceeds)
+  * Yellow: LIBR-identified outbound transactions (new threads)
+- Clickable transaction hashes linking to block explorers
+- 1000 transaction safety limit with warning banner
+- Suggests block explorer for wallets with extensive history
 
 Implementation:
-- Enhanced libr_wallet_status structure with threads array
-- Added thread management helper functions:
-  * ensureThreadStructure() - Auto-migrate old format
-  * addThreadToMonitoredWallet() - Add threads chronologically
-  * getCurrentMonitoredThread() - Get active monitoring thread
-  * reduceCurrentThreadAmount() - Update after tracing
-  * checkAndAdvanceToNextThread() - Auto-progress through queue
-  * updateMonitoredWalletTotals() - Recalculate aggregates
+- showLIBRVerificationModal() - Main verification display function
+  * Filters to show transactions from source deposit onwards
+  * Identifies and highlights source deposits and LIBR-detected TXs
+  * Truncates to 1000 transactions if necessary
+  * Generates block explorer links (Etherscan/Blockchain.com)
 
-- Updated LIBR functions to use thread structure:
-  * followLIBRTransaction() - Reduce current thread amount
-  * reanalyzeSingleMonitoredWallet() - Use current thread threshold
-  * reanalyzeAllMonitoredWallets() - Skip consumed wallets
-  * getAllMonitoredWallets() - Auto-migrate all entries
+- openLIBRVerificationFromModal() - Helper to launch modal
+  * Retrieves data from window.librVerificationData
+  * Opens verification modal with stored analysis data
 
-- Enhanced monitoring dashboard display:
-  * Show full thread queue with status indicators
-  * Highlight current thread being monitored
-  * Display individual thread amounts and totals
-  * Show progress percentage across all threads
+- Updated displayLIBRAnalysisResults() to:
+  * Show "View Verification Details" button
+  * Store analysis data in window.librVerificationData
+  * Make verification optional (user control)
 
-Methodology:
-LIBR balance analysis applied to ONE thread (current/oldest).
-PIFO ordering determines WHICH thread to analyze.
-Clean separation prevents complexity of simultaneous tracking.
+- Updated LIBR modal button layout:
+  * Added verification button on left side
+  * Maintains existing Close and Apply buttons on right
+
+Verification Table Shows:
+- Date/Time in local format
+- Type (Inbound/Outbound) with icons
+- Credit amounts (green text)
+- Debit amounts (red text)
+- Running balance (bold)
+- TX hash (abbreviated with link)
+
+Safety Features:
+- If > 1000 transactions: shows warning, truncates to last 1000
+- Advises user to get full records from block explorer
+- Provides direct links to Etherscan and Blockchain.com
+
+Use Cases:
+- Audit trail documentation for court proceedings
+- Cross-check LIBR analysis with manual review
+- Training demonstrations of LIBR methodology
+- Quality assurance before creating threads
+- Identify when full block explorer export needed
+
+User Control:
+Optional feature - investigators choose when to view.
+Does not interfere with normal LIBR workflow.
+Accessed via button in LIBR analysis results.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -52,110 +73,88 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 561 +++++++++++++++++++++++++++++++++++++++----------------------
- index.html | 332 +++++++++++++++++++++++++++++++++---
- 2 files changed, 675 insertions(+), 218 deletions(-)
+ CLAUDE.md  | 425 ++++++++++++++++++-------------------------------------------
+ index.html | 189 ++++++++++++++++++++++++++-
+ 2 files changed, 314 insertions(+), 300 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 44cc303 Implement multi-thread LIBR with PIFO ordering (0 seconds ago)
-- f85718c Add ability to add LIBR transactions directly to existing hops (21 minutes ago)
-- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (30 minutes ago)
+- 910e904 Add LIBR verification modal for transparency and user control (1 second ago)
+- 44cc303 Implement multi-thread LIBR with PIFO ordering (9 minutes ago)
+- f85718c Add ability to add LIBR transactions directly to existing hops (30 minutes ago)
+- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (39 minutes ago)
 - b454671 Fix LIBR modal display and implement proper iterative LIBR algorithm (10 hours ago)
 - cee9bb2 Remove ALL remaining template literals from filter section - COMPLETE FIX (10 hours ago)
-- e55e076 Replace all template literals with string concatenation in filter section (10 hours ago)
-- cbf5661 Fix template literal syntax error - use string concatenation instead (10 hours ago)
+- e55e076 Replace all template literals with string concatenation in filter section (11 hours ago)
+- cbf5661 Fix template literal syntax error - use string concatenation instead (11 hours ago)
 - 65d5419 Fix critical bugs and migrate API keys to environment variables (11 hours ago)
 - 96ee49a Add provenance-based visualization filtering with multi-select and saved views (12 hours ago)
-- 2035a72 Update CLAUDE.md with latest commit info (25 hours ago)
 
-## LIBR Verification Modal (New Feature - Session 2)
+## Enhanced Methodology Selection UI (New Feature - Session 3)
 
 ### Overview
 
-Optional transparency feature that displays complete transaction history for LIBR-analyzed wallets, allowing investigators to verify the analysis against block explorer data.
+Made the PIFO vs LIBR methodology selection more prominent in the case creation page and added comprehensive information modals to help investigators choose the right approach for their investigation.
 
-### Purpose
+### Visual Enhancements
 
-- Provides full transparency into LIBR methodology
-- Allows verification against external block explorer records
-- Documents all transactions in standard credit/debit format
-- Highlights key transactions for easy identification
+**Prominent Display:**
+- Blue gradient background with border and shadow
+- Centered heading: "⚖️ Select Tracing Methodology"
+- Side-by-side card layout with hover effects
+- Color-coded: PIFO (Blue) and LIBR (Orange)
+- Cards lift and glow on hover for better interactivity
 
-### How It Works
+**Each Method Card Shows:**
+- Radio button with larger size (20px)
+- Method name and full terminology
+- Brief one-line description
+- Color-coded "Best for" callout box
+- Info button (ℹ️) for detailed explanation
 
-**Access:** Click "📋 View Verification Details" button in LIBR analysis modal
+### Information Modals (lines 29408-29479)
 
-**Display:**
-- Full transaction history from source deposit onwards
-- Date/Time, Type, Credit (In), Debit (Out), Running Balance, TX Hash
-- Color-coded highlights:
-  - 🟢 **Green**: Source thread deposit (criminal proceeds entering wallet)
-  - 🟡 **Yellow**: LIBR-identified outbound transactions (new threads)
-- Clickable transaction hashes linking to block explorers
+**Click ℹ️ button to see:**
 
-**Safety Features:**
-- **1000 Transaction Limit**: If wallet has > 1,000 transactions since source deposit:
-  - Shows most recent 1,000 transactions
-  - Displays warning banner
-  - Advises user to obtain full records from block explorer
-  - Provides direct links to Etherscan/Blockchain.com
+**PIFO Modal:**
+- **Overview**: Full paragraph explaining PIFO methodology, immediate movement assumption, rapid tracing through multiple hops
+- **Common Use Cases**: Romance scams, investment fraud, ransomware, theft, BEC
+- **Workflow**: Step-by-step process flow
+- **When To Use**: 90%+ of investigations, rapid movement, clear chain of custody
+- **Example Scenario**: 10 BTC split into two 5 BTC payments, both traced
 
-### Implementation (lines 36123-36287)
+**LIBR Modal:**
+- **Overview**: Balance monitoring approach, arrests asset flow, fewer wallets, stablecoin focus
+- **Common Use Cases**: Stablecoin cases, wallet seizure scenarios, private key recovery, long-term monitoring
+- **Workflow**: Balance drop detection process
+- **When To Use**: Stablecoins (freeze/burn), wallet access potential, strategic concentration
+- **Example Scenario**: 50K USDT in 150K wallet, balance drops tracked, LIBR triggers
 
-**`showLIBRVerificationModal()`**
-- Accepts: wallet address, balance history, LIBR analysis, proceeds amount/date, currency, blockchain
-- Filters history to show only transactions after source deposit
-- Identifies source deposits (within 1 minute, 99%+ of amount)
-- Identifies LIBR-detected outbound transactions
-- Truncates to 1000 if necessary
-- Builds table with highlights and block explorer links
+### Implementation
 
-**`openLIBRVerificationFromModal()`**
-- Helper function called by verification button
-- Retrieves data from `window.librVerificationData`
-- Opens verification modal
+**`showMethodologyInfo(method)` (lines 29408-29474)**
+- Creates modal with method-specific content
+- Color-coded headers and sections
+- Comprehensive explanation in digestible sections
+- Link to documentation
+- Close button
 
-**Data Storage:**
-- `window.librVerificationData` stores all analysis data
-- Set by `displayLIBRAnalysisResults()` (lines 36120-36129)
-- Available throughout LIBR modal session
+**UI Updates (lines 1893-1952)**
+- Gradient background (#e3f2fd to #bbdefb)
+- 3px blue border with shadow
+- Grid layout for cards
+- Hover effects (transform, shadow, border color)
+- Info buttons positioned in top-right of each card
+- Warning banner about consistency
 
-### Verification Table Columns
+### Benefits
 
-| Column | Description |
-|--------|-------------|
-| Date/Time | Transaction timestamp in local format |
-| Type | 📥 Inbound or 📤 Outbound |
-| Credit (In) | Amount received (green text) |
-| Debit (Out) | Amount sent (red text) |
-| Running Balance | Balance after transaction (bold) |
-| Transaction Hash | Abbreviated hash with block explorer link 🔗 |
-
-### Block Explorer Links
-
-- **Ethereum/EVM**: https://etherscan.io/tx/{hash}
-- **Bitcoin**: https://www.blockchain.com/explorer/transactions/btc/{hash}
-
-### Verification Summary Footer
-
-Shows:
-- Total transactions displayed
-- Number of source deposits found
-- Number of LIBR-identified outbound transactions
-
-### Use Cases
-
-1. **Audit Trail**: Document methodology for court proceedings
-2. **Verification**: Cross-check LIBR analysis with manual review
-3. **Training**: Demonstrate LIBR methodology to new investigators
-4. **Quality Assurance**: Verify analysis before creating threads
-5. **Large Wallets**: Identify if full block explorer export needed (>1000 TXs)
-
-### User Control
-
-This is an **optional feature** - investigators choose when to view verification details. Does not interfere with normal LIBR workflow.
+✅ **Clear Decision Making** - Investigators understand which method to use
+✅ **Comprehensive Guidance** - Detailed explanations with examples
+✅ **Visual Hierarchy** - Prominent placement ensures it's not overlooked
+✅ **Interactive Learning** - Optional info modals don't overwhelm
+✅ **Professional Appearance** - Polished UI increases user confidence
 
 ---
 
@@ -168,6 +167,7 @@ This is an **optional feature** - investigators choose when to view verification
 - ✅ Timestamped audit trail in notes
 - ✅ Option to defer tracing decision
 - ✅ **NEW:** Optional verification modal for transparency
+- ✅ **NEW:** Prominent methodology selection with info modals
 - ✅ Smooth navigation with visual feedback
 - ✅ Maintains data integrity
 
