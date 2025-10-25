@@ -3,45 +3,79 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-24 22:00)
+## Latest Commit (Auto-updated: 2025-10-24 22:24)
 
-**Commit:** cee9bb2f8ebd60ea5d69be67ffd213b417271ed5
+**Commit:** b454671012df4689f4eb54b5ed0788075561ee82
 **Author:** Your Name
-**Message:** Remove ALL remaining template literals from filter section - COMPLETE FIX
+**Message:** Fix LIBR modal display and implement proper iterative LIBR algorithm
 
-Fixed ALL instances of backtick template literals:
-- Line 18095: console.log Applying filter message
-- Line 18124: filter description
-- Line 18131: showActiveFilterBadge call
-- Line 18134: console.log Filter applied message
-- Line 18155: savedView description
-- Line 18163: alert View saved message
-- Line 18183: console.log Loaded saved view
-- Line 18199: confirm Delete saved view
-- Line 18225: export filename construction
-- Lines 18281-18291: refreshSavedViewsList HTML generation (multi-line template)
+PART 1: Fixed Template Literal Syntax Errors
+- Removed ALL template literals from LIBR section (lines 35548-36020)
+- Replaced with string concatenation for browser compatibility
+- Fixed 20+ instances in:
+  * fetchCompleteTransactionHistory()
+  * calculateRunningBalance()
+  * findLIBRTransactionPoint()
+  * showLIBRBalanceTracker()
+  * displayLIBRAnalysisResults()
+- Modal now displays correctly
 
-This is the COMPLETE fix for all template literal syntax errors.
-All backticks replaced with string concatenation.
+PART 2: Implemented Proper Iterative LIBR Algorithm
+Previously: Only found FIRST transaction where balance dropped below proceeds
+Now: Properly implements LIBR methodology by:
+
+1. Starting with initial criminal proceeds amount (e.g., $100K)
+2. Finding FIRST outbound transaction where balance drops below $100K
+3. Calculating how much of the proceeds went into that transaction
+4. Creating thread with traced amount
+5. Reducing tracked amount to the new balance (e.g., $75K remaining)
+6. CONTINUING to monitor for next drop below $75K
+7. Repeating until all proceeds traced or determined to remain in wallet
+
+Algorithm Details:
+- trackedAmount starts at criminalProceedsAmount
+- For each outbound transaction where balance < trackedAmount:
+  * Calculate tracedInThisTx = min(tx.amount, trackedAmount - balance)
+  * Add transaction to transactionsToFollow array
+  * Update trackedAmount = balance (the new threshold)
+  * Continue monitoring
+- Stops when trackedAmount reaches near-zero or no more drops
+
+UI Improvements:
+- Shows ALL transactions that need to be followed (not just first)
+- Displays traced amount for each transaction
+- Shows remaining proceeds amount in wallet
+- Transaction table highlights ALL traced transactions
+- Numbered list of transactions to follow in order
+- Color-coded: First transaction gets blue border, all get "TRACE" badge
+
+New Return Fields:
+- transactionsToFollow: Array of ALL transactions containing proceeds
+- totalTransactionsToTrace: Count of transactions to follow
+- remainingProceedsInWallet: Amount still in wallet after all drops
+- Each transaction includes: txHash, amount, tracedAmount, balanceBefore, balanceAfter
+
+This is the correct LIBR methodology as described by the user.
 
 ### Changed Files:
 ```
- index.html | 54 ++++++++++++++++++++----------------------------------
- 1 file changed, 20 insertions(+), 34 deletions(-)
+ CLAUDE.md  |  94 +++++------------
+ index.html | 349 ++++++++++++++++++++++++++++++++-----------------------------
+ 2 files changed, 211 insertions(+), 232 deletions(-)
 ```
 
 ## Recent Commits History
 
-- cee9bb2 Remove ALL remaining template literals from filter section - COMPLETE FIX (0 seconds ago)
-- e55e076 Replace all template literals with string concatenation in filter section (8 minutes ago)
-- cbf5661 Fix template literal syntax error - use string concatenation instead (13 minutes ago)
-- 65d5419 Fix critical bugs and migrate API keys to environment variables (20 minutes ago)
-- 96ee49a Add provenance-based visualization filtering with multi-select and saved views (89 minutes ago)
-- 2035a72 Update CLAUDE.md with latest commit info (15 hours ago)
-- 2c960c0 Update CLAUDE.md with latest commit info (15 hours ago)
-- eb192ed Add LIBR (Lowest Intermediate Balance Rule) tracing method support (15 hours ago)
+- b454671 Fix LIBR modal display and implement proper iterative LIBR algorithm (0 seconds ago)
+- cee9bb2 Remove ALL remaining template literals from filter section - COMPLETE FIX (23 minutes ago)
+- e55e076 Replace all template literals with string concatenation in filter section (32 minutes ago)
+- cbf5661 Fix template literal syntax error - use string concatenation instead (37 minutes ago)
+- 65d5419 Fix critical bugs and migrate API keys to environment variables (44 minutes ago)
+- 96ee49a Add provenance-based visualization filtering with multi-select and saved views (2 hours ago)
+- 2035a72 Update CLAUDE.md with latest commit info (16 hours ago)
+- 2c960c0 Update CLAUDE.md with latest commit info (16 hours ago)
+- eb192ed Add LIBR (Lowest Intermediate Balance Rule) tracing method support (16 hours ago)
 - ad5bf5c Fix getCurrentART to exclude terminal wallets from next hop ART (2 weeks ago)
-- d9d1ded Revert "Fix hop auto-close bug when multiple threads are active" (2 weeks ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
