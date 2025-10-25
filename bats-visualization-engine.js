@@ -296,7 +296,10 @@ class CanvasRenderer {
         this.ctx.stroke();
     }
 
-    render(graph) {
+    render(graph, options = {}) {
+        const visibleNodes = options.visibleNodes || new Set(graph.nodes.keys());
+        const visibleEdges = options.visibleEdges || new Set(graph.edges.keys());
+
         // Clear canvas
         this.clear();
 
@@ -305,19 +308,23 @@ class CanvasRenderer {
             this.renderGrid();
         }
 
-        // Render edges
-        graph.edges.forEach(edge => {
-            const sourceNode = graph.getNode(edge.source);
-            const targetNode = graph.getNode(edge.target);
+        // Render only visible edges
+        graph.edges.forEach((edge, edgeId) => {
+            if (visibleEdges.has(edgeId)) {
+                const sourceNode = graph.getNode(edge.source);
+                const targetNode = graph.getNode(edge.target);
 
-            if (sourceNode && targetNode) {
-                this.renderEdge(edge, sourceNode, targetNode);
+                if (sourceNode && targetNode) {
+                    this.renderEdge(edge, sourceNode, targetNode);
+                }
             }
         });
 
-        // Render nodes
-        graph.nodes.forEach(node => {
-            this.renderNode(node);
+        // Render only visible nodes
+        graph.nodes.forEach((node, nodeId) => {
+            if (visibleNodes.has(nodeId)) {
+                this.renderNode(node);
+            }
         });
     }
 
@@ -902,135 +909,196 @@ class BATSVisualizationEngine {
                 return;
             }
 
-            // Convert investigation data to graph
+            // BUILD PROVENANCE INDEX
+            this.provenanceIndex = {
+                threads: new Map(),
+                descendants: new Map(),
+                ancestors: new Map(),
+                nodeToThreads: new Map(),
+                threadToNodes: new Map(),
+                victimRootThreads: new Map(),
+                notationToIds: new Map(),
+                terminalAncestors: new Map()
+            };
+
             let nodeIdCounter = 0;
             let edgeIdCounter = 0;
 
-        // Add victim nodes
-        if (investigation.victims && Array.isArray(investigation.victims)) {
-            console.log(`Processing ${investigation.victims.length} victims`);
-            investigation.victims.forEach((victim, vIndex) => {
-                console.log(`Processing victim ${vIndex}:`, victim);
-                if (victim && victim.transactions && Array.isArray(victim.transactions)) {
-                    console.log(`  - Found ${victim.transactions.length} transactions`);
-                    victim.transactions.forEach(tx => {
-                        if (!tx) {
-                            console.warn('  - Skipping null/undefined transaction');
-                            return;
-                        }
+            // INDEX STEP 1: Index all threads from investigation.availableThreads
+            if (investigation.availableThreads) {
+                for (const currency in investigation.availableThreads) {
+                    for (const internalId in investigation.availableThreads[currency]) {
+                        const thread = investigation.availableThreads[currency][internalId];
 
-                        const nodeId = `victim_${nodeIdCounter++}`;
-                        const walletAddress = tx.receivingWallet || tx.redWallet || 'Unknown';
-                        const displayLabel = (walletAddress && typeof walletAddress === 'string' && walletAddress.length > 12) ?
-                            walletAddress.substring(0, 8) + '...' : (walletAddress || 'Unknown');
+                        this.provenanceIndex.threads.set(internalId, thread);
 
-                        console.log(`  - Adding victim node: ${nodeId}, wallet: ${walletAddress}, amount: ${tx.amount} ${tx.currency}`);
-
-                        this.graph.addNode(nodeId, {
-                            type: 'victim',
-                            label: displayLabel,
-                            amount: parseFloat(tx.amount) || 0,
-                            currency: tx.currency || 'Unknown',
-                            layer: 0,
-                            data: tx
-                        });
-                    });
-                } else {
-                    console.warn(`  - Victim ${vIndex} has no transactions or invalid structure`);
-                }
-            });
-        } else {
-            console.warn('No victims found or victims not an array');
-        }
-
-        // Add hop nodes
-        if (investigation.hops && Array.isArray(investigation.hops)) {
-            console.log(`Processing ${investigation.hops.length} hops`);
-            investigation.hops.forEach((hop, hopIndex) => {
-                console.log(`Processing hop ${hopIndex}:`, hop);
-                if (hop && hop.entries && Array.isArray(hop.entries)) {
-                    console.log(`  - Found ${hop.entries.length} entries in hop ${hopIndex}`);
-                    hop.entries.forEach((entry, entryIndex) => {
-                        if (!entry) {
-                            console.warn(`  - Skipping null/undefined entry at index ${entryIndex}`);
-                            return;
-                        }
-
-                        try {
-                            const nodeId = `hop_${nodeIdCounter++}`;
-                            const nodeType = entry.entryType || entry.type || 'hop';
-
-                            // Get wallet address from appropriate field
-                            const walletAddress = entry.toWallet || entry.walletAddress || 'Unknown';
-                            const displayLabel = (walletAddress && typeof walletAddress === 'string' && walletAddress.length > 12) ?
-                                walletAddress.substring(0, 8) + '...' : (walletAddress || 'Unknown');
-
-                            console.log(`  - Adding ${nodeType} node: ${nodeId}, wallet: ${walletAddress}, amount: ${entry.amount} ${entry.currency}`);
-
-                    this.graph.addNode(nodeId, {
-                        type: nodeType,
-                        label: displayLabel,
-                        entity: entry.exchangeName || entry.exchangeAttribution?.name || entry.entity,
-                        layer: hopIndex + 1,
-                        data: entry
-                    });
-
-                    // Connect to previous layer
-                    if (hopIndex === 0) {
-                        // Connect to victims
-                        this.graph.nodes.forEach((node, victimId) => {
-                            if (node.layer === 0) {
-                                this.graph.addEdge(`edge_${edgeIdCounter++}`, victimId, nodeId);
+                        // Map notation → internalIds
+                        if (thread.notation) {
+                            if (!this.provenanceIndex.notationToIds.has(thread.notation)) {
+                                this.provenanceIndex.notationToIds.set(thread.notation, new Set());
                             }
-                        });
-                    } else {
-                        // Connect to previous hop
-                        // This is simplified - real implementation would track actual flow
-                        const prevLayerNodes = Array.from(this.graph.nodes.values())
-                            .filter(n => n.layer === hopIndex);
+                            this.provenanceIndex.notationToIds.get(thread.notation).add(internalId);
+                        }
 
-                        if (prevLayerNodes.length > 0) {
-                            this.graph.addEdge(
-                                `edge_${edgeIdCounter++}`,
-                                prevLayerNodes[0].id,
-                                nodeId
-                            );
+                        // Build parent-child relationships (handle both field names)
+                        const parentIds = thread.parentInternalIds || thread.parentThreads || [];
+                        if (parentIds.length > 0) {
+                            parentIds.forEach(parentId => {
+                                if (!this.provenanceIndex.descendants.has(parentId)) {
+                                    this.provenanceIndex.descendants.set(parentId, new Set());
+                                }
+                                this.provenanceIndex.descendants.get(parentId).add(internalId);
+
+                                if (!this.provenanceIndex.ancestors.has(internalId)) {
+                                    this.provenanceIndex.ancestors.set(internalId, new Set());
+                                }
+                                this.provenanceIndex.ancestors.get(internalId).add(parentId);
+                            });
+                        }
+
+                        // Track victim root threads
+                        if (thread.victimId && thread.transactionId) {
+                            const victimKey = `V${thread.victimId}`;
+                            if (!this.provenanceIndex.victimRootThreads.has(victimKey)) {
+                                this.provenanceIndex.victimRootThreads.set(victimKey, new Set());
+                            }
+                            this.provenanceIndex.victimRootThreads.get(victimKey).add(internalId);
                         }
                     }
-                        } catch (entryError) {
-                            console.error('Error processing hop entry:', entry, entryError);
-                            // Continue with next entry
-                        }
-                    });
                 }
+            }
+
+            console.log('✅ Indexed', this.provenanceIndex.threads.size, 'threads');
+
+            // CREATE NODES: Victims
+            if (investigation.victims && Array.isArray(investigation.victims)) {
+                console.log(`Processing ${investigation.victims.length} victims`);
+                investigation.victims.forEach((victim, vIndex) => {
+                    if (victim && victim.transactions && Array.isArray(victim.transactions)) {
+                        victim.transactions.forEach(tx => {
+                            if (!tx) return;
+
+                            const nodeId = `victim_${nodeIdCounter++}`;
+                            const notation = `V${victim.id}-T${tx.id}`;
+                            const threadIds = this.provenanceIndex.notationToIds.get(notation) || new Set();
+                            const walletAddress = tx.receivingWallet || tx.redWallet || 'Unknown';
+
+                            this.graph.addNode(nodeId, {
+                                type: 'victim',
+                                label: this.formatWalletLabel(walletAddress),
+                                amount: parseFloat(tx.amount) || 0,
+                                currency: tx.currency || 'Unknown',
+                                layer: 0,
+                                data: tx,
+                                threadNotation: notation,
+                                threadInternalIds: Array.from(threadIds),
+                                victimId: `V${victim.id}`
+                            });
+
+                            // Map node ↔ threads
+                            this.provenanceIndex.nodeToThreads.set(nodeId, threadIds);
+                            threadIds.forEach(tid => {
+                                if (!this.provenanceIndex.threadToNodes.has(tid)) {
+                                    this.provenanceIndex.threadToNodes.set(tid, new Set());
+                                }
+                                this.provenanceIndex.threadToNodes.get(tid).add(nodeId);
+                            });
+                        });
+                    }
+                });
+            }
+
+            // CREATE NODES: Hops
+            if (investigation.hops && Array.isArray(investigation.hops)) {
+                console.log(`Processing ${investigation.hops.length} hops`);
+                investigation.hops.forEach((hop, hopIndex) => {
+                    if (hop && hop.entries && Array.isArray(hop.entries)) {
+                        hop.entries.forEach(entry => {
+                            if (!entry) return;
+
+                            const nodeId = `hop_${nodeIdCounter++}`;
+                            const threadIds = entry.notation ?
+                                (this.provenanceIndex.notationToIds.get(entry.notation) || new Set()) :
+                                new Set();
+                            const sourceIds = entry.sourceThreadInternalId ?
+                                [entry.sourceThreadInternalId] :
+                                (entry.multipleSourceInternalIds || []);
+                            const walletAddress = entry.toWallet || entry.walletAddress || 'Unknown';
+
+                            this.graph.addNode(nodeId, {
+                                type: entry.entryType || 'hop',
+                                label: this.formatWalletLabel(walletAddress),
+                                entity: entry.exchangeName || entry.exchangeAttribution?.name || entry.entity,
+                                layer: hopIndex + 1,
+                                data: entry,
+                                threadNotation: entry.notation,
+                                threadInternalIds: Array.from(threadIds),
+                                sourceThreadInternalIds: sourceIds
+                            });
+
+                            // Map node ↔ threads
+                            this.provenanceIndex.nodeToThreads.set(nodeId, threadIds);
+                            threadIds.forEach(tid => {
+                                if (!this.provenanceIndex.threadToNodes.has(tid)) {
+                                    this.provenanceIndex.threadToNodes.set(tid, new Set());
+                                }
+                                this.provenanceIndex.threadToNodes.get(tid).add(nodeId);
+                            });
+
+                            // Build terminal ancestor index
+                            if (entry.entryType === 'terminal') {
+                                const allAncestors = new Set();
+                                threadIds.forEach(tid => {
+                                    this.getAllAncestors(tid, allAncestors);
+                                });
+                                this.provenanceIndex.terminalAncestors.set(nodeId, allAncestors);
+                            }
+
+                            // CREATE EDGES: Based on source thread provenance
+                            sourceIds.forEach(sourceInternalId => {
+                                const sourceNodes = this.provenanceIndex.threadToNodes.get(sourceInternalId);
+                                if (sourceNodes) {
+                                    sourceNodes.forEach(sourceNodeId => {
+                                        const edgeId = `edge_${edgeIdCounter++}`;
+                                        const thread = this.provenanceIndex.threads.get(sourceInternalId);
+
+                                        this.graph.addEdge(edgeId, sourceNodeId, nodeId, {
+                                            threadNotation: thread?.notation,
+                                            threadInternalId: sourceInternalId,
+                                            amount: thread?.totalAmount,
+                                            currency: thread?.currency
+                                        });
+                                    });
+                                }
+                            });
+                        });
+                    }
+                });
+            }
+
+            console.log('✅ Provenance index built:', {
+                threads: this.provenanceIndex.threads.size,
+                victims: this.provenanceIndex.victimRootThreads.size,
+                terminals: this.provenanceIndex.terminalAncestors.size,
+                nodes: this.graph.nodes.size,
+                edges: this.graph.edges.size
             });
-        }
 
-        // Log final graph state
-        console.log(`Graph loaded with ${this.graph.nodes.size} nodes and ${this.graph.edges.size} edges`);
-        console.log('Graph nodes:', Array.from(this.graph.nodes.entries()));
-        console.log('Graph edges:', Array.from(this.graph.edges.entries()));
+            // Apply layout
+            this.applyLayout('hierarchical');
 
-        // Apply layout
-        console.log('Applying hierarchical layout...');
-        this.applyLayout('hierarchical');
+            // Create filter manager after index is built
+            this.filterManager = new FocusedFilterManager(this);
+            this.currentFilterResult = null;
 
-        // Render
-        console.log('Rendering graph...');
-        console.log('Canvas size:', this.canvas.width, 'x', this.canvas.height);
-        console.log('Canvas style:', this.canvas.style.width, 'x', this.canvas.style.height);
-        console.log('Container size:', this.container.clientWidth, 'x', this.container.clientHeight);
-        this.render();
+            // Render
+            this.render();
+            this.interaction.fitToScreen();
 
-        // Fit to screen
-        console.log('Fitting to screen...');
-        this.interaction.fitToScreen();
-
-        console.log('Visualization loading complete');
+            console.log('Visualization loading complete');
 
         } catch (error) {
             console.error('Error loading investigation into visualization:', error);
-            // Show error message to user
             const container = document.getElementById('visualization-container');
             if (container) {
                 container.innerHTML = `
@@ -1042,6 +1110,42 @@ class BATSVisualizationEngine {
                 `;
             }
         }
+    }
+
+    // Helper: Get all ancestors recursively (for backward tracing)
+    getAllAncestors(internalId, result = new Set()) {
+        if (result.has(internalId)) return result;
+        result.add(internalId);
+
+        const parents = this.provenanceIndex.ancestors.get(internalId);
+        if (parents) {
+            parents.forEach(parentId => {
+                this.getAllAncestors(parentId, result);
+            });
+        }
+
+        return result;
+    }
+
+    // Helper: Get all descendants recursively (for forward tracing)
+    getAllDescendants(internalId, result = new Set()) {
+        if (result.has(internalId)) return result;
+        result.add(internalId);
+
+        const children = this.provenanceIndex.descendants.get(internalId);
+        if (children) {
+            children.forEach(childId => {
+                this.getAllDescendants(childId, result);
+            });
+        }
+
+        return result;
+    }
+
+    // Helper: Format wallet label
+    formatWalletLabel(address) {
+        if (!address || typeof address !== 'string') return 'Unknown';
+        return address.length > 12 ? address.substring(0, 8) + '...' : address;
     }
 
     applyLayout(type = 'hierarchical') {
@@ -1067,7 +1171,50 @@ class BATSVisualizationEngine {
     }
 
     render() {
-        this.renderer.render(this.graph);
+        if (this.currentFilterResult) {
+            this.renderer.render(this.graph, {
+                visibleNodes: this.currentFilterResult.nodes,
+                visibleEdges: this.currentFilterResult.edges
+            });
+        } else {
+            this.renderer.render(this.graph);
+        }
+    }
+
+    // Public API: Filter by victim
+    filterByVictim(victimId) {
+        if (!this.filterManager) return;
+        this.currentFilterResult = this.filterManager.filterByVictim(victimId);
+        this.render();
+        this.interaction.fitToScreen();
+        return this.currentFilterResult;
+    }
+
+    // Public API: Filter by root thread
+    filterByRootThread(notation) {
+        if (!this.filterManager) return;
+        this.currentFilterResult = this.filterManager.filterByRootThread(notation);
+        this.render();
+        this.interaction.fitToScreen();
+        return this.currentFilterResult;
+    }
+
+    // Public API: Filter by terminal
+    filterByTerminal(terminalNodeId) {
+        if (!this.filterManager) return;
+        this.currentFilterResult = this.filterManager.filterByTerminal(terminalNodeId);
+        this.render();
+        this.interaction.fitToScreen();
+        return this.currentFilterResult;
+    }
+
+    // Public API: Clear filter
+    clearFilter() {
+        if (!this.filterManager) return;
+        this.currentFilterResult = this.filterManager.clearFilter();
+        this.render();
+        this.interaction.fitToScreen();
+        return this.currentFilterResult;
     }
 
     startAnimation() {
@@ -1122,7 +1269,137 @@ class BATSVisualizationEngine {
     }
 }
 
+// ============================================
+// Focused Filter Manager
+// ============================================
+
+class FocusedFilterManager {
+    constructor(engine) {
+        this.engine = engine;
+        this.activeFilter = null;
+    }
+
+    // MODE 1: Filter by victim (forward trace)
+    filterByVictim(victimId) {
+        const rootThreads = this.engine.provenanceIndex.victimRootThreads.get(victimId);
+        if (!rootThreads || rootThreads.size === 0) {
+            console.warn(`No threads found for victim ${victimId}`);
+            return this.getEmptyResult();
+        }
+
+        // Get all descendants of victim's root threads (forward trace)
+        const allThreads = new Set();
+        rootThreads.forEach(rootId => {
+            this.engine.getAllDescendants(rootId, allThreads);
+        });
+
+        console.log(`${victimId}: ${rootThreads.size} root threads → ${allThreads.size} total threads`);
+
+        return this.buildFilterResult(allThreads, {
+            type: 'victim',
+            value: victimId,
+            description: `${victimId} - All funds traced forward`
+        });
+    }
+
+    // MODE 2: Filter by root thread notation (forward trace)
+    filterByRootThread(notation) {
+        const threadIds = this.engine.provenanceIndex.notationToIds.get(notation);
+        if (!threadIds || threadIds.size === 0) {
+            console.warn(`No threads found for notation ${notation}`);
+            return this.getEmptyResult();
+        }
+
+        // Get all descendants of this root thread (forward trace)
+        const allThreads = new Set();
+        threadIds.forEach(threadId => {
+            this.engine.getAllDescendants(threadId, allThreads);
+        });
+
+        console.log(`${notation}: ${threadIds.size} thread(s) → ${allThreads.size} descendants`);
+
+        return this.buildFilterResult(allThreads, {
+            type: 'rootThread',
+            value: notation,
+            description: `${notation} - Traced forward to terminal(s)`
+        });
+    }
+
+    // MODE 3: Filter by terminal (backward trace)
+    filterByTerminal(terminalNodeId) {
+        const ancestorThreads = this.engine.provenanceIndex.terminalAncestors.get(terminalNodeId);
+        if (!ancestorThreads || ancestorThreads.size === 0) {
+            console.warn(`No ancestor threads found for terminal ${terminalNodeId}`);
+            return this.getEmptyResult();
+        }
+
+        const terminalNode = this.engine.graph.getNode(terminalNodeId);
+        console.log(`Terminal ${terminalNode?.label}: ${ancestorThreads.size} ancestor threads`);
+
+        return this.buildFilterResult(ancestorThreads, {
+            type: 'terminal',
+            value: terminalNodeId,
+            description: `${terminalNode?.label || 'Terminal'} - Traced backward to sources`
+        }, terminalNodeId);
+    }
+
+    // Build filter result from thread set
+    buildFilterResult(threadSet, filterInfo, includeTerminalNode = null) {
+        // Find all nodes containing these threads
+        const visibleNodes = new Set();
+        threadSet.forEach(threadId => {
+            const nodes = this.engine.provenanceIndex.threadToNodes.get(threadId);
+            if (nodes) {
+                nodes.forEach(nodeId => visibleNodes.add(nodeId));
+            }
+        });
+
+        // Include terminal node if specified
+        if (includeTerminalNode) {
+            visibleNodes.add(includeTerminalNode);
+        }
+
+        // Get edges where both source and target are visible AND thread is in set
+        const visibleEdges = new Set();
+        this.engine.graph.edges.forEach((edge, edgeId) => {
+            if (visibleNodes.has(edge.source) &&
+                visibleNodes.has(edge.target) &&
+                threadSet.has(edge.threadInternalId)) {
+                visibleEdges.add(edgeId);
+            }
+        });
+
+        this.activeFilter = filterInfo;
+
+        return {
+            nodes: visibleNodes,
+            edges: visibleEdges,
+            filter: filterInfo
+        };
+    }
+
+    getEmptyResult() {
+        return {
+            nodes: new Set(),
+            edges: new Set(),
+            filter: null
+        };
+    }
+
+    clearFilter() {
+        this.activeFilter = null;
+        return {
+            nodes: new Set(this.engine.graph.nodes.keys()),
+            edges: new Set(this.engine.graph.edges.keys()),
+            filter: null
+        };
+    }
+}
+
+// ============================================
 // Export for use
+// ============================================
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = BATSVisualizationEngine;
 } else if (typeof window !== 'undefined') {
