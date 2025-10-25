@@ -17978,8 +17978,8 @@ function generateVisualizationPage() {
 
                     options.push({
                         id: victimId,
-                        label: `${victimId} - ${victim?.name || 'Unknown'}`,
-                        details: `${threads.size} transaction${threads.size > 1 ? 's' : ''}, ${totalAmount.toFixed(4)} ${currency}`,
+                        label: victimId + ' - ' + (victim?.name || 'Unknown'),
+                        details: threads.size + ' transaction' + (threads.size > 1 ? 's' : '') + ', ' + totalAmount.toFixed(4) + ' ' + currency,
                         type: 'victim'
                     });
                 });
@@ -18008,7 +18008,7 @@ function generateVisualizationPage() {
                     options.push({
                         id: notation,
                         label: notation,
-                        details: `${data.amount.toFixed(4)} ${data.currency}${data.count > 1 ? ` (${data.count} threads)` : ''}`,
+                        details: data.amount.toFixed(4) + ' ' + data.currency + (data.count > 1 ? ' (' + data.count + ' threads)' : ''),
                         type: 'rootThread'
                     });
                 });
@@ -18022,14 +18022,14 @@ function generateVisualizationPage() {
                         ancestors.forEach(ancestorId => {
                             const thread = idx.threads.get(ancestorId);
                             if (thread && thread.victimId) {
-                                victimSources.add(`V${thread.victimId}`);
+                                victimSources.add('V' + thread.victimId);
                             }
                         });
 
                         options.push({
                             id: terminalNodeId,
                             label: node.label || 'Unknown Terminal',
-                            details: `${ancestors.size} source thread${ancestors.size > 1 ? 's' : ''} from ${Array.from(victimSources).join(', ')}`,
+                            details: ancestors.size + ' source thread' + (ancestors.size > 1 ? 's' : '') + ' from ' + Array.from(victimSources).join(', '),
                             type: 'terminal',
                             fullAddress: node.data?.toWallet || ''
                         });
@@ -18043,23 +18043,18 @@ function generateVisualizationPage() {
 
                 const optionDiv = document.createElement('div');
                 optionDiv.className = 'filter-option-item';
-                optionDiv.innerHTML = `
-                    <input type="checkbox"
-                           id="filter-opt-${CSS.escape(option.id)}"
-                           value="${option.id}"
-                           ${isChecked ? 'checked' : ''}
-                           onchange="toggleFilterOption('${option.id.replace(/'/g, "\\'")}')">
-                    <label for="filter-opt-${CSS.escape(option.id)}" style="display: flex; flex-direction: column;">
-                        <strong>${option.label}</strong>
-                        <span style="font-size: 12px; color: #666;">${option.details}</span>
-                        ${option.fullAddress ? `<span style="font-size: 11px; color: #999; font-family: monospace;">${option.fullAddress}</span>` : ''}
-                    </label>
-                `;
+                optionDiv.innerHTML = '<input type="checkbox" id="filter-opt-' + CSS.escape(option.id) + '" value="' + option.id + '" ' +
+                    (isChecked ? 'checked' : '') + ' onchange="toggleFilterOption(\'' + option.id.replace(/'/g, "\\'") + '\')"> ' +
+                    '<label for="filter-opt-' + CSS.escape(option.id) + '" style="display: flex; flex-direction: column;"> ' +
+                    '<strong>' + option.label + '</strong> ' +
+                    '<span style="font-size: 12px; color: #666;">' + option.details + '</span> ' +
+                    (option.fullAddress ? '<span style="font-size: 11px; color: #999; font-family: monospace;">' + option.fullAddress + '</span>' : '') +
+                    '</label>';
 
                 optionsList.appendChild(optionDiv);
             });
 
-            console.log(`Loaded ${options.length} ${mode} options`);
+            console.log('Loaded ' + options.length + ' ' + mode + ' options');
         }
 
         // Toggle individual filter option
