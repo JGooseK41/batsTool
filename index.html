@@ -35897,10 +35897,13 @@ async function showLIBRBalanceTracker(walletAddress, criminalProceedsAmount, cri
         '<p style="color: #666; font-size: 14px;">This may take a moment for wallets with many transactions</p>' +
         '</div>' +
         '<div id="librAnalysisResults" style="display: none;"></div>' +
-        '<div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">' +
+        '<div style="display: flex; gap: 10px; justify-content: space-between; margin-top: 20px;">' +
+        '<button id="librVerificationButton" onclick="openLIBRVerificationFromModal()" class="btn btn-secondary" style="display: none;">' +
+        '📋 View Verification Details</button>' +
+        '<div style="display: flex; gap: 10px;">' +
         '<button onclick="closeLIBRBalanceModal()" class="btn btn-secondary">Close</button>' +
         '<button id="librApplyButton" onclick="applyLIBRSelection()" class="btn btn-primary" style="display: none;">Apply LIBR Selection</button>' +
-        '</div></div>';
+        '</div></div></div>';
 
     document.body.appendChild(modal);
 
@@ -36107,6 +36110,23 @@ function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProcee
     if (librAnalysis.balanceDroppedBelowProceeds && applyButton) {
         applyButton.style.display = 'inline-block';
     }
+
+    // Always show verification button (optional transparency feature)
+    const verificationButton = document.getElementById('librVerificationButton');
+    if (verificationButton) {
+        verificationButton.style.display = 'inline-block';
+    }
+
+    // Store verification data globally for access by verification modal
+    window.librVerificationData = {
+        walletAddress: walletAddress,
+        balanceHistory: balanceHistory,
+        librAnalysis: librAnalysis,
+        criminalProceedsAmount: criminalProceedsAmount,
+        criminalProceedsDate: criminalProceedsDate,
+        currency: currency,
+        blockchain: blockchain
+    };
 }
 
 function closeLIBRBalanceModal() {
@@ -36118,6 +36138,171 @@ function applyLIBRSelection() {
     // This will be enhanced in Phase 3 to pre-fill transaction data
     showNotification('LIBR analysis complete. Use the identified transaction for your trace.', 'info');
     closeLIBRBalanceModal();
+}
+
+// Show LIBR Verification Modal - Full transaction history for transparency
+function showLIBRVerificationModal(walletAddress, balanceHistory, librAnalysis, criminalProceedsAmount, criminalProceedsDate, currency, blockchain) {
+    console.log('📋 [LIBR] Opening verification modal for', walletAddress);
+
+    // Get source thread deposit transactions (criminal proceeds entering wallet)
+    const sourceTimestamp = new Date(criminalProceedsDate).getTime();
+    const sourceTransactions = balanceHistory.filter(entry =>
+        entry.type === 'inbound' &&
+        Math.abs(entry.timestamp - sourceTimestamp) < 60000 && // Within 1 minute
+        entry.amount >= criminalProceedsAmount * 0.99 // Within 1% of amount
+    );
+
+    // Get LIBR-identified outbound transactions
+    const identifiedTxHashes = new Set(
+        (librAnalysis.transactionsToFollow || []).map(tx => tx.txHash)
+    );
+
+    // Filter history - only show from source deposit onwards
+    let displayHistory = balanceHistory.filter(entry => entry.timestamp >= sourceTimestamp);
+
+    // Safety limit: If > 1000 transactions, truncate and warn
+    const isTruncated = displayHistory.length > 1000;
+    if (isTruncated) {
+        displayHistory = displayHistory.slice(-1000); // Show last 1000
+    }
+
+    // Build modal HTML
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'librVerificationModal';
+    modal.style.zIndex = '10001';
+
+    let html = '<div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow-y: auto;">' +
+        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">' +
+        '<h2>📋 LIBR Analysis Verification</h2>' +
+        '<button onclick="closeLIBRVerificationModal()" class="btn-close" style="font-size: 24px; border: none; background: none; cursor: pointer;">✕</button>' +
+        '</div>' +
+
+        '<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin-bottom: 20px; border-radius: 4px;">' +
+        '<h4 style="margin-top: 0;">🔍 Transaction History Verification</h4>' +
+        '<p style="margin: 5px 0;"><strong>Wallet:</strong> <code style="background: #fff; padding: 2px 6px; border-radius: 3px;">' + walletAddress + '</code></p>' +
+        '<p style="margin: 5px 0;"><strong>Blockchain:</strong> ' + blockchain + ' | <strong>Currency:</strong> ' + currency + '</p>' +
+        '<p style="margin: 5px 0;"><strong>Source Deposit:</strong> ' + criminalProceedsAmount.toLocaleString() + ' ' + currency + ' on ' + new Date(criminalProceedsDate).toLocaleString() + '</p>' +
+        '<p style="margin: 10px 0 0 0; font-size: 13px; color: #666;">💡 This table shows all transactions after the criminal proceeds deposit. Use this to verify LIBR analysis against block explorer data.</p>' +
+        '</div>';
+
+    // Warning if truncated
+    if (isTruncated) {
+        html += '<div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px;">' +
+            '<h4 style="margin-top: 0; color: #f57c00;">⚠️ Large Transaction History</h4>' +
+            '<p style="margin: 5px 0;">This wallet has more than 1,000 transactions since the criminal proceeds deposit.</p>' +
+            '<p style="margin: 5px 0;">Showing the <strong>most recent 1,000 transactions</strong> for verification.</p>' +
+            '<p style="margin: 5px 0; font-weight: bold;">For complete records, please obtain full transaction history from a block explorer:</p>' +
+            '<ul style="margin: 5px 0; padding-left: 20px;">' +
+            '<li>Ethereum/EVM: <a href="https://etherscan.io/address/' + walletAddress + '" target="_blank">Etherscan</a></li>' +
+            '<li>Bitcoin: <a href="https://www.blockchain.com/explorer/addresses/btc/' + walletAddress + '" target="_blank">Blockchain.com</a></li>' +
+            '</ul>' +
+            '</div>';
+    }
+
+    // Legend
+    html += '<div style="display: flex; gap: 15px; margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; font-size: 13px;">' +
+        '<div><span style="display: inline-block; width: 15px; height: 15px; background: #c8e6c9; border: 1px solid #4caf50; margin-right: 5px;"></span>Source Thread Deposit</div>' +
+        '<div><span style="display: inline-block; width: 15px; height: 15px; background: #fff3cd; border: 1px solid #ffc107; margin-right: 5px;"></span>LIBR-Identified Outbound (New Thread)</div>' +
+        '</div>';
+
+    // Transaction table
+    html += '<div style="overflow-x: auto;">' +
+        '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">' +
+        '<thead style="position: sticky; top: 0; background: #f5f5f5; z-index: 1;">' +
+        '<tr>' +
+        '<th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Date/Time</th>' +
+        '<th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Type</th>' +
+        '<th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Credit (In)</th>' +
+        '<th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Debit (Out)</th>' +
+        '<th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Running Balance</th>' +
+        '<th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Transaction Hash</th>' +
+        '</tr>' +
+        '</thead><tbody>';
+
+    // Add transaction rows
+    displayHistory.forEach(entry => {
+        const isSourceDeposit = sourceTransactions.some(st => st.txHash === entry.txHash);
+        const isLIBRIdentified = identifiedTxHashes.has(entry.txHash);
+
+        let rowStyle = '';
+        if (isSourceDeposit) {
+            rowStyle = 'background: #c8e6c9; border-left: 4px solid #4caf50;';
+        } else if (isLIBRIdentified) {
+            rowStyle = 'background: #fff3cd; border-left: 4px solid #ffc107;';
+        }
+
+        const creditAmount = entry.type === 'inbound' ? entry.amount.toFixed(6) : '';
+        const debitAmount = entry.type === 'outbound' ? entry.amount.toFixed(6) : '';
+
+        // Block explorer link
+        let explorerUrl = '#';
+        if (blockchain === 'ethereum' || blockchain.toLowerCase().includes('evm')) {
+            explorerUrl = 'https://etherscan.io/tx/' + entry.txHash;
+        } else if (blockchain === 'bitcoin') {
+            explorerUrl = 'https://www.blockchain.com/explorer/transactions/btc/' + entry.txHash;
+        }
+
+        const txHashShort = entry.txHash.substring(0, 10) + '...' + entry.txHash.substring(entry.txHash.length - 8);
+
+        html += '<tr style="' + rowStyle + '">' +
+            '<td style="padding: 8px; border-bottom: 1px solid #ddd;">' + new Date(entry.timestamp).toLocaleString() + '</td>' +
+            '<td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">' +
+            (entry.type === 'inbound' ? '📥 In' : '📤 Out') + '</td>' +
+            '<td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right; color: #2e7d32;">' +
+            (creditAmount ? creditAmount + ' ' + currency : '-') + '</td>' +
+            '<td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right; color: #c62828;">' +
+            (debitAmount ? debitAmount + ' ' + currency : '-') + '</td>' +
+            '<td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right; font-weight: bold;">' +
+            entry.balance.toFixed(6) + ' ' + currency + '</td>' +
+            '<td style="padding: 8px; border-bottom: 1px solid #ddd; font-family: monospace; font-size: 11px;">' +
+            '<a href="' + explorerUrl + '" target="_blank" style="color: #1976d2; text-decoration: none;">' +
+            txHashShort + ' 🔗</a>' +
+            '</td>' +
+            '</tr>';
+    });
+
+    html += '</tbody></table></div>' +
+
+        // Summary footer
+        '<div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px;">' +
+        '<h4 style="margin-top: 0;">📊 Verification Summary</h4>' +
+        '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 13px;">' +
+        '<div><strong>Total Transactions Shown:</strong><br>' + displayHistory.length.toLocaleString() + '</div>' +
+        '<div><strong>Source Deposits Found:</strong><br>' + sourceTransactions.length + '</div>' +
+        '<div><strong>LIBR-Identified Outbound:</strong><br>' + identifiedTxHashes.size + '</div>' +
+        '</div></div>' +
+
+        '<div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">' +
+        '<button onclick="closeLIBRVerificationModal()" class="btn btn-secondary">Close</button>' +
+        '</div></div>';
+
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+}
+
+function closeLIBRVerificationModal() {
+    const modal = document.getElementById('librVerificationModal');
+    if (modal) modal.remove();
+}
+
+// Helper to open verification modal from main LIBR modal
+function openLIBRVerificationFromModal() {
+    if (!window.librVerificationData) {
+        alert('No verification data available. Please run LIBR analysis first.');
+        return;
+    }
+
+    const data = window.librVerificationData;
+    showLIBRVerificationModal(
+        data.walletAddress,
+        data.balanceHistory,
+        data.librAnalysis,
+        data.criminalProceedsAmount,
+        data.criminalProceedsDate,
+        data.currency,
+        data.blockchain
+    );
 }
 
 // Helper function to launch LIBR analyzer from wizard or other contexts
