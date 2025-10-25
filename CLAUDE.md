@@ -3,30 +3,65 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 08:43)
+## Latest Commit (Auto-updated: 2025-10-25 09:08)
 
-**Commit:** 9ce7f3fa717ca3a4cb4b7fa15d6add57c9e51459
+**Commit:** a437c61bbf8787957baad0bd52ce7f8bd50946ab
 **Author:** Your Name
-**Message:** Auto-sync
+**Message:** Add missing CSS for modal-overlay to display info modals as popups
+
+Fixed methodology info modals appearing at bottom of page instead of
+as centered popup overlays.
+
+Issue:
+- JavaScript created elements with class="modal-overlay"
+- But CSS only had styles for class="modal"
+- Modal content appeared at bottom of page instead of as popup
+
+Solution:
+Added proper CSS for .modal-overlay class:
+- position: fixed (locks to viewport)
+- z-index: 10000 (appears on top)
+- display: flex with center alignment
+- Full viewport coverage (100% width/height)
+- Semi-transparent dark background (rgba(0,0,0,0.6))
+- backdrop-filter: blur(2px) for modern look
+
+Enhanced .modal-content styling:
+- Added padding: 30px (was 0)
+- Increased border-radius: 12px (was 8px)
+- Added max-width: 90vw (prevents overflow on small screens)
+
+Now when clicking ℹ️ buttons:
+✅ Modal appears as centered popup overlay
+✅ Dark semi-transparent background
+✅ Slight blur effect behind modal
+✅ Smooth slide-in animation
+✅ Proper spacing and sizing
+✅ Scrollable content if needed
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+ CLAUDE.md  | 22 +++++++++++-----------
+ index.html | 20 ++++++++++++++++++--
+ 2 files changed, 29 insertions(+), 13 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9ce7f3f Auto-sync (0 seconds ago)
-- e781bed Final (9 seconds ago)
-- 6b9faba Sync (16 seconds ago)
-- 6d75d57 Final CLAUDE.md sync (22 seconds ago)
-- 425e3ff Sync CLAUDE.md (28 seconds ago)
-- 15d582f Auto-update CLAUDE.md (34 seconds ago)
-- 2c5afb2 Fix methodology info buttons - make functions global and prevent event bubbling (46 seconds ago)
-- 279d82e Sync (9 minutes ago)
-- 14d9678 Auto-sync CLAUDE.md (9 minutes ago)
-- ccfcf29 Final sync (9 minutes ago)
+- a437c61 Add missing CSS for modal-overlay to display info modals as popups (0 seconds ago)
+- 9ce7f3f Auto-sync (25 minutes ago)
+- e781bed Final (25 minutes ago)
+- 6b9faba Sync (25 minutes ago)
+- 6d75d57 Final CLAUDE.md sync (25 minutes ago)
+- 425e3ff Sync CLAUDE.md (26 minutes ago)
+- 15d582f Auto-update CLAUDE.md (26 minutes ago)
+- 2c5afb2 Fix methodology info buttons - make functions global and prevent event bubbling (26 minutes ago)
+- 279d82e Sync (34 minutes ago)
+- 14d9678 Auto-sync CLAUDE.md (34 minutes ago)
 
 ## Key Features
 
