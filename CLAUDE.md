@@ -3,30 +3,67 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 15:06)
+## Latest Commit (Auto-updated: 2025-10-25 19:56)
 
-**Commit:** 5df232caa13e479e06bdd5ea31f89d46c7831245
+**Commit:** 50f3ad30c909e5d3262a735f7619b392a0bc3a5d
 **Author:** Your Name
-**Message:** Sync
+**Message:** Fix performance issue and auto-cap thread allocations
+
+PERFORMANCE FIX: Eliminate excessive buildAvailableThreadsIndex() calls
+
+Problem:
+- getAvailableSourcesForHop() was rebuilding entire thread index on every call
+- Caused 50+ rebuilds per user action (visible in console spam)
+- Severely degraded UI responsiveness during wizard interactions
+
+Solution:
+- Removed buildAvailableThreadsIndex() from read operation (line 8979)
+- Index only rebuilds when data actually changes (saves, edits, deletes)
+- Index still built at app initialization (line 10595)
+- Dramatic performance improvement - read operations now instant
+
+ALLOCATION FIX: Auto-cap instead of validation error
+
+Problem:
+- User got error: "thread v1-t2 only has .33453074 eth available, but .334531 was requested"
+- Floating point precision causing validation to fail unnecessarily
+- Blocked legitimate operations that should have auto-capped
+
+Solution:
+- Changed validation from hard block to auto-cap at available amount
+- Logs warning when capping occurs (for transparency)
+- Recalculates total after capping
+- Handles precision issues gracefully
+- User workflow no longer interrupted
+
+Impact:
+- Console logs reduced from 100+ lines per action to ~10 lines
+- UI interactions now instant instead of laggy
+- Allocation errors auto-resolve instead of blocking user
+- Better UX - system handles edge cases intelligently
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ index.html | 21 ++++++++++++++++-----
+ 1 file changed, 16 insertions(+), 5 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5df232c Sync (0 seconds ago)
-- 7073c23 Auto-sync CLAUDE.md (10 seconds ago)
-- eaa867e Final CLAUDE.md sync (14 seconds ago)
-- 6e584eb Sync CLAUDE.md (20 seconds ago)
-- f8bfb8b Update CLAUDE.md with latest commit info (29 seconds ago)
-- ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (44 seconds ago)
-- 15a2b2b Implement Phase 1: Bitcoin change address detection in LIBR results (2 hours ago)
-- 9f10344 Fix Bitcoin UTXO change address handling in LIBR balance calculation (3 hours ago)
-- baf7a93 Implement hop entry creation with PIFO allocations for LIBR Accept function (3 hours ago)
-- 7cbe030 Implement LIBR calculator with PIFO allocations and investigator decisions (3 hours ago)
+- 50f3ad3 Fix performance issue and auto-cap thread allocations (1 second ago)
+- 7d605bf Sync (5 hours ago)
+- 5df232c Sync (5 hours ago)
+- 7073c23 Auto-sync CLAUDE.md (5 hours ago)
+- eaa867e Final CLAUDE.md sync (5 hours ago)
+- 6e584eb Sync CLAUDE.md (5 hours ago)
+- f8bfb8b Update CLAUDE.md with latest commit info (5 hours ago)
+- ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (5 hours ago)
+- 15a2b2b Implement Phase 1: Bitcoin change address detection in LIBR results (7 hours ago)
+- 9f10344 Fix Bitcoin UTXO change address handling in LIBR balance calculation (7 hours ago)
 
 ## Key Features
 
