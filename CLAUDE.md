@@ -3,30 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 15:05)
+## Latest Commit (Auto-updated: 2025-10-25 15:06)
 
-**Commit:** 7073c23b0431c8c1ddf4b79a19927ee9276242fb
+**Commit:** 5df232caa13e479e06bdd5ea31f89d46c7831245
 **Author:** Your Name
-**Message:** Auto-sync CLAUDE.md
+**Message:** Sync
 
 ### Changed Files:
 ```
- CLAUDE.md | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ CLAUDE.md | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7073c23 Auto-sync CLAUDE.md (0 seconds ago)
-- eaa867e Final CLAUDE.md sync (4 seconds ago)
-- 6e584eb Sync CLAUDE.md (10 seconds ago)
-- f8bfb8b Update CLAUDE.md with latest commit info (19 seconds ago)
-- ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (34 seconds ago)
+- 5df232c Sync (0 seconds ago)
+- 7073c23 Auto-sync CLAUDE.md (10 seconds ago)
+- eaa867e Final CLAUDE.md sync (14 seconds ago)
+- 6e584eb Sync CLAUDE.md (20 seconds ago)
+- f8bfb8b Update CLAUDE.md with latest commit info (29 seconds ago)
+- ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (44 seconds ago)
 - 15a2b2b Implement Phase 1: Bitcoin change address detection in LIBR results (2 hours ago)
 - 9f10344 Fix Bitcoin UTXO change address handling in LIBR balance calculation (3 hours ago)
 - baf7a93 Implement hop entry creation with PIFO allocations for LIBR Accept function (3 hours ago)
 - 7cbe030 Implement LIBR calculator with PIFO allocations and investigator decisions (3 hours ago)
-- f3928c3 Add PIFO allocation calculator and prep for decision options (3 hours ago)
 
 ## Key Features
 
