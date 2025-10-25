@@ -11284,19 +11284,17 @@ function updateFormFieldsFromInvestigation() {
                 // Show success message with clear next steps based on methodology
                 setTimeout(() => {
                     if (investigation.tracingMethod === 'LIBR') {
-                        // LIBR workflow: Prompt to analyze victim wallets
-                        const shouldAnalyze = confirm('✅ Root Total Confirmed!\n\n' +
+                        // LIBR workflow: Show Red Wallets Dashboard
+                        alert('✅ Root Total Confirmed!\n\n' +
                               'Your investigation baseline has been established.\n\n' +
                               '🔶 LIBR METHODOLOGY:\n' +
-                              'Next, you should analyze the victim wallet(s) to determine if the criminal proceeds are still there or have moved.\n\n' +
-                              '📊 Would you like to analyze the victim wallet balances now?');
+                              'The Red Wallets Dashboard will now open.\n\n' +
+                              'Click "Analyze Wallet Balance" for each red wallet to determine if tracing is required.');
 
-                        if (shouldAnalyze) {
-                            // Trigger LIBR analysis for all victim wallets
-                            analyzeLIBRForVictimWallets();
-                        } else {
-                            alert('You can run LIBR analysis later from the "Trace Documentation" section.\n\nClick "Create Hop 1" when ready to start tracking.');
-                        }
+                        // Small delay to let alert close
+                        setTimeout(() => {
+                            showRedWalletsDashboard();
+                        }, 500);
                     } else {
                         // PIFO workflow: Standard message
                         alert('✅ Root Total Confirmed!\n\n' +
@@ -12499,6 +12497,14 @@ function addNewHop() {
         return;
     }
 
+    // LIBR methodology: Show Red Wallets Dashboard instead of creating hop
+    if (investigation.tracingMethod === 'LIBR') {
+        console.log('🔶 [LIBR] Opening Red Wallets Dashboard...');
+        showRedWalletsDashboard();
+        return;
+    }
+
+    // PIFO methodology: Continue with normal hop creation
     // Check if there are any active threads to trace
     const availableThreads = getAvailableSourcesForHop(getNextHopNumber(), null);
     const activeThreads = availableThreads.filter(t => t.availableAmount > 0.01); // Ignore tiny remainders
@@ -36531,6 +36537,195 @@ async function launchLIBRAnalyzerFromWizard() {
 
     await analyzeLIBRForWallet(walletAddress, proceedsAmount, proceedsDate, currency, blockchain);
 }
+
+// Group victim transactions by destination wallet (red wallets) for LIBR
+function getRedWalletsForLIBR() {
+    console.log('🔶 [LIBR] Grouping victim transactions by red wallet...');
+
+    const redWallets = [];
+
+    if (!investigation.victims || investigation.victims.length === 0) {
+        return redWallets;
+    }
+
+    investigation.victims.forEach((victim, victimIndex) => {
+        victim.transactions.forEach((tx, txIndex) => {
+            const walletAddress = tx.destinationWallet;
+            if (!walletAddress) return;
+
+            // Find existing red wallet entry
+            const existing = redWallets.find(w =>
+                w.address.toLowerCase() === walletAddress.toLowerCase() &&
+                w.blockchain === tx.blockchain &&
+                w.currency === tx.currency
+            );
+
+            if (existing) {
+                // Add to existing wallet's deposits
+                existing.monitoredAmount += parseFloat(tx.amount || 0);
+                existing.deposits.push({
+                    threadId: `V${victimIndex + 1}-T${txIndex + 1}`,
+                    victimIndex,
+                    txIndex,
+                    amount: parseFloat(tx.amount || 0),
+                    date: tx.date,
+                    txHash: tx.txHash
+                });
+                // Use earliest deposit date
+                if (new Date(tx.date) < new Date(existing.earliestDeposit)) {
+                    existing.earliestDeposit = tx.date;
+                }
+            } else {
+                // New red wallet
+                redWallets.push({
+                    address: walletAddress,
+                    blockchain: tx.blockchain,
+                    currency: tx.currency,
+                    monitoredAmount: parseFloat(tx.amount || 0),
+                    earliestDeposit: tx.date,
+                    deposits: [{
+                        threadId: `V${victimIndex + 1}-T${txIndex + 1}`,
+                        victimIndex,
+                        txIndex,
+                        amount: parseFloat(tx.amount || 0),
+                        date: tx.date,
+                        txHash: tx.txHash
+                    }],
+                    analyzed: false,
+                    lastAnalyzed: null
+                });
+            }
+        });
+    });
+
+    // Sort deposits within each wallet chronologically (PIFO order)
+    redWallets.forEach(wallet => {
+        wallet.deposits.sort((a, b) => new Date(a.date) - new Date(b.date));
+    });
+
+    console.log(`📊 [LIBR] Found ${redWallets.length} unique red wallet(s)`);
+    return redWallets;
+}
+
+// Show Red Wallets Dashboard for LIBR methodology
+function showRedWalletsDashboard() {
+    console.log('🔶 [LIBR] Opening Red Wallets Dashboard...');
+
+    const redWallets = getRedWalletsForLIBR();
+
+    if (redWallets.length === 0) {
+        alert('No red wallets found. Please ensure victim transactions have destination wallets specified.');
+        return;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'redWalletsDashboard';
+    modal.style.zIndex = '10000';
+
+    let walletsHTML = '';
+    redWallets.forEach((wallet, index) => {
+        const depositsHTML = wallet.deposits.map(d =>
+            `<div style="font-size: 12px; color: #666; margin: 2px 0;">
+                • ${d.threadId}: ${d.amount.toLocaleString()} ${wallet.currency} (${new Date(d.date).toLocaleDateString()})
+            </div>`
+        ).join('');
+
+        walletsHTML += `
+            <div style="background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: between; align-items: flex-start; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0 0 10px 0; color: #c62828;">🔴 Red Wallet ${index + 1}</h3>
+                        <div style="font-family: monospace; font-size: 13px; background: #f5f5f5; padding: 8px; border-radius: 4px; word-break: break-all; margin-bottom: 10px;">
+                            ${wallet.address}
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div><strong>Blockchain:</strong> ${wallet.blockchain}</div>
+                            <div><strong>Currency:</strong> ${wallet.currency}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 15px;">
+                    <div style="font-size: 18px; font-weight: bold; color: #f57c00; margin-bottom: 5px;">
+                        ⚖️ Monitored Balance: ${wallet.monitoredAmount.toLocaleString()} ${wallet.currency}
+                    </div>
+                    <div style="font-size: 13px; color: #666;">
+                        LIBR will trace when balance drops below this amount
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <strong>Victim Deposits (${wallet.deposits.length}):</strong>
+                    ${depositsHTML}
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="analyzeLIBRRedWallet(${index})" class="btn btn-primary" style="flex: 1;">
+                        📊 Analyze Wallet Balance
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>🔴 Red Wallets - LIBR Monitoring</h2>
+                <button onclick="closeRedWalletsDashboard()" class="btn-close" style="font-size: 24px; border: none; background: none; cursor: pointer;">✕</button>
+            </div>
+
+            <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                <h4 style="margin-top: 0;">📘 LIBR Methodology Workflow</h4>
+                <p style="margin: 5px 0;">In LIBR, you monitor <strong>red wallets</strong> holding criminal proceeds, not individual threads.</p>
+                <p style="margin: 5px 0;">Click <strong>"Analyze Wallet Balance"</strong> for each wallet below to determine if tracing is required.</p>
+                <p style="margin: 5px 0; font-weight: bold;">The system will calculate when the balance drops below the monitored amount and show you which transactions contain the proceeds.</p>
+            </div>
+
+            ${walletsHTML}
+
+            <div style="text-align: right; margin-top: 20px;">
+                <button onclick="closeRedWalletsDashboard()" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Store red wallets data globally for analysis functions
+    window.librRedWallets = redWallets;
+}
+
+window.closeRedWalletsDashboard = function() {
+    const modal = document.getElementById('redWalletsDashboard');
+    if (modal) modal.remove();
+};
+
+// Analyze a specific red wallet from the dashboard
+window.analyzeLIBRRedWallet = async function(walletIndex) {
+    const redWallets = window.librRedWallets;
+    if (!redWallets || !redWallets[walletIndex]) {
+        alert('Wallet data not found. Please try again.');
+        return;
+    }
+
+    const wallet = redWallets[walletIndex];
+
+    console.log(`📊 [LIBR] Analyzing red wallet ${walletIndex + 1}: ${wallet.address}`);
+
+    await analyzeLIBRForWallet(
+        wallet.address,
+        wallet.monitoredAmount,
+        wallet.earliestDeposit,
+        wallet.currency,
+        wallet.blockchain
+    );
+
+    // Mark as analyzed
+    wallet.analyzed = true;
+    wallet.lastAnalyzed = new Date().toISOString();
+};
 
 // Helper function to analyze all victim wallets for LIBR methodology
 async function analyzeLIBRForVictimWallets() {
