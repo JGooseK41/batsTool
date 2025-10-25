@@ -5,58 +5,20 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-25 15:05)
 
-**Commit:** ca2de8f62d4dc9b7fd6447d2f8d823d94cb9a1a8
+**Commit:** f8bfb8bb0084689a93227faa169c3533d3586a7b
 **Author:** Your Name
-**Message:** Add terminal wallet drill-down and legal process export for exchange subpoenas
-
-MAJOR FEATURE: Exchange-specific transaction exports for legal process requests
-
-Terminal Wallet Index Enhancements:
-- Summary by Exchange table with clickable drill-down
-- Shows total arrivals and amounts per exchange
-- One-click access to detailed transaction views
-
-Drill-Down Modal Features:
-- Click any exchange name to see all transactions
-- Detailed table with all legal process columns
-- Scrollable view with sticky headers
-- Export button within modal for convenience
-- Case information and timestamps included
-
-Legal Process Export (CSV/Excel):
-- Per-exchange export for subpoena submissions
-- Comprehensive header with case details
-- Columns: Entity Name, Sending Wallet, Receiving Wallet,
-  Date/Time (UTC), Amount, Currency, Transaction Hash,
-  Thread Notation, Hop Number, Case ID
-- One row per thread arriving at terminal wallet
-- Chronological ordering (oldest first)
-- Summary footer with totals by currency
-- Professional filename: Legal_Process_[Exchange]_[CaseID]_[Timestamp].csv
-
-Export Format Example:
-"Binance","0x1234...","0x5678...","2025-01-15 10:30:00 UTC",50000,"USDT","0xabc...","(V1-T1) H3",3,"ABC-2025-001"
-
-Use Cases:
-- Generate clean exports per exchange for subpoenas
-- Submit transaction hashes to identify account holders
-- Legal process documentation and evidence submission
-- International coordination with UTC timestamps
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md  |  75 ++++++++++++----
- index.html | 287 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
- 2 files changed, 336 insertions(+), 26 deletions(-)
+ CLAUDE.md | 114 +++++++++++++++++++++++++++++---------------------------------
+ 1 file changed, 54 insertions(+), 60 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (0 seconds ago)
+- f8bfb8b Update CLAUDE.md with latest commit info (0 seconds ago)
+- ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (15 seconds ago)
 - 15a2b2b Implement Phase 1: Bitcoin change address detection in LIBR results (2 hours ago)
 - 9f10344 Fix Bitcoin UTXO change address handling in LIBR balance calculation (3 hours ago)
 - baf7a93 Implement hop entry creation with PIFO allocations for LIBR Accept function (3 hours ago)
@@ -65,7 +27,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 8818581 Add Red Wallets Dashboard for LIBR methodology (3 hours ago)
 - 762e5e4 Fix LIBR workflow and transaction history display (6 hours ago)
 - 360cb19 Final CLAUDE.md sync (6 hours ago)
-- 7589e3e Sync (6 hours ago)
 
 ## Key Features
 
