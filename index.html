@@ -8975,8 +8975,8 @@ function updateThreadAvailabilityFromSwap(entry) {
 function getAvailableSourcesForHop(hopNumber, targetCurrency) {
     console.log(` Getting available sources for Hop ${hopNumber}, Currency filter: ${targetCurrency || 'ALL'}`);
 
-    // Ensure the threads database is up to date
-    buildAvailableThreadsIndex();
+    // Don't rebuild on every read - index is maintained when data changes
+    // buildAvailableThreadsIndex(); // REMOVED for performance - only rebuild when data changes
 
     console.log('Available threads database:', investigation.availableThreads);
 
@@ -26889,7 +26889,9 @@ function createHopEntryFromWizard() {
         console.log('Partial trace detected:', partialTraceNote);
     }
 
-    // Validate individual thread allocations don't exceed available amounts
+    // Auto-cap individual thread allocations at available amounts
+    // Don't block - just cap at what's available (handles floating point precision issues)
+    let hadAutoCap = false;
     for (const [threadId, allocation] of Object.entries(wizardData.allocations)) {
         // Determine currency from the thread
         const threads = getAvailableSourcesForHop(hop.hopNumber, null);
@@ -26904,10 +26906,19 @@ function createHopEntryFromWizard() {
             );
 
             if (!validation.valid) {
-                alert(`⚠️ Allocation Error:\n\n${validation.message}\n\nPlease adjust the amount and try again.`);
-                return; // Don't create the entry
+                // Auto-cap at available amount instead of blocking
+                const cappedAmount = validation.maxAvailable;
+                console.log(`⚠️ Auto-capping ${threadId}: requested ${allocation}, capped to ${cappedAmount} (available)`);
+                wizardData.allocations[threadId] = cappedAmount;
+                hadAutoCap = true;
             }
         }
+    }
+
+    // Recalculate total if we had to cap anything
+    if (hadAutoCap) {
+        totalAmount = Object.values(wizardData.allocations).reduce((sum, val) => sum + val, 0);
+        console.log(`✅ Total amount after auto-capping: ${totalAmount}`);
     }
 
     // Check if we're in edit mode
