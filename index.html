@@ -36195,6 +36195,9 @@ function getAllMonitoredWallets() {
 
         hop.entries.forEach(entry => {
             if (entry.type === 'libr_wallet_status') {
+                // Ensure thread structure exists (migrate old format if needed)
+                ensureThreadStructure(entry);
+
                 monitored.push({
                     ...entry,
                     hopNumber: hopIndex + 1,
@@ -36278,10 +36281,22 @@ async function reanalyzeSingleMonitoredWallet(monitoredWallet) {
     console.log('🔄 Re-analyzing monitored wallet:', monitoredWallet.walletAddress);
 
     try {
-        // Run LIBR analysis with the remaining proceeds as the new threshold
+        // Ensure thread structure and get current thread
+        ensureThreadStructure(monitoredWallet);
+        const currentThread = getCurrentMonitoredThread(monitoredWallet);
+
+        if (!currentThread) {
+            alert('No active thread to monitor in this wallet.\n\nAll threads may have been consumed.');
+            return;
+        }
+
+        // Run LIBR analysis with the CURRENT thread's remaining amount as threshold
+        // (LIBR + PIFO: only monitor oldest unconsumed thread)
+        console.log('📊 Analyzing current thread:', currentThread.notation, '(' + currentThread.remainingAmount + ' ' + monitoredWallet.currency + ')');
+
         await showLIBRBalanceTracker(
             monitoredWallet.walletAddress,
-            monitoredWallet.remainingProceeds,
+            currentThread.remainingAmount,  // Use CURRENT thread amount, not total
             monitoredWallet.lastAnalyzed || new Date().toISOString(),
             monitoredWallet.currency,
             monitoredWallet.blockchain
@@ -36342,9 +36357,13 @@ function showLIBRMonitoringDashboard() {
     // Add wallet cards
     monitoredWallets.forEach((wallet, index) => {
         const status = getMonitoringStatus(wallet.lastAnalyzed);
-        const originalAmount = wallet.originalProceeds || wallet.remainingProceeds;
-        const tracedAmount = originalAmount - wallet.remainingProceeds;
-        const tracedPercent = originalAmount > 0 ? ((tracedAmount / originalAmount) * 100).toFixed(0) : 0;
+        const currentThread = getCurrentMonitoredThread(wallet);
+
+        // Calculate totals
+        const totalOriginal = wallet.totalOriginalProceeds || wallet.originalProceeds || 0;
+        const totalRemaining = wallet.totalRemainingProceeds || wallet.remainingProceeds || 0;
+        const totalConsumed = wallet.totalConsumed || (totalOriginal - totalRemaining);
+        const tracedPercent = totalOriginal > 0 ? ((totalConsumed / totalOriginal) * 100).toFixed(0) : 0;
 
         html += '<div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: white;">' +
             '<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">' +
@@ -36359,20 +36378,61 @@ function showLIBRMonitoringDashboard() {
             '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">' +
             '<div><strong>Blockchain:</strong> ' + (wallet.blockchain || 'ethereum') + '</div>' +
             '<div><strong>Currency:</strong> ' + wallet.currency + '</div>' +
-            '</div>' +
+            '</div>';
 
-            '<div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 10px;">' +
-            '<div style="font-size: 18px; font-weight: bold; color: #f57c00;">💰 Monitored: ' + (wallet.remainingProceeds || 0).toLocaleString() + ' ' + wallet.currency + '</div>' +
+        // Thread queue display
+        if (wallet.threads && wallet.threads.length > 0) {
+            html += '<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; border-radius: 4px; margin-bottom: 10px;">' +
+                '<h4 style="margin: 0 0 10px 0; font-size: 14px;">🧵 Thread Queue (' + wallet.threads.length + ' thread' + (wallet.threads.length !== 1 ? 's' : '') + ')</h4>';
+
+            // Show each thread
+            wallet.threads.forEach((thread, threadIndex) => {
+                const isCurrent = threadIndex === wallet.currentThreadIndex;
+                const statusEmoji = thread.status === 'consumed' ? '✅' : (thread.status === 'monitoring' ? '👁️' : '⏳');
+                const statusText = thread.status === 'consumed' ? 'Consumed' : (thread.status === 'monitoring' ? 'Monitoring' : 'Pending');
+                const bgColor = isCurrent ? '#fff3cd' : '#f9f9f9';
+                const borderColor = isCurrent ? '#ffc107' : '#ddd';
+
+                html += '<div style="background: ' + bgColor + '; border: 1px solid ' + borderColor + '; padding: 8px; border-radius: 4px; margin-bottom: 5px; font-size: 12px;">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                    '<div><strong>' + thread.notation + '</strong> ' + statusEmoji + ' <em style="color: #666;">' + statusText + '</em></div>' +
+                    '<div><strong>' + thread.remainingAmount.toLocaleString() + ' / ' + thread.originalAmount.toLocaleString() + '</strong> ' + wallet.currency + '</div>' +
+                    '</div>';
+
+                if (isCurrent) {
+                    html += '<div style="margin-top: 5px; font-size: 11px; color: #f57c00;"><strong>← Currently monitoring this thread (PIFO: oldest first)</strong></div>';
+                }
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+        }
+
+        // Total values display
+        html += '<div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 10px;">' +
+            '<div style="font-size: 18px; font-weight: bold; color: #f57c00;">💰 Total Remaining: ' + totalRemaining.toLocaleString() + ' ' + wallet.currency + '</div>' +
             '<div style="font-size: 12px; color: #666; margin-top: 5px;">Last Analyzed: ' + status.text + '</div>' +
             '</div>' +
 
             '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 13px; margin-bottom: 10px;">' +
-            '<div><strong>Original:</strong><br>' + originalAmount.toLocaleString() + ' ' + wallet.currency + '</div>' +
-            '<div><strong>Traced:</strong><br>' + tracedAmount.toLocaleString() + ' ' + wallet.currency + '</div>' +
-            '<div><strong>Remaining:</strong><br>' + tracedPercent + '%</div>' +
-            '</div>' +
+            '<div><strong>Total Original:</strong><br>' + totalOriginal.toLocaleString() + ' ' + wallet.currency + '</div>' +
+            '<div><strong>Total Consumed:</strong><br>' + totalConsumed.toLocaleString() + ' ' + wallet.currency + '</div>' +
+            '<div><strong>Progress:</strong><br>' + tracedPercent + '%</div>' +
+            '</div>';
 
-            '<div style="display: flex; gap: 10px;">' +
+        // Current thread info
+        if (currentThread) {
+            html += '<div style="background: #e8f5e9; border: 1px solid #4caf50; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 12px;">' +
+                '👁️ <strong>Analyzing:</strong> Thread ' + currentThread.notation + ' (' + currentThread.remainingAmount.toLocaleString() + ' ' + wallet.currency + ' of ' + currentThread.originalAmount.toLocaleString() + ' remaining)' +
+                '</div>';
+        } else {
+            html += '<div style="background: #f5f5f5; border: 1px solid #ccc; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 12px; color: #666;">' +
+                '✅ <strong>All threads consumed</strong>' +
+                '</div>';
+        }
+
+        html += '<div style="display: flex; gap: 10px;">' +
             '<button onclick="reanalyzeSingleMonitoredWallet(' + JSON.stringify(wallet).replace(/"/g, '&quot;') + ')" class="btn btn-primary">🔄 Re-analyze Now</button>' +
             '<button onclick="jumpToHopForMonitoredWallet(' + wallet.hopNumber + ')" class="btn btn-secondary">📊 View Hop ' + wallet.hopNumber + '</button>' +
             '</div>' +
@@ -36434,7 +36494,21 @@ async function reanalyzeAllMonitoredWallets() {
         document.getElementById('batchProgressBar').style.width = ((i / monitoredWallets.length) * 100) + '%';
 
         try {
-            // Perform LIBR analysis
+            // Ensure thread structure and get current thread
+            ensureThreadStructure(wallet);
+            const currentThread = getCurrentMonitoredThread(wallet);
+
+            // Skip if no active thread
+            if (!currentThread) {
+                results.push({
+                    wallet: wallet.walletAddress,
+                    status: 'skipped',
+                    message: 'All threads consumed'
+                });
+                continue;
+            }
+
+            // Perform LIBR analysis on current thread
             const txHistory = await fetchCompleteTransactionHistory(
                 wallet.walletAddress,
                 wallet.blockchain || 'ethereum',
@@ -36449,7 +36523,7 @@ async function reanalyzeAllMonitoredWallets() {
 
             const librAnalysis = findLIBRTransactionPoint(
                 balanceHistory,
-                wallet.remainingProceeds,
+                currentThread.remainingAmount,  // Use current thread amount, not total
                 new Date(wallet.lastAnalyzed || new Date()).getTime()
             );
 
@@ -36637,20 +36711,41 @@ function followLIBRTransaction(txData) {
     );
 
     if (monitoredEntry) {
-        // Reduce remaining proceeds
-        monitoredEntry.remainingProceeds = txData.remainingInWallet;
+        // Ensure thread structure exists (migrate if needed)
+        ensureThreadStructure(monitoredEntry);
+
+        // Reduce current thread amount
+        reduceCurrentThreadAmount(monitoredEntry, txData.tracedAmount);
+
+        // Update last analyzed timestamp
         monitoredEntry.lastAnalyzed = new Date().toISOString();
 
+        // Add trace note
         const today = new Date().toLocaleDateString();
-        const updateNote = '[' + today + '] Traced ' + txData.tracedAmount.toFixed(6) + ' ' + txData.currency + ' via ' + txData.txHash;
+        const currentThread = getCurrentMonitoredThread(monitoredEntry);
+        const threadNotation = currentThread ? currentThread.notation : 'UNKNOWN';
+        const updateNote = '[' + today + '] Traced ' + txData.tracedAmount.toFixed(6) + ' ' + txData.currency + ' from thread ' + threadNotation + ' via ' + txData.txHash;
         monitoredEntry.notes = monitoredEntry.notes ? monitoredEntry.notes + '\n' + updateNote : updateNote;
     } else {
-        // Create monitored entry if it doesn't exist
+        // Create monitored entry with thread structure if it doesn't exist
         const remainingEntry = {
             type: 'libr_wallet_status',
             walletAddress: txData.walletAddress,
             blockchain: txData.blockchain,
             currency: txData.currency,
+            threads: [{
+                notation: txData.threadNotation || 'UNKNOWN',
+                depositTimestamp: txData.depositTimestamp || Date.now(),
+                originalAmount: txData.tracedAmount + txData.remainingInWallet,
+                remainingAmount: txData.remainingInWallet,
+                status: 'monitoring',
+                depositTxHash: txData.depositTxHash || ''
+            }],
+            currentThreadIndex: 0,
+            totalOriginalProceeds: txData.tracedAmount + txData.remainingInWallet,
+            totalRemainingProceeds: txData.remainingInWallet,
+            totalConsumed: txData.tracedAmount,
+            // Legacy fields for backwards compatibility
             remainingProceeds: txData.remainingInWallet,
             originalProceeds: txData.tracedAmount + txData.remainingInWallet,
             lastAnalyzed: new Date().toISOString(),
@@ -36709,6 +36804,205 @@ function markAsMonitoredOnly(txData) {
         showNotification('Transaction marked as monitored but not traced.\nYou can trace it later if needed.', 'info');
     }
 }
+
+// ====================================================================
+// LIBR Multi-Thread Management Functions
+// ====================================================================
+
+// Ensure monitored entry has thread structure (migrate from old format if needed)
+function ensureThreadStructure(monitoredEntry) {
+    // If already has threads array, return as-is
+    if (monitoredEntry.threads && Array.isArray(monitoredEntry.threads)) {
+        return monitoredEntry;
+    }
+
+    // Migrate old single-thread format to new multi-thread format
+    console.log('🔄 Migrating monitored entry to multi-thread structure');
+
+    // Create threads array with single thread from old data
+    monitoredEntry.threads = [{
+        notation: 'LEGACY',  // Will be updated when we know the actual thread notation
+        depositTimestamp: monitoredEntry.depositTimestamp || Date.now(),
+        originalAmount: monitoredEntry.originalProceeds || 0,
+        remainingAmount: monitoredEntry.remainingProceeds || 0,
+        status: (monitoredEntry.remainingProceeds > 0.000001) ? 'monitoring' : 'consumed',
+        depositTxHash: monitoredEntry.depositTxHash || ''
+    }];
+
+    // Set current thread index
+    monitoredEntry.currentThreadIndex = 0;
+
+    // Set aggregate totals
+    monitoredEntry.totalOriginalProceeds = monitoredEntry.originalProceeds || 0;
+    monitoredEntry.totalRemainingProceeds = monitoredEntry.remainingProceeds || 0;
+    monitoredEntry.totalConsumed = (monitoredEntry.originalProceeds || 0) - (monitoredEntry.remainingProceeds || 0);
+
+    return monitoredEntry;
+}
+
+// Add a new thread to monitored wallet (PIFO - chronologically ordered)
+function addThreadToMonitoredWallet(monitoredEntry, threadData) {
+    console.log('➕ Adding thread to monitored wallet:', threadData.notation);
+
+    // Ensure thread structure exists
+    ensureThreadStructure(monitoredEntry);
+
+    // Create new thread object
+    const newThread = {
+        notation: threadData.notation || 'UNKNOWN',
+        depositTimestamp: threadData.depositTimestamp || Date.now(),
+        originalAmount: threadData.amount || 0,
+        remainingAmount: threadData.amount || 0,
+        status: 'pending',  // New threads start as pending (will be monitored when current thread consumed)
+        depositTxHash: threadData.txHash || ''
+    };
+
+    // Insert thread in chronological order (oldest first - PIFO)
+    let insertIndex = monitoredEntry.threads.length;
+    for (let i = 0; i < monitoredEntry.threads.length; i++) {
+        if (newThread.depositTimestamp < monitoredEntry.threads[i].depositTimestamp) {
+            insertIndex = i;
+            break;
+        }
+    }
+
+    monitoredEntry.threads.splice(insertIndex, 0, newThread);
+
+    // Update totals
+    updateMonitoredWalletTotals(monitoredEntry);
+
+    // Update current thread index if we inserted before it
+    if (insertIndex <= monitoredEntry.currentThreadIndex) {
+        monitoredEntry.currentThreadIndex++;
+    }
+
+    // If this is the only thread or current thread is consumed, set this as current
+    if (monitoredEntry.threads.length === 1 ||
+        monitoredEntry.threads[monitoredEntry.currentThreadIndex].status === 'consumed') {
+        monitoredEntry.currentThreadIndex = insertIndex;
+        monitoredEntry.threads[insertIndex].status = 'monitoring';
+    }
+
+    console.log('✅ Thread added. Queue now has ' + monitoredEntry.threads.length + ' threads');
+
+    return monitoredEntry;
+}
+
+// Update aggregate totals for monitored wallet
+function updateMonitoredWalletTotals(monitoredEntry) {
+    if (!monitoredEntry.threads || monitoredEntry.threads.length === 0) {
+        monitoredEntry.totalOriginalProceeds = 0;
+        monitoredEntry.totalRemainingProceeds = 0;
+        monitoredEntry.totalConsumed = 0;
+        return monitoredEntry;
+    }
+
+    let totalOriginal = 0;
+    let totalRemaining = 0;
+
+    monitoredEntry.threads.forEach(thread => {
+        totalOriginal += thread.originalAmount;
+        totalRemaining += thread.remainingAmount;
+    });
+
+    monitoredEntry.totalOriginalProceeds = totalOriginal;
+    monitoredEntry.totalRemainingProceeds = totalRemaining;
+    monitoredEntry.totalConsumed = totalOriginal - totalRemaining;
+
+    // Also update legacy fields for backwards compatibility
+    monitoredEntry.originalProceeds = totalOriginal;
+    monitoredEntry.remainingProceeds = totalRemaining;
+
+    return monitoredEntry;
+}
+
+// Get current thread being monitored
+function getCurrentMonitoredThread(monitoredEntry) {
+    ensureThreadStructure(monitoredEntry);
+
+    if (!monitoredEntry.threads || monitoredEntry.threads.length === 0) {
+        return null;
+    }
+
+    const currentIndex = monitoredEntry.currentThreadIndex || 0;
+    if (currentIndex >= monitoredEntry.threads.length) {
+        return null;
+    }
+
+    return monitoredEntry.threads[currentIndex];
+}
+
+// Check if current thread is consumed and advance to next if needed
+function checkAndAdvanceToNextThread(monitoredEntry) {
+    ensureThreadStructure(monitoredEntry);
+
+    if (!monitoredEntry.threads || monitoredEntry.threads.length === 0) {
+        return false;  // No threads
+    }
+
+    const currentThread = monitoredEntry.threads[monitoredEntry.currentThreadIndex];
+
+    // Check if current thread is consumed (remaining amount is negligible)
+    if (currentThread.remainingAmount < 0.000001) {
+        currentThread.status = 'consumed';
+        console.log('✅ Thread ' + currentThread.notation + ' fully consumed');
+
+        // Find next pending thread in chronological order
+        let nextThreadIndex = -1;
+        for (let i = 0; i < monitoredEntry.threads.length; i++) {
+            if (monitoredEntry.threads[i].status === 'pending') {
+                nextThreadIndex = i;
+                break;
+            }
+        }
+
+        // Advance to next thread if found
+        if (nextThreadIndex !== -1) {
+            console.log('🔄 Advancing to next thread: ' + monitoredEntry.threads[nextThreadIndex].notation);
+            monitoredEntry.currentThreadIndex = nextThreadIndex;
+            monitoredEntry.threads[nextThreadIndex].status = 'monitoring';
+
+            // Add note about advancement
+            const today = new Date().toLocaleDateString();
+            const advanceNote = '[' + today + '] Advanced to thread ' + monitoredEntry.threads[nextThreadIndex].notation + ' (' + monitoredEntry.threads[nextThreadIndex].remainingAmount.toFixed(6) + ' ' + monitoredEntry.currency + ') after ' + currentThread.notation + ' fully consumed';
+            monitoredEntry.notes = monitoredEntry.notes ? monitoredEntry.notes + '\n' + advanceNote : advanceNote;
+
+            return true;  // Advanced
+        } else {
+            console.log('✅ All threads consumed in this wallet');
+            return false;  // No more threads
+        }
+    }
+
+    return false;  // Current thread not yet consumed
+}
+
+// Reduce current thread amount after tracing
+function reduceCurrentThreadAmount(monitoredEntry, amountTraced) {
+    const currentThread = getCurrentMonitoredThread(monitoredEntry);
+
+    if (!currentThread) {
+        console.warn('⚠️ No current thread to reduce');
+        return monitoredEntry;
+    }
+
+    // Reduce the current thread's remaining amount
+    currentThread.remainingAmount = Math.max(0, currentThread.remainingAmount - amountTraced);
+
+    console.log('📉 Reduced thread ' + currentThread.notation + ' by ' + amountTraced.toFixed(6) +
+                ', remaining: ' + currentThread.remainingAmount.toFixed(6));
+
+    // Update totals
+    updateMonitoredWalletTotals(monitoredEntry);
+
+    // Check if thread consumed and advance if needed
+    checkAndAdvanceToNextThread(monitoredEntry);
+
+    return monitoredEntry;
+}
+
+// End of LIBR Multi-Thread Management Functions
+// ====================================================================
 
 // End of LIBR Transaction Action Functions
 // ====================================================================

@@ -3,215 +3,379 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 07:43)
+## Latest Work Session (2025-10-25)
 
-**Commit:** 5064e3f5b4c8f3a1792b6d6240b9fbaf0806dbc7
-**Author:** Your Name
-**Message:** Implement comprehensive LIBR Monitoring Dashboard
+**Topic:** Multi-Thread LIBR with PIFO Ordering
 
-Adds complete monitoring infrastructure for LIBR methodology, allowing users
-to track and re-analyze wallets containing untraced criminal proceeds.
+Implemented comprehensive multi-thread support for LIBR monitored wallets, allowing proper tracking of multiple criminal proceeds threads entering the same wallet with chronological (PIFO) consumption tracking.
 
-## Core Monitoring Functions (lines 36084-36489)
+## Multi-Thread LIBR Implementation
 
-### getAllMonitoredWallets()
-- Scans all hops for entries with type 'libr_wallet_status'
-- Returns array of monitored wallets with hop context
-- Used throughout dashboard for wallet enumeration
+### Overview
 
-### daysSinceAnalysis() & getMonitoringStatus()
-- Calculate freshness of last analysis
-- Return color-coded status indicators:
-  * ✅ Green (<7 days) - Fresh
-  * ⚠️ Orange (7-30 days) - Needs review
-  * 🔴 Red (>30 days) - Urgent review needed
+When multiple criminal proceeds threads enter the same wallet, the system now:
+1. **Tracks all threads** in chronological order (PIFO: Proceeds In, First Out)
+2. **Monitors only the oldest unconsumed thread** at any given time
+3. **Auto-advances** to the next thread when current is fully consumed
+4. **Documents total values** of all threads for proper accounting
 
-### updateMonitoredWallet()
-- Updates monitored entry after re-analysis
-- Adjusts remainingProceeds based on new traces
-- Appends timestamped notes documenting changes
-- Saves to storage automatically
+### Key Principle: LIBR + PIFO Integration
 
-### jumpToHopForMonitoredWallet()
-- Switches to Hops tab
-- Scrolls to specific hop
-- Applies highlight-flash animation for 2 seconds
-- Smooth user navigation from dashboard to hop
+**LIBR methodology** (balance drop detection) is applied to **ONE thread at a time**.
+**PIFO ordering** determines **WHICH thread** to monitor (always the oldest unconsumed).
 
-## Dashboard UI (showLIBRMonitoringDashboard)
+This prevents the complexity of trying to track multiple threads simultaneously while maintaining proper chronological consumption tracking.
 
-**Main Features:**
-- Full-screen modal with wallet cards
-- Each card shows:
-  * Wallet address (copyable, monospace)
-  * Blockchain and currency
-  * Monitored amount (prominently displayed)
-  * Last analyzed timestamp with status icon
-  * Original deposit vs traced vs remaining breakdown
-  * Percentage remaining visualization
-- Action buttons per wallet:
-  * 🔄 Re-analyze Now - Launch LIBR analysis
-  * 📊 View Hop - Jump to hop in investigation
-- Summary footer:
-  * Total monitored wallets count
-  * Total value by currency
-  * Wallets needing review count with warning
+### Enhanced libr_wallet_status Structure
 
-## Single Wallet Re-analysis
+```javascript
+{
+    type: 'libr_wallet_status',
+    walletAddress: '0xABC...',
+    blockchain: 'ethereum',
+    currency: 'USDT',
 
-**reanalyzeSingleMonitoredWallet():**
-- Launches LIBR balance tracker with current monitored amount as threshold
-- Uses last analyzed date as starting point for new analysis
-- Opens familiar LIBR modal for transaction selection
-- User can add new entries to existing hop directly
+    // Thread queue (chronologically ordered - oldest first)
+    threads: [
+        {
+            notation: 'V1-T1',                // Thread identifier
+            depositTimestamp: 1698765432000,  // When thread entered wallet
+            originalAmount: 50000,            // Initial thread value
+            remainingAmount: 25000,           // Current remaining value
+            status: 'consumed',               // consumed | monitoring | pending
+            depositTxHash: '0x123...'         // Transaction that deposited thread
+        },
+        {
+            notation: 'V2-T1',
+            depositTimestamp: 1698765500000,
+            originalAmount: 30000,
+            remainingAmount: 30000,
+            status: 'monitoring',             // Currently being monitored
+            depositTxHash: '0x456...'
+        },
+        {
+            notation: 'V3-T1',
+            depositTimestamp: 1698765600000,
+            originalAmount: 20000,
+            remainingAmount: 20000,
+            status: 'pending',                // Waiting for V2-T1 to be consumed
+            depositTxHash: '0x789...'
+        }
+    ],
 
-## Batch Operations
+    currentThreadIndex: 1,  // Index of thread being monitored (V2-T1)
 
-### reanalyzeAllMonitoredWallets()
-**Progress Modal:**
-- Shows real-time progress: "Analyzing 0xABC... (2 of 5)"
-- Animated progress bar
-- Fetches complete transaction history for each wallet
-- Runs LIBR analysis with monitored amount as threshold
-- Handles errors gracefully per wallet
+    // Aggregate totals for accounting
+    totalOriginalProceeds: 100000,   // Sum of all thread original amounts
+    totalRemainingProceeds: 75000,   // Sum of all thread remaining amounts
+    totalConsumed: 25000,            // Total consumed across all threads
 
-**Results Collection:**
-- Success + New Activity: Transactions to follow found
-- Success + Stable: No new outbound transactions
-- Failed: Error occurred during analysis
+    // Legacy fields (maintained for backwards compatibility)
+    remainingProceeds: 75000,        // = totalRemainingProceeds
+    originalProceeds: 100000,        // = totalOriginalProceeds
 
-### showBatchResultsSummary()
-**Results Modal Sections:**
+    lastAnalyzed: '2025-10-25T...',
+    notes: '...'
+}
+```
 
-1. **Summary Cards** (top):
-   - New Activity count (orange)
-   - Stable count (green)
-   - Failed count (red)
+### New Helper Functions (lines 36713-36910)
 
-2. **Wallets with New Activity** (priority section):
-   - Orange highlighted cards
-   - Shows new transaction count
-   - Total traced amount from new TXs
-   - Remaining amount after new traces
-   - Buttons: "View Details" and "Add to Hop X"
+**`ensureThreadStructure(monitoredEntry)`**
+- Migrates old single-thread format to new multi-thread structure
+- Called automatically on all monitored entries
+- Preserves backwards compatibility with existing data
 
-3. **Stable Wallets** (collapsible):
-   - One-line entries
-   - "No new activity" badge
-   - Balance unchanged confirmation
+**`addThreadToMonitoredWallet(monitoredEntry, threadData)`**
+- Adds new thread to wallet's thread queue
+- Inserts in chronological order (PIFO)
+- Sets status to 'pending' (monitored when older threads consumed)
 
-4. **Failed Analysis** (errors):
-   - Red highlighted
-   - Error message displayed
-   - Helps troubleshoot API issues
+**`getCurrentMonitoredThread(monitoredEntry)`**
+- Returns the thread currently being monitored
+- Used by LIBR analysis to get threshold amount
 
-## Quick Access Banner (lines 13844-13877)
+**`reduceCurrentThreadAmount(monitoredEntry, amountTraced)`**
+- Reduces current thread's remaining amount after tracing
+- Updates aggregate totals
+- Auto-calls `checkAndAdvanceToNextThread()`
 
-**Location:** Top of Hops view (only when LIBR method active)
+**`checkAndAdvanceToNextThread(monitoredEntry)`**
+- Checks if current thread is consumed (< 0.000001)
+- Marks thread as 'consumed'
+- Finds next 'pending' thread in chronological order
+- Advances currentThreadIndex and sets new thread to 'monitoring'
+- Adds audit note about thread advancement
 
-**Conditional Display:**
-- Only shows if tracingMethod === 'LIBR'
-- Only shows if monitored wallets exist
+**`updateMonitoredWalletTotals(monitoredEntry)`**
+- Recalculates aggregate values from all threads
+- Updates totalOriginalProceeds, totalRemainingProceeds, totalConsumed
+- Maintains legacy fields for backwards compatibility
 
-**Banner Content:**
-- Left side:
-  * "👁️ LIBR Method Active" header
-  * Wallet count and total monitored value
-  * Warning if wallets need review
-- Right side:
-  * "View Monitored Wallets" button
-  * "Re-analyze All" button
+### Updated Functions
 
-**Visual Design:**
-- Blue gradient background
-- Responsive flexbox layout
-- Wraps on mobile
-- Clear call-to-action
+**`followLIBRTransaction()` (lines 36595-36681)**
+- Uses `reduceCurrentThreadAmount()` instead of direct assignment
+- Includes thread notation in trace notes
+- Creates monitored entry with thread structure if it doesn't exist
 
-## CSS Animations (lines 803-823)
+**`reanalyzeSingleMonitoredWallet()` (lines 36276-36308)**
+- Gets current thread via `getCurrentMonitoredThread()`
+- Uses **current thread's remaining amount** as LIBR threshold
+- Alerts if all threads consumed
 
-**@keyframes highlight-flash:**
-- Smooth yellow flash animation
-- 0% → 25% → 50% → 75% → 100%
-- White → Light yellow → Bright yellow → Light yellow → White
-- 2-second duration, ease-in-out
+**`reanalyzeAllMonitoredWallets()` (lines 36465+)**
+- Skips wallets where all threads consumed
+- Analyzes only current thread for each wallet
+- Reports skipped wallets in results
 
-**.highlight-flash class:**
-- Applied when jumping to hop from dashboard
-- Helps user see which hop was navigated to
-- Removes automatically after animation
+**`getAllMonitoredWallets()` (lines 36187-36211)**
+- Calls `ensureThreadStructure()` on all entries
+- Ensures all old entries migrated to new format
 
-## Integration Points
+### Monitoring Dashboard Display (lines 36357-36440)
 
-1. **With existing LIBR analysis:**
-   - Re-uses showLIBRBalanceTracker()
-   - Passes monitored amount as new threshold
-   - Seamless workflow continuation
+Each wallet card now shows:
 
-2. **With hop navigation:**
-   - Uses existing switchTab('hops')
-   - Scrolls to hop element by ID
-   - Highlights with animation
+**Thread Queue Section:**
+- All threads in chronological order
+- Status indicator: ✅ Consumed | 👁️ Monitoring | ⏳ Pending
+- Highlight current thread with yellow background
+- Show remaining/original amounts for each thread
+- Note: "Currently monitoring this thread (PIFO: oldest first)"
 
-3. **With storage:**
-   - Updates investigation.hops entries
-   - Calls saveToStorage() after updates
-   - Maintains data integrity
+**Total Values Section:**
+- Total Original Proceeds (sum of all threads)
+- Total Consumed (sum of consumed amounts)
+- Total Remaining (sum of remaining amounts)
+- Progress percentage
 
-## User Workflow
+**Current Thread Indicator:**
+- Green box showing which thread is being analyzed
+- Amount remaining in that thread
+- Or "All threads consumed" if none remain
 
-**Scenario: User wants to check monitored wallets**
+### Workflow Example: Multiple Threads in Same Wallet
 
-1. Navigate to Hops tab
-2. See banner: "3 wallets monitored (1 needs review)"
-3. Click "View Monitored Wallets"
-4. Dashboard opens showing all 3 wallets
-5. Wallet #1 shows ⚠️ (14 days old)
-6. Click "🔄 Re-analyze Now" on Wallet #1
-7. LIBR modal opens with new analysis
-8. Shows 2 new outbound transactions found
-9. User clicks "Add to Hop 1" for first TX
-10. Returns to hop view, entry added
-11. Dashboard auto-updates monitored amount
+**Scenario:** Wallet 0xABC receives three criminal proceeds deposits
 
-**Scenario: Bulk check after 1 month**
+**Step 1: First Thread Arrives**
+```
+V1-T1: 50,000 USDT deposited at timestamp 1000
+→ Created as monitoring thread
+→ LIBR threshold: 50,000 USDT
+```
 
-1. Click "🔄 Re-analyze All" from banner
-2. Progress modal: "Analyzing 3 wallets..."
-3. Results summary appears:
-   - 1 wallet with new activity 🔔
-   - 2 wallets stable ✅
-4. Click "Add to Hop 2" for active wallet
-5. Manually add transactions to hop
-6. Monitored amounts automatically reduced
+**Step 2: Second Thread Arrives While First Still Being Traced**
+```
+V2-T1: 30,000 USDT deposited at timestamp 2000
+→ Added to thread queue as 'pending'
+→ LIBR still monitoring V1-T1 (ignore V2-T1 for now)
+→ Total in wallet: 80,000 USDT
+→ Monitoring: 50,000 USDT (V1-T1 only)
+```
 
-## Benefits
+**Step 3: Third Thread Arrives**
+```
+V3-T1: 20,000 USDT deposited at timestamp 3000
+→ Added to queue as 'pending'
+→ Total in wallet: 100,000 USDT
+→ Still monitoring V1-T1 only
+```
 
-- ✅ Central location to view all monitored wallets
-- ✅ Visual indicators show which need attention
-- ✅ One-click re-analysis saves time
-- ✅ Batch mode for periodic review
-- ✅ Seamless integration with existing workflow
-- ✅ No data entry required (auto-updates)
-- ✅ Clear visibility of LIBR method status
+**Step 4: Trace V1-T1 Activity**
+```
+User traces 25,000 USDT from V1-T1
+→ V1-T1 remaining: 25,000 USDT
+→ Total remaining: 75,000 USDT
+→ Still monitoring V1-T1 (not consumed yet)
+```
+
+**Step 5: V1-T1 Fully Consumed**
+```
+User traces final 25,000 USDT from V1-T1
+→ V1-T1 remaining: 0 (consumed)
+→ Auto-advance to V2-T1
+→ V2-T1 status: 'pending' → 'monitoring'
+→ New LIBR threshold: 30,000 USDT (V2-T1 amount)
+→ Audit note: "Advanced to thread V2-T1 (30,000 USDT) after V1-T1 fully consumed"
+```
+
+**Step 6: Continue with V2-T1**
+```
+LIBR analysis now checks balance drops below 30,000 USDT
+Ignores V3-T1 until V2-T1 consumed
+```
+
+### Benefits
+
+✅ **Proper PIFO ordering** - Oldest thread consumed first, automatically
+✅ **Clear methodology** - LIBR applied to one thread, PIFO chooses which
+✅ **Complete accounting** - Total values documented alongside individual threads
+✅ **Auto-advancement** - System progresses through threads without manual intervention
+✅ **Backwards compatible** - Old single-thread entries auto-migrate
+✅ **Audit trail** - Thread advancement logged with timestamps
+
+### Technical Notes
+
+- Thread status transitions: `pending` → `monitoring` → `consumed`
+- Only ONE thread has `monitoring` status at a time
+- `currentThreadIndex` always points to the monitoring thread
+- Legacy fields (`remainingProceeds`, `originalProceeds`) maintained = totals
+- Threshold for LIBR = current thread's `remainingAmount`, not total balance
+
+---
+
+## Previous LIBR Implementation (2025-10-25 07:53)
+
+**Commit:** f85718cc15f0e1fbcc25e93860f2aa538aaa048f
+
+## New Action Buttons in LIBR Modal (lines 36062-36065)
+
+Each transaction in the "Transactions to Follow" section now has:
+
+**✅ Follow & Trace** (Primary button)
+- Adds transaction as outbound entry to the source hop
+- Uses traced amount (not full TX amount) per LIBR calculation
+- Auto-updates monitored wallet entry with reduced proceeds
+- Closes modal and jumps to hop with highlight animation
+- Shows success notification
+
+**👁️ Monitor Only** (Secondary button)
+- Adds note to monitored wallet about identified transaction
+- Doesn't create hop entry (user can trace later)
+- Useful for documenting but deferring tracing decisions
+- Only shown if wallet already has monitored entry
+
+## Transaction Data Context (lines 36033-36049)
+
+Each action button receives complete context:
+- TX Hash, timestamp, amounts (full and traced)
+- Balance before/after transaction
+- Wallet address (source)
+- Blockchain and currency
+- Hop number (auto-detected from monitored entries)
+- Remaining proceeds in wallet
+
+Auto-detects target hop by finding which hop has a libr_wallet_status
+entry for this wallet address.
+
+## followLIBRTransaction() Function (lines 36595-36676)
+
+**Creates outbound entry:**
+```javascript
+{
+  type: 'outbound',
+  txHash: '0x...',
+  amount: tracedAmount,  // LIBR calculated amount, not full TX
+  fromWallet: walletAddress,
+  notes: 'LIBR: Traced X from monitored wallet. Balance dropped to Y'
+}
+```
+
+**Updates or creates monitored entry:**
+- Reduces remainingProceeds to new balance
+- Adds timestamped note: "[Date] Traced X via TX..."
+- Creates entry if first time tracing from this wallet
+
+**User feedback:**
+- Saves to storage
+- Refreshes hop display
+- Closes LIBR modal
+- Shows success notification
+- Jumps to hop with highlight animation
+
+## markAsMonitoredOnly() Function (lines 36679-36711)
+
+**Alternative action for deferring trace:**
+- Finds monitored wallet entry
+- Appends note: "Identified but not traced: X in TX..."
+- Doesn't create hop entry
+- Allows user to document findings without committing to trace
+- Useful for large transactions needing approval or complex decisions
+
+## Updated displayLIBRAnalysisResults() (line 35962)
+
+Now accepts walletAddress and blockchain parameters to:
+- Find which hop the wallet belongs to
+- Pass context to action buttons
+- Enable auto-detection of target hop
+
+## Workflow Example
+
+**User traces wallet 0xABC... in Hop 1:**
+
+1. Hop 1 has libr_wallet_status for 0xABC... (100K monitored)
+2. User clicks "Re-analyze" from monitoring dashboard
+3. LIBR analysis finds 2 outbound transactions:
+   - TX #1: Traced 25K (balance drops to 75K)
+   - TX #2: Traced 30K (balance drops to 45K)
+4. User clicks "✅ Follow & Trace" on TX #1
+5. System:
+   - Adds outbound entry to Hop 1 (25K amount)
+   - Updates monitored: 100K → 75K remaining
+   - Adds note with timestamp
+6. Modal closes, jumps to Hop 1
+7. User sees new entry highlighted
+8. Monitored wallet now shows 75K (was 100K)
+9. Banner updates: "1 wallet monitored containing 75K"
+
+**Later, user clicks "Re-analyze" again:**
+
+1. LIBR runs with 75K threshold (not 100K)
+2. Finds TX #2 still needs tracing
+3. User clicks "✅ Follow & Trace"
+4. System adds to SAME Hop 1
+5. Monitored: 75K → 45K remaining
+
+**Result:** All entries stay in Hop 1 (same source wallet), monitored
+amount correctly tracks remaining proceeds.
+
+## Key Features
+
+- ✅ One-click add to existing hop
+- ✅ Auto-detects correct hop from wallet
+- ✅ Uses LIBR-calculated traced amount
+- ✅ Auto-updates monitored proceeds
+- ✅ Timestamped audit trail in notes
+- ✅ Option to defer tracing decision
+- ✅ Smooth navigation with visual feedback
+- ✅ Maintains data integrity
+
+## Integration with LIBR Methodology
+
+**Proper LIBR workflow now complete:**
+
+1. Run LIBR analysis → Find drops
+2. Click "Follow & Trace" → Add to hop
+3. Monitored amount auto-reduces
+4. Re-analyze later → Uses new threshold
+5. Find next drops → Add to same hop
+6. Repeat until all traced or remains stable
+
+**Hop 1 stays "open" and can receive entries anytime the monitored
+wallet has new activity, maintaining proper LIBR accounting.**
 
 ## Files Modified
 
 - index.html:
-  * Lines 36084-36489: LIBR monitoring functions
-  * Lines 13844-13877: Hops view banner injection
-  * Lines 803-823: CSS highlight-flash animation
+  * Line 35962: Updated displayLIBRAnalysisResults signature
+  * Line 35959: Pass walletAddress, blockchain to display
+  * Lines 36006-36023: Auto-detect target hop number
+  * Lines 36032-36067: Add action buttons to each transaction
+  * Lines 36590-36714: LIBR transaction action functions
 
 ### Changed Files:
 ```
- CLAUDE.md  |  92 ++++++++----
- index.html | 464 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 527 insertions(+), 29 deletions(-)
+ CLAUDE.md  | 273 ++++++++++++++++++++++++++++++++++++++++++++++---------------
+ index.html | 176 ++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 381 insertions(+), 68 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (0 seconds ago)
+- f85718c Add ability to add LIBR transactions directly to existing hops (1 second ago)
+- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (9 minutes ago)
 - b454671 Fix LIBR modal display and implement proper iterative LIBR algorithm (9 hours ago)
 - cee9bb2 Remove ALL remaining template literals from filter section - COMPLETE FIX (10 hours ago)
 - e55e076 Replace all template literals with string concatenation in filter section (10 hours ago)
@@ -220,7 +384,6 @@ to track and re-analyze wallets containing untraced criminal proceeds.
 - 96ee49a Add provenance-based visualization filtering with multi-select and saved views (11 hours ago)
 - 2035a72 Update CLAUDE.md with latest commit info (25 hours ago)
 - 2c960c0 Update CLAUDE.md with latest commit info (25 hours ago)
-- eb192ed Add LIBR (Lowest Intermediate Balance Rule) tracing method support (25 hours ago)
 
 ## Key Features
 - **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
