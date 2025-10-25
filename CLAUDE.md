@@ -3,30 +3,50 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 09:08)
+## Latest Commit (Auto-updated: 2025-10-25 09:13)
 
-**Commit:** 5ac855a596f46da94113ec564ce6aae3f915eef1
+**Commit:** c6b62b50feb36059d7c348cb57227b056c33fe3b
 **Author:** Your Name
-**Message:** Final sync
+**Message:** Remove GitHub repository link from methodology info modals
+
+Removed "View Documentation" button that linked to GitHub repository
+per user request to have no GitHub links anywhere in the application.
+
+Changes:
+- Removed "Need more information?" text
+- Removed "View Documentation" button with GitHub link
+- Kept only "Got It, Close" button
+- Cleaner, simpler modal footer
+
+Now methodology info modals show:
+✅ Complete methodology explanation
+✅ Use cases, workflow, examples
+✅ Single close button (no external links)
+❌ No GitHub repository references
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ CLAUDE.md  | 18 +++++++++---------
+ index.html |  2 --
+ 2 files changed, 9 insertions(+), 11 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5ac855a Final sync (0 seconds ago)
-- d475954 Sync (8 seconds ago)
-- 0d06cbd Update CLAUDE.md (15 seconds ago)
-- a437c61 Add missing CSS for modal-overlay to display info modals as popups (25 seconds ago)
-- 9ce7f3f Auto-sync (25 minutes ago)
-- e781bed Final (26 minutes ago)
-- 6b9faba Sync (26 minutes ago)
-- 6d75d57 Final CLAUDE.md sync (26 minutes ago)
-- 425e3ff Sync CLAUDE.md (26 minutes ago)
-- 15d582f Auto-update CLAUDE.md (26 minutes ago)
+- c6b62b5 Remove GitHub repository link from methodology info modals (1 second ago)
+- 5ac855a Final sync (5 minutes ago)
+- d475954 Sync (5 minutes ago)
+- 0d06cbd Update CLAUDE.md (5 minutes ago)
+- a437c61 Add missing CSS for modal-overlay to display info modals as popups (5 minutes ago)
+- 9ce7f3f Auto-sync (30 minutes ago)
+- e781bed Final (30 minutes ago)
+- 6b9faba Sync (30 minutes ago)
+- 6d75d57 Final CLAUDE.md sync (30 minutes ago)
+- 425e3ff Sync CLAUDE.md (30 minutes ago)
 
 ## Key Features
 
