@@ -36385,22 +36385,160 @@ window.acceptLIBRCalculation = function() {
         return;
     }
 
-    const confirm = window.confirm(
+    const totalTraced = analysis.librAnalysis.transactionsToFollow.reduce((sum, tx) => sum + tx.tracedAmount, 0);
+
+    const confirmed = window.confirm(
         'Accept LIBR Calculation?\n\n' +
         'This will create hop entries for ' + analysis.librAnalysis.totalTransactionsToTrace + ' transaction(s) ' +
         'with the calculated PIFO allocations.\n\n' +
-        'Total traced: ' + analysis.librAnalysis.transactionsToFollow.reduce((sum, tx) => sum + tx.tracedAmount, 0).toFixed(6) + ' ' + analysis.currency + '\n\n' +
+        'Total traced: ' + totalTraced.toFixed(6) + ' ' + analysis.currency + '\n\n' +
         'Continue?'
     );
 
-    if (!confirm) return;
+    if (!confirmed) return;
 
-    console.log('✅ [LIBR] Investigator accepted calculation');
+    console.log('✅ [LIBR] Investigator accepted calculation - creating hop entries...');
 
-    // TODO: Implement hop entry creation with allocations
-    alert('✅ Calculation accepted!\n\nHop entry creation will be implemented next.\n\nFor now, this records your decision to accept the LIBR calculation.');
+    try {
+        // Get or create hop 1
+        let hop = investigation.hops.find(h => h.hopNumber === 1);
+        if (!hop) {
+            // Create hop 1
+            hop = {
+                hopNumber: 1,
+                entries: [],
+                artAtStartByCurrency: investigation.confirmedRootTotalsByCurrency || {},
+                artAtStart: Object.values(investigation.confirmedRootTotalsByCurrency || {}).reduce((sum, amt) => sum + amt, 0),
+                completed: false
+            };
+            investigation.hops.push(hop);
+            console.log('Created Hop 1');
+        }
 
-    closeLIBRBalanceModal();
+        // Track remaining deposits for PIFO allocation across all transactions
+        let remainingDeposits = [...analysis.redWalletDeposits];
+        let entriesCreated = 0;
+
+        // Create an entry for each traced transaction
+        analysis.librAnalysis.transactionsToFollow.forEach((tx, txIndex) => {
+            // Calculate PIFO allocation for this transaction
+            const allocation = calculatePIFOAllocation(tx.tracedAmount, remainingDeposits);
+
+            // Build notation from allocation
+            let notationParts = [];
+            allocation.allocation.forEach(alloc => {
+                if (alloc.isFullyConsumed) {
+                    notationParts.push(alloc.threadId);
+                } else {
+                    notationParts.push(alloc.threadId + ' partial: ' + alloc.allocatedAmount.toFixed(6));
+                }
+            });
+
+            const notation = '(' + notationParts.join(') (') + ') H1';
+
+            // Create hop entry
+            const entry = {
+                entryType: 'trace',
+                type: 'trace',
+                notation: notation,
+                amount: tx.tracedAmount,
+                currency: analysis.currency,
+                hopNumber: 1,
+                sourceThreadIds: allocation.allocation.map(a => a.threadId),
+                pifoAllocation: allocation.allocation, // Store full allocation data
+                fromWallet: analysis.walletAddress,
+                fromWalletType: 'red',
+                fromWalletId: '',
+                toWallet: '', // To be filled when transaction is looked up
+                toWalletType: '',
+                toWalletId: '',
+                txHash: tx.txHash,
+                timestamp: new Date(tx.timestamp).toISOString(),
+                timezone: 'UTC',
+                chain: analysis.blockchain,
+                notes: 'LIBR-identified transaction\n' +
+                       'Balance dropped to ' + tx.balanceAfter.toFixed(6) + ' ' + analysis.currency + '\n' +
+                       'PIFO Allocation:\n' +
+                       allocation.allocation.map(a =>
+                           '- ' + a.threadId + ': ' + a.allocatedAmount.toFixed(6) + ' ' + analysis.currency +
+                           ' (' + a.percentage.toFixed(1) + '% of thread)'
+                       ).join('\n')
+            };
+
+            hop.entries.push(entry);
+            entriesCreated++;
+
+            console.log('Created hop entry:', notation, 'Amount:', tx.tracedAmount, analysis.currency);
+
+            // Update remaining deposits for next transaction
+            allocation.allocation.forEach(alloc => {
+                const depositIndex = remainingDeposits.findIndex(d => d.threadId === alloc.threadId);
+                if (depositIndex !== -1) {
+                    if (alloc.isFullyConsumed) {
+                        remainingDeposits.splice(depositIndex, 1);
+                    } else {
+                        remainingDeposits[depositIndex] = {
+                            ...remainingDeposits[depositIndex],
+                            amount: alloc.remainingInThread
+                        };
+                    }
+                }
+            });
+        });
+
+        // Update victim transaction consumption tracking
+        // Mark the victim threads as consumed based on allocations
+        const finalAllocation = calculatePIFOAllocation(totalTraced, analysis.redWalletDeposits);
+        finalAllocation.allocation.forEach(alloc => {
+            const deposit = analysis.redWalletDeposits.find(d => d.threadId === alloc.threadId);
+            if (deposit) {
+                const victim = investigation.victims[deposit.victimIndex];
+                const tx = victim.transactions[deposit.txIndex];
+
+                if (!tx.consumption) {
+                    tx.consumption = {
+                        totalAmount: deposit.amount,
+                        consumed: 0,
+                        remaining: deposit.amount
+                    };
+                }
+
+                tx.consumption.consumed += alloc.allocatedAmount;
+                tx.consumption.remaining = deposit.amount - tx.consumption.consumed;
+
+                if (alloc.isFullyConsumed) {
+                    tx.fullyConsumed = true;
+                }
+
+                console.log('Updated ' + alloc.threadId + ' consumption:', tx.consumption);
+            }
+        });
+
+        // Rebuild thread index to reflect consumption
+        buildAvailableThreadsIndex();
+
+        // Save and refresh
+        saveToStorage();
+        renderHops();
+
+        alert(
+            '✅ LIBR Calculation Accepted!\n\n' +
+            'Created ' + entriesCreated + ' hop ' + (entriesCreated === 1 ? 'entry' : 'entries') + ' in Hop 1\n' +
+            'Total traced: ' + totalTraced.toFixed(6) + ' ' + analysis.currency + '\n\n' +
+            'Thread consumption updated:\n' +
+            finalAllocation.allocation.map(a =>
+                '- ' + a.threadId + ': ' + a.allocatedAmount.toFixed(6) + ' traced' +
+                (a.isFullyConsumed ? ' (fully consumed)' : ' (' + a.remainingInThread.toFixed(6) + ' remains)')
+            ).join('\n') +
+            '\n\nYou can now look up the transaction details to complete each entry.'
+        );
+
+        closeLIBRBalanceModal();
+
+    } catch (error) {
+        console.error('Error creating hop entries:', error);
+        alert('Error creating hop entries:\n\n' + error.message + '\n\nPlease check the console for details.');
+    }
 };
 
 // Write off the traced amount (not worth pursuing)
