@@ -36083,6 +36083,19 @@ async function performLIBRAnalysis(walletAddress, criminalProceedsAmount, crimin
         new Date(criminalProceedsDate).getTime()
     );
 
+    // Get red wallet deposits for PIFO allocation display
+    let redWalletDeposits = [];
+    if (window.librRedWallets) {
+        const redWallet = window.librRedWallets.find(w =>
+            w.address.toLowerCase() === walletAddress.toLowerCase() &&
+            w.blockchain === blockchain &&
+            w.currency === currency
+        );
+        if (redWallet) {
+            redWalletDeposits = redWallet.deposits;
+        }
+    }
+
     // Store analysis in investigation object
     const walletKey = blockchain + '_' + walletAddress.toLowerCase();
     if (!investigation.librWalletAnalysis) investigation.librWalletAnalysis = {};
@@ -36099,20 +36112,22 @@ async function performLIBRAnalysis(walletAddress, criminalProceedsAmount, crimin
         criminalProceedsDate: criminalProceedsDate,
         balanceHistory: balanceHistory,
         librAnalysis: librAnalysis,
+        redWalletDeposits: redWalletDeposits,
         lastAnalyzed: new Date().toISOString()
     };
 
     saveToStorage();
 
     // Display results
-    displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProceedsAmount, criminalProceedsDate, currency, walletAddress, blockchain);
+    displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProceedsAmount, criminalProceedsDate, currency, walletAddress, blockchain, redWalletDeposits);
 }
 
-function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProceedsAmount, criminalProceedsDate, currency, walletAddress, blockchain) {
+function displayLIBRAnalysisResults(librAnalysis, balanceHistory, criminalProceedsAmount, criminalProceedsDate, currency, walletAddress, blockchain, redWalletDeposits) {
     console.log('📊 [LIBR] Displaying results:', {
         balanceHistoryLength: balanceHistory?.length || 0,
         criminalProceedsDate,
-        librAnalysis
+        librAnalysis,
+        redWalletDepositsCount: redWalletDeposits?.length || 0
     });
 
     const loadingDiv = document.getElementById('librLoadingIndicator');
@@ -36462,6 +36477,39 @@ function openLIBRVerificationFromModal() {
         data.currency,
         data.blockchain
     );
+}
+
+// Calculate PIFO allocation for traced amount across victim deposits
+function calculatePIFOAllocation(tracedAmount, deposits) {
+    const allocation = [];
+    let remaining = tracedAmount;
+
+    // Sort deposits chronologically (should already be sorted but ensure it)
+    const sortedDeposits = [...deposits].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    for (const deposit of sortedDeposits) {
+        if (remaining <= 0.000001) break; // All allocated
+
+        const allocated = Math.min(remaining, deposit.amount);
+        const percentage = (allocated / deposit.amount) * 100;
+
+        allocation.push({
+            threadId: deposit.threadId,
+            depositAmount: deposit.amount,
+            allocatedAmount: allocated,
+            percentage: percentage,
+            isFullyConsumed: percentage >= 99.999, // Account for floating point
+            remainingInThread: deposit.amount - allocated
+        });
+
+        remaining -= allocated;
+    }
+
+    return {
+        allocation,
+        totalAllocated: tracedAmount,
+        unallocatedAmount: remaining > 0.000001 ? remaining : 0
+    };
 }
 
 // Helper function to launch LIBR analyzer from wizard or other contexts
