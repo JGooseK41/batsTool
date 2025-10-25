@@ -5,39 +5,20 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-25 09:13)
 
-**Commit:** c6b62b50feb36059d7c348cb57227b056c33fe3b
+**Commit:** e9507e41f5b7af30a088c8f417047a275ff487aa
 **Author:** Your Name
-**Message:** Remove GitHub repository link from methodology info modals
-
-Removed "View Documentation" button that linked to GitHub repository
-per user request to have no GitHub links anywhere in the application.
-
-Changes:
-- Removed "Need more information?" text
-- Removed "View Documentation" button with GitHub link
-- Kept only "Got It, Close" button
-- Cleaner, simpler modal footer
-
-Now methodology info modals show:
-✅ Complete methodology explanation
-✅ Use cases, workflow, examples
-✅ Single close button (no external links)
-❌ No GitHub repository references
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md  | 18 +++++++++---------
- index.html |  2 --
- 2 files changed, 9 insertions(+), 11 deletions(-)
+ CLAUDE.md | 50 +++++++++++++++++++++++++++++++++++---------------
+ 1 file changed, 35 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c6b62b5 Remove GitHub repository link from methodology info modals (1 second ago)
+- e9507e4 Update CLAUDE.md (0 seconds ago)
+- c6b62b5 Remove GitHub repository link from methodology info modals (11 seconds ago)
 - 5ac855a Final sync (5 minutes ago)
 - d475954 Sync (5 minutes ago)
 - 0d06cbd Update CLAUDE.md (5 minutes ago)
@@ -45,8 +26,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 9ce7f3f Auto-sync (30 minutes ago)
 - e781bed Final (30 minutes ago)
 - 6b9faba Sync (30 minutes ago)
-- 6d75d57 Final CLAUDE.md sync (30 minutes ago)
-- 425e3ff Sync CLAUDE.md (30 minutes ago)
+- 6d75d57 Final CLAUDE.md sync (31 minutes ago)
 
 ## Key Features
 
