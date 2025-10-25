@@ -5,46 +5,20 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-25 08:34)
 
-**Commit:** c9bbf3476912308deac1de31933bbd7bd4b874a8
+**Commit:** 8dc0ee6df0fce409040b3b5407dfc82b1a0bd72f
 **Author:** Your Name
-**Message:** Fix methodology info buttons and remove undefined function call
-
-Fixes two critical issues with the methodology selection UI:
-
-1. Info buttons not working - Fixed event propagation
-   - Moved event.stopPropagation() to execute BEFORE function call
-   - Prevents label click from triggering when clicking info button
-   - Now both PIFO and LIBR info modals open correctly
-
-2. Removed undefined saveToUndoHistory() call
-   - Function was being called but never defined
-   - Caused ReferenceError when selecting tracing method
-   - Removed call from updateTracingMethod() function
-
-Changes:
-- Line 29391: Removed saveToUndoHistory() call
-- Line 1911: Fixed PIFO info button onclick order
-- Line 1934: Fixed LIBR info button onclick order
-
-Now investigators can successfully:
-- Click info buttons to see methodology details
-- Select PIFO or LIBR without console errors
-- View comprehensive explanation modals
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md  | 18 +++++++++---------
- index.html |  5 ++---
- 2 files changed, 11 insertions(+), 12 deletions(-)
+ CLAUDE.md | 57 ++++++++++++++++++++++++++++++++++++++++++---------------
+ 1 file changed, 42 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c9bbf34 Fix methodology info buttons and remove undefined function call (0 seconds ago)
+- 8dc0ee6 Update CLAUDE.md (0 seconds ago)
+- c9bbf34 Fix methodology info buttons and remove undefined function call (15 seconds ago)
 - 3ba11f0 Sync CLAUDE.md (5 minutes ago)
 - a7ae877 Final CLAUDE.md update (5 minutes ago)
 - 57da2a2 Update CLAUDE.md with latest commit (5 minutes ago)
@@ -53,7 +27,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 910e904 Add LIBR verification modal for transparency and user control (11 minutes ago)
 - 44cc303 Implement multi-thread LIBR with PIFO ordering (20 minutes ago)
 - f85718c Add ability to add LIBR transactions directly to existing hops (41 minutes ago)
-- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (50 minutes ago)
 
 ## Key Features
 
