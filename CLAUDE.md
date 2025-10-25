@@ -5,56 +5,20 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-25 19:56)
 
-**Commit:** 50f3ad30c909e5d3262a735f7619b392a0bc3a5d
+**Commit:** ffbdab1dee8022cc81b655db6c5ef760b90d8bc9
 **Author:** Your Name
-**Message:** Fix performance issue and auto-cap thread allocations
-
-PERFORMANCE FIX: Eliminate excessive buildAvailableThreadsIndex() calls
-
-Problem:
-- getAvailableSourcesForHop() was rebuilding entire thread index on every call
-- Caused 50+ rebuilds per user action (visible in console spam)
-- Severely degraded UI responsiveness during wizard interactions
-
-Solution:
-- Removed buildAvailableThreadsIndex() from read operation (line 8979)
-- Index only rebuilds when data actually changes (saves, edits, deletes)
-- Index still built at app initialization (line 10595)
-- Dramatic performance improvement - read operations now instant
-
-ALLOCATION FIX: Auto-cap instead of validation error
-
-Problem:
-- User got error: "thread v1-t2 only has .33453074 eth available, but .334531 was requested"
-- Floating point precision causing validation to fail unnecessarily
-- Blocked legitimate operations that should have auto-capped
-
-Solution:
-- Changed validation from hard block to auto-cap at available amount
-- Logs warning when capping occurs (for transparency)
-- Recalculates total after capping
-- Handles precision issues gracefully
-- User workflow no longer interrupted
-
-Impact:
-- Console logs reduced from 100+ lines per action to ~10 lines
-- UI interactions now instant instead of laggy
-- Allocation errors auto-resolve instead of blocking user
-- Better UX - system handles edge cases intelligently
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md
 
 ### Changed Files:
 ```
- index.html | 21 ++++++++++++++++-----
- 1 file changed, 16 insertions(+), 5 deletions(-)
+ CLAUDE.md | 67 +++++++++++++++++++++++++++++++++++++++++++++++++--------------
+ 1 file changed, 52 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 50f3ad3 Fix performance issue and auto-cap thread allocations (1 second ago)
+- ffbdab1 Update CLAUDE.md (0 seconds ago)
+- 50f3ad3 Fix performance issue and auto-cap thread allocations (7 seconds ago)
 - 7d605bf Sync (5 hours ago)
 - 5df232c Sync (5 hours ago)
 - 7073c23 Auto-sync CLAUDE.md (5 hours ago)
@@ -63,7 +27,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - f8bfb8b Update CLAUDE.md with latest commit info (5 hours ago)
 - ca2de8f Add terminal wallet drill-down and legal process export for exchange subpoenas (5 hours ago)
 - 15a2b2b Implement Phase 1: Bitcoin change address detection in LIBR results (7 hours ago)
-- 9f10344 Fix Bitcoin UTXO change address handling in LIBR balance calculation (7 hours ago)
 
 ## Key Features
 
