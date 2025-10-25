@@ -3,93 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 08:27)
+## Latest Commit (Auto-updated: 2025-10-25 08:28)
 
-**Commit:** 1fb0f7fbd0b089a96d79c6309e9a255f98995e0e
+**Commit:** 1c5dec4cc3f82743774f7958d354c35ef3b0ddae
 **Author:** Your Name
-**Message:** Enhance methodology selection UI with prominent display and info modals
-
-Makes the critical PIFO vs LIBR methodology selection more prominent
-in the case creation page and provides comprehensive guidance through
-interactive information modals to help investigators choose correctly.
-
-Visual Enhancements:
-- Prominent blue gradient section with border and shadow
-- Centered heading: "⚖️ Select Tracing Methodology"
-- Side-by-side card layout with hover effects
-- Color-coded cards: PIFO (Blue #2196f3), LIBR (Orange #ff9800)
-- Cards lift and glow on hover for better interactivity
-- Larger radio buttons (20px) for easier selection
-
-Each Method Card Shows:
-- Full methodology name and terminology
-- Brief one-line description
-- Color-coded "Best for" callout box
-- Info button (ℹ️) in top-right corner
-- Hover effects (transform, border color, shadow)
-
-Information Modals (showMethodologyInfo):
-Comprehensive explanation modals with:
-- Overview paragraph explaining the methodology
-- Common use cases (5 examples per method)
-- Step-by-step workflow diagram
-- "When to use" guidance
-- Detailed example scenario
-- Link to documentation
-- Color-coded sections matching method
-
-PIFO Modal Content:
-- Immediate movement assumption methodology
-- Best for 90%+ of investigations
-- Use cases: Romance scams, investment fraud, ransomware, theft, BEC
-- Example: 10 BTC split into two 5 BTC payments, both traced
-- Recommended for rapid fund movement scenarios
-
-LIBR Modal Content:
-- Balance monitoring and drop detection
-- Arrests asset flow, fewer wallets, strategic concentration
-- Use cases: Stablecoins, wallet seizure, private key recovery
-- Example: 50K USDT in 150K wallet, balance drop triggers
-- Best for stablecoin cases and seizure scenarios
-
-Implementation:
-- showMethodologyInfo(method) - Creates method-specific modal
-- closeMethodologyInfoModal() - Cleanup function
-- Enhanced case setup form (lines 1893-1952)
-- Info button click handlers with event.stopPropagation()
-- Responsive grid layout
-
-Benefits:
-- Clear decision making for investigators
-- Comprehensive guidance without overwhelming
-- Visual hierarchy ensures prominence
-- Interactive learning through optional modals
-- Professional appearance increases confidence
-- Reduces methodology selection errors
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Auto-update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md  | 256 ++++++++++++++++++++++++++++++-------------------------------
- index.html | 150 +++++++++++++++++++++++++++++++-----
- 2 files changed, 257 insertions(+), 149 deletions(-)
+ CLAUDE.md | 197 +++++++++++++++++++++-----------------------------------------
+ 1 file changed, 65 insertions(+), 132 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1fb0f7f Enhance methodology selection UI with prominent display and info modals (1 second ago)
-- 910e904 Add LIBR verification modal for transparency and user control (4 minutes ago)
-- 44cc303 Implement multi-thread LIBR with PIFO ordering (13 minutes ago)
-- f85718c Add ability to add LIBR transactions directly to existing hops (34 minutes ago)
-- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (44 minutes ago)
+- 1c5dec4 Auto-update CLAUDE.md with latest commit info (0 seconds ago)
+- 1fb0f7f Enhance methodology selection UI with prominent display and info modals (87 seconds ago)
+- 910e904 Add LIBR verification modal for transparency and user control (6 minutes ago)
+- 44cc303 Implement multi-thread LIBR with PIFO ordering (15 minutes ago)
+- f85718c Add ability to add LIBR transactions directly to existing hops (36 minutes ago)
+- 5064e3f Implement comprehensive LIBR Monitoring Dashboard (45 minutes ago)
 - b454671 Fix LIBR modal display and implement proper iterative LIBR algorithm (10 hours ago)
 - cee9bb2 Remove ALL remaining template literals from filter section - COMPLETE FIX (10 hours ago)
 - e55e076 Replace all template literals with string concatenation in filter section (11 hours ago)
 - cbf5661 Fix template literal syntax error - use string concatenation instead (11 hours ago)
-- 65d5419 Fix critical bugs and migrate API keys to environment variables (11 hours ago)
 
 ## Key Features
 
