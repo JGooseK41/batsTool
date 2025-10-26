@@ -7279,6 +7279,13 @@
                 parseResponse: (data) => {
                     console.log('Sui transaction data:', data);
 
+                    // Debug: Log the structure we're receiving
+                    if (data && data.result) {
+                        console.log('Sui tx.effects:', data.result.effects);
+                        console.log('Sui tx.effects.balanceChanges:', data.result.effects?.balanceChanges);
+                        console.log('Sui tx.transaction:', data.result.transaction);
+                    }
+
                     // Handle Suiscan API response format
                     if (data && data.result) {
                         const tx = data.result;
