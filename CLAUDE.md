@@ -3,30 +3,65 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-25 19:57)
+## Latest Commit (Auto-updated: 2025-10-26 09:02)
 
-**Commit:** b34b458d7c39597a364c80d5c4f27212aaa45414
+**Commit:** 452eae099ea5ea64c8d2f1b5c7a27a1be21ab159
 **Author:** Your Name
-**Message:** Sync
+**Message:** Add XRP (Ripple) blockchain support with XRPSCAN API
+
+NEW BLOCKCHAIN: XRP/Ripple transaction tracking
+
+API Integration:
+- Primary API: XRPSCAN (https://api.xrpscan.com)
+- Fallback: XRPL Cluster and Ripple public nodes
+- No API key required
+
+Address & Transaction Validation:
+- XRP addresses: Start with 'r', 24-34 characters (Base58)
+- Transaction hashes: 64 character hex strings
+- Regex patterns for validation
+
+Transaction Parsing Features:
+- Native XRP payments (drops to XRP conversion: 1 XRP = 1,000,000 drops)
+- Issued currencies/tokens on XRP Ledger
+- Timestamp conversion from Ripple epoch (Jan 1, 2000) to Unix
+- Transaction fee tracking in XRP
+- Destination tag support (critical for exchange deposits)
+- Source tag support
+- Transaction status validation (only successful transactions)
+
+Use Cases:
+- Track XRP payments to/from victims
+- Monitor exchange deposits via destination tags
+- Trace issued currencies on XRP Ledger
+- Legal process documentation with timestamps
+- Fee analysis for XRP transactions
+
+Example XRP Address: rN7n7otQDd6FczFgLdlqtyMVrn3LVgc3xq
+Example TX Hash: 1F8F2F8E8E5F5D5C5B5A59585756555453525150...
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+ index.html | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 70 insertions(+)
 ```
 
 ## Recent Commits History
 
-- b34b458 Sync (0 seconds ago)
-- a10a472 Auto-sync (6 seconds ago)
-- 255b2fd Sync (12 seconds ago)
-- 9d9da64 Final sync (18 seconds ago)
-- 52ed888 Sync CLAUDE.md (23 seconds ago)
-- ffbdab1 Update CLAUDE.md (27 seconds ago)
-- 50f3ad3 Fix performance issue and auto-cap thread allocations (34 seconds ago)
-- 7d605bf Sync (5 hours ago)
-- 5df232c Sync (5 hours ago)
-- 7073c23 Auto-sync CLAUDE.md (5 hours ago)
+- 452eae0 Add XRP (Ripple) blockchain support with XRPSCAN API (0 seconds ago)
+- 4ee5e23 Auto-sync (13 hours ago)
+- b34b458 Sync (13 hours ago)
+- a10a472 Auto-sync (13 hours ago)
+- 255b2fd Sync (13 hours ago)
+- 9d9da64 Final sync (13 hours ago)
+- 52ed888 Sync CLAUDE.md (13 hours ago)
+- ffbdab1 Update CLAUDE.md (13 hours ago)
+- 50f3ad3 Fix performance issue and auto-cap thread allocations (13 hours ago)
+- 7d605bf Sync (18 hours ago)
 
 ## Key Features
 
