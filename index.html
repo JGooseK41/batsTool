@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https://api.etherscan.io https://api.bscscan.com https://api.polygonscan.com https://api.blockcypher.com https://blockchain.info https://api.blockchair.com https://*.infura.io https://mempool.space https://api.mainnet-beta.solana.com https://rpc.ankr.com https://solana-mainnet.g.alchemy.com https://api.arkhamintelligence.com https://api.trongrid.io https://tronscan.org https://api.blockchain.info https://walletexplorer.com https://www.walletexplorer.com https://*.solscan.io https://pro-api.solscan.io https://public-api.solscan.io https://api.solscan.io https://api.xrpscan.com https://xrplcluster.com https://s1.ripple.com https://fullnode.mainnet.sui.io https://sui-mainnet.blockvision.org https://rpc-mainnet.suiscan.xyz https://suiscan.xyz https://midgard.ninerealms.com https://midgard.thorchain.info https://viewblock.io https://api.bridgers.xyz https://images.bridgers.xyz https://scan.layerzero-api.com https://layerzeroscan.com https://layerzero.network https://stargate.finance https://api.stargate.finance https://api.wormholescan.io https://wormholescan.io https://wormhole.com https://portalbridge.com; img-src 'self' data: https:; font-src 'self' data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https://api.etherscan.io https://api.bscscan.com https://api.polygonscan.com https://api.blockcypher.com https://blockchain.info https://api.blockchair.com https://*.infura.io https://mempool.space https://api.mainnet-beta.solana.com https://rpc.ankr.com https://solana-mainnet.g.alchemy.com https://api.arkhamintelligence.com https://api.trongrid.io https://tronscan.org https://api.blockchain.info https://walletexplorer.com https://www.walletexplorer.com https://*.solscan.io https://pro-api.solscan.io https://public-api.solscan.io https://api.solscan.io https://api.xrpscan.com https://xrplcluster.com https://s1.ripple.com https://fullnode.mainnet.sui.io https://sui-mainnet.blockvision.org https://rpc-mainnet.suiscan.xyz https://suiscan.xyz https://midgard.ninerealms.com https://midgard.thorchain.info https://viewblock.io https://api.bridgers.xyz https://images.bridgers.xyz https://scan.layerzero-api.com https://layerzeroscan.com https://layerzero.network https://stargate.finance https://api.stargate.finance https://api.wormholescan.io https://wormholescan.io https://wormhole.com https://portalbridge.com https://api.synapseprotocol.com https://synapseprotocol.com https://synapsebridge.com; img-src 'self' data: https:; font-src 'self' data:;">
     <title>B.A.T.S. - Block Audit Tracing Standard v4.1.1</title>
 
     <!-- Modern Visualization Engine -->
@@ -7511,8 +7511,19 @@
                 fantom: '0x7c9fc5741288cdfdd83ceb07f3ea7e22618d79d2',
                 base: '0x8d2de8d2f73f1f4cab472ac9a881c9b123c79627',
                 solana: 'worm2ZoG2kUd4vFXhvjh93UUH596ayRfgQ2MgjNMTth'
+            },
+            synapse: {
+                // Synapse Protocol Bridge - Cross-chain liquidity network with best REST API
+                ethereum: '0x2796317b0ff8538f253012862c06787adfb8ceb6',
+                bsc: '0xd123f70ae324d34a9e76b67a27bf77593ba8749f',
+                polygon: '0x8f5bbb2bb8c2ee94639e55d5f41de9b4839c1280',
+                arbitrum: '0x6f4e8eba4d337f874ab57478acc2cb5bacdc19c9',
+                optimism: '0xaf41a65f786339e7911f4acdad6bd49426f2dc6b',
+                avalanche: '0xc05e61d0e7a63d27546389b7ad62fdff5a91aace',
+                fantom: '0xaf41a65f786339e7911f4acdad6bd49426f2dc6b',
+                base: '0xaa3d85ad9d128dfecb55424085754f6dfa643eb1'
             }
-            // Future: axelar, synapse, hop, cbridge, across, etc.
+            // Future: axelar, hop, cbridge, across, etc.
         };
 
         // Currency decimal place configuration
@@ -7613,8 +7624,12 @@
                             'wormhole': {
                                 name: 'Wormhole',
                                 logo: 'https://wormhole.com/favicon.ico'
+                            },
+                            'synapse': {
+                                name: 'Synapse',
+                                logo: 'https://synapseprotocol.com/favicon.ico'
                             }
-                            // Future: axelar, synapse, hop, cbridge, across
+                            // Future: axelar, hop, cbridge, across
                         };
 
                         return {
@@ -7940,6 +7955,85 @@
         }
 
         /**
+         * Query Synapse Protocol REST API for bridge transaction status
+         * @param {string} txHash - Transaction hash on source chain
+         * @returns {Promise<object|null>} - Synapse bridge details or null
+         */
+        async function querySynapseAPI(txHash) {
+            try {
+                console.log(`🔮 Querying Synapse Protocol API for ${txHash}...`);
+
+                // Synapse REST API - bridgeTxStatus endpoint
+                const apiUrl = `https://api.synapseprotocol.com/bridgeTxStatus?txHash=${txHash}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    console.log(`Synapse API returned status ${response.status}`);
+                    return null;
+                }
+
+                const data = await response.json();
+
+                // Check if we got transaction data
+                if (!data || !data.txn) {
+                    console.log('No Synapse bridge transaction found');
+                    return null;
+                }
+
+                const txn = data.txn;
+                console.log('✅ Found Synapse bridge transaction:', txn);
+
+                // Map chain IDs to chain names (Synapse uses standard chain IDs)
+                const chainIdMap = {
+                    1: 'ethereum', 56: 'bsc', 137: 'polygon', 42161: 'arbitrum',
+                    10: 'optimism', 43114: 'avalanche', 250: 'fantom', 8453: 'base'
+                };
+
+                const fromChain = chainIdMap[txn.fromChainId] || `chain-${txn.fromChainId}`;
+                const toChain = chainIdMap[txn.toChainId] || `chain-${txn.toChainId}`;
+
+                // Parse status
+                const statusMap = {
+                    'completed': { status: 'completed', message: 'Bridge completed' },
+                    'pending': { status: 'pending', message: 'Bridge pending' },
+                    'failed': { status: 'failed', message: 'Bridge failed' }
+                };
+
+                const statusInfo = statusMap[txn.status] || { status: 'unknown', message: txn.status || 'Unknown' };
+
+                return {
+                    orderId: txn.kappa || txn.id,
+                    fromChain: fromChain,
+                    toChain: toChain,
+                    fromAddress: txn.fromAddress || '',
+                    toAddress: txn.toAddress || '',
+                    fromAmount: txn.amount || 0,
+                    toAmount: txn.toAmount || txn.amount || 0,
+                    fromCurrency: txn.tokenSymbol || '',
+                    toCurrency: txn.toTokenSymbol || txn.tokenSymbol || '',
+                    depositHash: txn.fromHash || txHash,
+                    receiveHash: txn.toHash || '',
+                    status: statusInfo.status,
+                    statusMessage: statusInfo.message,
+                    protocol: 'Synapse Protocol',
+                    bridgeType: 'Liquidity Network',
+                    kappa: txn.kappa, // Synapse-specific identifier
+                    hasRiskFlag: false // Synapse doesn't provide risk flags
+                };
+
+            } catch (error) {
+                console.error('Error querying Synapse Protocol API:', error);
+                return null;
+            }
+        }
+
+        /**
          * Detect and store bridge provider info on an entry
          * @param {object} entry - The hop entry to check
          * @returns {object|null} - Bridge provider info if detected
@@ -8013,6 +8107,8 @@
                     bridgeData = await queryStargateAPI(entry.txHash);
                 } else if (provider === 'wormhole') {
                     bridgeData = await queryWormholeAPI(entry.fromWallet, entry.txHash);
+                } else if (provider === 'synapse') {
+                    bridgeData = await querySynapseAPI(entry.txHash);
                 } else {
                     // Fallback: try to detect and query
                     console.warn('Unknown bridge provider, attempting Bridgers API');
