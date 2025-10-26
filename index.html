@@ -6779,6 +6779,76 @@
                     return null;
                 }
             },
+            xrp: {
+                name: 'XRP (Ripple)',
+                hashPattern: /^r[a-zA-Z0-9]{24,34}$/,
+                addressPattern: /^r[a-zA-Z0-9]{24,34}$/,
+                addressPrefixes: ['r'],
+                txPattern: /^[A-F0-9]{64}$/i,
+                apiUrl: 'https://api.xrpscan.com/api/v1/tx/',
+                addressApiUrl: 'https://api.xrpscan.com/api/v1/account/',
+                apiKey: null,
+                fallbackUrls: [
+                    'https://xrplcluster.com/v1/tx/',
+                    'https://s1.ripple.com:51234/'
+                ],
+                parseResponse: (data) => {
+                    console.log('XRP transaction data:', data);
+
+                    // XRPSCAN API response format
+                    if (data && data.transaction) {
+                        const tx = data.transaction;
+
+                        // Check if transaction was successful
+                        if (tx.meta && tx.meta.TransactionResult !== 'tesSUCCESS') {
+                            console.error('XRP transaction failed:', tx.meta.TransactionResult);
+                            return null;
+                        }
+
+                        // Handle Payment transactions
+                        if (tx.TransactionType === 'Payment') {
+                            let amount = 0;
+
+                            // XRP native payments
+                            if (typeof tx.Amount === 'string') {
+                                // Amount is in drops (1 XRP = 1,000,000 drops)
+                                amount = parseFloat(tx.Amount) / 1000000;
+                            }
+                            // Issued currency (tokens)
+                            else if (typeof tx.Amount === 'object' && tx.Amount.value) {
+                                amount = parseFloat(tx.Amount.value);
+                            }
+
+                            // Get timestamp (Ripple epoch: January 1, 2000 00:00 UTC)
+                            // Convert to Unix timestamp (milliseconds)
+                            const rippleEpoch = 946684800; // Unix timestamp for January 1, 2000
+                            const timestamp = tx.date ? (tx.date + rippleEpoch) * 1000 : Date.now();
+
+                            // Get fee (always in drops for native XRP)
+                            const fee = tx.Fee ? parseFloat(tx.Fee) / 1000000 : null;
+
+                            // Determine currency
+                            let currency = 'XRP';
+                            if (typeof tx.Amount === 'object' && tx.Amount.currency) {
+                                currency = tx.Amount.currency;
+                            }
+
+                            return {
+                                time: timestamp,
+                                amount: amount,
+                                currency: currency,
+                                from: tx.Account || 'Unknown',
+                                to: tx.Destination || 'Unknown',
+                                fee: fee,
+                                destinationTag: tx.DestinationTag || null,
+                                sourceTag: tx.SourceTag || null
+                            };
+                        }
+                    }
+
+                    return null;
+                }
+            },
             solana: {
                 name: 'Solana',
                 hashPattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
