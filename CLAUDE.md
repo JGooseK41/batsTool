@@ -3,103 +3,68 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 18:19)
+## Latest Commit (Auto-updated: 2025-10-26 18:34)
 
-**Commit:** 5e53da86696c50e830ea2015f9c7a5de4ea998b2
+**Commit:** c77262d28c86cd47c52fbb43d5437532332f7db5
 **Author:** Your Name
-**Message:** Fix Sui support and add THORChain cross-chain swap tracking
+**Message:** Add Bridgers cross-chain bridge auto-detection framework (Part 1)
 
-## Sui Support Fixed ✅
+## Universal Bridge/DEX Detection Pattern Established
 
-**Issue:** Sui blockchain configuration was added but non-functional
-**Root Cause:** Missing JSON-RPC handler in lookupTransaction()
+Created reusable pattern for ALL bridge/DEX integrations:
+1. Contract address detection
+2. API querying
+3. UI badge display
+4. Auto-trace pre-fill
+5. Risk flagging
+6. NO changes to core bridge logic
 
-**Fix Applied:**
-- Added Sui JSON-RPC call using `sui_getTransactionBlock` method
-- Proper parameter structure with all required options:
-  * showInput, showEffects, showEvents
-  * showObjectChanges, showBalanceChanges
-- Existing parseResponse function now receives proper data format
+This pattern will be used for: Wormhole, Axelar, LayerZero, Uniswap, PancakeSwap, and all future integrations.
 
-**Result:** Sui transactions can now be looked up and parsed correctly
+## Bridgers Integration - Foundation Complete
 
-## New EVM Chains Added to isEVMChain List ✅
+**Contract Addresses Added (39 chains):**
+- EVM chains: Ethereum, BSC, Polygon, Arbitrum, Avalanche, Optimism, Base, etc.
+- Non-EVM: Tron, Solana, Aptos, Sui, XRP, Bitcoin, Doge, LTC, BCH, Cosmos, TON
+- New chains: HECO, OEC, Cronos, CFX, Core, Merlin, Onchain, XLayer, APE, ETHF
 
-Added 6 new 2025 chains to the EVM detection list:
-- unichain (130)
-- sonic (146)
-- abstract (2741)
-- memecore (4352)
-- sophon (50104)
-- berachain (80094)
-
-**Impact:** These chains now properly use EVM parsing with token data and block timestamps
-
-## THORChain Cross-Chain Support Added 🆕
-
-**Why Important:** THORChain is THE primary cross-chain DEX for tracking stolen funds that get swapped across chains. Critical for crypto investigations.
-
-**API Integration:**
-- **Primary:** Midgard API (https://midgard.ninerealms.com/v2)
-- **Fallback:** https://midgard.thorchain.info/v2
-- **Endpoint:** `/v2/actions?txid={hash}`
-- **Rate Limit:** 100 requests/minute (free)
-
-**Features Implemented:**
-- Native RUNE currency support (8 decimals)
-- Swap transaction parsing with in/out amounts
-- Liquidity operations (addLiquidity, withdraw)
-- Cross-chain asset tracking (BTC.BTC, ETH.ETH format)
-- Timestamp parsing (nanoseconds → milliseconds)
-- Pool tracking for LP operations
-
-**Response Structure Handled:**
+**Detection Function:**
 ```javascript
-{
-  type: 'swap',
-  swapInfo: {
-    inAmount: 10.5,
-    inCurrency: 'BTC',
-    outAmount: 450000,
-    outCurrency: 'RUNE'
-  }
-}
+detectBridgeProvider(toAddress, chain)
+// Returns: { provider: 'bridgers', name: 'Bridgers', logo: 'url' }
 ```
 
-**Added to:**
-- All 3 blockchain dropdowns
-- Currency decimals (RUNE: 8)
-- CSP policy (midgard.ninerealms.com, viewblock.io)
-- blockchainAPIs configuration
-
-## Generic REST API Handler Added ✅
-
-**Problem:** XRP, THORChain, and future non-EVM chains had no fallback handler
-
-**Solution:** Added else clause in lookupTransaction() for generic REST APIs:
+**API Query Function:**
 ```javascript
-else {
-  // Generic REST API handler for XRP, THORChain, and other chains
-  url = apiUrl + txHash;
-  // Simple GET request with optional API key
-}
+async queryBridgersAPI(fromAddress, txHash)
+// Queries transaction history
+// Finds matching tx by hash
+// Returns standardized bridge data
 ```
 
-**Benefits:**
-- XRP now works without special handling
-- THORChain works seamlessly
-- Future REST API chains require minimal configuration
+**Response Format:**
+- Source/destination chains
+- Amounts and currencies
+- Transaction hashes (deposit, receive, refund)
+- Status tracking
+- **Risk flags** (blacklisted, risky address)
+- Explorer URLs
 
-## Total Blockchain Coverage: 32 Chains
+**Security:**
+- Updated CSP for api.bridgers.xyz
+- Updated CSP for images.bridgers.xyz
 
-**Non-EVM:** Bitcoin, Tron, XRP, THORChain, Sui, Solana
-**EVM L1:** Ethereum, Sonic, Berachain
-**EVM L2:** Base, Arbitrum, Optimism, zkSync, Linea, Scroll, Blast, Unichain, Abstract
-**EVM Sidechains:** Polygon, BNB Chain, Avalanche, Gnosis, Celo, Moonbeam, Moonriver, Mantle, Fraxtal, Taiko, Arbitrum Nova, BitTorrent, opBNB, HyperEVM, Memecore, Sophon
+## Remaining Work (Part 2):
 
-**Cross-Chain DEX:** THORChain (critical for investigations!)
+1. UI badge integration in hop entries
+2. "Auto-Trace Bridge" button
+3. Pre-fill bridge output dialog
+4. Risk warning display
+5. Testing with real transactions
 
-All changes tested and functional.
+## Why This Matters:
+
+Bridgers supports 39 chains - more than any other bridge. Critical for tracking cross-chain fund movements in investigations. Auto-detection saves investigators hours of manual work.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -107,23 +72,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 101 +++++++++++++++++++++++-----------------
- index.html | 152 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 206 insertions(+), 47 deletions(-)
+ CLAUDE.md  | 142 ++++++++++++++++++++++++++++----------------
+ index.html | 196 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 286 insertions(+), 52 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5e53da8 Fix Sui support and add THORChain cross-chain swap tracking (0 seconds ago)
-- b406c88 Add 6 new EVM chains from Etherscan API v2 (2025 additions) (8 minutes ago)
-- d7798cf Add Sui blockchain support with comprehensive integration (29 minutes ago)
-- 57cb298 Sync (9 hours ago)
-- 3d81ebb Auto-sync (9 hours ago)
-- 3aea07d Final sync (9 hours ago)
-- 4143f7f Sync CLAUDE.md (9 hours ago)
-- 7f8dda7 Update CLAUDE.md with XRP support (9 hours ago)
-- 452eae0 Add XRP (Ripple) blockchain support with XRPSCAN API (9 hours ago)
-- 4ee5e23 Auto-sync (22 hours ago)
+- c77262d Add Bridgers cross-chain bridge auto-detection framework (Part 1) (1 second ago)
+- 5e53da8 Fix Sui support and add THORChain cross-chain swap tracking (15 minutes ago)
+- b406c88 Add 6 new EVM chains from Etherscan API v2 (2025 additions) (23 minutes ago)
+- d7798cf Add Sui blockchain support with comprehensive integration (44 minutes ago)
+- 57cb298 Sync (10 hours ago)
+- 3d81ebb Auto-sync (10 hours ago)
+- 3aea07d Final sync (10 hours ago)
+- 4143f7f Sync CLAUDE.md (10 hours ago)
+- 7f8dda7 Update CLAUDE.md with XRP support (10 hours ago)
+- 452eae0 Add XRP (Ripple) blockchain support with XRPSCAN API (10 hours ago)
 
 ## Key Features
 

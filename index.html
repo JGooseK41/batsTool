@@ -7670,6 +7670,133 @@
             }
         }
 
+        /**
+         * Detect and store bridge provider info on an entry
+         * @param {object} entry - The hop entry to check
+         * @returns {object|null} - Bridge provider info if detected
+         */
+        function detectAndStoreBridgeProvider(entry) {
+            if (!entry.toWallet || !entry.chain) return null;
+
+            // Check if already detected
+            if (entry.bridgeProvider) return entry.bridgeProvider;
+
+            // Detect bridge provider
+            const provider = detectBridgeProvider(entry.toWallet, entry.chain);
+
+            if (provider) {
+                // Store on entry
+                entry.bridgeProvider = provider;
+                console.log(`🌉 Detected ${provider.name} bridge on entry ${entry.id}`);
+                return provider;
+            }
+
+            return null;
+        }
+
+        /**
+         * Auto-trace bridge output by querying API and pre-filling dialog
+         * @param {number} hopNumber - The hop number
+         * @param {number} entryId - The entry ID
+         */
+        async function autoTraceBridge(hopNumber, entryId) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            const entry = hop?.entries.find(e => e.id === entryId);
+
+            if (!hop || !entry) {
+                alert('Entry not found');
+                return;
+            }
+
+            // Show loading indicator
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'bridgeLoadingIndicator';
+            loadingDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                z-index: 10000;
+                text-align: center;
+            `;
+            loadingDiv.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 15px;">🌉</div>
+                <div style="font-size: 18px; font-weight: bold; color: #2c3e50;">Querying Bridgers API...</div>
+                <div style="color: #7f8c8d; margin-top: 10px;">Searching for bridge transaction</div>
+            `;
+            document.body.appendChild(loadingDiv);
+
+            try {
+                // Query Bridgers API
+                const bridgeData = await queryBridgersAPI(entry.fromWallet, entry.txHash);
+
+                // Remove loading indicator
+                loadingDiv.remove();
+
+                if (!bridgeData) {
+                    alert('❌ Bridge transaction not found\n\nThis transaction may not have been processed by Bridgers yet, or the transaction hash doesn\'t match Bridgers records.\n\nYou can still manually enter bridge details.');
+                    return;
+                }
+
+                // Check status
+                if (bridgeData.status !== 'completed') {
+                    const proceed = confirm(`⚠️ Bridge Status: ${bridgeData.statusMessage}\n\nThe bridge transaction is not yet complete. Would you like to see the details anyway?\n\nStatus: ${bridgeData.statusMessage}\nFrom: ${bridgeData.fromChain}\nTo: ${bridgeData.toChain}`);
+                    if (!proceed) return;
+                }
+
+                // Show risk warning if flagged
+                if (bridgeData.hasRiskFlag && bridgeData.refundReason) {
+                    alert(`⚠️ RISK FLAG DETECTED!\n\n${bridgeData.refundReason}\n\nThis transaction was flagged by Bridgers as risky. Proceed with caution.`);
+                }
+
+                // Store bridge data on entry
+                entry.bridgeApiData = bridgeData;
+
+                // Pre-fill bridge output dialog
+                showBridgeOutputDialog(hopNumber, entryId, bridgeData);
+
+            } catch (error) {
+                loadingDiv.remove();
+                console.error('Error auto-tracing bridge:', error);
+                alert(`❌ Error querying bridge API\n\n${error.message}\n\nYou can still manually enter bridge details.`);
+            }
+        }
+
+        /**
+         * Show bridge output dialog with pre-filled data
+         * @param {number} hopNumber - The hop number
+         * @param {number} entryId - The entry ID
+         * @param {object} bridgeData - Pre-filled bridge data (optional)
+         */
+        function showBridgeOutputDialog(hopNumber, entryId, bridgeData = null) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            const entry = hop?.entries.find(e => e.id === entryId);
+
+            if (!hop || !entry) return;
+
+            // Store bridge data temporarily for pre-fill
+            if (bridgeData) {
+                window.pendingBridgeAutoFill = {
+                    destinationChain: bridgeData.toChain.toLowerCase(),
+                    destinationTxHash: bridgeData.receiveHash || '',
+                    destinationWallet: bridgeData.toAddress || '',
+                    destinationAmount: bridgeData.toAmount || 0,
+                    destinationAsset: bridgeData.toCurrency || '',
+                    explorerUrl: bridgeData.receiveExplorerUrl || '',
+                    status: bridgeData.statusMessage || '',
+                    hasRiskFlag: bridgeData.hasRiskFlag || false,
+                    refundReason: bridgeData.refundReason || null
+                };
+            }
+
+            // Call the existing function to show the bridge output dialog
+            logBridgeOutput(hopNumber, entryId);
+        }
+
         function saveUndoState(description) {
             try {
                 // Deep clone the current investigation state
@@ -13710,11 +13837,25 @@ function addNewHop() {
                                                     (${entry.notation})
                                                 </span>
                                             ` : ''}
-                                            ${entry.isBridge ? `
-                                                <span style="background: #8b4513; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
-                                                    🌉 BRIDGE${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}
-                                                </span>
-                                            ` : (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged ? `
+                                            ${(() => {
+                                                // Detect bridge provider
+                                                const bridgeProvider = detectAndStoreBridgeProvider(entry);
+                                                if (bridgeProvider) {
+                                                    return `
+                                                        <span style="background: #8b4513; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                                                            🌉 ${bridgeProvider.name} DETECTED
+                                                        </span>
+                                                    `;
+                                                } else if (entry.isBridge) {
+                                                    return `
+                                                        <span style="background: #8b4513; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                                                            🌉 BRIDGE${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}
+                                                        </span>
+                                                    `;
+                                                }
+                                                return '';
+                                            })()}
+                                            ${(entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged && !detectAndStoreBridgeProvider(entry) ? `
                                                 <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
                                                     ${entry.isSmartContract ?
                                     `SMART CONTRACT${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}` :
@@ -13765,7 +13906,20 @@ function addNewHop() {
                                 </div>
                             </div>
                             <!-- Action buttons in collapsed view -->
-                            <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-start;">
+                            <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-start; flex-wrap: wrap;">
+                                ${(() => {
+                                    const bridgeProvider = entry.bridgeProvider || detectAndStoreBridgeProvider(entry);
+                                    if (bridgeProvider && entry.entryType === 'trace' && !entry.bridgeOutputLogged) {
+                                        return `
+                                            <button class="btn btn-sm" style="background: #e67e22; color: white; border: 1px solid #d35400; font-weight: bold;"
+                                                    onclick="event.stopPropagation(); autoTraceBridge(${hop.hopNumber}, ${entry.id})"
+                                                    title="Automatically fetch bridge details from ${bridgeProvider.name} API">
+                                                🔍 Auto-Trace ${bridgeProvider.name}
+                                            </button>
+                                        `;
+                                    }
+                                    return '';
+                                })()}
                                 ${((entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') ||
                                    (entry.toWalletType === 'brown' && entry.exchangeAttribution?.isSmartContract) ||
                                    (entry.toWalletType === 'brown' && entry.isBridge)) &&
@@ -13798,17 +13952,32 @@ function addNewHop() {
                                             <span style="color: #7f8c8d; font-size: 12px;">
                                                 ${entryTypeLabel}
                                             </span>
-                                            ${entry.isBridge ? `
-                                                <span style="background: #8b4513; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
-                                                    🌉 BRIDGE${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}
-                                                </span>
-                                            ` : (entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged ? `
-                                                <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
-                                                    ${entry.isSmartContract ?
-                                    `SMART CONTRACT${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}` :
-                                    `TERMINAL${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}`}
-                                                </span>
-                                            ` : ''}
+                                            ${(() => {
+                                                // Detect bridge provider
+                                                const bridgeProvider = detectAndStoreBridgeProvider(entry);
+                                                if (bridgeProvider) {
+                                                    return `
+                                                        <span style="background: #8b4513; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                                                            🌉 ${bridgeProvider.name} DETECTED
+                                                        </span>
+                                                    `;
+                                                } else if (entry.isBridge) {
+                                                    return `
+                                                        <span style="background: #8b4513; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                                                            🌉 BRIDGE${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}
+                                                        </span>
+                                                    `;
+                                                } else if ((entry.toWalletType === 'purple' || entry.toWalletType === 'PURPLE') && !entry.bridgeOutputLogged) {
+                                                    return `
+                                                        <span style="background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                                                            ${entry.isSmartContract ?
+                                                                `SMART CONTRACT${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}` :
+                                                                `TERMINAL${entry.exchangeAttribution?.name ? `: ${entry.exchangeAttribution.name}` : ''}`}
+                                                        </span>
+                                                    `;
+                                                }
+                                                return '';
+                                            })()}
                                             <span style="color: #666; font-size: 11px;">
                                                 (Click to collapse)
                                             </span>
@@ -28877,6 +29046,78 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 </div>
             `;
             document.body.appendChild(modal);
+
+            // Auto-fill fields if bridge data was provided
+            if (window.pendingBridgeAutoFill) {
+                const autoFill = window.pendingBridgeAutoFill;
+
+                // Pre-fill destination chain dropdown
+                const chainSelect = document.getElementById('bridgeDestChain');
+                if (chainSelect && autoFill.destinationChain) {
+                    chainSelect.value = autoFill.destinationChain;
+                    window.bridgeDestChain = autoFill.destinationChain;
+                }
+
+                // Pre-fill destination transaction hash
+                const txHashInput = document.getElementById('bridgeDestTxHash');
+                if (txHashInput && autoFill.destinationTxHash) {
+                    txHashInput.value = autoFill.destinationTxHash;
+                }
+
+                // Pre-fill destination wallet (will be populated by lookupBridgeDestTransaction)
+                const walletInput = document.getElementById('bridgeDestWallet');
+                if (walletInput && autoFill.destinationWallet) {
+                    walletInput.value = autoFill.destinationWallet;
+                }
+
+                // Pre-fill destination amount
+                const amountInput = document.getElementById('bridgeDestAmount');
+                if (amountInput && autoFill.destinationAmount) {
+                    amountInput.value = autoFill.destinationAmount;
+                }
+
+                // Pre-fill destination asset
+                const assetInput = document.getElementById('bridgeDestAsset');
+                if (assetInput && autoFill.destinationAsset) {
+                    assetInput.value = autoFill.destinationAsset;
+                }
+
+                // Show risk warning banner if flagged
+                if (autoFill.hasRiskFlag) {
+                    const riskBanner = document.createElement('div');
+                    riskBanner.style.cssText = 'background: #fff3cd; border: 2px solid #dc3545; border-radius: 8px; padding: 15px; margin: 20px 0;';
+                    riskBanner.innerHTML = `
+                        <h4 style="margin: 0 0 10px 0; color: #dc3545; font-size: 16px;">
+                            ⚠️ RISK FLAG DETECTED
+                        </h4>
+                        <p style="margin: 0; color: #856404; font-size: 14px;">
+                            <strong>Warning:</strong> ${autoFill.refundReason || 'This transaction has been flagged by the bridge provider.'}
+                        </p>
+                    `;
+
+                    // Insert before the destination details section
+                    const detailsSection = modal.querySelector('[style*="border-top: 2px solid"]');
+                    if (detailsSection) {
+                        detailsSection.insertBefore(riskBanner, detailsSection.firstChild);
+                    }
+                }
+
+                // Show auto-fill success message
+                const lookupResult = document.getElementById('bridgeLookupResult');
+                if (lookupResult) {
+                    lookupResult.style.display = 'block';
+                    lookupResult.innerHTML = `
+                        <div style="background: #e8f5e9; border: 1px solid #4caf50; border-radius: 6px; padding: 10px; color: #2e7d32;">
+                            ✅ Bridge transaction data auto-loaded from ${entry.bridgeProvider?.name || 'bridge API'}!
+                        </div>
+                    `;
+                }
+
+                // Clear the temporary data
+                delete window.pendingBridgeAutoFill;
+
+                console.log('✅ Bridge output dialog pre-filled with API data');
+            }
 
             // Check for commingling and calculate proportional attribution
             checkComminglingAndCalculateAttribution(hopNumber, entryId);
