@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https://api.etherscan.io https://api.bscscan.com https://api.polygonscan.com https://api.blockcypher.com https://blockchain.info https://api.blockchair.com https://*.infura.io https://mempool.space https://api.mainnet-beta.solana.com https://rpc.ankr.com https://solana-mainnet.g.alchemy.com https://api.arkhamintelligence.com https://api.trongrid.io https://tronscan.org https://api.blockchain.info https://walletexplorer.com https://www.walletexplorer.com https://*.solscan.io https://pro-api.solscan.io https://public-api.solscan.io https://api.solscan.io https://api.xrpscan.com https://xrplcluster.com https://s1.ripple.com https://fullnode.mainnet.sui.io https://sui-mainnet.blockvision.org https://rpc-mainnet.suiscan.xyz https://suiscan.xyz; img-src 'self' data: https:; font-src 'self' data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https://api.etherscan.io https://api.bscscan.com https://api.polygonscan.com https://api.blockcypher.com https://blockchain.info https://api.blockchair.com https://*.infura.io https://mempool.space https://api.mainnet-beta.solana.com https://rpc.ankr.com https://solana-mainnet.g.alchemy.com https://api.arkhamintelligence.com https://api.trongrid.io https://tronscan.org https://api.blockchain.info https://walletexplorer.com https://www.walletexplorer.com https://*.solscan.io https://pro-api.solscan.io https://public-api.solscan.io https://api.solscan.io https://api.xrpscan.com https://xrplcluster.com https://s1.ripple.com https://fullnode.mainnet.sui.io https://sui-mainnet.blockvision.org https://rpc-mainnet.suiscan.xyz https://suiscan.xyz https://midgard.ninerealms.com https://midgard.thorchain.info https://viewblock.io; img-src 'self' data: https:; font-src 'self' data:;">
     <title>B.A.T.S. - Block Audit Tracing Standard v4.1.1</title>
 
     <!-- Modern Visualization Engine -->
@@ -2724,6 +2724,7 @@
                         <option value="berachain">Berachain</option>
                         <option value="tron">Tron</option>
                         <option value="xrp">XRP (Ripple)</option>
+                        <option value="thorchain">THORChain</option>
                         <option value="sui">Sui</option>
                         <option value="solana">Solana</option>
                     </select>
@@ -2851,6 +2852,7 @@
                                 <option value="berachain">Berachain (BERA)</option>
                                 <option value="tron">Tron (TRX)</option>
                                 <option value="xrp">XRP (Ripple)</option>
+                                <option value="thorchain">THORChain (RUNE)</option>
                                 <option value="sui">Sui</option>
                                 <option value="solana">Solana (SOL)</option>
                             </select>
@@ -6955,6 +6957,110 @@
                     return null;
                 }
             },
+            thorchain: {
+                name: 'THORChain',
+                hashPattern: /^[A-F0-9]{64}$/i,
+                addressPattern: /^thor[a-zA-Z0-9]{39}$/,
+                addressPrefixes: ['thor'],
+                txPattern: /^[A-F0-9]{64}$/i,
+                apiUrl: 'https://midgard.ninerealms.com/v2/actions?txid=',
+                addressApiUrl: 'https://midgard.ninerealms.com/v2/member/',
+                explorerUrl: 'https://viewblock.io/thorchain/tx/',
+                apiKey: null,
+                fallbackUrls: [
+                    'https://midgard.thorchain.info/v2/actions?txid='
+                ],
+                parseResponse: (data) => {
+                    console.log('THORChain action data:', data);
+
+                    // Midgard API returns actions array
+                    if (data && data.actions && data.actions.length > 0) {
+                        const action = data.actions[0];
+
+                        // Extract timestamp (in nanoseconds, convert to milliseconds)
+                        const timestamp = action.date ? parseInt(action.date) / 1000000 : Date.now();
+
+                        // Handle different action types
+                        if (action.type === 'swap') {
+                            // Swap transaction
+                            const inTx = action.in && action.in[0];
+                            const outTx = action.out && action.out[0];
+
+                            if (inTx && outTx) {
+                                // Parse coin amounts (format: "100000000 RUNE" or "5000000 BTC.BTC")
+                                const parseAmount = (coins) => {
+                                    if (!coins || coins.length === 0) return { amount: 0, currency: 'RUNE' };
+                                    const coin = coins[0];
+                                    const parts = coin.amount.split(' ');
+                                    const amount = parts[0] ? parseFloat(parts[0]) / 100000000 : 0; // 8 decimals
+                                    const currency = parts[1] || 'RUNE';
+                                    return { amount, currency: currency.split('.')[0] }; // Remove chain prefix
+                                };
+
+                                const inAmount = parseAmount(inTx.coins);
+                                const outAmount = parseAmount(outTx.coins);
+
+                                return {
+                                    time: timestamp,
+                                    amount: inAmount.amount,
+                                    currency: inAmount.currency,
+                                    from: inTx.address || 'Unknown',
+                                    to: outTx.address || 'Unknown',
+                                    fee: null,
+                                    hasRealTimestamp: !!action.date,
+                                    swapInfo: {
+                                        type: 'swap',
+                                        inAmount: inAmount.amount,
+                                        inCurrency: inAmount.currency,
+                                        outAmount: outAmount.amount,
+                                        outCurrency: outAmount.currency
+                                    }
+                                };
+                            }
+                        } else if (action.type === 'addLiquidity' || action.type === 'withdraw') {
+                            // Liquidity operations
+                            const inTx = action.in && action.in[0];
+                            if (inTx) {
+                                const parseAmount = (coins) => {
+                                    if (!coins || coins.length === 0) return { amount: 0, currency: 'RUNE' };
+                                    const coin = coins[0];
+                                    const parts = coin.amount.split(' ');
+                                    const amount = parts[0] ? parseFloat(parts[0]) / 100000000 : 0;
+                                    const currency = parts[1] || 'RUNE';
+                                    return { amount, currency: currency.split('.')[0] };
+                                };
+
+                                const amount = parseAmount(inTx.coins);
+
+                                return {
+                                    time: timestamp,
+                                    amount: amount.amount,
+                                    currency: amount.currency,
+                                    from: inTx.address || 'Unknown',
+                                    to: action.pools && action.pools[0] ? action.pools[0] : 'Pool',
+                                    fee: null,
+                                    hasRealTimestamp: !!action.date,
+                                    actionType: action.type
+                                };
+                            }
+                        }
+
+                        // Fallback for other action types
+                        return {
+                            time: timestamp,
+                            amount: 0,
+                            currency: 'RUNE',
+                            from: action.in && action.in[0] ? action.in[0].address : 'Unknown',
+                            to: action.out && action.out[0] ? action.out[0].address : 'Unknown',
+                            fee: null,
+                            hasRealTimestamp: !!action.date,
+                            actionType: action.type
+                        };
+                    }
+
+                    return null;
+                }
+            },
             solana: {
                 name: 'Solana',
                 hashPattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
@@ -7331,6 +7437,7 @@
             'BNB': 8,  // BNB: 8 decimal places
             'XRP': 6,  // Ripple: 6 decimal places
             'SUI': 9,  // Sui: 9 decimal places (MIST)
+            'RUNE': 8, // THORChain: 8 decimal places
             'BERA': 18, // Berachain: 18 decimal places
             'S': 18,    // Sonic: 18 decimal places
             'M': 18,    // Memecore: 18 decimal places
@@ -11457,6 +11564,7 @@ function updateFormFieldsFromInvestigation() {
                                         <option value="berachain">Berachain</option>
                                         <option value="tron">Tron</option>
                                         <option value="xrp">XRP (Ripple)</option>
+                                        <option value="thorchain">THORChain</option>
                                         <option value="sui">Sui</option>
                                         <option value="solana">Solana</option>
                                     </select>
@@ -32870,7 +32978,7 @@ async function lookupTransaction() {
             } else if (detectedChain === 'solana') {
                 url = apiUrl;
                 if (corsEnabled) url = corsProxyUrl + url;
-                
+
                 // Solana RPC call
                 const response = await fetch(url, {
                     method: 'POST',
@@ -32885,13 +32993,49 @@ async function lookupTransaction() {
                 if (!response.ok) throw new Error('RPC request failed');
                 data = await response.json();
                 if (data.error) throw new Error(data.error.message);
+            } else if (detectedChain === 'sui') {
+                url = apiUrl;
+                if (corsEnabled) url = corsProxyUrl + url;
+
+                // Sui JSON-RPC call
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'sui_getTransactionBlock',
+                        params: [txHash, {
+                            showInput: true,
+                            showEffects: true,
+                            showEvents: true,
+                            showObjectChanges: true,
+                            showBalanceChanges: true
+                        }]
+                    })
+                });
+                if (!response.ok) throw new Error('RPC request failed');
+                data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+            } else {
+                // Generic REST API handler for XRP, THORChain, and other chains
+                url = apiUrl + txHash;
+                if (config.apiKey) {
+                    url += (url.includes('?') ? '&' : '?') + `apikey=${config.apiKey}`;
+                }
+                if (corsEnabled) url = corsProxyUrl + url;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Transaction not found');
+                data = await response.json();
             }
-            
+
             // Parse the response (pass tokenData and blockTimestamp for EVM chains)
             const isEVMChain = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc',
                                'avalanche', 'hyperevm', 'linea', 'scroll', 'mantle', 'blast',
                                'zksync', 'gnosis', 'celo', 'moonbeam', 'moonriver', 'fraxtal',
-                               'taiko', 'arbitrumnova', 'bittorrent', 'opbnb'].includes(detectedChain);
+                               'taiko', 'arbitrumnova', 'bittorrent', 'opbnb', 'unichain',
+                               'sonic', 'abstract', 'memecore', 'sophon', 'berachain'].includes(detectedChain);
             currentTxData = isEVMChain ?
                 config.parseResponse(data, tokenData, blockTimestamp, config) :
                 config.parseResponse(data);

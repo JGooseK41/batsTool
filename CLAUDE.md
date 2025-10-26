@@ -3,46 +3,61 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 17:50)
+## Latest Commit (Auto-updated: 2025-10-26 18:11)
 
-**Commit:** d7798cf991e249c82bceff80285cd9fd845de3c4
+**Commit:** b406c88ece25bb7eefd3d7b1a676eeacd88bb712
 **Author:** Your Name
-**Message:** Add Sui blockchain support with comprehensive integration
+**Message:** Add 6 new EVM chains from Etherscan API v2 (2025 additions)
 
-## What was added:
+## Chains Added:
 
-**Sui Blockchain Configuration (index.html:7053-7181)**
-- Complete Sui blockchain API integration
-- Sui Foundation public RPC endpoint (fullnode.mainnet.sui.io)
-- Fallback URLs: BlockVision and Suiscan RPC nodes
-- Native currency: SUI (9 decimal places - MIST)
-- Address format: 0x + 64 hex characters
-- Transaction digest: 44-character Base58 encoded
+**1. Unichain (Chain ID: 130)**
+- Uniswap's Ethereum L2 scaling solution
+- Native currency: ETH
+- Public mainnet launched January 2025
 
-**Key Features:**
-- MIST to SUI conversion (1 SUI = 1,000,000,000 MIST)
-- Balance change parsing for transfer detection
-- Multiple transfer support (single/multiple coin types)
-- Gas fee calculation (computation + storage costs)
-- Timestamp handling (milliseconds since epoch)
-- Transaction type detection (Pay, PaySui)
-- Coin type parsing (e.g., "0x2::sui::SUI" → "SUI")
+**2. Sonic (Chain ID: 146)**
+- EVM Layer-1 blockchain
+- Native currency: S
+- High-performance meme and DeFi focused
 
-**Integration Updates:**
-- Added SUI to currencyDecimals (9 decimal places)
-- Updated CSP policy with Sui API endpoints:
-  * https://fullnode.mainnet.sui.io
-  * https://sui-mainnet.blockvision.org
-  * https://rpc-mainnet.suiscan.xyz
-  * https://suiscan.xyz
-- Added XRP and Sui to all blockchain dropdowns (3 locations)
+**3. Abstract (Chain ID: 2741)**
+- Consumer crypto focused L2
+- Native currency: ETH
+- Recently launched in 2025
 
-**Blockchain Coverage:**
-✅ Bitcoin, Ethereum, Base, Arbitrum, Optimism, Polygon
-✅ BNB Chain, Avalanche, Tron, XRP, Sui, Solana
-✅ 15+ additional EVM chains (zkSync, Linea, Scroll, etc.)
+**4. Memecore (Chain ID: 4352)**
+- Meme-focused L1 blockchain
+- Native currency: M
+- Proof of Meme consensus mechanism
 
-**Note:** All Sui API endpoints are free and public.
+**5. Sophon (Chain ID: 50104)**
+- EVM-compatible L2 network
+- Native currency: SOPH
+- Gaming and entertainment focused
+
+**6. Berachain (Chain ID: 80094)**
+- Proof of Liquidity blockchain
+- Native currency: BERA
+- DeFi-native consensus model
+
+## Integration Details:
+
+- All chains use Etherscan API v2 unified endpoint
+- API keys managed via Netlify environment variables
+- Added to all 3 blockchain dropdowns
+- Native currencies added to currencyDecimals (18 decimals)
+- Full parseEVMResponse integration
+
+## Total Blockchain Coverage: 31+ Chains
+
+**Layer 1:** Bitcoin, Ethereum, Tron, XRP, Sui, Solana, Sonic, Berachain
+
+**Ethereum L2s:** Base, Arbitrum, Optimism, zkSync, Linea, Scroll, Blast, Unichain, Abstract
+
+**EVM Chains:** Polygon, BNB Chain, Avalanche, Gnosis, Celo, Moonbeam, Moonriver, Mantle, Fraxtal, Taiko, Arbitrum Nova, BitTorrent Chain, opBNB, HyperEVM, Memecore, Sophon
+
+All 6 new chains were recently added to Etherscan API v2 in February 2025.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -50,14 +65,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  22 +++++-----
- index.html | 138 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 148 insertions(+), 12 deletions(-)
+ CLAUDE.md  |  72 ++++++++++++++++++++++++++++++---------
+ index.html | 112 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 168 insertions(+), 16 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d7798cf Add Sui blockchain support with comprehensive integration (0 seconds ago)
+- b406c88 Add 6 new EVM chains from Etherscan API v2 (2025 additions) (0 seconds ago)
+- d7798cf Add Sui blockchain support with comprehensive integration (21 minutes ago)
 - 57cb298 Sync (9 hours ago)
 - 3d81ebb Auto-sync (9 hours ago)
 - 3aea07d Final sync (9 hours ago)
@@ -66,7 +82,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 452eae0 Add XRP (Ripple) blockchain support with XRPSCAN API (9 hours ago)
 - 4ee5e23 Auto-sync (22 hours ago)
 - b34b458 Sync (22 hours ago)
-- a10a472 Auto-sync (22 hours ago)
 
 ## Key Features
 
