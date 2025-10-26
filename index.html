@@ -40207,7 +40207,7 @@ async function lookupVictimTransaction(victimId, transactionId) {
                 } else if (detectedChain === 'solana') {
                     url = apiUrl;
                     if (corsEnabled) url = corsProxyUrl + url;
-                    
+
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -40221,20 +40221,51 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     if (!response.ok) throw new Error('RPC request failed');
                     data = await response.json();
                     if (data.error) throw new Error(data.error.message);
+
+                } else if (detectedChain === 'sui') {
+                    url = apiUrl;
+                    if (corsEnabled) url = corsProxyUrl + url;
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            id: 1,
+                            method: 'sui_getTransactionBlock',
+                            params: [
+                                txHash,
+                                {
+                                    showInput: true,
+                                    showEffects: true,
+                                    showEvents: true,
+                                    showObjectChanges: true,
+                                    showBalanceChanges: true
+                                }
+                            ]
+                        })
+                    });
+                    if (!response.ok) throw new Error('RPC request failed');
+                    data = await response.json();
+                    if (data.error) throw new Error(data.error.message);
                 }
-                
+
                 // Parse the response (pass tokenData and blockTimestamp for EVM chains)
                 const isEVMChain = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc',
                                'avalanche', 'hyperevm', 'linea', 'scroll', 'mantle', 'blast',
                                'zksync', 'gnosis', 'celo', 'moonbeam', 'moonriver', 'fraxtal',
-                               'taiko', 'arbitrumnova', 'bittorrent', 'opbnb'].includes(detectedChain);
+                               'taiko', 'arbitrumnova', 'bittorrent', 'opbnb', 'unichain',
+                               'sonic', 'abstract', 'memecore', 'sophon', 'berachain'].includes(detectedChain);
                 txData = isEVMChain ?
                     config.parseResponse(data, tokenData, blockTimestamp, config) :
                     config.parseResponse(data);
                 
                 console.log('Parsed transaction data:', txData);
-                
-                if (!txData) throw new Error('This is a 0 ETH transaction with no token transfers');
+
+                if (!txData) {
+                    const nativeCurrency = config.nativeCurrency || 'native currency';
+                    throw new Error(`No transfers found in this ${config.name} transaction (0 ${nativeCurrency} transfer with no token transfers)`);
+                }
                 
                 // Check if multiple transfers were detected
                 if (txData.multipleTransfers) {
