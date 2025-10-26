@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-26 09:02)
 
-**Commit:** 3d81ebbdb8e6c611d0b83f8e7e75f79e31a3964d
+**Commit:** 57cb2981eb54cf389cb0b0983bf07bb952688670
 **Author:** Your Name
-**Message:** Auto-sync
+**Message:** Sync
 
 ### Changed Files:
 ```
- CLAUDE.md | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ CLAUDE.md | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3d81ebb Auto-sync (0 seconds ago)
-- 3aea07d Final sync (5 seconds ago)
-- 4143f7f Sync CLAUDE.md (12 seconds ago)
-- 7f8dda7 Update CLAUDE.md with XRP support (19 seconds ago)
-- 452eae0 Add XRP (Ripple) blockchain support with XRPSCAN API (26 seconds ago)
+- 57cb298 Sync (0 seconds ago)
+- 3d81ebb Auto-sync (8 seconds ago)
+- 3aea07d Final sync (13 seconds ago)
+- 4143f7f Sync CLAUDE.md (20 seconds ago)
+- 7f8dda7 Update CLAUDE.md with XRP support (27 seconds ago)
+- 452eae0 Add XRP (Ripple) blockchain support with XRPSCAN API (34 seconds ago)
 - 4ee5e23 Auto-sync (13 hours ago)
 - b34b458 Sync (13 hours ago)
 - a10a472 Auto-sync (13 hours ago)
 - 255b2fd Sync (13 hours ago)
-- 9d9da64 Final sync (13 hours ago)
 
 ## Key Features
 
@@ -85,7 +85,7 @@ wallet has new activity, maintaining proper LIBR accounting.**
 - 2c960c0 Update CLAUDE.md with latest commit info (25 hours ago)
 
 ## Key Features
-- **Multi-blockchain support**: Bitcoin, Ethereum, ERC-20 tokens
+- **Multi-blockchain support**: Bitcoin, Ethereum, Base, Arbitrum, Optimism, Polygon, BNB Chain, Avalanche, Tron, XRP (Ripple), Sui, Solana, and 15+ EVM chains
 - **4-step investigation workflow**: Setup → Victims → Hops → Analysis
 - **Thread tracking system**: Uses V-T-H notation (Victim-Transaction-Hop)
 - **Real-time validation**: Validates traced amounts against ART (Available Running Total)

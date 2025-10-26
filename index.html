@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https://api.etherscan.io https://api.bscscan.com https://api.polygonscan.com https://api.blockcypher.com https://blockchain.info https://api.blockchair.com https://*.infura.io https://mempool.space https://api.mainnet-beta.solana.com https://rpc.ankr.com https://solana-mainnet.g.alchemy.com https://api.arkhamintelligence.com https://api.trongrid.io https://tronscan.org https://api.blockchain.info https://walletexplorer.com https://www.walletexplorer.com https://*.solscan.io https://pro-api.solscan.io https://public-api.solscan.io https://api.solscan.io; img-src 'self' data: https:; font-src 'self' data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https://api.etherscan.io https://api.bscscan.com https://api.polygonscan.com https://api.blockcypher.com https://blockchain.info https://api.blockchair.com https://*.infura.io https://mempool.space https://api.mainnet-beta.solana.com https://rpc.ankr.com https://solana-mainnet.g.alchemy.com https://api.arkhamintelligence.com https://api.trongrid.io https://tronscan.org https://api.blockchain.info https://walletexplorer.com https://www.walletexplorer.com https://*.solscan.io https://pro-api.solscan.io https://public-api.solscan.io https://api.solscan.io https://api.xrpscan.com https://xrplcluster.com https://s1.ripple.com https://fullnode.mainnet.sui.io https://sui-mainnet.blockvision.org https://rpc-mainnet.suiscan.xyz https://suiscan.xyz; img-src 'self' data: https:; font-src 'self' data:;">
     <title>B.A.T.S. - Block Audit Tracing Standard v4.1.1</title>
 
     <!-- Modern Visualization Engine -->
@@ -2717,6 +2717,8 @@
                         <option value="polygon">Polygon</option>
                         <option value="bsc">BNB Chain</option>
                         <option value="tron">Tron</option>
+                        <option value="xrp">XRP (Ripple)</option>
+                        <option value="sui">Sui</option>
                         <option value="solana">Solana</option>
                     </select>
                 </div>
@@ -2836,6 +2838,8 @@
                                 <option value="bsc">Binance Smart Chain (BSC)</option>
                                 <option value="polygon">Polygon (MATIC)</option>
                                 <option value="tron">Tron (TRX)</option>
+                                <option value="xrp">XRP (Ripple)</option>
+                                <option value="sui">Sui</option>
                                 <option value="solana">Solana (SOL)</option>
                             </select>
                         </div>
@@ -7050,6 +7054,135 @@
                     return null;
                 }
             },
+            sui: {
+                name: 'Sui',
+                hashPattern: /^0x[a-fA-F0-9]{64}$/,
+                addressPattern: /^0x[a-fA-F0-9]{64}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^[a-zA-Z0-9]{44}$/,
+                apiUrl: 'https://fullnode.mainnet.sui.io:443',
+                addressApiUrl: 'https://fullnode.mainnet.sui.io:443',
+                explorerApiUrl: 'https://suiscan.xyz/api/mainnet/transaction/',
+                apiKey: null,
+                fallbackUrls: [
+                    'https://sui-mainnet.blockvision.org',
+                    'https://rpc-mainnet.suiscan.xyz:443'
+                ],
+                parseResponse: (data) => {
+                    console.log('Sui transaction data:', data);
+
+                    // Handle Suiscan API response format
+                    if (data && data.result) {
+                        const tx = data.result;
+
+                        // Check transaction status
+                        if (tx.effects && tx.effects.status && tx.effects.status.status !== 'success') {
+                            console.error('Sui transaction failed:', tx.effects.status);
+                            return null;
+                        }
+
+                        // Parse timestamp (Sui uses milliseconds since epoch)
+                        const timestamp = tx.timestampMs ? parseInt(tx.timestampMs) : Date.now();
+
+                        // Parse balance changes to find transfers
+                        const transfers = [];
+                        if (tx.effects && tx.effects.balanceChanges) {
+                            const balanceChanges = tx.effects.balanceChanges;
+
+                            // Group balance changes by coin type
+                            const changesByCoin = {};
+                            balanceChanges.forEach(change => {
+                                const coinType = change.coinType || 'SUI';
+                                if (!changesByCoin[coinType]) {
+                                    changesByCoin[coinType] = [];
+                                }
+                                changesByCoin[coinType].push(change);
+                            });
+
+                            // Parse each coin type's transfers
+                            Object.entries(changesByCoin).forEach(([coinType, changes]) => {
+                                // Find sender (negative amount) and receiver (positive amount)
+                                const sender = changes.find(c => parseInt(c.amount) < 0);
+                                const receiver = changes.find(c => parseInt(c.amount) > 0);
+
+                                if (sender && receiver) {
+                                    // Extract currency symbol from coin type (e.g., "0x2::sui::SUI" -> "SUI")
+                                    const currencyMatch = coinType.match(/::(\w+)$/);
+                                    const currency = currencyMatch ? currencyMatch[1] : 'SUI';
+
+                                    // Convert from MIST to SUI (1 SUI = 1,000,000,000 MIST)
+                                    const amount = Math.abs(parseInt(receiver.amount)) / 1000000000;
+
+                                    transfers.push({
+                                        from: sender.owner?.AddressOwner || 'Unknown',
+                                        to: receiver.owner?.AddressOwner || 'Unknown',
+                                        amount: amount,
+                                        currency: currency,
+                                        coinType: coinType,
+                                        type: 'Sui Transfer'
+                                    });
+                                }
+                            });
+                        }
+
+                        // Get gas fee (in MIST, convert to SUI)
+                        const gasFee = tx.effects && tx.effects.gasUsed ?
+                            (parseInt(tx.effects.gasUsed.computationCost || 0) +
+                             parseInt(tx.effects.gasUsed.storageCost || 0)) / 1000000000 : 0;
+
+                        // Return single or multiple transfers
+                        if (transfers.length === 1) {
+                            return {
+                                time: timestamp,
+                                amount: transfers[0].amount,
+                                currency: transfers[0].currency,
+                                from: transfers[0].from,
+                                to: transfers[0].to,
+                                fee: gasFee,
+                                hasRealTimestamp: !!tx.timestampMs
+                            };
+                        } else if (transfers.length > 1) {
+                            return {
+                                multipleTransfers: true,
+                                transfers: transfers.map(t => ({
+                                    ...t,
+                                    time: timestamp,
+                                    hasRealTimestamp: !!tx.timestampMs
+                                })),
+                                time: timestamp,
+                                fee: gasFee,
+                                hasRealTimestamp: !!tx.timestampMs
+                            };
+                        }
+
+                        // Fallback: try to parse from transaction data directly
+                        if (tx.transaction && tx.transaction.data) {
+                            const txData = tx.transaction.data;
+
+                            // Handle PaySui or Pay transactions
+                            if (txData.transactions) {
+                                const payTx = txData.transactions.find(t => t.Pay || t.PaySui);
+                                if (payTx) {
+                                    const pay = payTx.Pay || payTx.PaySui;
+                                    const amount = pay.amounts ? pay.amounts[0] / 1000000000 : 0;
+
+                                    return {
+                                        time: timestamp,
+                                        amount: amount,
+                                        currency: 'SUI',
+                                        from: txData.sender || 'Unknown',
+                                        to: pay.recipients ? pay.recipients[0] : 'Unknown',
+                                        fee: gasFee,
+                                        hasRealTimestamp: !!tx.timestampMs
+                                    };
+                                }
+                            }
+                        }
+                    }
+
+                    return null;
+                }
+            },
             ripple: {
                 name: 'Ripple (XRP)',
                 hashPattern: /^[A-F0-9]{64}$/i,
@@ -7095,6 +7228,7 @@
             'ADA': 6,  // Cardano: 6 decimal places
             'BNB': 8,  // BNB: 8 decimal places
             'XRP': 6,  // Ripple: 6 decimal places
+            'SUI': 9,  // Sui: 9 decimal places (MIST)
             'CUSTOM': 8 // Default for custom currencies
         };
         
@@ -11210,6 +11344,8 @@ function updateFormFieldsFromInvestigation() {
                                         <option value="zksync">zkSync</option>
                                         <option value="gnosis">Gnosis</option>
                                         <option value="tron">Tron</option>
+                                        <option value="xrp">XRP (Ripple)</option>
+                                        <option value="sui">Sui</option>
                                         <option value="solana">Solana</option>
                                     </select>
                                 </div>
