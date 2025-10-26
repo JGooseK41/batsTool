@@ -2716,6 +2716,12 @@
                         <option value="optimism">Optimism</option>
                         <option value="polygon">Polygon</option>
                         <option value="bsc">BNB Chain</option>
+                        <option value="unichain">Unichain</option>
+                        <option value="sonic">Sonic</option>
+                        <option value="abstract">Abstract</option>
+                        <option value="memecore">Memecore</option>
+                        <option value="sophon">Sophon</option>
+                        <option value="berachain">Berachain</option>
                         <option value="tron">Tron</option>
                         <option value="xrp">XRP (Ripple)</option>
                         <option value="sui">Sui</option>
@@ -2837,6 +2843,12 @@
                                 <option value="ethereum">Ethereum (ETH)</option>
                                 <option value="bsc">Binance Smart Chain (BSC)</option>
                                 <option value="polygon">Polygon (MATIC)</option>
+                                <option value="unichain">Unichain</option>
+                                <option value="sonic">Sonic (S)</option>
+                                <option value="abstract">Abstract</option>
+                                <option value="memecore">Memecore (M)</option>
+                                <option value="sophon">Sophon (SOPH)</option>
+                                <option value="berachain">Berachain (BERA)</option>
                                 <option value="tron">Tron (TRX)</option>
                                 <option value="xrp">XRP (Ripple)</option>
                                 <option value="sui">Sui</option>
@@ -6756,6 +6768,96 @@
                 apiKey: localStorage.getItem('bats_etherscan_api_key') || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
                 parseResponse: parseEVMResponse
             },
+            unichain: {
+                name: 'Unichain',
+                nativeCurrency: 'ETH',
+                chainId: 130,
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=130&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=130&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=130&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=130&module=account&action=txlist&address=',
+                apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
+                parseResponse: parseEVMResponse
+            },
+            sonic: {
+                name: 'Sonic',
+                nativeCurrency: 'S',
+                chainId: 146,
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=146&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=146&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=146&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=146&module=account&action=txlist&address=',
+                apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
+                parseResponse: parseEVMResponse
+            },
+            abstract: {
+                name: 'Abstract',
+                nativeCurrency: 'ETH',
+                chainId: 2741,
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=2741&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=2741&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=2741&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=2741&module=account&action=txlist&address=',
+                apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
+                parseResponse: parseEVMResponse
+            },
+            memecore: {
+                name: 'Memecore',
+                nativeCurrency: 'M',
+                chainId: 4352,
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=4352&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=4352&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=4352&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=4352&module=account&action=txlist&address=',
+                apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
+                parseResponse: parseEVMResponse
+            },
+            sophon: {
+                name: 'Sophon',
+                nativeCurrency: 'SOPH',
+                chainId: 50104,
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=50104&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=50104&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=50104&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=50104&module=account&action=txlist&address=',
+                apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
+                parseResponse: parseEVMResponse
+            },
+            berachain: {
+                name: 'Berachain',
+                nativeCurrency: 'BERA',
+                chainId: 80094,
+                hashPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPattern: /^0x[a-fA-F0-9]{40}$/,
+                addressPrefixes: ['0x'],
+                txPattern: /^0x[a-fA-F0-9]{64}$/,
+                apiUrl: 'https://api.etherscan.io/v2/api?chainid=80094&module=proxy&action=eth_getTransactionByHash&txhash=',
+                tokenApiUrl: 'https://api.etherscan.io/v2/api?chainid=80094&module=proxy&action=eth_getTransactionReceipt&txhash=',
+                blockApiUrl: 'https://api.etherscan.io/v2/api?chainid=80094&module=proxy&action=eth_getBlockByNumber&tag=',
+                addressApiUrl: 'https://api.etherscan.io/v2/api?chainid=80094&module=account&action=txlist&address=',
+                apiKey: '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8',
+                parseResponse: parseEVMResponse
+            },
             tron: {
                 name: 'Tron',
                 hashPattern: /^T[a-zA-Z0-9]{33}$/,
@@ -7229,6 +7331,10 @@
             'BNB': 8,  // BNB: 8 decimal places
             'XRP': 6,  // Ripple: 6 decimal places
             'SUI': 9,  // Sui: 9 decimal places (MIST)
+            'BERA': 18, // Berachain: 18 decimal places
+            'S': 18,    // Sonic: 18 decimal places
+            'M': 18,    // Memecore: 18 decimal places
+            'SOPH': 18, // Sophon: 18 decimal places
             'CUSTOM': 8 // Default for custom currencies
         };
         
@@ -11343,6 +11449,12 @@ function updateFormFieldsFromInvestigation() {
                                         <option value="blast">Blast</option>
                                         <option value="zksync">zkSync</option>
                                         <option value="gnosis">Gnosis</option>
+                                        <option value="unichain">Unichain</option>
+                                        <option value="sonic">Sonic</option>
+                                        <option value="abstract">Abstract</option>
+                                        <option value="memecore">Memecore</option>
+                                        <option value="sophon">Sophon</option>
+                                        <option value="berachain">Berachain</option>
                                         <option value="tron">Tron</option>
                                         <option value="xrp">XRP (Ripple)</option>
                                         <option value="sui">Sui</option>

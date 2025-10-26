@@ -3,30 +3,70 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 09:02)
+## Latest Commit (Auto-updated: 2025-10-26 17:50)
 
-**Commit:** 57cb2981eb54cf389cb0b0983bf07bb952688670
+**Commit:** d7798cf991e249c82bceff80285cd9fd845de3c4
 **Author:** Your Name
-**Message:** Sync
+**Message:** Add Sui blockchain support with comprehensive integration
+
+## What was added:
+
+**Sui Blockchain Configuration (index.html:7053-7181)**
+- Complete Sui blockchain API integration
+- Sui Foundation public RPC endpoint (fullnode.mainnet.sui.io)
+- Fallback URLs: BlockVision and Suiscan RPC nodes
+- Native currency: SUI (9 decimal places - MIST)
+- Address format: 0x + 64 hex characters
+- Transaction digest: 44-character Base58 encoded
+
+**Key Features:**
+- MIST to SUI conversion (1 SUI = 1,000,000,000 MIST)
+- Balance change parsing for transfer detection
+- Multiple transfer support (single/multiple coin types)
+- Gas fee calculation (computation + storage costs)
+- Timestamp handling (milliseconds since epoch)
+- Transaction type detection (Pay, PaySui)
+- Coin type parsing (e.g., "0x2::sui::SUI" → "SUI")
+
+**Integration Updates:**
+- Added SUI to currencyDecimals (9 decimal places)
+- Updated CSP policy with Sui API endpoints:
+  * https://fullnode.mainnet.sui.io
+  * https://sui-mainnet.blockvision.org
+  * https://rpc-mainnet.suiscan.xyz
+  * https://suiscan.xyz
+- Added XRP and Sui to all blockchain dropdowns (3 locations)
+
+**Blockchain Coverage:**
+✅ Bitcoin, Ethereum, Base, Arbitrum, Optimism, Polygon
+✅ BNB Chain, Avalanche, Tron, XRP, Sui, Solana
+✅ 15+ additional EVM chains (zkSync, Linea, Scroll, etc.)
+
+**Note:** All Sui API endpoints are free and public.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ CLAUDE.md  |  22 +++++-----
+ index.html | 138 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 148 insertions(+), 12 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 57cb298 Sync (0 seconds ago)
-- 3d81ebb Auto-sync (8 seconds ago)
-- 3aea07d Final sync (13 seconds ago)
-- 4143f7f Sync CLAUDE.md (20 seconds ago)
-- 7f8dda7 Update CLAUDE.md with XRP support (27 seconds ago)
-- 452eae0 Add XRP (Ripple) blockchain support with XRPSCAN API (34 seconds ago)
-- 4ee5e23 Auto-sync (13 hours ago)
-- b34b458 Sync (13 hours ago)
-- a10a472 Auto-sync (13 hours ago)
-- 255b2fd Sync (13 hours ago)
+- d7798cf Add Sui blockchain support with comprehensive integration (0 seconds ago)
+- 57cb298 Sync (9 hours ago)
+- 3d81ebb Auto-sync (9 hours ago)
+- 3aea07d Final sync (9 hours ago)
+- 4143f7f Sync CLAUDE.md (9 hours ago)
+- 7f8dda7 Update CLAUDE.md with XRP support (9 hours ago)
+- 452eae0 Add XRP (Ripple) blockchain support with XRPSCAN API (9 hours ago)
+- 4ee5e23 Auto-sync (22 hours ago)
+- b34b458 Sync (22 hours ago)
+- a10a472 Auto-sync (22 hours ago)
 
 ## Key Features
 
@@ -85,7 +125,7 @@ wallet has new activity, maintaining proper LIBR accounting.**
 - 2c960c0 Update CLAUDE.md with latest commit info (25 hours ago)
 
 ## Key Features
-- **Multi-blockchain support**: Bitcoin, Ethereum, Base, Arbitrum, Optimism, Polygon, BNB Chain, Avalanche, Tron, XRP (Ripple), Sui, Solana, and 15+ EVM chains
+- **Multi-blockchain support**: Bitcoin, Ethereum, and 30+ EVM chains including Base, Arbitrum, Optimism, Polygon, BNB Chain, Avalanche, Unichain, Sonic, Abstract, Memecore, Sophon, Berachain, plus Tron, XRP, Sui, and Solana
 - **4-step investigation workflow**: Setup → Victims → Hops → Analysis
 - **Thread tracking system**: Uses V-T-H notation (Victim-Transaction-Hop)
 - **Real-time validation**: Validates traced amounts against ART (Available Running Total)
