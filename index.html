@@ -7279,14 +7279,6 @@
                 parseResponse: (data) => {
                     console.log('Sui transaction data:', data);
 
-                    // Debug: Log the full structure we're receiving
-                    if (data && data.result) {
-                        console.log('Sui FULL tx.effects:', JSON.stringify(data.result.effects, null, 2));
-                        console.log('Sui FULL tx.transaction:', JSON.stringify(data.result.transaction, null, 2));
-                        console.log('Sui FULL result keys:', Object.keys(data.result));
-                    }
-
-                    // Handle Suiscan API response format
                     if (data && data.result) {
                         const tx = data.result;
 
@@ -7299,45 +7291,48 @@
                         // Parse timestamp (Sui uses milliseconds since epoch)
                         const timestamp = tx.timestampMs ? parseInt(tx.timestampMs) : Date.now();
 
-                        // Parse balance changes to find transfers
+                        // Parse transfers from ProgrammableTransaction
                         const transfers = [];
-                        if (tx.effects && tx.effects.balanceChanges) {
-                            const balanceChanges = tx.effects.balanceChanges;
 
-                            // Group balance changes by coin type
-                            const changesByCoin = {};
-                            balanceChanges.forEach(change => {
-                                const coinType = change.coinType || 'SUI';
-                                if (!changesByCoin[coinType]) {
-                                    changesByCoin[coinType] = [];
-                                }
-                                changesByCoin[coinType].push(change);
-                            });
+                        // Get sender from transaction data
+                        const sender = tx.transaction?.data?.sender || 'Unknown';
 
-                            // Parse each coin type's transfers
-                            Object.entries(changesByCoin).forEach(([coinType, changes]) => {
-                                // Find sender (negative amount) and receiver (positive amount)
-                                const sender = changes.find(c => parseInt(c.amount) < 0);
-                                const receiver = changes.find(c => parseInt(c.amount) > 0);
+                        // Parse ProgrammableTransaction inputs and transactions
+                        if (tx.transaction && tx.transaction.data && tx.transaction.data.transaction) {
+                            const txData = tx.transaction.data.transaction;
+                            const inputs = txData.inputs || [];
+                            const transactions = txData.transactions || [];
 
-                                if (sender && receiver) {
-                                    // Extract currency symbol from coin type (e.g., "0x2::sui::SUI" -> "SUI")
-                                    const currencyMatch = coinType.match(/::(\w+)$/);
-                                    const currency = currencyMatch ? currencyMatch[1] : 'SUI';
+                            // Look for TransferObjects transaction (common pattern)
+                            const transferTx = transactions.find(t => t.TransferObjects);
+                            if (transferTx) {
+                                // Find amount and recipient from inputs
+                                let amount = 0;
+                                let recipient = 'Unknown';
 
+                                // Look for u64 value (amount in MIST) in inputs
+                                const amountInput = inputs.find(inp => inp.valueType === 'u64');
+                                if (amountInput && amountInput.value) {
                                     // Convert from MIST to SUI (1 SUI = 1,000,000,000 MIST)
-                                    const amount = Math.abs(parseInt(receiver.amount)) / 1000000000;
+                                    amount = parseInt(amountInput.value) / 1000000000;
+                                }
 
+                                // Look for address value (recipient) in inputs
+                                const recipientInput = inputs.find(inp => inp.valueType === 'address');
+                                if (recipientInput && recipientInput.value) {
+                                    recipient = recipientInput.value;
+                                }
+
+                                if (amount > 0 && recipient !== 'Unknown') {
                                     transfers.push({
-                                        from: sender.owner?.AddressOwner || 'Unknown',
-                                        to: receiver.owner?.AddressOwner || 'Unknown',
+                                        from: sender,
+                                        to: recipient,
                                         amount: amount,
-                                        currency: currency,
-                                        coinType: coinType,
+                                        currency: 'SUI',
                                         type: 'Sui Transfer'
                                     });
                                 }
-                            });
+                            }
                         }
 
                         // Get gas fee (in MIST, convert to SUI)
