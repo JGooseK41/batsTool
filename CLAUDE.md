@@ -3,61 +3,103 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 18:11)
+## Latest Commit (Auto-updated: 2025-10-26 18:19)
 
-**Commit:** b406c88ece25bb7eefd3d7b1a676eeacd88bb712
+**Commit:** 5e53da86696c50e830ea2015f9c7a5de4ea998b2
 **Author:** Your Name
-**Message:** Add 6 new EVM chains from Etherscan API v2 (2025 additions)
+**Message:** Fix Sui support and add THORChain cross-chain swap tracking
 
-## Chains Added:
+## Sui Support Fixed ✅
 
-**1. Unichain (Chain ID: 130)**
-- Uniswap's Ethereum L2 scaling solution
-- Native currency: ETH
-- Public mainnet launched January 2025
+**Issue:** Sui blockchain configuration was added but non-functional
+**Root Cause:** Missing JSON-RPC handler in lookupTransaction()
 
-**2. Sonic (Chain ID: 146)**
-- EVM Layer-1 blockchain
-- Native currency: S
-- High-performance meme and DeFi focused
+**Fix Applied:**
+- Added Sui JSON-RPC call using `sui_getTransactionBlock` method
+- Proper parameter structure with all required options:
+  * showInput, showEffects, showEvents
+  * showObjectChanges, showBalanceChanges
+- Existing parseResponse function now receives proper data format
 
-**3. Abstract (Chain ID: 2741)**
-- Consumer crypto focused L2
-- Native currency: ETH
-- Recently launched in 2025
+**Result:** Sui transactions can now be looked up and parsed correctly
 
-**4. Memecore (Chain ID: 4352)**
-- Meme-focused L1 blockchain
-- Native currency: M
-- Proof of Meme consensus mechanism
+## New EVM Chains Added to isEVMChain List ✅
 
-**5. Sophon (Chain ID: 50104)**
-- EVM-compatible L2 network
-- Native currency: SOPH
-- Gaming and entertainment focused
+Added 6 new 2025 chains to the EVM detection list:
+- unichain (130)
+- sonic (146)
+- abstract (2741)
+- memecore (4352)
+- sophon (50104)
+- berachain (80094)
 
-**6. Berachain (Chain ID: 80094)**
-- Proof of Liquidity blockchain
-- Native currency: BERA
-- DeFi-native consensus model
+**Impact:** These chains now properly use EVM parsing with token data and block timestamps
 
-## Integration Details:
+## THORChain Cross-Chain Support Added 🆕
 
-- All chains use Etherscan API v2 unified endpoint
-- API keys managed via Netlify environment variables
-- Added to all 3 blockchain dropdowns
-- Native currencies added to currencyDecimals (18 decimals)
-- Full parseEVMResponse integration
+**Why Important:** THORChain is THE primary cross-chain DEX for tracking stolen funds that get swapped across chains. Critical for crypto investigations.
 
-## Total Blockchain Coverage: 31+ Chains
+**API Integration:**
+- **Primary:** Midgard API (https://midgard.ninerealms.com/v2)
+- **Fallback:** https://midgard.thorchain.info/v2
+- **Endpoint:** `/v2/actions?txid={hash}`
+- **Rate Limit:** 100 requests/minute (free)
 
-**Layer 1:** Bitcoin, Ethereum, Tron, XRP, Sui, Solana, Sonic, Berachain
+**Features Implemented:**
+- Native RUNE currency support (8 decimals)
+- Swap transaction parsing with in/out amounts
+- Liquidity operations (addLiquidity, withdraw)
+- Cross-chain asset tracking (BTC.BTC, ETH.ETH format)
+- Timestamp parsing (nanoseconds → milliseconds)
+- Pool tracking for LP operations
 
-**Ethereum L2s:** Base, Arbitrum, Optimism, zkSync, Linea, Scroll, Blast, Unichain, Abstract
+**Response Structure Handled:**
+```javascript
+{
+  type: 'swap',
+  swapInfo: {
+    inAmount: 10.5,
+    inCurrency: 'BTC',
+    outAmount: 450000,
+    outCurrency: 'RUNE'
+  }
+}
+```
 
-**EVM Chains:** Polygon, BNB Chain, Avalanche, Gnosis, Celo, Moonbeam, Moonriver, Mantle, Fraxtal, Taiko, Arbitrum Nova, BitTorrent Chain, opBNB, HyperEVM, Memecore, Sophon
+**Added to:**
+- All 3 blockchain dropdowns
+- Currency decimals (RUNE: 8)
+- CSP policy (midgard.ninerealms.com, viewblock.io)
+- blockchainAPIs configuration
 
-All 6 new chains were recently added to Etherscan API v2 in February 2025.
+## Generic REST API Handler Added ✅
+
+**Problem:** XRP, THORChain, and future non-EVM chains had no fallback handler
+
+**Solution:** Added else clause in lookupTransaction() for generic REST APIs:
+```javascript
+else {
+  // Generic REST API handler for XRP, THORChain, and other chains
+  url = apiUrl + txHash;
+  // Simple GET request with optional API key
+}
+```
+
+**Benefits:**
+- XRP now works without special handling
+- THORChain works seamlessly
+- Future REST API chains require minimal configuration
+
+## Total Blockchain Coverage: 32 Chains
+
+**Non-EVM:** Bitcoin, Tron, XRP, THORChain, Sui, Solana
+**EVM L1:** Ethereum, Sonic, Berachain
+**EVM L2:** Base, Arbitrum, Optimism, zkSync, Linea, Scroll, Blast, Unichain, Abstract
+**EVM Sidechains:** Polygon, BNB Chain, Avalanche, Gnosis, Celo, Moonbeam, Moonriver, Mantle, Fraxtal, Taiko, Arbitrum Nova, BitTorrent, opBNB, HyperEVM, Memecore, Sophon
+
+**Cross-Chain DEX:** THORChain (critical for investigations!)
+
+All changes tested and functional.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -65,15 +107,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  72 ++++++++++++++++++++++++++++++---------
- index.html | 112 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 168 insertions(+), 16 deletions(-)
+ CLAUDE.md  | 101 +++++++++++++++++++++++-----------------
+ index.html | 152 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 206 insertions(+), 47 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b406c88 Add 6 new EVM chains from Etherscan API v2 (2025 additions) (0 seconds ago)
-- d7798cf Add Sui blockchain support with comprehensive integration (21 minutes ago)
+- 5e53da8 Fix Sui support and add THORChain cross-chain swap tracking (0 seconds ago)
+- b406c88 Add 6 new EVM chains from Etherscan API v2 (2025 additions) (8 minutes ago)
+- d7798cf Add Sui blockchain support with comprehensive integration (29 minutes ago)
 - 57cb298 Sync (9 hours ago)
 - 3d81ebb Auto-sync (9 hours ago)
 - 3aea07d Final sync (9 hours ago)
@@ -81,7 +124,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 7f8dda7 Update CLAUDE.md with XRP support (9 hours ago)
 - 452eae0 Add XRP (Ripple) blockchain support with XRPSCAN API (9 hours ago)
 - 4ee5e23 Auto-sync (22 hours ago)
-- b34b458 Sync (22 hours ago)
 
 ## Key Features
 
