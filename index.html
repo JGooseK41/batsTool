@@ -7279,11 +7279,11 @@
                 parseResponse: (data) => {
                     console.log('Sui transaction data:', data);
 
-                    // Debug: Log the structure we're receiving
+                    // Debug: Log the full structure we're receiving
                     if (data && data.result) {
-                        console.log('Sui tx.effects:', data.result.effects);
-                        console.log('Sui tx.effects.balanceChanges:', data.result.effects?.balanceChanges);
-                        console.log('Sui tx.transaction:', data.result.transaction);
+                        console.log('Sui FULL tx.effects:', JSON.stringify(data.result.effects, null, 2));
+                        console.log('Sui FULL tx.transaction:', JSON.stringify(data.result.transaction, null, 2));
+                        console.log('Sui FULL result keys:', Object.keys(data.result));
                     }
 
                     // Handle Suiscan API response format
