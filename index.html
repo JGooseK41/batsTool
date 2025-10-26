@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https://api.etherscan.io https://api.bscscan.com https://api.polygonscan.com https://api.blockcypher.com https://blockchain.info https://api.blockchair.com https://*.infura.io https://mempool.space https://api.mainnet-beta.solana.com https://rpc.ankr.com https://solana-mainnet.g.alchemy.com https://api.arkhamintelligence.com https://api.trongrid.io https://tronscan.org https://api.blockchain.info https://walletexplorer.com https://www.walletexplorer.com https://*.solscan.io https://pro-api.solscan.io https://public-api.solscan.io https://api.solscan.io https://api.xrpscan.com https://xrplcluster.com https://s1.ripple.com https://fullnode.mainnet.sui.io https://sui-mainnet.blockvision.org https://rpc-mainnet.suiscan.xyz https://suiscan.xyz https://midgard.ninerealms.com https://midgard.thorchain.info https://viewblock.io https://api.bridgers.xyz https://images.bridgers.xyz https://scan.layerzero-api.com https://layerzeroscan.com https://layerzero.network https://stargate.finance https://api.stargate.finance; img-src 'self' data: https:; font-src 'self' data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https://api.etherscan.io https://api.bscscan.com https://api.polygonscan.com https://api.blockcypher.com https://blockchain.info https://api.blockchair.com https://*.infura.io https://mempool.space https://api.mainnet-beta.solana.com https://rpc.ankr.com https://solana-mainnet.g.alchemy.com https://api.arkhamintelligence.com https://api.trongrid.io https://tronscan.org https://api.blockchain.info https://walletexplorer.com https://www.walletexplorer.com https://*.solscan.io https://pro-api.solscan.io https://public-api.solscan.io https://api.solscan.io https://api.xrpscan.com https://xrplcluster.com https://s1.ripple.com https://fullnode.mainnet.sui.io https://sui-mainnet.blockvision.org https://rpc-mainnet.suiscan.xyz https://suiscan.xyz https://midgard.ninerealms.com https://midgard.thorchain.info https://viewblock.io https://api.bridgers.xyz https://images.bridgers.xyz https://scan.layerzero-api.com https://layerzeroscan.com https://layerzero.network https://stargate.finance https://api.stargate.finance https://api.wormholescan.io https://wormholescan.io https://wormhole.com https://portalbridge.com; img-src 'self' data: https:; font-src 'self' data:;">
     <title>B.A.T.S. - Block Audit Tracing Standard v4.1.1</title>
 
     <!-- Modern Visualization Engine -->
@@ -7499,8 +7499,20 @@
                 mantle: '0x45f1a95a4d3f3836523f5c83673c797f4d4d263b',
                 metis: '0x2f6f07cdcf3588944bf4c42ac74ff24bf56e7590',
                 kava: '0x2f6f07cdcf3588944bf4c42ac74ff24bf56e7590'
+            },
+            wormhole: {
+                // Wormhole Portal Token Bridge - Cross-chain messaging and token bridge
+                ethereum: '0x3ee18b2214aff97000d974cf647e7c347e8fa585',
+                bsc: '0xb6f6d86a8f9879a9c87f643768d9efc38c1da6e7',
+                polygon: '0x5a58505a96d1dbf8df91cb21b54419fc36e93fde',
+                arbitrum: '0x0b2402144bb366a632d14b83f244d2e0e21bd39c',
+                optimism: '0x1d68124e65fafc907325e3edbf8c4d84499daa8b',
+                avalanche: '0x0e082f06ff657d94310cb8ce8b0d9a04541d8052',
+                fantom: '0x7c9fc5741288cdfdd83ceb07f3ea7e22618d79d2',
+                base: '0x8d2de8d2f73f1f4cab472ac9a881c9b123c79627',
+                solana: 'worm2ZoG2kUd4vFXhvjh93UUH596ayRfgQ2MgjNMTth'
             }
-            // Future: wormhole, axelar, synapse, hop, cbridge, across, etc.
+            // Future: axelar, synapse, hop, cbridge, across, etc.
         };
 
         // Currency decimal place configuration
@@ -7597,8 +7609,12 @@
                             'stargate': {
                                 name: 'Stargate',
                                 logo: 'https://stargate.finance/favicons/favicon-32x32.png'
+                            },
+                            'wormhole': {
+                                name: 'Wormhole',
+                                logo: 'https://wormhole.com/favicon.ico'
                             }
-                            // Future: wormhole, axelar, synapse, hop, cbridge, across
+                            // Future: axelar, synapse, hop, cbridge, across
                         };
 
                         return {
@@ -7832,6 +7848,98 @@
         }
 
         /**
+         * Query Wormhole Scan API for cross-chain bridge transaction details
+         * @param {string} fromAddress - Source wallet address
+         * @param {string} txHash - Transaction hash on source chain
+         * @returns {Promise<object|null>} - Wormhole bridge details or null
+         */
+        async function queryWormholeAPI(fromAddress, txHash) {
+            try {
+                console.log(`🪱 Querying Wormhole Scan API for ${txHash}...`);
+
+                // Wormhole Scan API - Operations by address endpoint
+                const apiUrl = `https://api.wormholescan.io/api/v1/operations?address=${fromAddress}&page=0&pageSize=50`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    console.log(`Wormhole Scan API returned status ${response.status}`);
+                    return null;
+                }
+
+                const data = await response.json();
+
+                // Check if we got operations
+                if (!data || !data.operations || data.operations.length === 0) {
+                    console.log('No Wormhole operations found for this address');
+                    return null;
+                }
+
+                // Find operation matching our transaction hash
+                const txHashLower = txHash.toLowerCase();
+                const matchingOp = data.operations.find(op =>
+                    (op.sourceTx?.txHash && op.sourceTx.txHash.toLowerCase() === txHashLower) ||
+                    (op.targetTx?.txHash && op.targetTx.txHash.toLowerCase() === txHashLower)
+                );
+
+                if (!matchingOp) {
+                    console.log('No matching Wormhole operation found for this transaction');
+                    return null;
+                }
+
+                console.log('✅ Found Wormhole operation:', matchingOp);
+
+                // Map chain IDs to chain names (Wormhole chain IDs)
+                const chainIdMap = {
+                    1: 'solana', 2: 'ethereum', 4: 'bsc', 5: 'polygon',
+                    6: 'avalanche', 10: 'fantom', 23: 'arbitrum', 24: 'optimism',
+                    30: 'base'
+                };
+
+                const fromChain = chainIdMap[matchingOp.sourceChain?.chainId] || `chain-${matchingOp.sourceChain?.chainId}`;
+                const toChain = chainIdMap[matchingOp.targetChain?.chainId] || `chain-${matchingOp.targetChain?.chainId}`;
+
+                // Parse status
+                const statusMap = {
+                    'completed': { status: 'completed', message: 'Transfer completed' },
+                    'pending': { status: 'pending', message: 'Transfer pending' },
+                    'confirmed': { status: 'completed', message: 'Confirmed' }
+                };
+
+                const statusInfo = statusMap[matchingOp.status] || { status: 'unknown', message: matchingOp.status || 'Unknown' };
+
+                return {
+                    orderId: matchingOp.id,
+                    fromChain: fromChain,
+                    toChain: toChain,
+                    fromAddress: matchingOp.sourceChain?.from || fromAddress,
+                    toAddress: matchingOp.targetChain?.to || '',
+                    fromAmount: matchingOp.data?.amount || 0,
+                    toAmount: matchingOp.data?.amount || 0,
+                    fromCurrency: matchingOp.data?.symbol || matchingOp.data?.tokenSymbol || '',
+                    toCurrency: matchingOp.data?.symbol || matchingOp.data?.tokenSymbol || '',
+                    depositHash: matchingOp.sourceTx?.txHash || txHash,
+                    receiveHash: matchingOp.targetTx?.txHash || '',
+                    status: statusInfo.status,
+                    statusMessage: statusInfo.message,
+                    protocol: 'Wormhole',
+                    bridgeType: 'Token Bridge',
+                    vaaId: matchingOp.vaa?.id || null,
+                    hasRiskFlag: false // Wormhole doesn't provide risk flags
+                };
+
+            } catch (error) {
+                console.error('Error querying Wormhole Scan API:', error);
+                return null;
+            }
+        }
+
+        /**
          * Detect and store bridge provider info on an entry
          * @param {object} entry - The hop entry to check
          * @returns {object|null} - Bridge provider info if detected
@@ -7903,6 +8011,8 @@
                     bridgeData = await queryLayerZeroAPI(entry.txHash);
                 } else if (provider === 'stargate') {
                     bridgeData = await queryStargateAPI(entry.txHash);
+                } else if (provider === 'wormhole') {
+                    bridgeData = await queryWormholeAPI(entry.fromWallet, entry.txHash);
                 } else {
                     // Fallback: try to detect and query
                     console.warn('Unknown bridge provider, attempting Bridgers API');
