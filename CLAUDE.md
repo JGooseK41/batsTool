@@ -5,20 +5,21 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-26 09:02)
 
-**Commit:** 7f8dda7bdebc4e87356d2ce87d20d710b28ed22a
+**Commit:** 4143f7f138700e04d22a88aed56d559ad314e5e5
 **Author:** Your Name
-**Message:** Update CLAUDE.md with XRP support
+**Message:** Sync CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md | 65 ++++++++++++++++++++++++++++++++++++++++++++++++---------------
- 1 file changed, 50 insertions(+), 15 deletions(-)
+ CLAUDE.md | 47 ++++++-----------------------------------------
+ 1 file changed, 6 insertions(+), 41 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7f8dda7 Update CLAUDE.md with XRP support (0 seconds ago)
-- 452eae0 Add XRP (Ripple) blockchain support with XRPSCAN API (7 seconds ago)
+- 4143f7f Sync CLAUDE.md (0 seconds ago)
+- 7f8dda7 Update CLAUDE.md with XRP support (7 seconds ago)
+- 452eae0 Add XRP (Ripple) blockchain support with XRPSCAN API (14 seconds ago)
 - 4ee5e23 Auto-sync (13 hours ago)
 - b34b458 Sync (13 hours ago)
 - a10a472 Auto-sync (13 hours ago)
@@ -26,7 +27,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 9d9da64 Final sync (13 hours ago)
 - 52ed888 Sync CLAUDE.md (13 hours ago)
 - ffbdab1 Update CLAUDE.md (13 hours ago)
-- 50f3ad3 Fix performance issue and auto-cap thread allocations (13 hours ago)
 
 ## Key Features
 
