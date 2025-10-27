@@ -17204,10 +17204,17 @@ function exportRedWalletIndexCSV() {
                 // BUG FIX: Skip ETH from token API - it's already in normal transactions
                 // Token API returns contract calls that moved ETH, but these are duplicates of normal txs
                 const nativeCurrency = config.nativeCurrency || 'ETH';
-                if (asset.toUpperCase() === nativeCurrency.toUpperCase() ||
-                    asset.includes('ETH') ||
-                    asset.includes('Ξ')) {
-                    console.log(`Skipped ETH from token API: ${tx.hash.substring(0, 10)}... (already in normal txs)`);
+                const assetUpper = asset.toUpperCase();
+                const assetNormalized = asset.normalize('NFKC'); // Normalize Unicode
+
+                // Check for ETH, EꓔH, Ξ, and other variants
+                if (assetUpper === nativeCurrency.toUpperCase() ||
+                    assetUpper.includes('ETH') ||
+                    assetNormalized.includes('ETH') ||
+                    asset.includes('Ξ') ||
+                    asset.includes('ꓔ') || // Unicode variant
+                    /E[\u0000-\uFFFF]?TH?/i.test(asset)) { // Regex to catch E*TH variants
+                    console.log(`Skipped ETH variant from token API: ${tx.hash.substring(0, 10)}... (asset: "${asset}", already in normal txs)`);
                     return; // Skip this transaction
                 }
 
