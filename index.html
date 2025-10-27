@@ -17543,6 +17543,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             }
 
             const normalTxs = normalData.result && Array.isArray(normalData.result) ? normalData.result : [];
+            const normalTxCount = normalTxs.length;
 
             // Get ERC-20 token transfers using V2 API (limit to 1000 most recent)
             const tokenTxUrl = `${baseUrl}?chainid=${chainId}&module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&page=1&offset=1000&sort=desc&apikey=${apiKey}`;
@@ -17558,6 +17559,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             }
 
             const tokenTxs = tokenData.result && Array.isArray(tokenData.result) ? tokenData.result : [];
+            const tokenTxCount = tokenTxs.length;
 
             // Get INTERNAL transactions (contract-generated ETH transfers) - CRITICAL for accurate balance!
             const internalTxUrl = `${baseUrl}?chainid=${chainId}&module=account&action=txlistinternal&address=${address}&startblock=0&endblock=99999999&page=1&offset=1000&sort=desc&apikey=${apiKey}`;
@@ -17573,6 +17575,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             }
 
             const internalTxs = internalData.result && Array.isArray(internalData.result) ? internalData.result : [];
+            const internalTxCount = internalTxs.length;
 
             // Combine and normalize with deduplication
             const allTransactions = [];
@@ -17705,15 +17708,22 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 walletExplorerState.oldestFetchedDate = oldestFetched.timestamp;
 
                 // Check if we have complete history
-                // Complete if: we fetched <1000 txs, OR oldest fetched matches first activity date
-                if (walletExplorerState.fetchedCount < 1000) {
+                // Complete if: ALL three endpoints returned < 1000 txs (none hit their limit)
+                // If ANY endpoint returns exactly 1000, there may be more data we're missing
+                const allEndpointsComplete = (normalTxCount < 1000 && tokenTxCount < 1000 && internalTxCount < 1000);
+
+                if (allEndpointsComplete) {
                     walletExplorerState.isCompleteHistory = true;
+                    console.log(`✅ Complete history: normal=${normalTxCount}, token=${tokenTxCount}, internal=${internalTxCount} (all <1000)`);
                 } else if (walletExplorerState.firstActivityDate && walletExplorerState.oldestFetchedDate) {
+                    // If any endpoint hit limit, double-check by comparing oldest fetched to first activity
                     // Allow 1 day tolerance for differences in transaction ordering
                     const dayInMs = 24 * 60 * 60 * 1000;
                     walletExplorerState.isCompleteHistory = Math.abs(walletExplorerState.oldestFetchedDate - walletExplorerState.firstActivityDate) < dayInMs;
+                    console.log(`⚠️ At least one endpoint hit 1000 limit (normal=${normalTxCount}, token=${tokenTxCount}, internal=${internalTxCount}), checking date match: ${walletExplorerState.isCompleteHistory}`);
                 } else {
                     walletExplorerState.isCompleteHistory = false;
+                    console.log(`❌ Incomplete history: normal=${normalTxCount}, token=${tokenTxCount}, internal=${internalTxCount}`);
                 }
             }
 

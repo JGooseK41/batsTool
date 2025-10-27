@@ -3,30 +3,119 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 19:05)
+## Latest Commit (Auto-updated: 2025-10-27 19:10)
 
-**Commit:** a1e179551acd3fc96b95d3e7f77f200aaf148e1a
+**Commit:** 9982aee4198be4f34cce32c52a01419d06eb9d60
 **Author:** Your Name
-**Message:** Auto-sync CLAUDE.md
+**Message:** Enhancement: Add labels and total volume to asset cards in Wallet Explorer
+
+✨ UX IMPROVEMENT: Clearer asset information display
+
+USER REQUEST: "specify that the value displayed is the current balance. If we
+have the information it would also be useful to display total volume"
+
+IMPLEMENTATION:
+
+1. Added totalIn and totalOut tracking (lines 14798-14819):
+   - Track total amount received (totalIn)
+   - Track total amount sent (totalOut)
+   - Calculated alongside balance during transaction aggregation
+
+2. Enhanced Asset Cards (lines 14967-14980):
+
+   Before:
+   ```
+   ETH
+   0.009351
+   9 transactions
+   ```
+
+   After:
+   ```
+   ETH
+   CURRENT BALANCE
+   0.009351
+   TOTAL VOLUME
+   1.523456
+   9 transactions
+   ```
+
+   Changes:
+   - Added "CURRENT BALANCE" label (uppercase, subtle)
+   - Added separator line between balance and volume
+   - Added "TOTAL VOLUME" section showing totalIn + totalOut
+   - Clean, hierarchical layout
+   - Doesn't look crowded
+
+3. Updated Dropdown Selector (lines 14992-15000):
+
+   Before:
+   ```
+   ETH ✓ (9 txs, Balance: 0.009351)
+   ```
+
+   After:
+   ```
+   ETH ✓ (9 txs, Bal: 0.0093, Vol: 1.5234)
+   ```
+
+   - Shows both balance and volume
+   - Abbreviated labels to save space
+   - Reduced decimals to 4 for readability
+
+STYLING:
+
+Card Layout:
+- "CURRENT BALANCE" label: 0.75rem, uppercase, semi-transparent white
+- Balance value: Existing asset-balance class styling
+- Separator: 1px solid line with transparency
+- "TOTAL VOLUME" label: Same styling as balance label
+- Volume value: 1rem, font-weight 600
+- Transaction count: Existing asset-tx-count class
+
+Benefits:
+✅ Clear what "balance" means (current on-chain balance)
+✅ Total volume shows overall wallet activity
+✅ Helps identify high-volume vs low-volume assets
+✅ Useful for investigating mixing/tumbling patterns
+✅ Clean design - not crowded
+✅ Consistent labeling throughout UI
+
+EXAMPLE USE CASES:
+
+Investigating mixer usage:
+- Balance: 0.001 ETH (low)
+- Volume: 50.000 ETH (very high)
+- Pattern: High volume, low balance = likely mixing
+
+Normal wallet:
+- Balance: 10.5 ETH
+- Volume: 15.2 ETH
+- Pattern: Moderate activity
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 138 +++++++++++++++++++++++++++++++-------------------------------
- 1 file changed, 69 insertions(+), 69 deletions(-)
+ CLAUDE.md  | 72 ++++++--------------------------------------------------------
+ index.html | 20 ++++++++++++++---
+ 2 files changed, 24 insertions(+), 68 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a1e1795 Auto-sync CLAUDE.md (0 seconds ago)
-- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (60 seconds ago)
+- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (0 seconds ago)
+- a1e1795 Auto-sync CLAUDE.md (5 minutes ago)
+- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (6 minutes ago)
 - 0f487ff Fix: Wallet Explorer now works with finalized hop notation (2 hours ago)
 - 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (2 hours ago)
 - dc1b7bc Auto-sync CLAUDE.md (8 hours ago)
 - 2874d87 Feature: Entry confirmation modal for wallet-by-wallet workflow (8 hours ago)
-- 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (8 hours ago)
+- 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (9 hours ago)
 - ad37883 Feature: Add info icon with tooltip explaining negative token balances (9 hours ago)
 - d2aa686 Fix: Improve ETH variant filtering to catch Unicode characters (EꓔH) (9 hours ago)
-- 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (9 hours ago)
 
 ## Key Features
 
