@@ -12532,57 +12532,56 @@ function updateFormFieldsFromInvestigation() {
                                            placeholder="Paste transaction hash to auto-fill details"
                                            onchange="updateTransaction(${victim.id}, ${transaction.id}, 'txHash', this.value)"
                                            style="flex: 1; font-size: 16px; padding: 14px; border: 2px solid #2196f3;">
-                                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                                        <button type="button" class="btn btn-sm btn-primary"
-                                                onclick="lookupVictimTransaction(${victim.id}, ${transaction.id})"
-                                                style="padding: 10px 20px; font-size: 16px; background: #2196f3; white-space: nowrap;">
-                                            🔍 Lookup Hash
-                                        </button>
-                                        <button type="button" class="btn btn-primary"
-                                                onclick="openWalletExplorer()"
-                                                style="padding: 10px 20px; font-size: 16px; background: #3498db; white-space: nowrap;">
-                                            🔍 Wallet Explorer
-                                        </button>
-                                    </div>
+                                    <button type="button" class="btn btn-sm btn-primary"
+                                            onclick="lookupVictimTransaction(${victim.id}, ${transaction.id})"
+                                            style="padding: 10px 20px; font-size: 16px; background: #2196f3; white-space: nowrap;">
+                                        🔍 Lookup Hash
+                                    </button>
                                 </div>
                                 <div style="font-size: 12px; color: #0d47a1; margin-bottom: 10px;">
                                     Paste the transaction hash and click Lookup to automatically fetch transaction details
                                 </div>
                                 <div style="display: flex; gap: 10px; align-items: center;">
-                                    <label style="color: #0d47a1; margin-right: 10px;">Chain:</label>
-                                    <select id="chain_victim_${victim.id}_${transaction.id}"
-                                            onchange="updateTransaction(${victim.id}, ${transaction.id}, 'chain', this.value)"
-                                            style="flex: 1; padding: 8px; border: 2px solid #2196f3; border-radius: 4px; background: white;">
-                                        <option value="">Auto-detect</option>
-                                        <option value="bitcoin">Bitcoin</option>
-                                        <option value="ethereum">Ethereum</option>
-                                        <option value="bsc">BNB Chain</option>
-                                        <option value="polygon">Polygon</option>
-                                        <option value="arbitrum">Arbitrum</option>
-                                        <option value="optimism">Optimism</option>
-                                        <option value="base">Base</option>
-                                        <option value="avalanche">Avalanche</option>
-                                        <option value="hyperevm">HyperEVM</option>
-                                        <option value="linea">Linea</option>
-                                        <option value="scroll">Scroll</option>
-                                        <option value="mantle">Mantle</option>
-                                        <option value="blast">Blast</option>
-                                        <option value="zksync">zkSync</option>
-                                        <option value="gnosis">Gnosis</option>
-                                        <option value="unichain">Unichain</option>
-                                        <option value="sonic">Sonic</option>
-                                        <option value="abstract">Abstract</option>
-                                        <option value="memecore">Memecore</option>
-                                        <option value="sophon">Sophon</option>
-                                        <option value="berachain">Berachain</option>
-                                        <option value="tron">Tron</option>
-                                        <option value="xrp">XRP (Ripple)</option>
-                                        <option value="thorchain">THORChain</option>
-                                        <option value="sui">Sui</option>
-                                        <option value="solana">Solana</option>
-                                    </select>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <label style="color: #0d47a1; white-space: nowrap;">Chain:</label>
+                                        <select id="chain_victim_${victim.id}_${transaction.id}"
+                                                onchange="updateTransaction(${victim.id}, ${transaction.id}, 'chain', this.value)"
+                                                style="padding: 10px; border: 2px solid #2196f3; border-radius: 4px; background: white; font-size: 14px;">
+                                            <option value="">Auto-detect</option>
+                                            <option value="bitcoin">Bitcoin</option>
+                                            <option value="ethereum">Ethereum</option>
+                                            <option value="bsc">BNB Chain</option>
+                                            <option value="polygon">Polygon</option>
+                                            <option value="arbitrum">Arbitrum</option>
+                                            <option value="optimism">Optimism</option>
+                                            <option value="base">Base</option>
+                                            <option value="avalanche">Avalanche</option>
+                                            <option value="hyperevm">HyperEVM</option>
+                                            <option value="linea">Linea</option>
+                                            <option value="scroll">Scroll</option>
+                                            <option value="mantle">Mantle</option>
+                                            <option value="blast">Blast</option>
+                                            <option value="zksync">zkSync</option>
+                                            <option value="gnosis">Gnosis</option>
+                                            <option value="unichain">Unichain</option>
+                                            <option value="sonic">Sonic</option>
+                                            <option value="abstract">Abstract</option>
+                                            <option value="memecore">Memecore</option>
+                                            <option value="sophon">Sophon</option>
+                                            <option value="berachain">Berachain</option>
+                                            <option value="tron">Tron</option>
+                                            <option value="xrp">XRP (Ripple)</option>
+                                            <option value="thorchain">THORChain</option>
+                                            <option value="sui">Sui</option>
+                                            <option value="solana">Solana</option>
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn btn-primary"
+                                            onclick="openWalletExplorer()"
+                                            style="padding: 10px 20px; font-size: 16px; background: #3498db; white-space: nowrap;">
+                                        🔍 Wallet Explorer
+                                    </button>
                                 </div>
-                                <div style="font-size: 12px; color: #0d47a1; margin-top: 8px;">Paste the transaction hash and click Lookup to automatically fetch transaction details</div>
                             </div>
                             <div class="form-group">
                                 <label>Amount</label>
