@@ -3,30 +3,49 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 22:41)
+## Latest Commit (Auto-updated: 2025-10-26 22:45)
 
-**Commit:** 234732368493eeadf867c294b4b8c4d89dbd3bc0
+**Commit:** 1c2af451c1621fd0317a907e303ef84630b9477e
 **Author:** Your Name
-**Message:** Update CLAUDE.md
+**Message:** Fix victim transaction form layout with proper alignment
+
+Chain dropdown now matches transaction hash width, buttons stacked.
+
+**Changes:**
+- Moved Wallet Explorer button to stack under Lookup Hash button
+- Chain dropdown uses flex: 1 to match transaction hash input width
+- Both buttons in flex column on the right side
+- Clean vertical alignment throughout form
+
+**Visual Layout:**
+```
+[Transaction Hash Input Field...............] [🔍 Lookup Hash    ]
+                                               [🔍 Wallet Explorer]
+Chain: [Auto-detect dropdown................]
+```
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
+ index.html | 90 +++++++++++++++++++++++++++++++-------------------------------
+ 1 file changed, 45 insertions(+), 45 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2347323 Update CLAUDE.md (0 seconds ago)
-- 9dead86 Final CLAUDE.md update (7 seconds ago)
-- bfc5113 Update CLAUDE.md (12 seconds ago)
-- 5951e7f Update CLAUDE.md (21 seconds ago)
-- 8244c0a Update CLAUDE.md with latest commit info (26 seconds ago)
-- 537bc5e Reorganize victim transaction form layout for cleaner appearance (31 seconds ago)
-- c537feb Final CLAUDE.md update (4 minutes ago)
-- 4b04f87 Update CLAUDE.md with latest commit info (4 minutes ago)
-- d69d5e8 Update CLAUDE.md with latest commit info (4 minutes ago)
-- 1b2c566 Update CLAUDE.md with latest commit info (5 minutes ago)
+- 1c2af45 Fix victim transaction form layout with proper alignment (0 seconds ago)
+- c2ff932 Update CLAUDE.md (3 minutes ago)
+- 2347323 Update CLAUDE.md (3 minutes ago)
+- 9dead86 Final CLAUDE.md update (3 minutes ago)
+- bfc5113 Update CLAUDE.md (4 minutes ago)
+- 5951e7f Update CLAUDE.md (4 minutes ago)
+- 8244c0a Update CLAUDE.md with latest commit info (4 minutes ago)
+- 537bc5e Reorganize victim transaction form layout for cleaner appearance (4 minutes ago)
+- c537feb Final CLAUDE.md update (8 minutes ago)
+- 4b04f87 Update CLAUDE.md with latest commit info (8 minutes ago)
 
 ## Key Features
 
