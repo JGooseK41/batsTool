@@ -5,20 +5,21 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-26 22:37)
 
-**Commit:** c80d506ca765737e1e845e3fd3136905e631aea1
+**Commit:** b562a37bea4f6c56cd8c27844a8ff77da8054689
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 63 ++++++++++++++++++++++++++-------------------------------------
- 1 file changed, 26 insertions(+), 37 deletions(-)
+ CLAUDE.md | 36 +++++++++---------------------------
+ 1 file changed, 9 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c80d506 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (9 seconds ago)
+- b562a37 Update CLAUDE.md with latest commit info (0 seconds ago)
+- c80d506 Update CLAUDE.md with latest commit info (6 seconds ago)
+- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (15 seconds ago)
 - 282a0a0 Add Wallet Explorer button to victim transaction form (9 minutes ago)
 - 3f46bcb Reorganize transaction lookup modal with clearer button choices (13 minutes ago)
 - 54fe434 Add 'View in Wallet Explorer' button to available threads for tracing workflow (20 minutes ago)
@@ -26,7 +27,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 2b63f37 Add confirmation dialog when clicking individual Add with selections (31 minutes ago)
 - 91ca1b5 Fix old cached data causing incorrect incomplete history warning (35 minutes ago)
 - 94fda5c Make bulk action bar highly visible and add debug logging (37 minutes ago)
-- 0745e7c CRITICAL FIX: Resolve undefined selectedTransactions error in Wallet Explorer (43 minutes ago)
 
 ## Key Features
 
