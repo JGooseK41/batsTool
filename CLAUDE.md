@@ -3,64 +3,64 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 17:25)
+## Latest Commit (Auto-updated: 2025-10-27 19:04)
 
-**Commit:** 0f487ff033a6fa9aa2a0694105a74e419e7da9d4
+**Commit:** 9b04c735da60f80a6a0c4f793a214fff7642374e
 **Author:** Your Name
-**Message:** Fix: Wallet Explorer now works with finalized hop notation
+**Message:** Remove redundant Quick Trace button from Available Threads modal
 
-🐛 BUG FIX: Could not open wallet explorer for threads after hop completion
+🗑️ CLEANUP: Remove duplicate Quick Trace button
 
-ISSUE: After completing Hop 1 and moving to Hop 2, clicking "Wallet Explorer"
-button for the thread from Hop 1 showed error:
-"Could not find wallet address for this thread."
+USER REQUEST: "get rid of it"
 
-ROOT CAUSE (line 22237):
-- Thread notation changes from "V1-T1" to "V(1)-T(1)-H1" after hop finalization
-- viewThreadInWalletExplorer() didn't recognize this notation format
-- Code tried to access entry.destinationWallet (wrong field name)
-- Should access entry.toWallet (actual field used in entries)
+ISSUE: Quick Trace button was redundant
+- Did the exact same thing as Wallet Explorer button
+- Confusing to have two buttons with same functionality
+- New entry confirmation modal already makes workflow fast
 
-THREAD NOTATION FORMATS:
-Before hop finalized: "V1-T1"
-After hop finalized:  "V(1)-T(1)-H1"
-Commingled format:    "(V1-T1) H1"
+CHANGES:
 
-SOLUTION (lines 22225-22242):
-1. Updated comment to document all supported notation formats
-2. Changed entry.destinationWallet to entry.toWallet
-3. Added fallback: entry.toWallet || entry.destinationWallet
-4. Added debug logging to show what was found
+1. Removed Quick Trace Button (lines 22376-22399):
+   ❌ Removed: "⚡ Quick Trace" button
+   ✅ Kept: "🔍 View & Trace" button (renamed from "Wallet Explorer")
+   ✅ Kept: "❌ Write Off" button
+   ✅ Kept: "❄️ Cold Storage" button
 
-BEHAVIOR:
+2. Simplified Button Layout:
+   Before:
+   - ⚡ Quick Trace (only if not fully assigned)
+   - ❌ Write Off (only if not fully assigned)
+   - ❄️ Cold Storage (only if not fully assigned)
+   - 🔍 Wallet Explorer (always visible)
 
-Before (broken):
-1. Complete Hop 1 with entry (creates thread "V(1)-T(1)-H1")
-2. Move to Hop 2
-3. Click "Wallet Explorer" for "V(1)-T(1)-H1"
-4. Error: "Could not find wallet address for this thread"
+   After:
+   - 🔍 View & Trace (always visible - primary action)
+   - ❌ Write Off (only if not fully assigned)
+   - ❄️ Cold Storage (only if not fully assigned)
 
-After (fixed):
-1. Complete Hop 1 with entry (creates thread "V(1)-T(1)-H1")
-2. Move to Hop 2
-3. Click "Wallet Explorer" for "V(1)-T(1)-H1"
-4. ✅ Wallet explorer opens for the destination wallet
-5. Shows all transactions from that wallet
-6. Can add more entries using confirmation modal
+3. Renamed Button:
+   "🔍 Wallet Explorer" → "🔍 View & Trace"
+   - Clearer what the button does
+   - Emphasizes that you can trace from the wallet explorer
+   - Updated tooltip: "Open Wallet Explorer to view and trace transactions"
 
-TECHNICAL DETAILS:
-- Notation "V(1)-T(1)-H1" extracts hop number: H1
-- Finds hop 1 entries
-- Gets first entry (all entries go to same destination)
-- Extracts toWallet field (destination address)
-- Opens wallet explorer with that address
-- Highlights the original transaction hash if available
+4. Removed Function (line 22430):
+   - quickTraceThread() function removed
+   - Left comment for code archaeology
 
-SUPPORTED FORMATS NOW:
-✅ "V1-T1" - Victim 1, Transaction 1 (before hop creation)
-✅ "V(1)-T(1)-H1" - Finalized hop 1 notation
-✅ "(V1-T1) H1" - Commingled thread notation
-✅ "(V1-T1,T2) H2" - Multiple transactions commingled
+BENEFITS:
+✅ Less confusing - one clear action button
+✅ Cleaner UI - fewer buttons in the list
+✅ Primary action always visible (even for fully assigned threads)
+✅ Better button naming - "View & Trace" is more descriptive
+
+WORKFLOW NOW:
+1. Open Available Threads modal
+2. Click "🔍 View & Trace" for any thread
+3. Wallet explorer opens
+4. Click "Add to Investigation" on any transaction
+5. Entry confirmation modal appears
+6. Create entry and choose to stay or return
 
 🤖 Generated with Claude Code
 
@@ -68,23 +68,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 80 ++++++++++++++++++++++++++++++++++++++++++++++++++------------
- index.html | 14 +++++++----
- 2 files changed, 75 insertions(+), 19 deletions(-)
+ CLAUDE.md  | 94 ++++++++++++++++++++++++++++++++++----------------------------
+ index.html | 32 +++++----------------
+ 2 files changed, 58 insertions(+), 68 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0f487ff Fix: Wallet Explorer now works with finalized hop notation (1 second ago)
-- 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (8 minutes ago)
-- dc1b7bc Auto-sync CLAUDE.md (6 hours ago)
-- 2874d87 Feature: Entry confirmation modal for wallet-by-wallet workflow (6 hours ago)
-- 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (7 hours ago)
-- ad37883 Feature: Add info icon with tooltip explaining negative token balances (7 hours ago)
-- d2aa686 Fix: Improve ETH variant filtering to catch Unicode characters (EꓔH) (7 hours ago)
-- 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (7 hours ago)
-- 25d0eef Auto-sync CLAUDE.md (7 hours ago)
-- 532cfca Sync CLAUDE.md (final) (7 hours ago)
+- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (0 seconds ago)
+- 0f487ff Fix: Wallet Explorer now works with finalized hop notation (2 hours ago)
+- 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (2 hours ago)
+- dc1b7bc Auto-sync CLAUDE.md (8 hours ago)
+- 2874d87 Feature: Entry confirmation modal for wallet-by-wallet workflow (8 hours ago)
+- 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (8 hours ago)
+- ad37883 Feature: Add info icon with tooltip explaining negative token balances (9 hours ago)
+- d2aa686 Fix: Improve ETH variant filtering to catch Unicode characters (EꓔH) (9 hours ago)
+- 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (9 hours ago)
+- 25d0eef Auto-sync CLAUDE.md (9 hours ago)
 
 ## Key Features
 
