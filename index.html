@@ -10035,31 +10035,40 @@ function buildAvailableThreadsIndex() {
                 const writeoffCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
                 console.log(`Processing write-off entry: ${entry.notation} for ${entry.amount} ${writeoffCurrency}`);
 
-                // Write-offs consume source threads just like terminal entries
-                if (entry.individualSourceAssignments && typeof entry.individualSourceAssignments === 'object') {
-                    Object.entries(entry.individualSourceAssignments).forEach(([threadId, allocatedAmount]) => {
-                        // Find the thread and deduct the allocated amount
-                        for (const curr in investigation.availableThreads) {
-                            const thread = investigation.availableThreads[curr][threadId];
-                            if (thread) {
-                                const amountUsed = parseFloat(allocatedAmount) || 0;
-                                console.log(`Write-off: Deducting ${amountUsed} from thread ${threadId} (had ${thread.availableAmount} available)`);
+                // CRITICAL FIX: Write-offs should only reduce ART when hop is CLOSED, not immediately
+                // Check if this write-off has been applied (when hop was closed)
+                const isApplied = entry.writeoffApplied === true;
 
-                                // Use proper rounding to avoid floating point errors
-                                thread.availableAmount = roundAmount(Math.max(0, thread.availableAmount - amountUsed));
+                if (isApplied) {
+                    // Write-off was applied when hop closed - deduct from available threads
+                    if (entry.individualSourceAssignments && typeof entry.individualSourceAssignments === 'object') {
+                        Object.entries(entry.individualSourceAssignments).forEach(([threadId, allocatedAmount]) => {
+                            // Find the thread and deduct the allocated amount
+                            for (const curr in investigation.availableThreads) {
+                                const thread = investigation.availableThreads[curr][threadId];
+                                if (thread) {
+                                    const amountUsed = parseFloat(allocatedAmount) || 0;
+                                    console.log(`Write-off (APPLIED): Deducting ${amountUsed} from thread ${threadId} (had ${thread.availableAmount} available)`);
 
-                                // Mark as exhausted if less than 0.01 remains
-                                if (thread.availableAmount < 0.01) {
-                                    thread.availableAmount = 0;
-                                    thread.fullyExhausted = true;
-                                    thread.exhaustedByWriteoff = entry.notation;
-                                    console.log(`Thread ${threadId} fully exhausted by write-off`);
-                                } else {
-                                    console.log(`Thread ${threadId} has ${thread.availableAmount} remaining after write-off`);
+                                    // Use proper rounding to avoid floating point errors
+                                    thread.availableAmount = roundAmount(Math.max(0, thread.availableAmount - amountUsed));
+
+                                    // Mark as exhausted if less than 0.01 remains
+                                    if (thread.availableAmount < 0.01) {
+                                        thread.availableAmount = 0;
+                                        thread.fullyExhausted = true;
+                                        thread.exhaustedByWriteoff = entry.notation;
+                                        console.log(`Thread ${threadId} fully exhausted by write-off`);
+                                    } else {
+                                        console.log(`Thread ${threadId} has ${thread.availableAmount} remaining after write-off`);
+                                    }
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
+                } else {
+                    // Write-off is PENDING - will be applied when hop closes
+                    console.log(`Write-off ${entry.notation} is PENDING - will be applied when hop closes`);
                 }
             }
             // Handle regular trace entries
@@ -14474,12 +14483,37 @@ function exportRedWalletIndexCSV() {
 
         // Open wallet explorer modal
         function openWalletExplorer(address = '', blockchain = '', tracedTxHash = null, sourceThreadId = null) {
-            // Pre-fill if called with parameters
-            if (address) document.getElementById('walletExplorerAddress').value = address;
+            // CRITICAL FIX: Check if address is actually a cluster ID
+            let actualAddress = address;
+            let isClusterView = false;
+
+            if (address && address.startsWith('cluster-')) {
+                // This is a cluster ID - get the first address from the cluster
+                const cluster = investigation.addressClusters?.[address];
+                if (cluster && cluster.addresses && cluster.addresses.length > 0) {
+                    actualAddress = cluster.addresses[0]; // Use first address
+                    isClusterView = true;
+                    console.log(`🔗 Opening Wallet Explorer for cluster ${address}`);
+                    console.log(`   Using address: ${actualAddress} (first of ${cluster.addresses.length})`);
+
+                    // Store cluster info for ART panel
+                    walletExplorerState.clusterInfo = cluster;
+                } else {
+                    console.warn(`⚠️ Cluster ID ${address} not found in investigation`);
+                }
+            }
+
+            // Pre-fill if called with parameters (use actual address, not cluster ID)
+            if (actualAddress) document.getElementById('walletExplorerAddress').value = actualAddress;
             if (blockchain) document.getElementById('walletExplorerBlockchain').value = blockchain;
 
             // Reset state
             resetWalletExplorer();
+
+            // Restore cluster info if this is a cluster view
+            if (isClusterView && walletExplorerState.clusterInfo) {
+                walletExplorerState.clusterInfo = walletExplorerState.clusterInfo; // Preserve after reset
+            }
 
             // Store traced transaction hash for highlighting
             if (tracedTxHash) {
@@ -14497,7 +14531,7 @@ function exportRedWalletIndexCSV() {
             showModal('walletExplorerModal');
 
             // If both address and blockchain provided, auto-search
-            if (address && blockchain) {
+            if (actualAddress && blockchain) {
                 setTimeout(() => searchWalletHistory(), 300);
             }
         }
@@ -14532,7 +14566,9 @@ function exportRedWalletIndexCSV() {
                 artMode: false,
                 artAvailable: 0,
                 artCurrency: '',
-                artSelections: new Map() // txHash → {tx, amount, action: 'trace'|'writeoff'}
+                artSelections: new Map(), // txHash → {tx, amount, action: 'trace'|'writeoff'}
+                // CRITICAL FIX: Cluster support
+                clusterInfo: null  // Store cluster info if opened via cluster
             };
 
             // Hide all sections
@@ -22393,6 +22429,20 @@ function completeHopAndProceed(hop) {
     hop.isCollapsed = true;
     window.hopCollapseState[hop.hopNumber] = true;
 
+    // CRITICAL FIX: Apply all pending write-offs when hop is closed
+    console.log(`🔒 Closing hop ${hop.hopNumber} - applying pending write-offs...`);
+    let writeoffsApplied = 0;
+    hop.entries.forEach(entry => {
+        if (entry.entryType === 'writeoff' && !entry.writeoffApplied) {
+            entry.writeoffApplied = true;
+            writeoffsApplied++;
+            console.log(`✅ Applied write-off: ${entry.notation} (${entry.amount} ${entry.currency})`);
+        }
+    });
+    if (writeoffsApplied > 0) {
+        console.log(`✅ Applied ${writeoffsApplied} write-off(s) for hop ${hop.hopNumber}`);
+    }
+
     // Calculate threads and ART for next hop
     const threadsCreated = [];
     let allThreadsTerminal = true;
@@ -22577,6 +22627,20 @@ function showTraceCompletionCeremony(hop, threadsCreated) {
     hop.completed = true;
     hop.isCollapsed = true;
     window.hopCollapseState[hop.hopNumber] = true;
+
+    // CRITICAL FIX: Apply all pending write-offs when hop is closed
+    console.log(`🔒 Closing hop ${hop.hopNumber} (trace completion) - applying pending write-offs...`);
+    let writeoffsApplied = 0;
+    hop.entries.forEach(entry => {
+        if (entry.entryType === 'writeoff' && !entry.writeoffApplied) {
+            entry.writeoffApplied = true;
+            writeoffsApplied++;
+            console.log(`✅ Applied write-off: ${entry.notation} (${entry.amount} ${entry.currency})`);
+        }
+    });
+    if (writeoffsApplied > 0) {
+        console.log(`✅ Applied ${writeoffsApplied} write-off(s) for hop ${hop.hopNumber}`);
+    }
 
     // Mark investigation as complete
     investigation.traceCompletedAt = new Date().toISOString();
@@ -23985,6 +24049,20 @@ function proceedToNextHop(hopNumber) {
     // Mark current hop as completed
     hop.completed = true;
 
+    // CRITICAL FIX: Apply all pending write-offs when hop is closed
+    console.log(`🔒 Closing hop ${hop.hopNumber} (proceeding to next) - applying pending write-offs...`);
+    let writeoffsApplied = 0;
+    hop.entries.forEach(entry => {
+        if (entry.entryType === 'writeoff' && !entry.writeoffApplied) {
+            entry.writeoffApplied = true;
+            writeoffsApplied++;
+            console.log(`✅ Applied write-off: ${entry.notation} (${entry.amount} ${entry.currency})`);
+        }
+    });
+    if (writeoffsApplied > 0) {
+        console.log(`✅ Applied ${writeoffsApplied} write-off(s) for hop ${hop.hopNumber}`);
+    }
+
     // Auto-collapse the completed hop
     window.hopCollapseState[hop.hopNumber] = true;
 
@@ -24027,6 +24105,20 @@ function proceedToWalletClassification(hopNumber) {
 // Complete the hop and create the next one
 function completeHopAndCreateNext(hop) {
     hop.completed = true;
+
+    // CRITICAL FIX: Apply all pending write-offs when hop is closed
+    console.log(`🔒 Closing hop ${hop.hopNumber} (create next) - applying pending write-offs...`);
+    let writeoffsApplied = 0;
+    hop.entries.forEach(entry => {
+        if (entry.entryType === 'writeoff' && !entry.writeoffApplied) {
+            entry.writeoffApplied = true;
+            writeoffsApplied++;
+            console.log(`✅ Applied write-off: ${entry.notation} (${entry.amount} ${entry.currency})`);
+        }
+    });
+    if (writeoffsApplied > 0) {
+        console.log(`✅ Applied ${writeoffsApplied} write-off(s) for hop ${hop.hopNumber}`);
+    }
 
     // Auto-collapse the completed hop
     window.hopCollapseState[hop.hopNumber] = true;
@@ -24090,6 +24182,21 @@ function completeInvestigation(hopNumber) {
     if (!hop) return;
 
     hop.completed = true;
+
+    // CRITICAL FIX: Apply all pending write-offs when hop is closed
+    console.log(`🔒 Closing hop ${hop.hopNumber} (investigation complete) - applying pending write-offs...`);
+    let writeoffsApplied = 0;
+    hop.entries.forEach(entry => {
+        if (entry.entryType === 'writeoff' && !entry.writeoffApplied) {
+            entry.writeoffApplied = true;
+            writeoffsApplied++;
+            console.log(`✅ Applied write-off: ${entry.notation} (${entry.amount} ${entry.currency})`);
+        }
+    });
+    if (writeoffsApplied > 0) {
+        console.log(`✅ Applied ${writeoffsApplied} write-off(s) for hop ${hop.hopNumber}`);
+    }
+
     window.hopCollapseState[hop.hopNumber] = true;
 
     saveToStorage();
