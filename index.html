@@ -14623,24 +14623,344 @@ function exportRedWalletIndexCSV() {
         }
 
         /**
-         * Get Bitcoin wallet history (stub - to be implemented)
+         * Get Bitcoin wallet history using mempool.space API
          */
         async function getBitcoinWalletHistory(address) {
-            throw new Error('Bitcoin wallet history - coming soon');
+            console.log('Fetching Bitcoin wallet history from mempool.space');
+
+            // Mempool.space API endpoint
+            const apiUrl = `https://mempool.space/api/address/${address}/txs`;
+
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error('Failed to fetch Bitcoin transactions');
+            }
+
+            const transactions = await response.json();
+
+            if (!transactions || transactions.length === 0) {
+                return [];
+            }
+
+            const allTransactions = [];
+
+            // Process each transaction
+            transactions.forEach(tx => {
+                // Determine if this is incoming or outgoing
+                // Check if address appears in outputs (incoming) or inputs (outgoing)
+                let isIncoming = false;
+                let isOutgoing = false;
+                let amount = 0;
+                let counterparty = '';
+
+                // Check outputs for incoming transactions
+                tx.vout?.forEach(output => {
+                    if (output.scriptpubkey_address === address) {
+                        isIncoming = true;
+                        amount += output.value;
+                    } else if (isIncoming && !counterparty) {
+                        // If we're receiving, the sender is in inputs
+                        counterparty = output.scriptpubkey_address || 'Unknown';
+                    }
+                });
+
+                // Check inputs for outgoing transactions
+                tx.vin?.forEach(input => {
+                    if (input.prevout?.scriptpubkey_address === address) {
+                        isOutgoing = true;
+                        amount += input.prevout.value;
+                    } else if (isOutgoing && !counterparty) {
+                        // If we're sending, the recipient is in outputs
+                        counterparty = input.prevout?.scriptpubkey_address || 'Unknown';
+                    }
+                });
+
+                // Find counterparty address
+                if (isIncoming) {
+                    // For incoming, counterparty is the sender (first input)
+                    counterparty = tx.vin?.[0]?.prevout?.scriptpubkey_address || 'Unknown';
+                } else if (isOutgoing) {
+                    // For outgoing, counterparty is the first output that's not us
+                    const recipientOutput = tx.vout?.find(o => o.scriptpubkey_address !== address);
+                    counterparty = recipientOutput?.scriptpubkey_address || 'Unknown';
+                }
+
+                // Convert satoshis to BTC
+                const btcAmount = amount / 100000000;
+
+                if (btcAmount > 0 && (isIncoming || isOutgoing)) {
+                    allTransactions.push({
+                        hash: tx.txid,
+                        timestamp: tx.status?.block_time ? tx.status.block_time * 1000 : Date.now(),
+                        type: isIncoming ? 'IN' : 'OUT',
+                        asset: 'BTC',
+                        amount: btcAmount,
+                        counterparty: counterparty,
+                        entityLabel: null,
+                        explorerUrl: `https://mempool.space/tx/${tx.txid}`
+                    });
+                }
+            });
+
+            // Sort by timestamp (newest first)
+            allTransactions.sort((a, b) => b.timestamp - a.timestamp);
+
+            console.log(`Found ${allTransactions.length} Bitcoin transactions`);
+
+            return allTransactions;
         }
 
         /**
-         * Get Tron wallet history (stub - to be implemented)
+         * Get Tron wallet history using TronGrid API
          */
         async function getTronWalletHistory(address) {
-            throw new Error('Tron wallet history - coming soon');
+            console.log('Fetching Tron wallet history from TronGrid');
+
+            const apiKey = window.apiKeys?.trongrid || localStorage.getItem('bats_trongrid_api_key') || '';
+            const baseUrl = 'https://api.trongrid.io';
+
+            const allTransactions = [];
+
+            // Get TRX transactions
+            const trxUrl = `${baseUrl}/v1/accounts/${address}/transactions?limit=200`;
+            const headers = apiKey ? { 'TRON-PRO-API-KEY': apiKey } : {};
+
+            try {
+                const trxResponse = await fetch(trxUrl, { headers });
+                const trxData = await trxResponse.json();
+
+                if (trxData.data && Array.isArray(trxData.data)) {
+                    trxData.data.forEach(tx => {
+                        // Parse TRX transfers
+                        if (tx.raw_data && tx.raw_data.contract) {
+                            tx.raw_data.contract.forEach(contract => {
+                                if (contract.type === 'TransferContract') {
+                                    const value = contract.parameter?.value;
+                                    if (value && value.amount) {
+                                        const isIncoming = value.to_address === address ||
+                                                         Buffer.from(value.to_address, 'hex').toString() === address;
+                                        const amount = value.amount / 1000000; // Sun to TRX
+
+                                        if (amount > 0) {
+                                            allTransactions.push({
+                                                hash: tx.txID,
+                                                timestamp: tx.block_timestamp || Date.now(),
+                                                type: isIncoming ? 'IN' : 'OUT',
+                                                asset: 'TRX',
+                                                amount: amount,
+                                                counterparty: isIncoming ? value.owner_address : value.to_address,
+                                                entityLabel: null,
+                                                explorerUrl: `https://tronscan.org/#/transaction/${tx.txID}`
+                                            });
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            } catch (error) {
+                console.warn('Error fetching TRX transactions:', error);
+            }
+
+            // Get TRC-20 token transfers
+            const tokenUrl = `${baseUrl}/v1/accounts/${address}/transactions/trc20?limit=200`;
+
+            try {
+                const tokenResponse = await fetch(tokenUrl, { headers });
+                const tokenData = await tokenResponse.json();
+
+                if (tokenData.data && Array.isArray(tokenData.data)) {
+                    tokenData.data.forEach(tx => {
+                        const isIncoming = tx.to === address;
+                        const decimals = parseInt(tx.token_info?.decimals) || 6;
+                        const amount = parseFloat(tx.value) / Math.pow(10, decimals);
+
+                        if (amount > 0) {
+                            allTransactions.push({
+                                hash: tx.transaction_id,
+                                timestamp: tx.block_timestamp || Date.now(),
+                                type: isIncoming ? 'IN' : 'OUT',
+                                asset: tx.token_info?.symbol || tx.token_info?.name || 'TRC20',
+                                amount: amount,
+                                counterparty: isIncoming ? tx.from : tx.to,
+                                entityLabel: null,
+                                explorerUrl: `https://tronscan.org/#/transaction/${tx.transaction_id}`
+                            });
+                        }
+                    });
+                }
+            } catch (error) {
+                console.warn('Error fetching TRC-20 transactions:', error);
+            }
+
+            // Sort by timestamp (newest first)
+            allTransactions.sort((a, b) => b.timestamp - a.timestamp);
+
+            console.log(`Found ${allTransactions.length} Tron transactions`);
+
+            return allTransactions;
         }
 
         /**
-         * Get Solana wallet history (stub - to be implemented)
+         * Get Solana wallet history using Solana JSON-RPC
          */
         async function getSolanaWalletHistory(address) {
-            throw new Error('Solana wallet history - coming soon');
+            console.log('Fetching Solana wallet history');
+
+            const rpcUrl = window.apiKeys?.solana || localStorage.getItem('bats_solana_rpc') || 'https://api.mainnet-beta.solana.com';
+
+            const allTransactions = [];
+
+            // Step 1: Get transaction signatures (limit to 100 for performance)
+            const signaturesResponse = await fetch(rpcUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'getSignaturesForAddress',
+                    params: [address, { limit: 100 }]
+                })
+            });
+
+            const signaturesData = await signaturesResponse.json();
+
+            if (!signaturesData.result || signaturesData.result.length === 0) {
+                console.log('No Solana transactions found');
+                return [];
+            }
+
+            console.log(`Found ${signaturesData.result.length} Solana transaction signatures`);
+
+            // Step 2: Fetch details for each transaction (in batches to avoid overwhelming API)
+            const batchSize = 20;
+            for (let i = 0; i < signaturesData.result.length && i < 100; i += batchSize) {
+                const batch = signaturesData.result.slice(i, i + batchSize);
+
+                for (const sig of batch) {
+                    try {
+                        const txResponse = await fetch(rpcUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                jsonrpc: '2.0',
+                                id: 1,
+                                method: 'getTransaction',
+                                params: [sig.signature, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 }]
+                            })
+                        });
+
+                        const txData = await txResponse.json();
+
+                        if (txData.result && txData.result.meta) {
+                            const tx = txData.result;
+                            const meta = tx.meta;
+
+                            // Parse SOL transfers from balance changes
+                            if (meta.postBalances && meta.preBalances) {
+                                const accountKeys = tx.transaction.message.accountKeys;
+
+                                accountKeys.forEach((account, idx) => {
+                                    const accountAddress = typeof account === 'string' ? account : account.pubkey;
+
+                                    if (accountAddress === address) {
+                                        const preBalance = meta.preBalances[idx];
+                                        const postBalance = meta.postBalances[idx];
+                                        const diff = postBalance - preBalance;
+
+                                        if (diff !== 0) {
+                                            const amount = Math.abs(diff) / 1000000000; // Lamports to SOL
+                                            const isIncoming = diff > 0;
+
+                                            // Find counterparty (first non-system account that's not us)
+                                            let counterparty = 'Unknown';
+                                            for (let j = 0; j < accountKeys.length; j++) {
+                                                const otherAccount = typeof accountKeys[j] === 'string' ? accountKeys[j] : accountKeys[j].pubkey;
+                                                if (otherAccount !== address && !otherAccount.startsWith('11111111')) {
+                                                    counterparty = otherAccount;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (amount > 0.00001) { // Filter dust
+                                                allTransactions.push({
+                                                    hash: sig.signature,
+                                                    timestamp: (sig.blockTime || 0) * 1000,
+                                                    type: isIncoming ? 'IN' : 'OUT',
+                                                    asset: 'SOL',
+                                                    amount: amount,
+                                                    counterparty: counterparty,
+                                                    entityLabel: null,
+                                                    explorerUrl: `https://solscan.io/tx/${sig.signature}`
+                                                });
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                            // Parse SPL token transfers
+                            if (meta.postTokenBalances && meta.preTokenBalances) {
+                                const tokenChanges = {};
+
+                                // Calculate token balance changes
+                                meta.postTokenBalances.forEach(post => {
+                                    const pre = meta.preTokenBalances.find(p => p.accountIndex === post.accountIndex);
+                                    const preAmount = pre ? parseFloat(pre.uiTokenAmount.uiAmountString || '0') : 0;
+                                    const postAmount = parseFloat(post.uiTokenAmount.uiAmountString || '0');
+                                    const diff = postAmount - preAmount;
+
+                                    if (diff !== 0) {
+                                        const accountKeys = tx.transaction.message.accountKeys;
+                                        const account = accountKeys[post.accountIndex];
+                                        const accountAddress = typeof account === 'string' ? account : account.pubkey;
+
+                                        // Check if this token account belongs to our address
+                                        if (post.owner === address) {
+                                            tokenChanges[post.mint] = {
+                                                diff: diff,
+                                                symbol: post.uiTokenAmount.symbol || 'SPL',
+                                                decimals: post.uiTokenAmount.decimals
+                                            };
+                                        }
+                                    }
+                                });
+
+                                // Create transactions for token changes
+                                Object.entries(tokenChanges).forEach(([mint, change]) => {
+                                    if (Math.abs(change.diff) > 0.00001) {
+                                        allTransactions.push({
+                                            hash: sig.signature,
+                                            timestamp: (sig.blockTime || 0) * 1000,
+                                            type: change.diff > 0 ? 'IN' : 'OUT',
+                                            asset: change.symbol,
+                                            amount: Math.abs(change.diff),
+                                            counterparty: 'Token Program',
+                                            entityLabel: null,
+                                            explorerUrl: `https://solscan.io/tx/${sig.signature}`
+                                        });
+                                    }
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Error fetching Solana tx ${sig.signature}:`, error);
+                    }
+                }
+
+                // Small delay between batches to avoid rate limiting
+                if (i + batchSize < signaturesData.result.length) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+            }
+
+            // Sort by timestamp (newest first)
+            allTransactions.sort((a, b) => b.timestamp - a.timestamp);
+
+            console.log(`Parsed ${allTransactions.length} Solana transactions`);
+
+            return allTransactions;
         }
 
         function calculateRootTotal() {
