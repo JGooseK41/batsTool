@@ -16151,6 +16151,10 @@ function exportRedWalletIndexCSV() {
                         <div id="comminglingValidation" style="margin-top: 15px; padding: 10px; border-radius: 6px; font-weight: bold;"></div>
                     </div>
 
+                    <div id="pifoChronologyWarning" style="display: none; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px; color: #856404;">
+                        <!-- Chronology warning will be inserted here by validation function -->
+                    </div>
+
                     <div style="display: flex; gap: 10px; justify-content: flex-end;">
                         <button onclick="closeComminglingSelector()" class="btn btn-secondary">
                             Cancel
@@ -16183,6 +16187,102 @@ function exportRedWalletIndexCSV() {
                     updateComminglingTotal();
                 }
             }
+        }
+
+        // PIFO Chronological Validation
+        function validatePIFOChronology(selectedThreads) {
+            // Only validate if methodology is PIFO
+            if (!investigation.tracingMethod || investigation.tracingMethod !== 'PIFO') {
+                return { valid: true };
+            }
+
+            if (!selectedThreads || selectedThreads.length <= 1) {
+                return { valid: true };
+            }
+
+            console.log('🔍 PIFO: Validating chronological order of selected threads...');
+
+            const threadDates = [];
+
+            // Extract dates for each selected thread
+            for (const thread of selectedThreads) {
+                const threadId = thread.threadId;
+
+                // Parse thread ID format: V1-T1, V2-T3, etc.
+                const match = threadId.match(/^V(\d+)-T(\d+)/);
+                if (!match) {
+                    console.warn(`Could not parse thread ID: ${threadId}`);
+                    continue;
+                }
+
+                const victimNum = parseInt(match[1]);
+                const txNum = parseInt(match[2]);
+
+                // Get victim and transaction
+                const victim = investigation.victims[victimNum - 1];
+                if (!victim) {
+                    console.warn(`Victim ${victimNum} not found for thread ${threadId}`);
+                    continue;
+                }
+
+                const tx = victim.transactions[txNum - 1];
+                if (!tx) {
+                    console.warn(`Transaction ${txNum} not found for victim ${victimNum} (thread ${threadId})`);
+                    continue;
+                }
+
+                // Get deposit date
+                const depositDate = tx.datetime ? new Date(tx.datetime) : null;
+                if (!depositDate || isNaN(depositDate.getTime())) {
+                    console.warn(`Invalid or missing date for thread ${threadId}`);
+                    continue;
+                }
+
+                threadDates.push({
+                    threadId: threadId,
+                    date: depositDate,
+                    victimNum: victimNum,
+                    txNum: txNum
+                });
+            }
+
+            // Check if we have enough valid dates to validate
+            if (threadDates.length < 2) {
+                return { valid: true };
+            }
+
+            // Sort by the order they appear in selectedThreads (user's selection order)
+            const selectionOrder = selectedThreads.map(t => t.threadId);
+            threadDates.sort((a, b) => {
+                return selectionOrder.indexOf(a.threadId) - selectionOrder.indexOf(b.threadId);
+            });
+
+            // Check if dates are in chronological order
+            const violations = [];
+            for (let i = 1; i < threadDates.length; i++) {
+                const prevThread = threadDates[i - 1];
+                const currThread = threadDates[i];
+
+                if (currThread.date < prevThread.date) {
+                    violations.push({
+                        laterThread: prevThread.threadId,
+                        laterDate: prevThread.date,
+                        earlierThread: currThread.threadId,
+                        earlierDate: currThread.date
+                    });
+                }
+            }
+
+            if (violations.length > 0) {
+                console.warn('⚠️ PIFO chronology violations detected:', violations);
+                return {
+                    valid: false,
+                    violations: violations
+                };
+            }
+
+            console.log('✅ PIFO: Thread selection is in chronological order');
+            return { valid: true };
         }
 
         // Update commingling total display
@@ -16232,6 +16332,38 @@ function exportRedWalletIndexCSV() {
                 validationDiv.style.color = '#155724';
                 validationDiv.innerHTML = `✅ Sufficient: ${(total - required).toLocaleString()} ${currency} will remain available`;
                 confirmBtn.disabled = false;
+            }
+
+            // CRITICAL FIX: PIFO Chronological Validation
+            const chronologyWarningDiv = document.getElementById('pifoChronologyWarning');
+            if (chronologyWarningDiv && selectedThreads.length > 1) {
+                const chronologyValidation = validatePIFOChronology(selectedThreads);
+
+                if (!chronologyValidation.valid) {
+                    // Show warning about chronology violation
+                    let warningHtml = '<div style="font-weight: bold; margin-bottom: 10px;">⚠️ PIFO Chronology Warning:</div>';
+                    warningHtml += '<div style="font-size: 14px; line-height: 1.6;">';
+                    warningHtml += 'PIFO methodology requires tracing deposits in chronological order.<br><br>';
+                    warningHtml += '<strong>Chronology Violations Detected:</strong><br>';
+
+                    chronologyValidation.violations.forEach((v, idx) => {
+                        const laterDateStr = v.laterDate.toISOString().slice(0, 19).replace('T', ' ');
+                        const earlierDateStr = v.earlierDate.toISOString().slice(0, 19).replace('T', ' ');
+                        warningHtml += `${idx + 1}. ${v.laterThread} (${laterDateStr}) selected before ${v.earlierThread} (${earlierDateStr})<br>`;
+                    });
+
+                    warningHtml += '<br><em>You may proceed, but you should document why chronological order was not followed.</em>';
+                    warningHtml += '</div>';
+
+                    chronologyWarningDiv.innerHTML = warningHtml;
+                    chronologyWarningDiv.style.display = 'block';
+
+                    // Store that user was warned about chronology
+                    window.comminglingTransactionData.chronologyWarning = chronologyValidation.violations;
+                } else {
+                    chronologyWarningDiv.style.display = 'none';
+                    window.comminglingTransactionData.chronologyWarning = null;
+                }
             }
 
             // Store selected threads
@@ -16308,7 +16440,14 @@ function exportRedWalletIndexCSV() {
                            `Wallet: ${data.walletAddress}\n` +
                            `Outbound to: ${data.tx.counterparty}\n` +
                            `Amount: ${data.tx.amount} ${data.tx.asset}\n` +
-                           `Timestamp: ${new Date(data.tx.timestamp).toUTCString()}`
+                           `Timestamp: ${new Date(data.tx.timestamp).toUTCString()}` +
+                           (data.chronologyWarning ? `\n\n⚠️ PIFO CHRONOLOGY NOTE:\n` +
+                            `Thread selection was not in chronological deposit order.\n` +
+                            data.chronologyWarning.map(v => {
+                                const laterDateStr = v.laterDate.toISOString().slice(0, 19).replace('T', ' ');
+                                const earlierDateStr = v.earlierDate.toISOString().slice(0, 19).replace('T', ' ');
+                                return `- ${v.laterThread} (${laterDateStr}) was selected before ${v.earlierThread} (${earlierDateStr})`;
+                            }).join('\n') : '')
                 };
 
                 hop.entries.push(entry);
@@ -29915,6 +30054,10 @@ function showHopWizardStep(step) {
                     </div>
                 </div>
             ` : ''}
+
+            <div id="wizardPifoChronologyWarning" style="display: none; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-top: 20px; color: #856404;">
+                <!-- PIFO chronology warning will be inserted here -->
+            </div>
         `;
 
         nextBtn.disabled = wizardData.selectedThreads.length === 0;
@@ -31721,6 +31864,45 @@ function updateWizardThreadSelection(threadInfo) {
     } else {
         // Clear detected chain if no threads selected
         wizardData.detectedChain = null;
+    }
+
+    // CRITICAL FIX: PIFO Chronological Validation for Wizard
+    const chronologyWarningDiv = document.getElementById('wizardPifoChronologyWarning');
+    if (chronologyWarningDiv && wizardData.selectedNotations && wizardData.selectedNotations.length > 1) {
+        // Prepare thread data for validation
+        const selectedThreads = wizardData.selectedNotations.map(threadId => ({
+            threadId: threadId,
+            amount: 0,  // Not needed for chronology check
+            currency: ''  // Not needed for chronology check
+        }));
+
+        const chronologyValidation = validatePIFOChronology(selectedThreads);
+
+        if (!chronologyValidation.valid) {
+            // Show warning about chronology violation
+            let warningHtml = '<div style="font-weight: bold; margin-bottom: 10px;">⚠️ PIFO Chronology Warning:</div>';
+            warningHtml += '<div style="font-size: 14px; line-height: 1.6;">';
+            warningHtml += 'PIFO methodology requires tracing deposits in chronological order.<br><br>';
+            warningHtml += '<strong>Chronology Violations Detected:</strong><br>';
+
+            chronologyValidation.violations.forEach((v, idx) => {
+                const laterDateStr = v.laterDate.toISOString().slice(0, 19).replace('T', ' ');
+                const earlierDateStr = v.earlierDate.toISOString().slice(0, 19).replace('T', ' ');
+                warningHtml += `${idx + 1}. ${v.laterThread} (${laterDateStr}) selected before ${v.earlierThread} (${earlierDateStr})<br>`;
+            });
+
+            warningHtml += '<br><em>You may proceed, but you should document why chronological order was not followed.</em>';
+            warningHtml += '</div>';
+
+            chronologyWarningDiv.innerHTML = warningHtml;
+            chronologyWarningDiv.style.display = 'block';
+
+            // Store warning in wizard data
+            wizardData.chronologyWarning = chronologyValidation.violations;
+        } else {
+            chronologyWarningDiv.style.display = 'none';
+            wizardData.chronologyWarning = null;
+        }
     }
 
     const nextBtn = document.getElementById('wizardNextBtn');
@@ -34017,6 +34199,17 @@ function createHopEntryFromWizard() {
     }
     if (wizardData.pifoNote) {
         entryNotes += `\n${wizardData.pifoNote}`;
+    }
+
+    // CRITICAL FIX: Add PIFO chronology warning to notes if present
+    if (wizardData.chronologyWarning && wizardData.chronologyWarning.length > 0) {
+        entryNotes += `\n\n⚠️ PIFO CHRONOLOGY NOTE:\n`;
+        entryNotes += `Thread selection was not in chronological deposit order.\n`;
+        wizardData.chronologyWarning.forEach(v => {
+            const laterDateStr = v.laterDate.toISOString().slice(0, 19).replace('T', ' ');
+            const earlierDateStr = v.earlierDate.toISOString().slice(0, 19).replace('T', ' ');
+            entryNotes += `- ${v.laterThread} (${laterDateStr}) was selected before ${v.earlierThread} (${earlierDateStr})\n`;
+        });
     }
 
     // Create new entry with wizard data
