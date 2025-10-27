@@ -3,36 +3,25 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 20:53)
+## Latest Commit (Auto-updated: 2025-10-26 22:36)
 
-**Commit:** 9ccc7553c4556768e64f84443c9a51a806037f2f
+**Commit:** 3c4d77c4d166b27e79e91c3822558104d785faee
 **Author:** Your Name
-**Message:** Improve Wallet Explorer asset cards: title, colors, and UX
+**Message:** Resize Wallet Explorer button to match Lookup Hash button size
+
+Changed from full-width button to stacked layout with matching sizes.
 
 **Changes:**
+- Both buttons now same size: padding 10px 20px, font-size 16px
+- Stacked vertically in flex column with 10px gap
+- Shortened text to "🔍 Wallet Explorer" for consistency
+- Helper text moved below buttons for cleaner layout
 
-1. **Title Update:**
-   - Changed "Assets in Wallet" → "Asset Activity History"
-   - Clarifies these show historical transactions, not current holdings
-   - More accurate for investigation context
-
-2. **Professional Color Scheme:**
-   - Replaced purple gradient (#667eea → #764ba2)
-   - New slate blue/gray gradient (#5a7a9e → #4a5f7f)
-   - Added subtle border for definition
-   - Enhanced hover state with lighter gradient
-   - More professional and muted appearance
-
-3. **UX Note:**
-   - Cards are already clickable (no code change needed)
-   - Click any card to select that asset and view transactions
-   - Provides visual feedback on hover
-
-**Visual Impact:**
-✅ Cards now use professional slate blue tones
-✅ Better matches investigation tool aesthetic
-✅ Clear title indicates historical activity
-✅ Smooth hover interaction maintained
+**Visual Layout:**
+```
+[Transaction Hash Input] [🔍 Lookup Hash    ]
+                         [🔍 Wallet Explorer]
+```
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -40,22 +29,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+ index.html | 30 +++++++++++++++---------------
+ 1 file changed, 15 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9ccc755 Improve Wallet Explorer asset cards: title, colors, and UX (1 second ago)
-- ee06ae9 Fix Wallet Explorer transaction table rendering error (2 minutes ago)
-- ace8026 Fix Ethereum/EVM wallet history baseUrl extraction bug (6 minutes ago)
-- c2eb009 Add Sui wallet history support to Wallet Explorer (10 minutes ago)
-- af75c83 Final sync (15 minutes ago)
-- e06cdff Sync CLAUDE.md (15 minutes ago)
-- ce42d38 Final CLAUDE.md auto-update sync (15 minutes ago)
-- 76b75c3 Auto-update CLAUDE.md timestamp (15 minutes ago)
-- c3927ec Update CLAUDE.md with Wallet Explorer completion documentation (15 minutes ago)
-- a824817 WALLET EXPLORER Phase 3: Inline wizard integration complete (18 minutes ago)
+- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (1 second ago)
+- 282a0a0 Add Wallet Explorer button to victim transaction form (8 minutes ago)
+- 3f46bcb Reorganize transaction lookup modal with clearer button choices (13 minutes ago)
+- 54fe434 Add 'View in Wallet Explorer' button to available threads for tracing workflow (20 minutes ago)
+- 59f33e3 Add transaction highlighting in Wallet Explorer for traced threads (26 minutes ago)
+- 2b63f37 Add confirmation dialog when clicking individual Add with selections (31 minutes ago)
+- 91ca1b5 Fix old cached data causing incorrect incomplete history warning (35 minutes ago)
+- 94fda5c Make bulk action bar highly visible and add debug logging (37 minutes ago)
+- 0745e7c CRITICAL FIX: Resolve undefined selectedTransactions error in Wallet Explorer (43 minutes ago)
+- 879ec43 Add amount filtering to Wallet Explorer with simultaneous filter support (48 minutes ago)
 
 ## Key Features
 
