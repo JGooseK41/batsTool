@@ -17208,7 +17208,9 @@ function exportRedWalletIndexCSV() {
                 console.log(`Internal TX: ${tx.hash} | Amount: ${amount} ETH | Direction: ${isIncoming ? 'IN' : 'OUT'} | isError: ${tx.isError}`);
 
                 // Only include if amount > 0 (filter out failed internal txs)
-                if (amount > 0 && !tx.isError && tx.isError !== '1') {
+                // BUG FIX: isError is "0" for success, "1" for failure (STRING not boolean!)
+                const isFailed = tx.isError === '1' || tx.isError === 1;
+                if (amount > 0 && !isFailed) {
                     console.log(`✅ ADDED internal tx to allTransactions: ${amount} ETH ${isIncoming ? 'IN' : 'OUT'}`);
                     allTransactions.push({
                         hash: tx.hash,
