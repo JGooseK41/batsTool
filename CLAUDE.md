@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-26 22:37)
 
-**Commit:** d69d5e8b40c5411162bc4b4e5549fb35cf544e38
+**Commit:** 4b04f87de8dea5333cc9ad22b3f9888be44c7496
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ CLAUDE.md | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d69d5e8 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 1b2c566 Update CLAUDE.md with latest commit info (7 seconds ago)
-- b562a37 Update CLAUDE.md with latest commit info (15 seconds ago)
-- c80d506 Update CLAUDE.md with latest commit info (21 seconds ago)
-- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (30 seconds ago)
+- 4b04f87 Update CLAUDE.md with latest commit info (0 seconds ago)
+- d69d5e8 Update CLAUDE.md with latest commit info (5 seconds ago)
+- 1b2c566 Update CLAUDE.md with latest commit info (12 seconds ago)
+- b562a37 Update CLAUDE.md with latest commit info (20 seconds ago)
+- c80d506 Update CLAUDE.md with latest commit info (26 seconds ago)
+- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (35 seconds ago)
 - 282a0a0 Add Wallet Explorer button to victim transaction form (9 minutes ago)
 - 3f46bcb Reorganize transaction lookup modal with clearer button choices (13 minutes ago)
 - 54fe434 Add 'View in Wallet Explorer' button to available threads for tracing workflow (20 minutes ago)
 - 59f33e3 Add transaction highlighting in Wallet Explorer for traced threads (27 minutes ago)
-- 2b63f37 Add confirmation dialog when clicking individual Add with selections (31 minutes ago)
 
 ## Key Features
 
