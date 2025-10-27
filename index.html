@@ -2821,7 +2821,9 @@
                                     <input type="checkbox" id="walletExplorerSelectAll" onchange="toggleSelectAllTransactions()"
                                            title="Select/Deselect all transactions on this page">
                                 </th>
-                                <th style="padding: 12px; text-align: left; font-weight: 600;">Date/Time</th>
+                                <th onclick="toggleTransactionSortOrder()" style="padding: 12px; text-align: left; font-weight: 600; cursor: pointer; user-select: none;" title="Click to sort">
+                                    Date/Time (UTC) <span id="walletExplorerSortIndicator">▼</span>
+                                </th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600;">Type</th>
                                 <th style="padding: 12px; text-align: right; font-weight: 600;">Amount</th>
                                 <th id="walletExplorerBalanceHeader" style="padding: 12px; text-align: right; font-weight: 600;">Balance</th>
@@ -14240,6 +14242,20 @@ function exportRedWalletIndexCSV() {
             displayAssetSummary();
         }
 
+        // Toggle transaction sort order
+        function toggleTransactionSortOrder() {
+            walletExplorerState.sortOrder = walletExplorerState.sortOrder === 'desc' ? 'asc' : 'desc';
+
+            // Update sort indicator
+            const indicator = document.getElementById('walletExplorerSortIndicator');
+            if (indicator) {
+                indicator.textContent = walletExplorerState.sortOrder === 'desc' ? '▼' : '▲';
+            }
+
+            // Re-render table with new sort order
+            renderTransactionTable();
+        }
+
         // Open wallet explorer modal
         function openWalletExplorer(address = '', blockchain = '', tracedTxHash = null, sourceThreadId = null) {
             // Pre-fill if called with parameters
@@ -14294,7 +14310,8 @@ function exportRedWalletIndexCSV() {
                 fetchedCount: 0,
                 selectedTransactions: new Set(),
                 highlightTxHash: null,
-                sourceThreadId: null
+                sourceThreadId: null,
+                sortOrder: 'desc' // 'desc' = newest first, 'asc' = oldest first
             };
 
             // Hide all sections
@@ -14712,7 +14729,14 @@ function exportRedWalletIndexCSV() {
             // Find all investigation threads for this wallet
             const investigationThreads = findInvestigationThreadsForWallet(walletExplorerState.address);
 
-            const transactions = walletExplorerState.filteredTransactions;
+            // Sort transactions based on current sort order
+            let transactions = [...walletExplorerState.filteredTransactions];
+            if (walletExplorerState.sortOrder === 'desc') {
+                transactions.sort((a, b) => b.timestamp - a.timestamp); // Newest first
+            } else {
+                transactions.sort((a, b) => a.timestamp - b.timestamp); // Oldest first
+            }
+
             const start = (walletExplorerState.currentPage - 1) * walletExplorerState.itemsPerPage;
             const end = start + walletExplorerState.itemsPerPage;
             const pageTransactions = transactions.slice(start, end);
@@ -14749,7 +14773,7 @@ function exportRedWalletIndexCSV() {
                     row.style.boxShadow = '0 0 10px rgba(33, 150, 243, 0.2)';
                 }
 
-                const date = new Date(tx.timestamp).toLocaleString();
+                const date = new Date(tx.timestamp).toLocaleString('en-US', { timeZone: 'UTC', timeZoneName: 'short' });
                 const typeIcon = tx.type === 'IN' ? '🟢' : '🔴';
                 const amountPrefix = tx.type === 'IN' ? '+' : '-';
                 const balance = walletExplorerState.balanceMap && walletExplorerState.balanceMap[tx.hash]
