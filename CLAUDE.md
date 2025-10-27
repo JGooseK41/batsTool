@@ -3,30 +3,67 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 09:30)
+## Latest Commit (Auto-updated: 2025-10-27 09:55)
 
-**Commit:** 751a6a16e58a31cdb78933d2e733d315114196af
+**Commit:** 871601510240fa77dea75835cd0b9fcc22e4094c
 **Author:** Your Name
-**Message:** Sync CLAUDE.md (skip hook)
+**Message:** Fix: Deduplicate transactions to prevent double-counting - CRITICAL BUG #2
+
+🐛 CRITICAL FIX: Transaction Deduplication (Duplicate Counting Bug)
+
+ISSUE: Same transactions counted multiple times causing incorrect balances
+- Example: Wallet showed -5.95 ETH when should be +0.00065 ETH
+- Same transaction hash appearing from multiple API endpoints
+
+ROOT CAUSE:
+Etherscan API returns same transaction from multiple sources:
+1. txlist (normal transactions)
+2. tokentx (token transactions) - includes contract calls with ETH
+3. txlistinternal (internal transactions)
+
+No deduplication was happening - all were added to array!
+
+FIX (lines 17163, 17177, 17206, 17240):
+- Added seenHashes Map to track hash+asset combinations
+- Normal tx: deduplicate by hash-asset key
+- Token tx: deduplicate by hash-asset key
+- Internal tx: deduplicate by hash-asset-internal key (separate to allow both)
+- Log skipped duplicates for debugging
+
+DEDUPLICATION STRATEGY:
+- Normal + Token: Use hash-ETH key (same key = duplicate)
+- Internal: Use hash-ETH-internal key (allows both normal + internal ETH in same tx)
+- Tokens: Use hash-TokenSymbol key (different assets = not duplicate)
+
+IMPACT:
+- Eliminates double/triple counting of transactions
+- Fixes balance calculations for all EVM networks
+- Test case: 0x8cfcd30368b282ed468c977735c929319ca1a780
+  - Before: -5.95 ETH (with duplicates)
+  - After: Should be +0.00065 ETH (without duplicates)
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
+ index.html | 97 +++++++++++++++++++++++++++++++++++++++++---------------------
+ 1 file changed, 64 insertions(+), 33 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 751a6a1 Sync CLAUDE.md (skip hook) (0 seconds ago)
-- 28a40ab Final CLAUDE.md sync (14 seconds ago)
-- 9a6f5da Update CLAUDE.md (auto-update from commit hook) (32 seconds ago)
-- a62d912 Update CLAUDE.md with latest commit info (45 seconds ago)
-- 5713f1e Fix: Remove corrupted emoji character causing SyntaxError at line 25149 (4 minutes ago)
-- 354ef01 Fix: Remove duplicate isChangeOutput declaration causing SyntaxError (9 minutes ago)
-- b2a8ac6 Phase 2 Implementation - Part 3: Final Quick Win Complete (4/4) ✅ (12 minutes ago)
-- 9dd698d Phase 2 Implementation - Part 2: 2 More Fixes Complete (5/16 Total) (21 minutes ago)
-- 8803873 Phase 2 Implementation - Part 1: 3 Fixes Complete (3/16) (23 minutes ago)
-- 21d9947 Implement High-Priority Fix #3: PIFO Chronological Validation - 100% COMPLETE (33 minutes ago)
+- 8716015 Fix: Deduplicate transactions to prevent double-counting - CRITICAL BUG #2 (1 second ago)
+- 8447862 Docs: Add comprehensive coverage analysis for internal transaction fix (5 minutes ago)
+- c3bd92c Fix: Internal transactions incorrectly filtered as failed - CRITICAL BUG (10 minutes ago)
+- a01c229 Debug: Add comprehensive logging for internal transaction processing (14 minutes ago)
+- 0507745 Auto-sync CLAUDE.md (25 minutes ago)
+- 751a6a1 Sync CLAUDE.md (skip hook) (25 minutes ago)
+- 28a40ab Final CLAUDE.md sync (25 minutes ago)
+- 9a6f5da Update CLAUDE.md (auto-update from commit hook) (25 minutes ago)
+- a62d912 Update CLAUDE.md with latest commit info (26 minutes ago)
+- 5713f1e Fix: Remove corrupted emoji character causing SyntaxError at line 25149 (29 minutes ago)
 
 ## Key Features
 
