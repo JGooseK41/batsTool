@@ -20006,13 +20006,35 @@ function viewAvailableThreads(hopNumber) {
                                                     '<span style="color: #28a745;">✓ Available</span>'
                                                 }
                                             </td>
-                                            <td style="padding: 10px; text-align: center;">
-                                                <button class="btn btn-primary"
-                                                        onclick="viewThreadInWalletExplorer('${thread.threadId.replace(/'/g, "\\'")}')"
-                                                        style="padding: 8px 12px; font-size: 13px; white-space: nowrap;"
-                                                        title="Open Wallet Explorer with highlighted incoming transaction">
-                                                    🔍 View in Wallet Explorer
-                                                </button>
+                                            <td style="padding: 10px;">
+                                                <div style="display: flex; flex-direction: column; gap: 5px;">
+                                                    ${!isFullyAssigned ? `
+                                                        <button class="btn btn-success"
+                                                                onclick="quickTraceThread('${thread.threadId.replace(/'/g, "\\'")}')"
+                                                                style="padding: 6px 10px; font-size: 12px; white-space: nowrap;"
+                                                                title="Quick trace this thread">
+                                                            ⚡ Quick Trace
+                                                        </button>
+                                                        <button class="btn btn-warning"
+                                                                onclick="quickWriteOffThread('${thread.threadId.replace(/'/g, "\\'")}')"
+                                                                style="padding: 6px 10px; font-size: 12px; white-space: nowrap; background: #dc3545; color: white;"
+                                                                title="Write off this thread">
+                                                            ❌ Write Off
+                                                        </button>
+                                                        <button class="btn btn-secondary"
+                                                                onclick="quickColdStorageThread('${thread.threadId.replace(/'/g, "\\'")}')"
+                                                                style="padding: 6px 10px; font-size: 12px; white-space: nowrap; background: #6f42c1; color: white;"
+                                                                title="Mark as cold storage">
+                                                            ❄️ Cold Storage
+                                                        </button>
+                                                    ` : ''}
+                                                    <button class="btn btn-primary"
+                                                            onclick="viewThreadInWalletExplorer('${thread.threadId.replace(/'/g, "\\'")}')"
+                                                            style="padding: 6px 10px; font-size: 12px; white-space: nowrap;"
+                                                            title="Open Wallet Explorer with highlighted incoming transaction">
+                                                        🔍 Wallet Explorer
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     `;
@@ -20041,6 +20063,215 @@ function viewAvailableThreads(hopNumber) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Quick Actions from Available Threads Modal
+
+// Quick Trace: Opens hop wizard with pre-selected thread
+function quickTraceThread(threadId) {
+    console.log(`⚡ Quick Trace initiated for thread: ${threadId}`);
+
+    // Close the available threads modal
+    const modal = document.getElementById('availableThreadsModal');
+    if (modal) modal.remove();
+
+    // Get the current hop number
+    const hopNumber = getCurrentHop();
+    if (!hopNumber) {
+        alert('⚠️ No active hop found.');
+        return;
+    }
+
+    // Open hop wizard with pre-selected thread
+    window.hopWizardData = {
+        hopNumber: hopNumber,
+        selectedThreads: [threadId],
+        preSelectedSourceThread: threadId
+    };
+
+    openHopWizard();
+
+    console.log(`✅ Hop wizard opened with pre-selected thread: ${threadId}`);
+}
+
+// Quick Write Off: Creates write-off entry immediately for a thread
+function quickWriteOffThread(threadId) {
+    console.log(`❌ Quick Write Off initiated for thread: ${threadId}`);
+
+    // Find the thread in available threads
+    const availableThreads = investigation.availableThreads || {};
+    let thread = null;
+    let currency = null;
+
+    for (const curr in availableThreads) {
+        if (availableThreads[curr][threadId]) {
+            thread = availableThreads[curr][threadId];
+            currency = curr;
+            break;
+        }
+    }
+
+    if (!thread) {
+        alert(`⚠️ Thread ${threadId} not found in available threads.`);
+        return;
+    }
+
+    // Get current hop
+    const hopNumber = getCurrentHop();
+    if (!hopNumber) {
+        alert('⚠️ No active hop found.');
+        return;
+    }
+
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+    if (!hop) {
+        alert(`⚠️ Hop ${hopNumber} not found.`);
+        return;
+    }
+
+    // Confirm write-off
+    const confirmed = confirm(
+        `❌ WRITE OFF THREAD\n\n` +
+        `Thread: ${threadId}\n` +
+        `Amount: ${thread.availableAmount.toLocaleString()} ${currency}\n\n` +
+        `This will create a write-off entry for the entire remaining amount.\n\n` +
+        `Reason: This amount is too small to trace, represents dust, fees, or is otherwise unrecoverable.\n\n` +
+        `Proceed with write-off?`
+    );
+
+    if (!confirmed) {
+        console.log('Write-off cancelled by user');
+        return;
+    }
+
+    // Create write-off entry
+    const entry = {
+        id: hop.entries.length + 1,
+        hopNumber: hopNumber,
+        entryType: 'writeoff',
+        amount: thread.availableAmount.toString(),
+        currency: currency,
+        sourceThreadId: threadId,
+        multipleSourceThreads: [threadId],
+        notation: '', // Will be generated
+        notes: `Quick write-off from Available Threads modal\nThread: ${threadId}\nAmount: ${thread.availableAmount.toLocaleString()} ${currency}\nReason: Small amount / dust / fees / unrecoverable`,
+        timestamp: new Date().toISOString().slice(0, 16),
+        chain: thread.blockchain || 'N/A',
+        transactionHash: '',
+        toWallet: '',
+        toWalletType: 'gray'
+    };
+
+    // Add entry to hop
+    hop.entries.push(entry);
+
+    // Sort entries chronologically
+    sortHopEntriesChronologically(hop);
+
+    // Save and render
+    saveToStorage();
+    renderHops();
+
+    // Close the available threads modal
+    const modal = document.getElementById('availableThreadsModal');
+    if (modal) modal.remove();
+
+    // Show success notification
+    showNotification(`✅ Write-off created for ${threadId}: ${thread.availableAmount.toLocaleString()} ${currency}`, 'success');
+
+    console.log(`✅ Write-off entry created for thread: ${threadId}`);
+}
+
+// Quick Cold Storage: Creates cold storage entry immediately for a thread
+function quickColdStorageThread(threadId) {
+    console.log(`❄️ Quick Cold Storage initiated for thread: ${threadId}`);
+
+    // Find the thread in available threads
+    const availableThreads = investigation.availableThreads || {};
+    let thread = null;
+    let currency = null;
+
+    for (const curr in availableThreads) {
+        if (availableThreads[curr][threadId]) {
+            thread = availableThreads[curr][threadId];
+            currency = curr;
+            break;
+        }
+    }
+
+    if (!thread) {
+        alert(`⚠️ Thread ${threadId} not found in available threads.`);
+        return;
+    }
+
+    // Get current hop
+    const hopNumber = getCurrentHop();
+    if (!hopNumber) {
+        alert('⚠️ No active hop found.');
+        return;
+    }
+
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+    if (!hop) {
+        alert(`⚠️ Hop ${hopNumber} not found.`);
+        return;
+    }
+
+    // Confirm cold storage
+    const confirmed = confirm(
+        `❄️ MARK AS COLD STORAGE\n\n` +
+        `Thread: ${threadId}\n` +
+        `Amount: ${thread.availableAmount.toLocaleString()} ${currency}\n\n` +
+        `This will mark the thread as terminated in cold storage.\n\n` +
+        `Cold storage means the funds have reached a wallet that is:\n` +
+        `• Not actively moving funds\n` +
+        `• Likely long-term storage\n` +
+        `• Terminal endpoint for this thread\n\n` +
+        `Proceed with cold storage marking?`
+    );
+
+    if (!confirmed) {
+        console.log('Cold storage marking cancelled by user');
+        return;
+    }
+
+    // Create cold storage entry
+    const entry = {
+        id: hop.entries.length + 1,
+        hopNumber: hopNumber,
+        entryType: 'cold_storage',
+        amount: thread.availableAmount.toString(),
+        currency: currency,
+        sourceThreadId: threadId,
+        multipleSourceThreads: [threadId],
+        notation: '', // Will be generated
+        notes: `Quick cold storage from Available Threads modal\nThread: ${threadId}\nAmount: ${thread.availableAmount.toLocaleString()} ${currency}\nStatus: Funds terminated in cold storage wallet`,
+        timestamp: new Date().toISOString().slice(0, 16),
+        chain: thread.blockchain || 'N/A',
+        transactionHash: '',
+        toWallet: thread.sourceWallet || 'Cold Storage',
+        toWalletType: 'purple',
+        isTerminal: true
+    };
+
+    // Add entry to hop
+    hop.entries.push(entry);
+
+    // Sort entries chronologically
+    sortHopEntriesChronologically(hop);
+
+    // Save and render
+    saveToStorage();
+    renderHops();
+
+    // Close the available threads modal
+    const modal = document.getElementById('availableThreadsModal');
+    if (modal) modal.remove();
+
+    // Show success notification
+    showNotification(`✅ Cold storage entry created for ${threadId}: ${thread.availableAmount.toLocaleString()} ${currency}`, 'success');
+
+    console.log(`✅ Cold storage entry created for thread: ${threadId}`);
 }
 
 // Reopen a completed hop for editing
