@@ -3,126 +3,98 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 19:33)
+## Latest Commit (Auto-updated: 2025-10-27 19:41)
 
-**Commit:** 127e40ae942c49291361b84c2e0db761f0896dd6
+**Commit:** 2bd784fbd92e71564f3de329a466fd0b4421755d
 **Author:** Your Name
-**Message:** Feature: Thread allocation progress visualization in Wallet Explorer
+**Message:** Fix: Include transaction hash in entry notes for audit trail
 
-✨ UX ENHANCEMENT: Real-time visual feedback for thread consumption
+🔧 BUG FIX: Transaction hash documentation in trace notes
 
-USER REQUEST: "how can we make it easier to show the user the progression
-of thread assignment while they are in the wallet explorer? If I have 2
-threads coming into a wallet, one for 50 and another for 150, i may just
-want to stay in that wallet explorer view until i have traced out 200. I
-may select a 2 transaction as write off and I should see that the 1st
-thread now is down to 48 then i can assign to an outbound transaction of
-75 which would consume the rest of that 1st thread and a portion of the
-2nd. I should be able to see that the 1st thread is fully allocated and
-what remains of the second."
+USER REPORT: "when i select an outbound transaction to allocate the
+thread to and generate an entry, the outgoing transaction hash is not
+being migrated so that there is no documentation of the outgoing hash
+in the trace documentation/notes"
 
-IMPLEMENTATION:
+ROOT CAUSE:
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+While the transactionHash field was being correctly stored in entry data,
+the human-readable notes field visible to investigators did NOT include
+the transaction hash. This created an incomplete audit trail.
 
-NEW FEATURE: Thread Allocation Progress Panel
+Entry data structure had:
+- ✅ transactionHash: tx.hash (stored in data)
+- ❌ notes: "..." (missing hash in visible documentation)
 
-Added visual progress tracking panel in Wallet Explorer that shows:
-- All threads entering the current wallet
-- Original amount vs available amount for each thread
-- Visual progress bars showing allocation percentage
-- Color-coded status indicators
-- Real-time updates after each entry creation
+SOLUTION:
+
+Added transaction hash to the notes field in ALL entry creation paths:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-COMPONENTS ADDED:
+1. TRACE ENTRIES (line 16496):
+   Before: notes without hash
+   After:  notes include "Transaction Hash: ${tx.hash}"
 
-1. HTML Panel (lines 2855-2864):
-   - Thread Progression container
-   - Blue gradient background with visual hierarchy
-   - Positioned between Source Thread Info and Selection Summary
+2. WRITE-OFF ENTRIES (line 16990):
+   Before: notes without hash
+   After:  notes include "Transaction Hash: ${tx.hash}"
 
-2. displayThreadProgression() Function (lines 15108-15259):
-   - Finds all threads for current wallet + selected currency
-   - Calculates consumption metrics per thread:
-     * Original total amount
-     * Amount consumed
-     * Amount remaining
-     * Percentage allocated
-   - Generates visual progress bars with color coding:
-     * 🟢 Green = Available (0% consumed)
-     * 🟠 Orange = In Progress (partial consumption)
-     * ⚪ Gray = Fully Allocated (100% consumed)
-   - Shows summary totals when multiple threads present
+3. COMMINGLING ENTRIES (line 16881):
+   Before: notes without hash
+   After:  notes include "Transaction Hash: ${data.tx.hash}"
 
-3. Integration Points:
-   - Called from initializeARTTracking() (line 15414)
-   - Auto-updates when creating entries via confirmEntryAndStay()
-   - Refreshes when selecting different assets
-   - Updates in real-time as threads are consumed
+4. BULK ADD ENTRIES (line 17619):
+   Before: notes without hash
+   After:  notes include "Transaction Hash: ${tx.hash}"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-VISUAL DESIGN:
+EXAMPLE OUTPUT (Trace Entry Notes):
 
-Each Thread Card Shows:
-┌─────────────────────────────────────────────────────┐
-│ ⚡ V1-T1  [In Progress]     Available: 48 / 50 BTC │
-│ ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░  96% allocated            │
-│ Consumed: 48 BTC          Remaining: 2 BTC         │
-└─────────────────────────────────────────────────────┘
+Before:
+```
+Trace entry created from Wallet Explorer
+Thread: V1-T1
+From: 0xabc...
+To: 0xdef...
+Amount: 50 BTC
+Timestamp: Mon, 27 Oct 2025 12:34:56 GMT
+```
 
-Summary (Multiple Threads):
-┌─────────────────────────────────────────────────────┐
-│ TOTAL (2 threads)            Combined Progress      │
-│ 127 / 200 BTC                   63.5% allocated     │
-└─────────────────────────────────────────────────────┘
+After:
+```
+Trace entry created from Wallet Explorer
+Thread: V1-T1
+From: 0xabc...
+To: 0xdef...
+Amount: 50 BTC
+Transaction Hash: 0x1234567890abcdef...
+Timestamp: Mon, 27 Oct 2025 12:34:56 GMT
+```
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-USAGE SCENARIO (User's Example):
+IMPACT:
 
-Starting State:
-- Thread V1-T1: 50 BTC (available)
-- Thread V2-T1: 150 BTC (available)
-- Total: 200 BTC to trace
+✅ Complete audit trail for all entries
+✅ Transaction hashes visible in entry notes
+✅ Investigators can verify on-chain activity
+✅ Court-ready documentation
+✅ Consistent across all entry creation methods
 
-After 2 BTC Write-Off:
-✓ Panel updates immediately
-- Thread V1-T1: 48 / 50 BTC (4% allocated)
-- Thread V2-T1: 150 / 150 BTC (0% allocated)
+AFFECTED FUNCTIONS:
+- addWalletTransactionToInvestigation()
+- writeOffWalletTransaction()
+- confirmComminglingAndCreateEntry()
+- addSelectedTransactionsToInvestigation()
 
-After 75 BTC Trace:
-✓ Panel updates immediately
-- Thread V1-T1: 0 / 50 BTC (100% allocated) ✓
-- Thread V2-T1: 127 / 150 BTC (15.3% allocated) ⚡
-
-User can see at a glance:
-- First thread fully consumed
-- Second thread partially allocated
-- 127 BTC still available to trace
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-BEHAVIOR:
-
-✅ Shows all threads entering the wallet (not just source thread)
-✅ Updates in real-time after each entry creation
-✅ Works with "Create & Stay in Explorer" workflow
-✅ Handles single or multiple threads
-✅ Color-coded for instant visual feedback
-✅ Shows both individual and aggregate progress
-✅ Persists across asset selection changes
-✅ Automatically hidden when no threads present
-
-BENEFITS:
-
-- Eliminates need to close/reopen wallet explorer to check progress
-- Provides immediate visual feedback on thread consumption
-- Helps investigators efficiently allocate threads wallet-by-wallet
-- Clear indication when threads are fully consumed
-- Summary view for complex multi-thread scenarios
+TESTING:
+- Create trace entry from wallet explorer
+- Create write-off from wallet explorer
+- Create commingled entry with multiple threads
+- Bulk add multiple transactions
+- Verify all entry notes include transaction hash
 
 🤖 Generated with Claude Code
 
@@ -130,23 +102,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 165 ++++++++++++++++++++++++++++++++++--------------------------
- index.html | 167 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 261 insertions(+), 71 deletions(-)
+ CLAUDE.md  | 186 +++++++++++++++++++++++++++++++++----------------------------
+ index.html |   6 +-
+ 2 files changed, 106 insertions(+), 86 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (0 seconds ago)
-- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (12 minutes ago)
-- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (20 minutes ago)
-- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (23 minutes ago)
-- a1e1795 Auto-sync CLAUDE.md (28 minutes ago)
-- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (29 minutes ago)
+- 2bd784f Fix: Include transaction hash in entry notes for audit trail (0 seconds ago)
+- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (8 minutes ago)
+- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (20 minutes ago)
+- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (29 minutes ago)
+- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (31 minutes ago)
+- a1e1795 Auto-sync CLAUDE.md (36 minutes ago)
+- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (37 minutes ago)
 - 0f487ff Fix: Wallet Explorer now works with finalized hop notation (2 hours ago)
 - 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (2 hours ago)
 - dc1b7bc Auto-sync CLAUDE.md (8 hours ago)
-- 2874d87 Feature: Entry confirmation modal for wallet-by-wallet workflow (8 hours ago)
 
 ## Key Features
 
