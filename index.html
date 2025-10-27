@@ -15295,8 +15295,161 @@ function exportRedWalletIndexCSV() {
                 alert(`✅ Added ${selectedTxs.length} transactions to ${victim.name || 'Victim ' + victim.id}!\n\nTransactions have been sorted chronologically.\n\nPlease review and adjust if needed.`);
 
             } else {
-                // HOP BUILDING MODE: Would need multi-entry wizard (not implemented yet)
-                alert(`Bulk add to hops is not yet implemented.\n\nFor now, please add transactions one at a time when building hops.\n\n${selectedTxs.length} transactions selected.`);
+                // HOP BUILDING MODE: Create multiple hop entries with validation
+                console.log(`Creating ${selectedTxs.length} hop entries...`);
+
+                const currentHopNumber = getCurrentHop();
+                if (!currentHopNumber) {
+                    alert('⚠️ No hop is currently being built.\n\nPlease start a new hop first.');
+                    return;
+                }
+
+                const hop = investigation.hops.find(h => h.hopNumber === currentHopNumber);
+                if (!hop) {
+                    alert('⚠️ Hop not found.');
+                    return;
+                }
+
+                // Check if we have thread context
+                const sourceThreadId = walletExplorerState.sourceThreadId;
+
+                // Calculate total amount needed
+                const totalAmount = selectedTxs.reduce((sum, tx) => sum + tx.amount, 0);
+                const currency = selectedTxs[0].asset; // Assume all same asset
+
+                // Check all transactions are same currency
+                const mixedCurrencies = selectedTxs.some(tx => tx.asset !== currency);
+                if (mixedCurrencies) {
+                    alert('⚠️ Cannot bulk add transactions with different currencies.\n\nPlease select transactions of the same asset type.');
+                    return;
+                }
+
+                // If we have source thread ID, validate against available amount
+                if (sourceThreadId) {
+                    const availableThreads = getAvailableSourcesForHop(currentHopNumber, currency);
+                    const sourceThread = availableThreads.find(t => t.threadId === sourceThreadId);
+
+                    if (sourceThread) {
+                        const availableAmount = sourceThread.availableAmount;
+
+                        // Check if total exceeds available amount
+                        if (totalAmount > availableAmount) {
+                            const confirmed = confirm(
+                                `⚠️ OVER-ALLOCATION WARNING\n\n` +
+                                `You are trying to allocate more than available:\n\n` +
+                                `Thread: ${sourceThreadId}\n` +
+                                `Available: ${availableAmount.toLocaleString()} ${currency}\n` +
+                                `Total selected: ${totalAmount.toLocaleString()} ${currency}\n` +
+                                `Over by: ${(totalAmount - availableAmount).toLocaleString()} ${currency}\n\n` +
+                                `This will create an over-allocation error!\n\n` +
+                                `Click OK to continue anyway, or Cancel to go back and adjust your selection.`
+                            );
+
+                            if (!confirmed) return;
+                        } else {
+                            // Show allocation preview
+                            const remaining = availableAmount - totalAmount;
+                            const allocationPct = ((totalAmount / availableAmount) * 100).toFixed(1);
+
+                            console.log(`✅ Allocation check passed:`);
+                            console.log(`   Available: ${availableAmount} ${currency}`);
+                            console.log(`   Allocating: ${totalAmount} ${currency} (${allocationPct}%)`);
+                            console.log(`   Remaining: ${remaining} ${currency}`);
+                        }
+                    }
+                }
+
+                // Confirm bulk addition
+                const confirmed = confirm(
+                    `📦 Bulk Add ${selectedTxs.length} Transactions\n\n` +
+                    `This will create ${selectedTxs.length} separate hop entries.\n\n` +
+                    `Total amount: ${totalAmount.toLocaleString()} ${currency}\n` +
+                    (sourceThreadId ? `Thread: ${sourceThreadId}\n` : '') +
+                    `Hop: ${currentHopNumber}\n\n` +
+                    `Continue?`
+                );
+
+                if (!confirmed) return;
+
+                // Create entries for each transaction
+                let entriesCreated = 0;
+                const errors = [];
+
+                for (const tx of selectedTxs) {
+                    try {
+                        const entry = {
+                            id: hop.entries.length + 1,
+                            hopNumber: currentHopNumber,
+                            entryType: 'trace',
+                            notation: '',
+                            amount: tx.amount.toString(),
+                            currency: tx.asset,
+                            customCurrency: '',
+                            // Enhanced fields
+                            sourceChain: [blockchain],
+                            displayNotation: '',
+                            summaryNotation: '',
+                            victimNumbers: '',
+                            transactionNumbers: '',
+                            availableSourceAmount: 0,
+                            sourceThreadId: sourceThreadId || '',
+                            sourceThreadData: null,
+                            assignmentPercentage: 0,
+                            generatedNotation: '',
+                            isConvergence: false,
+                            convergenceData: null,
+                            fromWallet: walletAddress,
+                            fromWalletType: '',
+                            fromWalletId: '',
+                            toWallet: tx.counterparty,
+                            toWalletType: '',
+                            toWalletId: '',
+                            transactionHash: tx.hash,
+                            timestamp: new Date(tx.timestamp).toISOString().slice(0, 16),
+                            timezone: 'UTC',
+                            chain: blockchain,
+                            notes: `Bulk added from Wallet Explorer\n` +
+                                   (sourceThreadId ? `Thread: ${sourceThreadId}\n` : '') +
+                                   `Wallet: ${walletAddress}\n` +
+                                   `Outbound to: ${tx.counterparty}\n` +
+                                   `Amount: ${tx.amount} ${tx.asset}\n` +
+                                   `Timestamp: ${new Date(tx.timestamp).toUTCString()}`
+                        };
+
+                        hop.entries.push(entry);
+                        entriesCreated++;
+                    } catch (error) {
+                        console.error(`Error creating entry for tx ${tx.hash}:`, error);
+                        errors.push(`${tx.hash.slice(0, 10)}... - ${error.message}`);
+                    }
+                }
+
+                // Sort entries chronologically
+                sortHopEntriesChronologically(hop);
+
+                // Save and render
+                saveToStorage();
+                renderHops();
+
+                // Show results
+                let message = `✅ Created ${entriesCreated} hop entries!\n\n` +
+                              `Total amount: ${totalAmount.toLocaleString()} ${currency}\n` +
+                              (sourceThreadId ? `Thread: ${sourceThreadId}\n` : '') +
+                              `Hop: ${currentHopNumber}`;
+
+                if (errors.length > 0) {
+                    message += `\n\n⚠️ Errors (${errors.length}):\n${errors.join('\n')}`;
+                }
+
+                alert(message);
+
+                // Scroll to the hop
+                setTimeout(() => {
+                    const hopElement = document.getElementById(`hop-${currentHopNumber}`);
+                    if (hopElement) {
+                        hopElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
             }
         }
 
