@@ -25146,7 +25146,7 @@ function generateVisualizationPage() {
             // Show notification
             const mode = visualizationEngine.clusterViewMode ? 'Cluster' : 'Individual Address';
             if (typeof showNotification === 'function') {
-                showNotification(`✅ Switched to ${mode} View`, 'success');
+                showNotification('Switched to ' + mode + ' View', 'success');
             }
         }
 
