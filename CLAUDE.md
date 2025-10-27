@@ -3,30 +3,49 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 22:37)
+## Latest Commit (Auto-updated: 2025-10-26 22:41)
 
-**Commit:** 4b04f87de8dea5333cc9ad22b3f9888be44c7496
+**Commit:** 537bc5e7ff20862ce71cf3d497dcc4fff30acc40
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Reorganize victim transaction form layout for cleaner appearance
+
+Moved chain dropdown to sit beside Wallet Explorer button.
+
+**Changes:**
+- Row 1: Transaction hash input + Lookup Hash button
+- Row 2: Chain dropdown (compact) + Wallet Explorer button
+- Removed duplicate helper text
+- Chain dropdown no longer uses flex: 1 (compact size)
+- Eliminated gaps of empty space
+
+**Visual Layout:**
+```
+[Transaction Hash Input Field...      ] [🔍 Lookup Hash]
+Chain: [Auto-detect ▼] [🔍 Wallet Explorer]
+```
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ index.html | 89 +++++++++++++++++++++++++++++++-------------------------------
+ 1 file changed, 44 insertions(+), 45 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4b04f87 Update CLAUDE.md with latest commit info (0 seconds ago)
-- d69d5e8 Update CLAUDE.md with latest commit info (5 seconds ago)
-- 1b2c566 Update CLAUDE.md with latest commit info (12 seconds ago)
-- b562a37 Update CLAUDE.md with latest commit info (20 seconds ago)
-- c80d506 Update CLAUDE.md with latest commit info (26 seconds ago)
-- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (35 seconds ago)
-- 282a0a0 Add Wallet Explorer button to victim transaction form (9 minutes ago)
-- 3f46bcb Reorganize transaction lookup modal with clearer button choices (13 minutes ago)
-- 54fe434 Add 'View in Wallet Explorer' button to available threads for tracing workflow (20 minutes ago)
-- 59f33e3 Add transaction highlighting in Wallet Explorer for traced threads (27 minutes ago)
+- 537bc5e Reorganize victim transaction form layout for cleaner appearance (0 seconds ago)
+- c537feb Final CLAUDE.md update (4 minutes ago)
+- 4b04f87 Update CLAUDE.md with latest commit info (4 minutes ago)
+- d69d5e8 Update CLAUDE.md with latest commit info (4 minutes ago)
+- 1b2c566 Update CLAUDE.md with latest commit info (4 minutes ago)
+- b562a37 Update CLAUDE.md with latest commit info (4 minutes ago)
+- c80d506 Update CLAUDE.md with latest commit info (4 minutes ago)
+- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (4 minutes ago)
+- 282a0a0 Add Wallet Explorer button to victim transaction form (13 minutes ago)
+- 3f46bcb Reorganize transaction lookup modal with clearer button choices (17 minutes ago)
 
 ## Key Features
 
