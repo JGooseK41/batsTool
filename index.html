@@ -2796,17 +2796,17 @@
                 </div>
 
                 <!-- Bulk Action Bar -->
-                <div id="walletExplorerBulkActions" style="display: none; background: #e3f2fd; border: 2px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <div id="walletExplorerBulkActions" style="display: none; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); border: 3px solid #2e7d32; padding: 18px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong id="walletExplorerSelectionCount">0 transactions selected</strong>
+                        <div style="color: white;">
+                            <strong id="walletExplorerSelectionCount" style="font-size: 16px;">0 transactions selected</strong>
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-secondary" onclick="clearTransactionSelection()" style="padding: 8px 16px;">
+                            <button class="btn btn-secondary" onclick="clearTransactionSelection()" style="padding: 10px 20px; background: white; color: #333; border: 2px solid #ccc;">
                                 Clear Selection
                             </button>
-                            <button class="btn btn-primary" onclick="addSelectedTransactionsToInvestigation()" style="background: #28a745; padding: 8px 16px;">
-                                ➕ Add Selected to Investigation
+                            <button class="btn btn-primary" onclick="addSelectedTransactionsToInvestigation()" style="background: white; color: #2e7d32; padding: 12px 24px; font-weight: bold; font-size: 16px; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                ➕ ADD ALL SELECTED TO INVESTIGATION
                             </button>
                         </div>
                     </div>
@@ -14977,12 +14977,15 @@ function exportRedWalletIndexCSV() {
 
         // Add selected transactions to investigation
         async function addSelectedTransactionsToInvestigation() {
+            console.log('🔵 BULK ADD: Starting bulk transaction addition...');
+
             // Safety check: ensure Set exists
             if (!walletExplorerState.selectedTransactions) {
                 walletExplorerState.selectedTransactions = new Set();
             }
 
             const selectedHashes = Array.from(walletExplorerState.selectedTransactions);
+            console.log(`🔵 BULK ADD: Found ${selectedHashes.length} selected transaction hashes`);
 
             if (selectedHashes.length === 0) {
                 alert('No transactions selected');
@@ -14993,6 +14996,7 @@ function exportRedWalletIndexCSV() {
             const selectedTxs = walletExplorerState.allTransactions.filter(tx =>
                 selectedHashes.includes(tx.hash)
             );
+            console.log(`🔵 BULK ADD: Retrieved ${selectedTxs.length} full transaction objects`);
 
             // Sort by timestamp (oldest first for proper chronological order in victim transactions)
             selectedTxs.sort((a, b) => a.timestamp - b.timestamp);
@@ -15058,6 +15062,8 @@ function exportRedWalletIndexCSV() {
                     if (!b.datetime) return -1;
                     return new Date(a.datetime) - new Date(b.datetime);
                 });
+
+                console.log(`🔵 BULK ADD: Successfully added ${selectedTxs.length} transactions to victim`);
 
                 // Save and re-render
                 saveToStorage();
