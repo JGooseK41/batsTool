@@ -14671,6 +14671,30 @@ function exportRedWalletIndexCSV() {
             }
         }
 
+        // LOW FIX #1: Clear wallet cache for specific address
+        function clearWalletCache(address, blockchain) {
+            const cacheKey = 'bats_wallet_' + WALLET_CACHE_VERSION + '_' + address + '_' + blockchain;
+            try {
+                sessionStorage.removeItem(cacheKey);
+                console.log(`🗑️ Cleared cache for ${address} on ${blockchain}`);
+            } catch (e) {
+                console.warn('Failed to clear wallet cache:', e);
+            }
+        }
+
+        // LOW FIX #1: Clear cache for all addresses in a cluster
+        function clearClusterCache(cluster) {
+            if (!cluster || !cluster.addresses) return;
+
+            cluster.addresses.forEach(address => {
+                // Clear cache for the cluster's blockchain
+                const blockchain = walletExplorerState.blockchain || 'Bitcoin';
+                clearWalletCache(address, blockchain);
+            });
+
+            console.log(`🗑️ Cleared cache for ${cluster.addresses.length} addresses in cluster ${cluster.id}`);
+        }
+
         // Process wallet data
         function processWalletData(transactions) {
             document.getElementById('walletExplorerLoading').style.display = 'none';
@@ -17548,6 +17572,10 @@ function exportRedWalletIndexCSV() {
                     existingCluster.notes += `All addresses in this cluster are controlled by the same entity.`;
 
                     console.log(`✅ Added address to existing cluster ${existingCluster.id} for wallet ${walletId}`);
+
+                    // LOW FIX #1: Clear cache for all cluster addresses
+                    clearClusterCache(existingCluster);
+
                     saveState();
                     return existingCluster.id;
                 }
@@ -17627,6 +17655,9 @@ METHODOLOGY IMPLICATIONS:
                 };
 
                 console.log(`✅ Created new cluster ${clusterId} for wallet ${walletId} (${walletLabel})`);
+
+                // LOW FIX #1: Clear cache for all cluster addresses
+                clearClusterCache(investigation.addressClusters[clusterId]);
 
                 // CRITICAL: Show LIBR-specific guidance when cluster is created
                 if (investigation.tracingMethod === 'LIBR') {
@@ -34261,6 +34292,34 @@ function createHopEntryFromWizard() {
     }
     if (wizardData.pifoNote) {
         entryNotes += `\n${wizardData.pifoNote}`;
+    }
+
+    // MEDIUM FIX #7: Add cluster notation to entry documentation
+    if (wizardData.selectedThreads && wizardData.selectedThreads.length > 0) {
+        const clusteredThreads = [];
+        wizardData.selectedThreads.forEach(threadId => {
+            // Check if this thread's source address is part of a cluster
+            const threads = getAvailableSourcesForHop(wizardData.hopNumber, null);
+            const thread = threads.find(t => t.threadId === threadId);
+            if (thread && thread.sourceWallet) {
+                const cluster = getClusterForAddress(thread.sourceWallet);
+                if (cluster) {
+                    clusteredThreads.push({
+                        threadId: threadId,
+                        cluster: cluster
+                    });
+                }
+            }
+        });
+
+        if (clusteredThreads.length > 0) {
+            entryNotes += `\n\n🔗 CLUSTER SOURCE NOTATION:\n`;
+            clusteredThreads.forEach(ct => {
+                entryNotes += `Thread ${ct.threadId} sources from Cluster ${ct.cluster.id} (Wallet: ${ct.cluster.walletId || 'Unknown'})\n`;
+                entryNotes += `  - Cluster contains ${ct.cluster.addresses.length} addresses\n`;
+                entryNotes += `  - Methodology: ${investigation.tracingMethod || 'PIFO'} (cluster acts as single entity)\n`;
+            });
+        }
     }
 
     // CRITICAL FIX: Add PIFO chronology warning to notes if present
