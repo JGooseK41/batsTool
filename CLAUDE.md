@@ -3,30 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 20:37)
+## Latest Commit (Auto-updated: 2025-10-26 20:38)
 
-**Commit:** c3927ec07909ff87365829645f0b22a1d167ef03
+**Commit:** 76b75c31c3548b8ba17c542336e442824681a791
 **Author:** Your Name
-**Message:** Update CLAUDE.md with Wallet Explorer completion documentation
+**Message:** Auto-update CLAUDE.md timestamp
 
 ### Changed Files:
 ```
- CLAUDE.md | 297 +++++++++++++++++++++++++++++++++++---------------------------
- 1 file changed, 166 insertions(+), 131 deletions(-)
+ CLAUDE.md | 197 +++++---------------------------------------------------------
+ 1 file changed, 15 insertions(+), 182 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c3927ec Update CLAUDE.md with Wallet Explorer completion documentation (0 seconds ago)
+- 76b75c3 Auto-update CLAUDE.md timestamp (0 seconds ago)
+- c3927ec Update CLAUDE.md with Wallet Explorer completion documentation (11 seconds ago)
 - a824817 WALLET EXPLORER Phase 3: Inline wizard integration complete (2 minutes ago)
-- 473b65d WALLET EXPLORER Phase 2: Bitcoin, Tron, and Solana support (27 minutes ago)
+- 473b65d WALLET EXPLORER Phase 2: Bitcoin, Tron, and Solana support (28 minutes ago)
 - 05dc805 WALLET EXPLORER Phase 1: Complete foundation with Ethereum support (31 minutes ago)
 - c4d28d0 Fix Sui transaction parsing - use ProgrammableTransaction structure (71 minutes ago)
 - b2b1769 Enhanced Sui debug logging to show full JSON structure (73 minutes ago)
 - 9158b87 Add debug logging for Sui transaction parsing (75 minutes ago)
 - a14b41e CRITICAL FIX: Update netlify.toml CSP to include Sui and bridge endpoints (78 minutes ago)
 - fb9a441 Update CLAUDE.md with Synapse Protocol integration documentation (85 minutes ago)
-- 6284019 Add Synapse Protocol bridge auto-detection with REST API integration (89 minutes ago)
 
 ## Key Features
 
