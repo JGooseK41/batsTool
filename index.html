@@ -2774,11 +2774,32 @@
                     <strong>⚠️ Large Wallet Warning:</strong> This wallet has too many transactions to calculate accurate running balance. Balance column may be incomplete.
                 </div>
 
+                <!-- Bulk Action Bar -->
+                <div id="walletExplorerBulkActions" style="display: none; background: #e3f2fd; border: 2px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong id="walletExplorerSelectionCount">0 transactions selected</strong>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-secondary" onclick="clearTransactionSelection()" style="padding: 8px 16px;">
+                                Clear Selection
+                            </button>
+                            <button class="btn btn-primary" onclick="addSelectedTransactionsToInvestigation()" style="background: #28a745; padding: 8px 16px;">
+                                ➕ Add Selected to Investigation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Transaction Table -->
                 <div style="overflow-x: auto; border: 1px solid #e1e8ed; border-radius: 8px;">
                     <table style="width: 100%; border-collapse: collapse; background: white;">
                         <thead style="background: #f8f9fa; border-bottom: 2px solid #e1e8ed;">
                             <tr>
+                                <th style="padding: 12px; text-align: center; font-weight: 600; width: 40px;">
+                                    <input type="checkbox" id="walletExplorerSelectAll" onchange="toggleSelectAllTransactions()"
+                                           title="Select/Deselect all transactions on this page">
+                                </th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600;">Date/Time</th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600;">Type</th>
                                 <th style="padding: 12px; text-align: right; font-weight: 600;">Amount</th>
@@ -14094,7 +14115,8 @@ function exportRedWalletIndexCSV() {
             firstActivityDate: null,  // When wallet was first seen on chain
             oldestFetchedDate: null,  // Oldest transaction we actually fetched
             isCompleteHistory: false,  // Whether we have complete history
-            fetchedCount: 0  // Number of transactions fetched
+            fetchedCount: 0,  // Number of transactions fetched
+            selectedTransactions: new Set()  // Track selected transaction hashes for bulk add
         };
 
         // Known legitimate tokens (case-insensitive)
@@ -14579,7 +14601,15 @@ function exportRedWalletIndexCSV() {
                 // Conditionally include balance column
                 const balanceCell = showBalance ? `<td style="padding: 12px; text-align: right;">${balance}</td>` : '';
 
+                // Check if this transaction is selected
+                const isSelected = walletExplorerState.selectedTransactions.has(tx.hash);
+
                 row.innerHTML = `
+                    <td style="padding: 12px; text-align: center;">
+                        <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
+                               ${isSelected ? 'checked' : ''}
+                               onchange="toggleTransactionSelection('${tx.hash}')">
+                    </td>
                     <td style="padding: 12px;">${date}</td>
                     <td style="padding: 12px;">${typeIcon} ${tx.type}</td>
                     <td style="padding: 12px; text-align: right; font-weight: 600;">${amountPrefix}${tx.amount.toFixed(6)} ${tx.asset}</td>
@@ -14600,6 +14630,7 @@ function exportRedWalletIndexCSV() {
             });
 
             updatePagination();
+            updateBulkActionBar();
         }
 
         // Update pagination
@@ -14785,6 +14816,189 @@ function exportRedWalletIndexCSV() {
             } catch (error) {
                 console.error('Error adding transaction:', error);
                 alert('Error adding transaction: ' + error.message);
+            }
+        }
+
+        // ====================================
+        // BULK TRANSACTION SELECTION
+        // ====================================
+
+        // Toggle individual transaction selection
+        function toggleTransactionSelection(txHash) {
+            if (walletExplorerState.selectedTransactions.has(txHash)) {
+                walletExplorerState.selectedTransactions.delete(txHash);
+            } else {
+                walletExplorerState.selectedTransactions.add(txHash);
+            }
+            updateBulkActionBar();
+            updateSelectAllCheckbox();
+        }
+
+        // Toggle select all transactions on current page
+        function toggleSelectAllTransactions() {
+            const selectAllCheckbox = document.getElementById('walletExplorerSelectAll');
+            const checkboxes = document.querySelectorAll('.wallet-tx-checkbox');
+
+            if (selectAllCheckbox.checked) {
+                // Select all on current page
+                checkboxes.forEach(cb => {
+                    const hash = cb.getAttribute('data-hash');
+                    walletExplorerState.selectedTransactions.add(hash);
+                    cb.checked = true;
+                });
+            } else {
+                // Deselect all on current page
+                checkboxes.forEach(cb => {
+                    const hash = cb.getAttribute('data-hash');
+                    walletExplorerState.selectedTransactions.delete(hash);
+                    cb.checked = false;
+                });
+            }
+
+            updateBulkActionBar();
+        }
+
+        // Update select all checkbox state
+        function updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('walletExplorerSelectAll');
+            const checkboxes = document.querySelectorAll('.wallet-tx-checkbox');
+
+            if (checkboxes.length === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+                return;
+            }
+
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+
+            if (checkedCount === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCount === checkboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+
+        // Clear all selections
+        function clearTransactionSelection() {
+            walletExplorerState.selectedTransactions.clear();
+            renderTransactionTable(); // Re-render to update checkboxes
+        }
+
+        // Update bulk action bar visibility and count
+        function updateBulkActionBar() {
+            const bulkActionsDiv = document.getElementById('walletExplorerBulkActions');
+            const countDiv = document.getElementById('walletExplorerSelectionCount');
+            const count = walletExplorerState.selectedTransactions.size;
+
+            if (count > 0) {
+                bulkActionsDiv.style.display = 'block';
+                countDiv.textContent = `${count} transaction${count > 1 ? 's' : ''} selected`;
+            } else {
+                bulkActionsDiv.style.display = 'none';
+            }
+        }
+
+        // Add selected transactions to investigation
+        async function addSelectedTransactionsToInvestigation() {
+            const selectedHashes = Array.from(walletExplorerState.selectedTransactions);
+
+            if (selectedHashes.length === 0) {
+                alert('No transactions selected');
+                return;
+            }
+
+            // Get full transaction objects
+            const selectedTxs = walletExplorerState.allTransactions.filter(tx =>
+                selectedHashes.includes(tx.hash)
+            );
+
+            // Sort by timestamp (oldest first for proper chronological order in victim transactions)
+            selectedTxs.sort((a, b) => a.timestamp - b.timestamp);
+
+            const blockchain = walletExplorerState.blockchain;
+            const walletAddress = walletExplorerState.address;
+
+            // Close wallet explorer
+            closeWalletExplorer();
+
+            // CONTEXT-AWARE ROUTING
+            const victimSection = document.getElementById('victimSetup');
+            const inVictimSetup = (victimSection && victimSection.style.display !== 'none') || !investigation.rootTotalConfirmed;
+
+            if (inVictimSetup) {
+                // VICTIM SETUP MODE: Add all as victim transactions
+                console.log(`Adding ${selectedTxs.length} transactions to victim...`);
+
+                if (!investigation.victims || investigation.victims.length === 0) {
+                    alert('Please add a victim first before logging transactions');
+                    return;
+                }
+
+                const victim = investigation.victims[investigation.victims.length - 1];
+
+                // Add each transaction
+                selectedTxs.forEach(tx => {
+                    // Find an empty transaction or create a new one
+                    let transaction = victim.transactions.find(t => !t.txHash || t.txHash.trim() === '');
+
+                    if (!transaction) {
+                        const transactionId = victim.transactions.length + 1;
+                        transaction = {
+                            id: transactionId,
+                            txHash: '',
+                            amount: '',
+                            currency: 'USD',
+                            customCurrency: '',
+                            receivingWallet: '',
+                            datetime: '',
+                            timezone: 'UTC',
+                            notes: '',
+                            chain: ''
+                        };
+                        victim.transactions.push(transaction);
+                    }
+
+                    // Populate transaction
+                    transaction.txHash = tx.hash;
+                    transaction.amount = tx.amount.toString();
+                    transaction.currency = tx.asset;
+                    transaction.receivingWallet = tx.type === 'IN' ? walletAddress : tx.counterparty;
+                    transaction.datetime = new Date(tx.timestamp).toISOString().slice(0, 16);
+                    transaction.timezone = 'UTC';
+                    transaction.chain = blockchain;
+                    transaction.notes = `Bulk added from Wallet Explorer - ${tx.type === 'IN' ? 'Incoming' : 'Outgoing'}`;
+                });
+
+                // Sort victim transactions chronologically
+                victim.transactions.sort((a, b) => {
+                    if (!a.datetime && !b.datetime) return 0;
+                    if (!a.datetime) return 1;
+                    if (!b.datetime) return -1;
+                    return new Date(a.datetime) - new Date(b.datetime);
+                });
+
+                // Save and re-render
+                saveToStorage();
+                renderVictims();
+
+                // Scroll to victim
+                setTimeout(() => {
+                    const victimElement = document.getElementById(`victim-${victim.id}`);
+                    if (victimElement) {
+                        victimElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+
+                alert(`✅ Added ${selectedTxs.length} transactions to ${victim.name || 'Victim ' + victim.id}!\n\nTransactions have been sorted chronologically.\n\nPlease review and adjust if needed.`);
+
+            } else {
+                // HOP BUILDING MODE: Would need multi-entry wizard (not implemented yet)
+                alert(`Bulk add to hops is not yet implemented.\n\nFor now, please add transactions one at a time when building hops.\n\n${selectedTxs.length} transactions selected.`);
             }
         }
 
