@@ -15236,11 +15236,20 @@ function exportRedWalletIndexCSV() {
             }, 100);
         }
 
+        function getCurrentHop() {
+            if (!investigation.hops || investigation.hops.length === 0) {
+                return null;
+            }
+
+            const maxHop = Math.max(...investigation.hops.map(h => h.hopNumber || 0));
+            return maxHop;
+        }
+
         function getNextHopNumber() {
             if (investigation.hops.length === 0) {
                 return 1;
             }
-            
+
             const maxHop = Math.max(...investigation.hops.map(h => h.hopNumber || 0));
             return maxHop + 1;
         }
