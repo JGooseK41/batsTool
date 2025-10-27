@@ -3026,19 +3026,6 @@
                            onkeyup="detectBlockchainFromHash(this.value)">
                     <div id="detectedBlockchain" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
 
-                    <!-- Wallet Explorer Option -->
-                    <div style="text-align: center; margin: 15px 0; padding: 15px; background: #e8f4fd; border-radius: 8px; border: 2px dashed #3498db;">
-                        <div style="color: #666; margin-bottom: 10px;">
-                            <strong>Don't have the transaction hash?</strong>
-                        </div>
-                        <button class="btn btn-primary" onclick="closeBlockchainLookupModal(); openWalletExplorer();" type="button"
-                                style="background: #3498db; padding: 10px 20px;">
-                            🔍 Search Wallet History Instead
-                        </button>
-                        <div style="font-size: 12px; color: #666; margin-top: 8px;">
-                            Browse wallet transactions to find the one you need
-                        </div>
-                    </div>
                 </div>
 
                 <div id="lookupError" style="display: none; background: #fee; border: 1px solid #c00; border-radius: 6px; padding: 15px; margin: 20px 0; color: #c00;"></div>
@@ -3046,24 +3033,34 @@
                     <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
                     <div>Fetching transaction data...</div>
                 </div>
-                
+
                 <div id="lookupResult" style="display: none; margin-top: 20px;">
                     <h4 style="color: #2c3e50; margin-bottom: 15px;">Transaction Details</h4>
                     <div id="txDetailsDisplay" style="background: #f8f9fa; padding: 15px; border-radius: 6px;"></div>
                 </div>
             </div>
-            
+
             <div style="text-align: center; margin-top: 25px;">
-                <button class="btn btn-primary" onclick="lookupTransaction()" id="lookupBtn">
-                    Lookup Transaction
-                </button>
-                <button class="btn btn-confirm" id="applyTxDataBtn" onclick="applyTransactionData()" style="display: none;">
-                    Apply to Entry
-                </button>
-                <button class="btn btn-secondary" onclick="openApiSettings()" style="background: #95a5a6;">
-                    ⚙️ API Settings
-                </button>
-                <button class="btn btn-secondary" onclick="closeBlockchainLookupModal()">Cancel</button>
+                <div style="margin-bottom: 15px;">
+                    <button class="btn btn-primary" onclick="lookupTransaction()" id="lookupBtn" style="padding: 12px 24px; font-size: 15px;">
+                        🔍 Lookup Hash
+                    </button>
+                    <button class="btn btn-confirm" id="applyTxDataBtn" onclick="applyTransactionData()" style="display: none;">
+                        Apply to Entry
+                    </button>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <button class="btn btn-primary" onclick="closeBlockchainLookupModal(); openWalletExplorer();" type="button"
+                            style="background: #3498db; padding: 12px 24px; font-size: 15px;">
+                        🔍 Open Wallet Explorer
+                    </button>
+                </div>
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e1e8ed;">
+                    <button class="btn btn-secondary" onclick="openApiSettings()" style="background: #95a5a6;">
+                        ⚙️ API Settings
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeBlockchainLookupModal()">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
