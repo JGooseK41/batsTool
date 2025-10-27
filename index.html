@@ -14793,6 +14793,29 @@ function exportRedWalletIndexCSV() {
         // Add transaction to investigation
         async function addWalletTransactionToInvestigation(txHash) {
             try {
+                // Check if multiple transactions are selected
+                if (!walletExplorerState.selectedTransactions) {
+                    walletExplorerState.selectedTransactions = new Set();
+                }
+
+                const selectedCount = walletExplorerState.selectedTransactions.size;
+
+                if (selectedCount > 0) {
+                    // Show confirmation dialog
+                    const userChoice = confirm(
+                        `⚠️ You have ${selectedCount} transaction${selectedCount > 1 ? 's' : ''} selected!\n\n` +
+                        `Click OK to add ALL ${selectedCount} selected transactions.\n` +
+                        `Click Cancel to add ONLY this one transaction.`
+                    );
+
+                    if (userChoice) {
+                        // User wants to add all selected
+                        await addSelectedTransactionsToInvestigation();
+                        return;
+                    }
+                    // User clicked Cancel, continue to add just this one
+                }
+
                 // Find the transaction data from wallet explorer state
                 const tx = walletExplorerState.allTransactions.find(t => t.hash === txHash);
                 if (!tx) {
