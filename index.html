@@ -2726,6 +2726,12 @@
             <!-- Asset Summary Section -->
             <div id="walletExplorerAssetSummary" style="display: none; margin-bottom: 20px;">
                 <h3 style="margin-bottom: 15px; color: #333;">📊 Asset Activity History</h3>
+
+                <!-- Wallet Info & History Completeness Warning -->
+                <div id="walletExplorerInfo" style="margin-bottom: 15px;">
+                    <!-- Populated by JavaScript -->
+                </div>
+
                 <div id="walletExplorerAssetList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
                     <!-- Asset cards will be populated here -->
                 </div>
@@ -2776,7 +2782,7 @@
                                 <th style="padding: 12px; text-align: left; font-weight: 600;">Date/Time</th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600;">Type</th>
                                 <th style="padding: 12px; text-align: right; font-weight: 600;">Amount</th>
-                                <th style="padding: 12px; text-align: right; font-weight: 600;">Balance</th>
+                                <th id="walletExplorerBalanceHeader" style="padding: 12px; text-align: right; font-weight: 600;">Balance</th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600;">Counterparty</th>
                                 <th style="padding: 12px; text-align: center; font-weight: 600;">Actions</th>
                             </tr>
@@ -14084,7 +14090,11 @@ function exportRedWalletIndexCSV() {
             itemsPerPage: 50,
             selectedAsset: '',
             assets: {},
-            showScamTokens: false  // Hide scam tokens by default
+            showScamTokens: false,  // Hide scam tokens by default
+            firstActivityDate: null,  // When wallet was first seen on chain
+            oldestFetchedDate: null,  // Oldest transaction we actually fetched
+            isCompleteHistory: false,  // Whether we have complete history
+            fetchedCount: 0  // Number of transactions fetched
         };
 
         // Known legitimate tokens (case-insensitive)
@@ -14342,6 +14352,7 @@ function exportRedWalletIndexCSV() {
         function displayAssetSummary() {
             const assetListDiv = document.getElementById('walletExplorerAssetList');
             const assetSelector = document.getElementById('walletExplorerAssetSelector');
+            const walletInfoDiv = document.getElementById('walletExplorerInfo');
 
             // Clear previous
             assetListDiv.innerHTML = '';
@@ -14353,6 +14364,41 @@ function exportRedWalletIndexCSV() {
                 document.getElementById('walletExplorerEmpty').style.display = 'block';
                 return;
             }
+
+            // Display wallet creation date and history completeness
+            let infoHTML = '';
+
+            if (walletExplorerState.firstActivityDate) {
+                const firstDate = new Date(walletExplorerState.firstActivityDate).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                infoHTML += `<div style="padding: 10px; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 4px; margin-bottom: 10px;">
+                    <strong>🕒 First Activity:</strong> ${firstDate} &nbsp;&nbsp;
+                    <strong>📊 Transactions Fetched:</strong> ${walletExplorerState.fetchedCount}
+                </div>`;
+            }
+
+            if (!walletExplorerState.isCompleteHistory) {
+                const oldestDate = walletExplorerState.oldestFetchedDate ?
+                    new Date(walletExplorerState.oldestFetchedDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    }) : 'Unknown';
+
+                infoHTML += `<div style="padding: 12px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>⚠️ INCOMPLETE HISTORY WARNING</strong><br>
+                    <div style="margin-top: 8px; font-size: 14px;">
+                        This wallet has more than 1,000 transactions. Only the most recent 1,000 are shown.<br>
+                        <strong>Oldest transaction shown:</strong> ${oldestDate}<br>
+                        <strong>Running balance calculations are disabled</strong> because we don't have complete history.
+                    </div>
+                </div>`;
+            }
+
+            walletInfoDiv.innerHTML = infoHTML;
 
             // Separate legitimate and scam tokens
             const legitimateAssets = [];
@@ -14505,6 +14551,13 @@ function exportRedWalletIndexCSV() {
             const tbody = document.getElementById('walletExplorerTableBody');
             tbody.innerHTML = '';
 
+            // Show/hide balance column based on history completeness
+            const balanceHeader = document.getElementById('walletExplorerBalanceHeader');
+            const showBalance = walletExplorerState.isCompleteHistory;
+            if (balanceHeader) {
+                balanceHeader.style.display = showBalance ? '' : 'none';
+            }
+
             const transactions = walletExplorerState.filteredTransactions;
             const start = (walletExplorerState.currentPage - 1) * walletExplorerState.itemsPerPage;
             const end = start + walletExplorerState.itemsPerPage;
@@ -14523,11 +14576,14 @@ function exportRedWalletIndexCSV() {
 
                 const entityLabel = tx.entityLabel ? `<span class="wallet-entity-label">${tx.entityLabel}</span>` : '';
 
+                // Conditionally include balance column
+                const balanceCell = showBalance ? `<td style="padding: 12px; text-align: right;">${balance}</td>` : '';
+
                 row.innerHTML = `
                     <td style="padding: 12px;">${date}</td>
                     <td style="padding: 12px;">${typeIcon} ${tx.type}</td>
                     <td style="padding: 12px; text-align: right; font-weight: 600;">${amountPrefix}${tx.amount.toFixed(6)} ${tx.asset}</td>
-                    <td style="padding: 12px; text-align: right;">${balance}</td>
+                    ${balanceCell}
                     <td style="padding: 12px; font-family: monospace; font-size: 0.9rem;">
                         ${tx.counterparty.substring(0, 10)}...${tx.counterparty.substring(tx.counterparty.length - 8)}
                         ${entityLabel}
@@ -14788,9 +14844,22 @@ function exportRedWalletIndexCSV() {
             // Use Etherscan API V2 format (same as rest of app)
             const baseUrl = 'https://api.etherscan.io/v2/api';
 
-            // Get normal transactions using V2 API
-            const normalTxUrl = `${baseUrl}?chainid=${chainId}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
-            console.log('Fetching normal transactions:', normalTxUrl);
+            // First, get the very first transaction to determine wallet creation date
+            const firstTxUrl = `${baseUrl}?chainid=${chainId}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1&sort=asc&apikey=${apiKey}`;
+            console.log('Fetching first transaction for wallet creation date...');
+
+            const firstTxResponse = await fetch(firstTxUrl);
+            const firstTxData = await firstTxResponse.json();
+            const firstTx = (firstTxData.result && Array.isArray(firstTxData.result) && firstTxData.result.length > 0) ? firstTxData.result[0] : null;
+
+            if (firstTx) {
+                walletExplorerState.firstActivityDate = parseInt(firstTx.timeStamp) * 1000;
+                console.log('First activity date:', new Date(walletExplorerState.firstActivityDate).toISOString());
+            }
+
+            // Get normal transactions using V2 API (limit to 1000 most recent)
+            const normalTxUrl = `${baseUrl}?chainid=${chainId}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1000&sort=desc&apikey=${apiKey}`;
+            console.log('Fetching normal transactions (limit 1000):', normalTxUrl);
 
             const normalResponse = await fetch(normalTxUrl);
             const normalData = await normalResponse.json();
@@ -14803,9 +14872,9 @@ function exportRedWalletIndexCSV() {
 
             const normalTxs = normalData.result && Array.isArray(normalData.result) ? normalData.result : [];
 
-            // Get ERC-20 token transfers using V2 API
-            const tokenTxUrl = `${baseUrl}?chainid=${chainId}&module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
-            console.log('Fetching token transactions:', tokenTxUrl);
+            // Get ERC-20 token transfers using V2 API (limit to 1000 most recent)
+            const tokenTxUrl = `${baseUrl}?chainid=${chainId}&module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&page=1&offset=1000&sort=desc&apikey=${apiKey}`;
+            console.log('Fetching token transactions (limit 1000):', tokenTxUrl);
 
             const tokenResponse = await fetch(tokenTxUrl);
             const tokenData = await tokenResponse.json();
@@ -14862,7 +14931,31 @@ function exportRedWalletIndexCSV() {
             // Sort by timestamp (newest first)
             allTransactions.sort((a, b) => b.timestamp - a.timestamp);
 
+            // Calculate metadata for history completeness
+            walletExplorerState.fetchedCount = allTransactions.length;
+
+            if (allTransactions.length > 0) {
+                // Find oldest transaction in our fetched set
+                const oldestFetched = allTransactions[allTransactions.length - 1];
+                walletExplorerState.oldestFetchedDate = oldestFetched.timestamp;
+
+                // Check if we have complete history
+                // Complete if: we fetched <1000 txs, OR oldest fetched matches first activity date
+                if (walletExplorerState.fetchedCount < 1000) {
+                    walletExplorerState.isCompleteHistory = true;
+                } else if (walletExplorerState.firstActivityDate && walletExplorerState.oldestFetchedDate) {
+                    // Allow 1 day tolerance for differences in transaction ordering
+                    const dayInMs = 24 * 60 * 60 * 1000;
+                    walletExplorerState.isCompleteHistory = Math.abs(walletExplorerState.oldestFetchedDate - walletExplorerState.firstActivityDate) < dayInMs;
+                } else {
+                    walletExplorerState.isCompleteHistory = false;
+                }
+            }
+
             console.log(`Found ${allTransactions.length} total transactions`);
+            console.log(`Complete history: ${walletExplorerState.isCompleteHistory}`);
+            console.log(`First activity: ${walletExplorerState.firstActivityDate ? new Date(walletExplorerState.firstActivityDate).toLocaleDateString() : 'Unknown'}`);
+            console.log(`Oldest fetched: ${walletExplorerState.oldestFetchedDate ? new Date(walletExplorerState.oldestFetchedDate).toLocaleDateString() : 'Unknown'}`);
 
             return allTransactions;
         }
