@@ -3,153 +3,174 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 06:33)
+## Latest Commit (Auto-updated: 2025-10-27 06:42)
 
-**Commit:** bbe846b4fcaa36a560dab9c38770b2d6b4295de1
+**Commit:** 2cbc687befd290af525311887056b5fe41fe1a7a
 **Author:** Your Name
-**Message:** Implement Bitcoin address clustering for UTXO change to new addresses
+**Message:** Enhance Bitcoin address clustering with wallet ID tracking, detailed documentation, cluster-wide viewing, and final report integration
 
-PROBLEM ADDRESSED:
-When Bitcoin change goes to a NEW address (not the same address), it creates a
-critical decision point for investigators:
-- Is this a payment to a different entity (new thread)?
-- OR is this change controlled by the same entity (cluster addresses)?
+USER REQUIREMENTS ADDRESSED:
+1. ✅ Retain wallet ID (Black 2, Yellow 3, etc.) from Universal Wallet Index
+2. ✅ Specific detailed documentation explaining when/why wallets added to clusters
+3. ✅ User-initiated cluster-wide transaction view (all addresses in one view)
+4. ✅ Wallet Cluster Index in final reports for complete audit trail
 
-For PIFO methodology, clustered addresses need DUAL MONITORING to determine
-which address "moves first" (Proceeds In First Out).
+ENHANCEMENTS IMPLEMENTED:
 
-SOLUTION - COMPLETE ADDRESS CLUSTERING SYSTEM:
+## 1. Wallet ID Tracking & Retention
+- Modified cluster data structure to store:
+  * `walletId`: Permanent ID from Universal Wallet Index (e.g., "B-2", "BL-3")
+  * `walletLabel`: Human-readable label
+  * `walletType`: Wallet type (black, blue, yellow, etc.)
+- `createAddressCluster()` automatically finds and stores wallet ID
+- Wallet ID prominently displayed in:
+  * Cluster monitoring modal (17494-17503)
+  * Cluster index report (25462-25465)
+  * ART tracking panel
+  * Entry notes
 
-## 1. Data Model
-- Added `investigation.addressClusters` object to track address relationships
-- Each cluster stores:
-  * List of addresses
-  * Thread ID (original thread)
-  * Monitored amounts for each address
-  * Methodology-specific tracking notes
-  * Creation timestamp and activity log
+## 2. Enhanced Documentation & Timestamping
+### Cluster Creation Notes (17346-17411):
+- Complete header with all metadata (Date, ClusterID, WalletID, Thread, Currency, Methodology)
+- Original vs new address details
+- Clustering reason explanation
+- PIFO/LIBR methodology implications
+- Full audit trail format
 
-## 2. UTXO Change Detection Enhancement
-- Modified `getBitcoinWalletHistory()` with smart heuristics:
-  * Detects non-round amounts (likely change)
-  * Identifies smaller outputs in multi-output transactions
-  * Flags `potentialNewAddressChange` for user decision
-  * Stores complete UTXO context for clustering
+### Cluster Update Notes (17320-17333):
+- Timestamp header with full date/time
+- ACTION field documenting what was done
+- WALLET ID retained and displayed
+- THREAD context
+- NEW ADDRESS added
+- AMOUNT being monitored
+- REASON for clustering
+- METHODOLOGY used
+- TOTAL ADDRESSES count
 
-## 3. Decision Modal UI
-- `showChangeAddressDecision()` - Interactive decision point
-- Two clear options:
-  * 🆕 Create New Thread - Treat as separate payment
-  * 🔗 Cluster Addresses - Link as same entity for dual monitoring
-- Shows transaction analysis with heuristic reasoning
-- Displays all outputs with change/payment indicators
-- Methodology-specific guidance (PIFO vs LIBR)
+Example Documentation:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔗 ADDRESS CLUSTER CREATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## 4. Clustering Management Functions
-- `createAddressCluster()` - Creates new cluster or adds to existing
-- `getClusterForAddress()` - Find cluster containing address
-- `removeAddressFromCluster()` - Break clustering relationship
-- `showClusterMonitoringView()` - View all clustered addresses
-- `displayClustersInWalletExplorer()` - Show active clusters in UI
+📅 DATE/TIME: 10/27/2025, 3:45:12 PM
+🆔 CLUSTER ID: cluster-1730058312456
+💼 WALLET ID: B-2
+🏷️  WALLET LABEL: Black Wallet 2
+🎨 WALLET TYPE: BLACK
+🧵 THREAD: V1-T1
+💰 CURRENCY: BTC
+📋 METHODOLOGY: PIFO
+...
+```
 
-## 5. Transaction Table Indicators
-- Orange badge: "🔗 Potential Change to New Address - Click to Decide"
-- Blue badge: "🔗 Clustered (X addresses) - Click for Details"
-- Interactive badges open decision/monitoring modals
-- Visual distinction from regular payments
+## 3. Cluster-Wide Transaction Viewing
+### viewClusterTransactions() Function (17595-17740):
+- **User-initiated** (button click, not automatic)
+- Fetches transactions from ALL clustered addresses in parallel
+- Combines and sorts chronologically
+- Marks each transaction with source address:
+  * 🏠 Original (first address)
+  * 🔄 Change 1, Change 2, etc.
+- Displays unified transaction history
+- Calculates aggregate balance across cluster
+- Shows cluster info banner
 
-## 6. Cluster Monitoring Panel
-- Dedicated UI panel in Wallet Explorer
-- Shows all active clusters for current thread
-- Methodology-specific instructions:
-  * PIFO: "Monitoring all addresses to see which moves first"
-  * LIBR: "Balance analysis considers all addresses together"
-- Quick access to detailed cluster view
-- Individual wallet explorer buttons for each address
+### Transaction Table Enhancement (15662):
+- Blue badge shows which address transaction came from
+- "🏠 Original" or "🔄 Change N" label
+- Only visible in cluster view mode
 
-## 7. Cluster Monitoring View
-- Complete cluster details modal
-- Shows all addresses with status:
-  * 🏠 Original Address (first in cluster)
-  * 🔄 Change Address N (subsequent addresses)
+### UI Integration:
+- "View All Cluster Transactions" button in monitoring modal (17515-17522)
+- Clear description: "Shows combined transaction history from all X clustered addresses"
+- Loads in Wallet Explorer with special cluster view mode
+
+## 4. Wallet Cluster Index for Final Reports
+### New Report Section (2235-2242):
+- "🔗 Wallet Cluster Index (UTXO Address Clustering)"
+- Tab button in Wallet Indexes section (2212-2214)
+- Orange theme (#ff9800) for cluster-related UI
+
+### generateClusterIndex() Function (25419-25494):
+- Summary statistics (total clusters, total addresses)
+- Table showing:
+  * Cluster ID
+  * **Wallet ID** (prominently displayed)
+  * Thread
+  * Number of addresses
+  * Currency
+  * Creation date
+  * View Details button
+
+### showClusterDetailsInReport() Function (25499-25576):
+- Complete cluster modal in report view
+- Shows wallet ID and label prominently
+- All clustered addresses with labels
+- Full cluster documentation
 - Monitored amounts for each address
-- Remove address functionality
-- Direct wallet explorer access
-- Cluster activity notes with timestamps
+- Methodology implications
 
-## 8. ART Tracking Integration
-- Selection list shows cluster membership
-- "🔗 From Clustered Address (X addresses)" indicator
-- Entry notes include complete clustering context:
-  * Cluster ID and address count
-  * PIFO/LIBR methodology notes
-  * Full list of all clustered addresses
-  * Dual monitoring explanation
-
-## PIFO METHODOLOGY SUPPORT:
-
-For PIFO investigations with clustered addresses:
-1. **Dual Monitoring**: Both (or all) addresses tracked simultaneously
-2. **First Movement Tracking**: Whichever address moves first is traced
-3. **Thread Continuity**: Value "remains" in both until one moves
-4. **Proper Allocation**: ART tracking accounts for cluster as single unit
-
-Example PIFO Scenario:
+## 5. Entry Notes Enhancement (15370-15397):
+When creating entries from ART tracker with clustered addresses:
 ```
-Thread V1-T1: 1.0 BTC traced to Address A
-Address A sends:
-  - 0.6 BTC → Address X (Payment)
-  - 0.3 BTC → Address B (Change to new address)
+Created from Wallet Explorer ART Tracker
+Thread: V1-T1
+Transaction: abc123...
+Amount: 0.5 BTC
+Action: trace
+Counterparty: bc1q...
 
-USER DECISION: Cluster A + B
-
-RESULT:
-- Both Address A and B are monitored for V1-T1
-- If Address A moves 0.1 BTC first → Trace from A (0.3 BTC remains in cluster)
-- If Address B moves 0.2 BTC first → Trace from B (0.1 BTC remains in cluster)
-- Cluster ensures proper PIFO accounting
+🔗 ADDRESS CLUSTERING:
+This transaction is from a clustered address.
+Cluster ID: cluster-1730058312456
+Cluster contains 3 addresses (UTXO change tracking).
+PIFO: Dual monitoring - first movement from any clustered address will be tracked.
+Cluster addresses:
+1. bc1qoriginaladdress...
+2. bc1qchangeaddr1...
+3. bc1qchangeaddr2...
 ```
-
-## LIBR METHODOLOGY SUPPORT:
-
-For LIBR investigations with clustered addresses:
-- Balance analysis considers all clustered addresses together
-- Combined balance determines traceability
-- Cluster acts as single "wallet entity" for balance calculations
 
 ## KEY FEATURES:
 
-✅ **Smart Detection**: Heuristic analysis flags likely change to new addresses
-✅ **User Control**: Investigators make clustering decisions with full context
-✅ **Dual Monitoring**: PIFO-compliant tracking of all clustered addresses
-✅ **Visual Clarity**: Badges, colors, and indicators throughout UI
-✅ **Complete Integration**: Works seamlessly with ART tracking
-✅ **Audit Trail**: Comprehensive notes document clustering decisions
-✅ **Flexible Management**: Add/remove addresses from clusters anytime
-✅ **Methodology Aware**: Adapts behavior for PIFO vs LIBR
+✅ **Wallet ID Retention**: Every cluster stores and displays the original wallet ID (Black 2, Yellow 3, etc.)
+✅ **Detailed Timestamping**: Every cluster action documented with full date/time
+✅ **Comprehensive Notes**: Clear explanations of WHY addresses were clustered
+✅ **Audit Trail**: Complete history of cluster creation and modifications
+✅ **User-Initiated Viewing**: Cluster-wide view only on explicit user request
+✅ **Unified Transaction History**: All cluster addresses shown in single view
+✅ **Source Address Labels**: Each transaction marked with which address it came from
+✅ **Final Report Integration**: Dedicated Wallet Cluster Index section
+✅ **Methodology Awareness**: PIFO/LIBR implications explained in all documentation
 
 ## BENEFITS:
 
-**For Bitcoin Investigations:**
-✅ Handles complex UTXO scenarios correctly
-✅ Prevents thread tracking errors from change to new addresses
-✅ Maintains PIFO compliance with dual monitoring
-✅ Provides clear decision points for investigators
-
 **For Investigators:**
-✅ Clear guidance on change vs payment identification
-✅ Transparent clustering process with full explanations
-✅ Easy cluster management and monitoring
-✅ Complete audit trail for legal/reporting purposes
+✅ Always know which wallet (Black 2, etc.) a cluster belongs to
+✅ Complete audit trail with specific timestamps
+✅ Easy to review clustering decisions months later
+✅ Single view shows all activity across clustered addresses
+✅ Clear documentation for legal/compliance purposes
 
-**For PIFO/LIBR:**
-✅ PIFO: Proper "which moves first" tracking
-✅ LIBR: Correct balance analysis across clustered addresses
-✅ Both: Maintained thread integrity and accurate allocation
+**For Reports:**
+✅ Wallet Cluster Index provides complete record
+✅ Each cluster links back to Universal Wallet Index
+✅ Detailed notes explain clustering rationale
+✅ Timestamps prove when decisions were made
+✅ Professional formatting for legal proceedings
+
+**For Compliance:**
+✅ Every clustering decision fully documented
+✅ Clear methodology (PIFO/LIBR) recorded
+✅ Timestamps for all actions
+✅ Original wallet ID maintained throughout
+✅ Complete chain of custody for address relationships
 
 ## FILES MODIFIED:
-- index.html (lines 4801, 16998-17083, 17094-17527, 15592-15603, 15626-15632,
-  15175-15183, 15370-15397, 2815-2827, 14872-14873)
+- index.html (lines 17290-17418, 17488-17522, 17595-17740, 15662, 15370-15397,
+  2212-2214, 2235-2242, 25386-25576)
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -157,23 +178,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 264 +++++++++++++++++++++++++++++++--
- index.html | 495 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 738 insertions(+), 21 deletions(-)
+ CLAUDE.md  | 365 +++++++++++++++++++------------------------------
+ index.html | 453 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 584 insertions(+), 234 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bbe846b Implement Bitcoin address clustering for UTXO change to new addresses (1 second ago)
-- 0bf302e Implement UTXO change detection for Bitcoin wallet explorer (15 minutes ago)
-- 780e905 Make Wallet Explorer methodology-aware: PIFO vs LIBR support (25 minutes ago)
-- fb1edeb Implement ART (Adjusted Root Total) Tracking in Wallet Explorer (5 hours ago)
+- 2cbc687 Enhance Bitcoin address clustering with wallet ID tracking, detailed documentation, cluster-wide viewing, and final report integration (2 seconds ago)
+- bbe846b Implement Bitcoin address clustering for UTXO change to new addresses (9 minutes ago)
+- 0bf302e Implement UTXO change detection for Bitcoin wallet explorer (24 minutes ago)
+- 780e905 Make Wallet Explorer methodology-aware: PIFO vs LIBR support (34 minutes ago)
+- fb1edeb Implement ART (Adjusted Root Total) Tracking in Wallet Explorer (6 hours ago)
 - f2cb229 Implement Feature 6: Batch write-offs for multiple threads (7 hours ago)
 - f511400 Implement Feature 5: Quick actions from Available Threads modal (7 hours ago)
 - c606314 Implement Feature 4: Entry preview before hop finalization (7 hours ago)
 - 7ede838 Implement Feature 3: Duplicate transaction detection with comprehensive search (7 hours ago)
 - 0788489 Implement Features 1-2: Auto-populate source thread + Smart contract detection (7 hours ago)
-- 2398a4f Final sync CLAUDE.md (7 hours ago)
 
 ## Key Features
 

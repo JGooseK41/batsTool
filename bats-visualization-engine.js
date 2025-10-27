@@ -110,6 +110,7 @@ class CanvasRenderer {
                 hop: { fill: '#3b82f6', stroke: '#2563eb', text: '#fff' },
                 terminal: { fill: '#10b981', stroke: '#059669', text: '#fff' },
                 bridge: { fill: '#8b5cf6', stroke: '#7c3aed', text: '#fff' },
+                cluster: { fill: '#ff9800', stroke: '#f57c00', text: '#fff' },
                 default: { fill: '#64748b', stroke: '#475569', text: '#fff' }
             },
 
@@ -211,7 +212,7 @@ class CanvasRenderer {
         // Draw node background
         this.ctx.fillStyle = theme.fill;
         this.ctx.strokeStyle = theme.stroke;
-        this.ctx.lineWidth = 2;
+        this.ctx.lineWidth = node.type === 'cluster' ? 3 : 2;
 
         if (node.type === 'terminal') {
             // Diamond shape for terminals
@@ -226,6 +227,27 @@ class CanvasRenderer {
             this.ctx.beginPath();
             this.ctx.arc(pos.x, pos.y, node.width/2, 0, Math.PI * 2);
             this.ctx.closePath();
+        } else if (node.type === 'cluster') {
+            // Hexagon for clusters - visually distinct
+            const size = node.width / 2;
+            this.ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i;
+                const x = pos.x + size * Math.cos(angle);
+                const y = pos.y + size * Math.sin(angle);
+                if (i === 0) {
+                    this.ctx.moveTo(x, y);
+                } else {
+                    this.ctx.lineTo(x, y);
+                }
+            }
+            this.ctx.closePath();
+
+            // Fill with gradient for cluster nodes
+            const gradient = this.ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, size);
+            gradient.addColorStop(0, '#ffa726');
+            gradient.addColorStop(1, '#ff9800');
+            this.ctx.fillStyle = gradient;
         } else {
             // Rectangle for others
             this.ctx.beginPath();
@@ -241,6 +263,23 @@ class CanvasRenderer {
         this.ctx.fill();
         this.ctx.stroke();
 
+        // Draw cluster badge
+        if (node.type === 'cluster' && node.addresses) {
+            this.ctx.fillStyle = '#f57c00';
+            this.ctx.strokeStyle = '#fff';
+            this.ctx.lineWidth = 1;
+            this.ctx.beginPath();
+            this.ctx.arc(pos.x + node.width/2 - 10, pos.y - node.height/2 + 10, 12, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.stroke();
+
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = `bold ${10 * this.camera.zoom}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(node.addresses.length, pos.x + node.width/2 - 10, pos.y - node.height/2 + 10);
+        }
+
         // Draw text
         this.ctx.fillStyle = theme.text;
         this.ctx.font = `${12 * this.camera.zoom}px Arial`;
@@ -249,10 +288,17 @@ class CanvasRenderer {
 
         // Label
         const label = node.label || node.id;
-        this.ctx.fillText(label, pos.x, pos.y - 5);
+        this.ctx.fillText(label, pos.x, pos.y - (node.subLabel ? 8 : 5));
+
+        // Sub-label (for clusters showing address count)
+        if (node.subLabel) {
+            this.ctx.font = `${9 * this.camera.zoom}px Arial`;
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            this.ctx.fillText(node.subLabel, pos.x, pos.y + 5);
+        }
 
         // Amount (if exists)
-        if (node.amount !== undefined) {
+        if (node.amount !== undefined && !node.subLabel) {
             this.ctx.font = `bold ${10 * this.camera.zoom}px Arial`;
             this.ctx.fillText(`${node.amount} ${node.currency || ''}`, pos.x, pos.y + 10);
         }
@@ -894,11 +940,50 @@ class BATSVisualizationEngine {
         // Animation loop
         this.isAnimating = false;
         this.animationFrame = null;
+
+        // Cluster view mode
+        this.clusterViewMode = false;  // Toggle between cluster view and individual address view
+        this.investigation = null;      // Store investigation for cluster lookups
+    }
+
+    /**
+     * Check if an address is part of a cluster
+     * @param {string} address - Wallet address to check
+     * @returns {object|null} - Cluster object if found, null otherwise
+     */
+    getClusterForAddress(address) {
+        if (!this.investigation || !this.investigation.addressClusters) {
+            return null;
+        }
+
+        for (const clusterId in this.investigation.addressClusters) {
+            const cluster = this.investigation.addressClusters[clusterId];
+            if (cluster.addresses && cluster.addresses.includes(address)) {
+                return cluster;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Toggle between cluster view and individual address view
+     */
+    toggleClusterView() {
+        this.clusterViewMode = !this.clusterViewMode;
+        console.log(`📊 Cluster view mode: ${this.clusterViewMode ? 'ENABLED' : 'DISABLED'}`);
+
+        // Reload visualization with new view mode
+        if (this.investigation) {
+            this.loadInvestigation(this.investigation);
+        }
     }
 
     loadInvestigation(investigation) {
         try {
             console.log('Loading investigation into visualization:', investigation);
+
+            // Store investigation for cluster lookups
+            this.investigation = investigation;
 
             // Clear existing graph
             this.graph.clear();
@@ -934,6 +1019,23 @@ class BATSVisualizationEngine {
                 notationToIds: new Map(),
                 terminalAncestors: new Map()
             };
+
+            // Track cluster nodes (for cluster view mode)
+            const clusterNodes = new Map();  // clusterId -> nodeId
+            const addressToCluster = new Map(); // address -> cluster object
+            const processedClusters = new Set(); // track which clusters we've already created nodes for
+
+            // Pre-process clusters if in cluster view mode
+            if (this.clusterViewMode && investigation.addressClusters) {
+                console.log(`🔗 Cluster view mode enabled. Processing ${Object.keys(investigation.addressClusters).length} clusters`);
+                for (const clusterId in investigation.addressClusters) {
+                    const cluster = investigation.addressClusters[clusterId];
+                    // Map each address to its cluster
+                    cluster.addresses.forEach(addr => {
+                        addressToCluster.set(addr.toLowerCase(), cluster);
+                    });
+                }
+            }
 
             let nodeIdCounter = 0;
             let edgeIdCounter = 0;
@@ -994,25 +1096,68 @@ class BATSVisualizationEngine {
                         victim.transactions.forEach(tx => {
                             if (!tx) return;
 
-                            const nodeId = `victim_${nodeIdCounter++}`;
                             const notation = `V${victim.id}-T${tx.id}`;
                             const threadIds = this.provenanceIndex.notationToIds.get(notation) || new Set();
                             const walletAddress = tx.receivingWallet || tx.redWallet || 'Unknown';
 
-                            this.graph.addNode(nodeId, {
-                                type: 'victim',
-                                label: this.formatWalletLabel(walletAddress),
-                                amount: parseFloat(tx.amount) || 0,
-                                currency: tx.currency || 'Unknown',
-                                layer: 0,
-                                data: tx,
-                                threadNotation: notation,
-                                threadInternalIds: Array.from(threadIds),
-                                victimId: `V${victim.id}`
-                            });
+                            // Check if this address is part of a cluster
+                            const cluster = addressToCluster.get(walletAddress.toLowerCase());
+                            let nodeId;
 
-                            // Map node ↔ threads
-                            this.provenanceIndex.nodeToThreads.set(nodeId, threadIds);
+                            if (cluster && this.clusterViewMode) {
+                                // CLUSTER MODE: Create or reuse cluster node
+                                if (clusterNodes.has(cluster.id)) {
+                                    // Cluster node already exists, reuse it
+                                    nodeId = clusterNodes.get(cluster.id);
+                                    // Update thread mappings for existing node
+                                    const existingThreadIds = this.provenanceIndex.nodeToThreads.get(nodeId) || new Set();
+                                    threadIds.forEach(tid => existingThreadIds.add(tid));
+                                    this.provenanceIndex.nodeToThreads.set(nodeId, existingThreadIds);
+                                } else {
+                                    // Create new cluster node
+                                    nodeId = `cluster_${nodeIdCounter++}`;
+                                    this.graph.addNode(nodeId, {
+                                        type: 'cluster',
+                                        label: `🔗 ${cluster.walletId || 'Cluster'}`,
+                                        subLabel: `(${cluster.addresses.length} addresses)`,
+                                        amount: parseFloat(tx.amount) || 0,
+                                        currency: tx.currency || 'Unknown',
+                                        layer: 0,
+                                        data: tx,
+                                        threadNotation: notation,
+                                        threadInternalIds: Array.from(threadIds),
+                                        victimId: `V${victim.id}`,
+                                        clusterId: cluster.id,
+                                        clusterData: cluster,
+                                        addresses: cluster.addresses
+                                    });
+                                    clusterNodes.set(cluster.id, nodeId);
+                                    processedClusters.add(cluster.id);
+
+                                    // Map node ↔ threads
+                                    this.provenanceIndex.nodeToThreads.set(nodeId, threadIds);
+                                }
+                            } else {
+                                // INDIVIDUAL MODE: Create regular node
+                                nodeId = `victim_${nodeIdCounter++}`;
+                                this.graph.addNode(nodeId, {
+                                    type: 'victim',
+                                    label: this.formatWalletLabel(walletAddress),
+                                    amount: parseFloat(tx.amount) || 0,
+                                    currency: tx.currency || 'Unknown',
+                                    layer: 0,
+                                    data: tx,
+                                    threadNotation: notation,
+                                    threadInternalIds: Array.from(threadIds),
+                                    victimId: `V${victim.id}`,
+                                    walletAddress: walletAddress
+                                });
+
+                                // Map node ↔ threads
+                                this.provenanceIndex.nodeToThreads.set(nodeId, threadIds);
+                            }
+
+                            // Update thread → nodes mapping
                             threadIds.forEach(tid => {
                                 if (!this.provenanceIndex.threadToNodes.has(tid)) {
                                     this.provenanceIndex.threadToNodes.set(tid, new Set());
@@ -1032,7 +1177,6 @@ class BATSVisualizationEngine {
                         hop.entries.forEach(entry => {
                             if (!entry) return;
 
-                            const nodeId = `hop_${nodeIdCounter++}`;
                             const threadIds = entry.notation ?
                                 (this.provenanceIndex.notationToIds.get(entry.notation) || new Set()) :
                                 new Set();
@@ -1041,19 +1185,62 @@ class BATSVisualizationEngine {
                                 (entry.multipleSourceInternalIds || []);
                             const walletAddress = entry.toWallet || entry.walletAddress || 'Unknown';
 
-                            this.graph.addNode(nodeId, {
-                                type: entry.entryType || 'hop',
-                                label: this.formatWalletLabel(walletAddress),
-                                entity: entry.exchangeName || entry.exchangeAttribution?.name || entry.entity,
-                                layer: hopIndex + 1,
-                                data: entry,
-                                threadNotation: entry.notation,
-                                threadInternalIds: Array.from(threadIds),
-                                sourceThreadInternalIds: sourceIds
-                            });
+                            // Check if this address is part of a cluster
+                            const cluster = addressToCluster.get(walletAddress.toLowerCase());
+                            let nodeId;
 
-                            // Map node ↔ threads
-                            this.provenanceIndex.nodeToThreads.set(nodeId, threadIds);
+                            if (cluster && this.clusterViewMode) {
+                                // CLUSTER MODE: Create or reuse cluster node
+                                if (clusterNodes.has(cluster.id)) {
+                                    // Cluster node already exists, reuse it
+                                    nodeId = clusterNodes.get(cluster.id);
+                                    // Update thread mappings for existing node
+                                    const existingThreadIds = this.provenanceIndex.nodeToThreads.get(nodeId) || new Set();
+                                    threadIds.forEach(tid => existingThreadIds.add(tid));
+                                    this.provenanceIndex.nodeToThreads.set(nodeId, existingThreadIds);
+                                } else {
+                                    // Create new cluster node
+                                    nodeId = `cluster_${nodeIdCounter++}`;
+                                    this.graph.addNode(nodeId, {
+                                        type: 'cluster',
+                                        label: `🔗 ${cluster.walletId || 'Cluster'}`,
+                                        subLabel: `(${cluster.addresses.length} addresses)`,
+                                        entity: entry.exchangeName || entry.exchangeAttribution?.name || entry.entity,
+                                        layer: hopIndex + 1,
+                                        data: entry,
+                                        threadNotation: entry.notation,
+                                        threadInternalIds: Array.from(threadIds),
+                                        sourceThreadInternalIds: sourceIds,
+                                        clusterId: cluster.id,
+                                        clusterData: cluster,
+                                        addresses: cluster.addresses
+                                    });
+                                    clusterNodes.set(cluster.id, nodeId);
+                                    processedClusters.add(cluster.id);
+
+                                    // Map node ↔ threads
+                                    this.provenanceIndex.nodeToThreads.set(nodeId, threadIds);
+                                }
+                            } else {
+                                // INDIVIDUAL MODE: Create regular node
+                                nodeId = `hop_${nodeIdCounter++}`;
+                                this.graph.addNode(nodeId, {
+                                    type: entry.entryType || 'hop',
+                                    label: this.formatWalletLabel(walletAddress),
+                                    entity: entry.exchangeName || entry.exchangeAttribution?.name || entry.entity,
+                                    layer: hopIndex + 1,
+                                    data: entry,
+                                    threadNotation: entry.notation,
+                                    threadInternalIds: Array.from(threadIds),
+                                    sourceThreadInternalIds: sourceIds,
+                                    walletAddress: walletAddress
+                                });
+
+                                // Map node ↔ threads
+                                this.provenanceIndex.nodeToThreads.set(nodeId, threadIds);
+                            }
+
+                            // Update thread → nodes mapping
                             threadIds.forEach(tid => {
                                 if (!this.provenanceIndex.threadToNodes.has(tid)) {
                                     this.provenanceIndex.threadToNodes.set(tid, new Set());
@@ -1090,6 +1277,11 @@ class BATSVisualizationEngine {
                         });
                     }
                 });
+            }
+
+            // Log cluster statistics if in cluster mode
+            if (this.clusterViewMode && clusterNodes.size > 0) {
+                console.log(`🔗 Cluster View Stats: ${clusterNodes.size} cluster nodes created`);
             }
 
             console.log('✅ Provenance index built:', {
