@@ -3,197 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 20:35)
+## Latest Commit (Auto-updated: 2025-10-26 20:37)
 
-**Commit:** a8248177ca16c8c00c6d06dcf76dbae793b40091
+**Commit:** c3927ec07909ff87365829645f0b22a1d167ef03
 **Author:** Your Name
-**Message:** WALLET EXPLORER Phase 3: Inline wizard integration complete
-
-Added inline "Search Wallet History" option directly in transaction
-lookup modal. Users can now seamlessly switch from hash lookup to
-wallet browsing without leaving their workflow.
-
-## What's New:
-
-### 1. Inline Wallet Explorer Button
-Added prominent button in blockchain lookup modal:
-- Displayed in blue dashed box
-- Clear messaging: "Don't have the transaction hash?"
-- Button: "🔍 Search Wallet History Instead"
-- Helper text: "Browse wallet transactions to find the one you need"
-
-### 2. Smart Context Handling
-The blockchain lookup modal is used in TWO places:
-- ✅ Victim transaction wizard
-- ✅ Hop entry section
-
-The same button works perfectly in BOTH contexts because:
-- `openBlockchainLookup(hopNumber, entryId)` sets context
-- `addWalletTransactionToInvestigation()` respects that context
-- Transaction gets added to the correct place automatically
-
-### 3. Seamless Workflow
-**Before:**
-1. User has wallet address but not transaction hash
-2. Opens external block explorer
-3. Finds transaction
-4. Copies hash
-5. Pastes in B.A.T.S.
-6. Clicks lookup
-
-**Now:**
-1. User has wallet address
-2. Clicks "🔍 Search Wallet History Instead"
-3. Enters wallet address
-4. Clicks transaction → Done!
-
-## User Experience:
-
-### Victim Transaction Flow:
-```
-Add Victim Transaction
-  ↓
-Click "Lookup Transaction"
-  ↓
-See "Don't have the hash?" button
-  ↓
-Click "Search Wallet History Instead"
-  ↓
-Wallet Explorer opens
-  ↓
-Find and click transaction
-  ↓
-Auto-added as victim transaction
-```
-
-### Hop Entry Flow:
-```
-Add Hop Entry
-  ↓
-Click "Lookup Transaction"
-  ↓
-See "Don't have the hash?" button
-  ↓
-Click "Search Wallet History Instead"
-  ↓
-Wallet Explorer opens
-  ↓
-Find and click transaction
-  ↓
-Auto-added to current hop
-```
-
-## Technical Implementation:
-
-**Button Handler:**
-```javascript
-onclick="closeBlockchainLookupModal(); openWalletExplorer();"
-```
-
-**Flow:**
-1. Closes lookup modal
-2. Opens Wallet Explorer
-3. User searches wallet
-4. User clicks transaction
-5. `addWalletTransactionToInvestigation()` called
-6. Closes Wallet Explorer
-7. Populates transaction hash field
-8. Triggers `lookupVictimTransaction()`
-9. Gets added to correct context (victim or hop)
-
-## Access Points Summary:
-
-Now there are **THREE** ways to access Wallet Explorer:
-
-1. **Top-Level Button**
-   - Location: Main toolbar (next to Undo)
-   - Use case: General exploration
-
-2. **Victim Transaction Wizard**
-   - Location: Inside blockchain lookup modal
-   - Use case: Adding victim transactions
-
-3. **Hop Entry Section**
-   - Location: Inside blockchain lookup modal
-   - Use case: Adding hop entries
-
-## UI/UX Design:
-
-**Visual Style:**
-- Blue dashed border (#3498db)
-- Light blue background (#e8f4fd)
-- Centered layout
-- Clear visual hierarchy
-- Friendly messaging
-
-**Placement:**
-- Between transaction hash input and lookup button
-- Visible but not intrusive
-- Natural "or" option in workflow
-
-## Benefits:
-
-✅ **Eliminates Context Switching** - No need for external explorers
-✅ **Faster Workflow** - 6 steps → 4 steps
-✅ **Better UX** - Discoverable within natural workflow
-✅ **Consistent** - Same experience everywhere
-✅ **Smart** - Context-aware auto-population
-
-## Complete Feature Status:
-
-### Phase 1: Foundation ✅
-- Modal UI with asset summary
-- Transaction table with green/red highlighting
-- Pagination, filtering, running balance
-- Top-level button
-- Ethereum/EVM support (30+ chains)
-
-### Phase 2: Multi-Chain ✅
-- Bitcoin support (mempool.space)
-- Tron support (TronGrid)
-- Solana support (Solana RPC)
-- 35+ total blockchains
-
-### Phase 3: Integration ✅
-- Inline wizard buttons
-- Seamless workflow integration
-- Context-aware behavior
-- Complete user journey
-
-## Wallet Explorer is 100% Complete! 🎉
-
-The feature is fully implemented with:
-- 35+ blockchain support
-- Beautiful UI/UX
-- Three access points
-- Context-aware integration
-- Comprehensive filtering
-- Smart caching
-- Entity labels ready
-- Professional styling
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with Wallet Explorer completion documentation
 
 ### Changed Files:
 ```
- index.html | 18 ++++++++++++++++--
- 1 file changed, 16 insertions(+), 2 deletions(-)
+ CLAUDE.md | 297 +++++++++++++++++++++++++++++++++++---------------------------
+ 1 file changed, 166 insertions(+), 131 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a824817 WALLET EXPLORER Phase 3: Inline wizard integration complete (0 seconds ago)
-- 473b65d WALLET EXPLORER Phase 2: Bitcoin, Tron, and Solana support (25 minutes ago)
-- 05dc805 WALLET EXPLORER Phase 1: Complete foundation with Ethereum support (29 minutes ago)
-- c4d28d0 Fix Sui transaction parsing - use ProgrammableTransaction structure (69 minutes ago)
-- b2b1769 Enhanced Sui debug logging to show full JSON structure (71 minutes ago)
-- 9158b87 Add debug logging for Sui transaction parsing (73 minutes ago)
-- a14b41e CRITICAL FIX: Update netlify.toml CSP to include Sui and bridge endpoints (76 minutes ago)
-- fb9a441 Update CLAUDE.md with Synapse Protocol integration documentation (83 minutes ago)
-- 6284019 Add Synapse Protocol bridge auto-detection with REST API integration (86 minutes ago)
-- 227af18 Fix Sui transaction lookup - add missing JSON-RPC handler (2 hours ago)
+- c3927ec Update CLAUDE.md with Wallet Explorer completion documentation (0 seconds ago)
+- a824817 WALLET EXPLORER Phase 3: Inline wizard integration complete (2 minutes ago)
+- 473b65d WALLET EXPLORER Phase 2: Bitcoin, Tron, and Solana support (27 minutes ago)
+- 05dc805 WALLET EXPLORER Phase 1: Complete foundation with Ethereum support (31 minutes ago)
+- c4d28d0 Fix Sui transaction parsing - use ProgrammableTransaction structure (71 minutes ago)
+- b2b1769 Enhanced Sui debug logging to show full JSON structure (73 minutes ago)
+- 9158b87 Add debug logging for Sui transaction parsing (75 minutes ago)
+- a14b41e CRITICAL FIX: Update netlify.toml CSP to include Sui and bridge endpoints (78 minutes ago)
+- fb9a441 Update CLAUDE.md with Synapse Protocol integration documentation (85 minutes ago)
+- 6284019 Add Synapse Protocol bridge auto-detection with REST API integration (89 minutes ago)
 
 ## Key Features
 
