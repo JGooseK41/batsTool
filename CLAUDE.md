@@ -5,47 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-26 22:41)
 
-**Commit:** 537bc5e7ff20862ce71cf3d497dcc4fff30acc40
+**Commit:** 8244c0a576a05420157719e01eaa2488c9c6ad61
 **Author:** Your Name
-**Message:** Reorganize victim transaction form layout for cleaner appearance
-
-Moved chain dropdown to sit beside Wallet Explorer button.
-
-**Changes:**
-- Row 1: Transaction hash input + Lookup Hash button
-- Row 2: Chain dropdown (compact) + Wallet Explorer button
-- Removed duplicate helper text
-- Chain dropdown no longer uses flex: 1 (compact size)
-- Eliminated gaps of empty space
-
-**Visual Layout:**
-```
-[Transaction Hash Input Field...      ] [🔍 Lookup Hash]
-Chain: [Auto-detect ▼] [🔍 Wallet Explorer]
-```
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- index.html | 89 +++++++++++++++++++++++++++++++-------------------------------
- 1 file changed, 44 insertions(+), 45 deletions(-)
+ CLAUDE.md | 49 ++++++++++++++++++++++++++++++++++---------------
+ 1 file changed, 34 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 537bc5e Reorganize victim transaction form layout for cleaner appearance (0 seconds ago)
+- 8244c0a Update CLAUDE.md with latest commit info (0 seconds ago)
+- 537bc5e Reorganize victim transaction form layout for cleaner appearance (5 seconds ago)
 - c537feb Final CLAUDE.md update (4 minutes ago)
 - 4b04f87 Update CLAUDE.md with latest commit info (4 minutes ago)
 - d69d5e8 Update CLAUDE.md with latest commit info (4 minutes ago)
 - 1b2c566 Update CLAUDE.md with latest commit info (4 minutes ago)
 - b562a37 Update CLAUDE.md with latest commit info (4 minutes ago)
 - c80d506 Update CLAUDE.md with latest commit info (4 minutes ago)
-- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (4 minutes ago)
+- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (5 minutes ago)
 - 282a0a0 Add Wallet Explorer button to victim transaction form (13 minutes ago)
-- 3f46bcb Reorganize transaction lookup modal with clearer button choices (17 minutes ago)
 
 ## Key Features
 
