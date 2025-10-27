@@ -14643,6 +14643,61 @@ function exportRedWalletIndexCSV() {
         }
 
         // Render transaction table
+        // Find all investigation threads entering this wallet
+        function findInvestigationThreadsForWallet(walletAddress) {
+            const threads = [];
+            const walletLower = walletAddress.toLowerCase();
+
+            // Search victim transactions
+            if (investigation.victims) {
+                investigation.victims.forEach(victim => {
+                    victim.transactions.forEach(transaction => {
+                        if (transaction.receivingWallet &&
+                            transaction.receivingWallet.toLowerCase() === walletLower &&
+                            transaction.txHash) {
+                            threads.push({
+                                threadId: `V${victim.id}-T${transaction.id}`,
+                                txHash: transaction.txHash.toLowerCase(),
+                                amount: transaction.amount,
+                                currency: transaction.currency,
+                                type: 'victim',
+                                isCurrent: walletExplorerState.sourceThreadId === `V${victim.id}-T${transaction.id}`
+                            });
+                        }
+                    });
+                });
+            }
+
+            // Search hop entries
+            if (investigation.hops) {
+                investigation.hops.forEach(hop => {
+                    if (hop.entries) {
+                        hop.entries.forEach(entry => {
+                            // Check destination wallet (for trace entries)
+                            if (entry.destinationWallet &&
+                                entry.destinationWallet.toLowerCase() === walletLower &&
+                                entry.transactionHash &&
+                                entry.entryType === 'trace') {
+                                const threadId = entry.notation || `H${hop.hopNumber}-E${entry.id}`;
+                                threads.push({
+                                    threadId: threadId,
+                                    txHash: entry.transactionHash.toLowerCase(),
+                                    amount: entry.amount,
+                                    currency: entry.currency,
+                                    type: 'hop',
+                                    hopNumber: hop.hopNumber,
+                                    isCurrent: walletExplorerState.sourceThreadId === threadId
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            console.log(`Found ${threads.length} investigation threads entering wallet ${walletAddress}:`, threads);
+            return threads;
+        }
+
         function renderTransactionTable() {
             const tbody = document.getElementById('walletExplorerTableBody');
             tbody.innerHTML = '';
@@ -14654,6 +14709,9 @@ function exportRedWalletIndexCSV() {
                 balanceHeader.style.display = showBalance ? '' : 'none';
             }
 
+            // Find all investigation threads for this wallet
+            const investigationThreads = findInvestigationThreadsForWallet(walletExplorerState.address);
+
             const transactions = walletExplorerState.filteredTransactions;
             const start = (walletExplorerState.currentPage - 1) * walletExplorerState.itemsPerPage;
             const end = start + walletExplorerState.itemsPerPage;
@@ -14662,7 +14720,12 @@ function exportRedWalletIndexCSV() {
             pageTransactions.forEach(tx => {
                 const row = document.createElement('tr');
 
-                // Check if this is the traced transaction to highlight
+                // Check if this transaction is part of the investigation
+                const matchedThread = investigationThreads.find(t => t.txHash === tx.hash.toLowerCase());
+                const isInvestigationThread = !!matchedThread;
+                const isCurrentThread = matchedThread?.isCurrent;
+
+                // Check if this is the traced transaction to highlight (legacy highlighting)
                 const isHighlighted = walletExplorerState.highlightTxHash &&
                                       tx.hash.toLowerCase() === walletExplorerState.highlightTxHash;
 
@@ -14673,11 +14736,17 @@ function exportRedWalletIndexCSV() {
                 }
                 row.className = rowClass;
 
-                // Add highlight styling directly if needed
-                if (isHighlighted) {
+                // Add highlight styling for investigation threads
+                if (isCurrentThread) {
+                    // Current thread - bright yellow/orange highlight
                     row.style.background = 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)';
                     row.style.borderLeft = '5px solid #f39c12';
                     row.style.boxShadow = '0 0 15px rgba(243, 156, 18, 0.3)';
+                } else if (isInvestigationThread) {
+                    // Other investigation thread - subtle blue highlight
+                    row.style.background = 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)';
+                    row.style.borderLeft = '5px solid #2196f3';
+                    row.style.boxShadow = '0 0 10px rgba(33, 150, 243, 0.2)';
                 }
 
                 const date = new Date(tx.timestamp).toLocaleString();
@@ -14689,10 +14758,13 @@ function exportRedWalletIndexCSV() {
 
                 const entityLabel = tx.entityLabel ? `<span class="wallet-entity-label">${tx.entityLabel}</span>` : '';
 
-                // Add highlight badge if this is the traced transaction
-                const highlightBadge = isHighlighted ?
-                    `<span style="background: #f39c12; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 8px;">🎯 TRACED THREAD</span>`
-                    : '';
+                // Add thread badge for investigation threads
+                let threadBadge = '';
+                if (isCurrentThread) {
+                    threadBadge = `<span style="background: #f39c12; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 8px;">🎯 ${matchedThread.threadId}</span>`;
+                } else if (isInvestigationThread) {
+                    threadBadge = `<span style="background: #2196f3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 8px;">📍 ${matchedThread.threadId}</span>`;
+                }
 
                 // Conditionally include balance column
                 const balanceCell = showBalance ? `<td style="padding: 12px; text-align: right;">${balance}</td>` : '';
@@ -14706,7 +14778,7 @@ function exportRedWalletIndexCSV() {
                                ${isSelected ? 'checked' : ''}
                                onchange="toggleTransactionSelection('${tx.hash}')">
                     </td>
-                    <td style="padding: 12px;">${date}${highlightBadge}</td>
+                    <td style="padding: 12px;">${date}${threadBadge}</td>
                     <td style="padding: 12px;">${typeIcon} ${tx.type}</td>
                     <td style="padding: 12px; text-align: right; font-weight: 600;">${amountPrefix}${tx.amount.toFixed(6)} ${tx.asset}</td>
                     ${balanceCell}
