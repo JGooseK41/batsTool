@@ -18756,13 +18756,82 @@ function closeFinalizationModal() {
     if (modal) modal.remove();
 }
 
+// View thread in Wallet Explorer with highlighted transaction
+function viewThreadInWalletExplorer(threadId) {
+    console.log(`🔍 Opening Wallet Explorer for thread: ${threadId}`);
+
+    // Parse the thread ID to find the source
+    // Thread ID formats: "V1-T1", "V2-T3", or "(V1-T1) H1", "(V2-T1,T2) H2"
+    let sourceWallet = null;
+    let blockchain = null;
+    let txHash = null;
+
+    // Check if it's a victim transaction (for Hop 1)
+    if (threadId.match(/^V\d+-T\d+$/)) {
+        const match = threadId.match(/^V(\d+)-T(\d+)$/);
+        if (match) {
+            const victimId = parseInt(match[1]);
+            const transactionId = parseInt(match[2]);
+
+            const victim = investigation.victims.find(v => v.id === victimId);
+            if (victim) {
+                const transaction = victim.transactions.find(t => t.id === transactionId);
+                if (transaction) {
+                    sourceWallet = transaction.receivingWallet;
+                    blockchain = transaction.chain || 'ethereum'; // Default to ethereum if not set
+                    txHash = transaction.txHash;
+                }
+            }
+        }
+    }
+    // Check if it's a hop entry (for Hop 2+)
+    else if (threadId.includes('H')) {
+        // Parse something like "(V1-T1) H1" or "(V1-T1,T2) H2"
+        const hopMatch = threadId.match(/H(\d+)/);
+        if (hopMatch) {
+            const hopNum = parseInt(hopMatch[1]);
+            const hop = investigation.hops.find(h => h.hopNumber === hopNum);
+
+            if (hop && hop.entries && hop.entries.length > 0) {
+                // Get the first entry for this thread (they all go to same destination wallet)
+                const entry = hop.entries[0];
+                sourceWallet = entry.destinationWallet;
+                blockchain = entry.chain || 'ethereum';
+                txHash = entry.transactionHash;
+            }
+        }
+    }
+
+    if (!sourceWallet) {
+        alert('Could not find wallet address for this thread.');
+        return;
+    }
+
+    if (!blockchain) {
+        alert('Could not determine blockchain for this thread.');
+        return;
+    }
+
+    console.log(`📍 Opening Wallet Explorer:`);
+    console.log(`   Wallet: ${sourceWallet}`);
+    console.log(`   Blockchain: ${blockchain}`);
+    console.log(`   Highlight TX: ${txHash || 'None'}`);
+
+    // Close the available threads modal
+    const modal = document.getElementById('availableThreadsModal');
+    if (modal) modal.remove();
+
+    // Open Wallet Explorer with transaction highlighted
+    openWalletExplorer(sourceWallet, blockchain, txHash);
+}
+
 function viewAvailableThreads(hopNumber) {
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
-    
+
     console.log('Viewing available threads for hop:', hop.hopNumber);
     console.log('Current hop entries:', hop.entries);
-    
+
     const availableThreads = getAvailableSourcesForHop(hop.hopNumber, null);
     console.log('Available threads returned:', availableThreads);
     
@@ -18795,6 +18864,7 @@ function viewAvailableThreads(hopNumber) {
                                     <th style="padding: 12px; text-align: right;">Available Amount</th>
                                     <th style="padding: 12px; text-align: left;">Currency</th>
                                     <th style="padding: 12px; text-align: left;">Status</th>
+                                    <th style="padding: 12px; text-align: center;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -18805,8 +18875,8 @@ function viewAvailableThreads(hopNumber) {
                                             <td style="padding: 10px; font-family: monospace;">${thread.threadId}</td>
                                             <td style="padding: 10px;">${thread.displayText}</td>
                                             <td style="padding: 10px; font-size: 13px;">
-                                                ${thread.datetime ? 
-                                                    formatDateTimeForReport(thread.datetime, thread.timezone) : 
+                                                ${thread.datetime ?
+                                                    formatDateTimeForReport(thread.datetime, thread.timezone) :
                                                     '<span style="color: #999;">Not specified</span>'
                                                 }
                                             </td>
@@ -18815,10 +18885,18 @@ function viewAvailableThreads(hopNumber) {
                                             </td>
                                             <td style="padding: 10px;">${thread.currency}</td>
                                             <td style="padding: 10px;">
-                                                ${isFullyAssigned ? 
-                                                    '<span style="color: #dc3545;">✗ Fully Assigned</span>' : 
+                                                ${isFullyAssigned ?
+                                                    '<span style="color: #dc3545;">✗ Fully Assigned</span>' :
                                                     '<span style="color: #28a745;">✓ Available</span>'
                                                 }
+                                            </td>
+                                            <td style="padding: 10px; text-align: center;">
+                                                <button class="btn btn-primary"
+                                                        onclick="viewThreadInWalletExplorer('${thread.threadId.replace(/'/g, "\\'")}')"
+                                                        style="padding: 8px 12px; font-size: 13px; white-space: nowrap;"
+                                                        title="Open Wallet Explorer with highlighted incoming transaction">
+                                                    🔍 View in Wallet Explorer
+                                                </button>
                                             </td>
                                         </tr>
                                     `;
