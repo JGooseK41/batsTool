@@ -3,42 +3,69 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 10:12)
+## Latest Commit (Auto-updated: 2025-10-27 10:40)
 
-**Commit:** ad37883c02df1c9555e2bae42186beb8a610d57d
+**Commit:** 5b5fc21e0799a49b19462683d2cb0a1bf26fc27c
 **Author:** Your Name
-**Message:** Feature: Add info icon with tooltip explaining negative token balances
+**Message:** Feature: Gray out already-allocated transactions in wallet explorer
 
-✨ UX IMPROVEMENT: Negative Balance Explanation
+✨ UX ENHANCEMENT: Visual indicator for used transactions
 
-FEATURE: Info icon (ℹ️) appears next to negative balances with helpful tooltip
+FEATURE: Transactions already used in the investigation are now grayed out
 
-ISSUE: Users see negative balances (e.g., -55 LINK) and don't understand why
-- Confusing when Etherscan shows 0 balance
-- No explanation of why on-chain math doesn't match
+ISSUE: Users could accidentally try to allocate the same transaction twice
+- No visual indication that a transaction was already used
+- Could lead to double-allocation errors
+- Confusing which transactions are still available
 
-IMPLEMENTATION (lines 14903-14917):
-Added info icon that appears only when asset.balance < 0
-- Cursor changes to 'help' on hover
-- Comprehensive title attribute with explanations
+IMPLEMENTATION:
 
-TOOLTIP EXPLAINS:
-1. DEX Swaps: Sold token for another asset (swap shows as OUT, but IN is different token)
-2. Off-Chain Purchases: CEX purchases/transfers not visible on blockchain
-3. API Limitations: Some contract interactions not fully captured
-4. Mixed Sources: Airdrops, off-chain swaps, CEX transfers
+1. Helper Function (line 15574):
+   - isTransactionUsedInInvestigation(txHash)
+   - Searches all hop entries for matching transaction hash
+   - Returns usage details (location, entry type, notation, amount)
 
-EXAMPLE:
-User sold 405 LINK for 2.07 ETH in DEX:
-- Tool shows: -55 LINK (405 OUT, 350 IN = -55)
-- Etherscan shows: 0 LINK (all swapped away)
-- Info icon explains: ℹ️ with tooltip about DEX swaps
+2. Visual Styling (line 15795):
+   - Gray gradient background (#f5f5f5 → #e8e8e8)
+   - Gray left border (#6c757d)
+   - Reduced opacity (0.6)
+   - "not-allowed" cursor
+   - Tooltip: "Already allocated in [notation] as [type]"
+
+3. Badge Display (line 15832):
+   - "✓ ALLOCATED ([notation])" badge in TYPE column
+   - Shows specific hop entry (e.g., "H2-E1")
+   - Gray badge (#6c757d background)
+
+4. Disabled Checkbox (line 15859):
+   - Checkbox disabled and grayed out
+   - Tooltip explains allocation location
+   - Same styling as change outputs
+
+5. Disabled Action Buttons (line 15892):
+   - "Add to Investigation" button hidden
+   - "Write Off" button hidden
+   - Replaced with "Already Used" text
+   - Explorer link still available
+
+6. Disabled Row Interaction (line 15813):
+   - Row clicks disabled in ART mode
+   - Prevents selection of used transactions
+   - Consistent with change output behavior
 
 USER BENEFIT:
-- Reduces confusion about negative balances
-- Educates users about blockchain transaction visibility
-- Provides actionable recommendation (check Etherscan)
-- Context-sensitive help (only shows for negative balances)
+- ✅ Clear visual distinction between available and used transactions
+- ✅ Prevents accidental double-allocation
+- ✅ Shows exactly where transaction was used (hop + entry notation)
+- ✅ Reduces user errors in complex investigations
+- ✅ Consistent with change output handling
+- ✅ Professional gray styling matches application design
+
+EXAMPLE:
+User viewing wallet with 10 OUT transactions:
+- 3 already traced in H2 → Show grayed out with "✓ ALLOCATED (V1-T1 H2)" badge
+- 2 written off in H3 → Show grayed out with "✓ ALLOCATED (V1-T1 H3)" badge
+- 5 available → Normal styling, interactive, can be selected
 
 🤖 Generated with Claude Code
 
@@ -46,22 +73,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 18 +++++++++++++++++-
- 1 file changed, 17 insertions(+), 1 deletion(-)
+ CLAUDE.md  | 65 +++++++++++++++++++++++++++++++++++++++------------
+ index.html | 78 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 124 insertions(+), 19 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ad37883 Feature: Add info icon with tooltip explaining negative token balances (0 seconds ago)
-- d2aa686 Fix: Improve ETH variant filtering to catch Unicode characters (EꓔH) (6 minutes ago)
-- 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (9 minutes ago)
-- 25d0eef Auto-sync CLAUDE.md (14 minutes ago)
-- 532cfca Sync CLAUDE.md (final) (15 minutes ago)
-- 6f8070b Update CLAUDE.md with latest commit info (15 minutes ago)
-- 8716015 Fix: Deduplicate transactions to prevent double-counting - CRITICAL BUG #2 (17 minutes ago)
-- 8447862 Docs: Add comprehensive coverage analysis for internal transaction fix (22 minutes ago)
-- c3bd92c Fix: Internal transactions incorrectly filtered as failed - CRITICAL BUG (27 minutes ago)
-- a01c229 Debug: Add comprehensive logging for internal transaction processing (31 minutes ago)
+- 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (1 second ago)
+- ad37883 Feature: Add info icon with tooltip explaining negative token balances (28 minutes ago)
+- d2aa686 Fix: Improve ETH variant filtering to catch Unicode characters (EꓔH) (34 minutes ago)
+- 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (37 minutes ago)
+- 25d0eef Auto-sync CLAUDE.md (43 minutes ago)
+- 532cfca Sync CLAUDE.md (final) (43 minutes ago)
+- 6f8070b Update CLAUDE.md with latest commit info (43 minutes ago)
+- 8716015 Fix: Deduplicate transactions to prevent double-counting - CRITICAL BUG #2 (45 minutes ago)
+- 8447862 Docs: Add comprehensive coverage analysis for internal transaction fix (50 minutes ago)
+- c3bd92c Fix: Internal transactions incorrectly filtered as failed - CRITICAL BUG (55 minutes ago)
 
 ## Key Features
 

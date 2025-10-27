@@ -2978,6 +2978,50 @@
         </div>
     </div>
 
+    <!-- Entry Confirmation Modal -->
+    <div id="entryConfirmationModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>✅ Confirm Entry Creation</h2>
+                <p>Review and confirm this entry before adding it to the investigation</p>
+            </div>
+
+            <!-- Entry Preview Section -->
+            <div id="entryPreviewSection" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <!-- Will be populated by JavaScript -->
+            </div>
+
+            <!-- ART Impact Section -->
+            <div id="artImpactSection" style="background: #e8f4f8; border: 2px solid #3498db; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px; color: #2c3e50;">📊 ART Impact</h3>
+                <div id="artImpactDetails">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Available Threads Section -->
+            <div id="availableThreadsSection" style="background: #fff3cd; border: 2px solid #f39c12; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px; color: #856404;">🧵 Available Threads for This Wallet</h3>
+                <div id="availableThreadsDetails">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="closeEntryConfirmationModal()" style="padding: 12px 30px;">
+                    ❌ Cancel
+                </button>
+                <button class="btn btn-primary" onclick="confirmEntryAndStay()" style="padding: 12px 30px; background: #28a745;">
+                    ✅ Create & Stay in Explorer
+                </button>
+                <button class="btn btn-primary" onclick="confirmEntryAndReturn()" style="padding: 12px 30px;">
+                    ✅ Create & Return to Hops
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- API Settings Modal -->
     <div id="apiSettingsModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
@@ -16092,9 +16136,6 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     console.log(`🔗 Using cluster source address: ${walletAddress}`);
                 }
 
-                // Close wallet explorer
-                closeWalletExplorer();
-
                 // CONTEXT-AWARE ROUTING
                 const victimSection = document.getElementById('victimSetup');
                 const inVictimSetup = (victimSection && victimSection.style.display !== 'none') || !investigation.rootTotalConfirmed;
@@ -16102,6 +16143,9 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 if (inVictimSetup) {
                     // VICTIM SETUP MODE: Directly populate victim transaction
                     console.log('Adding to victim transaction...');
+
+                    // Close wallet explorer for victim mode
+                    closeWalletExplorer();
 
                     // Find the most recent victim or create one
                     let victim;
@@ -16197,30 +16241,54 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         }
                     }
 
-                    // No commingling detected - use standard blockchain lookup modal
-                    console.log('No commingling detected, opening blockchain lookup modal...');
+                    // No commingling detected - create trace entry directly
+                    console.log('No commingling detected, creating trace entry...');
 
-                    const txHashInput = document.getElementById('txHashInput');
-                    const chainSelector = document.getElementById('chainSelector');
-
-                    if (txHashInput && chainSelector) {
-                        txHashInput.value = txHash;
-                        chainSelector.value = blockchain;
-
-                        // Store source thread ID for auto-population
-                        window.walletExplorerSourceThread = sourceThreadId;
-                        console.log(`💾 Stored source thread for auto-population: ${sourceThreadId}`);
-
-                        // Show the modal
-                        showModal('blockchainLookupModal');
-
-                        // Auto-trigger lookup
-                        setTimeout(() => {
-                            lookupTransaction();
-                        }, 300);
-                    } else {
-                        throw new Error('Blockchain lookup modal not found. Please use the manual transaction entry.');
+                    // Get the hop
+                    const hop = investigation.hops.find(h => h.hopNumber === currentHopNumber);
+                    if (!hop) {
+                        throw new Error('Hop not found');
                     }
+
+                    // Create trace entry data
+                    const traceEntry = {
+                        id: hop.entries.length + 1,
+                        hopNumber: currentHopNumber,
+                        entryType: 'trace',
+                        notation: '',
+                        amount: tx.amount.toString(),
+                        currency: tx.asset,
+                        customCurrency: '',
+                        category: '',
+                        justification: '',
+                        // Enhanced fields
+                        sourceChain: [blockchain],
+                        displayNotation: '',
+                        summaryNotation: '',
+                        victimNumbers: '',
+                        transactionNumbers: '',
+                        availableSourceAmount: 0,
+                        sourceThreadId: sourceThreadId,
+                        sourceThreadData: null,
+                        assignmentPercentage: 0,
+                        generatedNotation: '',
+                        isConvergence: false,
+                        convergenceData: null,
+                        fromWallet: walletAddress,
+                        fromWalletType: '',
+                        fromWalletId: '',
+                        toWallet: tx.counterparty,
+                        toWalletType: '',
+                        toWalletId: '',
+                        transactionHash: tx.hash,
+                        timestamp: new Date(tx.timestamp).toISOString().slice(0, 16),
+                        timezone: 'UTC',
+                        chain: blockchain,
+                        notes: `Trace entry created from Wallet Explorer\nThread: ${sourceThreadId}\nFrom: ${walletAddress}\nTo: ${tx.counterparty}\nAmount: ${tx.amount} ${tx.asset}\nTimestamp: ${new Date(tx.timestamp).toUTCString()}`
+                    };
+
+                    // Show confirmation modal instead of blockchain lookup
+                    showEntryConfirmationModal(traceEntry, tx);
                 }
 
             } catch (error) {
@@ -16670,26 +16738,13 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     throw new Error('Transaction data not found in wallet history');
                 }
 
-                // Confirm write-off
-                const confirmed = confirm(
-                    `📝 Write Off Transaction\n\n` +
-                    `Are you sure you want to write off this transaction?\n\n` +
-                    `Amount: ${tx.amount} ${tx.asset}\n` +
-                    `From: ${walletExplorerState.address.slice(0, 20)}...\n` +
-                    `To: ${tx.counterparty.slice(0, 20)}...\n` +
-                    `Thread: ${walletExplorerState.sourceThreadId}\n\n` +
-                    `This will create a write-off entry in Hop ${currentHopNumber} and reduce the ART.`
-                );
-
-                if (!confirmed) return;
-
                 // Get the hop
                 const hop = investigation.hops.find(h => h.hopNumber === currentHopNumber);
                 if (!hop) {
                     throw new Error('Hop not found');
                 }
 
-                // Create write-off entry
+                // Create write-off entry data (don't add to hop yet - will be added after confirmation)
                 const writeoffEntry = {
                     id: hop.entries.length + 1,
                     hopNumber: currentHopNumber,
@@ -16723,43 +16778,304 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     timestamp: new Date(tx.timestamp).toISOString().slice(0, 16),
                     timezone: 'UTC',
                     chain: walletExplorerState.blockchain,
-                    notes: `Write-off created from Wallet Explorer\nThread: ${walletExplorerState.sourceThreadId}\nWallet: ${walletExplorerState.address}\nOutbound to: ${tx.counterparty}\nAmount: ${tx.amount} ${tx.asset}\nTimestamp: ${new Date(tx.timestamp).toUTCString()}`
+                    notes: `Write-off created from Wallet Explorer\nThread: ${walletExplorerState.sourceThreadId}\nWallet: ${walletExplorerState.address}\nOutbound to: ${tx.counterparty}\nAmount: ${tx.amount} ${tx.asset}\nTimestamp: ${new Date(tx.timestamp).toUTCString()}`,
+                    writeoffApplied: false // Will be applied when hop is closed
                 };
 
-                // Add entry to hop
-                hop.entries.push(writeoffEntry);
-
-                // Sort entries chronologically
-                sortHopEntriesChronologically(hop);
-
-                // Close wallet explorer
-                closeWalletExplorer();
-
-                // Save and render
-                saveToStorage();
-                renderHops();
-
-                // Show success message and scroll to the hop
-                alert(
-                    `✅ Write-off Created!\n\n` +
-                    `Amount: ${tx.amount} ${tx.asset}\n` +
-                    `Thread: ${walletExplorerState.sourceThreadId}\n` +
-                    `Hop: ${currentHopNumber}\n\n` +
-                    `The write-off has been added and will reduce the ART when the hop is finalized.`
-                );
-
-                // Scroll to the hop
-                setTimeout(() => {
-                    const hopElement = document.getElementById(`hop-${currentHopNumber}`);
-                    if (hopElement) {
-                        hopElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                }, 100);
+                // Show confirmation modal instead of directly creating entry
+                showEntryConfirmationModal(writeoffEntry, tx);
 
             } catch (error) {
                 console.error('Error writing off transaction:', error);
                 alert('Error writing off transaction: ' + error.message);
             }
+        }
+
+        // ====================================
+        // ENTRY CONFIRMATION MODAL
+        // ====================================
+
+        // Global state for pending entry
+        let pendingEntryData = null;
+
+        // Show entry confirmation modal with preview
+        function showEntryConfirmationModal(entryData, tx) {
+            pendingEntryData = { entryData, tx };
+
+            // Populate entry preview
+            populateEntryPreview(entryData, tx);
+
+            // Calculate and show ART impact
+            calculateAndShowARTImpact(entryData);
+
+            // Show available threads for this wallet
+            showAvailableThreadsForWallet();
+
+            // Show the modal
+            showModal('entryConfirmationModal');
+        }
+
+        // Populate entry preview section
+        function populateEntryPreview(entryData, tx) {
+            const section = document.getElementById('entryPreviewSection');
+
+            const entryTypeLabel = entryData.entryType === 'writeoff' ? '📝 Write-Off' :
+                                   entryData.entryType === 'swap' ? '🔄 Swap' :
+                                   entryData.entryType === 'bridge' ? '🌉 Bridge' :
+                                   '📍 Trace';
+
+            const html = `
+                <h3 style="margin-bottom: 15px; color: #333;">${entryTypeLabel} Entry Preview</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Amount</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #2c3e50;">${parseFloat(entryData.amount).toLocaleString()} ${entryData.currency}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Entry Type</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #2c3e50;">${entryData.entryType.toUpperCase()}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">From Wallet</div>
+                        <div style="font-family: monospace; font-size: 14px; color: #2c3e50;">${entryData.fromWallet ? entryData.fromWallet.substring(0, 20) + '...' : 'N/A'}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">To Wallet</div>
+                        <div style="font-family: monospace; font-size: 14px; color: #2c3e50;">${entryData.toWallet ? entryData.toWallet.substring(0, 20) + '...' : 'N/A'}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Blockchain</div>
+                        <div style="font-size: 14px; color: #2c3e50;">${entryData.chain || 'N/A'}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Transaction Hash</div>
+                        <div style="font-family: monospace; font-size: 14px; color: #2c3e50;">${entryData.transactionHash ? entryData.transactionHash.substring(0, 20) + '...' : 'N/A'}</div>
+                    </div>
+                </div>
+                ${entryData.sourceThreadId ? `
+                    <div style="margin-top: 15px; padding: 12px; background: #e8f4f8; border-left: 4px solid #3498db; border-radius: 4px;">
+                        <strong>Source Thread:</strong> ${entryData.sourceThreadId}
+                    </div>
+                ` : ''}
+            `;
+
+            section.innerHTML = html;
+        }
+
+        // Calculate and show ART impact
+        function calculateAndShowARTImpact(entryData) {
+            const section = document.getElementById('artImpactDetails');
+
+            // Get current ART
+            const currentHop = getCurrentHop();
+            const sourceThreadId = entryData.sourceThreadId;
+            const currency = entryData.currency;
+            const entryAmount = parseFloat(entryData.amount);
+
+            if (!sourceThreadId) {
+                section.innerHTML = '<div style="color: #666;">No thread context available for ART calculation</div>';
+                return;
+            }
+
+            // Get available threads
+            const availableThreads = getAvailableSourcesForHop(currentHop, currency);
+            const sourceThread = availableThreads.find(t => t.threadId === sourceThreadId);
+
+            if (!sourceThread) {
+                section.innerHTML = '<div style="color: #666;">Thread not found</div>';
+                return;
+            }
+
+            const currentART = sourceThread.availableAmount;
+            const newART = currentART - entryAmount;
+            const artChange = -entryAmount;
+
+            const artColor = newART >= 0 ? '#28a745' : '#dc3545';
+            const changeColor = artChange >= 0 ? '#28a745' : '#dc3545';
+
+            const html = `
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                    <div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Current ART</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #2c3e50;">${currentART.toLocaleString()} ${currency}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Change</div>
+                        <div style="font-size: 24px; font-weight: bold; color: ${changeColor};">${artChange.toLocaleString()} ${currency}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">New ART</div>
+                        <div style="font-size: 24px; font-weight: bold; color: ${artColor};">${newART.toLocaleString()} ${currency}</div>
+                    </div>
+                </div>
+                ${newART < 0 ? `
+                    <div style="margin-top: 15px; padding: 12px; background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 4px; color: #721c24;">
+                        <strong>⚠️ Warning:</strong> This entry will result in a negative ART. Please verify the amount is correct.
+                    </div>
+                ` : ''}
+            `;
+
+            section.innerHTML = html;
+        }
+
+        // Show available threads for current wallet
+        function showAvailableThreadsForWallet() {
+            const section = document.getElementById('availableThreadsDetails');
+
+            if (!walletExplorerState.address) {
+                section.innerHTML = '<div style="color: #666;">No wallet context available</div>';
+                return;
+            }
+
+            const currentHop = getCurrentHop();
+            if (!currentHop) {
+                section.innerHTML = '<div style="color: #666;">No hop currently being built</div>';
+                return;
+            }
+
+            // Get all available threads
+            const allThreads = {};
+
+            // Build index of available threads by currency
+            if (investigation.victims) {
+                investigation.victims.forEach(victim => {
+                    victim.transactions.forEach(tx => {
+                        if (!tx.currency) return;
+
+                        const threadId = `V${victim.id}-T${tx.id}`;
+                        const availableThreads = getAvailableSourcesForHop(currentHop, tx.currency);
+                        const thread = availableThreads.find(t => t.threadId === threadId);
+
+                        if (thread && thread.availableAmount > 0) {
+                            if (!allThreads[tx.currency]) {
+                                allThreads[tx.currency] = [];
+                            }
+                            allThreads[tx.currency].push(thread);
+                        }
+                    });
+                });
+            }
+
+            if (Object.keys(allThreads).length === 0) {
+                section.innerHTML = '<div style="color: #856404;">No available threads remaining for this hop</div>';
+                return;
+            }
+
+            let html = '';
+            for (const [currency, threads] of Object.entries(allThreads)) {
+                html += `
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-weight: bold; margin-bottom: 8px; color: #856404;">${currency}</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            ${threads.map(thread => `
+                                <div style="padding: 8px 12px; background: white; border: 2px solid ${thread.threadId === pendingEntryData?.entryData?.sourceThreadId ? '#f39c12' : '#dee2e6'}; border-radius: 6px;">
+                                    <div style="font-weight: bold; font-size: 14px;">${thread.threadId}</div>
+                                    <div style="font-size: 12px; color: #666;">${thread.availableAmount.toLocaleString()} ${currency}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            section.innerHTML = html;
+        }
+
+        // Close entry confirmation modal
+        function closeEntryConfirmationModal() {
+            pendingEntryData = null;
+            hideModal('entryConfirmationModal');
+        }
+
+        // Confirm entry and stay in wallet explorer
+        async function confirmEntryAndStay() {
+            if (!pendingEntryData) return;
+
+            try {
+                // Create the entry
+                await createEntryFromPendingData();
+
+                // Close confirmation modal
+                hideModal('entryConfirmationModal');
+
+                // Refresh wallet explorer transactions to show updated used/grayed out states
+                renderTransactionTable();
+
+                // Update ART tracking panel if visible
+                if (walletExplorerState.sourceThreadId) {
+                    initializeARTTracking();
+                }
+
+                // Show success notification
+                showNotification(`✅ Entry created successfully! You can continue adding more entries from this wallet.`, 'success');
+
+                // Clear pending data
+                pendingEntryData = null;
+
+            } catch (error) {
+                console.error('Error creating entry:', error);
+                alert('Error creating entry: ' + error.message);
+            }
+        }
+
+        // Confirm entry and return to hops page
+        async function confirmEntryAndReturn() {
+            if (!pendingEntryData) return;
+
+            try {
+                // Create the entry
+                await createEntryFromPendingData();
+
+                // Close confirmation modal
+                hideModal('entryConfirmationModal');
+
+                // Close wallet explorer
+                closeWalletExplorer();
+
+                // Show success notification
+                showNotification(`✅ Entry created successfully!`, 'success');
+
+                // Scroll to the hop
+                const currentHop = getCurrentHop();
+                setTimeout(() => {
+                    const hopElement = document.getElementById(`hop-${currentHop}`);
+                    if (hopElement) {
+                        hopElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+
+                // Clear pending data
+                pendingEntryData = null;
+
+            } catch (error) {
+                console.error('Error creating entry:', error);
+                alert('Error creating entry: ' + error.message);
+            }
+        }
+
+        // Create entry from pending data
+        async function createEntryFromPendingData() {
+            const { entryData, tx } = pendingEntryData;
+
+            // Get the current hop
+            const currentHopNumber = getCurrentHop();
+            const hop = investigation.hops.find(h => h.hopNumber === currentHopNumber);
+
+            if (!hop) {
+                throw new Error('Hop not found');
+            }
+
+            // Add entry to hop
+            hop.entries.push(entryData);
+
+            // Sort entries chronologically
+            sortHopEntriesChronologically(hop);
+
+            // Save and render
+            saveToStorage();
+            renderHops();
+
+            console.log(`✅ Entry created successfully in Hop ${currentHopNumber}`);
         }
 
         // ====================================
