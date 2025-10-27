@@ -3,56 +3,64 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 17:17)
+## Latest Commit (Auto-updated: 2025-10-27 17:25)
 
-**Commit:** 4b2fb46cdbe49803ccde6775a63ebed6c3bf46cb
+**Commit:** 0f487ff033a6fa9aa2a0694105a74e419e7da9d4
 **Author:** Your Name
-**Message:** Fix: Quick Trace button now works with new entry confirmation workflow
+**Message:** Fix: Wallet Explorer now works with finalized hop notation
 
-🐛 BUG FIX: ReferenceError - openHopWizard is not defined
+🐛 BUG FIX: Could not open wallet explorer for threads after hop completion
 
-ISSUE: Quick Trace button threw error:
-"Uncaught ReferenceError: openHopWizard is not defined"
+ISSUE: After completing Hop 1 and moving to Hop 2, clicking "Wallet Explorer"
+button for the thread from Hop 1 showed error:
+"Could not find wallet address for this thread."
 
-ROOT CAUSE (line 22453):
-- quickTraceThread() called non-existent openHopWizard() function
-- Function was intended to open hop wizard with pre-selected thread
-- openHopWizard() never existed in codebase
+ROOT CAUSE (line 22237):
+- Thread notation changes from "V1-T1" to "V(1)-T(1)-H1" after hop finalization
+- viewThreadInWalletExplorer() didn't recognize this notation format
+- Code tried to access entry.destinationWallet (wrong field name)
+- Should access entry.toWallet (actual field used in entries)
 
-SOLUTION (lines 22432-22442):
-- Changed quickTraceThread() to call viewThreadInWalletExplorer()
-- Now opens wallet explorer directly for the thread
-- Simpler and more aligned with new entry confirmation modal workflow
+THREAD NOTATION FORMATS:
+Before hop finalized: "V1-T1"
+After hop finalized:  "V(1)-T(1)-H1"
+Commingled format:    "(V1-T1) H1"
+
+SOLUTION (lines 22225-22242):
+1. Updated comment to document all supported notation formats
+2. Changed entry.destinationWallet to entry.toWallet
+3. Added fallback: entry.toWallet || entry.destinationWallet
+4. Added debug logging to show what was found
 
 BEHAVIOR:
 
 Before (broken):
-1. Click "⚡ Quick Trace" button
-2. Error: openHopWizard is not defined
-3. Nothing happens
+1. Complete Hop 1 with entry (creates thread "V(1)-T(1)-H1")
+2. Move to Hop 2
+3. Click "Wallet Explorer" for "V(1)-T(1)-H1"
+4. Error: "Could not find wallet address for this thread"
 
 After (fixed):
-1. Click "⚡ Quick Trace" button
-2. Opens wallet explorer for thread's destination wallet
-3. Shows all transactions from that wallet
-4. Click "Add to Investigation" on any transaction
-5. Entry confirmation modal appears
-6. Create entry and choose to stay or return
+1. Complete Hop 1 with entry (creates thread "V(1)-T(1)-H1")
+2. Move to Hop 2
+3. Click "Wallet Explorer" for "V(1)-T(1)-H1"
+4. ✅ Wallet explorer opens for the destination wallet
+5. Shows all transactions from that wallet
+6. Can add more entries using confirmation modal
 
-WHY THIS IS BETTER:
-✅ Actually works (no error)
-✅ Shows wallet context before tracing
-✅ Allows user to select which transaction to trace
-✅ Leverages new entry confirmation modal
-✅ Consistent with "🔍 Wallet Explorer" button behavior
-✅ More flexible than forcing immediate wizard
+TECHNICAL DETAILS:
+- Notation "V(1)-T(1)-H1" extracts hop number: H1
+- Finds hop 1 entries
+- Gets first entry (all entries go to same destination)
+- Extracts toWallet field (destination address)
+- Opens wallet explorer with that address
+- Highlights the original transaction hash if available
 
-NOTE:
-The "Quick Trace" button is essentially the same as the "Wallet Explorer"
-button now. Both open the wallet explorer for that thread. The difference
-is just visual/UX - "Quick Trace" implies a faster workflow, which is
-appropriate since the new entry confirmation modal makes creating entries
-from the wallet explorer very fast.
+SUPPORTED FORMATS NOW:
+✅ "V1-T1" - Victim 1, Transaction 1 (before hop creation)
+✅ "V(1)-T(1)-H1" - Finalized hop 1 notation
+✅ "(V1-T1) H1" - Commingled thread notation
+✅ "(V1-T1,T2) H2" - Multiple transactions commingled
 
 🤖 Generated with Claude Code
 
@@ -60,14 +68,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 142 ++++++-------------------------------------------------------
- index.html |  24 +++--------
- 2 files changed, 19 insertions(+), 147 deletions(-)
+ CLAUDE.md  | 80 ++++++++++++++++++++++++++++++++++++++++++++++++++------------
+ index.html | 14 +++++++----
+ 2 files changed, 75 insertions(+), 19 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (0 seconds ago)
+- 0f487ff Fix: Wallet Explorer now works with finalized hop notation (1 second ago)
+- 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (8 minutes ago)
 - dc1b7bc Auto-sync CLAUDE.md (6 hours ago)
 - 2874d87 Feature: Entry confirmation modal for wallet-by-wallet workflow (6 hours ago)
 - 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (7 hours ago)
@@ -76,7 +85,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (7 hours ago)
 - 25d0eef Auto-sync CLAUDE.md (7 hours ago)
 - 532cfca Sync CLAUDE.md (final) (7 hours ago)
-- 6f8070b Update CLAUDE.md with latest commit info (7 hours ago)
 
 ## Key Features
 

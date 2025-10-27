@@ -22375,13 +22375,13 @@ function viewAvailableThreads(hopNumber) {
                                             </td>
                                             <td style="padding: 10px;">
                                                 <div style="display: flex; flex-direction: column; gap: 5px;">
+                                                    <button class="btn btn-primary"
+                                                            onclick="viewThreadInWalletExplorer('${thread.threadId.replace(/'/g, "\\'")}')"
+                                                            style="padding: 6px 10px; font-size: 12px; white-space: nowrap;"
+                                                            title="Open Wallet Explorer to view and trace transactions">
+                                                        🔍 View & Trace
+                                                    </button>
                                                     ${!isFullyAssigned ? `
-                                                        <button class="btn btn-success"
-                                                                onclick="quickTraceThread('${thread.threadId.replace(/'/g, "\\'")}')"
-                                                                style="padding: 6px 10px; font-size: 12px; white-space: nowrap;"
-                                                                title="Quick trace this thread">
-                                                            ⚡ Quick Trace
-                                                        </button>
                                                         <button class="btn btn-warning"
                                                                 onclick="quickWriteOffThread('${thread.threadId.replace(/'/g, "\\'")}')"
                                                                 style="padding: 6px 10px; font-size: 12px; white-space: nowrap; background: #dc3545; color: white;"
@@ -22395,12 +22395,6 @@ function viewAvailableThreads(hopNumber) {
                                                             ❄️ Cold Storage
                                                         </button>
                                                     ` : ''}
-                                                    <button class="btn btn-primary"
-                                                            onclick="viewThreadInWalletExplorer('${thread.threadId.replace(/'/g, "\\'")}')"
-                                                            style="padding: 6px 10px; font-size: 12px; white-space: nowrap;"
-                                                            title="Open Wallet Explorer with highlighted incoming transaction">
-                                                        🔍 Wallet Explorer
-                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -22433,19 +22427,7 @@ function viewAvailableThreads(hopNumber) {
 }
 
 // Quick Actions from Available Threads Modal
-
-// Quick Trace: Opens hop wizard with pre-selected thread
-function quickTraceThread(threadId) {
-    console.log(`⚡ Quick Trace initiated for thread: ${threadId}`);
-
-    // With the new entry confirmation modal workflow, "Quick Trace" simply opens
-    // the wallet explorer for this thread - the same as the "Wallet Explorer" button.
-    // This provides a convenient shortcut for investigators.
-
-    viewThreadInWalletExplorer(threadId);
-
-    console.log(`✅ Wallet Explorer opened for quick trace of thread: ${threadId}`);
-}
+// Note: quickTraceThread() removed - redundant with viewThreadInWalletExplorer()
 
 // Quick Write Off: Creates write-off entry immediately for a thread
 function quickWriteOffThread(threadId) {
