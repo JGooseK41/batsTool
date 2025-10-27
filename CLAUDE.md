@@ -3,30 +3,90 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 22:45)
+## Latest Commit (Auto-updated: 2025-10-26 22:55)
 
-**Commit:** 5cf76404f27ce7eef8b6307c796687ceb94b52a2
+**Commit:** d11ed6b2664732bf106cd16150800b4c28fe137b
 **Author:** Your Name
-**Message:** Final CLAUDE.md update
+**Message:** Add Write Off functionality to Wallet Explorer with full documentation
+
+Investigators can now write off outbound transactions directly from Wallet Explorer.
+
+**Changes:**
+
+1. **Added sourceThreadId to walletExplorerState:**
+   - Tracks which thread the wallet belongs to
+   - Required for proper write-off accounting
+
+2. **Modified openWalletExplorer() signature:**
+   - Now accepts: (address, blockchain, tracedTxHash, sourceThreadId)
+   - Stores thread context for write-offs
+
+3. **Updated viewThreadInWalletExplorer():**
+   - Passes thread ID when opening Wallet Explorer
+   - Maintains investigation context
+
+4. **Added Write Off button:**
+   - Only appears for outbound transactions
+   - Only when thread context is available
+   - Gray button with red border (📝 Write Off)
+
+5. **Implemented writeOffWalletTransaction():**
+   - Verifies thread context and current hop
+   - Shows confirmation dialog with full transaction details
+   - Creates write-off entry with proper documentation:
+     * Transaction hash, wallets, timestamp
+     * Source thread ID for accounting
+     * Blockchain and currency info
+     * Detailed notes for audit trail
+   - Automatically sorts entries chronologically
+   - Scrolls to hop after creation
+
+**Write-off Entry Documentation:**
+- entryType: 'writeoff'
+- sourceThreadId: Tracked from thread context
+- transactionHash: Full transaction hash
+- fromWallet/toWallet: Properly logged
+- timestamp: Transaction timestamp (UTC)
+- notes: Full audit trail including thread, wallets, amount
+
+**User Workflow:**
+1. Open Available Threads modal
+2. Click "🔍 View in Wallet Explorer" for a thread
+3. Browse outbound transactions
+4. Click "📝 Write Off" on transaction to write off
+5. Confirm write-off details
+6. Entry auto-created with full documentation
+7. ART will be reduced when hop finalized
+
+**Benefits:**
+✅ Write-offs properly linked to source threads
+✅ Full transaction documentation captured
+✅ Same accounting as manual write-off entries
+✅ Faster workflow for investigators
+✅ Complete audit trail maintained
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ index.html | 147 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 139 insertions(+), 8 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5cf7640 Final CLAUDE.md update (0 seconds ago)
-- 501e6fc Update CLAUDE.md (7 seconds ago)
-- 365f479 Update CLAUDE.md (12 seconds ago)
-- 1c2af45 Fix victim transaction form layout with proper alignment (16 seconds ago)
-- c2ff932 Update CLAUDE.md (4 minutes ago)
-- 2347323 Update CLAUDE.md (4 minutes ago)
-- 9dead86 Final CLAUDE.md update (4 minutes ago)
-- bfc5113 Update CLAUDE.md (4 minutes ago)
-- 5951e7f Update CLAUDE.md (4 minutes ago)
-- 8244c0a Update CLAUDE.md with latest commit info (4 minutes ago)
+- d11ed6b Add Write Off functionality to Wallet Explorer with full documentation (0 seconds ago)
+- f1a146f Update CLAUDE.md (10 minutes ago)
+- 5cf7640 Final CLAUDE.md update (10 minutes ago)
+- 501e6fc Update CLAUDE.md (10 minutes ago)
+- 365f479 Update CLAUDE.md (10 minutes ago)
+- 1c2af45 Fix victim transaction form layout with proper alignment (10 minutes ago)
+- c2ff932 Update CLAUDE.md (14 minutes ago)
+- 2347323 Update CLAUDE.md (14 minutes ago)
+- 9dead86 Final CLAUDE.md update (14 minutes ago)
+- bfc5113 Update CLAUDE.md (14 minutes ago)
 
 ## Key Features
 
