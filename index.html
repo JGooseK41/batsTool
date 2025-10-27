@@ -14175,6 +14175,57 @@ function exportRedWalletIndexCSV() {
         // Run cleanup on load
         cleanupOldWalletCache();
 
+        // Known contract addresses for smart detection (lowercase)
+        const KNOWN_CONTRACTS = {
+            // DEX Routers (Ethereum)
+            '0x7a250d5630b4cf539739df2c5dacb4c659f2488d': { type: 'dex', name: 'Uniswap V2 Router', suggestedType: 'swap' },
+            '0xe592427a0aece92de3edee1f18e0157c05861564': { type: 'dex', name: 'Uniswap V3 Router', suggestedType: 'swap' },
+            '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45': { type: 'dex', name: 'Uniswap Universal Router', suggestedType: 'swap' },
+            '0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f': { type: 'dex', name: 'SushiSwap Router', suggestedType: 'swap' },
+            '0xf164fc0ec4e93095b804a4795bbe1e041497b92a': { type: 'dex', name: 'UniswapV2Router01', suggestedType: 'swap' },
+            '0x1111111254fb6c44bac0bed2854e76f90643097d': { type: 'dex', name: '1inch V4 Router', suggestedType: 'swap' },
+            '0x1111111254eeb25477b68fb85ed929f73a960582': { type: 'dex', name: '1inch V5 Router', suggestedType: 'swap' },
+            '0xdef1c0ded9bec7f1a1670819833240f027b25eff': { type: 'dex', name: '0x Exchange Proxy', suggestedType: 'swap' },
+
+            // Bridge Contracts
+            '0x8484ef722627bf18ca5ae6bcf031c23e6e922b30': { type: 'bridge', name: 'Polygon Bridge', suggestedType: 'trace', warning: 'Cross-chain bridge - track on destination chain' },
+            '0xa0c68c638235ee32657e8f720a23cec1bfc77c77': { type: 'bridge', name: 'Polygon (Matic) Bridge', suggestedType: 'trace', warning: 'Bridged to Polygon' },
+            '0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf': { type: 'bridge', name: 'Polygon ERC20 Bridge', suggestedType: 'trace', warning: 'Bridged to Polygon' },
+            '0x4dbd4fc535ac27206064b68ffcf827b0a60bab3f': { type: 'bridge', name: 'Arbitrum Bridge', suggestedType: 'trace', warning: 'Bridged to Arbitrum' },
+            '0x72ce9c846789fdb6fc1f34ac4ad25dd9ef7031ef': { type: 'bridge', name: 'Optimism Gateway', suggestedType: 'trace', warning: 'Bridged to Optimism' },
+            '0x3154cf16ccdb4c6d922629664174b904d80f2c35': { type: 'bridge', name: 'Base Bridge', suggestedType: 'trace', warning: 'Bridged to Base' },
+            '0x3ee18b2214aff97000d974cf647e7c347e8fa585': { type: 'bridge', name: 'Wormhole Bridge', suggestedType: 'trace', warning: 'Cross-chain bridge via Wormhole' },
+            '0x98f3c9e6e3face36baad05fe09d375ef1464288b': { type: 'bridge', name: 'Wormhole Token Bridge', suggestedType: 'trace', warning: 'Cross-chain bridge via Wormhole' },
+            '0x6ab5ae6822647046626e83ee6db8187151e1d5ab': { type: 'bridge', name: 'Stargate Router', suggestedType: 'trace', warning: 'LayerZero bridge via Stargate' },
+            '0x8731d54e9d02c286767d56ac03e8037c07e01e98': { type: 'bridge', name: 'Stargate Router ETH', suggestedType: 'trace', warning: 'LayerZero bridge via Stargate' },
+            '0x150f94b44927f078737562f0fcf3c95c01cc2376': { type: 'bridge', name: 'Synapse Bridge', suggestedType: 'trace', warning: 'Cross-chain bridge via Synapse' },
+
+            // Mixers / Privacy (CRITICAL - Golden Thread Breaks)
+            '0x12d66f87a04a9e220743712ce6d9bb1b5616b8fc': { type: 'mixer', name: 'Tornado Cash 0.1 ETH', suggestedType: 'writeoff', warning: '⚠️ MIXER DETECTED - Golden thread broken! Suggest write-off.' },
+            '0x47ce0c6ed5b0ce3d3a51fdb1c52dc66a7c3c2936': { type: 'mixer', name: 'Tornado Cash 1 ETH', suggestedType: 'writeoff', warning: '⚠️ MIXER DETECTED - Golden thread broken! Suggest write-off.' },
+            '0x910cbd523d972eb0a6f4cae4618ad62622b39dbf': { type: 'mixer', name: 'Tornado Cash 10 ETH', suggestedType: 'writeoff', warning: '⚠️ MIXER DETECTED - Golden thread broken! Suggest write-off.' },
+            '0xa160cdab225685da1d56aa342ad8841c3b53f291': { type: 'mixer', name: 'Tornado Cash 100 ETH', suggestedType: 'writeoff', warning: '⚠️ MIXER DETECTED - Golden thread broken! Suggest write-off.' },
+            '0xd90e2f925da726b50c4ed8d0fb90ad053324f31b': { type: 'mixer', name: 'Tornado Cash DAI', suggestedType: 'writeoff', warning: '⚠️ MIXER DETECTED - Golden thread broken! Suggest write-off.' },
+            '0xfd8610d20aa15b7b2e3be39b396a1bc3516c7144': { type: 'mixer', name: 'Tornado Cash WBTC', suggestedType: 'writeoff', warning: '⚠️ MIXER DETECTED - Golden thread broken! Suggest write-off.' },
+
+            // Add more as needed...
+        };
+
+        // Detect contract type and provide suggestions
+        function detectContractType(address) {
+            if (!address) return null;
+
+            const addressLower = address.toLowerCase();
+            const contract = KNOWN_CONTRACTS[addressLower];
+
+            if (contract) {
+                console.log(`🔍 Detected ${contract.type}: ${contract.name}`);
+                return contract;
+            }
+
+            return null;
+        }
+
         // Known legitimate tokens (case-insensitive)
         const VERIFIED_TOKENS = {
             'ETH': true,
@@ -14782,6 +14833,27 @@ function exportRedWalletIndexCSV() {
 
                 const entityLabel = tx.entityLabel ? `<span class="wallet-entity-label">${tx.entityLabel}</span>` : '';
 
+                // Detect contract type for smart suggestions
+                const detectedContract = detectContractType(tx.counterparty);
+                let contractBadge = '';
+                if (detectedContract) {
+                    let badgeColor = '#6c757d'; // Default gray
+                    let badgeIcon = '📋';
+
+                    if (detectedContract.type === 'dex') {
+                        badgeColor = '#17a2b8'; // Cyan for DEX
+                        badgeIcon = '🔄';
+                    } else if (detectedContract.type === 'bridge') {
+                        badgeColor = '#fd7e14'; // Orange for bridge
+                        badgeIcon = '🌉';
+                    } else if (detectedContract.type === 'mixer') {
+                        badgeColor = '#dc3545'; // Red for mixer
+                        badgeIcon = '⚠️';
+                    }
+
+                    contractBadge = `<div style="margin-top: 4px;"><span style="background: ${badgeColor}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">${badgeIcon} ${detectedContract.name}</span></div>`;
+                }
+
                 // Add thread badge for investigation threads
                 let threadBadge = '';
                 if (isCurrentThread) {
@@ -14809,6 +14881,7 @@ function exportRedWalletIndexCSV() {
                     <td style="padding: 12px; font-family: monospace; font-size: 0.9rem;">
                         ${tx.counterparty.substring(0, 10)}...${tx.counterparty.substring(tx.counterparty.length - 8)}
                         ${entityLabel}
+                        ${contractBadge}
                     </td>
                     <td style="padding: 12px; text-align: center;">
                         <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
@@ -15087,6 +15160,10 @@ function exportRedWalletIndexCSV() {
                     if (txHashInput && chainSelector) {
                         txHashInput.value = txHash;
                         chainSelector.value = blockchain;
+
+                        // Store source thread ID for auto-population
+                        window.walletExplorerSourceThread = sourceThreadId;
+                        console.log(`💾 Stored source thread for auto-population: ${sourceThreadId}`);
 
                         // Show the modal
                         showModal('blockchainLookupModal');
@@ -15807,6 +15884,7 @@ function exportRedWalletIndexCSV() {
                             transactionNumbers: '',
                             availableSourceAmount: 0,
                             sourceThreadId: sourceThreadId || '',
+                            multipleSourceThreads: sourceThreadId ? [sourceThreadId] : [],  // Auto-assign to source thread
                             sourceThreadData: null,
                             assignmentPercentage: 0,
                             generatedNotation: '',
@@ -15823,7 +15901,7 @@ function exportRedWalletIndexCSV() {
                             timezone: 'UTC',
                             chain: blockchain,
                             notes: `Bulk added from Wallet Explorer\n` +
-                                   (sourceThreadId ? `Thread: ${sourceThreadId}\n` : '') +
+                                   (sourceThreadId ? `Auto-assigned to thread: ${sourceThreadId}\n` : '') +
                                    `Wallet: ${walletAddress}\n` +
                                    `Outbound to: ${tx.counterparty}\n` +
                                    `Amount: ${tx.amount} ${tx.asset}\n` +
@@ -28607,6 +28685,15 @@ function openHopEntryWizard(hopNumber) {
             txHash: '',
             entryMode: 'lookup'
         };
+
+        // Auto-populate source thread from Wallet Explorer if available
+        if (window.walletExplorerSourceThread) {
+            console.log(`🎯 Auto-selecting source thread from Wallet Explorer: ${window.walletExplorerSourceThread}`);
+            window.hopWizardData.selectedThreads = [window.walletExplorerSourceThread];
+            window.hopWizardData.preSelectedSourceThread = window.walletExplorerSourceThread;
+            // Clear it so it doesn't affect subsequent wizard opens
+            delete window.walletExplorerSourceThread;
+        }
     }
     
     const wizardHTML = `
