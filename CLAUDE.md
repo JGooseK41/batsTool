@@ -3,30 +3,107 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 23:03)
+## Latest Commit (Auto-updated: 2025-10-26 23:07)
 
-**Commit:** 731eee9bf8f63b04eaadb3c9ff69c38f9c5c7dcf
+**Commit:** f185ea253da4afe5770206e88d5befdf46b95b45
 **Author:** Your Name
-**Message:** Update CLAUDE.md with commingling detection documentation
+**Message:** Add column header sorting and enforce UTC time display
+
+Added clickable column header to toggle between newest→oldest and oldest→newest sorting.
+
+**New Features:**
+
+1. **Clickable Date/Time Header:**
+   - Click "Date/Time (UTC)" header to toggle sort order
+   - Visual indicator: ▼ (newest first) or ▲ (oldest first)
+   - Cursor changes to pointer on hover
+   - User-friendly sort toggle
+
+2. **Sort Order Persistence:**
+   - Default: Newest first (descending)
+   - Toggles between desc/asc on each click
+   - Maintains sort across page changes
+   - Updates indicator arrow automatically
+
+3. **UTC Time Enforcement:**
+   - Column header now explicitly says "Date/Time (UTC)"
+   - All timestamps formatted with UTC timezone
+   - Shows "UTC" in time display
+   - Format: "1/15/2024, 10:30:45 AM UTC"
+
+4. **Sorting Logic:**
+   - Sorts by timestamp (not display string)
+   - Newest first: Sorts descending by timestamp
+   - Oldest first: Sorts ascending by timestamp
+   - Applied before pagination for consistency
+
+**User Experience:**
+
+**Before:**
+- Date/Time column (no sorting)
+- Unclear if times are local or UTC
+- Fixed order (newest first)
+
+**After:**
+- Date/Time (UTC) ▼ (clickable)
+- Clear UTC indication
+- Click header → ▲ (oldest first)
+- Click again → ▼ (newest first)
+
+**Example Display:**
+```
+Date/Time (UTC) ▼          | Type | Amount
+──────────────────────────────────────────
+1/15/2024, 3:45 PM UTC 🎯 V1-T1  | 🟢 IN | +100 ETH
+1/14/2024, 2:30 PM UTC 📍 V1-T2  | 🟢 IN | +100 ETH
+1/13/2024, 1:15 PM UTC 📍 V1-T3  | 🟢 IN | +100 ETH
+```
+
+Click header:
+```
+Date/Time (UTC) ▲          | Type | Amount
+──────────────────────────────────────────
+1/13/2024, 1:15 PM UTC 📍 V1-T3  | 🟢 IN | +100 ETH
+1/14/2024, 2:30 PM UTC 📍 V1-T2  | 🟢 IN | +100 ETH
+1/15/2024, 3:45 PM UTC 🎯 V1-T1  | 🟢 IN | +100 ETH
+```
+
+**Implementation:**
+- Added sortOrder to walletExplorerState
+- Default: 'desc' (newest first)
+- toggleTransactionSortOrder() switches between desc/asc
+- Updates visual indicator (▼/▲)
+- Sorts transactions array before pagination
+- Time formatted with explicit UTC timezone
+
+**Benefits:**
+✅ Clear time zone indication (UTC)
+✅ Flexible sorting for investigation workflows
+✅ Visual feedback on current sort order
+✅ Consistent behavior across all transactions
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 110 +++++++++++++++++++++++++++++++++++++++++++++++++++++---------
- 1 file changed, 95 insertions(+), 15 deletions(-)
+ index.html | 32 ++++++++++++++++++++++++++++----
+ 1 file changed, 28 insertions(+), 4 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 731eee9 Update CLAUDE.md with commingling detection documentation (0 seconds ago)
-- 4a2996c Add intelligent commingling detection and multi-thread selector (5 seconds ago)
-- 78d3160 Update CLAUDE.md (4 minutes ago)
-- 0a09335 Update CLAUDE.md with bulk select documentation (4 minutes ago)
-- 46d2a54 Implement bulk multi-select for hop entries with over-allocation prevention (4 minutes ago)
-- 940a77b Sync CLAUDE.md (7 minutes ago)
-- 7c87616 Update CLAUDE.md (7 minutes ago)
-- b198a8e Final CLAUDE.md update (8 minutes ago)
-- 76aab97 Update CLAUDE.md (8 minutes ago)
-- 30833ef Update CLAUDE.md with write-off feature documentation (8 minutes ago)
+- f185ea2 Add column header sorting and enforce UTC time display (0 seconds ago)
+- f1d531c Add multi-thread highlighting and V-T notation display in Wallet Explorer (87 seconds ago)
+- d6d4b8a Final CLAUDE.md sync (4 minutes ago)
+- 731eee9 Update CLAUDE.md with commingling detection documentation (4 minutes ago)
+- 4a2996c Add intelligent commingling detection and multi-thread selector (4 minutes ago)
+- 78d3160 Update CLAUDE.md (8 minutes ago)
+- 0a09335 Update CLAUDE.md with bulk select documentation (8 minutes ago)
+- 46d2a54 Implement bulk multi-select for hop entries with over-allocation prevention (8 minutes ago)
+- 940a77b Sync CLAUDE.md (11 minutes ago)
+- 7c87616 Update CLAUDE.md (11 minutes ago)
 
 ## Key Features
 
