@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-26 22:41)
 
-**Commit:** 9dead86f5cc0d9d88fe9a7f12be03eefa6e2e2e8
+**Commit:** 234732368493eeadf867c294b4b8c4d89dbd3bc0
 **Author:** Your Name
-**Message:** Final CLAUDE.md update
+**Message:** Update CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ CLAUDE.md | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9dead86 Final CLAUDE.md update (0 seconds ago)
-- bfc5113 Update CLAUDE.md (5 seconds ago)
-- 5951e7f Update CLAUDE.md (14 seconds ago)
-- 8244c0a Update CLAUDE.md with latest commit info (19 seconds ago)
-- 537bc5e Reorganize victim transaction form layout for cleaner appearance (24 seconds ago)
+- 2347323 Update CLAUDE.md (0 seconds ago)
+- 9dead86 Final CLAUDE.md update (7 seconds ago)
+- bfc5113 Update CLAUDE.md (12 seconds ago)
+- 5951e7f Update CLAUDE.md (21 seconds ago)
+- 8244c0a Update CLAUDE.md with latest commit info (26 seconds ago)
+- 537bc5e Reorganize victim transaction form layout for cleaner appearance (31 seconds ago)
 - c537feb Final CLAUDE.md update (4 minutes ago)
 - 4b04f87 Update CLAUDE.md with latest commit info (4 minutes ago)
 - d69d5e8 Update CLAUDE.md with latest commit info (4 minutes ago)
-- 1b2c566 Update CLAUDE.md with latest commit info (4 minutes ago)
-- b562a37 Update CLAUDE.md with latest commit info (5 minutes ago)
+- 1b2c566 Update CLAUDE.md with latest commit info (5 minutes ago)
 
 ## Key Features
 
