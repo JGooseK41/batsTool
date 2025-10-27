@@ -14539,7 +14539,7 @@ function exportRedWalletIndexCSV() {
                     return await getSolanaWalletHistory(address);
 
                 case 'sui':
-                    throw new Error('Sui wallet history not yet implemented');
+                    return await getSuiWalletHistory(address);
 
                 case 'ripple':
                     throw new Error('XRP wallet history not yet implemented');
@@ -14975,6 +14975,205 @@ function exportRedWalletIndexCSV() {
             console.log(`Parsed ${allTransactions.length} Solana transactions`);
 
             return allTransactions;
+        }
+
+        /**
+         * Get Sui wallet history using Sui JSON-RPC
+         */
+        async function getSuiWalletHistory(address) {
+            console.log('Fetching Sui wallet history');
+
+            const rpcUrl = 'https://fullnode.mainnet.sui.io';
+            const allTransactions = [];
+
+            // Step 1: Query transaction blocks for the address (limit to 50 for performance)
+            const response = await fetch(rpcUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'suix_queryTransactionBlocks',
+                    params: [
+                        {
+                            filter: {
+                                FromAddress: address
+                            },
+                            options: {
+                                showInput: true,
+                                showEffects: true,
+                                showEvents: false,
+                                showObjectChanges: false,
+                                showBalanceChanges: false
+                            }
+                        },
+                        null, // cursor
+                        50,   // limit
+                        true  // descending order
+                    ]
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.result || !data.result.data || data.result.data.length === 0) {
+                // Try as ToAddress
+                const toResponse = await fetch(rpcUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'suix_queryTransactionBlocks',
+                        params: [
+                            {
+                                filter: {
+                                    ToAddress: address
+                                },
+                                options: {
+                                    showInput: true,
+                                    showEffects: true,
+                                    showEvents: false,
+                                    showObjectChanges: false,
+                                    showBalanceChanges: false
+                                }
+                            },
+                            null,
+                            50,
+                            true
+                        ]
+                    })
+                });
+
+                const toData = await toResponse.json();
+
+                if (!toData.result || !toData.result.data || toData.result.data.length === 0) {
+                    console.log('No Sui transactions found');
+                    return [];
+                }
+
+                // Process incoming transactions
+                toData.result.data.forEach(tx => {
+                    const parsed = parseSuiTransaction(tx, address, 'IN');
+                    if (parsed) allTransactions.push(parsed);
+                });
+            } else {
+                // Process outgoing transactions
+                data.result.data.forEach(tx => {
+                    const parsed = parseSuiTransaction(tx, address, 'OUT');
+                    if (parsed) allTransactions.push(parsed);
+                });
+
+                // Also get incoming transactions
+                const toResponse = await fetch(rpcUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'suix_queryTransactionBlocks',
+                        params: [
+                            {
+                                filter: {
+                                    ToAddress: address
+                                },
+                                options: {
+                                    showInput: true,
+                                    showEffects: true,
+                                    showEvents: false,
+                                    showObjectChanges: false,
+                                    showBalanceChanges: false
+                                }
+                            },
+                            null,
+                            50,
+                            true
+                        ]
+                    })
+                });
+
+                const toData = await toResponse.json();
+
+                if (toData.result && toData.result.data) {
+                    toData.result.data.forEach(tx => {
+                        const parsed = parseSuiTransaction(tx, address, 'IN');
+                        if (parsed) allTransactions.push(parsed);
+                    });
+                }
+            }
+
+            // Remove duplicates based on digest
+            const uniqueTransactions = [];
+            const seenDigests = new Set();
+
+            allTransactions.forEach(tx => {
+                if (!seenDigests.has(tx.hash)) {
+                    seenDigests.add(tx.hash);
+                    uniqueTransactions.push(tx);
+                }
+            });
+
+            // Sort by timestamp (newest first)
+            uniqueTransactions.sort((a, b) => b.timestamp - a.timestamp);
+
+            console.log(`Found ${uniqueTransactions.length} Sui transactions`);
+
+            return uniqueTransactions;
+        }
+
+        /**
+         * Parse a single Sui transaction
+         */
+        function parseSuiTransaction(tx, address, defaultDirection) {
+            if (!tx || !tx.transaction) return null;
+
+            const txData = tx.transaction.data;
+            const digest = tx.digest;
+
+            // Get timestamp
+            const timestamp = tx.timestampMs ? parseInt(tx.timestampMs) : Date.now();
+
+            // Parse ProgrammableTransaction
+            if (txData.transaction && txData.transaction.kind === 'ProgrammableTransaction') {
+                const inputs = txData.transaction.inputs || [];
+                const transactions = txData.transaction.transactions || [];
+                const sender = txData.sender;
+
+                // Look for TransferObjects transaction
+                const transferTx = transactions.find(t => t.TransferObjects);
+
+                if (transferTx && inputs.length > 0) {
+                    // Find amount (u64 input)
+                    const amountInput = inputs.find(inp => inp.valueType === 'u64');
+                    // Find recipient (address input)
+                    const recipientInput = inputs.find(inp => inp.valueType === 'address');
+
+                    if (amountInput && recipientInput) {
+                        const amount = parseInt(amountInput.value) / 1000000000; // MIST to SUI
+                        const recipient = recipientInput.value;
+
+                        // Determine direction
+                        const isOutgoing = sender === address;
+                        const type = isOutgoing ? 'OUT' : 'IN';
+                        const counterparty = isOutgoing ? recipient : sender;
+
+                        if (amount > 0) {
+                            return {
+                                hash: digest,
+                                timestamp: timestamp,
+                                type: type,
+                                asset: 'SUI',
+                                amount: amount,
+                                counterparty: counterparty,
+                                entityLabel: null,
+                                explorerUrl: `https://suiscan.xyz/mainnet/tx/${digest}`
+                            };
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
 
         function calculateRootTotal() {
