@@ -3,30 +3,59 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 20:38)
+## Latest Commit (Auto-updated: 2025-10-26 20:53)
 
-**Commit:** e06cdff96f352e20be7d7e98e93f7fb52b6281db
+**Commit:** 9ccc7553c4556768e64f84443c9a51a806037f2f
 **Author:** Your Name
-**Message:** Sync CLAUDE.md
+**Message:** Improve Wallet Explorer asset cards: title, colors, and UX
+
+**Changes:**
+
+1. **Title Update:**
+   - Changed "Assets in Wallet" → "Asset Activity History"
+   - Clarifies these show historical transactions, not current holdings
+   - More accurate for investigation context
+
+2. **Professional Color Scheme:**
+   - Replaced purple gradient (#667eea → #764ba2)
+   - New slate blue/gray gradient (#5a7a9e → #4a5f7f)
+   - Added subtle border for definition
+   - Enhanced hover state with lighter gradient
+   - More professional and muted appearance
+
+3. **UX Note:**
+   - Cards are already clickable (no code change needed)
+   - Click any card to select that asset and view transactions
+   - Provides visual feedback on hover
+
+**Visual Impact:**
+✅ Cards now use professional slate blue tones
+✅ Better matches investigation tool aesthetic
+✅ Clear title indicates historical activity
+✅ Smooth hover interaction maintained
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+ index.html | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e06cdff Sync CLAUDE.md (0 seconds ago)
-- ce42d38 Final CLAUDE.md auto-update sync (13 seconds ago)
-- 76b75c3 Auto-update CLAUDE.md timestamp (23 seconds ago)
-- c3927ec Update CLAUDE.md with Wallet Explorer completion documentation (34 seconds ago)
-- a824817 WALLET EXPLORER Phase 3: Inline wizard integration complete (3 minutes ago)
-- 473b65d WALLET EXPLORER Phase 2: Bitcoin, Tron, and Solana support (28 minutes ago)
-- 05dc805 WALLET EXPLORER Phase 1: Complete foundation with Ethereum support (32 minutes ago)
-- c4d28d0 Fix Sui transaction parsing - use ProgrammableTransaction structure (71 minutes ago)
-- b2b1769 Enhanced Sui debug logging to show full JSON structure (74 minutes ago)
-- 9158b87 Add debug logging for Sui transaction parsing (76 minutes ago)
+- 9ccc755 Improve Wallet Explorer asset cards: title, colors, and UX (1 second ago)
+- ee06ae9 Fix Wallet Explorer transaction table rendering error (2 minutes ago)
+- ace8026 Fix Ethereum/EVM wallet history baseUrl extraction bug (6 minutes ago)
+- c2eb009 Add Sui wallet history support to Wallet Explorer (10 minutes ago)
+- af75c83 Final sync (15 minutes ago)
+- e06cdff Sync CLAUDE.md (15 minutes ago)
+- ce42d38 Final CLAUDE.md auto-update sync (15 minutes ago)
+- 76b75c3 Auto-update CLAUDE.md timestamp (15 minutes ago)
+- c3927ec Update CLAUDE.md with Wallet Explorer completion documentation (15 minutes ago)
+- a824817 WALLET EXPLORER Phase 3: Inline wizard integration complete (18 minutes ago)
 
 ## Key Features
 
