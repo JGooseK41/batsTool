@@ -19965,15 +19965,44 @@ function viewAvailableThreads(hopNumber) {
                             <small>Threads become available from previous hop entries that have been traced.</small>
                         </div>
                     ` : `
-                        <div style="background: #e8f4f8; border: 1px solid #3498db; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                        <div style="background: #e8f4f8; border: 1px solid #3498db; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
                             <p style="margin: 0; color: #2c3e50;">
                                 <strong>Available threads:</strong> These are the funds you can trace in this hop.
                                 Each thread represents a transaction output from a previous hop that hasn't been fully assigned yet.
                             </p>
+                            <button class="btn btn-secondary" id="toggleBatchWriteOffMode"
+                                    onclick="toggleBatchWriteOffMode()"
+                                    style="padding: 8px 16px; white-space: nowrap;">
+                                📋 Batch Write-Off Mode
+                            </button>
                         </div>
-                        <table style="width: 100%; border-collapse: collapse;">
+                        <div id="batchWriteOffControls" style="display: none; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong style="color: #856404;">Batch Write-Off Mode Active</strong>
+                                    <p style="margin: 5px 0 0 0; font-size: 13px; color: #856404;">
+                                        Select multiple threads to write off together. <span id="batchSelectedCount">0</span> selected.
+                                    </p>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-warning" onclick="batchWriteOffSelected()"
+                                            id="batchWriteOffButton" disabled
+                                            style="background: #dc3545; color: white; padding: 8px 16px;">
+                                        ❌ Write Off Selected
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="toggleBatchWriteOffMode()"
+                                            style="padding: 8px 16px;">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse;" id="availableThreadsTable">
                             <thead>
                                 <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                    <th style="padding: 12px; text-align: center; display: none;" class="batch-select-column">
+                                        <input type="checkbox" id="selectAllThreads" onclick="toggleSelectAllThreads()" title="Select all">
+                                    </th>
                                     <th style="padding: 12px; text-align: left;">Thread ID</th>
                                     <th style="padding: 12px; text-align: left;">Source</th>
                                     <th style="padding: 12px; text-align: left;">Date/Time</th>
@@ -19987,7 +20016,16 @@ function viewAvailableThreads(hopNumber) {
                                 ${availableThreads.map(thread => {
                                     const isFullyAssigned = thread.availableAmount === 0;
                                     return `
-                                        <tr style="border-bottom: 1px solid #dee2e6;">
+                                        <tr style="border-bottom: 1px solid #dee2e6;" data-thread-id="${thread.threadId.replace(/'/g, '&#39;')}" data-currency="${thread.currency}" data-amount="${thread.availableAmount}">
+                                            <td style="padding: 10px; text-align: center; display: none;" class="batch-select-column">
+                                                ${!isFullyAssigned ? `
+                                                    <input type="checkbox" class="thread-select-checkbox"
+                                                           data-thread-id="${thread.threadId.replace(/'/g, '&#39;')}"
+                                                           data-currency="${thread.currency}"
+                                                           data-amount="${thread.availableAmount}"
+                                                           onchange="updateBatchSelection()">
+                                                ` : ''}
+                                            </td>
                                             <td style="padding: 10px; font-family: monospace;">${thread.threadId}</td>
                                             <td style="padding: 10px;">${thread.displayText}</td>
                                             <td style="padding: 10px; font-size: 13px;">
@@ -20272,6 +20310,187 @@ function quickColdStorageThread(threadId) {
     showNotification(`✅ Cold storage entry created for ${threadId}: ${thread.availableAmount.toLocaleString()} ${currency}`, 'success');
 
     console.log(`✅ Cold storage entry created for thread: ${threadId}`);
+}
+
+// Batch Write-Off Functions
+
+// Toggle batch write-off mode in Available Threads modal
+function toggleBatchWriteOffMode() {
+    const controlsDiv = document.getElementById('batchWriteOffControls');
+    const selectColumns = document.querySelectorAll('.batch-select-column');
+    const toggleButton = document.getElementById('toggleBatchWriteOffMode');
+
+    if (controlsDiv.style.display === 'none') {
+        // Enable batch mode
+        controlsDiv.style.display = 'block';
+        selectColumns.forEach(col => col.style.display = 'table-cell');
+        toggleButton.style.background = '#ffc107';
+        toggleButton.style.color = '#000';
+        console.log('📋 Batch write-off mode enabled');
+    } else {
+        // Disable batch mode
+        controlsDiv.style.display = 'none';
+        selectColumns.forEach(col => col.style.display = 'none');
+        toggleButton.style.background = '';
+        toggleButton.style.color = '';
+
+        // Uncheck all checkboxes
+        document.querySelectorAll('.thread-select-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('selectAllThreads').checked = false;
+        updateBatchSelection();
+
+        console.log('📋 Batch write-off mode disabled');
+    }
+}
+
+// Update batch selection count and enable/disable button
+function updateBatchSelection() {
+    const checkboxes = document.querySelectorAll('.thread-select-checkbox:checked');
+    const count = checkboxes.length;
+    const countSpan = document.getElementById('batchSelectedCount');
+    const writeOffButton = document.getElementById('batchWriteOffButton');
+
+    countSpan.textContent = count;
+
+    if (count > 0) {
+        writeOffButton.disabled = false;
+    } else {
+        writeOffButton.disabled = true;
+    }
+
+    console.log(`📋 Batch selection updated: ${count} thread(s) selected`);
+}
+
+// Toggle select all threads
+function toggleSelectAllThreads() {
+    const selectAllCheckbox = document.getElementById('selectAllThreads');
+    const threadCheckboxes = document.querySelectorAll('.thread-select-checkbox');
+
+    threadCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+
+    updateBatchSelection();
+}
+
+// Batch write off selected threads
+function batchWriteOffSelected() {
+    console.log('❌ Batch write-off initiated');
+
+    const checkboxes = document.querySelectorAll('.thread-select-checkbox:checked');
+    if (checkboxes.length === 0) {
+        alert('⚠️ No threads selected for write-off.');
+        return;
+    }
+
+    // Get current hop
+    const hopNumber = getCurrentHop();
+    if (!hopNumber) {
+        alert('⚠️ No active hop found.');
+        return;
+    }
+
+    const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+    if (!hop) {
+        alert(`⚠️ Hop ${hopNumber} not found.`);
+        return;
+    }
+
+    // Collect selected threads
+    const selectedThreads = [];
+    const availableThreads = investigation.availableThreads || {};
+
+    checkboxes.forEach(checkbox => {
+        const threadId = checkbox.dataset.threadId;
+        const currency = checkbox.dataset.currency;
+        const amount = parseFloat(checkbox.dataset.amount);
+
+        // Find full thread data
+        let thread = null;
+        if (availableThreads[currency] && availableThreads[currency][threadId]) {
+            thread = availableThreads[currency][threadId];
+        }
+
+        selectedThreads.push({
+            threadId: threadId,
+            currency: currency,
+            amount: amount,
+            thread: thread
+        });
+    });
+
+    // Group by currency for display
+    const totalsByCurrency = {};
+    selectedThreads.forEach(t => {
+        if (!totalsByCurrency[t.currency]) {
+            totalsByCurrency[t.currency] = 0;
+        }
+        totalsByCurrency[t.currency] += t.amount;
+    });
+
+    const totalsText = Object.entries(totalsByCurrency)
+        .map(([curr, total]) => `  • ${total.toLocaleString()} ${curr}`)
+        .join('\n');
+
+    // Confirm batch write-off
+    const confirmed = confirm(
+        `❌ BATCH WRITE OFF\n\n` +
+        `You are about to write off ${selectedThreads.length} thread(s):\n\n` +
+        `${selectedThreads.map(t => `  • ${t.threadId}: ${t.amount.toLocaleString()} ${t.currency}`).join('\n')}\n\n` +
+        `Total by currency:\n${totalsText}\n\n` +
+        `This will create ${selectedThreads.length} write-off ${selectedThreads.length === 1 ? 'entry' : 'entries'}.\n\n` +
+        `Proceed with batch write-off?`
+    );
+
+    if (!confirmed) {
+        console.log('Batch write-off cancelled by user');
+        return;
+    }
+
+    // Create write-off entries for each selected thread
+    let entriesCreated = 0;
+
+    selectedThreads.forEach(selectedThread => {
+        const entry = {
+            id: hop.entries.length + 1,
+            hopNumber: hopNumber,
+            entryType: 'writeoff',
+            amount: selectedThread.amount.toString(),
+            currency: selectedThread.currency,
+            sourceThreadId: selectedThread.threadId,
+            multipleSourceThreads: [selectedThread.threadId],
+            notation: '', // Will be generated
+            notes: `Batch write-off from Available Threads modal\nThread: ${selectedThread.threadId}\nAmount: ${selectedThread.amount.toLocaleString()} ${selectedThread.currency}\nReason: Batch processing of small amounts / dust / fees / unrecoverable`,
+            timestamp: new Date().toISOString().slice(0, 16),
+            chain: selectedThread.thread?.blockchain || 'N/A',
+            transactionHash: '',
+            toWallet: '',
+            toWalletType: 'gray'
+        };
+
+        hop.entries.push(entry);
+        entriesCreated++;
+    });
+
+    // Sort entries chronologically
+    sortHopEntriesChronologically(hop);
+
+    // Save and render
+    saveToStorage();
+    renderHops();
+
+    // Close the available threads modal
+    const modal = document.getElementById('availableThreadsModal');
+    if (modal) modal.remove();
+
+    // Show success notification
+    const totalAmountText = Object.entries(totalsByCurrency)
+        .map(([curr, total]) => `${total.toLocaleString()} ${curr}`)
+        .join(', ');
+
+    showNotification(`✅ Batch write-off complete: ${entriesCreated} ${entriesCreated === 1 ? 'entry' : 'entries'} created (${totalAmountText})`, 'success');
+
+    console.log(`✅ Batch write-off complete: ${entriesCreated} entries created`);
 }
 
 // Reopen a completed hop for editing
