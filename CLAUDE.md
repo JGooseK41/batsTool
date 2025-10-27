@@ -3,30 +3,110 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 22:59)
+## Latest Commit (Auto-updated: 2025-10-26 23:03)
 
-**Commit:** 0a09335bc6ff572aed1e605651293e78565acc32
+**Commit:** 4a2996c3eb3bf582ea35e542f6361c366823f3da
 **Author:** Your Name
-**Message:** Update CLAUDE.md with bulk select documentation
+**Message:** Add intelligent commingling detection and multi-thread selector
+
+Automatically detects when a transaction requires multiple source threads and provides smooth UI for thread selection.
+
+**Scenario:**
+- Thread V1-T1: 100 ETH → Wallet A
+- Thread V1-T2: 100 ETH → Wallet A
+- Thread V1-T3: 100 ETH → Wallet A
+- Outbound from Wallet A: 300 ETH (requires all 3 threads)
+
+**How It Works:**
+
+1. **Automatic Commingling Detection:**
+   - User opens Wallet Explorer from V1-T1 (only 100 ETH)
+   - User clicks "Add to Investigation" on 300 ETH outbound
+   - System detects: Transaction (300 ETH) > Thread capacity (100 ETH)
+   - Searches for other threads entering same wallet
+   - Finds V1-T2 (100 ETH) and V1-T3 (100 ETH)
+
+2. **Smart Thread Selector Modal:**
+   - Shows "🔀 Commingling Detected" dialog
+   - Displays transaction details (amount, wallets, hash)
+   - Lists all threads entering the wallet with checkboxes:
+     * V1-T1: 100 ETH (auto-selected - original thread)
+     * V1-T2: 100 ETH (available to select)
+     * V1-T3: 100 ETH (available to select)
+   - Real-time total calculation as user selects threads
+
+3. **Live Validation Display:**
+   - Selected Total: Updates as checkboxes change
+   - Required: Shows transaction amount
+   - Validation messages:
+     * "⚠️ Insufficient: Need 100 ETH more" (if under)
+     * "✅ Perfect match!" (if exact)
+     * "✅ Sufficient: 50 ETH will remain available" (if over)
+   - Confirm button disabled until sufficient threads selected
+
+4. **Entry Creation:**
+   - Creates hop entry with multipleSourceThreads array
+   - Sets isConvergence: true
+   - Stores convergenceData with thread details
+   - Proper notation generation for commingled entries
+   - Full audit trail in notes
+
+**User Experience:**
+
+**Without Commingling:**
+- Click "Add to Investigation" → Standard entry created
+
+**With Commingling:**
+- Click "Add to Investigation" on 300 ETH transaction
+- System shows: "🔀 Commingling Detected"
+- V1-T1 already checked (100 ETH selected)
+- Status: "⚠️ Insufficient: Need 200 ETH more"
+- User checks V1-T2 (200 ETH selected)
+- Status: "⚠️ Insufficient: Need 100 ETH more"
+- User checks V1-T3 (300 ETH selected)
+- Status: "✅ Perfect match!"
+- Click "✅ Create Commingled Entry"
+- Entry created with all 3 threads properly allocated
+
+**Benefits:**
+✅ Automatic detection - no manual calculation needed
+✅ Visual feedback - see totals update in real-time
+✅ Error prevention - can't create entry until sufficient
+✅ Smart defaults - original thread auto-selected
+✅ Flexible - user can select any combination
+✅ Clear status - always know if selection is valid
+✅ Proper accounting - multipleSourceThreads handled correctly
+
+**Technical Details:**
+- Searches threads by destinationWallet and currency match
+- Only shows threads entering the same wallet
+- Filters by currency to prevent cross-currency commingling
+- Validates total >= required before allowing creation
+- Creates entry with convergenceData for thread allocation
+- Maintains full audit trail with all thread IDs in notes
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 126 ++++++++++++++++++++++++++++++++++++++++++++++++++++++--------
- 1 file changed, 111 insertions(+), 15 deletions(-)
+ index.html | 322 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 320 insertions(+), 2 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0a09335 Update CLAUDE.md with bulk select documentation (0 seconds ago)
-- 46d2a54 Implement bulk multi-select for hop entries with over-allocation prevention (4 seconds ago)
-- 940a77b Sync CLAUDE.md (4 minutes ago)
-- 7c87616 Update CLAUDE.md (4 minutes ago)
-- b198a8e Final CLAUDE.md update (4 minutes ago)
-- 76aab97 Update CLAUDE.md (4 minutes ago)
-- 30833ef Update CLAUDE.md with write-off feature documentation (4 minutes ago)
-- d11ed6b Add Write Off functionality to Wallet Explorer with full documentation (4 minutes ago)
-- f1a146f Update CLAUDE.md (14 minutes ago)
-- 5cf7640 Final CLAUDE.md update (14 minutes ago)
+- 4a2996c Add intelligent commingling detection and multi-thread selector (1 second ago)
+- 78d3160 Update CLAUDE.md (4 minutes ago)
+- 0a09335 Update CLAUDE.md with bulk select documentation (4 minutes ago)
+- 46d2a54 Implement bulk multi-select for hop entries with over-allocation prevention (4 minutes ago)
+- 940a77b Sync CLAUDE.md (7 minutes ago)
+- 7c87616 Update CLAUDE.md (7 minutes ago)
+- b198a8e Final CLAUDE.md update (8 minutes ago)
+- 76aab97 Update CLAUDE.md (8 minutes ago)
+- 30833ef Update CLAUDE.md with write-off feature documentation (8 minutes ago)
+- d11ed6b Add Write Off functionality to Wallet Explorer with full documentation (8 minutes ago)
 
 ## Key Features
 
