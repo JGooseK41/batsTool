@@ -14137,7 +14137,8 @@ function exportRedWalletIndexCSV() {
             oldestFetchedDate: null,  // Oldest transaction we actually fetched
             isCompleteHistory: false,  // Whether we have complete history
             fetchedCount: 0,  // Number of transactions fetched
-            selectedTransactions: new Set()  // Track selected transaction hashes for bulk add
+            selectedTransactions: new Set(),  // Track selected transaction hashes for bulk add
+            highlightTxHash: null  // Transaction hash to highlight (traced thread context)
         };
 
         // Cache version - increment when fetch logic changes to invalidate old cache
@@ -14234,13 +14235,19 @@ function exportRedWalletIndexCSV() {
         }
 
         // Open wallet explorer modal
-        function openWalletExplorer(address = '', blockchain = '') {
+        function openWalletExplorer(address = '', blockchain = '', tracedTxHash = null) {
             // Pre-fill if called with parameters
             if (address) document.getElementById('walletExplorerAddress').value = address;
             if (blockchain) document.getElementById('walletExplorerBlockchain').value = blockchain;
 
             // Reset state
             resetWalletExplorer();
+
+            // Store traced transaction hash for highlighting
+            if (tracedTxHash) {
+                walletExplorerState.highlightTxHash = tracedTxHash.toLowerCase();
+                console.log(`🎯 Wallet Explorer: Will highlight transaction ${tracedTxHash}`);
+            }
 
             // Show modal
             showModal('walletExplorerModal');
@@ -14273,7 +14280,8 @@ function exportRedWalletIndexCSV() {
                 oldestFetchedDate: null,
                 isCompleteHistory: false,
                 fetchedCount: 0,
-                selectedTransactions: new Set()
+                selectedTransactions: new Set(),
+                highlightTxHash: null
             };
 
             // Hide all sections
@@ -14640,7 +14648,24 @@ function exportRedWalletIndexCSV() {
 
             pageTransactions.forEach(tx => {
                 const row = document.createElement('tr');
-                row.className = 'wallet-tx-row ' + (tx.type === 'IN' ? 'wallet-tx-in' : 'wallet-tx-out');
+
+                // Check if this is the traced transaction to highlight
+                const isHighlighted = walletExplorerState.highlightTxHash &&
+                                      tx.hash.toLowerCase() === walletExplorerState.highlightTxHash;
+
+                // Add highlight class if this is the traced transaction
+                let rowClass = 'wallet-tx-row ' + (tx.type === 'IN' ? 'wallet-tx-in' : 'wallet-tx-out');
+                if (isHighlighted) {
+                    rowClass += ' wallet-tx-highlighted';
+                }
+                row.className = rowClass;
+
+                // Add highlight styling directly if needed
+                if (isHighlighted) {
+                    row.style.background = 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)';
+                    row.style.borderLeft = '5px solid #f39c12';
+                    row.style.boxShadow = '0 0 15px rgba(243, 156, 18, 0.3)';
+                }
 
                 const date = new Date(tx.timestamp).toLocaleString();
                 const typeIcon = tx.type === 'IN' ? '🟢' : '🔴';
@@ -14650,6 +14675,11 @@ function exportRedWalletIndexCSV() {
                     : '—';
 
                 const entityLabel = tx.entityLabel ? `<span class="wallet-entity-label">${tx.entityLabel}</span>` : '';
+
+                // Add highlight badge if this is the traced transaction
+                const highlightBadge = isHighlighted ?
+                    `<span style="background: #f39c12; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 8px;">🎯 TRACED THREAD</span>`
+                    : '';
 
                 // Conditionally include balance column
                 const balanceCell = showBalance ? `<td style="padding: 12px; text-align: right;">${balance}</td>` : '';
@@ -14663,7 +14693,7 @@ function exportRedWalletIndexCSV() {
                                ${isSelected ? 'checked' : ''}
                                onchange="toggleTransactionSelection('${tx.hash}')">
                     </td>
-                    <td style="padding: 12px;">${date}</td>
+                    <td style="padding: 12px;">${date}${highlightBadge}</td>
                     <td style="padding: 12px;">${typeIcon} ${tx.type}</td>
                     <td style="padding: 12px; text-align: right; font-weight: 600;">${amountPrefix}${tx.amount.toFixed(6)} ${tx.asset}</td>
                     ${balanceCell}
