@@ -2794,8 +2794,15 @@
                         </div>
                     </div>
 
-                    <!-- Clear Filters Button -->
-                    <div style="margin-top: 12px; text-align: right;">
+                    <!-- Additional Filters -->
+                    <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                                <input type="checkbox" id="walletExplorerHideZeroBalance" onchange="toggleZeroBalanceFilter()" checked
+                                       style="width: 18px; height: 18px; cursor: pointer;">
+                                <span>Hide zero-balance transfers</span>
+                            </label>
+                        </div>
                         <button class="btn btn-secondary" onclick="clearAllFilters()" style="padding: 8px 20px;">
                             🔄 Clear All Filters
                         </button>
@@ -14325,6 +14332,7 @@ function exportRedWalletIndexCSV() {
             selectedAsset: '',
             assets: {},
             showScamTokens: false,  // Hide scam tokens by default
+            hideZeroBalance: true,  // Hide zero-balance transfers by default
             firstActivityDate: null,  // When wallet was first seen on chain
             oldestFetchedDate: null,  // Oldest transaction we actually fetched
             isCompleteHistory: false,  // Whether we have complete history
@@ -14617,6 +14625,12 @@ function exportRedWalletIndexCSV() {
             // Show modal
             showModal('walletExplorerModal');
 
+            // Sync checkbox state with walletExplorerState
+            const hideZeroCheckbox = document.getElementById('walletExplorerHideZeroBalance');
+            if (hideZeroCheckbox) {
+                hideZeroCheckbox.checked = walletExplorerState.hideZeroBalance;
+            }
+
             // If both address and blockchain provided, auto-search
             if (actualAddress && blockchain) {
                 setTimeout(() => searchWalletHistory(), 300);
@@ -14641,6 +14655,7 @@ function exportRedWalletIndexCSV() {
                 selectedAsset: '',
                 assets: {},
                 showScamTokens: false,
+                hideZeroBalance: true,  // Hide zero-balance transfers by default
                 firstActivityDate: null,
                 oldestFetchedDate: null,
                 isCompleteHistory: false,
@@ -15932,6 +15947,13 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
             // Sort transactions based on current sort order
             let transactions = [...walletExplorerState.filteredTransactions];
+
+            // Filter out zero-balance transfers if hideZeroBalance is enabled
+            if (walletExplorerState.hideZeroBalance) {
+                transactions = transactions.filter(tx => tx.amount > 0);
+                console.log(`Filtered out zero-balance transfers: ${walletExplorerState.filteredTransactions.length - transactions.length} removed, ${transactions.length} remaining`);
+            }
+
             if (walletExplorerState.sortOrder === 'desc') {
                 transactions.sort((a, b) => b.timestamp - a.timestamp); // Newest first
             } else {
@@ -16245,12 +16267,23 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             renderTransactionTable();
         }
 
+        // Toggle zero-balance filter
+        function toggleZeroBalanceFilter() {
+            const checkbox = document.getElementById('walletExplorerHideZeroBalance');
+            walletExplorerState.hideZeroBalance = checkbox.checked;
+            console.log(`Zero-balance filter: ${walletExplorerState.hideZeroBalance ? 'HIDE' : 'SHOW'} zero-balance transfers`);
+            renderTransactionTable();
+        }
+
         // Clear all filters
         function clearAllFilters() {
             document.getElementById('walletExplorerDateFrom').value = '';
             document.getElementById('walletExplorerDateTo').value = '';
             document.getElementById('walletExplorerAmountMin').value = '';
             document.getElementById('walletExplorerAmountMax').value = '';
+            // Reset zero-balance filter to default (hide)
+            document.getElementById('walletExplorerHideZeroBalance').checked = true;
+            walletExplorerState.hideZeroBalance = true;
             filterWalletTransactions();
         }
 

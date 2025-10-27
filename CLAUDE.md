@@ -3,122 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 19:41)
+## Latest Commit (Auto-updated: 2025-10-27 19:44)
 
-**Commit:** 2bd784fbd92e71564f3de329a466fd0b4421755d
+**Commit:** 16dcb5a9425e4b26cfbecb84816ec774939b853f
 **Author:** Your Name
-**Message:** Fix: Include transaction hash in entry notes for audit trail
-
-🔧 BUG FIX: Transaction hash documentation in trace notes
-
-USER REPORT: "when i select an outbound transaction to allocate the
-thread to and generate an entry, the outgoing transaction hash is not
-being migrated so that there is no documentation of the outgoing hash
-in the trace documentation/notes"
-
-ROOT CAUSE:
-
-While the transactionHash field was being correctly stored in entry data,
-the human-readable notes field visible to investigators did NOT include
-the transaction hash. This created an incomplete audit trail.
-
-Entry data structure had:
-- ✅ transactionHash: tx.hash (stored in data)
-- ❌ notes: "..." (missing hash in visible documentation)
-
-SOLUTION:
-
-Added transaction hash to the notes field in ALL entry creation paths:
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-1. TRACE ENTRIES (line 16496):
-   Before: notes without hash
-   After:  notes include "Transaction Hash: ${tx.hash}"
-
-2. WRITE-OFF ENTRIES (line 16990):
-   Before: notes without hash
-   After:  notes include "Transaction Hash: ${tx.hash}"
-
-3. COMMINGLING ENTRIES (line 16881):
-   Before: notes without hash
-   After:  notes include "Transaction Hash: ${data.tx.hash}"
-
-4. BULK ADD ENTRIES (line 17619):
-   Before: notes without hash
-   After:  notes include "Transaction Hash: ${tx.hash}"
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-EXAMPLE OUTPUT (Trace Entry Notes):
-
-Before:
-```
-Trace entry created from Wallet Explorer
-Thread: V1-T1
-From: 0xabc...
-To: 0xdef...
-Amount: 50 BTC
-Timestamp: Mon, 27 Oct 2025 12:34:56 GMT
-```
-
-After:
-```
-Trace entry created from Wallet Explorer
-Thread: V1-T1
-From: 0xabc...
-To: 0xdef...
-Amount: 50 BTC
-Transaction Hash: 0x1234567890abcdef...
-Timestamp: Mon, 27 Oct 2025 12:34:56 GMT
-```
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-IMPACT:
-
-✅ Complete audit trail for all entries
-✅ Transaction hashes visible in entry notes
-✅ Investigators can verify on-chain activity
-✅ Court-ready documentation
-✅ Consistent across all entry creation methods
-
-AFFECTED FUNCTIONS:
-- addWalletTransactionToInvestigation()
-- writeOffWalletTransaction()
-- confirmComminglingAndCreateEntry()
-- addSelectedTransactionsToInvestigation()
-
-TESTING:
-- Create trace entry from wallet explorer
-- Create write-off from wallet explorer
-- Create commingled entry with multiple threads
-- Bulk add multiple transactions
-- Verify all entry notes include transaction hash
-
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Auto-sync CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md  | 186 +++++++++++++++++++++++++++++++++----------------------------
- index.html |   6 +-
- 2 files changed, 106 insertions(+), 86 deletions(-)
+ CLAUDE.md | 184 ++++++++++++++++++++++++++------------------------------------
+ 1 file changed, 78 insertions(+), 106 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2bd784f Fix: Include transaction hash in entry notes for audit trail (0 seconds ago)
-- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (8 minutes ago)
-- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (20 minutes ago)
-- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (29 minutes ago)
-- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (31 minutes ago)
-- a1e1795 Auto-sync CLAUDE.md (36 minutes ago)
-- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (37 minutes ago)
+- 16dcb5a Auto-sync CLAUDE.md (0 seconds ago)
+- 2bd784f Fix: Include transaction hash in entry notes for audit trail (2 minutes ago)
+- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (11 minutes ago)
+- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (23 minutes ago)
+- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (31 minutes ago)
+- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (34 minutes ago)
+- a1e1795 Auto-sync CLAUDE.md (38 minutes ago)
+- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (39 minutes ago)
 - 0f487ff Fix: Wallet Explorer now works with finalized hop notation (2 hours ago)
 - 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (2 hours ago)
-- dc1b7bc Auto-sync CLAUDE.md (8 hours ago)
 
 ## Key Features
 
