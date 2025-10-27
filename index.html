@@ -15072,13 +15072,15 @@ function exportRedWalletIndexCSV() {
          * Get Sui wallet history using Sui JSON-RPC
          */
         async function getSuiWalletHistory(address) {
-            console.log('Fetching Sui wallet history');
+            console.log('Fetching Sui wallet history for:', address);
 
             const rpcUrl = 'https://fullnode.mainnet.sui.io';
             const allTransactions = [];
 
-            // Step 1: Query transaction blocks for the address (limit to 50 for performance)
-            const response = await fetch(rpcUrl, {
+            // ALWAYS query both FromAddress (outgoing) and ToAddress (incoming)
+            // Query 1: FromAddress (outgoing transactions)
+            console.log('Querying Sui FromAddress (outgoing)...');
+            const fromResponse = await fetch(rpcUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -15087,9 +15089,7 @@ function exportRedWalletIndexCSV() {
                     method: 'suix_queryTransactionBlocks',
                     params: [
                         {
-                            filter: {
-                                FromAddress: address
-                            },
+                            filter: { FromAddress: address },
                             options: {
                                 showInput: true,
                                 showEffects: true,
@@ -15105,92 +15105,63 @@ function exportRedWalletIndexCSV() {
                 })
             });
 
-            const data = await response.json();
+            const fromData = await fromResponse.json();
+            console.log('FromAddress results:', fromData.result?.data?.length || 0, 'transactions');
 
-            if (!data.result || !data.result.data || data.result.data.length === 0) {
-                // Try as ToAddress
-                const toResponse = await fetch(rpcUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        jsonrpc: '2.0',
-                        id: 1,
-                        method: 'suix_queryTransactionBlocks',
-                        params: [
-                            {
-                                filter: {
-                                    ToAddress: address
-                                },
-                                options: {
-                                    showInput: true,
-                                    showEffects: true,
-                                    showEvents: false,
-                                    showObjectChanges: false,
-                                    showBalanceChanges: false
-                                }
-                            },
-                            null,
-                            50,
-                            true
-                        ]
-                    })
+            // Process outgoing transactions
+            if (fromData.result && fromData.result.data) {
+                fromData.result.data.forEach(tx => {
+                    const parsed = parseSuiTransaction(tx, address, 'OUT');
+                    if (parsed) {
+                        console.log('Parsed OUT transaction:', parsed.amount, 'SUI');
+                        allTransactions.push(parsed);
+                    } else {
+                        console.log('Failed to parse OUT transaction:', tx.digest);
+                    }
                 });
+            }
 
-                const toData = await toResponse.json();
+            // Query 2: ToAddress (incoming transactions)
+            console.log('Querying Sui ToAddress (incoming)...');
+            const toResponse = await fetch(rpcUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'suix_queryTransactionBlocks',
+                    params: [
+                        {
+                            filter: { ToAddress: address },
+                            options: {
+                                showInput: true,
+                                showEffects: true,
+                                showEvents: false,
+                                showObjectChanges: false,
+                                showBalanceChanges: false
+                            }
+                        },
+                        null,
+                        50,
+                        true
+                    ]
+                })
+            });
 
-                if (!toData.result || !toData.result.data || toData.result.data.length === 0) {
-                    console.log('No Sui transactions found');
-                    return [];
-                }
+            const toData = await toResponse.json();
+            console.log('ToAddress results:', toData.result?.data?.length || 0, 'transactions');
 
-                // Process incoming transactions
+            // Process incoming transactions
+            if (toData.result && toData.result.data) {
                 toData.result.data.forEach(tx => {
                     const parsed = parseSuiTransaction(tx, address, 'IN');
-                    if (parsed) allTransactions.push(parsed);
+                    if (parsed) {
+                        console.log('Parsed IN transaction:', parsed.amount, 'SUI');
+                        allTransactions.push(parsed);
+                    } else {
+                        console.log('Failed to parse IN transaction:', tx.digest);
+                    }
                 });
-            } else {
-                // Process outgoing transactions
-                data.result.data.forEach(tx => {
-                    const parsed = parseSuiTransaction(tx, address, 'OUT');
-                    if (parsed) allTransactions.push(parsed);
-                });
-
-                // Also get incoming transactions
-                const toResponse = await fetch(rpcUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        jsonrpc: '2.0',
-                        id: 1,
-                        method: 'suix_queryTransactionBlocks',
-                        params: [
-                            {
-                                filter: {
-                                    ToAddress: address
-                                },
-                                options: {
-                                    showInput: true,
-                                    showEffects: true,
-                                    showEvents: false,
-                                    showObjectChanges: false,
-                                    showBalanceChanges: false
-                                }
-                            },
-                            null,
-                            50,
-                            true
-                        ]
-                    })
-                });
-
-                const toData = await toResponse.json();
-
-                if (toData.result && toData.result.data) {
-                    toData.result.data.forEach(tx => {
-                        const parsed = parseSuiTransaction(tx, address, 'IN');
-                        if (parsed) allTransactions.push(parsed);
-                    });
-                }
             }
 
             // Remove duplicates based on digest
