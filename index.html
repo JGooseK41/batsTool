@@ -14659,8 +14659,10 @@ function exportRedWalletIndexCSV() {
             const normalResponse = await fetch(normalTxUrl);
             const normalData = await normalResponse.json();
 
+            console.log('Etherscan normal tx response:', normalData);
+
             if (normalData.status !== '1') {
-                console.warn('No normal transactions found');
+                console.warn('No normal transactions found. Status:', normalData.status, 'Message:', normalData.message, 'Result:', normalData.result);
             }
 
             const normalTxs = normalData.result && Array.isArray(normalData.result) ? normalData.result : [];
@@ -14672,8 +14674,10 @@ function exportRedWalletIndexCSV() {
             const tokenResponse = await fetch(tokenTxUrl);
             const tokenData = await tokenResponse.json();
 
+            console.log('Etherscan token tx response:', tokenData);
+
             if (tokenData.status !== '1') {
-                console.warn('No token transactions found');
+                console.warn('No token transactions found. Status:', tokenData.status, 'Message:', tokenData.message, 'Result:', tokenData.result);
             }
 
             const tokenTxs = tokenData.result && Array.isArray(tokenData.result) ? tokenData.result : [];
