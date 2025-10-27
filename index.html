@@ -14948,36 +14948,63 @@ function exportRedWalletIndexCSV() {
             let librGuidance = '';
             let walletCurrentBalance = 0;
             let traceableAmount = 0;
+            let isClusteredWallet = false;
+            let clusterInfo = null;
 
             if (isLIBR && walletExplorerState.balanceMap) {
-                // Get current balance from the most recent transaction
-                const balances = Object.values(walletExplorerState.balanceMap);
-                walletCurrentBalance = balances.length > 0 ? balances[balances.length - 1] : 0;
+                // CRITICAL: Check if wallet is part of a cluster
+                const cluster = getClusterForAddress(walletExplorerState.address);
+                isClusteredWallet = !!cluster;
 
-                // Traceable amount = Available ART if balance < available, else we need balance analysis
-                if (walletCurrentBalance < sourceThread.availableAmount) {
-                    traceableAmount = sourceThread.availableAmount - walletCurrentBalance;
+                if (isClusteredWallet) {
+                    // CLUSTER MODE: Use aggregate balance across ALL addresses
+                    clusterInfo = cluster;
+                    console.log(`🔗 LIBR: Wallet is part of cluster ${cluster.id}`);
+                    console.log(`🔗 LIBR: Cluster has ${cluster.addresses.length} addresses`);
+
+                    // Note: Actual balance calculation would be async
+                    // For now, show indicator that cluster balance will be used
                     librGuidance = `
-                        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-top: 10px; border-radius: 4px;">
-                            <div style="font-size: 12px; font-weight: bold; color: #856404; margin-bottom: 5px;">📊 LIBR Analysis:</div>
-                            <div style="font-size: 11px; color: #856404;">
-                                Current Balance: ${walletCurrentBalance.toLocaleString()} ${currency}<br>
-                                Traced Amount: ${sourceThread.availableAmount.toLocaleString()} ${currency}<br>
-                                <strong>✅ Balance dropped below traced amount - ${traceableAmount.toLocaleString()} ${currency} is traceable</strong>
+                        <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 10px; margin-top: 10px; border-radius: 4px;">
+                            <div style="font-size: 12px; font-weight: bold; color: #e65100; margin-bottom: 5px;">🔗 LIBR Cluster Mode:</div>
+                            <div style="font-size: 11px; color: #e65100;">
+                                This wallet is part of <strong>Cluster ${cluster.id}</strong> with ${cluster.addresses.length} addresses.<br>
+                                <strong>Aggregate Balance Analysis:</strong> LIBR will calculate the combined balance across all ${cluster.addresses.length} addresses.<br>
+                                Traced Amount: ${sourceThread.availableAmount.toLocaleString()} ${currency}<br><br>
+                                ⚠️ Use the LIBR Balance Analyzer to calculate aggregate cluster balance before tracing.
                             </div>
                         </div>
                     `;
                 } else {
-                    librGuidance = `
-                        <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-top: 10px; border-radius: 4px;">
-                            <div style="font-size: 12px; font-weight: bold; color: #1976d2; margin-bottom: 5px;">📊 LIBR Analysis:</div>
-                            <div style="font-size: 11px; color: #1976d2;">
-                                Current Balance: ${walletCurrentBalance.toLocaleString()} ${currency}<br>
-                                Traced Amount: ${sourceThread.availableAmount.toLocaleString()} ${currency}<br>
-                                <strong>ℹ️ Balance still above traced amount - funds remain in wallet per LIBR</strong>
+                    // SINGLE ADDRESS MODE: Use individual wallet balance
+                    const balances = Object.values(walletExplorerState.balanceMap);
+                    walletCurrentBalance = balances.length > 0 ? balances[balances.length - 1] : 0;
+
+                    // Traceable amount = Available ART if balance < available, else we need balance analysis
+                    if (walletCurrentBalance < sourceThread.availableAmount) {
+                        traceableAmount = sourceThread.availableAmount - walletCurrentBalance;
+                        librGuidance = `
+                            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-top: 10px; border-radius: 4px;">
+                                <div style="font-size: 12px; font-weight: bold; color: #856404; margin-bottom: 5px;">📊 LIBR Analysis:</div>
+                                <div style="font-size: 11px; color: #856404;">
+                                    Current Balance: ${walletCurrentBalance.toLocaleString()} ${currency}<br>
+                                    Traced Amount: ${sourceThread.availableAmount.toLocaleString()} ${currency}<br>
+                                    <strong>✅ Balance dropped below traced amount - ${traceableAmount.toLocaleString()} ${currency} is traceable</strong>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                        `;
+                    } else {
+                        librGuidance = `
+                            <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-top: 10px; border-radius: 4px;">
+                                <div style="font-size: 12px; font-weight: bold; color: #1976d2; margin-bottom: 5px;">📊 LIBR Analysis:</div>
+                                <div style="font-size: 11px; color: #1976d2;">
+                                    Current Balance: ${walletCurrentBalance.toLocaleString()} ${currency}<br>
+                                    Traced Amount: ${sourceThread.availableAmount.toLocaleString()} ${currency}<br>
+                                    <strong>ℹ️ Balance still above traced amount - funds remain in wallet per LIBR</strong>
+                                </div>
+                            </div>
+                        `;
+                    }
                 }
             }
 
@@ -17425,6 +17452,24 @@ METHODOLOGY IMPLICATIONS:
                 };
 
                 console.log(`✅ Created new cluster ${clusterId} for wallet ${walletId} (${walletLabel})`);
+
+                // CRITICAL: Show LIBR-specific guidance when cluster is created
+                if (investigation.tracingMethod === 'LIBR') {
+                    setTimeout(() => {
+                        alert('🔗 LIBR Cluster Created\n\n' +
+                              'Cluster ID: ' + clusterId + '\n' +
+                              'Wallet ID: ' + walletId + '\n' +
+                              'Addresses: 2 (original + change)\n\n' +
+                              '⚠️ IMPORTANT - LIBR Methodology:\n\n' +
+                              'Under LIBR, you MUST calculate the AGGREGATE balance across ALL addresses in this cluster.\n\n' +
+                              'The cluster acts as a single wallet entity:\n' +
+                              '• Combined balance determines traceability\n' +
+                              '• Funds are only traced when aggregate balance drops below traced amount\n' +
+                              '• Use LIBR Balance Analyzer to calculate cluster balance\n\n' +
+                              'Do NOT analyze addresses individually - this would violate LIBR methodology.');
+                    }, 100);
+                }
+
                 saveState();
                 return clusterId;
             }
@@ -17446,6 +17491,73 @@ METHODOLOGY IMPLICATIONS:
                 }
             }
             return null;
+        }
+
+        /**
+         * Get aggregate balance across all addresses in a cluster (for LIBR methodology)
+         * CRITICAL: LIBR requires aggregate balance calculation for clustered addresses
+         */
+        async function getAggregateClusterBalance(cluster, blockchain) {
+            if (!cluster || !cluster.addresses) {
+                return 0;
+            }
+
+            console.log(`🔍 LIBR: Calculating aggregate balance for cluster ${cluster.id}...`);
+
+            let totalBalance = 0;
+            const balances = [];
+
+            // Fetch balance for each address in the cluster
+            for (const address of cluster.addresses) {
+                try {
+                    let balance = 0;
+
+                    // Get current balance based on blockchain
+                    if (blockchain === 'Bitcoin') {
+                        const txs = await getBitcoinWalletHistory(address);
+                        // Calculate balance from transactions
+                        balance = calculateBitcoinBalance(address, txs);
+                    } else if (blockchain === 'Ethereum' || blockchain.startsWith('EVM:')) {
+                        // For Ethereum and EVM chains
+                        balance = await getEthereumBalance(address, blockchain);
+                    } else if (blockchain === 'Tron') {
+                        balance = await getTronBalance(address);
+                    }
+                    // Add other blockchains as needed
+
+                    balances.push({ address, balance });
+                    totalBalance += balance;
+                    console.log(`   ${address}: ${balance} ${cluster.currency}`);
+                } catch (error) {
+                    console.error(`Failed to get balance for ${address}:`, error);
+                    // Continue with other addresses even if one fails
+                }
+            }
+
+            console.log(`✅ LIBR: Total aggregate balance = ${totalBalance} ${cluster.currency}`);
+            console.log(`   Addresses checked: ${balances.length}/${cluster.addresses.length}`);
+
+            return totalBalance;
+        }
+
+        /**
+         * Calculate Bitcoin balance from transaction history
+         */
+        function calculateBitcoinBalance(address, transactions) {
+            if (!transactions || transactions.length === 0) return 0;
+
+            let balance = 0;
+            for (const tx of transactions) {
+                // Add received amounts
+                if (tx.to && tx.to.toLowerCase() === address.toLowerCase()) {
+                    balance += parseFloat(tx.amount || 0);
+                }
+                // Subtract sent amounts
+                if (tx.from && tx.from.toLowerCase() === address.toLowerCase()) {
+                    balance -= parseFloat(tx.amount || 0);
+                }
+            }
+            return Math.max(0, balance); // Balance can't be negative
         }
 
         /**
@@ -36392,20 +36504,110 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
 
         // Update tracing method (PIFO vs LIBR)
         function updateTracingMethod(method) {
+            // CRITICAL: Check if methodology is locked
+            const hasHops = investigation.hops && investigation.hops.length > 0;
+            const hasAllocations = investigation.availableThreads &&
+                                  Object.values(investigation.availableThreads).some(currencyThreads =>
+                                      Object.keys(currencyThreads).length > 0
+                                  );
+            const currentMethod = investigation.tracingMethod || 'PIFO';
+
+            // Block methodology change if investigation has begun
+            if ((hasHops || hasAllocations) && currentMethod !== method) {
+                alert('⛔ METHODOLOGY LOCKED\n\n' +
+                      'Cannot change methodology after investigation has begun.\n\n' +
+                      '📋 Current Methodology: ' + currentMethod + '\n' +
+                      '🔒 Investigation Status: LOCKED\n\n' +
+                      'This investigation is using ' + currentMethod + ' methodology.\n' +
+                      'Mixing methodologies would invalidate the entire investigation for court purposes.\n\n' +
+                      'Reason: ' + (hasHops ? investigation.hops.length + ' hop(s) already created' :
+                                    'Victim transactions already processed with ' + currentMethod) + '\n\n' +
+                      'To use ' + method + ' methodology, you must create a new investigation.');
+
+                // Reset radio button to current methodology
+                const radios = document.getElementsByName('tracingMethod');
+                for (const radio of radios) {
+                    radio.checked = (radio.value === currentMethod);
+                }
+
+                return false;
+            }
+
+            // Allow change if investigation hasn't started
             investigation.tracingMethod = method;
 
-            // Show warning if switching methods mid-investigation
-            if (investigation.hops.length > 0) {
-                const warning = method === 'LIBR' ?
-                    'LIBR method selected: This will arrest asset flow and keep funds in fewer wallets closer to the RED wallet. Useful for stablecoin burn/reissue strategies or when private key access may be obtained. Ensure consistency throughout your investigation.' :
-                    'Switched back to PIFO (default method). Ensure all previous entries follow PIFO methodology.';
-                showNotification(warning, 'info');
+            // Show methodology information for first selection
+            if (!hasHops && !hasAllocations) {
+                const info = method === 'LIBR' ?
+                    '🔶 LIBR method selected: This will arrest asset flow and keep funds in fewer wallets closer to the RED wallet. Useful for stablecoin burn/reissue strategies or when private key access may be obtained.' :
+                    '📘 PIFO method selected (default): Criminal proceeds are assumed to move immediately upon entering a wallet. This is the recommended methodology for 90%+ of cryptocurrency investigations.';
+                showNotification(info, 'info');
             }
 
             // Update any UI elements that might display the method
             const methodDisplay = document.getElementById('currentTracingMethod');
             if (methodDisplay) {
                 methodDisplay.textContent = method;
+            }
+
+            // Update methodology lock indicator if it exists
+            updateMethodologyLockIndicator();
+
+            saveState();
+            return true;
+        }
+
+        // Update methodology lock indicator in UI
+        function updateMethodologyLockIndicator() {
+            const hasHops = investigation.hops && investigation.hops.length > 0;
+            const hasAllocations = investigation.availableThreads &&
+                                  Object.values(investigation.availableThreads).some(currencyThreads =>
+                                      Object.keys(currencyThreads).length > 0
+                                  );
+            const isLocked = hasHops || hasAllocations;
+            const currentMethod = investigation.tracingMethod || 'PIFO';
+
+            // Find methodology radio container and add lock indicator
+            const methodologyContainer = document.querySelector('[name="tracingMethod"]')?.closest('.form-group');
+            if (methodologyContainer) {
+                // Remove existing lock indicator
+                const existingLock = methodologyContainer.querySelector('.methodology-lock-indicator');
+                if (existingLock) {
+                    existingLock.remove();
+                }
+
+                // Add lock indicator if locked
+                if (isLocked) {
+                    const lockIndicator = document.createElement('div');
+                    lockIndicator.className = 'methodology-lock-indicator';
+                    lockIndicator.style.cssText = 'background: #fff3cd; border-left: 4px solid #ff9800; padding: 10px; margin-top: 10px; border-radius: 4px;';
+                    lockIndicator.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 20px;">🔒</span>
+                            <div>
+                                <strong style="color: #856404;">Methodology Locked: ${currentMethod}</strong><br>
+                                <span style="font-size: 12px; color: #856404;">
+                                    ${hasHops ? investigation.hops.length + ' hop(s)' : 'Victim transactions'} already processed.
+                                    Cannot change methodology mid-investigation.
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                    methodologyContainer.appendChild(lockIndicator);
+
+                    // Disable radio buttons
+                    const radios = document.getElementsByName('tracingMethod');
+                    for (const radio of radios) {
+                        if (radio.value !== currentMethod) {
+                            radio.disabled = true;
+                            const label = radio.closest('label');
+                            if (label) {
+                                label.style.opacity = '0.5';
+                                label.style.cursor = 'not-allowed';
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -36724,6 +36926,11 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             console.log('Investigation loaded successfully!');
             console.log('Available threads after loading:', investigation.availableThreads);
 
+            // Update methodology lock indicator for loaded investigation
+            if (typeof updateMethodologyLockIndicator === 'function') {
+                setTimeout(() => updateMethodologyLockIndicator(), 100);
+            }
+
             // Switch to the hops tab to show the loaded investigation
             if (typeof window.switchTab === 'function') {
                 window.switchTab('hops');
@@ -36899,6 +37106,78 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
     </div>
 
     ${redWalletSection}
+
+    ${investigation.addressClusters && Object.keys(investigation.addressClusters).length > 0 ? `
+    <div class="section">
+        <div class="section-title">Section 2.5: Wallet Cluster Index (UTXO Address Clustering)</div>
+        <p style="font-style: italic; color: #666; margin-bottom: 15px;">
+            The following addresses have been manually clustered by the investigator as controlled
+            by the same entity. Clustering is used for dual monitoring in PIFO methodology and
+            aggregate balance tracking in LIBR methodology. Each cluster represents addresses that
+            share control and are monitored as a single wallet entity.
+        </p>
+        <table>
+            <tr>
+                <th>Cluster ID</th>
+                <th>Wallet ID</th>
+                <th>Thread</th>
+                <th>Addresses</th>
+                <th>Currency</th>
+                <th>Created</th>
+                <th>Last Activity</th>
+                <th>Methodology</th>
+                <th>Documentation</th>
+            </tr>
+            ${Object.values(investigation.addressClusters).map(cluster => `
+                <tr>
+                    <td style="font-size: 11px; font-family: monospace;">${cluster.id}</td>
+                    <td>
+                        <strong style="color: #ff9800;">${cluster.walletId || 'Unknown'}</strong><br>
+                        <span style="font-size: 11px; color: #666;">${cluster.walletLabel || ''}</span>
+                    </td>
+                    <td><strong>${cluster.threadId}</strong></td>
+                    <td style="font-family: monospace; font-size: 10px; max-width: 300px;">
+                        ${cluster.addresses.map((addr, idx) => `
+                            <div style="margin: 2px 0; padding: 3px; background: ${idx === 0 ? '#fff3e0' : '#e3f2fd'}; border-radius: 3px;">
+                                ${idx === 0 ? '🏠' : '🔄'} ${addr}
+                                ${cluster.monitoredAmounts && cluster.monitoredAmounts[addr] !== undefined ?
+                                    `<br><span style="font-size: 9px; color: #666;">Monitored: ${cluster.monitoredAmounts[addr]} ${cluster.currency}</span>` : ''}
+                            </div>
+                        `).join('')}
+                        <div style="margin-top: 5px; font-weight: bold; color: #2c3e50;">
+                            Total: ${cluster.addresses.length} addresses
+                        </div>
+                    </td>
+                    <td><strong>${cluster.currency}</strong></td>
+                    <td style="font-size: 11px;">${new Date(cluster.created).toLocaleString('en-US', {timeZone: 'UTC'})} UTC</td>
+                    <td style="font-size: 11px;">${new Date(cluster.lastActivity).toLocaleString('en-US', {timeZone: 'UTC'})} UTC</td>
+                    <td>
+                        <span style="background: ${investigation.tracingMethod === 'PIFO' ? '#2196f3' : '#ff9800'};
+                                     color: white; padding: 3px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">
+                            ${investigation.tracingMethod || 'PIFO'}
+                        </span>
+                    </td>
+                    <td>
+                        <details style="cursor: pointer;">
+                            <summary style="font-weight: bold; color: #2196f3;">View Details</summary>
+                            <pre style="font-size: 9px; max-width: 500px; max-height: 400px; overflow: auto;
+                                        background: #f8f9fa; padding: 10px; margin-top: 10px; border-radius: 4px;
+                                        border-left: 4px solid #ff9800; white-space: pre-wrap; word-wrap: break-word;">${cluster.notes || 'No additional notes'}</pre>
+                        </details>
+                    </td>
+                </tr>
+            `).join('')}
+        </table>
+        <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-left: 4px solid #ff9800; border-radius: 4px;">
+            <p style="margin: 0; font-size: 13px;"><strong>📝 Clustering Methodology Note:</strong></p>
+            <p style="margin: 10px 0 0 0; font-size: 12px; color: #856404;">
+                ${investigation.tracingMethod === 'PIFO' ?
+                    'Under PIFO methodology, all addresses in a cluster are monitored simultaneously. Whichever address moves funds FIRST will be traced, ensuring proper PIFO compliance for UTXO change address scenarios.' :
+                    'Under LIBR methodology, balance analysis considers ALL addresses in the cluster together. The aggregate balance across all clustered addresses determines when criminal proceeds are considered to have "left" the wallet entity.'}
+            </p>
+        </div>
+    </div>
+    ` : ''}
 
     ${investigation.hops.length > 0 ? `
     <div class="section">
