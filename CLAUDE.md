@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-26 22:37)
 
-**Commit:** b562a37bea4f6c56cd8c27844a8ff77da8054689
+**Commit:** 1b2c566611a7cc06c960909ecd64902053bb9199
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 36 +++++++++---------------------------
- 1 file changed, 9 insertions(+), 27 deletions(-)
+ CLAUDE.md | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b562a37 Update CLAUDE.md with latest commit info (0 seconds ago)
-- c80d506 Update CLAUDE.md with latest commit info (6 seconds ago)
-- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (15 seconds ago)
+- 1b2c566 Update CLAUDE.md with latest commit info (0 seconds ago)
+- b562a37 Update CLAUDE.md with latest commit info (8 seconds ago)
+- c80d506 Update CLAUDE.md with latest commit info (14 seconds ago)
+- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (23 seconds ago)
 - 282a0a0 Add Wallet Explorer button to victim transaction form (9 minutes ago)
 - 3f46bcb Reorganize transaction lookup modal with clearer button choices (13 minutes ago)
 - 54fe434 Add 'View in Wallet Explorer' button to available threads for tracing workflow (20 minutes ago)
 - 59f33e3 Add transaction highlighting in Wallet Explorer for traced threads (27 minutes ago)
 - 2b63f37 Add confirmation dialog when clicking individual Add with selections (31 minutes ago)
 - 91ca1b5 Fix old cached data causing incorrect incomplete history warning (35 minutes ago)
-- 94fda5c Make bulk action bar highly visible and add debug logging (37 minutes ago)
 
 ## Key Features
 
