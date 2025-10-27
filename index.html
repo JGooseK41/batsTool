@@ -30076,7 +30076,9 @@ function showHopWizardStep(step) {
                 }
 
                 // Apply allocation based on mode
-                wizardData.allocations = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
+                const allocationResult = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
+                wizardData.allocations = allocationResult.allocations;
+                wizardData.allocationInfo = allocationResult; // Store for validation warnings
 
                 // Create allocation notes
                 const allocationNotes = [];
@@ -30131,6 +30133,25 @@ function showHopWizardStep(step) {
                 <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin: 15px 0;">
                     <strong>📊 ${wizardData.allocationMode === 'matching' ? 'Matching Mode' : 'PIFO Applied'}:</strong> ${wizardData.pifoNote}
                     <br><small>You can adjust these amounts manually if needed.</small>
+                </div>
+            ` : ''}
+
+            ${wizardData.allocationInfo && wizardData.allocationInfo.hasUnderAllocation ? `
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin: 15px 0; color: #856404;">
+                    <div style="font-weight: bold; margin-bottom: 10px;">⚠️ Under-Allocation Detected</div>
+                    <div style="font-size: 14px; line-height: 1.6;">
+                        You have <strong>${wizardData.allocationInfo.underAllocated.toLocaleString()}</strong> available across selected threads,
+                        but this transaction only uses <strong>${wizardData.allocationInfo.totalAllocated.toLocaleString()}</strong>.
+                        <br><br>
+                        <strong>${wizardData.allocationInfo.underAllocated.toLocaleString()}</strong> will remain unallocated in the available threads.
+                        <br><br>
+                        <em>This is acceptable for partial tracing. If you intended to trace more, consider:</em>
+                        <ul style="margin: 5px 0; padding-left: 20px;">
+                            <li>Verifying the transaction amount is correct</li>
+                            <li>Creating multiple entries if funds split to different destinations</li>
+                            <li>Leaving remainder for future trace opportunities</li>
+                        </ul>
+                    </div>
                 </div>
             ` : ''}
 
@@ -31948,7 +31969,9 @@ function applyMatchingAllocation() {
 
     if (txAmount > 0 && wizardData.selectedThreads.length > 0) {
         // For matching mode, try to match the exact transaction amount
-        wizardData.allocations = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
+        const allocationResult = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
+        wizardData.allocations = allocationResult.allocations;
+        wizardData.allocationInfo = allocationResult; // Store for validation warnings
 
         // Add note indicating matching mode
         const matchNotes = [];
@@ -32023,7 +32046,17 @@ function applyPIFOAllocation(totalAmount, selectedThreads) {
         remainingAmount = roundToCurrencyPrecision(remainingAmount - toAllocate, currency);
     }
 
-    return allocations;
+    // MEDIUM FIX #1: Track under-allocation for validation
+    const totalAllocated = Object.values(allocations).reduce((sum, val) => sum + val, 0);
+    const underAllocated = totalAvailable - totalAllocated;
+
+    return {
+        allocations: allocations,
+        totalAvailable: totalAvailable,
+        totalAllocated: totalAllocated,
+        underAllocated: underAllocated > 0.01 ? underAllocated : 0, // Ignore rounding errors
+        hasUnderAllocation: underAllocated > 0.01
+    };
 }
 
 // Re-apply PIFO to current wizard state
@@ -32035,7 +32068,9 @@ function applyPIFOToWizard() {
 
     if (txAmount > 0 && wizardData.selectedThreads.length > 0) {
         // Apply PIFO allocation
-        wizardData.allocations = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
+        const allocationResult = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
+        wizardData.allocations = allocationResult.allocations;
+        wizardData.allocationInfo = allocationResult; // Store for validation warnings
 
         // Update the UI
         for (const [threadId, amount] of Object.entries(wizardData.allocations)) {
@@ -33866,7 +33901,9 @@ function createHopEntryFromWizard() {
         console.log(`Capping allocation at available amount: ${totalAvailable}`);
 
         // Simply cap at what's available - this is our maximum claim
-        wizardData.allocations = applyPIFOAllocation(totalAvailable, wizardData.selectedThreads);
+        const allocationResult = applyPIFOAllocation(totalAvailable, wizardData.selectedThreads);
+        wizardData.allocations = allocationResult.allocations;
+        wizardData.allocationInfo = allocationResult; // Store for validation warnings
         totalAmount = totalAvailable;
 
         console.log('Adjusted allocations to available amount:', wizardData.allocations);
@@ -33883,7 +33920,9 @@ function createHopEntryFromWizard() {
             console.log(`Capping allocation at transaction amount: ${txAmount} (was trying to allocate ${totalAmount})`);
 
             // Cap at transaction amount - can't claim more than what moved
-            wizardData.allocations = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
+            const allocationResult = applyPIFOAllocation(txAmount, wizardData.selectedThreads);
+            wizardData.allocations = allocationResult.allocations;
+            wizardData.allocationInfo = allocationResult; // Store for validation warnings
             totalAmount = txAmount;
 
             console.log('Capped allocations at transaction amount:', wizardData.allocations);
@@ -33900,12 +33939,35 @@ function createHopEntryFromWizard() {
         return; // Hard block
     }
 
-    // Check if this is partial tracing (transaction amount exceeds our allocation)
+    // MEDIUM FIX #8: Enhanced partial allocation documentation
     let partialTraceNote = '';
     if (wizardData.txData && wizardData.txData.amount && wizardData.txData.amount > totalAmount) {
         // This is partial tracing - we're only following our portion
         partialTraceNote = `Partial trace: Following ${totalAmount} of ${wizardData.txData.amount} ${wizardData.txData.currency || ''} (transaction total)`;
         console.log('Partial trace detected:', partialTraceNote);
+    }
+
+    // Check for under-allocation (threads not fully used)
+    if (wizardData.allocationInfo && wizardData.allocationInfo.hasUnderAllocation) {
+        const remainingDetails = [];
+        wizardData.selectedThreads.forEach(threadId => {
+            const thread = threads.find(t => t.threadId === threadId);
+            if (thread) {
+                const allocated = wizardData.allocations[threadId] || 0;
+                const remaining = thread.availableAmount - allocated;
+                if (remaining > 0.01) { // Ignore rounding errors
+                    remainingDetails.push(`${remaining.toLocaleString()} ${thread.currency} remains in ${threadId}`);
+                }
+            }
+        });
+
+        if (remainingDetails.length > 0) {
+            if (partialTraceNote) {
+                partialTraceNote += `\nRemaining in source threads: ${remainingDetails.join('; ')}`;
+            } else {
+                partialTraceNote = `Under-allocation: ${remainingDetails.join('; ')}`;
+            }
+        }
     }
 
     // Auto-cap individual thread allocations at available amounts
@@ -37497,7 +37559,16 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     <th>Timestamp</th>
                     <th>Notes</th>
                 </tr>
-                ${hop.entries.map(entry => `
+                ${hop.entries.map(entry => {
+                    // LOW FIX #3: Add bridge transaction chain markers
+                    let classification = walletTypes[entry.toWalletType] || entry.toWalletType;
+                    if (entry.isBridge && entry.bridgeDetails) {
+                        classification += ` 🌉 (Bridge: ${entry.bridgeDetails.sourceChain || entry.chain || 'Unknown'} → ${entry.bridgeDetails.destinationChain || 'Unknown'})`;
+                    } else if (entry.isBridge) {
+                        classification += ` 🌉 (Bridge Transaction)`;
+                    }
+
+                    return `
                     <tr>
                         <td>${entry.entryType}</td>
                         <td>${entry.notation}</td>
@@ -37505,12 +37576,13 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                         <td>${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency}</td>
                         <td style="font-family: monospace; font-size: 11px; word-break: break-all;">${entry.fromWallet}</td>
                         <td style="font-family: monospace; font-size: 11px; word-break: break-all;">${entry.toWallet}</td>
-                        <td>${walletTypes[entry.toWalletType] || entry.toWalletType}</td>
+                        <td>${classification}</td>
                         <td style="font-family: monospace; font-size: 11px; word-break: break-all;">${entry.txHash}</td>
                         <td>${entry.timestamp ? formatDateTimeForReport(entry.timestamp, entry.timezone || 'UTC') : 'Not specified'}</td>
                         <td>${entry.notes || entry.justification || ''}</td>
                     </tr>
-                `).join('')}
+                    `;
+                }).join('')}
             </table>
         `).join('')}
     </div>
