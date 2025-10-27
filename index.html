@@ -8602,6 +8602,10 @@
             try {
                 // Deep clone the current investigation state
                 // Use structured clone if available (more efficient for large objects)
+                // LOW FIX #5: This includes ALL investigation properties including:
+                //   - victims, hops, availableThreads
+                //   - addressClusters (verified included)
+                //   - universalWalletIndex, filters, etc.
                 let clonedInvestigation;
                 if (typeof structuredClone === 'function') {
                     // Modern browsers support structuredClone (faster and handles more types)
@@ -10086,6 +10090,7 @@ function buildAvailableThreadsIndex() {
 
                         // For terminal wallets, deduct the allocated amounts from source threads
                         // Only mark as fully exhausted if the entire thread was actually used
+                        // LOW FIX #4: This is where partial allocations are handled - remainders stay available
                         if (entry.individualSourceAssignments && typeof entry.individualSourceAssignments === 'object') {
                             Object.entries(entry.individualSourceAssignments).forEach(([threadId, allocatedAmount]) => {
                                 // Find the thread and deduct the allocated amount
@@ -14389,10 +14394,37 @@ function exportRedWalletIndexCSV() {
                                     notation: entry.notation || `H${hop.hopNumber}-E${entry.id}`,
                                     entryType: entry.entryType,
                                     amount: entry.amount,
-                                    currency: entry.currency
+                                    currency: entry.currency,
+                                    // MEDIUM FIX #10: Include wallet addresses for cluster checking
+                                    fromWallet: entry.fromWallet,
+                                    toWallet: entry.toWallet
                                 });
                             }
                         });
+                    }
+                });
+            }
+
+            // MEDIUM FIX #10: Check if any duplicates involve clustered addresses
+            if (duplicates.length > 0 && walletExplorerState.address) {
+                const currentAddress = walletExplorerState.clusterView ?
+                                      (walletExplorerState.allTransactions.find(t => t.hash === txHash)?.sourceAddress || walletExplorerState.address) :
+                                      walletExplorerState.address;
+
+                duplicates.forEach(dup => {
+                    // Check if duplicate's addresses are in same cluster as current address
+                    if (dup.fromWallet || dup.toWallet) {
+                        const currentCluster = getClusterForAddress(currentAddress);
+                        if (currentCluster) {
+                            const dupFromCluster = dup.fromWallet ? getClusterForAddress(dup.fromWallet) : null;
+                            const dupToCluster = dup.toWallet ? getClusterForAddress(dup.toWallet) : null;
+
+                            if ((dupFromCluster && dupFromCluster.id === currentCluster.id) ||
+                                (dupToCluster && dupToCluster.id === currentCluster.id)) {
+                                dup.clusterMatch = true;
+                                dup.clusterNote = `⚠️ From same cluster (${currentCluster.id})`;
+                            }
+                        }
                     }
                 });
             }
@@ -15910,13 +15942,17 @@ function exportRedWalletIndexCSV() {
                         dupLocation = `Hop ${dup.hopNumber} → ${dup.notation} (${dup.entryType})`;
                     }
 
+                    // MEDIUM FIX #10: Include cluster warning in duplicate message
+                    const clusterWarning = dup.clusterMatch ? `\n${dup.clusterNote}\n` : '';
+
                     const proceed = confirm(
                         `⚠️ DUPLICATE TRANSACTION DETECTED\n\n` +
                         `This transaction already exists in your investigation:\n\n` +
                         `Location: ${dupLocation}\n` +
                         `Amount: ${dup.amount} ${dup.currency}\n` +
-                        `Hash: ${txHash.slice(0, 20)}...\n\n` +
-                        `Adding it again may create accounting errors!\n\n` +
+                        `Hash: ${txHash.slice(0, 20)}...\n` +
+                        clusterWarning +
+                        `\nAdding it again may create accounting errors!\n\n` +
                         `Click OK to add anyway, or Cancel to go back.`
                     );
 
@@ -15953,7 +15989,12 @@ function exportRedWalletIndexCSV() {
                 }
 
                 const blockchain = walletExplorerState.blockchain;
-                const walletAddress = walletExplorerState.address;
+                // MEDIUM FIX #9: Use actual source address when in cluster view
+                let walletAddress = walletExplorerState.address;
+                if (walletExplorerState.clusterView && tx.sourceAddress) {
+                    walletAddress = tx.sourceAddress;
+                    console.log(`🔗 Using cluster source address: ${walletAddress}`);
+                }
 
                 // Close wallet explorer
                 closeWalletExplorer();
@@ -34472,9 +34513,14 @@ function createHopEntryFromWizard() {
     closeHopWizard();
 
     // Rebuild thread index to ensure available amounts are updated
+    // LOW FIX #4: This ensures available threads panel reflects partial allocations correctly
+    // buildAvailableThreadsIndex() recalculates all thread amounts, including remainders
+    // from partial traces (terminal wallets, partial allocations, etc.)
     buildAvailableThreadsIndex();
 
     // Render with collapsed state already set
+    // LOW FIX #4: renderHops() includes the available threads panel, which displays
+    // the freshly calculated remainders with progress bars showing % assigned
     renderHops();
     saveToStorage();
 

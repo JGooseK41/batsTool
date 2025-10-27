@@ -3,90 +3,83 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 09:06)
+## Latest Commit (Auto-updated: 2025-10-27 09:09)
 
-**Commit:** 8803873f574f4e6ab8d42b8894cbe6220f3d744e
+**Commit:** 9dd698d04a20df2656b8a10c55dfe0d22280f8a1
 **Author:** Your Name
-**Message:** Phase 2 Implementation - Part 1: 3 Fixes Complete (3/16)
+**Message:** Phase 2 Implementation - Part 2: 2 More Fixes Complete (5/16 Total)
 
-🎯 MEDIUM FIX #1: Thread Allocation Validation Gap (COMPLETE)
-✅ Added under-allocation detection to applyPIFOAllocation()
-✅ Returns detailed allocation metrics (total available, allocated, under-allocated)
-✅ Updated all 5 call sites to use new return format
-✅ Added warning banner in wizard Step 2 when under-allocation detected
-✅ Shows exact amounts remaining in each thread
-✅ Provides guidance on partial tracing best practices
+🎯 LOW FIX #1: Wallet Explorer Cache Invalidation on Clustering (COMPLETE)
+✅ Added clearWalletCache() function to remove cached data for specific address
+✅ Added clearClusterCache() function to clear cache for all cluster addresses
+✅ Cache now cleared when address added to existing cluster
+✅ Cache now cleared when new cluster created
+✅ Prevents stale data showing for up to 5 minutes after clustering
 
-IMPLEMENTATION:
-- Modified applyPIFOAllocation() return value (lines 32026-32036)
-  - Now returns object with allocations + metrics
-  - Tracks totalAvailable, totalAllocated, underAllocated
-  - hasUnderAllocation flag for easy checking
-- Updated 5 call sites (lines 30079, 31953, 32050, 33885, 33904)
-  - Extract allocations from result object
-  - Store allocationInfo in wizardData for warnings
-- Added warning banner in wizard Step 2 (lines 30139-30156)
-  - Shows when threads not fully allocated
-  - Lists exact remaining amounts per thread
-  - Explains partial tracing use cases
+IMPLEMENTATION (lines 14674-14696, 17577, 17660):
+- clearWalletCache(address, blockchain) removes sessionStorage entry
+- clearClusterCache(cluster) iterates all cluster addresses and clears each
+- Called in createAddressCluster() after adding to existing cluster (line 17577)
+- Called in createAddressCluster() after creating new cluster (line 17660)
+- Logs cache clearing for debugging
 
 BENEFIT:
-Before: No warning when threads under-utilized - easy to miss untraced funds
-After: Clear warning shows remaining amounts with actionable guidance
-Result: Prevents accidental incomplete tracing
+Before: Cached wallet data stays for 5 minutes even after clustering
+After: Cache immediately cleared when cluster modified
+Result: Fresh data shown immediately after clustering changes
 
 ---
 
-🎯 MEDIUM FIX #8: Partial Allocation Documentation (COMPLETE)
-✅ Enhanced partial trace notes with detailed remaining amounts
-✅ Automatically lists which threads have remainders
-✅ Shows exact amounts remaining in each source thread
-✅ Integrates with under-allocation detection
+🎯 MEDIUM FIX #7: Cluster Notation in Hop Entry Documentation (COMPLETE)
+✅ Automatically detects when source threads come from clustered addresses
+✅ Adds cluster context to entry notes
+✅ Documents cluster ID, wallet ID, and address count
+✅ Explains methodology implications (PIFO/LIBR)
+✅ Creates complete audit trail of cluster usage
 
-IMPLEMENTATION (lines 33942-33971):
-- Enhanced partialTraceNote generation
-- Added check for allocationInfo.hasUnderAllocation
-- Iterates through selected threads to calculate remainders
-- Formats remaining amounts per thread
-- Appends to entry notes automatically
+IMPLEMENTATION (lines 34297-34323):
+- Iterates through selected threads in wizard
+- Checks if thread's source wallet is part of cluster
+- Calls getClusterForAddress() for each source
+- Collects all clustered threads
+- Appends cluster notation section to entry notes
+- Format: "🔗 CLUSTER SOURCE NOTATION:"
+- Lists each cluster with thread ID, wallet ID, address count
+- Includes methodology note about cluster behavior
 
 BENEFIT:
-Before: "Partial trace: Following X of Y total" (generic)
-After: "Partial trace: Following X of Y total
-       Remaining in source threads: 5 BTC remains in V1-T1; 2 BTC remains in V2-T1"
-Result: Complete audit trail of all unallocated amounts
+Before: No indication in entry notes that source was clustered
+After: Complete cluster documentation automatically added
+Result: Audit trail shows cluster relationships and methodology compliance
+
+EXAMPLE ENTRY NOTE:
+```
+PIFO allocation applied: V1-T1: 5/10 BTC
+
+🔗 CLUSTER SOURCE NOTATION:
+Thread V1-T1 sources from Cluster cluster-1234567890 (Wallet: Red-1)
+  - Cluster contains 3 addresses
+  - Methodology: PIFO (cluster acts as single entity)
+```
 
 ---
 
-🎯 LOW FIX #3: Bridge Transactions Marked in Reports (COMPLETE)
-✅ Bridge entries now show chain information in reports
-✅ Displays source → destination chain for bridge transactions
-✅ Clear 🌉 bridge emoji marker for visual identification
-✅ Works with bridgeDetails when available
+PROGRESS: 5/16 Phase 2 Fixes Complete (31.25%)
+✅ Medium severity: 3/11 complete (27%)
+✅ Low severity: 2/5 complete (40%)
 
-IMPLEMENTATION (lines 37562-37585):
-- Modified hop documentation table generation
-- Enhanced classification column for bridge entries
-- Shows "🌉 (Bridge: Ethereum → Arbitrum)" format
-- Falls back to generic "🌉 (Bridge Transaction)" if details missing
-- Integrates with existing bridgeDetails structure
+COMPLETED SO FAR:
+✅ MEDIUM #1: Thread allocation validation gap
+✅ MEDIUM #8: Partial allocation documentation
+✅ MEDIUM #7: Cluster notation in hop entry documentation
+✅ LOW #3: Bridge transactions marked in reports
+✅ LOW #1: Wallet explorer cache invalidation
 
-BENEFIT:
-Before: Bridge entries look like normal transfers
-After: Clear chain transition markers in reports
-Result: Easy identification of cross-chain movements in documentation
+REMAINING: 11 fixes
+- 8 Medium-severity
+- 3 Low-severity
 
----
-
-PROGRESS: 3/16 Phase 2 Fixes Complete (18.75%)
-✅ Medium severity: 2/11 complete
-✅ Low severity: 1/5 complete
-
-REMAINING:
-- 9 Medium-severity fixes
-- 4 Low-severity fixes
-
-Next batch: Cluster-related fixes and cache invalidation
+Next batch: Cluster transaction source, duplicate detection, undo system
 
 🤖 Generated with Claude Code
 
@@ -94,23 +87,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 156 ++++++++++++++++++++++++++++++++++++++++---------------------
- index.html |  92 ++++++++++++++++++++++++++++++++----
- 2 files changed, 186 insertions(+), 62 deletions(-)
+ CLAUDE.md  | 197 +++++++++++++++++++++++++++++--------------------------------
+ index.html |  59 ++++++++++++++++++
+ 2 files changed, 151 insertions(+), 105 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8803873 Phase 2 Implementation - Part 1: 3 Fixes Complete (3/16) (0 seconds ago)
-- 21d9947 Implement High-Priority Fix #3: PIFO Chronological Validation - 100% COMPLETE (10 minutes ago)
-- 40b6c36 Implement High-Priority Fixes #1 and #2 - Write-off timing and ART panel for clusters (22 minutes ago)
-- 23732b2 Add implementation progress report - Critical fixes complete (28 minutes ago)
-- 5c72216 Implement Critical Bugs #1, #2, #3 - Methodology locking, Cluster index, LIBR+Clustering (30 minutes ago)
-- 1fff957 Update bug analysis: Remove High #1 and High #5 as correctly implemented features (39 minutes ago)
+- 9dd698d Phase 2 Implementation - Part 2: 2 More Fixes Complete (5/16 Total) (0 seconds ago)
+- 8803873 Phase 2 Implementation - Part 1: 3 Fixes Complete (3/16) (2 minutes ago)
+- 21d9947 Implement High-Priority Fix #3: PIFO Chronological Validation - 100% COMPLETE (12 minutes ago)
+- 40b6c36 Implement High-Priority Fixes #1 and #2 - Write-off timing and ART panel for clusters (25 minutes ago)
+- 23732b2 Add implementation progress report - Critical fixes complete (30 minutes ago)
+- 5c72216 Implement Critical Bugs #1, #2, #3 - Methodology locking, Cluster index, LIBR+Clustering (32 minutes ago)
+- 1fff957 Update bug analysis: Remove High #1 and High #5 as correctly implemented features (42 minutes ago)
 - 06cbd12 Add cluster view toggle button to visualization UI (2 hours ago)
 - 557163f Add Bitcoin clustering visualization support with cluster/individual view toggle (2 hours ago)
 - 2cbc687 Enhance Bitcoin address clustering with wallet ID tracking, detailed documentation, cluster-wide viewing, and final report integration (2 hours ago)
-- bbe846b Implement Bitcoin address clustering for UTXO change to new addresses (3 hours ago)
 
 ## Key Features
 
