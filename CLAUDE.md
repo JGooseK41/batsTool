@@ -3,48 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 22:36)
+## Latest Commit (Auto-updated: 2025-10-26 22:37)
 
-**Commit:** 3c4d77c4d166b27e79e91c3822558104d785faee
+**Commit:** c80d506ca765737e1e845e3fd3136905e631aea1
 **Author:** Your Name
-**Message:** Resize Wallet Explorer button to match Lookup Hash button size
-
-Changed from full-width button to stacked layout with matching sizes.
-
-**Changes:**
-- Both buttons now same size: padding 10px 20px, font-size 16px
-- Stacked vertically in flex column with 10px gap
-- Shortened text to "🔍 Wallet Explorer" for consistency
-- Helper text moved below buttons for cleaner layout
-
-**Visual Layout:**
-```
-[Transaction Hash Input] [🔍 Lookup Hash    ]
-                         [🔍 Wallet Explorer]
-```
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- index.html | 30 +++++++++++++++---------------
- 1 file changed, 15 insertions(+), 15 deletions(-)
+ CLAUDE.md | 63 ++++++++++++++++++++++++++-------------------------------------
+ 1 file changed, 26 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (1 second ago)
-- 282a0a0 Add Wallet Explorer button to victim transaction form (8 minutes ago)
+- c80d506 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 3c4d77c Resize Wallet Explorer button to match Lookup Hash button size (9 seconds ago)
+- 282a0a0 Add Wallet Explorer button to victim transaction form (9 minutes ago)
 - 3f46bcb Reorganize transaction lookup modal with clearer button choices (13 minutes ago)
 - 54fe434 Add 'View in Wallet Explorer' button to available threads for tracing workflow (20 minutes ago)
-- 59f33e3 Add transaction highlighting in Wallet Explorer for traced threads (26 minutes ago)
+- 59f33e3 Add transaction highlighting in Wallet Explorer for traced threads (27 minutes ago)
 - 2b63f37 Add confirmation dialog when clicking individual Add with selections (31 minutes ago)
 - 91ca1b5 Fix old cached data causing incorrect incomplete history warning (35 minutes ago)
 - 94fda5c Make bulk action bar highly visible and add debug logging (37 minutes ago)
 - 0745e7c CRITICAL FIX: Resolve undefined selectedTransactions error in Wallet Explorer (43 minutes ago)
-- 879ec43 Add amount filtering to Wallet Explorer with simultaneous filter support (48 minutes ago)
 
 ## Key Features
 
