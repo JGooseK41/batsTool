@@ -14492,17 +14492,30 @@ function exportRedWalletIndexCSV() {
         // Add transaction to investigation
         async function addWalletTransactionToInvestigation(txHash) {
             try {
+                const blockchain = walletExplorerState.blockchain;
+
                 // Close wallet explorer
                 closeWalletExplorer();
 
-                // Populate the transaction lookup field
-                const hashInput = document.getElementById('transactionHash');
-                if (hashInput) {
-                    hashInput.value = txHash;
-                }
+                // Open the blockchain lookup modal and pre-populate it
+                // This reuses existing workflow instead of duplicating logic
+                const txHashInput = document.getElementById('txHashInput');
+                const chainSelector = document.getElementById('chainSelector');
 
-                // Trigger lookup
-                await lookupVictimTransaction();
+                if (txHashInput && chainSelector) {
+                    txHashInput.value = txHash;
+                    chainSelector.value = blockchain;
+
+                    // Show the modal
+                    showModal('blockchainLookupModal');
+
+                    // Auto-trigger lookup
+                    setTimeout(() => {
+                        lookupTransaction();
+                    }, 300);
+                } else {
+                    throw new Error('Blockchain lookup modal not found. Please use the manual transaction entry.');
+                }
 
             } catch (error) {
                 console.error('Error adding transaction:', error);
