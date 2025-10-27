@@ -14559,7 +14559,10 @@ function exportRedWalletIndexCSV() {
             }
 
             const apiKey = window.apiKeys?.etherscan || config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
-            const baseUrl = config.apiUrl.replace('/api?module=proxy&action=eth_getTransactionByHash&txhash=', '');
+
+            // Extract base URL properly (e.g., https://api.etherscan.io)
+            const urlObj = new URL(config.apiUrl);
+            const baseUrl = `${urlObj.protocol}//${urlObj.host}`;
 
             // Get normal transactions
             const normalTxUrl = `${baseUrl}/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
