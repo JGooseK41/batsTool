@@ -1077,6 +1077,94 @@
     }
 }
 
+/* Wallet Explorer Specific Styles */
+.wallet-tx-in {
+    background-color: #e8f5e9 !important;
+    border-left: 4px solid #4caf50;
+}
+
+.wallet-tx-out {
+    background-color: #ffebee !important;
+    border-left: 4px solid #f44336;
+}
+
+.wallet-asset-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.wallet-asset-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.wallet-asset-card h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.wallet-asset-card .asset-balance {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.wallet-asset-card .asset-tx-count {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.wallet-tx-row {
+    transition: background-color 0.2s;
+}
+
+.wallet-tx-row:hover {
+    background-color: #f8f9fa !important;
+}
+
+.wallet-entity-label {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #e3f2fd;
+    color: #1976d2;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.wallet-explorer-action-btn {
+    padding: 6px 16px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.wallet-explorer-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.wallet-explorer-external-link {
+    color: #666;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.wallet-explorer-external-link:hover {
+    color: #3498db;
+}
+
 /* Modern Graph Visualization Styles */
 .graph-node {
     cursor: pointer;
@@ -1569,11 +1657,18 @@
                     <div id="breadcrumbs" style="font-size: 14px; color: #666;">
                         <!-- Breadcrumbs will be dynamically updated -->
                     </div>
-                    <button id="undoButton" class="btn" onclick="performUndo()" disabled
-                            style="background: #95a5a6; padding: 8px 16px;"
-                            title="No actions to undo">
-                        ↶ Undo
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="openWalletExplorer()"
+                                style="background: #3498db; padding: 8px 16px;"
+                                title="Open Wallet Explorer - Search wallet transaction history">
+                            🔍 Wallet Explorer
+                        </button>
+                        <button id="undoButton" class="btn" onclick="performUndo()" disabled
+                                style="background: #95a5a6; padding: 8px 16px;"
+                                title="No actions to undo">
+                            ↶ Undo
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="nav-tabs" id="mainNavTabs" style="display: none;">
@@ -2568,6 +2663,151 @@
                 <button class="btn btn-secondary" onclick="hideModal('attributionModal')">
                     Ignore
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallet Explorer Modal -->
+    <div id="walletExplorerModal" class="modal">
+        <div class="modal-content" style="max-width: 1200px; max-height: 90vh;">
+            <div class="modal-header">
+                <h2>🔍 Wallet Explorer</h2>
+                <p>View wallet transaction history across all blockchains</p>
+            </div>
+
+            <!-- Wallet Input Section -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 15px; align-items: end;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                            Wallet Address
+                        </label>
+                        <input type="text" id="walletExplorerAddress" placeholder="Enter wallet address (e.g., 0xabc... or bc1...)"
+                               style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-family: monospace; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                            Blockchain
+                        </label>
+                        <select id="walletExplorerBlockchain"
+                                style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                            <option value="">Select blockchain...</option>
+                            <option value="ethereum">Ethereum</option>
+                            <option value="bitcoin">Bitcoin</option>
+                            <option value="tron">Tron</option>
+                            <option value="solana">Solana</option>
+                            <option value="base">Base</option>
+                            <option value="arbitrum">Arbitrum</option>
+                            <option value="optimism">Optimism</option>
+                            <option value="polygon">Polygon</option>
+                            <option value="bsc">BNB Chain</option>
+                            <option value="avalanche">Avalanche</option>
+                            <option value="sui">Sui</option>
+                            <option value="ripple">XRP</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" onclick="searchWalletHistory()"
+                                style="padding: 12px 24px; white-space: nowrap;">
+                            🔎 Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="walletExplorerLoading" style="display: none; text-align: center; padding: 40px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">⏳</div>
+                <div style="font-size: 18px; color: #666;">Loading wallet history...</div>
+            </div>
+
+            <!-- Asset Summary Section -->
+            <div id="walletExplorerAssetSummary" style="display: none; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px; color: #333;">📊 Assets in Wallet</h3>
+                <div id="walletExplorerAssetList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <!-- Asset cards will be populated here -->
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                        Select Asset to View History:
+                    </label>
+                    <select id="walletExplorerAssetSelector" onchange="displayAssetTransactions()"
+                            style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                        <option value="">Choose an asset...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Transaction List Section -->
+            <div id="walletExplorerTransactions" style="display: none;">
+                <!-- Filter Section -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">From Date:</label>
+                            <input type="date" id="walletExplorerDateFrom" onchange="filterWalletTransactions()"
+                                   style="width: 100%; padding: 8px; border: 2px solid #e1e8ed; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">To Date:</label>
+                            <input type="date" id="walletExplorerDateTo" onchange="filterWalletTransactions()"
+                                   style="width: 100%; padding: 8px; border: 2px solid #e1e8ed; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary" onclick="clearDateFilter()" style="padding: 8px 16px;">
+                                Clear Dates
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Running Balance Warning -->
+                <div id="walletExplorerBalanceWarning" style="display: none; background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>⚠️ Large Wallet Warning:</strong> This wallet has too many transactions to calculate accurate running balance. Balance column may be incomplete.
+                </div>
+
+                <!-- Transaction Table -->
+                <div style="overflow-x: auto; border: 1px solid #e1e8ed; border-radius: 8px;">
+                    <table style="width: 100%; border-collapse: collapse; background: white;">
+                        <thead style="background: #f8f9fa; border-bottom: 2px solid #e1e8ed;">
+                            <tr>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Date/Time</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Type</th>
+                                <th style="padding: 12px; text-align: right; font-weight: 600;">Amount</th>
+                                <th style="padding: 12px; text-align: right; font-weight: 600;">Balance</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Counterparty</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="walletExplorerTableBody">
+                            <!-- Transaction rows will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div id="walletExplorerPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <button class="btn btn-secondary" id="walletExplorerPrevPage" onclick="previousWalletPage()" disabled>
+                        ← Previous
+                    </button>
+                    <div id="walletExplorerPageInfo" style="font-weight: 500; color: #666;">
+                        Page 1 of 1
+                    </div>
+                    <button class="btn btn-secondary" id="walletExplorerNextPage" onclick="nextWalletPage()" disabled>
+                        Next →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="walletExplorerEmpty" style="display: none; text-align: center; padding: 60px 20px; color: #999;">
+                <div style="font-size: 64px; margin-bottom: 20px;">📭</div>
+                <div style="font-size: 18px;">No transactions found</div>
+            </div>
+
+            <!-- Close Button -->
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="closeWalletExplorer()">Close</button>
             </div>
         </div>
     </div>
@@ -13812,6 +14052,595 @@ function exportRedWalletIndexCSV() {
             
             // Add to body
             document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // ====================================
+        // WALLET EXPLORER FUNCTIONALITY
+        // ====================================
+
+        // Global state for wallet explorer
+        let walletExplorerState = {
+            address: '',
+            blockchain: '',
+            allTransactions: [],
+            filteredTransactions: [],
+            currentPage: 1,
+            itemsPerPage: 50,
+            selectedAsset: '',
+            assets: {}
+        };
+
+        // Open wallet explorer modal
+        function openWalletExplorer(address = '', blockchain = '') {
+            // Pre-fill if called with parameters
+            if (address) document.getElementById('walletExplorerAddress').value = address;
+            if (blockchain) document.getElementById('walletExplorerBlockchain').value = blockchain;
+
+            // Reset state
+            resetWalletExplorer();
+
+            // Show modal
+            showModal('walletExplorerModal');
+
+            // If both address and blockchain provided, auto-search
+            if (address && blockchain) {
+                setTimeout(() => searchWalletHistory(), 300);
+            }
+        }
+
+        // Close wallet explorer
+        function closeWalletExplorer() {
+            hideModal('walletExplorerModal');
+            resetWalletExplorer();
+        }
+
+        // Reset wallet explorer state
+        function resetWalletExplorer() {
+            walletExplorerState = {
+                address: '',
+                blockchain: '',
+                allTransactions: [],
+                filteredTransactions: [],
+                currentPage: 1,
+                itemsPerPage: 50,
+                selectedAsset: '',
+                assets: {}
+            };
+
+            // Hide all sections
+            document.getElementById('walletExplorerLoading').style.display = 'none';
+            document.getElementById('walletExplorerAssetSummary').style.display = 'none';
+            document.getElementById('walletExplorerTransactions').style.display = 'none';
+            document.getElementById('walletExplorerEmpty').style.display = 'none';
+        }
+
+        // Search wallet history
+        async function searchWalletHistory() {
+            const address = document.getElementById('walletExplorerAddress').value.trim();
+            const blockchain = document.getElementById('walletExplorerBlockchain').value;
+
+            if (!address) {
+                alert('Please enter a wallet address');
+                return;
+            }
+
+            if (!blockchain) {
+                alert('Please select a blockchain');
+                return;
+            }
+
+            // Check cache first
+            const cacheKey = 'bats_wallet_history_' + address + '_' + blockchain + '_' + Date.now();
+            const cached = checkWalletCache(address, blockchain);
+
+            if (cached) {
+                console.log('Using cached wallet history');
+                processWalletData(cached);
+                return;
+            }
+
+            // Show loading
+            document.getElementById('walletExplorerAssetSummary').style.display = 'none';
+            document.getElementById('walletExplorerTransactions').style.display = 'none';
+            document.getElementById('walletExplorerEmpty').style.display = 'none';
+            document.getElementById('walletExplorerLoading').style.display = 'block';
+
+            try {
+                // Get wallet history from API
+                const transactions = await getWalletHistory(address, blockchain);
+
+                if (!transactions || transactions.length === 0) {
+                    document.getElementById('walletExplorerLoading').style.display = 'none';
+                    document.getElementById('walletExplorerEmpty').style.display = 'block';
+                    return;
+                }
+
+                // Cache the results
+                cacheWalletHistory(address, blockchain, transactions);
+
+                // Process and display
+                processWalletData(transactions);
+
+            } catch (error) {
+                console.error('Wallet history lookup error:', error);
+                document.getElementById('walletExplorerLoading').style.display = 'none';
+                alert('Error loading wallet history: ' + error.message);
+            }
+        }
+
+        // Check wallet cache
+        function checkWalletCache(address, blockchain) {
+            const cacheKey = 'bats_wallet_' + address + '_' + blockchain;
+            const cached = sessionStorage.getItem(cacheKey);
+
+            if (!cached) return null;
+
+            try {
+                const data = JSON.parse(cached);
+                const age = Date.now() - data.timestamp;
+
+                // Cache valid for 5 minutes (300000ms)
+                if (age < 300000) {
+                    return data.transactions;
+                } else {
+                    sessionStorage.removeItem(cacheKey);
+                    return null;
+                }
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Cache wallet history
+        function cacheWalletHistory(address, blockchain, transactions) {
+            const cacheKey = 'bats_wallet_' + address + '_' + blockchain;
+            const data = {
+                timestamp: Date.now(),
+                transactions: transactions
+            };
+
+            try {
+                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+            } catch (e) {
+                console.warn('Failed to cache wallet history:', e);
+            }
+        }
+
+        // Process wallet data
+        function processWalletData(transactions) {
+            document.getElementById('walletExplorerLoading').style.display = 'none';
+
+            walletExplorerState.allTransactions = transactions;
+            walletExplorerState.address = document.getElementById('walletExplorerAddress').value.trim();
+            walletExplorerState.blockchain = document.getElementById('walletExplorerBlockchain').value;
+
+            // Aggregate assets
+            aggregateAssets(transactions);
+
+            // Display asset summary
+            displayAssetSummary();
+        }
+
+        // Aggregate assets from transactions
+        function aggregateAssets(transactions) {
+            const assets = {};
+
+            transactions.forEach(tx => {
+                const asset = tx.asset || 'Unknown';
+
+                if (!assets[asset]) {
+                    assets[asset] = {
+                        name: asset,
+                        balance: 0,
+                        txCount: 0,
+                        transactions: []
+                    };
+                }
+
+                assets[asset].txCount++;
+                assets[asset].transactions.push(tx);
+
+                // Calculate balance (will be refined when asset is selected)
+                if (tx.type === 'IN') {
+                    assets[asset].balance += tx.amount;
+                } else if (tx.type === 'OUT') {
+                    assets[asset].balance -= tx.amount;
+                }
+            });
+
+            // Filter out assets with 0 balance
+            walletExplorerState.assets = Object.fromEntries(
+                Object.entries(assets).filter(([key, val]) => val.balance !== 0 || val.txCount > 0)
+            );
+        }
+
+        // Display asset summary
+        function displayAssetSummary() {
+            const assetListDiv = document.getElementById('walletExplorerAssetList');
+            const assetSelector = document.getElementById('walletExplorerAssetSelector');
+
+            // Clear previous
+            assetListDiv.innerHTML = '';
+            assetSelector.innerHTML = '<option value="">Choose an asset...</option>';
+
+            const assets = Object.values(walletExplorerState.assets);
+
+            if (assets.length === 0) {
+                document.getElementById('walletExplorerEmpty').style.display = 'block';
+                return;
+            }
+
+            // Create asset cards
+            assets.forEach(asset => {
+                const card = document.createElement('div');
+                card.className = 'wallet-asset-card';
+                card.innerHTML = `
+                    <h4>${asset.name}</h4>
+                    <div class="asset-balance">${asset.balance.toFixed(6)}</div>
+                    <div class="asset-tx-count">${asset.txCount} transactions</div>
+                `;
+                card.onclick = () => selectAsset(asset.name);
+                assetListDiv.appendChild(card);
+
+                // Add to selector
+                const option = document.createElement('option');
+                option.value = asset.name;
+                option.textContent = `${asset.name} (${asset.txCount} txs, Balance: ${asset.balance.toFixed(6)})`;
+                assetSelector.appendChild(option);
+            });
+
+            document.getElementById('walletExplorerAssetSummary').style.display = 'block';
+        }
+
+        // Select asset
+        function selectAsset(assetName) {
+            document.getElementById('walletExplorerAssetSelector').value = assetName;
+            displayAssetTransactions();
+        }
+
+        // Display asset transactions
+        function displayAssetTransactions() {
+            const assetName = document.getElementById('walletExplorerAssetSelector').value;
+
+            if (!assetName) {
+                document.getElementById('walletExplorerTransactions').style.display = 'none';
+                return;
+            }
+
+            walletExplorerState.selectedAsset = assetName;
+            const asset = walletExplorerState.assets[assetName];
+
+            if (!asset) return;
+
+            // Sort transactions chronologically (newest first for display, but calculate balance from oldest)
+            const sortedTxs = [...asset.transactions].sort((a, b) => b.timestamp - a.timestamp);
+
+            // Calculate running balance (from oldest to newest)
+            const txsForBalance = [...asset.transactions].sort((a, b) => a.timestamp - b.timestamp);
+            let runningBalance = 0;
+            const balanceMap = {};
+
+            // Check if too large
+            const tooLarge = txsForBalance.length > 10000;
+
+            if (!tooLarge) {
+                txsForBalance.forEach(tx => {
+                    if (tx.type === 'IN') {
+                        runningBalance += tx.amount;
+                    } else {
+                        runningBalance -= tx.amount;
+                    }
+                    balanceMap[tx.hash] = runningBalance;
+                });
+            }
+
+            // Show/hide balance warning
+            document.getElementById('walletExplorerBalanceWarning').style.display = tooLarge ? 'block' : 'none';
+
+            // Set filtered transactions
+            walletExplorerState.filteredTransactions = sortedTxs;
+            walletExplorerState.balanceMap = balanceMap;
+            walletExplorerState.currentPage = 1;
+
+            // Display transactions
+            renderTransactionTable();
+
+            document.getElementById('walletExplorerTransactions').style.display = 'block';
+        }
+
+        // Render transaction table
+        function renderTransactionTable() {
+            const tbody = document.getElementById('walletExplorerTableBody');
+            tbody.innerHTML = '';
+
+            const transactions = walletExplorerState.filteredTransactions;
+            const start = (walletExplorerState.currentPage - 1) * walletExplorerState.itemsPerPage;
+            const end = start + walletExplorerState.itemsPerPage;
+            const pageTransactions = transactions.slice(start, end);
+
+            pageTransactions.forEach(tx => {
+                const row = document.createElement('tr');
+                row.className = 'wallet-tx-row ' + (tx.type === 'IN' ? 'wallet-tx-in' : 'wallet-tx-out');
+
+                const date = new Date(tx.timestamp).toLocaleString();
+                const typeIcon = tx.type === 'IN' ? '🟢' : '🔴';
+                const amountPrefix = tx.type === 'IN' ? '+' : '-';
+                const balance = walletExplorerState.balanceMap && walletExplorerState.balanceMap[tx.hash]
+                    ? walletExplorerState.balanceMap[tx.hash].toFixed(6)
+                    : '—';
+
+                const entityLabel = tx.entityLabel ? `<span class="wallet-entity-label">${tx.entityLabel}</span>` : '';
+
+                row.innerHTML = `
+                    <td style="padding: 12px;">${date}</td>
+                    <td style="padding: 12px;">${typeIcon} ${tx.type}</td>
+                    <td style="padding: 12px; text-align: right; font-weight: 600;">${amountPrefix}${tx.amount.toFixed(6)} ${tx.asset}</td>
+                    <td style="padding: 12px; text-align: right;">${balance}</td>
+                    <td style="padding: 12px; font-family: monospace; font-size: 0.9rem;">
+                        ${tx.counterparty.substring(0, 10)}...${tx.counterparty.substring(tx.counterparty.length - 8)}
+                        ${entityLabel}
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        <button class="wallet-explorer-action-btn btn-primary" onclick="addWalletTransactionToInvestigation('${tx.hash}')">
+                            ${getWalletActionButtonLabel()}
+                        </button>
+                        <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link">🔗</a>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+            updatePagination();
+        }
+
+        // Update pagination
+        function updatePagination() {
+            const totalPages = Math.ceil(walletExplorerState.filteredTransactions.length / walletExplorerState.itemsPerPage);
+            const currentPage = walletExplorerState.currentPage;
+
+            document.getElementById('walletExplorerPageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('walletExplorerPrevPage').disabled = currentPage === 1;
+            document.getElementById('walletExplorerNextPage').disabled = currentPage === totalPages;
+        }
+
+        // Pagination functions
+        function previousWalletPage() {
+            if (walletExplorerState.currentPage > 1) {
+                walletExplorerState.currentPage--;
+                renderTransactionTable();
+            }
+        }
+
+        function nextWalletPage() {
+            const totalPages = Math.ceil(walletExplorerState.filteredTransactions.length / walletExplorerState.itemsPerPage);
+            if (walletExplorerState.currentPage < totalPages) {
+                walletExplorerState.currentPage++;
+                renderTransactionTable();
+            }
+        }
+
+        // Filter transactions by date range
+        function filterWalletTransactions() {
+            const fromDate = document.getElementById('walletExplorerDateFrom').value;
+            const toDate = document.getElementById('walletExplorerDateTo').value;
+
+            if (!walletExplorerState.selectedAsset) return;
+
+            const asset = walletExplorerState.assets[walletExplorerState.selectedAsset];
+            let transactions = [...asset.transactions];
+
+            if (fromDate) {
+                const fromTimestamp = new Date(fromDate).getTime();
+                transactions = transactions.filter(tx => tx.timestamp >= fromTimestamp);
+            }
+
+            if (toDate) {
+                const toTimestamp = new Date(toDate).getTime() + 86400000; // Add 1 day
+                transactions = transactions.filter(tx => tx.timestamp < toTimestamp);
+            }
+
+            // Sort newest first
+            transactions.sort((a, b) => b.timestamp - a.timestamp);
+
+            walletExplorerState.filteredTransactions = transactions;
+            walletExplorerState.currentPage = 1;
+
+            renderTransactionTable();
+        }
+
+        // Clear date filter
+        function clearDateFilter() {
+            document.getElementById('walletExplorerDateFrom').value = '';
+            document.getElementById('walletExplorerDateTo').value = '';
+            filterWalletTransactions();
+        }
+
+        // Get context-aware button label
+        function getWalletActionButtonLabel() {
+            // Check if in victim setup mode
+            const victimSection = document.getElementById('victimSetup');
+            if (victimSection && victimSection.style.display !== 'none') {
+                return '➕ Log Victim Transaction';
+            }
+
+            // Check if building hops
+            const currentHop = getCurrentHop();
+            if (currentHop) {
+                return '➕ Add to Hop ' + currentHop;
+            }
+
+            return '➕ Add to Investigation';
+        }
+
+        // Add transaction to investigation
+        async function addWalletTransactionToInvestigation(txHash) {
+            try {
+                // Close wallet explorer
+                closeWalletExplorer();
+
+                // Populate the transaction lookup field
+                const hashInput = document.getElementById('transactionHash');
+                if (hashInput) {
+                    hashInput.value = txHash;
+                }
+
+                // Trigger lookup
+                await lookupVictimTransaction();
+
+            } catch (error) {
+                console.error('Error adding transaction:', error);
+                alert('Error adding transaction: ' + error.message);
+            }
+        }
+
+        // ====================================
+        // WALLET HISTORY API INTEGRATION
+        // ====================================
+
+        /**
+         * Get wallet transaction history from blockchain APIs
+         * Returns standardized transaction format
+         */
+        async function getWalletHistory(address, blockchain) {
+            console.log(`Fetching wallet history for ${address} on ${blockchain}`);
+
+            switch (blockchain) {
+                case 'ethereum':
+                case 'base':
+                case 'arbitrum':
+                case 'optimism':
+                case 'polygon':
+                case 'bsc':
+                case 'avalanche':
+                    return await getEthereumWalletHistory(address, blockchain);
+
+                case 'bitcoin':
+                    return await getBitcoinWalletHistory(address);
+
+                case 'tron':
+                    return await getTronWalletHistory(address);
+
+                case 'solana':
+                    return await getSolanaWalletHistory(address);
+
+                case 'sui':
+                    throw new Error('Sui wallet history not yet implemented');
+
+                case 'ripple':
+                    throw new Error('XRP wallet history not yet implemented');
+
+                default:
+                    throw new Error('Unsupported blockchain: ' + blockchain);
+            }
+        }
+
+        /**
+         * Get Ethereum/EVM wallet history
+         */
+        async function getEthereumWalletHistory(address, blockchain) {
+            const config = blockchainAPIs[blockchain];
+            if (!config) {
+                throw new Error('Unknown blockchain: ' + blockchain);
+            }
+
+            const apiKey = window.apiKeys?.etherscan || config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+            const baseUrl = config.apiUrl.replace('/api?module=proxy&action=eth_getTransactionByHash&txhash=', '');
+
+            // Get normal transactions
+            const normalTxUrl = `${baseUrl}/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
+            console.log('Fetching normal transactions:', normalTxUrl);
+
+            const normalResponse = await fetch(normalTxUrl);
+            const normalData = await normalResponse.json();
+
+            if (normalData.status !== '1') {
+                console.warn('No normal transactions found');
+            }
+
+            const normalTxs = normalData.result && Array.isArray(normalData.result) ? normalData.result : [];
+
+            // Get ERC-20 token transfers
+            const tokenTxUrl = `${baseUrl}/api?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
+            console.log('Fetching token transactions:', tokenTxUrl);
+
+            const tokenResponse = await fetch(tokenTxUrl);
+            const tokenData = await tokenResponse.json();
+
+            if (tokenData.status !== '1') {
+                console.warn('No token transactions found');
+            }
+
+            const tokenTxs = tokenData.result && Array.isArray(tokenData.result) ? tokenData.result : [];
+
+            // Combine and normalize
+            const allTransactions = [];
+
+            // Process normal transactions
+            normalTxs.forEach(tx => {
+                const isIncoming = tx.to && tx.to.toLowerCase() === address.toLowerCase();
+                const amount = parseFloat(tx.value) / 1e18; // Wei to ETH
+
+                // Only include if amount > 0
+                if (amount > 0) {
+                    allTransactions.push({
+                        hash: tx.hash,
+                        timestamp: parseInt(tx.timeStamp) * 1000,
+                        type: isIncoming ? 'IN' : 'OUT',
+                        asset: config.nativeCurrency || 'ETH',
+                        amount: amount,
+                        counterparty: isIncoming ? tx.from : tx.to,
+                        entityLabel: null, // Will be enhanced later
+                        explorerUrl: `${config.explorerUrl || 'https://etherscan.io'}/tx/${tx.hash}`
+                    });
+                }
+            });
+
+            // Process token transactions
+            tokenTxs.forEach(tx => {
+                const isIncoming = tx.to && tx.to.toLowerCase() === address.toLowerCase();
+                const decimals = parseInt(tx.tokenDecimal) || 18;
+                const amount = parseFloat(tx.value) / Math.pow(10, decimals);
+
+                allTransactions.push({
+                    hash: tx.hash,
+                    timestamp: parseInt(tx.timeStamp) * 1000,
+                    type: isIncoming ? 'IN' : 'OUT',
+                    asset: tx.tokenSymbol || tx.tokenName || 'Token',
+                    amount: amount,
+                    counterparty: isIncoming ? tx.from : tx.to,
+                    entityLabel: null,
+                    explorerUrl: `${config.explorerUrl || 'https://etherscan.io'}/tx/${tx.hash}`
+                });
+            });
+
+            // Sort by timestamp (newest first)
+            allTransactions.sort((a, b) => b.timestamp - a.timestamp);
+
+            console.log(`Found ${allTransactions.length} total transactions`);
+
+            return allTransactions;
+        }
+
+        /**
+         * Get Bitcoin wallet history (stub - to be implemented)
+         */
+        async function getBitcoinWalletHistory(address) {
+            throw new Error('Bitcoin wallet history - coming soon');
+        }
+
+        /**
+         * Get Tron wallet history (stub - to be implemented)
+         */
+        async function getTronWalletHistory(address) {
+            throw new Error('Tron wallet history - coming soon');
+        }
+
+        /**
+         * Get Solana wallet history (stub - to be implemented)
+         */
+        async function getSolanaWalletHistory(address) {
+            throw new Error('Solana wallet history - coming soon');
         }
 
         function calculateRootTotal() {
