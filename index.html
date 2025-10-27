@@ -14226,6 +14226,56 @@ function exportRedWalletIndexCSV() {
             return null;
         }
 
+        // Check if transaction hash already exists in investigation
+        function findDuplicateTransaction(txHash) {
+            if (!txHash) return null;
+
+            const hashLower = txHash.toLowerCase();
+            const duplicates = [];
+
+            // Search victim transactions
+            if (investigation.victims) {
+                investigation.victims.forEach(victim => {
+                    victim.transactions.forEach(transaction => {
+                        if (transaction.txHash && transaction.txHash.toLowerCase() === hashLower) {
+                            duplicates.push({
+                                location: 'victim',
+                                victimId: victim.id,
+                                victimName: victim.name || `Victim ${victim.id}`,
+                                transactionId: transaction.id,
+                                threadId: `V${victim.id}-T${transaction.id}`,
+                                amount: transaction.amount,
+                                currency: transaction.currency
+                            });
+                        }
+                    });
+                });
+            }
+
+            // Search hop entries
+            if (investigation.hops) {
+                investigation.hops.forEach(hop => {
+                    if (hop.entries) {
+                        hop.entries.forEach(entry => {
+                            if (entry.transactionHash && entry.transactionHash.toLowerCase() === hashLower) {
+                                duplicates.push({
+                                    location: 'hop',
+                                    hopNumber: hop.hopNumber,
+                                    entryId: entry.id,
+                                    notation: entry.notation || `H${hop.hopNumber}-E${entry.id}`,
+                                    entryType: entry.entryType,
+                                    amount: entry.amount,
+                                    currency: entry.currency
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            return duplicates.length > 0 ? duplicates : null;
+        }
+
         // Known legitimate tokens (case-insensitive)
         const VERIFIED_TOKENS = {
             'ETH': true,
@@ -15014,6 +15064,31 @@ function exportRedWalletIndexCSV() {
         // Add transaction to investigation
         async function addWalletTransactionToInvestigation(txHash) {
             try {
+                // Check for duplicate transaction first
+                const duplicates = findDuplicateTransaction(txHash);
+                if (duplicates && duplicates.length > 0) {
+                    const dup = duplicates[0]; // Get first duplicate
+                    let dupLocation = '';
+
+                    if (dup.location === 'victim') {
+                        dupLocation = `${dup.victimName} → ${dup.threadId}`;
+                    } else {
+                        dupLocation = `Hop ${dup.hopNumber} → ${dup.notation} (${dup.entryType})`;
+                    }
+
+                    const proceed = confirm(
+                        `⚠️ DUPLICATE TRANSACTION DETECTED\n\n` +
+                        `This transaction already exists in your investigation:\n\n` +
+                        `Location: ${dupLocation}\n` +
+                        `Amount: ${dup.amount} ${dup.currency}\n` +
+                        `Hash: ${txHash.slice(0, 20)}...\n\n` +
+                        `Adding it again may create accounting errors!\n\n` +
+                        `Click OK to add anyway, or Cancel to go back.`
+                    );
+
+                    if (!proceed) return;
+                }
+
                 // Check if multiple transactions are selected
                 if (!walletExplorerState.selectedTransactions) {
                     walletExplorerState.selectedTransactions = new Set();
