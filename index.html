@@ -2795,6 +2795,23 @@
                     <strong>⚠️ Large Wallet Warning:</strong> This wallet has too many transactions to calculate accurate running balance. Balance column may be incomplete.
                 </div>
 
+                <!-- UTXO Change Detection Info -->
+                <div id="walletExplorerUTXOInfo" style="display: none; background: #e3f2fd; border: 2px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <div style="font-size: 24px;">💡</div>
+                        <div style="flex: 1;">
+                            <strong style="color: #1976d2;">UTXO Change Detection Active</strong>
+                            <p style="margin: 8px 0 0 0; font-size: 13px; color: #1565c0;">
+                                Bitcoin uses UTXO (Unspent Transaction Output) model. When sending Bitcoin, "change" often returns to the same address.
+                            </p>
+                            <div style="margin-top: 10px; font-size: 12px; color: #1976d2;">
+                                <strong>🔄 Change Outputs:</strong> Marked with gray background and disabled checkboxes - these funds stay in the original thread (not traceable as new transactions).<br>
+                                <strong>🔴 Payment Outputs:</strong> Actual payments to other addresses - these create new threads and are selectable for tracing.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ART Tracking Panel -->
                 <div id="walletExplorerARTPanel" style="display: none; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 3px solid #2196f3; padding: 20px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
                     <div style="margin-bottom: 15px;">
@@ -14837,6 +14854,18 @@ function exportRedWalletIndexCSV() {
             // Initialize ART tracking if source thread available
             initializeARTTracking();
 
+            // Show UTXO info banner for Bitcoin
+            const utxoBanner = document.getElementById('walletExplorerUTXOInfo');
+            if (walletExplorerState.blockchain === 'bitcoin') {
+                if (utxoBanner) {
+                    utxoBanner.style.display = 'block';
+                }
+            } else {
+                if (utxoBanner) {
+                    utxoBanner.style.display = 'none';
+                }
+            }
+
             document.getElementById('walletExplorerTransactions').style.display = 'block';
         }
 
@@ -15156,6 +15185,13 @@ function exportRedWalletIndexCSV() {
         function toggleARTSelection(tx) {
             if (!walletExplorerState.artMode) return;
 
+            // Block selection of change outputs
+            if (tx.isChange || tx.type === 'CHANGE') {
+                console.log(`🚫 Cannot select change output: ${tx.hash}`);
+                alert('⚠️ UTXO Change Output\n\nChange outputs cannot be selected for tracing.\n\nChange represents funds returning to the same address and stays within the original thread.\n\nOnly select actual payment outputs to other addresses.');
+                return;
+            }
+
             const txHash = tx.hash;
 
             if (walletExplorerState.artSelections.has(txHash)) {
@@ -15460,8 +15496,17 @@ function exportRedWalletIndexCSV() {
                 }
 
                 const date = new Date(tx.timestamp).toLocaleString('en-US', { timeZone: 'UTC', timeZoneName: 'short' });
-                const typeIcon = tx.type === 'IN' ? '🟢' : '🔴';
-                const amountPrefix = tx.type === 'IN' ? '+' : '-';
+
+                // Handle UTXO change outputs differently
+                const isChangeOutput = tx.isChange === true || tx.type === 'CHANGE';
+                let typeIcon = tx.type === 'IN' ? '🟢' : '🔴';
+                let amountPrefix = tx.type === 'IN' ? '+' : '-';
+
+                if (isChangeOutput) {
+                    typeIcon = '🔄'; // Different icon for change
+                    amountPrefix = '↩️'; // Return arrow for change
+                }
+
                 const balance = walletExplorerState.balanceMap && walletExplorerState.balanceMap[tx.hash]
                     ? walletExplorerState.balanceMap[tx.hash].toFixed(6)
                     : '—';
@@ -15505,15 +15550,26 @@ function exportRedWalletIndexCSV() {
                     ? walletExplorerState.artSelections.has(tx.hash)
                     : walletExplorerState.selectedTransactions && walletExplorerState.selectedTransactions.has(tx.hash);
 
-                // In ART mode, add visual selection indicator
-                if (walletExplorerState.artMode && isSelected) {
+                // Handle UTXO change outputs differently
+                const isChangeOutput = tx.isChange === true || tx.type === 'CHANGE';
+
+                // Style change outputs with gray background and info styling
+                if (isChangeOutput) {
+                    row.style.background = 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)';
+                    row.style.borderLeft = '5px solid #9e9e9e';
+                    row.style.opacity = '0.7';
+                    row.title = 'UTXO Change Output - Funds returning to same address (not traceable)';
+                }
+
+                // In ART mode, add visual selection indicator (but not for change)
+                if (walletExplorerState.artMode && isSelected && !isChangeOutput) {
                     row.style.background = 'linear-gradient(135deg, #d1f2eb 0%, #a3e4d7 100%)';
                     row.style.borderLeft = '5px solid #1abc9c';
                     row.style.boxShadow = '0 0 10px rgba(26, 188, 156, 0.3)';
                 }
 
-                // Add click handler for ART mode row selection
-                if (walletExplorerState.artMode) {
+                // Add click handler for ART mode row selection (disabled for change)
+                if (walletExplorerState.artMode && !isChangeOutput) {
                     row.style.cursor = 'pointer';
                     row.onclick = (e) => {
                         // Don't trigger if clicking buttons or checkboxes
@@ -15522,11 +15578,24 @@ function exportRedWalletIndexCSV() {
                         }
                         toggleARTSelection(tx);
                     };
+                } else if (isChangeOutput) {
+                    row.style.cursor = 'not-allowed';
+                }
+
+                // Create change badge if applicable
+                let changeBadge = '';
+                if (isChangeOutput) {
+                    changeBadge = `<div style="margin-top: 4px;"><span style="background: #9e9e9e; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">🔄 CHANGE (Not Traceable)</span></div>`;
                 }
 
                 row.innerHTML = `
                     <td style="padding: 12px; text-align: center;">
-                        ${walletExplorerState.artMode ? `
+                        ${isChangeOutput ? `
+                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
+                                   disabled
+                                   title="Change outputs cannot be selected - funds stay in same thread"
+                                   style="cursor: not-allowed; opacity: 0.3;">
+                        ` : walletExplorerState.artMode ? `
                             <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
                                    ${isSelected ? 'checked' : ''}
                                    onclick="event.stopPropagation(); toggleARTSelection(${JSON.stringify(tx).replace(/"/g, '&quot;')})">
@@ -15537,7 +15606,7 @@ function exportRedWalletIndexCSV() {
                         `}
                     </td>
                     <td style="padding: 12px;">${date}${threadBadge}</td>
-                    <td style="padding: 12px;">${typeIcon} ${tx.type}</td>
+                    <td style="padding: 12px;">${typeIcon} ${isChangeOutput ? 'CHANGE' : tx.type}${changeBadge}</td>
                     <td style="padding: 12px; text-align: right; font-weight: 600;">${amountPrefix}${tx.amount.toFixed(6)} ${tx.asset}</td>
                     ${balanceCell}
                     <td style="padding: 12px; font-family: monospace; font-size: 0.9rem;">
@@ -15546,19 +15615,26 @@ function exportRedWalletIndexCSV() {
                         ${contractBadge}
                     </td>
                     <td style="padding: 12px; text-align: center;">
-                        <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
-                            <button class="wallet-explorer-action-btn btn-primary" onclick="addWalletTransactionToInvestigation('${tx.hash}')" style="font-size: 13px; padding: 8px 12px;">
-                                ${getWalletActionButtonLabel()}
-                            </button>
-                            ${tx.type === 'OUT' && walletExplorerState.sourceThreadId ? `
-                                <button class="wallet-explorer-action-btn" onclick="writeOffWalletTransaction('${tx.hash}')"
-                                        style="font-size: 13px; padding: 8px 12px; background: #9e9e9e; color: white; border: 2px solid #dc3545;"
-                                        title="Write off this outbound transaction">
-                                    📝 Write Off
+                        ${isChangeOutput ? `
+                            <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+                                <span style="font-size: 11px; color: #666; font-style: italic;">N/A - Change</span>
+                                <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link">🔗</a>
+                            </div>
+                        ` : `
+                            <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+                                <button class="wallet-explorer-action-btn btn-primary" onclick="addWalletTransactionToInvestigation('${tx.hash}')" style="font-size: 13px; padding: 8px 12px;">
+                                    ${getWalletActionButtonLabel()}
                                 </button>
-                            ` : ''}
-                            <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link">🔗</a>
-                        </div>
+                                ${tx.type === 'OUT' && walletExplorerState.sourceThreadId ? `
+                                    <button class="wallet-explorer-action-btn" onclick="writeOffWalletTransaction('${tx.hash}')"
+                                            style="font-size: 13px; padding: 8px 12px; background: #9e9e9e; color: white; border: 2px solid #dc3545;"
+                                            title="Write off this outbound transaction">
+                                        📝 Write Off
+                                    </button>
+                                ` : ''}
+                                <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link">🔗</a>
+                            </div>
+                        `}
                     </td>
                 `;
 
@@ -16862,68 +16938,123 @@ function exportRedWalletIndexCSV() {
 
             const allTransactions = [];
 
-            // Process each transaction
+            // Process each transaction (UTXO-aware)
             transactions.forEach(tx => {
-                // Determine if this is incoming or outgoing
-                // Check if address appears in outputs (incoming) or inputs (outgoing)
-                let isIncoming = false;
-                let isOutgoing = false;
-                let amount = 0;
-                let counterparty = '';
+                // Check if this address appears in inputs (spending UTXOs)
+                const ourInputs = [];
+                let totalInputValue = 0;
 
-                // Check outputs for incoming transactions
-                tx.vout?.forEach(output => {
-                    if (output.scriptpubkey_address === address) {
-                        isIncoming = true;
-                        amount += output.value;
-                    } else if (isIncoming && !counterparty) {
-                        // If we're receiving, the sender is in inputs
-                        counterparty = output.scriptpubkey_address || 'Unknown';
-                    }
-                });
-
-                // Check inputs for outgoing transactions
                 tx.vin?.forEach(input => {
                     if (input.prevout?.scriptpubkey_address === address) {
-                        isOutgoing = true;
-                        amount += input.prevout.value;
-                    } else if (isOutgoing && !counterparty) {
-                        // If we're sending, the recipient is in outputs
-                        counterparty = input.prevout?.scriptpubkey_address || 'Unknown';
+                        ourInputs.push(input);
+                        totalInputValue += input.prevout.value;
                     }
                 });
 
-                // Find counterparty address
+                // Check if this address appears in outputs (receiving UTXOs)
+                const ourOutputs = [];
+                const otherOutputs = [];
+                let totalOutputValue = 0;
+
+                tx.vout?.forEach(output => {
+                    if (output.scriptpubkey_address === address) {
+                        ourOutputs.push(output);
+                        totalOutputValue += output.value;
+                    } else {
+                        otherOutputs.push(output);
+                    }
+                });
+
+                const isOutgoing = ourInputs.length > 0;
+                const isIncoming = ourOutputs.length > 0 && ourInputs.length === 0;
+
+                // For INCOMING transactions (no inputs from us)
                 if (isIncoming) {
-                    // For incoming, counterparty is the sender (first input)
-                    counterparty = tx.vin?.[0]?.prevout?.scriptpubkey_address || 'Unknown';
-                } else if (isOutgoing) {
-                    // For outgoing, counterparty is the first output that's not us
-                    const recipientOutput = tx.vout?.find(o => o.scriptpubkey_address !== address);
-                    counterparty = recipientOutput?.scriptpubkey_address || 'Unknown';
-                }
+                    const totalReceived = totalOutputValue / 100000000;
+                    const sender = tx.vin?.[0]?.prevout?.scriptpubkey_address || 'Unknown';
 
-                // Convert satoshis to BTC
-                const btcAmount = amount / 100000000;
-
-                if (btcAmount > 0 && (isIncoming || isOutgoing)) {
                     allTransactions.push({
                         hash: tx.txid,
                         timestamp: tx.status?.block_time ? tx.status.block_time * 1000 : Date.now(),
-                        type: isIncoming ? 'IN' : 'OUT',
+                        type: 'IN',
                         asset: 'BTC',
-                        amount: btcAmount,
-                        counterparty: counterparty,
+                        amount: totalReceived,
+                        counterparty: sender,
                         entityLabel: null,
-                        explorerUrl: `https://mempool.space/tx/${tx.txid}`
+                        explorerUrl: `https://mempool.space/tx/${tx.txid}`,
+                        isChange: false,
+                        isUTXO: true
                     });
+                }
+
+                // For OUTGOING transactions (has inputs from us)
+                if (isOutgoing) {
+                    // Calculate actual sent amount (inputs - change outputs)
+                    const changeValue = totalOutputValue; // Amount returning to us
+                    const sentValue = totalInputValue - changeValue;
+                    const sentBTC = sentValue / 100000000;
+
+                    // For each non-change output, create a transaction record
+                    otherOutputs.forEach(output => {
+                        const outputBTC = output.value / 100000000;
+
+                        // Only include if output is significant (>0.00000001 BTC)
+                        if (outputBTC > 0.00000001) {
+                            allTransactions.push({
+                                hash: tx.txid,
+                                timestamp: tx.status?.block_time ? tx.status.block_time * 1000 : Date.now(),
+                                type: 'OUT',
+                                asset: 'BTC',
+                                amount: outputBTC,
+                                counterparty: output.scriptpubkey_address || 'Unknown',
+                                entityLabel: null,
+                                explorerUrl: `https://mempool.space/tx/${tx.txid}`,
+                                isChange: false,
+                                isUTXO: true,
+                                // Additional UTXO metadata
+                                utxoData: {
+                                    totalSent: sentBTC,
+                                    changeAmount: changeValue / 100000000,
+                                    outputCount: otherOutputs.length,
+                                    hasChange: ourOutputs.length > 0
+                                }
+                            });
+                        }
+                    });
+
+                    // If there's change, record it separately (marked as change)
+                    if (ourOutputs.length > 0) {
+                        const changeBTC = changeValue / 100000000;
+
+                        // Only include significant change
+                        if (changeBTC > 0.00000001) {
+                            allTransactions.push({
+                                hash: tx.txid,
+                                timestamp: tx.status?.block_time ? tx.status.block_time * 1000 : Date.now(),
+                                type: 'CHANGE', // Special type for change
+                                asset: 'BTC',
+                                amount: changeBTC,
+                                counterparty: address, // Change returns to self
+                                entityLabel: null,
+                                explorerUrl: `https://mempool.space/tx/${tx.txid}`,
+                                isChange: true,
+                                isUTXO: true,
+                                utxoData: {
+                                    totalSent: sentBTC,
+                                    changeAmount: changeBTC,
+                                    outputCount: otherOutputs.length
+                                }
+                            });
+                        }
+                    }
                 }
             });
 
             // Sort by timestamp (newest first)
             allTransactions.sort((a, b) => b.timestamp - a.timestamp);
 
-            console.log(`Found ${allTransactions.length} Bitcoin transactions`);
+            const changeCount = allTransactions.filter(t => t.isChange).length;
+            console.log(`Found ${allTransactions.length} Bitcoin transactions (${changeCount} change outputs)`);
 
             return allTransactions;
         }
