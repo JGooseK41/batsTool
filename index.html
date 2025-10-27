@@ -15051,7 +15051,24 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             // Set filtered transactions
             walletExplorerState.filteredTransactions = sortedTxs;
             walletExplorerState.balanceMap = balanceMap;
-            walletExplorerState.currentPage = 1;
+
+            // Auto-navigate to page containing highlighted transaction
+            if (walletExplorerState.highlightTxHash) {
+                const highlightIndex = sortedTxs.findIndex(tx =>
+                    tx.hash.toLowerCase() === walletExplorerState.highlightTxHash.toLowerCase()
+                );
+
+                if (highlightIndex !== -1) {
+                    // Calculate which page the transaction is on
+                    const pageNumber = Math.floor(highlightIndex / walletExplorerState.itemsPerPage) + 1;
+                    walletExplorerState.currentPage = pageNumber;
+                    console.log(`📄 Auto-navigated to page ${pageNumber} for highlighted transaction (index ${highlightIndex})`);
+                } else {
+                    walletExplorerState.currentPage = 1;
+                }
+            } else {
+                walletExplorerState.currentPage = 1;
+            }
 
             // Display transactions
             renderTransactionTable();
@@ -15637,6 +15654,15 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
             const hashLower = txHash.toLowerCase();
 
+            // IMPORTANT: If this transaction is the SOURCE of the current thread we're exploring,
+            // DON'T mark it as "used" - it's the ACTIVE thread we're following!
+            // Only gray out OUTBOUND transactions that have been allocated.
+            if (walletExplorerState.highlightTxHash && walletExplorerState.highlightTxHash.toLowerCase() === hashLower) {
+                // This is the incoming transaction that created the thread we're tracing
+                // Don't gray it out - it should show in yellow/gold as the active thread
+                return { isUsed: false, location: '', entryType: '', isActiveThread: true };
+            }
+
             // Search all hop entries
             for (const hop of investigation.hops) {
                 if (!hop.entries) continue;
@@ -15769,8 +15795,9 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 row.className = rowClass;
 
                 // Add highlight styling for investigation threads
-                if (isCurrentThread) {
-                    // Current thread - bright yellow/orange highlight
+                // Highlighted transaction (active thread source) gets yellow/gold regardless of isCurrentThread
+                if (isHighlighted || isCurrentThread) {
+                    // Current thread or highlighted incoming transaction - bright yellow/orange highlight
                     row.style.background = 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)';
                     row.style.borderLeft = '5px solid #f39c12';
                     row.style.boxShadow = '0 0 15px rgba(243, 156, 18, 0.3)';
@@ -15851,7 +15878,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 }
 
                 // Style used transactions (already allocated in investigation)
-                if (isUsedTransaction && !isChangeOutput) {
+                // BUT: Don't gray out the highlighted transaction - it's the active thread we're following!
+                if (isUsedTransaction && !isChangeOutput && !isHighlighted) {
                     row.style.background = 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)';
                     row.style.borderLeft = '5px solid #6c757d';
                     row.style.opacity = '0.6';
