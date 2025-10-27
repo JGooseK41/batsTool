@@ -14887,6 +14887,21 @@ function exportRedWalletIndexCSV() {
 
             const tokenTxs = tokenData.result && Array.isArray(tokenData.result) ? tokenData.result : [];
 
+            // Get INTERNAL transactions (contract-generated ETH transfers) - CRITICAL for accurate balance!
+            const internalTxUrl = `${baseUrl}?chainid=${chainId}&module=account&action=txlistinternal&address=${address}&startblock=0&endblock=99999999&page=1&offset=1000&sort=desc&apikey=${apiKey}`;
+            console.log('Fetching internal transactions (limit 1000):', internalTxUrl);
+
+            const internalResponse = await fetch(internalTxUrl);
+            const internalData = await internalResponse.json();
+
+            console.log('Etherscan V2 internal tx response:', internalData);
+
+            if (internalData.status !== '1') {
+                console.warn('No internal transactions found. Status:', internalData.status, 'Message:', internalData.message);
+            }
+
+            const internalTxs = internalData.result && Array.isArray(internalData.result) ? internalData.result : [];
+
             // Combine and normalize
             const allTransactions = [];
 
@@ -14926,6 +14941,27 @@ function exportRedWalletIndexCSV() {
                     entityLabel: null,
                     explorerUrl: `${config.explorerUrl || 'https://etherscan.io'}/tx/${tx.hash}`
                 });
+            });
+
+            // Process INTERNAL transactions (critical for accurate ETH balance!)
+            internalTxs.forEach(tx => {
+                const isIncoming = tx.to && tx.to.toLowerCase() === address.toLowerCase();
+                const amount = parseFloat(tx.value) / 1e18; // Wei to ETH
+
+                // Only include if amount > 0 (filter out failed internal txs)
+                if (amount > 0 && !tx.isError && tx.isError !== '1') {
+                    allTransactions.push({
+                        hash: tx.hash,
+                        timestamp: parseInt(tx.timeStamp) * 1000,
+                        type: isIncoming ? 'IN' : 'OUT',
+                        asset: config.nativeCurrency || 'ETH',
+                        amount: amount,
+                        counterparty: isIncoming ? tx.from : tx.to,
+                        entityLabel: null,
+                        explorerUrl: `${config.explorerUrl || 'https://etherscan.io'}/tx/${tx.hash}`,
+                        isInternal: true  // Flag for debugging
+                    });
+                }
             });
 
             // Sort by timestamp (newest first)
