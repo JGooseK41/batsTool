@@ -24371,6 +24371,12 @@ function generateVisualizationPage() {
             <button class="btn-primary" onclick="changeLayout('hierarchical')">📊 Hierarchical</button>
             <button class="btn-primary" onclick="changeLayout('force')">🔀 Force Layout</button>
             <button class="btn-primary" onclick="changeLayout('tree')">🌳 Tree Layout</button>
+            <button id="clusterViewToggleBtn" onclick="toggleClusterView()"
+                    style="padding: 8px 16px; background: #3b82f6; border: 2px solid #2563eb;
+                           color: white; border-radius: 4px; cursor: pointer; font-size: 14px;
+                           font-weight: 500; transition: all 0.2s;">
+                📍 Individual View (ON)
+            </button>
             <span style="flex: 1;"></span>
             <button class="btn-secondary" onclick="navigateToReports()">📄 Go to Reports</button>
             <button class="btn-secondary" onclick="resetView()">🔄 Reset View</button>
@@ -24674,6 +24680,45 @@ function generateVisualizationPage() {
                 } else if (format === 'svg') {
                     visualizationEngine.exporter.exportSVG();
                 }
+            }
+        }
+
+        /**
+         * Toggle between cluster view and individual address view
+         */
+        function toggleClusterView() {
+            if (!visualizationEngine) {
+                alert('⚠️ Visualization engine not initialized');
+                return;
+            }
+
+            // Check if investigation has clusters
+            if (!investigation.addressClusters || Object.keys(investigation.addressClusters).length === 0) {
+                alert('ℹ️ No Address Clusters\n\nThis investigation has no clustered addresses.\n\nCluster view is only available for UTXO chains (Bitcoin) when addresses have been manually clustered.');
+                return;
+            }
+
+            // Toggle and reload
+            visualizationEngine.toggleClusterView();
+
+            // Update button state
+            const btn = document.getElementById('clusterViewToggleBtn');
+            if (btn) {
+                if (visualizationEngine.clusterViewMode) {
+                    btn.innerHTML = '🔗 Cluster View (ON)';
+                    btn.style.background = '#ff9800';
+                    btn.style.borderColor = '#f57c00';
+                } else {
+                    btn.innerHTML = '📍 Individual View (ON)';
+                    btn.style.background = '#3b82f6';
+                    btn.style.borderColor = '#2563eb';
+                }
+            }
+
+            // Show notification
+            const mode = visualizationEngine.clusterViewMode ? 'Cluster' : 'Individual Address';
+            if (typeof showNotification === 'function') {
+                showNotification(`✅ Switched to ${mode} View`, 'success');
             }
         }
 
