@@ -2795,6 +2795,77 @@
                     <strong>⚠️ Large Wallet Warning:</strong> This wallet has too many transactions to calculate accurate running balance. Balance column may be incomplete.
                 </div>
 
+                <!-- ART Tracking Panel -->
+                <div id="walletExplorerARTPanel" style="display: none; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 3px solid #2196f3; padding: 20px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
+                    <div style="margin-bottom: 15px;">
+                        <h3 style="margin: 0 0 10px 0; color: #0d47a1; font-size: 18px;">📊 Adjusted Root Total (ART) Tracker</h3>
+                        <p style="margin: 0; color: #1976d2; font-size: 13px;">
+                            Select transactions to trace or write off. Real-time math shows remaining ART.
+                        </p>
+                    </div>
+
+                    <!-- Source Thread Info -->
+                    <div id="walletExplorerARTSourceInfo" style="background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                        <!-- Populated by JavaScript -->
+                    </div>
+
+                    <!-- Selection Summary -->
+                    <div id="walletExplorerARTSelections" style="display: none; background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0; color: #0d47a1; font-size: 14px;">📝 Selected Transactions (<span id="walletExplorerARTSelectionCount">0</span>)</h4>
+                        <div id="walletExplorerARTSelectionList" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;">
+                            <!-- Selection list populated by JavaScript -->
+                        </div>
+                        <div style="border-top: 2px solid #e1e8ed; padding-top: 10px; margin-top: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong style="color: #0d47a1;">Total Selected:</strong>
+                                    <span id="walletExplorerARTSelectedTotal" style="font-size: 18px; font-weight: bold; color: #2196f3; margin-left: 10px;">0</span>
+                                    <span id="walletExplorerARTSelectedCurrency" style="font-size: 14px; color: #666;"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ART Status -->
+                    <div id="walletExplorerARTStatus" style="background: white; border-radius: 8px; padding: 15px; border-left: 5px solid #4caf50;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div>
+                                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Available ART</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #4caf50;">
+                                    <span id="walletExplorerARTAvailable">0</span>
+                                    <span id="walletExplorerARTCurrency" style="font-size: 14px; color: #666;"></span>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Selected</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #2196f3;">
+                                    <span id="walletExplorerARTSelected">0</span>
+                                    <span id="walletExplorerARTSelectedCurr" style="font-size: 14px; color: #666;"></span>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Remaining After</div>
+                                <div style="font-size: 20px; font-weight: bold;" id="walletExplorerARTRemainingContainer">
+                                    <span id="walletExplorerARTRemaining">0</span>
+                                    <span id="walletExplorerARTRemainingCurr" style="font-size: 14px; color: #666;"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Commit Actions -->
+                    <div id="walletExplorerARTActions" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 2px solid #e1e8ed;">
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-secondary" onclick="clearARTSelections()" style="padding: 10px 20px;">
+                                🔄 Clear Selections
+                            </button>
+                            <button class="btn btn-success" onclick="commitARTSelections()" style="padding: 12px 30px; font-weight: bold; font-size: 16px; background: #4caf50; border: 2px solid #388e3c;">
+                                ✅ Commit & Create Entries
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Bulk Action Bar -->
                 <div id="walletExplorerBulkActions" style="display: none; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); border: 3px solid #2e7d32; padding: 18px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -14412,7 +14483,12 @@ function exportRedWalletIndexCSV() {
                 selectedTransactions: new Set(),
                 highlightTxHash: null,
                 sourceThreadId: null,
-                sortOrder: 'desc' // 'desc' = newest first, 'asc' = oldest first
+                sortOrder: 'desc', // 'desc' = newest first, 'asc' = oldest first
+                // ART Tracking
+                artMode: false,
+                artAvailable: 0,
+                artCurrency: '',
+                artSelections: new Map() // txHash → {tx, amount, action: 'trace'|'writeoff'}
             };
 
             // Hide all sections
@@ -14420,6 +14496,7 @@ function exportRedWalletIndexCSV() {
             document.getElementById('walletExplorerAssetSummary').style.display = 'none';
             document.getElementById('walletExplorerTransactions').style.display = 'none';
             document.getElementById('walletExplorerEmpty').style.display = 'none';
+            document.getElementById('walletExplorerARTPanel').style.display = 'none';
         }
 
         // Search wallet history
@@ -14757,7 +14834,301 @@ function exportRedWalletIndexCSV() {
             // Display transactions
             renderTransactionTable();
 
+            // Initialize ART tracking if source thread available
+            initializeARTTracking();
+
             document.getElementById('walletExplorerTransactions').style.display = 'block';
+        }
+
+        // Initialize ART Tracking Panel
+        function initializeARTTracking() {
+            const sourceThreadId = walletExplorerState.sourceThreadId;
+
+            if (!sourceThreadId) {
+                document.getElementById('walletExplorerARTPanel').style.display = 'none';
+                return;
+            }
+
+            // Find the source thread in available threads
+            const availableThreads = investigation.availableThreads || {};
+            let sourceThread = null;
+            let currency = null;
+
+            for (const curr in availableThreads) {
+                if (availableThreads[curr][sourceThreadId]) {
+                    sourceThread = availableThreads[curr][sourceThreadId];
+                    currency = curr;
+                    break;
+                }
+            }
+
+            if (!sourceThread) {
+                console.log(`Source thread ${sourceThreadId} not found in available threads`);
+                document.getElementById('walletExplorerARTPanel').style.display = 'none';
+                return;
+            }
+
+            // Ensure selected asset matches the thread currency
+            if (walletExplorerState.selectedAsset !== currency) {
+                console.log(`Selected asset (${walletExplorerState.selectedAsset}) does not match thread currency (${currency})`);
+                document.getElementById('walletExplorerARTPanel').style.display = 'none';
+                return;
+            }
+
+            // Enable ART mode
+            walletExplorerState.artMode = true;
+            walletExplorerState.artAvailable = sourceThread.availableAmount;
+            walletExplorerState.artCurrency = currency;
+
+            // Update source info
+            document.getElementById('walletExplorerARTSourceInfo').innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 12px; color: #666; margin-bottom: 3px;">Tracing Thread:</div>
+                        <div style="font-size: 16px; font-weight: bold; color: #0d47a1;">${sourceThreadId}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 3px;">Available to Trace:</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #4caf50;">
+                            ${sourceThread.availableAmount.toLocaleString()} ${currency}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Update ART status
+            updateARTDisplay();
+
+            // Show the panel
+            document.getElementById('walletExplorerARTPanel').style.display = 'block';
+
+            console.log(`✅ ART tracking enabled for ${sourceThreadId}: ${sourceThread.availableAmount} ${currency}`);
+        }
+
+        // Update ART Display
+        function updateARTDisplay() {
+            if (!walletExplorerState.artMode) return;
+
+            const available = walletExplorerState.artAvailable;
+            const currency = walletExplorerState.artCurrency;
+            const selections = walletExplorerState.artSelections;
+
+            // Calculate total selected
+            let totalSelected = 0;
+            for (const selection of selections.values()) {
+                totalSelected += selection.amount;
+            }
+
+            const remaining = available - totalSelected;
+
+            // Update display
+            document.getElementById('walletExplorerARTAvailable').textContent = available.toLocaleString();
+            document.getElementById('walletExplorerARTCurrency').textContent = currency;
+
+            document.getElementById('walletExplorerARTSelected').textContent = totalSelected.toLocaleString();
+            document.getElementById('walletExplorerARTSelectedCurr').textContent = currency;
+
+            document.getElementById('walletExplorerARTRemaining').textContent = remaining.toLocaleString();
+            document.getElementById('walletExplorerARTRemainingCurr').textContent = currency;
+
+            // Color remaining based on status
+            const remainingContainer = document.getElementById('walletExplorerARTRemainingContainer');
+            if (remaining < -0.01) {
+                // Over-allocated - RED
+                remainingContainer.querySelector('span').style.color = '#dc3545';
+                remainingContainer.style.borderLeft = '5px solid #dc3545';
+            } else if (Math.abs(remaining) < 0.01) {
+                // Perfect match - GREEN
+                remainingContainer.querySelector('span').style.color = '#4caf50';
+                remainingContainer.style.borderLeft = '5px solid #4caf50';
+            } else {
+                // Under-allocated - YELLOW/ORANGE
+                remainingContainer.querySelector('span').style.color = '#ff9800';
+                remainingContainer.style.borderLeft = '5px solid #ff9800';
+            }
+
+            // Update selections list
+            if (selections.size > 0) {
+                document.getElementById('walletExplorerARTSelections').style.display = 'block';
+                document.getElementById('walletExplorerARTActions').style.display = 'block';
+                document.getElementById('walletExplorerARTSelectionCount').textContent = selections.size;
+
+                const selectionList = document.getElementById('walletExplorerARTSelectionList');
+                selectionList.innerHTML = '';
+
+                for (const [txHash, selection] of selections.entries()) {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'padding: 8px; margin-bottom: 5px; background: #f8f9fa; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;';
+                    div.innerHTML = `
+                        <div style="flex: 1;">
+                            <div style="font-size: 11px; font-family: monospace; color: #666;">${txHash.substring(0, 16)}...</div>
+                            <div style="font-size: 13px; font-weight: bold; color: #2196f3;">${selection.amount.toLocaleString()} ${currency}</div>
+                        </div>
+                        <div style="display: flex; gap: 5px;">
+                            <select style="padding: 4px 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;"
+                                    onchange="updateSelectionAction('${txHash}', this.value)">
+                                <option value="trace" ${selection.action === 'trace' ? 'selected' : ''}>🔍 Trace</option>
+                                <option value="writeoff" ${selection.action === 'writeoff' ? 'selected' : ''}>❌ Write Off</option>
+                            </select>
+                            <button onclick="removeARTSelection('${txHash}')"
+                                    style="padding: 4px 8px; font-size: 12px; background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer;">
+                                ✕
+                            </button>
+                        </div>
+                    `;
+                    selectionList.appendChild(div);
+                }
+
+                document.getElementById('walletExplorerARTSelectedTotal').textContent = totalSelected.toLocaleString();
+                document.getElementById('walletExplorerARTSelectedCurrency').textContent = currency;
+            } else {
+                document.getElementById('walletExplorerARTSelections').style.display = 'none';
+                document.getElementById('walletExplorerARTActions').style.display = 'none';
+            }
+        }
+
+        // Toggle ART selection for a transaction
+        function toggleARTSelection(tx) {
+            if (!walletExplorerState.artMode) return;
+
+            const txHash = tx.hash;
+
+            if (walletExplorerState.artSelections.has(txHash)) {
+                // Deselect
+                walletExplorerState.artSelections.delete(txHash);
+                console.log(`❌ Deselected: ${txHash}`);
+            } else {
+                // Select
+                walletExplorerState.artSelections.set(txHash, {
+                    tx: tx,
+                    amount: tx.amount,
+                    action: tx.type === 'OUT' ? 'trace' : 'trace' // Default to trace
+                });
+                console.log(`✅ Selected: ${txHash} (${tx.amount} ${walletExplorerState.artCurrency})`);
+            }
+
+            updateARTDisplay();
+            renderTransactionTable(); // Refresh to update selection state
+        }
+
+        // Update selection action (trace/writeoff)
+        function updateSelectionAction(txHash, action) {
+            if (!walletExplorerState.artSelections.has(txHash)) return;
+
+            const selection = walletExplorerState.artSelections.get(txHash);
+            selection.action = action;
+
+            console.log(`📝 Updated ${txHash} action to: ${action}`);
+        }
+
+        // Remove ART selection
+        function removeARTSelection(txHash) {
+            walletExplorerState.artSelections.delete(txHash);
+            console.log(`🗑️ Removed selection: ${txHash}`);
+            updateARTDisplay();
+            renderTransactionTable();
+        }
+
+        // Clear all ART selections
+        function clearARTSelections() {
+            walletExplorerState.artSelections.clear();
+            console.log('🔄 Cleared all ART selections');
+            updateARTDisplay();
+            renderTransactionTable();
+        }
+
+        // Commit ART selections and create entries
+        function commitARTSelections() {
+            if (!walletExplorerState.artMode) {
+                alert('⚠️ ART tracking not enabled');
+                return;
+            }
+
+            if (walletExplorerState.artSelections.size === 0) {
+                alert('⚠️ No transactions selected');
+                return;
+            }
+
+            const selections = Array.from(walletExplorerState.artSelections.values());
+            const sourceThreadId = walletExplorerState.sourceThreadId;
+            const currency = walletExplorerState.artCurrency;
+            const available = walletExplorerState.artAvailable;
+
+            // Calculate total
+            let totalSelected = 0;
+            for (const selection of selections) {
+                totalSelected += selection.amount;
+            }
+
+            const remaining = available - totalSelected;
+
+            // Show confirmation
+            const confirmMsg = `✅ COMMIT ART SELECTIONS\n\n` +
+                `Thread: ${sourceThreadId}\n` +
+                `Available: ${available.toLocaleString()} ${currency}\n\n` +
+                `Selections: ${selections.length} transaction(s)\n` +
+                `Total: ${totalSelected.toLocaleString()} ${currency}\n` +
+                `Remaining: ${remaining.toLocaleString()} ${currency}\n\n` +
+                `${remaining < -0.01 ? '⚠️ WARNING: OVER-ALLOCATED!\n\n' : ''}` +
+                `This will create ${selections.length} ${selections.length === 1 ? 'entry' : 'entries'}.\n\n` +
+                `Proceed?`;
+
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            // Get current hop
+            const hopNumber = getCurrentHop();
+            if (!hopNumber) {
+                alert('⚠️ No active hop found');
+                return;
+            }
+
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            if (!hop) {
+                alert(`⚠️ Hop ${hopNumber} not found`);
+                return;
+            }
+
+            // Create entries for each selection
+            let entriesCreated = 0;
+
+            for (const selection of selections) {
+                const entry = {
+                    id: hop.entries.length + 1,
+                    hopNumber: hopNumber,
+                    entryType: selection.action, // 'trace' or 'writeoff'
+                    amount: selection.amount.toString(),
+                    currency: currency,
+                    sourceThreadId: sourceThreadId,
+                    multipleSourceThreads: [sourceThreadId],
+                    notation: '',
+                    notes: `Created from Wallet Explorer ART Tracker\nThread: ${sourceThreadId}\nTransaction: ${selection.tx.hash}\nAmount: ${selection.amount.toLocaleString()} ${currency}\nAction: ${selection.action}\nCounterparty: ${selection.tx.counterparty || 'N/A'}`,
+                    timestamp: new Date(selection.tx.timestamp).toISOString().slice(0, 16),
+                    chain: walletExplorerState.blockchain,
+                    transactionHash: selection.tx.hash,
+                    toWallet: selection.action === 'trace' ? (selection.tx.counterparty || '') : '',
+                    toWalletType: selection.action === 'trace' ? 'blue' : 'gray'
+                };
+
+                hop.entries.push(entry);
+                entriesCreated++;
+            }
+
+            // Sort entries chronologically
+            sortHopEntriesChronologically(hop);
+
+            // Save and render
+            saveToStorage();
+            renderHops();
+
+            // Close wallet explorer
+            closeWalletExplorer();
+
+            // Show success notification
+            showNotification(`✅ ART Commit Complete: ${entriesCreated} ${entriesCreated === 1 ? 'entry' : 'entries'} created (${totalSelected.toLocaleString()} ${currency})`, 'success');
+
+            console.log(`✅ ART commit complete: ${entriesCreated} entries created`);
         }
 
         // Render transaction table
@@ -14915,14 +15286,41 @@ function exportRedWalletIndexCSV() {
                 // Conditionally include balance column
                 const balanceCell = showBalance ? `<td style="padding: 12px; text-align: right;">${balance}</td>` : '';
 
-                // Check if this transaction is selected (safety check for Set existence)
-                const isSelected = walletExplorerState.selectedTransactions && walletExplorerState.selectedTransactions.has(tx.hash);
+                // Check if this transaction is selected
+                const isSelected = walletExplorerState.artMode
+                    ? walletExplorerState.artSelections.has(tx.hash)
+                    : walletExplorerState.selectedTransactions && walletExplorerState.selectedTransactions.has(tx.hash);
+
+                // In ART mode, add visual selection indicator
+                if (walletExplorerState.artMode && isSelected) {
+                    row.style.background = 'linear-gradient(135deg, #d1f2eb 0%, #a3e4d7 100%)';
+                    row.style.borderLeft = '5px solid #1abc9c';
+                    row.style.boxShadow = '0 0 10px rgba(26, 188, 156, 0.3)';
+                }
+
+                // Add click handler for ART mode row selection
+                if (walletExplorerState.artMode) {
+                    row.style.cursor = 'pointer';
+                    row.onclick = (e) => {
+                        // Don't trigger if clicking buttons or checkboxes
+                        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+                            return;
+                        }
+                        toggleARTSelection(tx);
+                    };
+                }
 
                 row.innerHTML = `
                     <td style="padding: 12px; text-align: center;">
-                        <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
-                               ${isSelected ? 'checked' : ''}
-                               onchange="toggleTransactionSelection('${tx.hash}')">
+                        ${walletExplorerState.artMode ? `
+                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
+                                   ${isSelected ? 'checked' : ''}
+                                   onclick="event.stopPropagation(); toggleARTSelection(${JSON.stringify(tx).replace(/"/g, '&quot;')})">
+                        ` : `
+                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
+                                   ${isSelected ? 'checked' : ''}
+                                   onchange="toggleTransactionSelection('${tx.hash}')">
+                        `}
                     </td>
                     <td style="padding: 12px;">${date}${threadBadge}</td>
                     <td style="padding: 12px;">${typeIcon} ${tx.type}</td>
