@@ -14083,8 +14083,76 @@ function exportRedWalletIndexCSV() {
             currentPage: 1,
             itemsPerPage: 50,
             selectedAsset: '',
-            assets: {}
+            assets: {},
+            showScamTokens: false  // Hide scam tokens by default
         };
+
+        // Known legitimate tokens (case-insensitive)
+        const VERIFIED_TOKENS = {
+            'ETH': true,
+            'WETH': true,
+            'USDT': true,
+            'USDC': true,
+            'DAI': true,
+            'WBTC': true,
+            'BTC': true,
+            'SOL': true,
+            'MATIC': true,
+            'BNB': true,
+            'LINK': true,
+            'UNI': true,
+            'AAVE': true,
+            'CRV': true,
+            'MKR': true,
+            'SNX': true,
+            'COMP': true
+        };
+
+        // Detect scam tokens
+        function isScamToken(assetName) {
+            if (!assetName) return false;
+
+            const lower = assetName.toLowerCase();
+
+            // Check for phishing keywords
+            const phishingKeywords = [
+                'visit', 'claim', 'reward', 'airdrop', 'bonus',
+                '.com', '.net', '.org', '.io', 'http', 'www.',
+                'click', 'free', 'prize', 'winner', 'congratulations',
+                'verify', 'security', 'urgent', 'action required'
+            ];
+
+            for (const keyword of phishingKeywords) {
+                if (lower.includes(keyword)) {
+                    return true;
+                }
+            }
+
+            // Check for non-ASCII characters (Unicode lookalikes)
+            // Allow only basic Latin, numbers, and common symbols
+            const hasNonASCII = /[^\x20-\x7E]/.test(assetName);
+            if (hasNonASCII) {
+                return true;
+            }
+
+            // Check for excessive length (scam tokens often have long names)
+            if (assetName.length > 20) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // Check if token is verified/legitimate
+        function isVerifiedToken(assetName) {
+            return VERIFIED_TOKENS[assetName.toUpperCase()] === true;
+        }
+
+        // Toggle scam token visibility
+        function toggleScamTokens() {
+            walletExplorerState.showScamTokens = !walletExplorerState.showScamTokens;
+            displayAssetSummary();
+        }
 
         // Open wallet explorer modal
         function openWalletExplorer(address = '', blockchain = '') {
@@ -14279,30 +14347,98 @@ function exportRedWalletIndexCSV() {
             assetListDiv.innerHTML = '';
             assetSelector.innerHTML = '<option value="">Choose an asset...</option>';
 
-            const assets = Object.values(walletExplorerState.assets);
+            let assets = Object.values(walletExplorerState.assets);
 
             if (assets.length === 0) {
                 document.getElementById('walletExplorerEmpty').style.display = 'block';
                 return;
             }
 
-            // Create asset cards
+            // Separate legitimate and scam tokens
+            const legitimateAssets = [];
+            const scamAssets = [];
+            let scamCount = 0;
+
             assets.forEach(asset => {
+                const isScam = isScamToken(asset.name);
+                if (isScam) {
+                    scamAssets.push(asset);
+                    scamCount++;
+                } else {
+                    legitimateAssets.push(asset);
+                }
+            });
+
+            // Sort: verified tokens first, then by balance
+            legitimateAssets.sort((a, b) => {
+                const aVerified = isVerifiedToken(a.name);
+                const bVerified = isVerifiedToken(b.name);
+                if (aVerified && !bVerified) return -1;
+                if (!aVerified && bVerified) return 1;
+                return Math.abs(b.balance) - Math.abs(a.balance);
+            });
+
+            // Add toggle button if scam tokens exist
+            if (scamCount > 0) {
+                const toggleDiv = document.createElement('div');
+                toggleDiv.style.cssText = 'margin-bottom: 15px; padding: 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; text-align: center;';
+                toggleDiv.innerHTML = `
+                    <strong>⚠️ ${scamCount} scam token${scamCount > 1 ? 's' : ''} hidden</strong>
+                    <button onclick="toggleScamTokens()" style="margin-left: 10px; padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        ${walletExplorerState.showScamTokens ? '🔒 Hide Scam Tokens' : '👁️ Show Scam Tokens'}
+                    </button>
+                `;
+                assetListDiv.appendChild(toggleDiv);
+            }
+
+            // Display legitimate assets
+            const assetsToShow = walletExplorerState.showScamTokens ? [...legitimateAssets, ...scamAssets] : legitimateAssets;
+
+            assetsToShow.forEach(asset => {
+                const isScam = isScamToken(asset.name);
+                const isVerified = isVerifiedToken(asset.name);
+
                 const card = document.createElement('div');
                 card.className = 'wallet-asset-card';
+
+                // Add special styling for verified or scam tokens
+                if (isVerified) {
+                    card.style.background = 'linear-gradient(135deg, #28a745 0%, #20873a 100%)';
+                    card.style.border = '2px solid #1e7e34';
+                } else if (isScam) {
+                    card.style.background = 'linear-gradient(135deg, #dc3545 0%, #bd2130 100%)';
+                    card.style.border = '2px solid #c82333';
+                    card.style.opacity = '0.7';
+                }
+
+                // Add badge for verified tokens
+                const badge = isVerified ? '<span style="background: #ffc107; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-left: 8px;">✓ VERIFIED</span>' : '';
+                const scamBadge = isScam ? '<span style="background: #fff; color: #dc3545; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-left: 8px;">⚠️ SCAM</span>' : '';
+
                 card.innerHTML = `
-                    <h4>${asset.name}</h4>
+                    <h4>${asset.name}${badge}${scamBadge}</h4>
                     <div class="asset-balance">${asset.balance.toFixed(6)}</div>
-                    <div class="asset-tx-count">${asset.txCount} transactions</div>
+                    <div class="asset-tx-count">${asset.txCount} transaction${asset.txCount > 1 ? 's' : ''}</div>
                 `;
-                card.onclick = () => selectAsset(asset.name);
+
+                if (!isScam) {
+                    card.onclick = () => selectAsset(asset.name);
+                    card.style.cursor = 'pointer';
+                } else {
+                    card.style.cursor = 'not-allowed';
+                    card.title = 'Suspected scam token - click is disabled for safety';
+                }
+
                 assetListDiv.appendChild(card);
 
-                // Add to selector
-                const option = document.createElement('option');
-                option.value = asset.name;
-                option.textContent = `${asset.name} (${asset.txCount} txs, Balance: ${asset.balance.toFixed(6)})`;
-                assetSelector.appendChild(option);
+                // Only add non-scam tokens to selector
+                if (!isScam) {
+                    const option = document.createElement('option');
+                    option.value = asset.name;
+                    const verifiedLabel = isVerified ? ' ✓' : '';
+                    option.textContent = `${asset.name}${verifiedLabel} (${asset.txCount} txs, Balance: ${asset.balance.toFixed(6)})`;
+                    assetSelector.appendChild(option);
+                }
             });
 
             document.getElementById('walletExplorerAssetSummary').style.display = 'block';
