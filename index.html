@@ -14492,29 +14492,102 @@ function exportRedWalletIndexCSV() {
         // Add transaction to investigation
         async function addWalletTransactionToInvestigation(txHash) {
             try {
+                // Find the transaction data from wallet explorer state
+                const tx = walletExplorerState.allTransactions.find(t => t.hash === txHash);
+                if (!tx) {
+                    throw new Error('Transaction data not found in wallet history');
+                }
+
                 const blockchain = walletExplorerState.blockchain;
+                const walletAddress = walletExplorerState.address;
 
                 // Close wallet explorer
                 closeWalletExplorer();
 
-                // Open the blockchain lookup modal and pre-populate it
-                // This reuses existing workflow instead of duplicating logic
-                const txHashInput = document.getElementById('txHashInput');
-                const chainSelector = document.getElementById('chainSelector');
+                // CONTEXT-AWARE ROUTING
+                const victimSection = document.getElementById('victimSetup');
+                const inVictimSetup = (victimSection && victimSection.style.display !== 'none') || !investigation.rootTotalConfirmed;
 
-                if (txHashInput && chainSelector) {
-                    txHashInput.value = txHash;
-                    chainSelector.value = blockchain;
+                if (inVictimSetup) {
+                    // VICTIM SETUP MODE: Directly populate victim transaction
+                    console.log('Adding to victim transaction...');
 
-                    // Show the modal
-                    showModal('blockchainLookupModal');
+                    // Find the most recent victim or create one
+                    let victim;
+                    if (!investigation.victims || investigation.victims.length === 0) {
+                        alert('Please add a victim first before logging transactions');
+                        return;
+                    }
 
-                    // Auto-trigger lookup
+                    // Use the last victim
+                    victim = investigation.victims[investigation.victims.length - 1];
+
+                    // Find an empty transaction or create a new one
+                    let transaction = victim.transactions.find(t => !t.txHash || t.txHash.trim() === '');
+
+                    if (!transaction) {
+                        // All transactions are filled, create a new one
+                        const transactionId = victim.transactions.length + 1;
+                        transaction = {
+                            id: transactionId,
+                            txHash: '',
+                            amount: '',
+                            currency: 'USD',
+                            customCurrency: '',
+                            receivingWallet: '',
+                            datetime: '',
+                            timezone: 'UTC',
+                            notes: '',
+                            chain: ''
+                        };
+                        victim.transactions.push(transaction);
+                    }
+
+                    // Populate transaction with wallet explorer data
+                    transaction.txHash = tx.hash;
+                    transaction.amount = tx.amount.toString();
+                    transaction.currency = tx.asset;
+                    transaction.receivingWallet = tx.type === 'IN' ? walletAddress : tx.counterparty;
+                    transaction.datetime = new Date(tx.timestamp).toISOString().slice(0, 16);
+                    transaction.timezone = 'UTC';
+                    transaction.chain = blockchain;
+                    transaction.notes = `Added from Wallet Explorer - ${tx.type === 'IN' ? 'Incoming' : 'Outgoing'} transaction`;
+
+                    // Save and re-render
+                    saveToStorage();
+                    renderVictims();
+
+                    // Scroll to the victim section
                     setTimeout(() => {
-                        lookupTransaction();
-                    }, 300);
+                        const victimElement = document.getElementById(`victim-${victim.id}`);
+                        if (victimElement) {
+                            victimElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }, 100);
+
+                    alert(`✅ Transaction added to ${victim.name || 'Victim ' + victim.id}!\n\nAmount: ${transaction.amount} ${transaction.currency}\nWallet: ${transaction.receivingWallet.slice(0, 20)}...\n\nPlease review and adjust if needed.`);
+
                 } else {
-                    throw new Error('Blockchain lookup modal not found. Please use the manual transaction entry.');
+                    // HOP BUILDING MODE: Use blockchain lookup modal
+                    console.log('Opening blockchain lookup modal for hop entry...');
+
+                    const txHashInput = document.getElementById('txHashInput');
+                    const chainSelector = document.getElementById('chainSelector');
+
+                    if (txHashInput && chainSelector) {
+                        txHashInput.value = txHash;
+                        chainSelector.value = blockchain;
+
+                        // Show the modal
+                        showModal('blockchainLookupModal');
+
+                        // Auto-trigger lookup
+                        setTimeout(() => {
+                            lookupTransaction();
+                        }, 300);
+                    } else {
+                        throw new Error('Blockchain lookup modal not found. Please use the manual transaction entry.');
+                    }
                 }
 
             } catch (error) {
