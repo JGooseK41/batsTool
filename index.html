@@ -15571,6 +15571,44 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             console.log(`✅ ART commit complete: ${entriesCreated} entries created`);
         }
 
+        // Check if a transaction has been used in the investigation (hop entry or write-off)
+        function isTransactionUsedInInvestigation(txHash) {
+            if (!investigation || !investigation.hops || !txHash) {
+                return { isUsed: false, location: '', entryType: '' };
+            }
+
+            const hashLower = txHash.toLowerCase();
+
+            // Search all hop entries
+            for (const hop of investigation.hops) {
+                if (!hop.entries) continue;
+
+                for (const entry of hop.entries) {
+                    if (entry.transactionHash && entry.transactionHash.toLowerCase() === hashLower) {
+                        // Found a match - return details about where it's used
+                        const location = `H${hop.hopNumber}-E${entry.id}`;
+                        const entryType = entry.entryType === 'writeoff' ? 'Write-Off' :
+                                         entry.entryType === 'swap' ? 'Swap' :
+                                         entry.entryType === 'bridge' ? 'Bridge' :
+                                         'Entry';
+
+                        return {
+                            isUsed: true,
+                            location: location,
+                            entryType: entryType,
+                            hopNumber: hop.hopNumber,
+                            entryId: entry.id,
+                            notation: entry.notation,
+                            amount: entry.amount,
+                            currency: entry.currency
+                        };
+                    }
+                }
+            }
+
+            return { isUsed: false, location: '', entryType: '' };
+        }
+
         // Render transaction table
         // Find all investigation threads entering this wallet
         function findInvestigationThreadsForWallet(walletAddress) {
@@ -15689,6 +15727,11 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
                 // Handle UTXO change outputs differently
                 const isChangeOutput = tx.isChange === true || tx.type === 'CHANGE';
+
+                // Check if this transaction has been used in the investigation
+                const usageInfo = isTransactionUsedInInvestigation(tx.hash);
+                const isUsedTransaction = usageInfo.isUsed;
+
                 let typeIcon = tx.type === 'IN' ? '🟢' : '🔴';
                 let amountPrefix = tx.type === 'IN' ? '+' : '-';
 
@@ -15749,6 +15792,16 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     row.title = 'UTXO Change Output - Funds returning to same address (not traceable)';
                 }
 
+                // Style used transactions (already allocated in investigation)
+                if (isUsedTransaction && !isChangeOutput) {
+                    row.style.background = 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)';
+                    row.style.borderLeft = '5px solid #6c757d';
+                    row.style.opacity = '0.6';
+                    row.style.cursor = 'not-allowed';
+                    const notation = usageInfo.notation || usageInfo.location;
+                    row.title = `Already allocated in ${notation} as ${usageInfo.entryType} (${usageInfo.amount} ${usageInfo.currency})`;
+                }
+
                 // In ART mode, add visual selection indicator (but not for change)
                 if (walletExplorerState.artMode && isSelected && !isChangeOutput) {
                     row.style.background = 'linear-gradient(135deg, #d1f2eb 0%, #a3e4d7 100%)';
@@ -15756,8 +15809,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     row.style.boxShadow = '0 0 10px rgba(26, 188, 156, 0.3)';
                 }
 
-                // Add click handler for ART mode row selection (disabled for change)
-                if (walletExplorerState.artMode && !isChangeOutput) {
+                // Add click handler for ART mode row selection (disabled for change or used)
+                if (walletExplorerState.artMode && !isChangeOutput && !isUsedTransaction) {
                     row.style.cursor = 'pointer';
                     row.onclick = (e) => {
                         // Don't trigger if clicking buttons or checkboxes
@@ -15766,7 +15819,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         }
                         toggleARTSelection(tx);
                     };
-                } else if (isChangeOutput) {
+                } else if (isChangeOutput || isUsedTransaction) {
                     row.style.cursor = 'not-allowed';
                 }
 
@@ -15774,6 +15827,13 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 let changeBadge = '';
                 if (isChangeOutput) {
                     changeBadge = `<div style="margin-top: 4px;"><span style="background: #9e9e9e; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">🔄 CHANGE (Not Traceable)</span></div>`;
+                }
+
+                // Create used transaction badge
+                let usedBadge = '';
+                if (isUsedTransaction && !isChangeOutput) {
+                    const notation = usageInfo.notation || usageInfo.location;
+                    usedBadge = `<div style="margin-top: 4px;"><span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">✓ ALLOCATED (${notation})</span></div>`;
                 }
 
                 // Check if this is potential change to NEW address
@@ -15796,6 +15856,11 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                                    disabled
                                    title="Change outputs cannot be selected - funds stay in same thread"
                                    style="cursor: not-allowed; opacity: 0.3;">
+                        ` : isUsedTransaction ? `
+                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
+                                   disabled
+                                   title="Already allocated in ${usageInfo.notation || usageInfo.location}"
+                                   style="cursor: not-allowed; opacity: 0.3;">
                         ` : walletExplorerState.artMode ? `
                             <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
                                    ${isSelected ? 'checked' : ''}
@@ -15807,7 +15872,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         `}
                     </td>
                     <td style="padding: 12px;">${date}${threadBadge}</td>
-                    <td style="padding: 12px;">${typeIcon} ${isChangeOutput ? 'CHANGE' : tx.type}${changeBadge}</td>
+                    <td style="padding: 12px;">${typeIcon} ${isChangeOutput ? 'CHANGE' : tx.type}${changeBadge}${usedBadge}</td>
                     <td style="padding: 12px; text-align: right; font-weight: 600;">${amountPrefix}${tx.amount.toFixed(6)} ${tx.asset}</td>
                     ${balanceCell}
                     <td style="padding: 12px; font-family: monospace; font-size: 0.9rem;">
@@ -15822,6 +15887,11 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         ${isChangeOutput ? `
                             <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
                                 <span style="font-size: 11px; color: #666; font-style: italic;">N/A - Change</span>
+                                <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link">🔗</a>
+                            </div>
+                        ` : isUsedTransaction ? `
+                            <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+                                <span style="font-size: 11px; color: #666; font-style: italic;">Already Used</span>
                                 <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link">🔗</a>
                             </div>
                         ` : `

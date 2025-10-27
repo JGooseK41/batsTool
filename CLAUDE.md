@@ -3,30 +3,65 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 09:57)
+## Latest Commit (Auto-updated: 2025-10-27 10:12)
 
-**Commit:** 532cfcaa17c50d41bc93d41ee909fe6fc679ebf3
+**Commit:** ad37883c02df1c9555e2bae42186beb8a610d57d
 **Author:** Your Name
-**Message:** Sync CLAUDE.md (final)
+**Message:** Feature: Add info icon with tooltip explaining negative token balances
+
+✨ UX IMPROVEMENT: Negative Balance Explanation
+
+FEATURE: Info icon (ℹ️) appears next to negative balances with helpful tooltip
+
+ISSUE: Users see negative balances (e.g., -55 LINK) and don't understand why
+- Confusing when Etherscan shows 0 balance
+- No explanation of why on-chain math doesn't match
+
+IMPLEMENTATION (lines 14903-14917):
+Added info icon that appears only when asset.balance < 0
+- Cursor changes to 'help' on hover
+- Comprehensive title attribute with explanations
+
+TOOLTIP EXPLAINS:
+1. DEX Swaps: Sold token for another asset (swap shows as OUT, but IN is different token)
+2. Off-Chain Purchases: CEX purchases/transfers not visible on blockchain
+3. API Limitations: Some contract interactions not fully captured
+4. Mixed Sources: Airdrops, off-chain swaps, CEX transfers
+
+EXAMPLE:
+User sold 405 LINK for 2.07 ETH in DEX:
+- Tool shows: -55 LINK (405 OUT, 350 IN = -55)
+- Etherscan shows: 0 LINK (all swapped away)
+- Info icon explains: ℹ️ with tooltip about DEX swaps
+
+USER BENEFIT:
+- Reduces confusion about negative balances
+- Educates users about blockchain transaction visibility
+- Provides actionable recommendation (check Etherscan)
+- Context-sensitive help (only shows for negative balances)
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 67 ++++++++++++++-------------------------------------------------
- 1 file changed, 15 insertions(+), 52 deletions(-)
+ index.html | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
 ```
 
 ## Recent Commits History
 
-- 532cfca Sync CLAUDE.md (final) (0 seconds ago)
-- 6f8070b Update CLAUDE.md with latest commit info (12 seconds ago)
-- 8716015 Fix: Deduplicate transactions to prevent double-counting - CRITICAL BUG #2 (2 minutes ago)
-- 8447862 Docs: Add comprehensive coverage analysis for internal transaction fix (7 minutes ago)
-- c3bd92c Fix: Internal transactions incorrectly filtered as failed - CRITICAL BUG (13 minutes ago)
-- a01c229 Debug: Add comprehensive logging for internal transaction processing (16 minutes ago)
-- 0507745 Auto-sync CLAUDE.md (27 minutes ago)
-- 751a6a1 Sync CLAUDE.md (skip hook) (27 minutes ago)
-- 28a40ab Final CLAUDE.md sync (27 minutes ago)
-- 9a6f5da Update CLAUDE.md (auto-update from commit hook) (28 minutes ago)
+- ad37883 Feature: Add info icon with tooltip explaining negative token balances (0 seconds ago)
+- d2aa686 Fix: Improve ETH variant filtering to catch Unicode characters (EꓔH) (6 minutes ago)
+- 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (9 minutes ago)
+- 25d0eef Auto-sync CLAUDE.md (14 minutes ago)
+- 532cfca Sync CLAUDE.md (final) (15 minutes ago)
+- 6f8070b Update CLAUDE.md with latest commit info (15 minutes ago)
+- 8716015 Fix: Deduplicate transactions to prevent double-counting - CRITICAL BUG #2 (17 minutes ago)
+- 8447862 Docs: Add comprehensive coverage analysis for internal transaction fix (22 minutes ago)
+- c3bd92c Fix: Internal transactions incorrectly filtered as failed - CRITICAL BUG (27 minutes ago)
+- a01c229 Debug: Add comprehensive logging for internal transaction processing (31 minutes ago)
 
 ## Key Features
 
