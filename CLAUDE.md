@@ -3,108 +3,126 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 19:21)
+## Latest Commit (Auto-updated: 2025-10-27 19:33)
 
-**Commit:** b716ef0df62c3d6b5108fc6f7de802455ad9ead5
+**Commit:** 127e40ae942c49291361b84c2e0db761f0896dd6
 **Author:** Your Name
-**Message:** Fix: Active thread highlighting and auto-pagination in Wallet Explorer
+**Message:** Feature: Thread allocation progress visualization in Wallet Explorer
 
-✨ UX IMPROVEMENTS: Better thread navigation and visual clarity
+✨ UX ENHANCEMENT: Real-time visual feedback for thread consumption
 
-USER REQUEST: "after building hop 1 i went on to hop 2... the thread was on
-the second page, it would be better if the wallet explorer automatically
-opened up to the page that holds the thread... the inbound thread shows up
-as grayed out... it should show up the yellow/gold color because it is an
-active thread that needs to be assigned"
+USER REQUEST: "how can we make it easier to show the user the progression
+of thread assignment while they are in the wallet explorer? If I have 2
+threads coming into a wallet, one for 50 and another for 150, i may just
+want to stay in that wallet explorer view until i have traced out 200. I
+may select a 2 transaction as write off and I should see that the 1st
+thread now is down to 48 then i can assign to an outbound transaction of
+75 which would consume the rest of that 1st thread and a portion of the
+2nd. I should be able to see that the 1st thread is fully allocated and
+what remains of the second."
 
-TWO ISSUES FIXED:
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-ISSUE #1: No Auto-Pagination to Highlighted Transaction
-
-ROOT CAUSE:
-When opening wallet explorer from "View & Trace" button, the explorer always
-opened to page 1, even if the thread's transaction was on page 2, 3, etc.
-User had to manually navigate through pages to find the highlighted transaction.
-
-SOLUTION (lines 15055-15071):
-Added logic to automatically calculate which page contains the highlighted
-transaction and navigate to that page on open.
-
-Implementation:
-1. Find index of highlighted transaction in filtered array
-2. Calculate page number: Math.floor(index / itemsPerPage) + 1
-3. Set walletExplorerState.currentPage to calculated page
-4. Log navigation for debugging
-
-Example:
-- Transaction at index 25, with 20 items per page
-- Page = Math.floor(25 / 20) + 1 = 2
-- Auto-opens to page 2 ✅
+IMPLEMENTATION:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ISSUE #2: Active Thread Incorrectly Grayed Out
+NEW FEATURE: Thread Allocation Progress Panel
 
-ROOT CAUSE:
-The INCOMING transaction that created the current thread was showing grayed
-out as "already used", when it should show in yellow/gold as the ACTIVE
-thread being traced.
+Added visual progress tracking panel in Wallet Explorer that shows:
+- All threads entering the current wallet
+- Original amount vs available amount for each thread
+- Visual progress bars showing allocation percentage
+- Color-coded status indicators
+- Real-time updates after each entry creation
 
-The gray-out logic marked ANY transaction in the investigation as "used",
-including the source transaction we're actively following.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-SOLUTION (lines 15640-15647, 15799, 15882):
+COMPONENTS ADDED:
 
-1. Enhanced isTransactionUsedInInvestigation() (lines 15640-15647):
-   - Check if transaction hash matches highlightTxHash
-   - If it's the highlighted transaction, return isUsed: false
-   - Added isActiveThread flag for clarity
-   - Only gray out OUTBOUND transactions that have been allocated
+1. HTML Panel (lines 2855-2864):
+   - Thread Progression container
+   - Blue gradient background with visual hierarchy
+   - Positioned between Source Thread Info and Selection Summary
 
-2. Updated highlighting logic (line 15799):
-   - Apply yellow/gold highlight to isHighlighted OR isCurrentThread
-   - Ensures active thread always gets yellow/gold styling
+2. displayThreadProgression() Function (lines 15108-15259):
+   - Finds all threads for current wallet + selected currency
+   - Calculates consumption metrics per thread:
+     * Original total amount
+     * Amount consumed
+     * Amount remaining
+     * Percentage allocated
+   - Generates visual progress bars with color coding:
+     * 🟢 Green = Available (0% consumed)
+     * 🟠 Orange = In Progress (partial consumption)
+     * ⚪ Gray = Fully Allocated (100% consumed)
+   - Shows summary totals when multiple threads present
 
-3. Updated gray-out logic (line 15882):
-   - Added !isHighlighted condition to gray-out check
-   - Prevents graying out the active thread source transaction
+3. Integration Points:
+   - Called from initializeARTTracking() (line 15414)
+   - Auto-updates when creating entries via confirmEntryAndStay()
+   - Refreshes when selecting different assets
+   - Updates in real-time as threads are consumed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VISUAL DESIGN:
+
+Each Thread Card Shows:
+┌─────────────────────────────────────────────────────┐
+│ ⚡ V1-T1  [In Progress]     Available: 48 / 50 BTC │
+│ ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░  96% allocated            │
+│ Consumed: 48 BTC          Remaining: 2 BTC         │
+└─────────────────────────────────────────────────────┘
+
+Summary (Multiple Threads):
+┌─────────────────────────────────────────────────────┐
+│ TOTAL (2 threads)            Combined Progress      │
+│ 127 / 200 BTC                   63.5% allocated     │
+└─────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+USAGE SCENARIO (User's Example):
+
+Starting State:
+- Thread V1-T1: 50 BTC (available)
+- Thread V2-T1: 150 BTC (available)
+- Total: 200 BTC to trace
+
+After 2 BTC Write-Off:
+✓ Panel updates immediately
+- Thread V1-T1: 48 / 50 BTC (4% allocated)
+- Thread V2-T1: 150 / 150 BTC (0% allocated)
+
+After 75 BTC Trace:
+✓ Panel updates immediately
+- Thread V1-T1: 0 / 50 BTC (100% allocated) ✓
+- Thread V2-T1: 127 / 150 BTC (15.3% allocated) ⚡
+
+User can see at a glance:
+- First thread fully consumed
+- Second thread partially allocated
+- 127 BTC still available to trace
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 BEHAVIOR:
 
-Before (broken):
-1. Open wallet for thread from Hop 1 → Opens to page 1
-2. Transaction is on page 2 → Must manually navigate
-3. Incoming transaction shows gray → Looks "used/unavailable"
-4. Confusing which transaction to follow
+✅ Shows all threads entering the wallet (not just source thread)
+✅ Updates in real-time after each entry creation
+✅ Works with "Create & Stay in Explorer" workflow
+✅ Handles single or multiple threads
+✅ Color-coded for instant visual feedback
+✅ Shows both individual and aggregate progress
+✅ Persists across asset selection changes
+✅ Automatically hidden when no threads present
 
-After (fixed):
-1. Open wallet for thread from Hop 1 → Auto-opens to page 2 ✅
-2. Incoming transaction shows yellow/gold → Clear it's ACTIVE ✅
-3. Only OUTBOUND allocated transactions show gray ✅
-4. Clear visual hierarchy
+BENEFITS:
 
-VISUAL STATES:
-
-🟡 Yellow/Gold = Active thread (incoming transaction being traced)
-🔵 Blue = Other investigation threads (not current)
-⚪ Gray = Already allocated outbound transactions
-🟢 Green = Available unallocated transactions
-
-EXAMPLE WORKFLOW:
-
-Hop 1:
-- Trace V1-T1 to wallet 0xabc...
-- Creates thread V(1)-T(1)-H1
-
-Hop 2:
-- Click "View & Trace" for V(1)-T(1)-H1
-- Wallet explorer opens directly to page with incoming transaction
-- Incoming transaction shows YELLOW/GOLD (active thread)
-- Select outbound transactions to trace
-- After creating entries, those show GRAY (already used)
-- Active thread stays YELLOW/GOLD
+- Eliminates need to close/reopen wallet explorer to check progress
+- Provides immediate visual feedback on thread consumption
+- Helps investigators efficiently allocate threads wallet-by-wallet
+- Clear indication when threads are fully consumed
+- Summary view for complex multi-thread scenarios
 
 🤖 Generated with Claude Code
 
@@ -112,23 +130,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 178 +++++++++++++++++++++++++++++--------------------------------
- index.html |  36 +++++++++++--
- 2 files changed, 116 insertions(+), 98 deletions(-)
+ CLAUDE.md  | 165 ++++++++++++++++++++++++++++++++++--------------------------
+ index.html | 167 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 261 insertions(+), 71 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (1 second ago)
-- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (8 minutes ago)
-- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (11 minutes ago)
-- a1e1795 Auto-sync CLAUDE.md (16 minutes ago)
-- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (17 minutes ago)
+- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (0 seconds ago)
+- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (12 minutes ago)
+- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (20 minutes ago)
+- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (23 minutes ago)
+- a1e1795 Auto-sync CLAUDE.md (28 minutes ago)
+- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (29 minutes ago)
 - 0f487ff Fix: Wallet Explorer now works with finalized hop notation (2 hours ago)
 - 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (2 hours ago)
 - dc1b7bc Auto-sync CLAUDE.md (8 hours ago)
 - 2874d87 Feature: Entry confirmation modal for wallet-by-wallet workflow (8 hours ago)
-- 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (9 hours ago)
 
 ## Key Features
 

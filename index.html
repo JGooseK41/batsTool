@@ -16493,7 +16493,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         timestamp: new Date(tx.timestamp).toISOString().slice(0, 16),
                         timezone: 'UTC',
                         chain: blockchain,
-                        notes: `Trace entry created from Wallet Explorer\nThread: ${sourceThreadId}\nFrom: ${walletAddress}\nTo: ${tx.counterparty}\nAmount: ${tx.amount} ${tx.asset}\nTimestamp: ${new Date(tx.timestamp).toUTCString()}`
+                        notes: `Trace entry created from Wallet Explorer\nThread: ${sourceThreadId}\nFrom: ${walletAddress}\nTo: ${tx.counterparty}\nAmount: ${tx.amount} ${tx.asset}\nTransaction Hash: ${tx.hash}\nTimestamp: ${new Date(tx.timestamp).toUTCString()}`
                     };
 
                     // Show confirmation modal instead of blockchain lookup
@@ -16878,6 +16878,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                            `Wallet: ${data.walletAddress}\n` +
                            `Outbound to: ${data.tx.counterparty}\n` +
                            `Amount: ${data.tx.amount} ${data.tx.asset}\n` +
+                           `Transaction Hash: ${data.tx.hash}\n` +
                            `Timestamp: ${new Date(data.tx.timestamp).toUTCString()}` +
                            (data.chronologyWarning ? `\n\n⚠️ PIFO CHRONOLOGY NOTE:\n` +
                             `Thread selection was not in chronological deposit order.\n` +
@@ -16987,7 +16988,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     timestamp: new Date(tx.timestamp).toISOString().slice(0, 16),
                     timezone: 'UTC',
                     chain: walletExplorerState.blockchain,
-                    notes: `Write-off created from Wallet Explorer\nThread: ${walletExplorerState.sourceThreadId}\nWallet: ${walletExplorerState.address}\nOutbound to: ${tx.counterparty}\nAmount: ${tx.amount} ${tx.asset}\nTimestamp: ${new Date(tx.timestamp).toUTCString()}`,
+                    notes: `Write-off created from Wallet Explorer\nThread: ${walletExplorerState.sourceThreadId}\nWallet: ${walletExplorerState.address}\nOutbound to: ${tx.counterparty}\nAmount: ${tx.amount} ${tx.asset}\nTransaction Hash: ${tx.hash}\nTimestamp: ${new Date(tx.timestamp).toUTCString()}`,
                     writeoffApplied: false // Will be applied when hop is closed
                 };
 
@@ -17615,6 +17616,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                                    `Wallet: ${walletAddress}\n` +
                                    `Outbound to: ${tx.counterparty}\n` +
                                    `Amount: ${tx.amount} ${tx.asset}\n` +
+                                   `Transaction Hash: ${tx.hash}\n` +
                                    `Timestamp: ${new Date(tx.timestamp).toUTCString()}`
                         };
 
