@@ -12534,9 +12534,19 @@ function updateFormFieldsFromInvestigation() {
                                            style="flex: 1; font-size: 16px; padding: 14px; border: 2px solid #2196f3;">
                                     <button type="button" class="btn btn-sm btn-primary"
                                             onclick="lookupVictimTransaction(${victim.id}, ${transaction.id})"
-                                            style="padding: 10px 20px; font-size: 16px; background: #2196f3;">
-                                        🔍 Lookup
+                                            style="padding: 10px 20px; font-size: 16px; background: #2196f3; white-space: nowrap;">
+                                        🔍 Lookup Hash
                                     </button>
+                                </div>
+                                <div style="margin-bottom: 10px;">
+                                    <button type="button" class="btn btn-primary"
+                                            onclick="openWalletExplorer()"
+                                            style="width: 100%; padding: 12px; font-size: 15px; background: #3498db;">
+                                        🔍 Open Wallet Explorer
+                                    </button>
+                                    <div style="font-size: 12px; color: #0d47a1; margin-top: 8px; text-align: center;">
+                                        Don't have the hash? Browse wallet transactions to find it
+                                    </div>
                                 </div>
                                 <div style="display: flex; gap: 10px; align-items: center;">
                                     <label style="color: #0d47a1; margin-right: 10px;">Chain:</label>
