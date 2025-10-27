@@ -22198,8 +22198,11 @@ function closeFinalizationModal() {
 function viewThreadInWalletExplorer(threadId) {
     console.log(`🔍 Opening Wallet Explorer for thread: ${threadId}`);
 
-    // Parse the thread ID to find the source
-    // Thread ID formats: "V1-T1", "V2-T3", or "(V1-T1) H1", "(V2-T1,T2) H2"
+    // Parse the thread ID to find the destination wallet
+    // Supported thread ID formats:
+    //   - "V1-T1", "V2-T3" (victim transactions)
+    //   - "(V1-T1) H1", "(V2-T1,T2) H2" (commingled threads)
+    //   - "V(1)-T(1)-H1", "V(2)-T(1)-H2" (finalized hop notation)
     let sourceWallet = null;
     let blockchain = null;
     let txHash = null;
@@ -22223,8 +22226,8 @@ function viewThreadInWalletExplorer(threadId) {
         }
     }
     // Check if it's a hop entry (for Hop 2+)
+    // Formats: "(V1-T1) H1", "(V1-T1,T2) H2", "V(1)-T(1)-H1"
     else if (threadId.includes('H')) {
-        // Parse something like "(V1-T1) H1" or "(V1-T1,T2) H2"
         const hopMatch = threadId.match(/H(\d+)/);
         if (hopMatch) {
             const hopNum = parseInt(hopMatch[1]);
@@ -22233,9 +22236,12 @@ function viewThreadInWalletExplorer(threadId) {
             if (hop && hop.entries && hop.entries.length > 0) {
                 // Get the first entry for this thread (they all go to same destination wallet)
                 const entry = hop.entries[0];
-                sourceWallet = entry.destinationWallet;
+                // Use toWallet field (where the funds went)
+                sourceWallet = entry.toWallet || entry.destinationWallet;
                 blockchain = entry.chain || 'ethereum';
                 txHash = entry.transactionHash;
+
+                console.log(`📌 Found hop ${hopNum} entry: toWallet=${entry.toWallet}, chain=${entry.chain}, tx=${entry.transactionHash}`);
             }
         }
     }

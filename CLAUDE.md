@@ -3,30 +3,80 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 11:26)
+## Latest Commit (Auto-updated: 2025-10-27 17:17)
 
-**Commit:** dc1b7bc651cba7fc569613fac110d24e7da77c91
+**Commit:** 4b2fb46cdbe49803ccde6775a63ebed6c3bf46cb
 **Author:** Your Name
-**Message:** Auto-sync CLAUDE.md
+**Message:** Fix: Quick Trace button now works with new entry confirmation workflow
+
+🐛 BUG FIX: ReferenceError - openHopWizard is not defined
+
+ISSUE: Quick Trace button threw error:
+"Uncaught ReferenceError: openHopWizard is not defined"
+
+ROOT CAUSE (line 22453):
+- quickTraceThread() called non-existent openHopWizard() function
+- Function was intended to open hop wizard with pre-selected thread
+- openHopWizard() never existed in codebase
+
+SOLUTION (lines 22432-22442):
+- Changed quickTraceThread() to call viewThreadInWalletExplorer()
+- Now opens wallet explorer directly for the thread
+- Simpler and more aligned with new entry confirmation modal workflow
+
+BEHAVIOR:
+
+Before (broken):
+1. Click "⚡ Quick Trace" button
+2. Error: openHopWizard is not defined
+3. Nothing happens
+
+After (fixed):
+1. Click "⚡ Quick Trace" button
+2. Opens wallet explorer for thread's destination wallet
+3. Shows all transactions from that wallet
+4. Click "Add to Investigation" on any transaction
+5. Entry confirmation modal appears
+6. Create entry and choose to stay or return
+
+WHY THIS IS BETTER:
+✅ Actually works (no error)
+✅ Shows wallet context before tracing
+✅ Allows user to select which transaction to trace
+✅ Leverages new entry confirmation modal
+✅ Consistent with "🔍 Wallet Explorer" button behavior
+✅ More flexible than forcing immediate wizard
+
+NOTE:
+The "Quick Trace" button is essentially the same as the "Wallet Explorer"
+button now. Both open the wallet explorer for that thread. The difference
+is just visual/UX - "Quick Trace" implies a faster workflow, which is
+appropriate since the new entry confirmation modal makes creating entries
+from the wallet explorer very fast.
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 183 +++++++++++++++++++++++++++++++++++++++-----------------------
- 1 file changed, 117 insertions(+), 66 deletions(-)
+ CLAUDE.md  | 142 ++++++-------------------------------------------------------
+ index.html |  24 +++--------
+ 2 files changed, 19 insertions(+), 147 deletions(-)
 ```
 
 ## Recent Commits History
 
-- dc1b7bc Auto-sync CLAUDE.md (0 seconds ago)
-- 2874d87 Feature: Entry confirmation modal for wallet-by-wallet workflow (2 minutes ago)
-- 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (47 minutes ago)
-- ad37883 Feature: Add info icon with tooltip explaining negative token balances (75 minutes ago)
-- d2aa686 Fix: Improve ETH variant filtering to catch Unicode characters (EꓔH) (80 minutes ago)
-- 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (84 minutes ago)
-- 25d0eef Auto-sync CLAUDE.md (89 minutes ago)
-- 532cfca Sync CLAUDE.md (final) (89 minutes ago)
-- 6f8070b Update CLAUDE.md with latest commit info (2 hours ago)
-- 8716015 Fix: Deduplicate transactions to prevent double-counting - CRITICAL BUG #2 (2 hours ago)
+- 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (0 seconds ago)
+- dc1b7bc Auto-sync CLAUDE.md (6 hours ago)
+- 2874d87 Feature: Entry confirmation modal for wallet-by-wallet workflow (6 hours ago)
+- 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (7 hours ago)
+- ad37883 Feature: Add info icon with tooltip explaining negative token balances (7 hours ago)
+- d2aa686 Fix: Improve ETH variant filtering to catch Unicode characters (EꓔH) (7 hours ago)
+- 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (7 hours ago)
+- 25d0eef Auto-sync CLAUDE.md (7 hours ago)
+- 532cfca Sync CLAUDE.md (final) (7 hours ago)
+- 6f8070b Update CLAUDE.md with latest commit info (7 hours ago)
 
 ## Key Features
 
