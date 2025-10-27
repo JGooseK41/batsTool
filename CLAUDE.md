@@ -5,47 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-26 22:45)
 
-**Commit:** 1c2af451c1621fd0317a907e303ef84630b9477e
+**Commit:** 365f479d21709cb8a41e0d4c382c3142f2f8901c
 **Author:** Your Name
-**Message:** Fix victim transaction form layout with proper alignment
-
-Chain dropdown now matches transaction hash width, buttons stacked.
-
-**Changes:**
-- Moved Wallet Explorer button to stack under Lookup Hash button
-- Chain dropdown uses flex: 1 to match transaction hash input width
-- Both buttons in flex column on the right side
-- Clean vertical alignment throughout form
-
-**Visual Layout:**
-```
-[Transaction Hash Input Field...............] [🔍 Lookup Hash    ]
-                                               [🔍 Wallet Explorer]
-Chain: [Auto-detect dropdown................]
-```
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md
 
 ### Changed Files:
 ```
- index.html | 90 +++++++++++++++++++++++++++++++-------------------------------
- 1 file changed, 45 insertions(+), 45 deletions(-)
+ CLAUDE.md | 49 ++++++++++++++++++++++++++++++++++---------------
+ 1 file changed, 34 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1c2af45 Fix victim transaction form layout with proper alignment (0 seconds ago)
+- 365f479 Update CLAUDE.md (0 seconds ago)
+- 1c2af45 Fix victim transaction form layout with proper alignment (4 seconds ago)
 - c2ff932 Update CLAUDE.md (3 minutes ago)
 - 2347323 Update CLAUDE.md (3 minutes ago)
-- 9dead86 Final CLAUDE.md update (3 minutes ago)
+- 9dead86 Final CLAUDE.md update (4 minutes ago)
 - bfc5113 Update CLAUDE.md (4 minutes ago)
 - 5951e7f Update CLAUDE.md (4 minutes ago)
 - 8244c0a Update CLAUDE.md with latest commit info (4 minutes ago)
 - 537bc5e Reorganize victim transaction form layout for cleaner appearance (4 minutes ago)
 - c537feb Final CLAUDE.md update (8 minutes ago)
-- 4b04f87 Update CLAUDE.md with latest commit info (8 minutes ago)
 
 ## Key Features
 
