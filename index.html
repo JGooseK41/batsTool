@@ -14140,6 +14140,32 @@ function exportRedWalletIndexCSV() {
             selectedTransactions: new Set()  // Track selected transaction hashes for bulk add
         };
 
+        // Cache version - increment when fetch logic changes to invalidate old cache
+        // v2: Added internal transactions for Ethereum
+        const WALLET_CACHE_VERSION = 'v2';
+
+        // Clean up old wallet cache versions on startup
+        function cleanupOldWalletCache() {
+            try {
+                const keysToRemove = [];
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    if (key && key.startsWith('bats_wallet_') && !key.includes(WALLET_CACHE_VERSION)) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => sessionStorage.removeItem(key));
+                if (keysToRemove.length > 0) {
+                    console.log(`Cleared ${keysToRemove.length} old wallet cache entries`);
+                }
+            } catch (e) {
+                console.warn('Failed to cleanup old wallet cache:', e);
+            }
+        }
+
+        // Run cleanup on load
+        cleanupOldWalletCache();
+
         // Known legitimate tokens (case-insensitive)
         const VERIFIED_TOKENS = {
             'ETH': true,
@@ -14313,7 +14339,7 @@ function exportRedWalletIndexCSV() {
 
         // Check wallet cache
         function checkWalletCache(address, blockchain) {
-            const cacheKey = 'bats_wallet_' + address + '_' + blockchain;
+            const cacheKey = 'bats_wallet_' + WALLET_CACHE_VERSION + '_' + address + '_' + blockchain;
             const cached = sessionStorage.getItem(cacheKey);
 
             if (!cached) return null;
@@ -14336,7 +14362,7 @@ function exportRedWalletIndexCSV() {
 
         // Cache wallet history
         function cacheWalletHistory(address, blockchain, transactions) {
-            const cacheKey = 'bats_wallet_' + address + '_' + blockchain;
+            const cacheKey = 'bats_wallet_' + WALLET_CACHE_VERSION + '_' + address + '_' + blockchain;
             const data = {
                 timestamp: Date.now(),
                 transactions: transactions
