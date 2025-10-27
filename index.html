@@ -14944,8 +14944,46 @@ function exportRedWalletIndexCSV() {
                     alert(`✅ Transaction added to ${victim.name || 'Victim ' + victim.id}!\n\nAmount: ${transaction.amount} ${transaction.currency}\nWallet: ${transaction.receivingWallet.slice(0, 20)}...\n\nPlease review and adjust if needed.`);
 
                 } else {
-                    // HOP BUILDING MODE: Use blockchain lookup modal
-                    console.log('Opening blockchain lookup modal for hop entry...');
+                    // HOP BUILDING MODE: Check for commingling scenario
+                    console.log('Checking for commingling scenario...');
+
+                    const currentHopNumber = getCurrentHop();
+                    if (!currentHopNumber) {
+                        alert('⚠️ No hop is currently being built.\n\nPlease start a new hop first.');
+                        return;
+                    }
+
+                    // Check if we have thread context and if transaction exceeds thread capacity
+                    const sourceThreadId = walletExplorerState.sourceThreadId;
+                    const txAmount = tx.amount;
+                    const txCurrency = tx.asset;
+
+                    if (sourceThreadId) {
+                        // Get available threads for this hop
+                        const availableThreads = getAvailableSourcesForHop(currentHopNumber, txCurrency);
+                        const sourceThread = availableThreads.find(t => t.threadId === sourceThreadId);
+
+                        // Find other threads going to the same wallet (commingling detection)
+                        const threadsToSameWallet = availableThreads.filter(t =>
+                            t.destinationWallet &&
+                            t.destinationWallet.toLowerCase() === walletAddress.toLowerCase() &&
+                            t.currency === txCurrency
+                        );
+
+                        console.log(`Found ${threadsToSameWallet.length} threads entering wallet ${walletAddress}:`, threadsToSameWallet.map(t => `${t.threadId} (${t.availableAmount} ${t.currency})`));
+
+                        // Check if transaction exceeds single thread capacity
+                        if (sourceThread && txAmount > sourceThread.availableAmount && threadsToSameWallet.length > 1) {
+                            // COMMINGLING SCENARIO: Show thread selection dialog
+                            console.log(`🔀 COMMINGLING DETECTED: Transaction (${txAmount} ${txCurrency}) exceeds thread ${sourceThreadId} (${sourceThread.availableAmount} ${txCurrency})`);
+
+                            showComminglingThreadSelector(tx, threadsToSameWallet, currentHopNumber);
+                            return;
+                        }
+                    }
+
+                    // No commingling detected - use standard blockchain lookup modal
+                    console.log('No commingling detected, opening blockchain lookup modal...');
 
                     const txHashInput = document.getElementById('txHashInput');
                     const chainSelector = document.getElementById('chainSelector');
@@ -14969,6 +15007,286 @@ function exportRedWalletIndexCSV() {
             } catch (error) {
                 console.error('Error adding transaction:', error);
                 alert('Error adding transaction: ' + error.message);
+            }
+        }
+
+        // Show commingling thread selector for transactions that exceed single thread capacity
+        function showComminglingThreadSelector(tx, availableThreads, hopNumber) {
+            console.log('🔀 Showing commingling thread selector...');
+
+            const modalId = 'comminglingThreadSelectorModal';
+
+            // Remove existing modal if present
+            const existingModal = document.getElementById(modalId);
+            if (existingModal) existingModal.remove();
+
+            // Sort threads by amount (largest first)
+            availableThreads.sort((a, b) => b.availableAmount - a.availableAmount);
+
+            const modal = document.createElement('div');
+            modal.id = modalId;
+            modal.className = 'modal';
+            modal.style.display = 'block';
+
+            const walletAddr = walletExplorerState.address;
+            const blockchain = walletExplorerState.blockchain;
+
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 700px;">
+                    <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 20px; margin: -20px -20px 20px -20px; border-radius: 8px 8px 0 0;">
+                        <h2 style="margin: 0; font-size: 24px;">🔀 Commingling Detected</h2>
+                        <p style="margin: 10px 0 0 0; opacity: 0.95;">This transaction requires multiple source threads</p>
+                    </div>
+
+                    <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                        <div style="font-weight: bold; color: #856404; margin-bottom: 10px;">📊 Transaction Details:</div>
+                        <div style="color: #856404; line-height: 1.8;">
+                            <strong>Amount:</strong> ${tx.amount.toLocaleString()} ${tx.asset}<br>
+                            <strong>From:</strong> ${walletAddr.slice(0, 20)}...<br>
+                            <strong>To:</strong> ${tx.counterparty.slice(0, 20)}...<br>
+                            <strong>Hash:</strong> ${tx.hash.slice(0, 20)}...
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 16px;">
+                            Select source threads to commingle:
+                        </div>
+                        <div style="background: #e8f4f8; border: 2px solid #3498db; border-radius: 8px; padding: 15px;">
+                            <div id="threadSelectionList">
+                                ${availableThreads.map(thread => `
+                                    <div style="padding: 12px; background: white; border-radius: 6px; margin-bottom: 10px; border: 2px solid #e0e0e0;">
+                                        <label style="display: flex; align-items: center; cursor: pointer;">
+                                            <input type="checkbox"
+                                                   class="commingling-thread-checkbox"
+                                                   data-thread-id="${thread.threadId}"
+                                                   data-amount="${thread.availableAmount}"
+                                                   data-currency="${thread.currency}"
+                                                   onchange="updateComminglingTotal()"
+                                                   style="margin-right: 10px; width: 18px; height: 18px;">
+                                            <div style="flex: 1;">
+                                                <div style="font-weight: bold; color: #2c3e50;">
+                                                    ${thread.threadId}
+                                                </div>
+                                                <div style="color: #7f8c8d; font-size: 14px; margin-top: 4px;">
+                                                    Available: ${thread.availableAmount.toLocaleString()} ${thread.currency}
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="comminglingTotalDisplay" style="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <div style="color: #6c757d; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Selected Total</div>
+                                <div id="comminglingSelectedTotal" style="font-size: 20px; font-weight: bold; color: #495057;">0 ${tx.asset}</div>
+                            </div>
+                            <div>
+                                <div style="color: #6c757d; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Required</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #e67e22;">${tx.amount.toLocaleString()} ${tx.asset}</div>
+                            </div>
+                        </div>
+                        <div id="comminglingValidation" style="margin-top: 15px; padding: 10px; border-radius: 6px; font-weight: bold;"></div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="closeComminglingSelector()" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                        <button id="confirmComminglingBtn" onclick="confirmComminglingAndCreateEntry()" class="btn btn-primary" disabled>
+                            ✅ Create Commingled Entry
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Store transaction data for later use
+            window.comminglingTransactionData = {
+                tx: tx,
+                walletAddress: walletAddr,
+                blockchain: blockchain,
+                hopNumber: hopNumber,
+                requiredAmount: tx.amount,
+                currency: tx.asset
+            };
+
+            // Auto-select the source thread that opened the wallet explorer
+            const sourceThreadId = walletExplorerState.sourceThreadId;
+            if (sourceThreadId) {
+                const checkbox = modal.querySelector(`input[data-thread-id="${sourceThreadId}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    updateComminglingTotal();
+                }
+            }
+        }
+
+        // Update commingling total display
+        function updateComminglingTotal() {
+            const checkboxes = document.querySelectorAll('.commingling-thread-checkbox:checked');
+            let total = 0;
+            const selectedThreads = [];
+
+            checkboxes.forEach(cb => {
+                const amount = parseFloat(cb.dataset.amount);
+                total += amount;
+                selectedThreads.push({
+                    threadId: cb.dataset.threadId,
+                    amount: amount,
+                    currency: cb.dataset.currency
+                });
+            });
+
+            const data = window.comminglingTransactionData;
+            const required = data.requiredAmount;
+            const currency = data.currency;
+
+            // Update display
+            document.getElementById('comminglingSelectedTotal').textContent = total.toLocaleString() + ' ' + currency;
+
+            const validationDiv = document.getElementById('comminglingValidation');
+            const confirmBtn = document.getElementById('confirmComminglingBtn');
+
+            if (total === 0) {
+                validationDiv.style.display = 'none';
+                confirmBtn.disabled = true;
+            } else if (total < required) {
+                validationDiv.style.display = 'block';
+                validationDiv.style.background = '#fff3cd';
+                validationDiv.style.color = '#856404';
+                validationDiv.innerHTML = `⚠️ Insufficient: Need ${(required - total).toLocaleString()} ${currency} more`;
+                confirmBtn.disabled = true;
+            } else if (total === required) {
+                validationDiv.style.display = 'block';
+                validationDiv.style.background = '#d4edda';
+                validationDiv.style.color = '#155724';
+                validationDiv.innerHTML = `✅ Perfect match! All threads will be fully or partially allocated.`;
+                confirmBtn.disabled = false;
+            } else {
+                validationDiv.style.display = 'block';
+                validationDiv.style.background = '#d4edda';
+                validationDiv.style.color = '#155724';
+                validationDiv.innerHTML = `✅ Sufficient: ${(total - required).toLocaleString()} ${currency} will remain available`;
+                confirmBtn.disabled = false;
+            }
+
+            // Store selected threads
+            window.comminglingTransactionData.selectedThreads = selectedThreads;
+            window.comminglingTransactionData.selectedTotal = total;
+        }
+
+        // Close commingling selector
+        function closeComminglingSelector() {
+            const modal = document.getElementById('comminglingThreadSelectorModal');
+            if (modal) modal.remove();
+            window.comminglingTransactionData = null;
+
+            // Reopen wallet explorer
+            const data = walletExplorerState;
+            if (data.address && data.blockchain) {
+                openWalletExplorer(data.address, data.blockchain, data.highlightTxHash, data.sourceThreadId);
+            }
+        }
+
+        // Confirm commingling and create entry
+        function confirmComminglingAndCreateEntry() {
+            const data = window.comminglingTransactionData;
+            if (!data || !data.selectedThreads || data.selectedThreads.length === 0) {
+                alert('Please select at least one thread');
+                return;
+            }
+
+            try {
+                const hop = investigation.hops.find(h => h.hopNumber === data.hopNumber);
+                if (!hop) {
+                    throw new Error('Hop not found');
+                }
+
+                // Create entry with multiple source threads
+                const entry = {
+                    id: hop.entries.length + 1,
+                    hopNumber: data.hopNumber,
+                    entryType: 'trace',
+                    notation: '',
+                    amount: data.tx.amount.toString(),
+                    currency: data.tx.asset,
+                    customCurrency: '',
+                    // Enhanced fields
+                    sourceChain: [data.blockchain],
+                    displayNotation: '',
+                    summaryNotation: '',
+                    victimNumbers: '',
+                    transactionNumbers: '',
+                    availableSourceAmount: 0,
+                    sourceThreadId: '', // Leave empty for multiple threads
+                    multipleSourceThreads: data.selectedThreads.map(t => t.threadId),
+                    sourceThreadData: null,
+                    assignmentPercentage: 0,
+                    generatedNotation: '',
+                    isConvergence: true,
+                    convergenceData: {
+                        threads: data.selectedThreads,
+                        totalAvailable: data.selectedTotal,
+                        amountUsed: data.tx.amount
+                    },
+                    fromWallet: data.walletAddress,
+                    fromWalletType: '',
+                    fromWalletId: '',
+                    toWallet: data.tx.counterparty,
+                    toWalletType: '',
+                    toWalletId: '',
+                    transactionHash: data.tx.hash,
+                    timestamp: new Date(data.tx.timestamp).toISOString().slice(0, 16),
+                    timezone: 'UTC',
+                    chain: data.blockchain,
+                    notes: `Commingled entry created from Wallet Explorer\n` +
+                           `Source Threads: ${data.selectedThreads.map(t => t.threadId).join(', ')}\n` +
+                           `Wallet: ${data.walletAddress}\n` +
+                           `Outbound to: ${data.tx.counterparty}\n` +
+                           `Amount: ${data.tx.amount} ${data.tx.asset}\n` +
+                           `Timestamp: ${new Date(data.tx.timestamp).toUTCString()}`
+                };
+
+                hop.entries.push(entry);
+
+                // Sort entries chronologically
+                sortHopEntriesChronologically(hop);
+
+                // Close modals
+                const modal = document.getElementById('comminglingThreadSelectorModal');
+                if (modal) modal.remove();
+                closeWalletExplorer();
+
+                // Save and render
+                saveToStorage();
+                renderHops();
+
+                // Show success message
+                alert(
+                    `✅ Commingled Entry Created!\n\n` +
+                    `Amount: ${data.tx.amount} ${data.tx.asset}\n` +
+                    `Source Threads: ${data.selectedThreads.map(t => t.threadId).join(', ')}\n` +
+                    `Hop: ${data.hopNumber}\n\n` +
+                    `The entry has been created with ${data.selectedThreads.length} commingled threads.`
+                );
+
+                // Scroll to the hop
+                setTimeout(() => {
+                    const hopElement = document.getElementById(`hop-${data.hopNumber}`);
+                    if (hopElement) {
+                        hopElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+
+            } catch (error) {
+                console.error('Error creating commingled entry:', error);
+                alert('Error creating commingled entry: ' + error.message);
             }
         }
 
