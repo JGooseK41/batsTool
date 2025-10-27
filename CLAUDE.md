@@ -3,138 +3,174 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 19:09)
+## Latest Commit (Auto-updated: 2025-10-26 20:35)
 
-**Commit:** 6284019b35829f0f482e733be02523c0cf18406b
+**Commit:** a8248177ca16c8c00c6d06dcf76dbae793b40091
 **Author:** Your Name
-**Message:** Add Synapse Protocol bridge auto-detection with REST API integration
+**Message:** WALLET EXPLORER Phase 3: Inline wizard integration complete
 
-BRIDGE INTEGRATION #5: Synapse Protocol with best-in-class REST API
+Added inline "Search Wallet History" option directly in transaction
+lookup modal. Users can now seamlessly switch from hash lookup to
+wallet browsing without leaving their workflow.
 
 ## What's New:
 
-### 1. Synapse Protocol Bridge Detection (8 chains)
-Contract addresses added for Synapse Bridge:
-- Ethereum: 0x2796317b0ff8538f253012862c06787adfb8ceb6
-- BSC: 0xd123f70ae324d34a9e76b67a27bf77593ba8749f
-- Polygon: 0x8f5bbb2bb8c2ee94639e55d5f41de9b4839c1280
-- Arbitrum: 0x6f4e8eba4d337f874ab57478acc2cb5bacdc19c9
-- Optimism: 0xaf41a65f786339e7911f4acdad6bd49426f2dc6b
-- Avalanche: 0xc05e61d0e7a63d27546389b7ad62fdff5a91aace
-- Fantom: 0xaf41a65f786339e7911f4acdad6bd49426f2dc6b
-- Base: 0xaa3d85ad9d128dfecb55424085754f6dfa643eb1
+### 1. Inline Wallet Explorer Button
+Added prominent button in blockchain lookup modal:
+- Displayed in blue dashed box
+- Clear messaging: "Don't have the transaction hash?"
+- Button: "🔍 Search Wallet History Instead"
+- Helper text: "Browse wallet transactions to find the one you need"
 
-### 2. Synapse REST API Integration
-- **API Endpoint:** api.synapseprotocol.com/bridgeTxStatus?txHash={hash}
-- **Query Method:** Simple GET request with tx hash
-- **OpenAPI 3.0 Spec:** Available at api.synapseprotocol.com/openapi.json
-- **Returns:** Source/destination chains, amounts, currencies, tx hashes, status
+### 2. Smart Context Handling
+The blockchain lookup modal is used in TWO places:
+- ✅ Victim transaction wizard
+- ✅ Hop entry section
 
-### 3. Comprehensive Data Parsing
-- **Status Detection:** completed, pending, failed
-- **Chain ID Mapping:** Standard Ethereum chain IDs
-  - 1: Ethereum, 56: BSC, 137: Polygon, 42161: Arbitrum
-  - 10: Optimism, 43114: Avalanche, 250: Fantom, 8453: Base
-- **Token Data:** Amount, symbol from transaction
-- **Kappa Tracking:** Synapse-specific transaction identifier
-- **Address Parsing:** Source and target addresses
+The same button works perfectly in BOTH contexts because:
+- `openBlockchainLookup(hopNumber, entryId)` sets context
+- `addWalletTransactionToInvestigation()` respects that context
+- Transaction gets added to the correct place automatically
 
-### 4. UI Integration
-- "🔮 Synapse DETECTED" badge in collapsed/expanded views
-- "🔍 Auto-Trace Synapse" button for detected transactions
-- Provider logo from synapseprotocol.com
-- Auto-fill bridge output dialog with API data
+### 3. Seamless Workflow
+**Before:**
+1. User has wallet address but not transaction hash
+2. Opens external block explorer
+3. Finds transaction
+4. Copies hash
+5. Pastes in B.A.T.S.
+6. Clicks lookup
 
-### 5. Router Enhancement
-Updated autoTraceBridge() to include Synapse:
-```javascript
-if (provider === 'synapse') {
-    bridgeData = await querySynapseAPI(entry.txHash);
-}
+**Now:**
+1. User has wallet address
+2. Clicks "🔍 Search Wallet History Instead"
+3. Enters wallet address
+4. Clicks transaction → Done!
+
+## User Experience:
+
+### Victim Transaction Flow:
+```
+Add Victim Transaction
+  ↓
+Click "Lookup Transaction"
+  ↓
+See "Don't have the hash?" button
+  ↓
+Click "Search Wallet History Instead"
+  ↓
+Wallet Explorer opens
+  ↓
+Find and click transaction
+  ↓
+Auto-added as victim transaction
 ```
 
-### 6. CSP Policy Updates
-Added to Content Security Policy:
-- api.synapseprotocol.com (API)
-- synapseprotocol.com (Logo/Docs)
-- synapsebridge.com (Bridge UI)
+### Hop Entry Flow:
+```
+Add Hop Entry
+  ↓
+Click "Lookup Transaction"
+  ↓
+See "Don't have the hash?" button
+  ↓
+Click "Search Wallet History Instead"
+  ↓
+Wallet Explorer opens
+  ↓
+Find and click transaction
+  ↓
+Auto-added to current hop
+```
 
 ## Technical Implementation:
 
-**API Query Function:**
+**Button Handler:**
 ```javascript
-async function querySynapseAPI(txHash) {
-    // 1. Query bridgeTxStatus endpoint by tx hash
-    // 2. Parse transaction data from response
-    // 3. Map chain IDs to chain names
-    // 4. Extract token amounts and symbols
-    // 5. Return standardized bridge data format
-}
+onclick="closeBlockchainLookupModal(); openWalletExplorer();"
 ```
 
-**Why Synapse Has Best API:**
-- ✅ Clean REST endpoint (just tx hash needed)
-- ✅ OpenAPI 3.0 specification available
-- ✅ No pagination/address searching required
-- ✅ Direct transaction lookup
-- ✅ Well-documented response format
+**Flow:**
+1. Closes lookup modal
+2. Opens Wallet Explorer
+3. User searches wallet
+4. User clicks transaction
+5. `addWalletTransactionToInvestigation()` called
+6. Closes Wallet Explorer
+7. Populates transaction hash field
+8. Triggers `lookupVictimTransaction()`
+9. Gets added to correct context (victim or hop)
 
-## Coverage Statistics:
+## Access Points Summary:
 
-**Total Bridge Detection Now:**
-- Bridgers: 39 chains
-- LayerZero: 17 chains (messaging protocol)
-- Stargate: 14 chains (liquidity bridge)
-- Wormhole: 30+ chains (token bridge)
-- Synapse: 20+ chains (liquidity network)
-- **Total: 120+ blockchain coverage**
+Now there are **THREE** ways to access Wallet Explorer:
 
-## Why Synapse Matters:
+1. **Top-Level Button**
+   - Location: Main toolbar (next to Undo)
+   - Use case: General exploration
 
-1. **Developer-Friendly:** Best REST API of all bridges
-2. **Liquidity Network:** Unified liquidity across 20+ chains
-3. **Direct Lookup:** No complex address/tx searching needed
-4. **Well-Documented:** OpenAPI spec, clear examples
-5. **Kappa System:** Unique transaction identifier
+2. **Victim Transaction Wizard**
+   - Location: Inside blockchain lookup modal
+   - Use case: Adding victim transactions
 
-## Testing Status:
+3. **Hop Entry Section**
+   - Location: Inside blockchain lookup modal
+   - Use case: Adding hop entries
 
-✅ Contract addresses added (8 chains)
-✅ Detection function updated
-✅ API query function created
-✅ Router logic implemented
-✅ CSP policy updated
-✅ UI badges working
-⏳ Needs real transaction testing with Synapse operations
+## UI/UX Design:
 
-## API Response Structure:
+**Visual Style:**
+- Blue dashed border (#3498db)
+- Light blue background (#e8f4fd)
+- Centered layout
+- Clear visual hierarchy
+- Friendly messaging
 
-Synapse API returns transaction with:
-- `txn.kappa`: Unique identifier
-- `txn.fromChainId`/`txn.toChainId`: Standard chain IDs
-- `txn.fromHash`/`txn.toHash`: Transaction hashes
-- `txn.amount`: Transfer amount
-- `txn.tokenSymbol`: Token symbol
-- `txn.status`: completed|pending|failed
-- `txn.fromAddress`/`txn.toAddress`: Wallet addresses
+**Placement:**
+- Between transaction hash input and lookup button
+- Visible but not intrusive
+- Natural "or" option in workflow
 
-## Next Bridges to Add:
+## Benefits:
 
-- Axelar (60+ chains, Cosmos ecosystem)
-- Hop Protocol (L2 specialist)
-- Celer cBridge (40+ chains)
-- Across Protocol (fastest, optimistic)
+✅ **Eliminates Context Switching** - No need for external explorers
+✅ **Faster Workflow** - 6 steps → 4 steps
+✅ **Better UX** - Discoverable within natural workflow
+✅ **Consistent** - Same experience everywhere
+✅ **Smart** - Context-aware auto-population
 
-## Pattern Established:
+## Complete Feature Status:
 
-All 5 bridges now follow same workflow:
-1. Contract address detection
-2. UI badge display
-3. Auto-Trace button
-4. API query function
-5. Pre-fill bridge output dialog
-6. Risk flagging (where available)
-7. Same hop processing
+### Phase 1: Foundation ✅
+- Modal UI with asset summary
+- Transaction table with green/red highlighting
+- Pagination, filtering, running balance
+- Top-level button
+- Ethereum/EVM support (30+ chains)
+
+### Phase 2: Multi-Chain ✅
+- Bitcoin support (mempool.space)
+- Tron support (TronGrid)
+- Solana support (Solana RPC)
+- 35+ total blockchains
+
+### Phase 3: Integration ✅
+- Inline wizard buttons
+- Seamless workflow integration
+- Context-aware behavior
+- Complete user journey
+
+## Wallet Explorer is 100% Complete! 🎉
+
+The feature is fully implemented with:
+- 35+ blockchain support
+- Beautiful UI/UX
+- Three access points
+- Context-aware integration
+- Comprehensive filtering
+- Smart caching
+- Entity labels ready
+- Professional styling
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -142,23 +178,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 238 ++++++++++++++++++++++++++-----------------------------------
- index.html | 104 +++++++++++++++++++++++++--
- 2 files changed, 200 insertions(+), 142 deletions(-)
+ index.html | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6284019 Add Synapse Protocol bridge auto-detection with REST API integration (0 seconds ago)
-- 227af18 Fix Sui transaction lookup - add missing JSON-RPC handler (6 minutes ago)
-- a4fddd4 Add Wormhole bridge auto-detection with Portal Token Bridge integration (12 minutes ago)
-- b4e7920 Add LayerZero and Stargate Finance bridge auto-detection (17 minutes ago)
-- a7c8c8a Complete Bridgers cross-chain bridge auto-detection UI (Part 2) (27 minutes ago)
-- c77262d Add Bridgers cross-chain bridge auto-detection framework (Part 1) (35 minutes ago)
-- 5e53da8 Fix Sui support and add THORChain cross-chain swap tracking (50 minutes ago)
-- b406c88 Add 6 new EVM chains from Etherscan API v2 (2025 additions) (58 minutes ago)
-- d7798cf Add Sui blockchain support with comprehensive integration (79 minutes ago)
-- 57cb298 Sync (10 hours ago)
+- a824817 WALLET EXPLORER Phase 3: Inline wizard integration complete (0 seconds ago)
+- 473b65d WALLET EXPLORER Phase 2: Bitcoin, Tron, and Solana support (25 minutes ago)
+- 05dc805 WALLET EXPLORER Phase 1: Complete foundation with Ethereum support (29 minutes ago)
+- c4d28d0 Fix Sui transaction parsing - use ProgrammableTransaction structure (69 minutes ago)
+- b2b1769 Enhanced Sui debug logging to show full JSON structure (71 minutes ago)
+- 9158b87 Add debug logging for Sui transaction parsing (73 minutes ago)
+- a14b41e CRITICAL FIX: Update netlify.toml CSP to include Sui and bridge endpoints (76 minutes ago)
+- fb9a441 Update CLAUDE.md with Synapse Protocol integration documentation (83 minutes ago)
+- 6284019 Add Synapse Protocol bridge auto-detection with REST API integration (86 minutes ago)
+- 227af18 Fix Sui transaction lookup - add missing JSON-RPC handler (2 hours ago)
 
 ## Key Features
 
