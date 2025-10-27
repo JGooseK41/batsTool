@@ -2812,6 +2812,20 @@
                     </div>
                 </div>
 
+                <!-- Address Clustering Panel -->
+                <div id="walletExplorerClusterPanel" style="display: none; background: linear-gradient(135deg, #fff3cd 0%, #ffe082 100%); border: 3px solid #ffa726; padding: 20px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
+                    <div style="margin-bottom: 15px;">
+                        <h3 style="margin: 0 0 10px 0; color: #e65100; font-size: 18px;">🔗 Active Address Clusters for This Thread</h3>
+                        <p style="margin: 0; color: #ef6c00; font-size: 13px;">
+                            UTXO change addresses clustered for dual monitoring. <span id="walletExplorerClusterMethod"></span>
+                        </p>
+                    </div>
+
+                    <div id="walletExplorerClusterList" style="background: white; border-radius: 8px; padding: 15px;">
+                        <!-- Cluster list populated by JavaScript -->
+                    </div>
+                </div>
+
                 <!-- ART Tracking Panel -->
                 <div id="walletExplorerARTPanel" style="display: none; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 3px solid #2196f3; padding: 20px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
                     <div style="margin-bottom: 15px;">
@@ -4797,7 +4811,8 @@
             threadValidationErrors: [],
             sourceChainReports: [],
             integrationVersion: '4.0',
-            tracingMethod: 'PIFO' // Default to PIFO, can be changed to 'LIBR'
+            tracingMethod: 'PIFO', // Default to PIFO, can be changed to 'LIBR'
+            addressClusters: {}  // Track clustered addresses for UTXO change to new addresses
         };
         
         // Undo system
@@ -14854,6 +14869,9 @@ function exportRedWalletIndexCSV() {
             // Initialize ART tracking if source thread available
             initializeARTTracking();
 
+            // Display address clusters for this thread
+            displayClustersInWalletExplorer();
+
             // Show UTXO info banner for Bitcoin
             const utxoBanner = document.getElementById('walletExplorerUTXOInfo');
             if (walletExplorerState.blockchain === 'bitcoin') {
@@ -15153,10 +15171,16 @@ function exportRedWalletIndexCSV() {
                 for (const [txHash, selection] of selections.entries()) {
                     const div = document.createElement('div');
                     div.style.cssText = 'padding: 8px; margin-bottom: 5px; background: #f8f9fa; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;';
+
+                    // Check if this transaction is from a clustered address
+                    const cluster = getClusterForAddress(selection.tx?.counterparty);
+                    const clusterInfo = cluster ? `<div style="font-size: 10px; color: #ff9800; margin-top: 2px;">🔗 From Clustered Address (${cluster.addresses.length} addresses)</div>` : '';
+
                     div.innerHTML = `
                         <div style="flex: 1;">
                             <div style="font-size: 11px; font-family: monospace; color: #666;">${txHash.substring(0, 16)}...</div>
                             <div style="font-size: 13px; font-weight: bold; color: #2196f3;">${selection.amount.toLocaleString()} ${currency}</div>
+                            ${clusterInfo}
                         </div>
                         <div style="display: flex; gap: 5px;">
                             <select style="padding: 4px 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;"
@@ -15344,6 +15368,13 @@ function exportRedWalletIndexCSV() {
             let entriesCreated = 0;
 
             for (const selection of selections) {
+                // Check if transaction is from a clustered address
+                const cluster = getClusterForAddress(selection.tx?.counterparty);
+                let clusterNote = '';
+                if (cluster) {
+                    clusterNote = `\n\n🔗 ADDRESS CLUSTERING:\nThis transaction is from a clustered address.\nCluster ID: ${cluster.id}\nCluster contains ${cluster.addresses.length} addresses (UTXO change tracking).\n${isPIFO ? 'PIFO: Dual monitoring - first movement from any clustered address will be tracked.' : 'LIBR: Balance analysis considers all clustered addresses together.'}\nCluster addresses:\n${cluster.addresses.map((addr, i) => `${i + 1}. ${addr.substring(0, 20)}...${addr.substring(addr.length - 10)}`).join('\n')}`;
+                }
+
                 const entry = {
                     id: hop.entries.length + 1,
                     hopNumber: hopNumber,
@@ -15353,7 +15384,7 @@ function exportRedWalletIndexCSV() {
                     sourceThreadId: sourceThreadId,
                     multipleSourceThreads: [sourceThreadId],
                     notation: '',
-                    notes: `Created from Wallet Explorer ART Tracker\nThread: ${sourceThreadId}\nTransaction: ${selection.tx.hash}\nAmount: ${selection.amount.toLocaleString()} ${currency}\nAction: ${selection.action}\nCounterparty: ${selection.tx.counterparty || 'N/A'}`,
+                    notes: `Created from Wallet Explorer ART Tracker\nThread: ${sourceThreadId}\nTransaction: ${selection.tx.hash}\nAmount: ${selection.amount.toLocaleString()} ${currency}\nAction: ${selection.action}\nCounterparty: ${selection.tx.counterparty || 'N/A'}${clusterNote}`,
                     timestamp: new Date(selection.tx.timestamp).toISOString().slice(0, 16),
                     chain: walletExplorerState.blockchain,
                     transactionHash: selection.tx.hash,
@@ -15588,6 +15619,19 @@ function exportRedWalletIndexCSV() {
                     changeBadge = `<div style="margin-top: 4px;"><span style="background: #9e9e9e; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">🔄 CHANGE (Not Traceable)</span></div>`;
                 }
 
+                // Check if this is potential change to NEW address
+                let potentialChangeBadge = '';
+                if (tx.potentialNewAddressChange && !isChangeOutput) {
+                    potentialChangeBadge = `<div style="margin-top: 4px;"><span style="background: #ff9800; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; cursor: pointer;" onclick="showChangeAddressDecision(${JSON.stringify(tx).replace(/"/g, '&quot;')})">🔗 Potential Change to New Address - Click to Decide</span></div>`;
+                }
+
+                // Check if address is part of a cluster
+                let clusterBadge = '';
+                const cluster = getClusterForAddress(tx.counterparty);
+                if (cluster) {
+                    clusterBadge = `<div style="margin-top: 4px;"><span style="background: #2196f3; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; cursor: pointer;" onclick="showClusterMonitoringView('${cluster.id}')">🔗 Clustered (${cluster.addresses.length} addresses) - Click for Details</span></div>`;
+                }
+
                 row.innerHTML = `
                     <td style="padding: 12px; text-align: center;">
                         ${isChangeOutput ? `
@@ -15613,6 +15657,8 @@ function exportRedWalletIndexCSV() {
                         ${tx.counterparty.substring(0, 10)}...${tx.counterparty.substring(tx.counterparty.length - 8)}
                         ${entityLabel}
                         ${contractBadge}
+                        ${potentialChangeBadge}
+                        ${clusterBadge}
                     </td>
                     <td style="padding: 12px; text-align: center;">
                         ${isChangeOutput ? `
@@ -16994,12 +17040,33 @@ function exportRedWalletIndexCSV() {
                     const sentValue = totalInputValue - changeValue;
                     const sentBTC = sentValue / 100000000;
 
-                    // For each non-change output, create a transaction record
-                    otherOutputs.forEach(output => {
+                    // Analyze other outputs to detect potential change to new address
+                    // Heuristics: Non-round amounts, smaller values often indicate change
+                    const analyzedOutputs = otherOutputs.map(output => {
                         const outputBTC = output.value / 100000000;
+                        const isRoundAmount = (outputBTC % 0.01 === 0) || (outputBTC % 0.1 === 0) || (outputBTC % 1 === 0);
+                        const hasManyCryptoDecimals = outputBTC.toString().split('.')[1]?.length > 4;
+
+                        return {
+                            ...output,
+                            outputBTC: outputBTC,
+                            // Change heuristics (not foolproof, but helpful)
+                            likelyChange: !isRoundAmount && hasManyCryptoDecimals && otherOutputs.length > 1
+                        };
+                    });
+
+                    // Sort by amount (largest first) to help identify payments vs change
+                    analyzedOutputs.sort((a, b) => b.value - a.value);
+
+                    // For each non-change output, create a transaction record
+                    analyzedOutputs.forEach((output, index) => {
+                        const outputBTC = output.outputBTC;
 
                         // Only include if output is significant (>0.00000001 BTC)
                         if (outputBTC > 0.00000001) {
+                            // Check if this looks like change to a NEW address
+                            const potentialNewAddressChange = output.likelyChange && ourOutputs.length === 0;
+
                             allTransactions.push({
                                 hash: tx.txid,
                                 timestamp: tx.status?.block_time ? tx.status.block_time * 1000 : Date.now(),
@@ -17011,12 +17078,21 @@ function exportRedWalletIndexCSV() {
                                 explorerUrl: `https://mempool.space/tx/${tx.txid}`,
                                 isChange: false,
                                 isUTXO: true,
+                                // Flag potential change to new address
+                                potentialNewAddressChange: potentialNewAddressChange,
                                 // Additional UTXO metadata
                                 utxoData: {
                                     totalSent: sentBTC,
                                     changeAmount: changeValue / 100000000,
                                     outputCount: otherOutputs.length,
-                                    hasChange: ourOutputs.length > 0
+                                    hasChange: ourOutputs.length > 0,
+                                    originalAddress: address,  // Store for clustering
+                                    outputIndex: index,
+                                    allOutputs: analyzedOutputs.map(o => ({
+                                        address: o.scriptpubkey_address,
+                                        amount: o.outputBTC,
+                                        likelyChange: o.likelyChange
+                                    }))
                                 }
                             });
                         }
@@ -17042,7 +17118,8 @@ function exportRedWalletIndexCSV() {
                                 utxoData: {
                                     totalSent: sentBTC,
                                     changeAmount: changeBTC,
-                                    outputCount: otherOutputs.length
+                                    outputCount: otherOutputs.length,
+                                    originalAddress: address
                                 }
                             });
                         }
@@ -17058,6 +17135,412 @@ function exportRedWalletIndexCSV() {
 
             return allTransactions;
         }
+
+        /**
+         * ========================================
+         * ADDRESS CLUSTERING SYSTEM FOR UTXO
+         * ========================================
+         * Handles Bitcoin change to new addresses
+         * Allows clustering for dual PIFO monitoring
+         */
+
+        /**
+         * Show decision modal for potential change to new address
+         * User decides: New Thread OR Cluster with Original
+         */
+        function showChangeAddressDecision(tx) {
+            const modal = document.createElement('div');
+            modal.id = 'changeAddressDecisionModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+            `;
+
+            const isLIBR = investigation.tracingMethod === 'LIBR';
+            const isPIFO = investigation.tracingMethod === 'PIFO';
+
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                    <h3 style="margin: 0 0 20px 0; color: #ff9800;">
+                        🔗 Potential Change to New Address Detected
+                    </h3>
+
+                    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                        <strong>📊 Transaction Analysis:</strong><br><br>
+                        This output has characteristics suggesting it might be <strong>change</strong> going to a <strong>new address</strong>:<br>
+                        • Non-round amount (${tx.amount} ${tx.asset})<br>
+                        • Smaller output in multi-output transaction<br>
+                        • Could be controlled by same entity<br><br>
+                        <strong>Original Address:</strong> <code>${tx.utxoData?.originalAddress?.substring(0, 20)}...</code><br>
+                        <strong>New Address:</strong> <code>${tx.counterparty?.substring(0, 20)}...</code>
+                    </div>
+
+                    <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
+                        <strong>❓ Decision Required:</strong><br><br>
+                        <strong>Option 1: New Thread</strong> → Treat as separate payment to different entity<br>
+                        <strong>Option 2: Cluster Addresses</strong> → Link addresses as controlled by same entity
+                        ${isPIFO ? '<br><br><strong>PIFO Mode:</strong> If clustered, both addresses will be monitored to see which moves first.' : ''}
+                        ${isLIBR ? '<br><br><strong>LIBR Mode:</strong> If clustered, balance analysis will consider both addresses together.' : ''}
+                    </div>
+
+                    <div style="margin-bottom: 25px;">
+                        <h4 style="margin: 0 0 15px 0; color: #333;">Choose Action:</h4>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <button onclick="handleClusterDecision('${tx.hash}', '${tx.counterparty}', ${tx.amount}, 'newThread')"
+                                    style="padding: 20px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                                🆕 Create New Thread<br>
+                                <small style="font-weight: normal; opacity: 0.9;">Treat as separate payment</small>
+                            </button>
+
+                            <button onclick="handleClusterDecision('${tx.hash}', '${tx.counterparty}', ${tx.amount}, 'cluster')"
+                                    style="padding: 20px; background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                                🔗 Cluster Addresses<br>
+                                <small style="font-weight: normal; opacity: 0.9;">Link as same entity (dual monitoring)</small>
+                            </button>
+                        </div>
+                    </div>
+
+                    ${tx.utxoData?.allOutputs?.length > 1 ? `
+                        <details style="margin-bottom: 20px;">
+                            <summary style="cursor: pointer; font-weight: bold; color: #666; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+                                📋 View All Transaction Outputs (${tx.utxoData.allOutputs.length})
+                            </summary>
+                            <div style="margin-top: 10px; padding: 10px; background: #fafafa; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+                                ${tx.utxoData.allOutputs.map((out, i) => `
+                                    <div style="padding: 8px; margin: 5px 0; background: white; border-radius: 4px; border-left: 3px solid ${out.likelyChange ? '#ff9800' : '#4caf50'};">
+                                        <strong>${out.likelyChange ? '🔄 Likely Change' : '💸 Likely Payment'}</strong><br>
+                                        <code style="font-size: 11px;">${out.address?.substring(0, 35)}...</code><br>
+                                        <strong>${out.amount} BTC</strong>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </details>
+                    ` : ''}
+
+                    <div style="text-align: right;">
+                        <button onclick="closeChangeAddressDecisionModal()"
+                                style="padding: 10px 20px; background: #9e9e9e; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Cancel (Decide Later)
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        /**
+         * Close the change address decision modal
+         */
+        function closeChangeAddressDecisionModal() {
+            const modal = document.getElementById('changeAddressDecisionModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        /**
+         * Handle user's clustering decision
+         */
+        function handleClusterDecision(txHash, newAddress, amount, decision) {
+            const originalAddress = walletExplorerState.currentWallet;
+            const threadId = walletExplorerState.sourceThreadId;
+
+            if (decision === 'newThread') {
+                // User chose to treat as new thread - no special action needed
+                console.log('User chose to create new thread for address:', newAddress);
+                alert('✅ New Thread Mode\n\n' +
+                      'This address will be treated as a separate payment.\n\n' +
+                      'When you trace this transaction, it will create a normal new thread.');
+                closeChangeAddressDecisionModal();
+            } else if (decision === 'cluster') {
+                // User chose to cluster addresses
+                const clusterId = createAddressCluster(originalAddress, newAddress, threadId, amount);
+
+                if (clusterId) {
+                    alert('✅ Addresses Clustered\n\n' +
+                          'Both addresses are now linked for dual monitoring.\n\n' +
+                          (investigation.tracingMethod === 'PIFO' ?
+                           'PIFO: Both addresses will be monitored to see which moves first.' :
+                           'LIBR: Balance analysis will consider both addresses together.') +
+                          '\n\nView cluster status in Wallet Explorer.');
+
+                    // Refresh wallet explorer to show cluster indicators
+                    closeChangeAddressDecisionModal();
+                    if (typeof renderTransactionTable === 'function') {
+                        renderTransactionTable();
+                    }
+                }
+            }
+        }
+
+        /**
+         * Create a new address cluster
+         * Links multiple addresses as controlled by same entity
+         */
+        function createAddressCluster(originalAddress, newAddress, threadId, amount) {
+            // Check if either address is already in a cluster
+            const existingCluster = getClusterForAddress(originalAddress) || getClusterForAddress(newAddress);
+
+            if (existingCluster) {
+                // Add to existing cluster
+                if (!existingCluster.addresses.includes(newAddress)) {
+                    existingCluster.addresses.push(newAddress);
+                    existingCluster.monitoredAmounts[newAddress] = amount;
+                    existingCluster.lastActivity = new Date().toISOString();
+                    existingCluster.notes += `\n[${new Date().toLocaleString()}] Added address: ${newAddress}`;
+
+                    console.log('Added address to existing cluster:', existingCluster.id);
+                    saveState();
+                    return existingCluster.id;
+                }
+            } else {
+                // Create new cluster
+                const clusterId = 'cluster-' + Date.now();
+                const currency = walletExplorerState.artCurrency || 'BTC';
+
+                investigation.addressClusters[clusterId] = {
+                    id: clusterId,
+                    addresses: [originalAddress, newAddress],
+                    threadId: threadId,
+                    totalAmount: amount,
+                    currency: currency,
+                    monitoredAmounts: {
+                        [originalAddress]: 0,  // Original amount already being monitored
+                        [newAddress]: amount   // New change amount
+                    },
+                    created: new Date().toISOString(),
+                    lastActivity: new Date().toISOString(),
+                    notes: `Cluster created from UTXO change detection.\nOriginal: ${originalAddress}\nChange to: ${newAddress}\nThread: ${threadId}`
+                };
+
+                console.log('Created new address cluster:', clusterId);
+                saveState();
+                return clusterId;
+            }
+        }
+
+        /**
+         * Get cluster containing a specific address
+         */
+        function getClusterForAddress(address) {
+            if (!investigation.addressClusters) {
+                investigation.addressClusters = {};
+                return null;
+            }
+
+            for (const clusterId in investigation.addressClusters) {
+                const cluster = investigation.addressClusters[clusterId];
+                if (cluster.addresses.includes(address)) {
+                    return cluster;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Remove address from cluster
+         */
+        function removeAddressFromCluster(address) {
+            const cluster = getClusterForAddress(address);
+            if (!cluster) return false;
+
+            cluster.addresses = cluster.addresses.filter(addr => addr !== address);
+            delete cluster.monitoredAmounts[address];
+            cluster.lastActivity = new Date().toISOString();
+            cluster.notes += `\n[${new Date().toLocaleString()}] Removed address: ${address}`;
+
+            // If cluster now has only 1 address, delete the cluster
+            if (cluster.addresses.length <= 1) {
+                delete investigation.addressClusters[cluster.id];
+                console.log('Cluster dissolved (only 1 address remaining):', cluster.id);
+            }
+
+            saveState();
+            return true;
+        }
+
+        /**
+         * Show cluster monitoring view
+         * Displays all addresses in a cluster with their status
+         */
+        function showClusterMonitoringView(clusterId) {
+            const cluster = investigation.addressClusters[clusterId];
+            if (!cluster) {
+                alert('Cluster not found');
+                return;
+            }
+
+            const modal = document.createElement('div');
+            modal.id = 'clusterMonitoringModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+            `;
+
+            const isPIFO = investigation.tracingMethod === 'PIFO';
+
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <h3 style="margin: 0 0 20px 0; color: #2196f3;">
+                        🔗 Address Cluster: ${cluster.id}
+                    </h3>
+
+                    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <strong>Thread:</strong> ${cluster.threadId}<br>
+                        <strong>Currency:</strong> ${cluster.currency}<br>
+                        <strong>Total Amount:</strong> ${cluster.totalAmount}<br>
+                        <strong>Created:</strong> ${new Date(cluster.created).toLocaleString()}<br>
+                        <strong>Methodology:</strong> ${investigation.tracingMethod || 'PIFO'}
+                        ${isPIFO ? '<br><br><strong>PIFO:</strong> Monitoring all addresses to see which moves first' : ''}
+                    </div>
+
+                    <h4 style="margin: 20px 0 10px 0;">📍 Clustered Addresses (${cluster.addresses.length})</h4>
+
+                    <div style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
+                        ${cluster.addresses.map((addr, index) => `
+                            <div style="background: ${index === 0 ? '#fff3cd' : '#f5f5f5'}; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid ${index === 0 ? '#ffc107' : '#2196f3'};">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                    <div style="flex: 1;">
+                                        <strong>${index === 0 ? '🏠 Original Address' : '🔄 Change Address ' + index}</strong><br>
+                                        <code style="font-size: 12px; word-break: break-all;">${addr}</code>
+                                    </div>
+                                    <button onclick="removeAddressFromCluster('${addr}'); closeClusterMonitoringModal(); alert('Address removed from cluster');"
+                                            style="padding: 5px 10px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                                        Remove
+                                    </button>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                                    <div style="background: white; padding: 8px; border-radius: 4px;">
+                                        <strong>Monitored:</strong> ${cluster.monitoredAmounts[addr] || 0} ${cluster.currency}
+                                    </div>
+                                    <div>
+                                        <button onclick="openWalletExplorer('${addr}', '${cluster.currency}')"
+                                                style="width: 100%; padding: 8px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                            🔍 View Wallet
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <details style="margin-bottom: 20px;">
+                        <summary style="cursor: pointer; font-weight: bold; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+                            📝 Cluster Notes
+                        </summary>
+                        <div style="margin-top: 10px; padding: 15px; background: #fafafa; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+${cluster.notes}
+                        </div>
+                    </details>
+
+                    <div style="text-align: right;">
+                        <button onclick="closeClusterMonitoringModal()"
+                                style="padding: 10px 20px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        /**
+         * Close cluster monitoring modal
+         */
+        function closeClusterMonitoringModal() {
+            const modal = document.getElementById('clusterMonitoringModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        /**
+         * Get all clusters for a specific thread
+         */
+        function getClustersForThread(threadId) {
+            if (!investigation.addressClusters) return [];
+
+            return Object.values(investigation.addressClusters)
+                .filter(cluster => cluster.threadId === threadId);
+        }
+
+        /**
+         * Display clusters in wallet explorer panel
+         */
+        function displayClustersInWalletExplorer() {
+            const threadId = walletExplorerState.sourceThreadId;
+            const clusterPanel = document.getElementById('walletExplorerClusterPanel');
+            const clusterList = document.getElementById('walletExplorerClusterList');
+            const clusterMethod = document.getElementById('walletExplorerClusterMethod');
+
+            if (!threadId || !clusterPanel || !clusterList) return;
+
+            const clusters = getClustersForThread(threadId);
+
+            if (clusters.length === 0) {
+                clusterPanel.style.display = 'none';
+                return;
+            }
+
+            // Show panel
+            clusterPanel.style.display = 'block';
+
+            // Set methodology message
+            const isPIFO = investigation.tracingMethod === 'PIFO';
+            clusterMethod.innerHTML = isPIFO ?
+                '<strong>PIFO:</strong> Monitoring all addresses to see which moves first.' :
+                '<strong>LIBR:</strong> Balance analysis considers all addresses together.';
+
+            // Populate cluster list
+            clusterList.innerHTML = clusters.map(cluster => `
+                <div style="background: #fafafa; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #ffa726;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <div>
+                            <strong style="color: #e65100;">Cluster ID:</strong> <code>${cluster.id}</code><br>
+                            <strong style="color: #e65100;">Addresses:</strong> ${cluster.addresses.length} clustered
+                        </div>
+                        <button onclick="showClusterMonitoringView('${cluster.id}')"
+                                style="padding: 8px 16px; background: #ff9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                            🔍 View Details
+                        </button>
+                    </div>
+                    <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                        ${cluster.addresses.map((addr, i) => `
+                            <div style="background: white; padding: 8px; border-radius: 4px; font-size: 11px;">
+                                <strong>${i === 0 ? '🏠 Original' : `🔄 Change ${i}`}:</strong><br>
+                                <code style="word-break: break-all; font-size: 10px;">${addr.substring(0, 15)}...${addr.substring(addr.length - 10)}</code><br>
+                                <span style="color: #666;">${cluster.monitoredAmounts[addr] || 0} ${cluster.currency}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        /**
+         * ========================================
+         * END ADDRESS CLUSTERING SYSTEM
+         * ========================================
+         */
 
         /**
          * Get Tron wallet history using TronGrid API

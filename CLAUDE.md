@@ -3,30 +3,264 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-26 23:07)
+## Latest Commit (Auto-updated: 2025-10-27 06:18)
 
-**Commit:** 75b99c0bd3b3cbd8d5e48da3cdf3f891afc1264e
+**Commit:** 0bf302e033a2eb243256dff70994fddca26b4101
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest features
+**Message:** Implement UTXO change detection for Bitcoin wallet explorer
+
+**Critical Feature:** Proper handling of Bitcoin change outputs in UTXO model
+
+**Problem Solved:**
+Previous implementation treated ALL Bitcoin outputs as separate transactions, including change outputs that return to the sender's address. This caused:
+- ❌ Change being incorrectly traced as new transactions
+- ❌ Inflated transaction counts
+- ❌ Thread continuity errors
+- ❌ Over-allocation when change is mistakenly selected
+- ❌ Confusion about which outputs to trace
+
+**Solution: UTXO-Aware Transaction Processing**
+
+## **1. Intelligent Change Detection**
+
+**getBitcoinWalletHistory() - Completely Rewritten:**
+
+**OLD Logic (WRONG):**
+```javascript
+// Treated all outputs as separate transactions
+tx.vout.forEach(output => {
+    if (output.address !== wallet) {
+        // Create transaction for this output
+    }
+});
+```
+
+**NEW Logic (CORRECT):**
+```javascript
+// Separate change from payments
+const ourOutputs = []; // Change (returns to us)
+const otherOutputs = []; // Payments (to others)
+
+tx.vout.forEach(output => {
+    if (output.address === wallet) {
+        ourOutputs.push(output); // This is change
+    } else {
+        otherOutputs.push(output); // This is payment
+    }
+});
+
+// Only create trace entries for actual payments
+// Flag change separately with isChange: true
+```
+
+## **2. Transaction Categorization**
+
+**Three Types:**
+1. **IN** - Incoming (no inputs from our address)
+   - Normal incoming payment
+   - Not change
+
+2. **OUT** - Outgoing payment to another address
+   - Actual payment
+   - Traceable
+   - Creates new thread
+
+3. **CHANGE** - Output returning to same address
+   - Funds stay in wallet
+   - NOT traceable as new transaction
+   - Stays in original thread
+   - Visual: Gray, disabled, "🔄 CHANGE" badge
+
+## **3. Visual Indicators**
+
+**Change Outputs:**
+```
+Row Style:
+- Gray gradient background
+- Gray left border
+- 70% opacity
+- "not-allowed" cursor
+- Tooltip: "UTXO Change Output - Funds returning to same address"
+
+Type Display:
+- 🔄 CHANGE (instead of 🔴 OUT)
+- ↩️ Amount prefix (instead of -)
+- Badge: "🔄 CHANGE (Not Traceable)"
+
+Checkbox:
+- Disabled
+- Grayed out (30% opacity)
+- Tooltip: "Change outputs cannot be selected"
+
+Actions:
+- No trace/write-off buttons
+- Shows: "N/A - Change"
+- Only explorer link available
+```
+
+**Payment Outputs:**
+```
+Row Style:
+- Normal colors
+- Selectable
+- Active cursor
+
+Type Display:
+- 🔴 OUT
+- - Amount prefix
+- Normal styling
+
+Actions:
+- Full buttons available
+- "Add to Investigation"
+- "Write Off" (if applicable)
+```
+
+## **4. Selection Protection**
+
+**ART Mode - Change Blocking:**
+```javascript
+function toggleARTSelection(tx) {
+    if (tx.isChange || tx.type === 'CHANGE') {
+        alert('⚠️ UTXO Change Output\n\n' +
+              'Change outputs cannot be selected for tracing.\n\n' +
+              'Change represents funds returning to the same ' +
+              'address and stays within the original thread.\n\n' +
+              'Only select actual payment outputs to other addresses.');
+        return; // BLOCKED
+    }
+    // ... normal selection logic
+}
+```
+
+**Checkbox Protection:**
+- Change checkboxes are `disabled` in HTML
+- Cannot be checked even if user tries
+- Clear tooltip explains why
+
+## **5. Info Banner for Bitcoin**
+
+When viewing Bitcoin wallets, auto-shows:
+
+```
+💡 UTXO Change Detection Active
+
+Bitcoin uses UTXO (Unspent Transaction Output) model.
+When sending Bitcoin, "change" often returns to the same address.
+
+🔄 Change Outputs: Marked with gray background and
+disabled checkboxes - these funds stay in the original
+thread (not traceable as new transactions).
+
+🔴 Payment Outputs: Actual payments to other addresses -
+these create new threads and are selectable for tracing.
+```
+
+## **6. Enhanced Transaction Data**
+
+**UTXO Metadata Added:**
+```javascript
+{
+    hash: "abc123...",
+    type: "OUT" | "IN" | "CHANGE",
+    isChange: boolean,
+    isUTXO: true,
+    utxoData: {
+        totalSent: 0.5,      // Total BTC sent (excluding change)
+        changeAmount: 0.3,    // Change returned
+        outputCount: 2,       // Number of payment outputs
+        hasChange: true       // Whether tx includes change
+    }
+}
+```
+
+## **Example Scenario:**
+
+**Bitcoin Transaction:**
+- **Inputs:** 1.0 BTC from bc1quser...
+- **Outputs:**
+  - 0.6 BTC → bc1qrecipient1... (Payment)
+  - 0.3 BTC → bc1qrecipient2... (Payment)
+  - 0.09 BTC → bc1quser... (Change)
+  - 0.01 BTC → (Miner fee)
+
+**Wallet Explorer Shows:**
+```
+🔴 OUT    0.6 BTC  → bc1qrecipient1...  [Add to Investigation]
+🔴 OUT    0.3 BTC  → bc1qrecipient2...  [Add to Investigation]
+🔄 CHANGE 0.09 BTC → bc1quser...        [N/A - Change] [GRAYED OUT]
+```
+
+**Only the two payment outputs (0.6 + 0.3 BTC) are selectable for tracing.**
+
+## **Benefits:**
+
+**For Investigators:**
+✅ **Correct thread tracking** - Change doesn't break thread continuity
+✅ **Clear visual distinction** - Instantly see change vs payments
+✅ **Prevented mistakes** - Can't accidentally trace change
+✅ **Accurate allocation** - ART math excludes change automatically
+✅ **Better understanding** - Learn UTXO model through visual feedback
+
+**For Bitcoin Investigations:**
+✅ **Proper UTXO handling** - Respects Bitcoin's transaction model
+✅ **Thread integrity** - Change stays in original thread
+✅ **Accurate tracing** - Only follow actual payments
+✅ **No false branches** - Change doesn't create phantom threads
+
+**For PIFO/LIBR:**
+✅ **PIFO:** Change not counted in outbound allocation
+✅ **LIBR:** Change correctly excluded from balance drops
+✅ **Both:** Proper thread accounting maintained
+
+## **Technical Details:**
+
+**Change Detection Algorithm:**
+1. Parse transaction inputs/outputs
+2. Identify outputs to our address (change)
+3. Identify outputs to other addresses (payments)
+4. Calculate: sentValue = inputTotal - changeTotal
+5. Create separate transaction records for each payment
+6. Mark change with `isChange: true` and `type: 'CHANGE'`
+7. Log: "Found X transactions (Y change outputs)"
+
+**Backward Compatibility:**
+✅ EVM chains unaffected (no UTXO model)
+✅ Existing investigations continue working
+✅ Only Bitcoin transactions get change detection
+✅ No breaking changes to data model
+
+## **Future Enhancements:**
+
+Possible extensions for other UTXO chains:
+- Bitcoin Cash (BCH)
+- Litecoin (LTC)
+- Dogecoin (DOGE)
+- Cardano (ADA)
+- (Same logic applies to all UTXO-based chains)
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 107 +++++++++++++++++++++++++++++++++++++++++++++++++++++---------
- 1 file changed, 92 insertions(+), 15 deletions(-)
+ index.html | 253 ++++++++++++++++++++++++++++++++++++++++++++++---------------
+ 1 file changed, 192 insertions(+), 61 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 75b99c0 Update CLAUDE.md with latest features (0 seconds ago)
-- f185ea2 Add column header sorting and enforce UTC time display (8 seconds ago)
-- f1d531c Add multi-thread highlighting and V-T notation display in Wallet Explorer (2 minutes ago)
-- d6d4b8a Final CLAUDE.md sync (4 minutes ago)
-- 731eee9 Update CLAUDE.md with commingling detection documentation (4 minutes ago)
-- 4a2996c Add intelligent commingling detection and multi-thread selector (4 minutes ago)
-- 78d3160 Update CLAUDE.md (8 minutes ago)
-- 0a09335 Update CLAUDE.md with bulk select documentation (8 minutes ago)
-- 46d2a54 Implement bulk multi-select for hop entries with over-allocation prevention (8 minutes ago)
-- 940a77b Sync CLAUDE.md (12 minutes ago)
+- 0bf302e Implement UTXO change detection for Bitcoin wallet explorer (0 seconds ago)
+- 780e905 Make Wallet Explorer methodology-aware: PIFO vs LIBR support (10 minutes ago)
+- fb1edeb Implement ART (Adjusted Root Total) Tracking in Wallet Explorer (5 hours ago)
+- f2cb229 Implement Feature 6: Batch write-offs for multiple threads (7 hours ago)
+- f511400 Implement Feature 5: Quick actions from Available Threads modal (7 hours ago)
+- c606314 Implement Feature 4: Entry preview before hop finalization (7 hours ago)
+- 7ede838 Implement Feature 3: Duplicate transaction detection with comprehensive search (7 hours ago)
+- 0788489 Implement Features 1-2: Auto-populate source thread + Smart contract detection (7 hours ago)
+- 2398a4f Final sync CLAUDE.md (7 hours ago)
+- 75b99c0 Update CLAUDE.md with latest features (7 hours ago)
 
 ## Key Features
 
