@@ -3,85 +3,108 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 19:13)
+## Latest Commit (Auto-updated: 2025-10-27 19:21)
 
-**Commit:** f1ad696bdda59764128d5c5792511e6e660db215
+**Commit:** b716ef0df62c3d6b5108fc6f7de802455ad9ead5
 **Author:** Your Name
-**Message:** Fix: Incorrect incomplete history warning in Wallet Explorer
+**Message:** Fix: Active thread highlighting and auto-pagination in Wallet Explorer
 
-🐛 BUG FIX: False "incomplete history" warning on complete wallets
+✨ UX IMPROVEMENTS: Better thread navigation and visual clarity
 
-USER REPORT: "i am also still getting the incomplete history warning when i
-go back into a wallet where i just was... we should be seeing the full balance
-history as well as generating the running balance"
+USER REQUEST: "after building hop 1 i went on to hop 2... the thread was on
+the second page, it would be better if the wallet explorer automatically
+opened up to the page that holds the thread... the inbound thread shows up
+as grayed out... it should show up the yellow/gold color because it is an
+active thread that needs to be assigned"
 
-ROOT CAUSE (line 17709):
-The code checked if TOTAL combined transactions < 1000 to determine completeness.
-But this is wrong! Three separate API endpoints each return up to 1000:
-- Normal transactions (up to 1000)
-- Token transactions (up to 1000)
-- Internal transactions (up to 1000)
+TWO ISSUES FIXED:
 
-A wallet with 800 normal + 400 token + 100 internal = 1300 total would
-incorrectly show "incomplete history" even though all endpoints returned
-complete data (none hit their 1000 limit).
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-SOLUTION (lines 17546, 17562, 17578, 17710-17727):
+ISSUE #1: No Auto-Pagination to Highlighted Transaction
 
-1. Track individual endpoint counts:
-   - normalTxCount = normalTxs.length
-   - tokenTxCount = tokenTxs.length
-   - internalTxCount = internalTxs.length
+ROOT CAUSE:
+When opening wallet explorer from "View & Trace" button, the explorer always
+opened to page 1, even if the thread's transaction was on page 2, 3, etc.
+User had to manually navigate through pages to find the highlighted transaction.
 
-2. New completeness logic:
-   - Complete if: ALL three endpoints < 1000 (none hit limit)
-   - If ANY endpoint = 1000, fallback to date comparison
-   - More accurate determination of history completeness
+SOLUTION (lines 15055-15071):
+Added logic to automatically calculate which page contains the highlighted
+transaction and navigate to that page on open.
 
-3. Added detailed logging:
-   - Shows count from each endpoint
-   - Explains why history is marked complete/incomplete
-   - Easier debugging
+Implementation:
+1. Find index of highlighted transaction in filtered array
+2. Calculate page number: Math.floor(index / itemsPerPage) + 1
+3. Set walletExplorerState.currentPage to calculated page
+4. Log navigation for debugging
+
+Example:
+- Transaction at index 25, with 20 items per page
+- Page = Math.floor(25 / 20) + 1 = 2
+- Auto-opens to page 2 ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ISSUE #2: Active Thread Incorrectly Grayed Out
+
+ROOT CAUSE:
+The INCOMING transaction that created the current thread was showing grayed
+out as "already used", when it should show in yellow/gold as the ACTIVE
+thread being traced.
+
+The gray-out logic marked ANY transaction in the investigation as "used",
+including the source transaction we're actively following.
+
+SOLUTION (lines 15640-15647, 15799, 15882):
+
+1. Enhanced isTransactionUsedInInvestigation() (lines 15640-15647):
+   - Check if transaction hash matches highlightTxHash
+   - If it's the highlighted transaction, return isUsed: false
+   - Added isActiveThread flag for clarity
+   - Only gray out OUTBOUND transactions that have been allocated
+
+2. Updated highlighting logic (line 15799):
+   - Apply yellow/gold highlight to isHighlighted OR isCurrentThread
+   - Ensures active thread always gets yellow/gold styling
+
+3. Updated gray-out logic (line 15882):
+   - Added !isHighlighted condition to gray-out check
+   - Prevents graying out the active thread source transaction
 
 BEHAVIOR:
 
 Before (broken):
-- Wallet: 800 normal, 400 token, 100 internal = 1300 total
-- Logic: 1300 >= 1000 → Incomplete history ❌
-- Shows warning incorrectly
-- Disables running balance calculations
+1. Open wallet for thread from Hop 1 → Opens to page 1
+2. Transaction is on page 2 → Must manually navigate
+3. Incoming transaction shows gray → Looks "used/unavailable"
+4. Confusing which transaction to follow
 
 After (fixed):
-- Wallet: 800 normal, 400 token, 100 internal = 1300 total
-- Logic: All endpoints < 1000 → Complete history ✅
-- No warning
-- Running balance calculations enabled
+1. Open wallet for thread from Hop 1 → Auto-opens to page 2 ✅
+2. Incoming transaction shows yellow/gold → Clear it's ACTIVE ✅
+3. Only OUTBOUND allocated transactions show gray ✅
+4. Clear visual hierarchy
 
-Example Scenarios:
+VISUAL STATES:
 
-Scenario 1 - Complete History:
-- Normal: 800/1000 ✅
-- Token: 400/1000 ✅
-- Internal: 100/1000 ✅
-→ Complete history, show running balance
+🟡 Yellow/Gold = Active thread (incoming transaction being traced)
+🔵 Blue = Other investigation threads (not current)
+⚪ Gray = Already allocated outbound transactions
+🟢 Green = Available unallocated transactions
 
-Scenario 2 - Incomplete History:
-- Normal: 1000/1000 ❌ (hit limit)
-- Token: 500/1000 ✅
-- Internal: 200/1000 ✅
-→ Incomplete (normal endpoint hit limit), compare dates
+EXAMPLE WORKFLOW:
 
-Scenario 3 - Edge Case:
-- Normal: 1000/1000 (hit limit)
-- But oldest fetched = first activity date
-→ Actually complete (date match confirms it)
+Hop 1:
+- Trace V1-T1 to wallet 0xabc...
+- Creates thread V(1)-T(1)-H1
 
-BENEFITS:
-✅ No false "incomplete history" warnings
-✅ Running balance calculations work correctly
-✅ Better user experience - accurate history status
-✅ More reliable balance calculations
-✅ Proper handling of high-volume wallets
+Hop 2:
+- Click "View & Trace" for V(1)-T(1)-H1
+- Wallet explorer opens directly to page with incoming transaction
+- Incoming transaction shows YELLOW/GOLD (active thread)
+- Select outbound transactions to trace
+- After creating entries, those show GRAY (already used)
+- Active thread stays YELLOW/GOLD
 
 🤖 Generated with Claude Code
 
@@ -89,23 +112,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 107 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- index.html |  14 ++++++--
- 2 files changed, 110 insertions(+), 11 deletions(-)
+ CLAUDE.md  | 178 +++++++++++++++++++++++++++++--------------------------------
+ index.html |  36 +++++++++++--
+ 2 files changed, 116 insertions(+), 98 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (0 seconds ago)
-- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (3 minutes ago)
-- a1e1795 Auto-sync CLAUDE.md (7 minutes ago)
-- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (8 minutes ago)
+- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (1 second ago)
+- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (8 minutes ago)
+- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (11 minutes ago)
+- a1e1795 Auto-sync CLAUDE.md (16 minutes ago)
+- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (17 minutes ago)
 - 0f487ff Fix: Wallet Explorer now works with finalized hop notation (2 hours ago)
 - 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (2 hours ago)
 - dc1b7bc Auto-sync CLAUDE.md (8 hours ago)
 - 2874d87 Feature: Entry confirmation modal for wallet-by-wallet workflow (8 hours ago)
 - 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (9 hours ago)
-- ad37883 Feature: Add info icon with tooltip explaining negative token balances (9 hours ago)
 
 ## Key Features
 

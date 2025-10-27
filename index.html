@@ -2852,6 +2852,17 @@
                         <!-- Populated by JavaScript -->
                     </div>
 
+                    <!-- Thread Progression Panel -->
+                    <div id="walletExplorerThreadProgression" style="display: none; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 3px solid #2196f3; border-radius: 10px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
+                        <h4 style="margin: 0 0 15px 0; color: #0d47a1; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 18px;">📊</span>
+                            <span>Thread Allocation Progress</span>
+                        </h4>
+                        <div id="walletExplorerThreadProgressionList">
+                            <!-- Thread progress bars will be populated here -->
+                        </div>
+                    </div>
+
                     <!-- Selection Summary -->
                     <div id="walletExplorerARTSelections" style="display: none; background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                         <h4 style="margin: 0 0 10px 0; color: #0d47a1; font-size: 14px;">📝 Selected Transactions (<span id="walletExplorerARTSelectionCount">0</span>)</h4>
@@ -15094,6 +15105,159 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             document.getElementById('walletExplorerTransactions').style.display = 'block';
         }
 
+        // Display Thread Progression for Current Wallet
+        function displayThreadProgression() {
+            const walletAddress = walletExplorerState.address;
+            const selectedCurrency = walletExplorerState.selectedAsset;
+
+            if (!walletAddress || !selectedCurrency || !investigation.availableThreads) {
+                document.getElementById('walletExplorerThreadProgression').style.display = 'none';
+                return;
+            }
+
+            // Find all threads entering this wallet with the selected currency
+            const walletThreads = [];
+            const availableThreads = investigation.availableThreads[selectedCurrency] || {};
+
+            for (const threadKey in availableThreads) {
+                const thread = availableThreads[threadKey];
+
+                // Check if this thread's source wallet matches current wallet
+                // Need to handle both exact matches and case-insensitive matches
+                if (thread.sourceWallet &&
+                    thread.sourceWallet.toLowerCase() === walletAddress.toLowerCase()) {
+                    walletThreads.push({
+                        ...thread,
+                        threadId: thread.notation || threadKey
+                    });
+                }
+            }
+
+            // If no threads found for this wallet, hide the panel
+            if (walletThreads.length === 0) {
+                document.getElementById('walletExplorerThreadProgression').style.display = 'none';
+                return;
+            }
+
+            // Sort threads by threadId for consistent display
+            walletThreads.sort((a, b) => a.threadId.localeCompare(b.threadId));
+
+            // Build the thread progression display
+            const progressListDiv = document.getElementById('walletExplorerThreadProgressionList');
+            progressListDiv.innerHTML = '';
+
+            let totalOriginal = 0;
+            let totalAvailable = 0;
+
+            walletThreads.forEach(thread => {
+                const originalAmount = thread.totalAmount || 0;
+                const availableAmount = thread.availableAmount || 0;
+                const consumedAmount = originalAmount - availableAmount;
+                const percentConsumed = originalAmount > 0 ? (consumedAmount / originalAmount) * 100 : 0;
+                const percentRemaining = 100 - percentConsumed;
+
+                totalOriginal += originalAmount;
+                totalAvailable += availableAmount;
+
+                // Determine status styling
+                const isFullyAllocated = availableAmount === 0;
+                const isPartiallyAllocated = availableAmount > 0 && consumedAmount > 0;
+                const isUnused = consumedAmount === 0;
+
+                let statusColor, statusIcon, statusText, barColor;
+
+                if (isFullyAllocated) {
+                    statusColor = '#9e9e9e';
+                    statusIcon = '✓';
+                    statusText = 'Fully Allocated';
+                    barColor = '#9e9e9e';
+                } else if (isPartiallyAllocated) {
+                    statusColor = '#ff9800';
+                    statusIcon = '⚡';
+                    statusText = 'In Progress';
+                    barColor = '#ff9800';
+                } else {
+                    statusColor = '#4caf50';
+                    statusIcon = '●';
+                    statusText = 'Available';
+                    barColor = '#4caf50';
+                }
+
+                // Create thread progress item
+                const threadItem = document.createElement('div');
+                threadItem.style.cssText = 'background: white; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 4px solid ' + statusColor;
+
+                threadItem.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 16px; color: ${statusColor};">${statusIcon}</span>
+                            <strong style="font-size: 13px; color: #0d47a1;">${thread.threadId}</strong>
+                            <span style="font-size: 11px; color: ${statusColor}; font-weight: 600;">${statusText}</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 12px; color: #666;">Available</div>
+                            <div style="font-size: 14px; font-weight: bold; color: ${statusColor};">
+                                ${availableAmount.toLocaleString()} / ${originalAmount.toLocaleString()} ${selectedCurrency}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden; position: relative;">
+                        <!-- Consumed portion -->
+                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: ${percentConsumed}%; background: ${barColor}; transition: width 0.3s ease;"></div>
+                        <!-- Remaining portion -->
+                        <div style="position: absolute; left: ${percentConsumed}%; right: 0; top: 0; bottom: 0; background: #f5f5f5;"></div>
+                        <!-- Progress text -->
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #333;">
+                            ${percentConsumed.toFixed(0)}% allocated
+                        </div>
+                    </div>
+
+                    <!-- Details -->
+                    <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: #666;">
+                        <div>
+                            <span style="color: #f44336;">Consumed: ${consumedAmount.toLocaleString()} ${selectedCurrency}</span>
+                        </div>
+                        <div>
+                            <span style="color: #4caf50;">Remaining: ${availableAmount.toLocaleString()} ${selectedCurrency}</span>
+                        </div>
+                    </div>
+                `;
+
+                progressListDiv.appendChild(threadItem);
+            });
+
+            // Add summary at the bottom if multiple threads
+            if (walletThreads.length > 1) {
+                const totalConsumed = totalOriginal - totalAvailable;
+                const totalPercentConsumed = totalOriginal > 0 ? (totalConsumed / totalOriginal) * 100 : 0;
+
+                const summaryDiv = document.createElement('div');
+                summaryDiv.style.cssText = 'background: linear-gradient(135deg, #fff3e0 0%, #ffe082 100%); border-radius: 8px; padding: 12px; margin-top: 10px; border: 2px solid #ffa726;';
+                summaryDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 11px; color: #e65100; font-weight: 600;">TOTAL (${walletThreads.length} threads)</div>
+                            <div style="font-size: 13px; font-weight: bold; color: #e65100; margin-top: 3px;">
+                                ${totalAvailable.toLocaleString()} / ${totalOriginal.toLocaleString()} ${selectedCurrency}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 11px; color: #e65100;">Combined Progress</div>
+                            <div style="font-size: 16px; font-weight: bold; color: #e65100;">
+                                ${totalPercentConsumed.toFixed(1)}% allocated
+                            </div>
+                        </div>
+                    </div>
+                `;
+                progressListDiv.appendChild(summaryDiv);
+            }
+
+            // Show the panel
+            document.getElementById('walletExplorerThreadProgression').style.display = 'block';
+        }
+
         // Initialize ART Tracking Panel
         function initializeARTTracking() {
             const sourceThreadId = walletExplorerState.sourceThreadId;
@@ -15245,6 +15409,9 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
             // Update ART status
             updateARTDisplay();
+
+            // Update thread progression visualization
+            displayThreadProgression();
 
             // Show the panel
             document.getElementById('walletExplorerARTPanel').style.display = 'block';
