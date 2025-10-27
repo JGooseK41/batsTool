@@ -14241,7 +14241,13 @@ function exportRedWalletIndexCSV() {
                 currentPage: 1,
                 itemsPerPage: 50,
                 selectedAsset: '',
-                assets: {}
+                assets: {},
+                showScamTokens: false,
+                firstActivityDate: null,
+                oldestFetchedDate: null,
+                isCompleteHistory: false,
+                fetchedCount: 0,
+                selectedTransactions: new Set()
             };
 
             // Hide all sections
@@ -14622,8 +14628,8 @@ function exportRedWalletIndexCSV() {
                 // Conditionally include balance column
                 const balanceCell = showBalance ? `<td style="padding: 12px; text-align: right;">${balance}</td>` : '';
 
-                // Check if this transaction is selected
-                const isSelected = walletExplorerState.selectedTransactions.has(tx.hash);
+                // Check if this transaction is selected (safety check for Set existence)
+                const isSelected = walletExplorerState.selectedTransactions && walletExplorerState.selectedTransactions.has(tx.hash);
 
                 row.innerHTML = `
                     <td style="padding: 12px; text-align: center;">
@@ -14871,6 +14877,11 @@ function exportRedWalletIndexCSV() {
 
         // Toggle individual transaction selection
         function toggleTransactionSelection(txHash) {
+            // Safety check: ensure Set exists
+            if (!walletExplorerState.selectedTransactions) {
+                walletExplorerState.selectedTransactions = new Set();
+            }
+
             if (walletExplorerState.selectedTransactions.has(txHash)) {
                 walletExplorerState.selectedTransactions.delete(txHash);
             } else {
@@ -14882,6 +14893,11 @@ function exportRedWalletIndexCSV() {
 
         // Toggle select all transactions on current page
         function toggleSelectAllTransactions() {
+            // Safety check: ensure Set exists
+            if (!walletExplorerState.selectedTransactions) {
+                walletExplorerState.selectedTransactions = new Set();
+            }
+
             const selectAllCheckbox = document.getElementById('walletExplorerSelectAll');
             const checkboxes = document.querySelectorAll('.wallet-tx-checkbox');
 
@@ -14931,12 +14947,22 @@ function exportRedWalletIndexCSV() {
 
         // Clear all selections
         function clearTransactionSelection() {
+            // Safety check: ensure Set exists
+            if (!walletExplorerState.selectedTransactions) {
+                walletExplorerState.selectedTransactions = new Set();
+            }
+
             walletExplorerState.selectedTransactions.clear();
             renderTransactionTable(); // Re-render to update checkboxes
         }
 
         // Update bulk action bar visibility and count
         function updateBulkActionBar() {
+            // Safety check: ensure Set exists
+            if (!walletExplorerState.selectedTransactions) {
+                walletExplorerState.selectedTransactions = new Set();
+            }
+
             const bulkActionsDiv = document.getElementById('walletExplorerBulkActions');
             const countDiv = document.getElementById('walletExplorerSelectionCount');
             const count = walletExplorerState.selectedTransactions.size;
@@ -14951,6 +14977,11 @@ function exportRedWalletIndexCSV() {
 
         // Add selected transactions to investigation
         async function addSelectedTransactionsToInvestigation() {
+            // Safety check: ensure Set exists
+            if (!walletExplorerState.selectedTransactions) {
+                walletExplorerState.selectedTransactions = new Set();
+            }
+
             const selectedHashes = Array.from(walletExplorerState.selectedTransactions);
 
             if (selectedHashes.length === 0) {
