@@ -3,144 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 11:25)
+## Latest Commit (Auto-updated: 2025-10-27 11:26)
 
-**Commit:** 2874d87b34a012ee53a8b99eaca9b40e2a761bac
+**Commit:** dc1b7bc651cba7fc569613fac110d24e7da77c91
 **Author:** Your Name
-**Message:** Feature: Entry confirmation modal for wallet-by-wallet workflow
-
-✨ MAJOR UX ENHANCEMENT: Build multiple entries without leaving wallet explorer
-
-FEATURE: New confirmation modal when creating entries from wallet explorer
-
-USER REQUEST: "build entries from inside the wallet explorer by having a modal
-pop up to confirm the entry creation without closing the wallet explorer or going
-back into the hop creation page... this way you could build multiple entries
-without leaving the wallet explorer and after each one it could show you your
-updated art and available threads"
-
-IMPLEMENTATION:
-
-1. Entry Confirmation Modal (lines 2981-3023):
-   - Shows entry preview with all details
-   - Displays ART impact (current → change → new ART)
-   - Shows available threads for current wallet
-   - Two action buttons:
-     * "Create & Stay in Explorer" (green)
-     * "Create & Return to Hops" (blue)
-   - Professional styling with color-coded sections
-
-2. Modal Helper Functions (lines 16809-17094):
-   - showEntryConfirmationModal(): Main modal display
-   - populateEntryPreview(): Shows entry details in grid
-   - calculateAndShowARTImpact(): 3-column ART comparison
-   - showAvailableThreadsForWallet(): Grouped by currency
-   - confirmEntryAndStay(): Creates entry, refreshes explorer
-   - confirmEntryAndReturn(): Creates entry, closes explorer
-   - createEntryFromPendingData(): Adds entry to hop
-
-3. Modified writeOffWalletTransaction() (lines 16696-16763):
-   - Creates write-off entry data
-   - Shows confirmation modal instead of direct creation
-   - Removed closeWalletExplorer() call
-   - Added writeoffApplied: false flag
-
-4. Modified addWalletTransactionToInvestigation() (lines 16071-16292):
-   - Creates trace entry data directly
-   - Shows confirmation modal for non-commingling traces
-   - Removed premature closeWalletExplorer() call
-   - Kept close for victim setup mode only
-
-5. "Create & Stay" Workflow (lines 17005-17034):
-   - Creates entry in hop
-   - Closes confirmation modal
-   - Refreshes transaction table (grays out used transactions)
-   - Updates ART tracking panel
-   - Shows success notification
-   - Keeps wallet explorer open
-
-6. "Create & Return" Workflow (lines 17036-17069):
-   - Creates entry in hop
-   - Closes confirmation modal
-   - Closes wallet explorer
-   - Shows success notification
-   - Scrolls to hop section
-
-FEATURES:
-
-Entry Preview Section:
-- Amount and currency (large, bold)
-- Entry type (trace/writeoff/swap/bridge)
-- From/to wallets (truncated addresses)
-- Blockchain and transaction hash
-- Source thread (highlighted)
-
-ART Impact Section:
-- Current ART (before)
-- Change amount (red if negative)
-- New ART (after, red if negative)
-- Warning if new ART would be negative
-
-Available Threads Section:
-- Grouped by currency
-- Shows thread ID and available amount
-- Highlights currently selected thread (orange border)
-- Shows "No available threads" if exhausted
-
-USER BENEFIT:
-✅ Build multiple entries from one wallet without navigation
-✅ See ART impact before confirming
-✅ See all available threads at a glance
-✅ Choose to continue or finish after each entry
-✅ Transactions automatically gray out after use
-✅ Real-time ART updates after each entry
-✅ Smooth, professional workflow
-✅ Reduces errors from context switching
-✅ Perfect for complex multi-hop investigations
-
-WORKFLOW EXAMPLE:
-1. Open wallet 0xabc... from Available Threads
-2. See 5 OUT transactions
-3. Click "Add to Investigation" on first transaction
-4. Modal shows: Entry preview + "ART: 10→9 ETH" + "3 threads available"
-5. Click "Create & Stay in Explorer"
-6. First transaction grays out, ART updates to 9 ETH
-7. Click "Add to Investigation" on second transaction
-8. Modal shows: "ART: 9→7 ETH" + "2 threads available"
-9. Click "Create & Stay in Explorer"
-10. Continue building entries without leaving wallet
-11. When done, close wallet explorer manually
-
-TECHNICAL NOTES:
-- Global state: pendingEntryData stores entry before confirmation
-- Entry IDs calculated: hop.entries.length + 1
-- writeoffApplied flag for proper ART timing
-- Commingling path unchanged (still uses selector)
-- Victim setup mode unchanged (still closes explorer)
-
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Auto-sync CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md  | 104 +++++++++------
- index.html | 432 ++++++++++++++++++++++++++++++++++++++++++++++++++++---------
- 2 files changed, 440 insertions(+), 96 deletions(-)
+ CLAUDE.md | 183 +++++++++++++++++++++++++++++++++++++++-----------------------
+ 1 file changed, 117 insertions(+), 66 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 2874d87 Feature: Entry confirmation modal for wallet-by-wallet workflow (0 seconds ago)
-- 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (45 minutes ago)
-- ad37883 Feature: Add info icon with tooltip explaining negative token balances (73 minutes ago)
-- d2aa686 Fix: Improve ETH variant filtering to catch Unicode characters (EꓔH) (79 minutes ago)
-- 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (83 minutes ago)
-- 25d0eef Auto-sync CLAUDE.md (88 minutes ago)
-- 532cfca Sync CLAUDE.md (final) (88 minutes ago)
-- 6f8070b Update CLAUDE.md with latest commit info (88 minutes ago)
+- dc1b7bc Auto-sync CLAUDE.md (0 seconds ago)
+- 2874d87 Feature: Entry confirmation modal for wallet-by-wallet workflow (2 minutes ago)
+- 5b5fc21 Feature: Gray out already-allocated transactions in wallet explorer (47 minutes ago)
+- ad37883 Feature: Add info icon with tooltip explaining negative token balances (75 minutes ago)
+- d2aa686 Fix: Improve ETH variant filtering to catch Unicode characters (EꓔH) (80 minutes ago)
+- 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (84 minutes ago)
+- 25d0eef Auto-sync CLAUDE.md (89 minutes ago)
+- 532cfca Sync CLAUDE.md (final) (89 minutes ago)
+- 6f8070b Update CLAUDE.md with latest commit info (2 hours ago)
 - 8716015 Fix: Deduplicate transactions to prevent double-counting - CRITICAL BUG #2 (2 hours ago)
-- 8447862 Docs: Add comprehensive coverage analysis for internal transaction fix (2 hours ago)
 
 ## Key Features
 

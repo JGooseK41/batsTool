@@ -22432,27 +22432,13 @@ function viewAvailableThreads(hopNumber) {
 function quickTraceThread(threadId) {
     console.log(`⚡ Quick Trace initiated for thread: ${threadId}`);
 
-    // Close the available threads modal
-    const modal = document.getElementById('availableThreadsModal');
-    if (modal) modal.remove();
+    // With the new entry confirmation modal workflow, "Quick Trace" simply opens
+    // the wallet explorer for this thread - the same as the "Wallet Explorer" button.
+    // This provides a convenient shortcut for investigators.
 
-    // Get the current hop number
-    const hopNumber = getCurrentHop();
-    if (!hopNumber) {
-        alert('⚠️ No active hop found.');
-        return;
-    }
+    viewThreadInWalletExplorer(threadId);
 
-    // Open hop wizard with pre-selected thread
-    window.hopWizardData = {
-        hopNumber: hopNumber,
-        selectedThreads: [threadId],
-        preSelectedSourceThread: threadId
-    };
-
-    openHopWizard();
-
-    console.log(`✅ Hop wizard opened with pre-selected thread: ${threadId}`);
+    console.log(`✅ Wallet Explorer opened for quick trace of thread: ${threadId}`);
 }
 
 // Quick Write Off: Creates write-off entry immediately for a thread
