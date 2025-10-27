@@ -17158,45 +17158,67 @@ function exportRedWalletIndexCSV() {
 
             const internalTxs = internalData.result && Array.isArray(internalData.result) ? internalData.result : [];
 
-            // Combine and normalize
+            // Combine and normalize with deduplication
             const allTransactions = [];
+            const seenHashes = new Map(); // Track hash+asset to prevent duplicates
 
             // Process normal transactions
+            console.log(`Processing ${normalTxs.length} normal transactions...`);
             normalTxs.forEach(tx => {
                 const isIncoming = tx.to && tx.to.toLowerCase() === address.toLowerCase();
                 const amount = parseFloat(tx.value) / 1e18; // Wei to ETH
 
                 // Only include if amount > 0
                 if (amount > 0) {
-                    allTransactions.push({
-                        hash: tx.hash,
-                        timestamp: parseInt(tx.timeStamp) * 1000,
-                        type: isIncoming ? 'IN' : 'OUT',
-                        asset: config.nativeCurrency || 'ETH',
-                        amount: amount,
-                        counterparty: isIncoming ? tx.from : tx.to,
-                        entityLabel: null, // Will be enhanced later
-                        explorerUrl: `${config.explorerUrl || 'https://etherscan.io'}/tx/${tx.hash}`
-                    });
+                    const asset = config.nativeCurrency || 'ETH';
+                    const key = `${tx.hash}-${asset}`;
+
+                    // BUG FIX: Deduplicate by hash+asset to prevent same transaction counted multiple times
+                    if (!seenHashes.has(key)) {
+                        seenHashes.set(key, true);
+                        allTransactions.push({
+                            hash: tx.hash,
+                            timestamp: parseInt(tx.timeStamp) * 1000,
+                            type: isIncoming ? 'IN' : 'OUT',
+                            asset: asset,
+                            amount: amount,
+                            counterparty: isIncoming ? tx.from : tx.to,
+                            entityLabel: null, // Will be enhanced later
+                            explorerUrl: `${config.explorerUrl || 'https://etherscan.io'}/tx/${tx.hash}`
+                        });
+                        console.log(`Added normal tx: ${tx.hash.substring(0, 10)}... ${isIncoming ? 'IN' : 'OUT'} ${amount.toFixed(8)} ${asset}`);
+                    } else {
+                        console.log(`Skipped duplicate normal tx: ${tx.hash.substring(0, 10)}... ${asset}`);
+                    }
                 }
             });
 
             // Process token transactions
+            console.log(`Processing ${tokenTxs.length} token transactions...`);
             tokenTxs.forEach(tx => {
                 const isIncoming = tx.to && tx.to.toLowerCase() === address.toLowerCase();
                 const decimals = parseInt(tx.tokenDecimal) || 18;
                 const amount = parseFloat(tx.value) / Math.pow(10, decimals);
+                const asset = tx.tokenSymbol || tx.tokenName || 'Token';
+                const key = `${tx.hash}-${asset}`;
 
-                allTransactions.push({
-                    hash: tx.hash,
-                    timestamp: parseInt(tx.timeStamp) * 1000,
-                    type: isIncoming ? 'IN' : 'OUT',
-                    asset: tx.tokenSymbol || tx.tokenName || 'Token',
-                    amount: amount,
-                    counterparty: isIncoming ? tx.from : tx.to,
-                    entityLabel: null,
-                    explorerUrl: `${config.explorerUrl || 'https://etherscan.io'}/tx/${tx.hash}`
-                });
+                // BUG FIX: Deduplicate token transactions
+                if (!seenHashes.has(key)) {
+                    seenHashes.set(key, true);
+                    allTransactions.push({
+                        hash: tx.hash,
+                        timestamp: parseInt(tx.timeStamp) * 1000,
+                        type: isIncoming ? 'IN' : 'OUT',
+                        asset: asset,
+                        amount: amount,
+                        counterparty: isIncoming ? tx.from : tx.to,
+                        entityLabel: null,
+                        explorerUrl: `${config.explorerUrl || 'https://etherscan.io'}/tx/${tx.hash}`
+                    });
+                    console.log(`Added token tx: ${tx.hash.substring(0, 10)}... ${isIncoming ? 'IN' : 'OUT'} ${amount.toFixed(8)} ${asset}`);
+                } else {
+                    console.log(`Skipped duplicate token tx: ${tx.hash.substring(0, 10)}... ${asset}`);
+                }
             });
 
             // Process INTERNAL transactions (critical for accurate ETH balance!)
@@ -17211,18 +17233,27 @@ function exportRedWalletIndexCSV() {
                 // BUG FIX: isError is "0" for success, "1" for failure (STRING not boolean!)
                 const isFailed = tx.isError === '1' || tx.isError === 1;
                 if (amount > 0 && !isFailed) {
-                    console.log(`✅ ADDED internal tx to allTransactions: ${amount} ETH ${isIncoming ? 'IN' : 'OUT'}`);
-                    allTransactions.push({
-                        hash: tx.hash,
-                        timestamp: parseInt(tx.timeStamp) * 1000,
-                        type: isIncoming ? 'IN' : 'OUT',
-                        asset: config.nativeCurrency || 'ETH',
-                        amount: amount,
-                        counterparty: isIncoming ? tx.from : tx.to,
-                        entityLabel: null,
-                        explorerUrl: `${config.explorerUrl || 'https://etherscan.io'}/tx/${tx.hash}`,
-                        isInternal: true  // Flag for debugging
-                    });
+                    const asset = config.nativeCurrency || 'ETH';
+                    const key = `${tx.hash}-${asset}-internal`;
+
+                    // BUG FIX: Deduplicate internal transactions (use separate key to allow both normal + internal)
+                    if (!seenHashes.has(key)) {
+                        seenHashes.set(key, true);
+                        allTransactions.push({
+                            hash: tx.hash,
+                            timestamp: parseInt(tx.timeStamp) * 1000,
+                            type: isIncoming ? 'IN' : 'OUT',
+                            asset: asset,
+                            amount: amount,
+                            counterparty: isIncoming ? tx.from : tx.to,
+                            entityLabel: null,
+                            explorerUrl: `${config.explorerUrl || 'https://etherscan.io'}/tx/${tx.hash}`,
+                            isInternal: true  // Flag for debugging
+                        });
+                        console.log(`✅ ADDED internal tx: ${tx.hash.substring(0, 10)}... ${isIncoming ? 'IN' : 'OUT'} ${amount.toFixed(8)} ${asset}`);
+                    } else {
+                        console.log(`Skipped duplicate internal tx: ${tx.hash.substring(0, 10)}...`);
+                    }
                 } else {
                     console.log(`❌ SKIPPED internal tx: amount=${amount}, isError=${tx.isError}`);
                 }
