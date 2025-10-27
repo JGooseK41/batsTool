@@ -14880,12 +14880,72 @@ function exportRedWalletIndexCSV() {
             walletExplorerState.artAvailable = sourceThread.availableAmount;
             walletExplorerState.artCurrency = currency;
 
+            // Get investigation methodology
+            const methodology = investigation.tracingMethod || 'PIFO';
+            const isPIFO = methodology === 'PIFO';
+            const isLIBR = methodology === 'LIBR';
+
+            // For LIBR, calculate wallet balance and traceable amount
+            let librGuidance = '';
+            let walletCurrentBalance = 0;
+            let traceableAmount = 0;
+
+            if (isLIBR && walletExplorerState.balanceMap) {
+                // Get current balance from the most recent transaction
+                const balances = Object.values(walletExplorerState.balanceMap);
+                walletCurrentBalance = balances.length > 0 ? balances[balances.length - 1] : 0;
+
+                // Traceable amount = Available ART if balance < available, else we need balance analysis
+                if (walletCurrentBalance < sourceThread.availableAmount) {
+                    traceableAmount = sourceThread.availableAmount - walletCurrentBalance;
+                    librGuidance = `
+                        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-top: 10px; border-radius: 4px;">
+                            <div style="font-size: 12px; font-weight: bold; color: #856404; margin-bottom: 5px;">📊 LIBR Analysis:</div>
+                            <div style="font-size: 11px; color: #856404;">
+                                Current Balance: ${walletCurrentBalance.toLocaleString()} ${currency}<br>
+                                Traced Amount: ${sourceThread.availableAmount.toLocaleString()} ${currency}<br>
+                                <strong>✅ Balance dropped below traced amount - ${traceableAmount.toLocaleString()} ${currency} is traceable</strong>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    librGuidance = `
+                        <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-top: 10px; border-radius: 4px;">
+                            <div style="font-size: 12px; font-weight: bold; color: #1976d2; margin-bottom: 5px;">📊 LIBR Analysis:</div>
+                            <div style="font-size: 11px; color: #1976d2;">
+                                Current Balance: ${walletCurrentBalance.toLocaleString()} ${currency}<br>
+                                Traced Amount: ${sourceThread.availableAmount.toLocaleString()} ${currency}<br>
+                                <strong>ℹ️ Balance still above traced amount - funds remain in wallet per LIBR</strong>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Methodology-specific guidance
+            const methodologyBadge = isPIFO
+                ? `<span style="background: #2196f3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">PIFO</span>`
+                : `<span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">LIBR</span>`;
+
+            const methodologyGuidance = isPIFO
+                ? `<div style="font-size: 11px; color: #666; margin-top: 5px;">Strict allocation required - fully allocate ${sourceThread.availableAmount.toLocaleString()} ${currency}</div>`
+                : `<div style="font-size: 11px; color: #666; margin-top: 5px;">Balance-based tracing - only trace when balance drops</div>`;
+
             // Update source info
             document.getElementById('walletExplorerARTSourceInfo').innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 3px;">Tracing Thread:</div>
                         <div style="font-size: 16px; font-weight: bold; color: #0d47a1;">${sourceThreadId}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 3px;">Methodology:</div>
+                        <div>${methodologyBadge}</div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        ${methodologyGuidance}
                     </div>
                     <div style="text-align: right;">
                         <div style="font-size: 12px; color: #666; margin-bottom: 3px;">Available to Trace:</div>
@@ -14894,7 +14954,13 @@ function exportRedWalletIndexCSV() {
                         </div>
                     </div>
                 </div>
+                ${librGuidance}
             `;
+
+            // Store methodology for validation
+            walletExplorerState.methodology = methodology;
+            walletExplorerState.walletBalance = walletCurrentBalance;
+            walletExplorerState.traceableAmount = traceableAmount;
 
             // Update ART status
             updateARTDisplay();
@@ -14931,20 +14997,119 @@ function exportRedWalletIndexCSV() {
             document.getElementById('walletExplorerARTRemaining').textContent = remaining.toLocaleString();
             document.getElementById('walletExplorerARTRemainingCurr').textContent = currency;
 
-            // Color remaining based on status
+            // Color remaining based on status and add methodology-aware suggestions
             const remainingContainer = document.getElementById('walletExplorerARTRemainingContainer');
+            const methodology = walletExplorerState.methodology || 'PIFO';
+            const isPIFO = methodology === 'PIFO';
+            const isLIBR = methodology === 'LIBR';
+
+            let smartSuggestion = '';
+
             if (remaining < -0.01) {
-                // Over-allocated - RED
+                // Over-allocated - RED (ERROR for both methods)
                 remainingContainer.querySelector('span').style.color = '#dc3545';
                 remainingContainer.style.borderLeft = '5px solid #dc3545';
+                smartSuggestion = `
+                    <div style="background: #f8d7da; border: 2px solid #dc3545; border-radius: 8px; padding: 10px; margin-top: 10px;">
+                        <div style="font-size: 12px; font-weight: bold; color: #721c24; margin-bottom: 5px;">⚠️ OVER-ALLOCATION ERROR</div>
+                        <div style="font-size: 11px; color: #721c24;">
+                            You've selected ${Math.abs(remaining).toLocaleString()} ${currency} more than available!<br>
+                            <strong>Remove some selections before committing.</strong>
+                        </div>
+                    </div>
+                `;
             } else if (Math.abs(remaining) < 0.01) {
                 // Perfect match - GREEN
                 remainingContainer.querySelector('span').style.color = '#4caf50';
                 remainingContainer.style.borderLeft = '5px solid #4caf50';
+
+                if (isPIFO) {
+                    smartSuggestion = `
+                        <div style="background: #d4edda; border: 2px solid #4caf50; border-radius: 8px; padding: 10px; margin-top: 10px;">
+                            <div style="font-size: 12px; font-weight: bold; color: #155724; margin-bottom: 5px;">✅ PIFO: Perfect Allocation</div>
+                            <div style="font-size: 11px; color: #155724;">
+                                All ${available.toLocaleString()} ${currency} allocated! Ready to commit.
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    smartSuggestion = `
+                        <div style="background: #d4edda; border: 2px solid #4caf50; border-radius: 8px; padding: 10px; margin-top: 10px;">
+                            <div style="font-size: 12px; font-weight: bold; color: #155724; margin-bottom: 5px;">✅ LIBR: Full Allocation</div>
+                            <div style="font-size: 11px; color: #155724;">
+                                All ${available.toLocaleString()} ${currency} allocated. Ready to commit if balance analysis confirms traceability.
+                            </div>
+                        </div>
+                    `;
+                }
             } else {
                 // Under-allocated - YELLOW/ORANGE
                 remainingContainer.querySelector('span').style.color = '#ff9800';
                 remainingContainer.style.borderLeft = '5px solid #ff9800';
+
+                if (isPIFO) {
+                    smartSuggestion = `
+                        <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 10px; margin-top: 10px;">
+                            <div style="font-size: 12px; font-weight: bold; color: #856404; margin-bottom: 5px;">⚠️ PIFO: Incomplete Allocation</div>
+                            <div style="font-size: 11px; color: #856404;">
+                                You have ${remaining.toLocaleString()} ${currency} remaining.<br>
+                                <strong>PIFO requires full allocation</strong> - select more transactions or write off the remainder.
+                            </div>
+                        </div>
+                    `;
+                } else if (isLIBR) {
+                    const walletBalance = walletExplorerState.walletBalance || 0;
+                    const traceableAmount = walletExplorerState.traceableAmount || 0;
+
+                    if (walletBalance >= available) {
+                        // Balance above traced amount - partial allocation OK
+                        smartSuggestion = `
+                            <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 10px; margin-top: 10px;">
+                                <div style="font-size: 12px; font-weight: bold; color: #1976d2; margin-bottom: 5px;">ℹ️ LIBR: Partial Allocation Acceptable</div>
+                                <div style="font-size: 11px; color: #1976d2;">
+                                    You have ${remaining.toLocaleString()} ${currency} unallocated.<br>
+                                    <strong>Wallet balance (${walletBalance.toLocaleString()} ${currency}) is still above traced amount.</strong><br>
+                                    Per LIBR, unallocated funds remain in wallet until balance drops further.
+                                </div>
+                            </div>
+                        `;
+                    } else if (traceableAmount > 0) {
+                        // Balance dropped - should trace more
+                        smartSuggestion = `
+                            <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 10px; margin-top: 10px;">
+                                <div style="font-size: 12px; font-weight: bold; color: #856404; margin-bottom: 5px;">💡 LIBR: More Tracing Recommended</div>
+                                <div style="font-size: 11px; color: #856404;">
+                                    Balance dropped below traced amount!<br>
+                                    <strong>${traceableAmount.toLocaleString()} ${currency} is traceable</strong> based on LIBR analysis.<br>
+                                    Current selection: ${totalSelected.toLocaleString()} ${currency} (${remaining.toLocaleString()} ${currency} remaining)
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        smartSuggestion = `
+                            <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 10px; margin-top: 10px;">
+                                <div style="font-size: 12px; font-weight: bold; color: #856404; margin-bottom: 5px;">ℹ️ LIBR: Partial Allocation</div>
+                                <div style="font-size: 11px; color: #856404;">
+                                    You have ${remaining.toLocaleString()} ${currency} remaining unallocated.
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            // Add suggestion to ART status area
+            const existingSuggestion = document.getElementById('walletExplorerARTSuggestion');
+            if (existingSuggestion) {
+                existingSuggestion.remove();
+            }
+
+            if (smartSuggestion) {
+                const artStatus = document.getElementById('walletExplorerARTStatus');
+                const suggestionDiv = document.createElement('div');
+                suggestionDiv.id = 'walletExplorerARTSuggestion';
+                suggestionDiv.innerHTML = smartSuggestion;
+                artStatus.parentNode.insertBefore(suggestionDiv, artStatus.nextSibling);
             }
 
             // Update selections list
@@ -15061,17 +15226,66 @@ function exportRedWalletIndexCSV() {
             }
 
             const remaining = available - totalSelected;
+            const methodology = walletExplorerState.methodology || 'PIFO';
+            const isPIFO = methodology === 'PIFO';
+            const isLIBR = methodology === 'LIBR';
 
-            // Show confirmation
-            const confirmMsg = `✅ COMMIT ART SELECTIONS\n\n` +
-                `Thread: ${sourceThreadId}\n` +
-                `Available: ${available.toLocaleString()} ${currency}\n\n` +
-                `Selections: ${selections.length} transaction(s)\n` +
-                `Total: ${totalSelected.toLocaleString()} ${currency}\n` +
-                `Remaining: ${remaining.toLocaleString()} ${currency}\n\n` +
-                `${remaining < -0.01 ? '⚠️ WARNING: OVER-ALLOCATED!\n\n' : ''}` +
-                `This will create ${selections.length} ${selections.length === 1 ? 'entry' : 'entries'}.\n\n` +
-                `Proceed?`;
+            // Methodology-specific validation
+            if (remaining < -0.01) {
+                // Over-allocation - BLOCK for both methods
+                alert(
+                    `❌ OVER-ALLOCATION ERROR\n\n` +
+                    `You've selected ${Math.abs(remaining).toLocaleString()} ${currency} more than available!\n\n` +
+                    `Available: ${available.toLocaleString()} ${currency}\n` +
+                    `Selected: ${totalSelected.toLocaleString()} ${currency}\n\n` +
+                    `Please remove some selections before committing.`
+                );
+                return;
+            }
+
+            if (isPIFO && remaining > 0.01) {
+                // PIFO requires full allocation - BLOCK
+                const proceed = confirm(
+                    `⚠️ PIFO: INCOMPLETE ALLOCATION\n\n` +
+                    `PIFO methodology requires full allocation of all funds.\n\n` +
+                    `Available: ${available.toLocaleString()} ${currency}\n` +
+                    `Selected: ${totalSelected.toLocaleString()} ${currency}\n` +
+                    `Remaining: ${remaining.toLocaleString()} ${currency}\n\n` +
+                    `You must either:\n` +
+                    `• Select more transactions to trace\n` +
+                    `• Write off the remaining ${remaining.toLocaleString()} ${currency}\n\n` +
+                    `Click OK to go back and adjust selections, or Cancel to force commit anyway (not recommended).`
+                );
+
+                if (proceed) {
+                    // User wants to go back and adjust
+                    return;
+                }
+                // User chose to force commit - continue with warning
+            }
+
+            // Build confirmation message
+            let confirmMsg = `✅ COMMIT ART SELECTIONS\n\n`;
+            confirmMsg += `Methodology: ${methodology}\n`;
+            confirmMsg += `Thread: ${sourceThreadId}\n`;
+            confirmMsg += `Available: ${available.toLocaleString()} ${currency}\n\n`;
+            confirmMsg += `Selections: ${selections.length} transaction(s)\n`;
+            confirmMsg += `Total: ${totalSelected.toLocaleString()} ${currency}\n`;
+            confirmMsg += `Remaining: ${remaining.toLocaleString()} ${currency}\n\n`;
+
+            if (isPIFO && Math.abs(remaining) < 0.01) {
+                confirmMsg += `✅ PIFO: Perfect allocation - all funds accounted for!\n\n`;
+            } else if (isLIBR && remaining > 0.01) {
+                const walletBalance = walletExplorerState.walletBalance || 0;
+                if (walletBalance >= available) {
+                    confirmMsg += `ℹ️ LIBR: Partial allocation acceptable - wallet balance (${walletBalance.toLocaleString()} ${currency}) above traced amount.\n\n`;
+                } else {
+                    confirmMsg += `💡 LIBR: ${remaining.toLocaleString()} ${currency} remains untraced.\n\n`;
+                }
+            }
+
+            confirmMsg += `This will create ${selections.length} ${selections.length === 1 ? 'entry' : 'entries'}.\n\n`;
+            confirmMsg += `Proceed?`;
 
             if (!confirm(confirmMsg)) {
                 return;
