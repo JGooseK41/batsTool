@@ -5,116 +5,21 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-26 22:59)
 
-**Commit:** 46d2a54c481273d9cd608c037dd17bcd2903e659
+**Commit:** 0a09335bc6ff572aed1e605651293e78565acc32
 **Author:** Your Name
-**Message:** Implement bulk multi-select for hop entries with over-allocation prevention
-
-Investigators can now select multiple transactions and bulk add them as hop entries with automatic validation.
-
-**New Functionality:**
-
-1. **Multi-Transaction Selection:**
-   - Select multiple outbound transactions using checkboxes
-   - Click "ADD ALL SELECTED TO INVESTIGATION" in green banner
-   - Creates one hop entry per selected transaction
-
-2. **Automatic Allocation Math:**
-   - Calculates total amount across all selected transactions
-   - Validates against available thread amount
-   - Shows allocation percentage and remaining amount
-   - Example: 10 BTC available, select 3 transactions (2+3+4 = 9 BTC)
-     * Allocation: 9 BTC (90%)
-     * Remaining: 1 BTC
-
-3. **Over-Allocation Prevention:**
-   - Detects when total exceeds available amount
-   - Shows detailed warning dialog:
-     * Thread ID
-     * Available amount
-     * Total selected
-     * Over-allocation amount
-   - Allows user to cancel and adjust selection
-   - Can proceed with warning acknowledgment
-
-4. **Currency Validation:**
-   - Ensures all selected transactions are same currency
-   - Prevents mixing BTC, ETH, etc. in same bulk add
-   - Clear error message if mixed currencies detected
-
-5. **Bulk Entry Creation:**
-   - Creates separate hop entry for each transaction
-   - All entries linked to same source thread (if applicable)
-   - Proper transaction hash, wallets, timestamps captured
-   - Detailed notes for audit trail
-   - Automatically sorted chronologically
-
-6. **Confirmation & Results:**
-   - Shows preview before creating entries:
-     * Number of entries to create
-     * Total amount
-     * Thread ID
-     * Hop number
-   - Success message shows entries created
-   - Error handling for partial failures
-   - Auto-scrolls to hop after creation
-
-**Example Workflow:**
-
-Thread V1-T1 has 10 BTC available
-
-Investigator selects 3 outbound transactions:
-- TX1: 2 BTC to wallet A
-- TX2: 3 BTC to wallet B
-- TX3: 4 BTC to wallet C
-
-System validates:
-✅ Total: 9 BTC < 10 BTC available
-✅ All same currency (BTC)
-✅ Allocation: 90%
-✅ Remaining: 1 BTC
-
-Result:
-- 3 hop entries created
-- Each linked to V1-T1 source thread
-- All properly documented
-- ART accounting correct
-
-**Over-Allocation Example:**
-
-Thread V1-T1 has 10 BTC available
-
-Investigator selects 4 transactions totaling 12 BTC
-
-System shows warning:
-⚠️ OVER-ALLOCATION WARNING
-Available: 10 BTC
-Total selected: 12 BTC
-Over by: 2 BTC
-
-User can cancel and deselect transactions or proceed with acknowledgment.
-
-**Benefits:**
-✅ Faster bulk entry creation
-✅ Automatic math validation
-✅ Prevents allocation errors
-✅ Clear warnings before mistakes
-✅ Maintains full audit trail
-✅ Chronological sorting
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with bulk select documentation
 
 ### Changed Files:
 ```
- index.html | 157 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 155 insertions(+), 2 deletions(-)
+ CLAUDE.md | 126 ++++++++++++++++++++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 111 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 46d2a54 Implement bulk multi-select for hop entries with over-allocation prevention (0 seconds ago)
-- 940a77b Sync CLAUDE.md (3 minutes ago)
+- 0a09335 Update CLAUDE.md with bulk select documentation (0 seconds ago)
+- 46d2a54 Implement bulk multi-select for hop entries with over-allocation prevention (4 seconds ago)
+- 940a77b Sync CLAUDE.md (4 minutes ago)
 - 7c87616 Update CLAUDE.md (4 minutes ago)
 - b198a8e Final CLAUDE.md update (4 minutes ago)
 - 76aab97 Update CLAUDE.md (4 minutes ago)
@@ -122,7 +27,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - d11ed6b Add Write Off functionality to Wallet Explorer with full documentation (4 minutes ago)
 - f1a146f Update CLAUDE.md (14 minutes ago)
 - 5cf7640 Final CLAUDE.md update (14 minutes ago)
-- 501e6fc Update CLAUDE.md (14 minutes ago)
 
 ## Key Features
 
