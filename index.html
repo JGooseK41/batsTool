@@ -14799,6 +14799,8 @@ function exportRedWalletIndexCSV() {
                     assets[asset] = {
                         name: asset,
                         balance: 0,
+                        totalIn: 0,
+                        totalOut: 0,
                         txCount: 0,
                         transactions: []
                     };
@@ -14807,11 +14809,13 @@ function exportRedWalletIndexCSV() {
                 assets[asset].txCount++;
                 assets[asset].transactions.push(tx);
 
-                // Calculate balance (will be refined when asset is selected)
+                // Calculate balance and totals
                 if (tx.type === 'IN') {
                     assets[asset].balance += tx.amount;
+                    assets[asset].totalIn += tx.amount;
                 } else if (tx.type === 'OUT') {
                     assets[asset].balance -= tx.amount;
+                    assets[asset].totalOut += tx.amount;
                 }
 
                 // Debug ETH transactions
@@ -14960,9 +14964,18 @@ function exportRedWalletIndexCSV() {
 Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small positive amount, the negative balance here indicates more tokens were sent than received on-chain.">ℹ️</span>
                 ` : '';
 
+                const totalVolume = asset.totalIn + asset.totalOut;
+
                 card.innerHTML = `
                     <h4>${asset.name}${badge}${scamBadge}</h4>
-                    <div class="asset-balance">${asset.balance.toFixed(6)}${negativeBalanceInfo}</div>
+                    <div style="margin: 8px 0;">
+                        <div style="font-size: 0.75rem; color: rgba(255,255,255,0.8); text-transform: uppercase; margin-bottom: 2px;">Current Balance</div>
+                        <div class="asset-balance">${asset.balance.toFixed(6)}${negativeBalanceInfo}</div>
+                    </div>
+                    <div style="margin: 8px 0; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2);">
+                        <div style="font-size: 0.75rem; color: rgba(255,255,255,0.8); text-transform: uppercase; margin-bottom: 2px;">Total Volume</div>
+                        <div style="font-size: 1rem; font-weight: 600;">${totalVolume.toFixed(6)}</div>
+                    </div>
                     <div class="asset-tx-count">${asset.txCount} transaction${asset.txCount > 1 ? 's' : ''}</div>
                 `;
 
@@ -14981,7 +14994,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     const option = document.createElement('option');
                     option.value = asset.name;
                     const verifiedLabel = isVerified ? ' ✓' : '';
-                    option.textContent = `${asset.name}${verifiedLabel} (${asset.txCount} txs, Balance: ${asset.balance.toFixed(6)})`;
+                    const totalVol = asset.totalIn + asset.totalOut;
+                    option.textContent = `${asset.name}${verifiedLabel} (${asset.txCount} txs, Bal: ${asset.balance.toFixed(4)}, Vol: ${totalVol.toFixed(4)})`;
                     assetSelector.appendChild(option);
                 }
             });

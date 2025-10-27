@@ -3,79 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 19:04)
+## Latest Commit (Auto-updated: 2025-10-27 19:05)
 
-**Commit:** 9b04c735da60f80a6a0c4f793a214fff7642374e
+**Commit:** a1e179551acd3fc96b95d3e7f77f200aaf148e1a
 **Author:** Your Name
-**Message:** Remove redundant Quick Trace button from Available Threads modal
-
-🗑️ CLEANUP: Remove duplicate Quick Trace button
-
-USER REQUEST: "get rid of it"
-
-ISSUE: Quick Trace button was redundant
-- Did the exact same thing as Wallet Explorer button
-- Confusing to have two buttons with same functionality
-- New entry confirmation modal already makes workflow fast
-
-CHANGES:
-
-1. Removed Quick Trace Button (lines 22376-22399):
-   ❌ Removed: "⚡ Quick Trace" button
-   ✅ Kept: "🔍 View & Trace" button (renamed from "Wallet Explorer")
-   ✅ Kept: "❌ Write Off" button
-   ✅ Kept: "❄️ Cold Storage" button
-
-2. Simplified Button Layout:
-   Before:
-   - ⚡ Quick Trace (only if not fully assigned)
-   - ❌ Write Off (only if not fully assigned)
-   - ❄️ Cold Storage (only if not fully assigned)
-   - 🔍 Wallet Explorer (always visible)
-
-   After:
-   - 🔍 View & Trace (always visible - primary action)
-   - ❌ Write Off (only if not fully assigned)
-   - ❄️ Cold Storage (only if not fully assigned)
-
-3. Renamed Button:
-   "🔍 Wallet Explorer" → "🔍 View & Trace"
-   - Clearer what the button does
-   - Emphasizes that you can trace from the wallet explorer
-   - Updated tooltip: "Open Wallet Explorer to view and trace transactions"
-
-4. Removed Function (line 22430):
-   - quickTraceThread() function removed
-   - Left comment for code archaeology
-
-BENEFITS:
-✅ Less confusing - one clear action button
-✅ Cleaner UI - fewer buttons in the list
-✅ Primary action always visible (even for fully assigned threads)
-✅ Better button naming - "View & Trace" is more descriptive
-
-WORKFLOW NOW:
-1. Open Available Threads modal
-2. Click "🔍 View & Trace" for any thread
-3. Wallet explorer opens
-4. Click "Add to Investigation" on any transaction
-5. Entry confirmation modal appears
-6. Create entry and choose to stay or return
-
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Auto-sync CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md  | 94 ++++++++++++++++++++++++++++++++++----------------------------
- index.html | 32 +++++----------------
- 2 files changed, 58 insertions(+), 68 deletions(-)
+ CLAUDE.md | 138 +++++++++++++++++++++++++++++++-------------------------------
+ 1 file changed, 69 insertions(+), 69 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (0 seconds ago)
+- a1e1795 Auto-sync CLAUDE.md (0 seconds ago)
+- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (60 seconds ago)
 - 0f487ff Fix: Wallet Explorer now works with finalized hop notation (2 hours ago)
 - 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (2 hours ago)
 - dc1b7bc Auto-sync CLAUDE.md (8 hours ago)
@@ -84,7 +27,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - ad37883 Feature: Add info icon with tooltip explaining negative token balances (9 hours ago)
 - d2aa686 Fix: Improve ETH variant filtering to catch Unicode characters (EꓔH) (9 hours ago)
 - 1489539 Fix: Exclude native currency (ETH) from token API to prevent double-counting - CRITICAL BUG #3 (9 hours ago)
-- 25d0eef Auto-sync CLAUDE.md (9 hours ago)
 
 ## Key Features
 
