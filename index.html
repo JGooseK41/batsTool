@@ -17200,6 +17200,17 @@ function exportRedWalletIndexCSV() {
                 const decimals = parseInt(tx.tokenDecimal) || 18;
                 const amount = parseFloat(tx.value) / Math.pow(10, decimals);
                 const asset = tx.tokenSymbol || tx.tokenName || 'Token';
+
+                // BUG FIX: Skip ETH from token API - it's already in normal transactions
+                // Token API returns contract calls that moved ETH, but these are duplicates of normal txs
+                const nativeCurrency = config.nativeCurrency || 'ETH';
+                if (asset.toUpperCase() === nativeCurrency.toUpperCase() ||
+                    asset.includes('ETH') ||
+                    asset.includes('Ξ')) {
+                    console.log(`Skipped ETH from token API: ${tx.hash.substring(0, 10)}... (already in normal txs)`);
+                    return; // Skip this transaction
+                }
+
                 const key = `${tx.hash}-${asset}`;
 
                 // BUG FIX: Deduplicate token transactions
