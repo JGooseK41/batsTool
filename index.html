@@ -14647,19 +14647,19 @@ function exportRedWalletIndexCSV() {
             }
 
             const apiKey = window.apiKeys?.etherscan || config.apiKey || '3X65ZBIMYIGFZEV6B3D2YWWXUJD1DWAKP8';
+            const chainId = config.chainId || 1;
 
-            // Extract base URL properly (e.g., https://api.etherscan.io)
-            const urlObj = new URL(config.apiUrl);
-            const baseUrl = `${urlObj.protocol}//${urlObj.host}`;
+            // Use Etherscan API V2 format (same as rest of app)
+            const baseUrl = 'https://api.etherscan.io/v2/api';
 
-            // Get normal transactions
-            const normalTxUrl = `${baseUrl}/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
+            // Get normal transactions using V2 API
+            const normalTxUrl = `${baseUrl}?chainid=${chainId}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
             console.log('Fetching normal transactions:', normalTxUrl);
 
             const normalResponse = await fetch(normalTxUrl);
             const normalData = await normalResponse.json();
 
-            console.log('Etherscan normal tx response:', normalData);
+            console.log('Etherscan V2 normal tx response:', normalData);
 
             if (normalData.status !== '1') {
                 console.warn('No normal transactions found. Status:', normalData.status, 'Message:', normalData.message, 'Result:', normalData.result);
@@ -14667,14 +14667,14 @@ function exportRedWalletIndexCSV() {
 
             const normalTxs = normalData.result && Array.isArray(normalData.result) ? normalData.result : [];
 
-            // Get ERC-20 token transfers
-            const tokenTxUrl = `${baseUrl}/api?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
+            // Get ERC-20 token transfers using V2 API
+            const tokenTxUrl = `${baseUrl}?chainid=${chainId}&module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
             console.log('Fetching token transactions:', tokenTxUrl);
 
             const tokenResponse = await fetch(tokenTxUrl);
             const tokenData = await tokenResponse.json();
 
-            console.log('Etherscan token tx response:', tokenData);
+            console.log('Etherscan V2 token tx response:', tokenData);
 
             if (tokenData.status !== '1') {
                 console.warn('No token transactions found. Status:', tokenData.status, 'Message:', tokenData.message, 'Result:', tokenData.result);
