@@ -14746,6 +14746,8 @@ function exportRedWalletIndexCSV() {
         function aggregateAssets(transactions) {
             const assets = {};
 
+            console.log(`🔍 AGGREGATING ${transactions.length} transactions by asset...`);
+
             transactions.forEach(tx => {
                 const asset = tx.asset || 'Unknown';
 
@@ -14767,6 +14769,16 @@ function exportRedWalletIndexCSV() {
                 } else if (tx.type === 'OUT') {
                     assets[asset].balance -= tx.amount;
                 }
+
+                // Debug ETH transactions
+                if (asset === 'ETH') {
+                    console.log(`ETH tx: ${tx.type} ${tx.amount.toFixed(8)} ETH | Running balance: ${assets[asset].balance.toFixed(8)} | Internal: ${tx.isInternal || false}`);
+                }
+            });
+
+            console.log('📊 Asset aggregation complete:');
+            Object.keys(assets).forEach(asset => {
+                console.log(`  ${asset}: ${assets[asset].balance.toFixed(6)} (${assets[asset].txCount} transactions)`);
             });
 
             // Filter out assets with 0 balance
@@ -17188,12 +17200,16 @@ function exportRedWalletIndexCSV() {
             });
 
             // Process INTERNAL transactions (critical for accurate ETH balance!)
+            console.log(`Processing ${internalTxs.length} internal transactions...`);
             internalTxs.forEach(tx => {
                 const isIncoming = tx.to && tx.to.toLowerCase() === address.toLowerCase();
                 const amount = parseFloat(tx.value) / 1e18; // Wei to ETH
 
+                console.log(`Internal TX: ${tx.hash} | Amount: ${amount} ETH | Direction: ${isIncoming ? 'IN' : 'OUT'} | isError: ${tx.isError}`);
+
                 // Only include if amount > 0 (filter out failed internal txs)
                 if (amount > 0 && !tx.isError && tx.isError !== '1') {
+                    console.log(`✅ ADDED internal tx to allTransactions: ${amount} ETH ${isIncoming ? 'IN' : 'OUT'}`);
                     allTransactions.push({
                         hash: tx.hash,
                         timestamp: parseInt(tx.timeStamp) * 1000,
@@ -17205,6 +17221,8 @@ function exportRedWalletIndexCSV() {
                         explorerUrl: `${config.explorerUrl || 'https://etherscan.io'}/tx/${tx.hash}`,
                         isInternal: true  // Flag for debugging
                     });
+                } else {
+                    console.log(`❌ SKIPPED internal tx: amount=${amount}, isError=${tx.isError}`);
                 }
             });
 
