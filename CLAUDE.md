@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-26 20:38)
 
-**Commit:** ce42d38330b6af6ebdaceece993a3192e88f55a0
+**Commit:** e06cdff96f352e20be7d7e98e93f7fb52b6281db
 **Author:** Your Name
-**Message:** Final CLAUDE.md auto-update sync
+**Message:** Sync CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ CLAUDE.md | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ce42d38 Final CLAUDE.md auto-update sync (0 seconds ago)
-- 76b75c3 Auto-update CLAUDE.md timestamp (10 seconds ago)
-- c3927ec Update CLAUDE.md with Wallet Explorer completion documentation (21 seconds ago)
+- e06cdff Sync CLAUDE.md (0 seconds ago)
+- ce42d38 Final CLAUDE.md auto-update sync (13 seconds ago)
+- 76b75c3 Auto-update CLAUDE.md timestamp (23 seconds ago)
+- c3927ec Update CLAUDE.md with Wallet Explorer completion documentation (34 seconds ago)
 - a824817 WALLET EXPLORER Phase 3: Inline wizard integration complete (3 minutes ago)
 - 473b65d WALLET EXPLORER Phase 2: Bitcoin, Tron, and Solana support (28 minutes ago)
-- 05dc805 WALLET EXPLORER Phase 1: Complete foundation with Ethereum support (31 minutes ago)
+- 05dc805 WALLET EXPLORER Phase 1: Complete foundation with Ethereum support (32 minutes ago)
 - c4d28d0 Fix Sui transaction parsing - use ProgrammableTransaction structure (71 minutes ago)
 - b2b1769 Enhanced Sui debug logging to show full JSON structure (74 minutes ago)
 - 9158b87 Add debug logging for Sui transaction parsing (76 minutes ago)
-- a14b41e CRITICAL FIX: Update netlify.toml CSP to include Sui and bridge endpoints (79 minutes ago)
 
 ## Key Features
 
