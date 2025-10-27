@@ -2750,22 +2750,43 @@
             <div id="walletExplorerTransactions" style="display: none;">
                 <!-- Filter Section -->
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">From Date:</label>
-                            <input type="date" id="walletExplorerDateFrom" onchange="filterWalletTransactions()"
-                                   style="width: 100%; padding: 8px; border: 2px solid #e1e8ed; border-radius: 6px;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <!-- Date Filters -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 500;">From Date:</label>
+                                <input type="date" id="walletExplorerDateFrom" onchange="filterWalletTransactions()"
+                                       style="width: 100%; padding: 8px; border: 2px solid #e1e8ed; border-radius: 6px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 500;">To Date:</label>
+                                <input type="date" id="walletExplorerDateTo" onchange="filterWalletTransactions()"
+                                       style="width: 100%; padding: 8px; border: 2px solid #e1e8ed; border-radius: 6px;">
+                            </div>
                         </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">To Date:</label>
-                            <input type="date" id="walletExplorerDateTo" onchange="filterWalletTransactions()"
-                                   style="width: 100%; padding: 8px; border: 2px solid #e1e8ed; border-radius: 6px;">
+
+                        <!-- Amount Filters -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Min Amount:</label>
+                                <input type="number" id="walletExplorerAmountMin" placeholder="0.00" step="any" min="0"
+                                       onchange="filterWalletTransactions()"
+                                       style="width: 100%; padding: 8px; border: 2px solid #e1e8ed; border-radius: 6px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Max Amount:</label>
+                                <input type="number" id="walletExplorerAmountMax" placeholder="Any" step="any" min="0"
+                                       onchange="filterWalletTransactions()"
+                                       style="width: 100%; padding: 8px; border: 2px solid #e1e8ed; border-radius: 6px;">
+                            </div>
                         </div>
-                        <div>
-                            <button class="btn btn-secondary" onclick="clearDateFilter()" style="padding: 8px 16px;">
-                                Clear Dates
-                            </button>
-                        </div>
+                    </div>
+
+                    <!-- Clear Filters Button -->
+                    <div style="margin-top: 12px; text-align: right;">
+                        <button class="btn btn-secondary" onclick="clearAllFilters()" style="padding: 8px 20px;">
+                            🔄 Clear All Filters
+                        </button>
                     </div>
                 </div>
 
@@ -14659,16 +14680,19 @@ function exportRedWalletIndexCSV() {
             }
         }
 
-        // Filter transactions by date range
+        // Filter transactions by date range and amount
         function filterWalletTransactions() {
             const fromDate = document.getElementById('walletExplorerDateFrom').value;
             const toDate = document.getElementById('walletExplorerDateTo').value;
+            const minAmount = document.getElementById('walletExplorerAmountMin').value;
+            const maxAmount = document.getElementById('walletExplorerAmountMax').value;
 
             if (!walletExplorerState.selectedAsset) return;
 
             const asset = walletExplorerState.assets[walletExplorerState.selectedAsset];
             let transactions = [...asset.transactions];
 
+            // Apply date filters
             if (fromDate) {
                 const fromTimestamp = new Date(fromDate).getTime();
                 transactions = transactions.filter(tx => tx.timestamp >= fromTimestamp);
@@ -14677,6 +14701,21 @@ function exportRedWalletIndexCSV() {
             if (toDate) {
                 const toTimestamp = new Date(toDate).getTime() + 86400000; // Add 1 day
                 transactions = transactions.filter(tx => tx.timestamp < toTimestamp);
+            }
+
+            // Apply amount filters
+            if (minAmount !== '' && minAmount !== null) {
+                const min = parseFloat(minAmount);
+                if (!isNaN(min)) {
+                    transactions = transactions.filter(tx => tx.amount >= min);
+                }
+            }
+
+            if (maxAmount !== '' && maxAmount !== null) {
+                const max = parseFloat(maxAmount);
+                if (!isNaN(max)) {
+                    transactions = transactions.filter(tx => tx.amount <= max);
+                }
             }
 
             // Sort newest first
@@ -14688,11 +14727,18 @@ function exportRedWalletIndexCSV() {
             renderTransactionTable();
         }
 
-        // Clear date filter
-        function clearDateFilter() {
+        // Clear all filters
+        function clearAllFilters() {
             document.getElementById('walletExplorerDateFrom').value = '';
             document.getElementById('walletExplorerDateTo').value = '';
+            document.getElementById('walletExplorerAmountMin').value = '';
+            document.getElementById('walletExplorerAmountMax').value = '';
             filterWalletTransactions();
+        }
+
+        // Clear date filter (backwards compatibility)
+        function clearDateFilter() {
+            clearAllFilters();
         }
 
         // Get context-aware button label
