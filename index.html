@@ -14900,9 +14900,25 @@ function exportRedWalletIndexCSV() {
                 const badge = isVerified ? '<span style="background: #ffc107; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-left: 8px;">✓ VERIFIED</span>' : '';
                 const scamBadge = isScam ? '<span style="background: #fff; color: #dc3545; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-left: 8px;">⚠️ SCAM</span>' : '';
 
+                // Add info icon for negative balances
+                const negativeBalanceInfo = asset.balance < 0 ? `
+                    <span style="cursor: help; margin-left: 8px; font-size: 0.9rem;"
+                          title="Negative Balance Explanation:
+
+• DEX Swaps: You may have sold this token for another asset (e.g., swapped LINK for ETH). The outgoing transaction is recorded, but the incoming asset appears elsewhere.
+
+• Off-Chain Purchases: If you bought this token on a centralized exchange (Coinbase, Binance) and transferred it out, the on-chain record only shows the withdrawal, not the purchase.
+
+• API Limitations: Some contract interactions or internal transfers may not be fully captured by blockchain APIs.
+
+• Mixed Sources: You may have acquired this token through methods not visible on-chain (airdrops, off-chain swaps, CEX transfers).
+
+Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small positive amount, the negative balance here indicates more tokens were sent than received on-chain.">ℹ️</span>
+                ` : '';
+
                 card.innerHTML = `
                     <h4>${asset.name}${badge}${scamBadge}</h4>
-                    <div class="asset-balance">${asset.balance.toFixed(6)}</div>
+                    <div class="asset-balance">${asset.balance.toFixed(6)}${negativeBalanceInfo}</div>
                     <div class="asset-tx-count">${asset.txCount} transaction${asset.txCount > 1 ? 's' : ''}</div>
                 `;
 
