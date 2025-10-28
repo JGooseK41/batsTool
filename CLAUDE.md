@@ -3,77 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 17:29)
+## Latest Commit (Auto-updated: 2025-10-28 17:33)
 
-**Commit:** 108adc3f1e492360a666da74ad8c1f461a049468
+**Commit:** 973fd58429e825bb2a7e50bbeac07bff8c979f7d
 **Author:** Your Name
-**Message:** 🎉 IMPLEMENTATION PLAN COMPLETE - All 8 Phases Finished
-
-SUMMARY OF ALL CHANGES:
-
-✅ Phase 1: Thread Management & Allocation
-   1.2 Change address handling (de0f793)
-       - Same-address change no longer creates entries
-       - Funds stay in source thread automatically
-
-   1.3 Allocation validation (3e6a044)
-       - Hard block on over-allocation
-       - Partial trace option with proportional reduction
-
-✅ Phase 2: Notation & Display (Already Correct)
-   2.1 Commingling notation
-       - Verified parentheses format: (V1-T1) (V2-T1) H2
-       - Notation preserved through swaps
-
-   2.2 Thread review modal
-       - Verified not auto-triggering (already optional)
-
-✅ Phase 3: Validation & Constraints
-   3.1 Victim completion workflow (e7fc75c)
-       - Enforced sequential completion before adding new victim
-       - Warning message with disabled button
-
-   3.2 Write-off behavior (Already Correct)
-       - Verified applied on hop close only
-       - Tracked separately in totals
-
-✅ Phase 4: Transaction Handling
-   4.1 ERC-20/gas fee handling (9ef10ed)
-       - Clarified gas fees never tracked as outputs
-       - Enhanced logging for token-only vs mixed transactions
-
-   4.2 Manual entry flexibility (3c70353)
-       - txHash now optional in manual mode
-       - Supports CEX/off-chain transfers
-
-CODE CHANGES: 4 commits with fixes
-VERIFICATIONS: 4 features confirmed correct
-TOTAL: 8/8 phases complete
-
-All core behavior fixes from the implementation plan are now in place.
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 59 +++++++++++++++++++++++++++++++++++++++++++++--------------
- 1 file changed, 45 insertions(+), 14 deletions(-)
+ CLAUDE.md | 78 ++++++++++++++++++++++++++++++++++++++-------------------------
+ 1 file changed, 47 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 108adc3 🎉 IMPLEMENTATION PLAN COMPLETE - All 8 Phases Finished (0 seconds ago)
-- 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (16 seconds ago)
-- 9ef10ed Fix: Clarify ERC-20/gas fee handling - gas never tracked as output (2 minutes ago)
-- e7fc75c Fix: Enforce victim completion workflow before adding new victims (8 minutes ago)
-- 60e020a Summary: Implementation Plan Progress - Phases 1-3 Complete (19 minutes ago)
-- 1b43c79 Update CLAUDE.md with latest commit info (20 minutes ago)
-- 3e6a044 Fix: Enforce hard allocation validation with partial trace option (22 minutes ago)
-- de0f793 Fix: Correct change address handling - same-address change stays in thread (24 minutes ago)
-- c6d49cf Update CLAUDE.md with latest commit info (41 minutes ago)
-- d1973e3 Refactor: Migrate thread index from currency-keyed to flat provenance-based structure (41 minutes ago)
+- 973fd58 Update CLAUDE.md with latest commit info (1 second ago)
+- 108adc3 🎉 IMPLEMENTATION PLAN COMPLETE - All 8 Phases Finished (4 minutes ago)
+- 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (4 minutes ago)
+- 9ef10ed Fix: Clarify ERC-20/gas fee handling - gas never tracked as output (6 minutes ago)
+- e7fc75c Fix: Enforce victim completion workflow before adding new victims (12 minutes ago)
+- 60e020a Summary: Implementation Plan Progress - Phases 1-3 Complete (23 minutes ago)
+- 1b43c79 Update CLAUDE.md with latest commit info (24 minutes ago)
+- 3e6a044 Fix: Enforce hard allocation validation with partial trace option (26 minutes ago)
+- de0f793 Fix: Correct change address handling - same-address change stays in thread (28 minutes ago)
+- c6d49cf Update CLAUDE.md with latest commit info (44 minutes ago)
 
 ## Key Features
 
