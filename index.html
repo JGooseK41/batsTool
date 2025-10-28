@@ -10006,46 +10006,65 @@ function generateInternalThreadId(notation, currency, forceUnique = false) {
 function isLegacyThreadSystem() {
     if (!investigation.availableThreads) return false;
 
-    // Check if any thread lacks internalId - indicates legacy system
-    for (const currency in investigation.availableThreads) {
-        for (const key in investigation.availableThreads[currency]) {
-            const thread = investigation.availableThreads[currency][key];
-            if (!thread.internalId) return true;
-        }
+    // FLAT STRUCTURE: Check if we're already using flat provenance-based structure
+    // If first entry is a thread object (not a currency container), we're already flat
+    const firstKey = Object.keys(investigation.availableThreads)[0];
+    if (!firstKey) return false;
+
+    const firstEntry = investigation.availableThreads[firstKey];
+
+    // If first entry has thread properties, it's flat structure (already migrated)
+    if (firstEntry && firstEntry.internalId && firstEntry.currency) {
+        return false; // Already using new flat structure
     }
+
+    // If first entry is an object without thread properties, might be currency container (legacy)
+    // Check if it contains nested threads
+    if (firstEntry && typeof firstEntry === 'object' && !firstEntry.internalId) {
+        // This looks like currency container - legacy structure
+        return true;
+    }
+
     return false;
 }
 
-// Migrate from legacy notation-based system to dual-layer system
+// Migrate from legacy notation-based system to flat structure
 function migrateThreadsToDualLayer() {
     if (!isLegacyThreadSystem()) {
-        console.log('Already using dual-layer system');
+        console.log('✅ Already using flat provenance-based structure');
         return;
     }
 
-    console.log('Migrating to dual-layer thread system...');
+    console.log('⚠️ Migrating from legacy nested structure to flat provenance-based structure...');
     const newThreads = {};
 
-    // Migrate existing threads
+    // Migrate existing threads from nested (currency → threads) to flat (internalId → thread)
     for (const currency in investigation.availableThreads) {
-        newThreads[currency] = {};
+        const currencyThreads = investigation.availableThreads[currency];
+        if (!currencyThreads || typeof currencyThreads !== 'object') continue;
 
-        for (const notation in investigation.availableThreads[currency]) {
-            const thread = investigation.availableThreads[currency][notation];
+        for (const notation in currencyThreads) {
+            const thread = currencyThreads[notation];
+            if (!thread) continue; // Skip null threads
 
             // Generate internal ID if missing
             if (!thread.internalId) {
                 thread.internalId = generateInternalThreadId(notation, currency);
+            }
+            if (!thread.notation) {
                 thread.notation = notation;
             }
+            if (!thread.currency) {
+                thread.currency = currency;
+            }
 
-            // Re-index by internal ID
-            newThreads[currency][thread.internalId] = thread;
+            // FLAT STRUCTURE: Index by internal ID at root level
+            newThreads[thread.internalId] = thread;
         }
     }
 
     investigation.availableThreads = newThreads;
-    console.log('Thread migration complete');
+    console.log(`✅ Migration complete: ${Object.keys(newThreads).length} threads migrated to flat structure`);
 }
 
 // Consolidate duplicate threads with the same notation
@@ -10055,54 +10074,58 @@ function consolidateDuplicateThreads() {
     console.log('Consolidating duplicate threads...');
     let duplicatesFound = 0;
 
-    for (const currency in investigation.availableThreads) {
-        const threads = investigation.availableThreads[currency];
-        const threadsByNotation = {};
-        const threadsToDelete = [];
+    // FLAT STRUCTURE: Group all threads by notation+currency combo
+    const threadsByNotation = {};
+    const threadsToDelete = [];
 
-        // Group threads by notation
-        for (const threadId in threads) {
-            const thread = threads[threadId];
-            if (!thread.notation) continue;
+    // Group threads by notation
+    for (const threadId in investigation.availableThreads) {
+        const thread = investigation.availableThreads[threadId];
+        if (!thread || !thread.notation) continue;
 
-            if (!threadsByNotation[thread.notation]) {
-                threadsByNotation[thread.notation] = [];
-            }
-            threadsByNotation[thread.notation].push({ id: threadId, thread });
+        // Use notation+currency as key to handle same notation in different currencies
+        const key = `${thread.notation}_${thread.currency}`;
+
+        if (!threadsByNotation[key]) {
+            threadsByNotation[key] = [];
         }
+        threadsByNotation[key].push({ id: threadId, thread });
+    }
 
-        // Consolidate duplicates
-        for (const notation in threadsByNotation) {
-            const duplicates = threadsByNotation[notation];
-            if (duplicates.length > 1) {
-                console.log(`Found ${duplicates.length} threads with notation ${notation} in ${currency}`);
-                duplicatesFound += duplicates.length - 1;
+    // Consolidate duplicates
+    for (const key in threadsByNotation) {
+        const duplicates = threadsByNotation[key];
+        if (duplicates.length > 1) {
+            const firstThread = duplicates[0].thread;
+            console.log(`Found ${duplicates.length} threads with notation ${firstThread.notation} in ${firstThread.currency}`);
+            duplicatesFound += duplicates.length - 1;
 
-                // Keep the thread with highest amount or most recent
-                let keepThread = duplicates[0];
-                for (let i = 1; i < duplicates.length; i++) {
-                    if (duplicates[i].thread.totalAmount > keepThread.thread.totalAmount) {
-                        threadsToDelete.push(keepThread.id);
-                        keepThread = duplicates[i];
-                    } else {
-                        threadsToDelete.push(duplicates[i].id);
-                    }
-                }
-
-                // Update the kept thread to use deterministic ID
-                const deterministicId = generateInternalThreadId(notation, currency, false);
-                if (keepThread.id !== deterministicId) {
-                    threads[deterministicId] = keepThread.thread;
-                    keepThread.thread.internalId = deterministicId;
+            // Keep the thread with highest amount or most recent
+            let keepThread = duplicates[0];
+            for (let i = 1; i < duplicates.length; i++) {
+                if (duplicates[i].thread.totalAmount > keepThread.thread.totalAmount) {
                     threadsToDelete.push(keepThread.id);
+                    keepThread = duplicates[i];
+                } else {
+                    threadsToDelete.push(duplicates[i].id);
                 }
             }
-        }
 
-        // Delete duplicate threads
-        for (const threadId of threadsToDelete) {
-            delete threads[threadId];
+            // Update the kept thread to use deterministic ID
+            const notation = firstThread.notation;
+            const currency = firstThread.currency;
+            const deterministicId = generateInternalThreadId(notation, currency, false);
+            if (keepThread.id !== deterministicId) {
+                investigation.availableThreads[deterministicId] = keepThread.thread;
+                keepThread.thread.internalId = deterministicId;
+                threadsToDelete.push(keepThread.id);
+            }
         }
+    }
+
+    // FLAT STRUCTURE: Delete duplicate threads from root level
+    for (const threadId of threadsToDelete) {
+        delete investigation.availableThreads[threadId];
     }
 
     if (duplicatesFound > 0) {
