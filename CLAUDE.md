@@ -3,44 +3,43 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 13:55)
+## Latest Commit (Auto-updated: 2025-10-28 14:08)
 
-**Commit:** ef2f2772f299fff41d0820a638a17a5c3c7c4b7d
+**Commit:** 0379f66d255cf8bab7f83960816921d63b1609ca
 **Author:** Your Name
-**Message:** Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity
+**Message:** Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer
 
-- Add chain name mapping (TRON → tron, ETH → ethereum, etc.) to ensure bridge API chain names correctly map to blockchainAPIs keys
-- Add detailed logging at every step of bridge output process:
-  * Bridge API response and chain mapping
-  * Auto-fill data preparation and dropdown verification
-  * Form values when user submits
-  * Chain validation before thread creation
-  * Thread creation parameters
-  * Final thread state after creation
-- Add validation to ensure destination chain exists in blockchainAPIs
-- Add verification that dropdown auto-fill succeeded
+Problem: When clicking to view a bridge output thread (e.g., USDT(TRON) from ETH→TRON bridge), the Wallet Explorer was using the entry's chain (ethereum) instead of the thread's destination chain (tron).
 
-This will help diagnose the issue where bridge output threads were created with wrong chain identity (e.g., Tron threads showing as Ethereum).
+Root cause: viewThreadInWalletExplorer() looked at hop entries to get chain/wallet, but entries store SOURCE chain. Bridge output threads store DESTINATION chain.
+
+Solution:
+- Look up the actual thread object in investigation.availableThreads
+- Use thread.chainId (destination chain) instead of entry.chain (source chain)
+- Use thread.sourceWallet (destination address) instead of entry.toWallet (bridge address)
+- Fall back to entry data if thread not found (for backwards compatibility)
+
+Now when viewing bridge output threads, Wallet Explorer correctly searches the destination blockchain with the destination wallet address.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 190 +++++++++++++++++++++++++++++++++++++------------------------
- index.html |  94 +++++++++++++++++++++++++++++-
- 2 files changed, 207 insertions(+), 77 deletions(-)
+ CLAUDE.md  | 172 ++++++++++---------------------------------------------------
+ index.html |  46 +++++++++++++++--
+ 2 files changed, 69 insertions(+), 149 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (1 second ago)
-- e788fda Fix: Replace auto-adjustment with proper partial trace support (25 minutes ago)
-- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (28 minutes ago)
-- a3e864d Update CLAUDE.md with latest commit info (31 minutes ago)
-- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (32 minutes ago)
-- 4127c39 Update CLAUDE.md with latest commit info (37 minutes ago)
-- 5b66f89 Fix: Bridge tracing with undefined transaction hash (38 minutes ago)
-- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (53 minutes ago)
-- 9524dae Critical Fix: Write-off and cold storage thread allocation (60 minutes ago)
-- 0638d63 Feature: Court-ready clustering documentation with justification and source/destination tracking (8 hours ago)
+- 0379f66 Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer (0 seconds ago)
+- ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (13 minutes ago)
+- e788fda Fix: Replace auto-adjustment with proper partial trace support (39 minutes ago)
+- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (41 minutes ago)
+- a3e864d Update CLAUDE.md with latest commit info (44 minutes ago)
+- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (45 minutes ago)
+- 4127c39 Update CLAUDE.md with latest commit info (50 minutes ago)
+- 5b66f89 Fix: Bridge tracing with undefined transaction hash (51 minutes ago)
+- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (66 minutes ago)
+- 9524dae Critical Fix: Write-off and cold storage thread allocation (74 minutes ago)
 
 ## Key Features
 

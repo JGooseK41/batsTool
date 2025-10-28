@@ -23418,11 +23418,11 @@ function viewThreadInWalletExplorer(threadId) {
             if (hop && hop.entries && hop.entries.length > 0) {
                 // Get the first entry for this thread (they all go to same destination wallet)
                 const entry = hop.entries[0];
-                txHash = entry.transactionHash;
 
-                // CRITICAL FIX: Look up the actual thread object to get the correct chain AND wallet
+                // CRITICAL FIX: Look up the actual thread object to get the correct chain, wallet, AND txHash
                 // The entry's chain is the SOURCE chain, but for bridge outputs we need the DESTINATION chain
                 // The entry's toWallet might be the bridge address, but thread's sourceWallet is the actual destination
+                // The entry's transactionHash is the SOURCE tx, but thread's destinationTxHash is the DESTINATION tx
                 // Search all currencies in availableThreads for this thread notation
                 let foundThread = null;
                 for (const currency in investigation.availableThreads) {
@@ -23439,7 +23439,7 @@ function viewThreadInWalletExplorer(threadId) {
                     if (foundThread) break;
                 }
 
-                // If we found the thread, use its chainId and sourceWallet (correct for bridges)
+                // If we found the thread, use its chainId, sourceWallet, and destinationTxHash (correct for bridges)
                 // Otherwise fall back to entry data (for normal entries)
                 if (foundThread) {
                     if (foundThread.chainId) {
@@ -23455,10 +23455,20 @@ function viewThreadInWalletExplorer(threadId) {
                     } else {
                         sourceWallet = entry.toWallet || entry.destinationWallet;
                     }
+
+                    // For bridge outputs, use destinationTxHash (the transaction on the destination chain)
+                    // For normal entries, fall back to entry transactionHash
+                    if (foundThread.destinationTxHash) {
+                        txHash = foundThread.destinationTxHash;
+                        console.log(`✅ Using thread destinationTxHash: ${txHash}`);
+                    } else {
+                        txHash = entry.transactionHash;
+                    }
                 } else {
                     blockchain = entry.chain || 'ethereum';
                     sourceWallet = entry.toWallet || entry.destinationWallet;
-                    console.log(`⚠️ Thread not found in availableThreads, using entry data: wallet=${sourceWallet}, chain=${blockchain}`);
+                    txHash = entry.transactionHash;
+                    console.log(`⚠️ Thread not found in availableThreads, using entry data: wallet=${sourceWallet}, chain=${blockchain}, tx=${txHash}`);
                 }
 
                 console.log(`📌 Opening Wallet Explorer: wallet=${sourceWallet}, chain=${blockchain}, tx=${txHash}`);
