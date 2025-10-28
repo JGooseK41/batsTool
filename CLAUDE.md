@@ -3,83 +3,141 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 21:19)
+## Latest Commit (Auto-updated: 2025-10-28 05:18)
 
-**Commit:** f219cd1c165d246adbd8c1aa2130b19bc618a34e
+**Commit:** 7e89d3f0a90215dd08a3d4fd6c1779c1dc780d68
 **Author:** Your Name
-**Message:** Fix: Commingling detection for victim transaction threads
+**Message:** Feature: Multi-thread allocation in Wallet Explorer entry confirmation
 
-🐛 BUG FIX: Commingling not detected for transactions from RED wallets
+🎯 COMPLETE IMPLEMENTATION: Replicate hop wizard allocation logic in wallet explorer
 
 PROBLEM:
-
-User trying to create 49,975.262 USDT trace entry with thread V1-T1
-(only 908.918 USDT available), even though V1-T2 (49,980 USDT) exists
-at the same wallet.
-
-System should have detected commingling and prompted for thread selection,
-but instead allowed creation with massive over-allocation warning.
-
-Console showed: "Found 0 threads entering wallet" - commingling detection
-failed completely.
-
-ROOT CAUSE:
-
-Commingling detection checked for:
-  t.destinationWallet === walletAddress
-
-But victim transaction threads (V1-T1, V1-T2) have:
-  t.sourceWallet (the receiving wallet from victim transaction)
-
-NOT destinationWallet (which is for hop entry outputs).
-
-So the filter found 0 threads and never triggered commingling detection.
+- Wallet Explorer entry confirmation modal only supported single thread allocation
+- No way to handle commingling, partial spends, or bridges properly
+- Users had to manually calculate thread allocation
+- System could allow over-allocation (e.g., 49,975 USDT with only 908 USDT thread)
 
 SOLUTION:
+Implemented full multi-thread selection and allocation in entry confirmation modal,
+matching the sophisticated logic that already exists in the hop wizard.
 
-Modified commingling detection to check BOTH properties (lines 16528-16535):
+NEW FEATURES:
 
-Before:
-  threadsToSameWallet = availableThreads.filter(t =>
-    t.destinationWallet &&
-    t.destinationWallet.toLowerCase() === walletAddress.toLowerCase()
-  )
+1. **Thread Selection Interface** (lines 17252-17312)
+   - Interactive checkboxes for each available thread
+   - Shows available amount for each thread
+   - Auto-selects pre-assigned thread if one exists
+   - Visual feedback with green borders for selected threads
+   - Real-time allocation calculation on selection change
 
-After:
-  threadsToSameWallet = availableThreads.filter(t => {
-    const threadWallet = t.destinationWallet || t.sourceWallet;
-    return threadWallet &&
-           threadWallet.toLowerCase() === walletAddress.toLowerCase()
-  })
+2. **PIFO Allocation Calculation** (lines 17331-17396)
+   - Automatic PIFO ordering by victim ID and transaction ID
+   - Calculates how to allocate selected threads to transaction amount
+   - Handles partial spends correctly
+   - Tracks remaining amounts for each thread
+   - Identifies which threads will be fully depleted
+
+3. **Allocation Preview Display** (lines 17398-17474)
+   - Shows detailed breakdown of each thread's allocation
+   - Color-coded indicators (red = fully depleted, green = partial)
+   - Displays remaining amounts (future change threads)
+   - Total allocated vs transaction amount comparison
+   - Warning messages for partial traces (shortfall)
+   - Warning messages for excess allocation
+
+4. **Enhanced Entry Data** (lines 17479-17525)
+   - Applies multi-thread allocation to entry before creation
+   - Handles both single and multiple thread cases
+   - Stores allocation details in entry data
+   - Adds comprehensive allocation notes to entry
+   - Documents partial traces with shortfall amounts
+   - Validation prevents entries without thread selection
+
+5. **Updated ART Impact Display** (lines 17196-17247)
+   - Shows total available ART across all threads
+   - Displays transaction amount to allocate
+   - Calculates remaining ART after allocation
+   - Clear guidance to select threads below
+   - Warning for insufficient funds scenarios
 
 BEHAVIOR:
 
-Before:
-- V1-T1 (908 USDT) and V1-T2 (49,980 USDT) both at same wallet
-- Select 49,975 USDT transaction
-- Commingling NOT detected (0 threads found)
-- Allows creation with -49,066 ART warning ❌
+**Before:**
+- Entry confirmation showed simple thread list
+- Single thread auto-assigned
+- No way to select multiple threads
+- Could create entries with massive over-allocation ❌
 
-After:
-- V1-T1 (908 USDT) and V1-T2 (49,980 USDT) both at same wallet
-- Select 49,975 USDT transaction
-- Commingling DETECTED (2 threads found) ✅
-- Shows thread selector modal ✅
-- User can select V1-T2 (which has enough) ✅
+**After:**
+- Interactive thread selection with checkboxes ✅
+- Real-time allocation preview ✅
+- Automatic PIFO ordering ✅
+- Partial spend handling ✅
+- Change thread identification ✅
+- Prevents entries without proper allocation ✅
+- Full documentation in entry notes ✅
+
+WORKFLOW EXAMPLE:
+
+1. User clicks "Follow & Trace" on transaction in Wallet Explorer
+2. Entry confirmation modal opens
+3. **NEW:** Thread Selection Section shows all available threads with checkboxes
+4. User selects multiple threads (e.g., V1-T1, V1-T2)
+5. **NEW:** Allocation Preview shows:
+   - V1-T1: Use 908 of 908 USDT (fully depleted)
+   - V1-T2: Use 49,067 of 49,980 USDT (913 USDT will remain)
+   - Total Allocated: 49,975 USDT
+6. User confirms entry
+7. Entry created with proper multi-thread allocation
+8. System automatically handles partial spends and change threads
+
+USE CASES NOW SUPPORTED:
+
+✅ **Commingling:** Select multiple victim threads merging at same wallet
+✅ **Partial Spends:** Allocate portion of thread, remainder becomes change
+✅ **Bridges:** Properly allocate across thread boundaries
+✅ **Complex Flows:** Any combination of multi-thread scenarios
+✅ **Audit Trail:** Full documentation of allocation in entry notes
+
+TECHNICAL IMPLEMENTATION:
+
+- **Global State:** window.walletExplorerThreadSelection tracks selections
+- **PIFO Sorting:** Matches hop wizard's victim/transaction ordering
+- **Allocation Algorithm:** Same logic as applyPIFOAllocation()
+- **Entry Enhancement:** applyMultiThreadAllocationToEntry() adds allocation data
+- **Validation:** Prevents confirmation without thread selection
+- **Notes Documentation:** Automatic allocation notes for audit trail
+
+TESTING:
+
+Test Scenario 1: Single thread
+- Select V1-T1 (1000 USDT available)
+- Transaction amount: 500 USDT
+- Preview shows: Use 500 of 1000 (500 will remain)
+- Entry created with partial allocation ✅
+
+Test Scenario 2: Multiple threads (commingling)
+- Select V1-T1 (908 USDT) and V1-T2 (49,980 USDT)
+- Transaction amount: 49,975 USDT
+- Preview shows both allocations in PIFO order
+- Entry created with proper multi-thread allocation ✅
+
+Test Scenario 3: Insufficient funds
+- Select V1-T1 (100 USDT)
+- Transaction amount: 1000 USDT
+- Preview shows shortfall warning
+- Entry documents partial trace ✅
 
 IMPACT:
 
-✅ Commingling detection works for victim transactions
-✅ Prevents over-allocation of small threads
-✅ Prompts user to select correct thread combination
-✅ Works for both victim threads and hop entry threads
-✅ Maintains existing behavior for hop-to-hop commingling
+🎯 Wallet Explorer now has SAME power as Hop Wizard
+🎯 Users can log complex transactions easily
+🎯 Prevents allocation errors automatically
+🎯 Maintains full audit trail in entry notes
+🎯 Significantly improves workflow for commingling cases
 
-TESTING:
-- Open wallet with 2+ victim transaction threads
-- Select outbound transaction larger than first thread
-- Verify commingling selector modal appears
-- Verify can select appropriate thread combination
+FILES MODIFIED:
+- index.html (lines 17119-17525, 3023-3040)
 
 🤖 Generated with Claude Code
 
@@ -87,23 +145,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 224 +++++++++++++++++--------------------------------------------
- index.html |  12 ++--
- 2 files changed, 67 insertions(+), 169 deletions(-)
+ CLAUDE.md  | 106 ++++++++++-------
+ index.html | 381 +++++++++++++++++++++++++++++++++++++++++++++++++++----------
+ 2 files changed, 380 insertions(+), 107 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f219cd1 Fix: Commingling detection for victim transaction threads (0 seconds ago)
-- e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (89 seconds ago)
-- f48d691 Feature: Batch entry logging workflow in Wallet Explorer (74 minutes ago)
-- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (83 minutes ago)
-- 16dcb5a Auto-sync CLAUDE.md (2 hours ago)
-- 2bd784f Fix: Include transaction hash in entry notes for audit trail (2 hours ago)
-- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (2 hours ago)
-- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (2 hours ago)
-- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (2 hours ago)
-- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (2 hours ago)
+- 7e89d3f Feature: Multi-thread allocation in Wallet Explorer entry confirmation (0 seconds ago)
+- f219cd1 Fix: Commingling detection for victim transaction threads (8 hours ago)
+- e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (8 hours ago)
+- f48d691 Feature: Batch entry logging workflow in Wallet Explorer (9 hours ago)
+- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (9 hours ago)
+- 16dcb5a Auto-sync CLAUDE.md (10 hours ago)
+- 2bd784f Fix: Include transaction hash in entry notes for audit trail (10 hours ago)
+- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (10 hours ago)
+- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (10 hours ago)
+- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (10 hours ago)
 
 ## Key Features
 

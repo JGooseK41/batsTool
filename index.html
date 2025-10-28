@@ -7436,8 +7436,11 @@
                 addressPattern: /^r[a-zA-Z0-9]{24,34}$/,
                 addressPrefixes: ['r'],
                 txPattern: /^[A-F0-9]{64}$/i,
+                // XRPScan API with required origin parameter
                 apiUrl: 'https://api.xrpscan.com/api/v1/tx/',
                 addressApiUrl: 'https://api.xrpscan.com/api/v1/account/',
+                explorerUrl: 'https://xrpscan.com/',  // Base URL for block/tx/address links
+                apiOrigin: 'theblockaudit.com',  // Required origin parameter for XRPScan API
                 apiKey: null,
                 fallbackUrls: [
                     'https://xrplcluster.com/v1/tx/',
@@ -7936,31 +7939,7 @@
                     return null;
                 }
             },
-            ripple: {
-                name: 'Ripple (XRP)',
-                hashPattern: /^[A-F0-9]{64}$/i,
-                addressPattern: /^r[0-9a-zA-Z]{24,34}$/,
-                addressPrefixes: ['r'],
-                txPattern: /^[A-F0-9]{64}$/i,
-                apiUrl: 'https://api.xrpscan.com/api/v1/tx/',
-                apiKey: null,
-                parseResponse: (data) => {
-                    if (data) {
-                        return {
-                            time: data.date ? new Date(data.date * 1000).getTime() : Date.now(),
-                            amount: data.Amount ? (typeof data.Amount === 'string' ?
-                                parseInt(data.Amount) / 1000000 :
-                                parseFloat(data.Amount.value || 0)) : 0,
-                            currency: data.Amount?.currency || 'XRP',
-                            from: data.Account || '',
-                            to: data.Destination || '',
-                            fee: data.Fee ? parseInt(data.Fee) / 1000000 : 0,
-                            hasRealTimestamp: !!data.date
-                        };
-                    }
-                    return null;
-                }
-            }
+            // Note: "ripple" entry removed - use "xrp" instead for XRP/Ripple blockchain
         };
 
         // Bridge/DEX Contract Addresses for Auto-Detection
@@ -40966,7 +40945,7 @@ function detectBlockchainFromHash(hash) {
 function updateChainDisplay() {
     const chainSelector = document.getElementById('chainSelector');
     const detectedDiv = document.getElementById('detectedBlockchain');
-    
+
     if (chainSelector.value) {
         const config = blockchainAPIs[chainSelector.value];
         detectedDiv.innerHTML = `<span style="color: #3498db;">ℹ️ Selected: ${config.name}</span>`;
@@ -40978,6 +40957,24 @@ function updateChainDisplay() {
         } else {
             detectedDiv.innerHTML = '';
         }
+    }
+}
+
+// Helper function to generate XRPScan.com links for transactions, addresses, and blocks
+function getXRPScanLink(type, value) {
+    const baseUrl = 'https://xrpscan.com/';
+    switch (type) {
+        case 'tx':
+        case 'transaction':
+            return `${baseUrl}tx/${value}`;
+        case 'account':
+        case 'address':
+            return `${baseUrl}account/${value}`;
+        case 'ledger':
+        case 'block':
+            return `${baseUrl}ledger/${value}`;
+        default:
+            return baseUrl;
     }
 }
 
@@ -41204,6 +41201,17 @@ async function lookupTransaction() {
                 if (!response.ok) throw new Error('RPC request failed');
                 data = await response.json();
                 if (data.error) throw new Error(data.error.message);
+
+            } else if (detectedChain === 'xrp') {
+                // XRP/Ripple with XRPScan API - requires origin parameter
+                const origin = config.apiOrigin || 'theblockaudit.com';
+                url = `${apiUrl}${txHash}?origin=${origin}`;
+                if (corsEnabled) url = corsProxyUrl + url;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Transaction not found');
+                data = await response.json();
+
             } else {
                 // Generic REST API handler for XRP, THORChain, and other chains
                 url = apiUrl + txHash;
@@ -44483,7 +44491,7 @@ async function fetchTransactionData(hash, blockchain) {
             } else if (blockchain === 'solana') {
                 url = apiUrl;
                 if (corsEnabled) url = corsProxyUrl + url;
-                
+
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -44497,6 +44505,19 @@ async function fetchTransactionData(hash, blockchain) {
                 if (!response.ok) continue;
                 data = await response.json();
                 if (data.error) continue;
+
+            } else if (blockchain === 'xrp') {
+                // XRP/Ripple with XRPScan API - requires origin parameter
+                const origin = config.apiOrigin || 'theblockaudit.com';
+                url = `${apiUrl}${hash}?origin=${origin}`;
+                if (corsEnabled) url = corsProxyUrl + url;
+
+                const response = await fetch(url).catch(err => {
+                    console.warn(`XRP fetch failed for ${url}:`, err);
+                    return null;
+                });
+                if (!response || !response.ok) continue;
+                data = await response.json();
             }
             
             // Parse and return the data (pass tokenData for all EVM chains)
