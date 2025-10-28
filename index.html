@@ -10763,7 +10763,21 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
     // Simply consult the universal threads database
     for (const currency in investigation.availableThreads) {
         // Skip if filtering by currency and this doesn't match
-        if (targetCurrency && currency !== targetCurrency) continue;
+        // Enhanced matching: Strip chain suffix for comparison to handle USDT vs USDT(TRON)
+        if (targetCurrency) {
+            const baseCurrency = currency.replace(/\([^)]+\)$/, ''); // Remove (CHAIN) suffix
+            const targetBase = targetCurrency.replace(/\([^)]+\)$/, '');
+
+            // Match if either exact match OR base currencies match
+            if (currency !== targetCurrency && baseCurrency !== targetBase) {
+                console.log(`⏭️  Skipping currency "${currency}" (base: "${baseCurrency}") - doesn't match target "${targetCurrency}" (base: "${targetBase}")`);
+                continue;
+            }
+
+            if (baseCurrency === targetBase && currency !== targetCurrency) {
+                console.log(`✅ Base currency match: "${currency}" matches target "${targetCurrency}" (base: "${baseCurrency}")`);
+            }
+        }
 
         for (const threadKey in investigation.availableThreads[currency]) {
             const thread = investigation.availableThreads[currency][threadKey];

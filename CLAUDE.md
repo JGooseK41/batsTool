@@ -3,43 +3,37 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 14:08)
+## Latest Commit (Auto-updated: 2025-10-28 14:14)
 
-**Commit:** 0379f66d255cf8bab7f83960816921d63b1609ca
+**Commit:** f6d7ae9d3f0a10bd577eb644f2ae35aefa70c440
 **Author:** Your Name
-**Message:** Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer
+**Message:** Fix: Use thread destinationTxHash to highlight correct transaction in Wallet Explorer
 
-Problem: When clicking to view a bridge output thread (e.g., USDT(TRON) from ETH→TRON bridge), the Wallet Explorer was using the entry's chain (ethereum) instead of the thread's destination chain (tron).
+Problem: When viewing a bridge output thread in Wallet Explorer, the inbound transaction was not highlighted in yellow/gold because we were using the SOURCE transaction hash (Ethereum) instead of the DESTINATION transaction hash (Tron).
 
-Root cause: viewThreadInWalletExplorer() looked at hop entries to get chain/wallet, but entries store SOURCE chain. Bridge output threads store DESTINATION chain.
+Solution: Use thread.destinationTxHash (if available) instead of entry.transactionHash when opening Wallet Explorer for bridge output threads.
 
-Solution:
-- Look up the actual thread object in investigation.availableThreads
-- Use thread.chainId (destination chain) instead of entry.chain (source chain)
-- Use thread.sourceWallet (destination address) instead of entry.toWallet (bridge address)
-- Fall back to entry data if thread not found (for backwards compatibility)
-
-Now when viewing bridge output threads, Wallet Explorer correctly searches the destination blockchain with the destination wallet address.
+Now the correct Tron transaction will be highlighted when viewing a bridge output thread.
 
 ### Changed Files:
 ```
- CLAUDE.md  | 172 ++++++++++---------------------------------------------------
- index.html |  46 +++++++++++++++--
- 2 files changed, 69 insertions(+), 149 deletions(-)
+ CLAUDE.md  | 53 ++++++++++++++++++++++++++---------------------------
+ index.html | 18 ++++++++++++++----
+ 2 files changed, 40 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0379f66 Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer (0 seconds ago)
-- ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (13 minutes ago)
-- e788fda Fix: Replace auto-adjustment with proper partial trace support (39 minutes ago)
-- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (41 minutes ago)
-- a3e864d Update CLAUDE.md with latest commit info (44 minutes ago)
-- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (45 minutes ago)
-- 4127c39 Update CLAUDE.md with latest commit info (50 minutes ago)
-- 5b66f89 Fix: Bridge tracing with undefined transaction hash (51 minutes ago)
-- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (66 minutes ago)
-- 9524dae Critical Fix: Write-off and cold storage thread allocation (74 minutes ago)
+- f6d7ae9 Fix: Use thread destinationTxHash to highlight correct transaction in Wallet Explorer (0 seconds ago)
+- 0379f66 Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer (6 minutes ago)
+- ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (19 minutes ago)
+- e788fda Fix: Replace auto-adjustment with proper partial trace support (45 minutes ago)
+- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (47 minutes ago)
+- a3e864d Update CLAUDE.md with latest commit info (50 minutes ago)
+- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (51 minutes ago)
+- 4127c39 Update CLAUDE.md with latest commit info (56 minutes ago)
+- 5b66f89 Fix: Bridge tracing with undefined transaction hash (57 minutes ago)
+- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (72 minutes ago)
 
 ## Key Features
 
