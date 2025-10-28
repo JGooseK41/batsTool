@@ -15341,16 +15341,23 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             let sourceThread = null;
             let currency = null;
 
+            // Search through all currencies and all threads to find matching notation
             for (const curr in availableThreads) {
-                if (availableThreads[curr][sourceThreadId]) {
-                    sourceThread = availableThreads[curr][sourceThreadId];
-                    currency = curr;
-                    break;
+                for (const threadKey in availableThreads[curr]) {
+                    const thread = availableThreads[curr][threadKey];
+                    // Match by notation (V1-T1) not by internal ID (V1-T1_USDT)
+                    if (thread.notation === sourceThreadId || threadKey === sourceThreadId) {
+                        sourceThread = thread;
+                        currency = curr;
+                        break;
+                    }
                 }
+                if (sourceThread) break;
             }
 
             if (!sourceThread) {
                 console.log(`Source thread ${sourceThreadId} not found in available threads`);
+                console.log('Available threads:', availableThreads);
                 document.getElementById('walletExplorerARTPanel').style.display = 'none';
                 return;
             }

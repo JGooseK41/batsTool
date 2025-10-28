@@ -3,125 +3,169 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 19:56)
+## Latest Commit (Auto-updated: 2025-10-27 20:05)
 
-**Commit:** b02f45954dd277cbd438f9655aa765d628553196
+**Commit:** f48d69190de94211ec78885cc5e07cc894aef804
 **Author:** Your Name
-**Message:** Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer
+**Message:** Feature: Batch entry logging workflow in Wallet Explorer
 
-✨ UX ENHANCEMENT: Filter out spam and zero-value transactions
+✨ UX ENHANCEMENT: Queue multiple entries and log them all at once
 
-USER REQUEST: "there were a number of 0 balance transfers in the wallet
-explorer, we should have the ability to toggle 0 balance transfers in
-the display and it should be set to not show 0 balance transfers by
-default"
+USER REQUEST: "there also needs to be a way when you get back to the hop
+entry builder after making all your selections in the wallet explorer that
+you can click one button to log all entries created from in the wallet
+explorer. Maybe a button at the bottom of the wallet explorer that says
+return to hop builder then when you click that a pop up asks if you want
+to log all entries you created in the wallet explorer"
 
 PROBLEM:
 
-Zero-balance transfers clutter the wallet explorer and make it harder to
-find meaningful transactions. These are often:
-- Contract interactions (approvals, calls)
-- Spam tokens sent to many addresses
-- Failed transactions
-- NFT mints/transfers (value in token, not ETH)
+When building entries wallet-by-wallet, investigators had to:
+1. Create entry → Return to hops → Verify
+2. Go back to wallet → Create another entry → Return → Verify
+3. Repeat for each transaction
+
+This was tedious and broke the flow. No way to review all entries together
+before logging them to the investigation.
 
 SOLUTION:
 
-Added toggle checkbox to hide/show zero-balance transfers with sensible
-default to hide them.
+New batch workflow where entries are queued in the wallet explorer, then
+logged all at once with a confirmation modal showing all pending entries.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 IMPLEMENTATION:
 
-1. UI Component (lines 2797-2809):
-   - Added checkbox "Hide zero-balance transfers"
-   - Positioned in filter section next to "Clear All Filters" button
-   - Default state: checked (hide zero-balance)
-   - Calls toggleZeroBalanceFilter() on change
+1. Pending Entries Tracking (lines 14336, 14660):
+   - Added pendingEntries[] array to walletExplorerState
+   - Tracks all entries created during wallet explorer session
+   - Cleared on wallet close or after batch confirmation
 
-2. State Management:
-   - Added hideZeroBalance flag to walletExplorerState (lines 14335, 14652)
-   - Default value: true (hide by default)
-   - Persists during wallet explorer session
-   - Resets to default when opening new wallet
+2. Return to Hop Builder Button (lines 2995-2997):
+   - Hidden by default
+   - Shows when pendingEntries.length > 0
+   - Displays count: "✅ Return to Hop Builder (N entries)"
+   - Green styling to indicate ready to proceed
 
-3. Toggle Function (lines 16257-16263):
-   - toggleZeroBalanceFilter()
-   - Updates walletExplorerState.hideZeroBalance from checkbox
-   - Logs filter state for debugging
-   - Re-renders table immediately
+3. Modified "Create & Stay" Workflow (lines 17287-17327):
+   - No longer creates entry immediately
+   - Adds entry to pendingEntries array
+   - Shows notification with total count
+   - Updates Return button visibility
+   - Updates thread progression panel
+   - Grays out transaction in table
 
-4. Filter Logic (lines 15945-15949):
-   - Added to renderTransactionTable()
-   - Filters transactions where tx.amount > 0
-   - Only applies when hideZeroBalance is true
-   - Logs number of filtered transactions
+4. Batch Confirmation Modal (lines 3046-3093):
+   - Shows summary: total count + destination hop
+   - Lists all pending entries with details:
+     * Entry type (trace/writeoff) with color coding
+     * Amount and currency
+     * From/To addresses
+     * Thread assignment
+     * Transaction hash
+   - Warning about permanent addition
+   - Buttons: Cancel or "Log All N Entries"
 
-5. Integration:
-   - clearAllFilters() resets checkbox to default (hide)
-   - openWalletExplorer() syncs checkbox with state (lines 16628-16632)
-   - Works with all other filters (date, amount ranges)
+5. Supporting Functions:
+   - updateReturnButton() (lines 17364-17375)
+     * Shows/hides button based on pending count
+     * Updates count display
+
+   - returnToHopBuilder() (lines 17377-17445)
+     * Validates pending entries exist
+     * Populates batch confirmation modal
+     * Shows entry cards with color-coded types
+
+   - confirmBatchEntries() (lines 17452-17503)
+     * Adds all pending entries to hop
+     * Sorts chronologically
+     * Saves and renders
+     * Closes all modals
+     * Scrolls to hop
+     * Clears pending entries
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-BEHAVIOR:
+WORKFLOW:
 
-Default State (Zero-Balance Hidden):
-- Checkbox: ✓ checked
-- Display: Only shows transactions with amount > 0
-- Clean, focused transaction list
+Old (Multiple Round Trips):
+1. Open wallet explorer
+2. Select transaction → Create entry → Return to hops
+3. Verify entry in hop
+4. Open wallet explorer again
+5. Select another transaction → Create entry → Return to hops
+6. Repeat...
 
-User Unchecks (Show Zero-Balance):
-- Checkbox: ☐ unchecked
-- Display: Shows ALL transactions including zero-balance
-- Useful for debugging or investigating contract interactions
-
-Clear All Filters:
-- Resets checkbox to ✓ checked (hide zero-balance)
-- Restores default clean view
+New (Batch Workflow):
+1. Open wallet explorer
+2. Select transaction → "Create & Stay in Explorer"
+3. Entry queued (1 total)
+4. Select another transaction → "Create & Stay in Explorer"
+5. Entry queued (2 total)
+6. Select more transactions...
+7. Click "Return to Hop Builder (5 entries)"
+8. Review ALL 5 entries in confirmation modal
+9. Click "Log All 5 Entries"
+10. All entries added at once ✅
+11. Return to hop builder to see results
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 EXAMPLE:
 
-Wallet with 1000 transactions:
-- 800 normal transfers (with value)
-- 200 zero-balance transfers (spam/approvals)
+Investigating wallet with 10 outbound transactions:
 
-Before:
-- All 1000 transactions shown
-- Hard to find relevant transfers
-- Cluttered view
+User workflow:
+1. Open wallet via "View & Trace" button
+2. Select first OUT tx → "Create & Stay" → Queued (1)
+3. Select second OUT tx → "Create & Stay" → Queued (2)
+4. Select third OUT tx → "Create & Stay" → Queued (3)
+5. ... continue for all 10 transactions
+6. Button shows: "Return to Hop Builder (10 entries)"
+7. Click button → Modal shows all 10 entries
+8. Review: 8 traces + 2 write-offs
+9. Click "Log All 10 Entries"
+10. All entries added to Hop 2 at once
+11. Return to hop view to verify
+12. Done! ✨
 
-After (Default):
-- Only 800 value transfers shown
-- Zero-balance filtered out
-- Clean, focused view
-
-After (Unchecked):
-- All 1000 transactions shown
-- User can inspect contract interactions if needed
+VS Old Workflow:
+- Would require 10 separate create/return/verify cycles
+- Easy to lose track of progress
+- No way to review all together
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 BENEFITS:
 
-✅ Cleaner wallet explorer by default
-✅ Faster to find meaningful transactions
-✅ Reduces visual clutter from spam tokens
-✅ User can still view all transactions if needed
-✅ Improves performance (fewer rows to render)
-✅ Consistent with "hide scam tokens" pattern
-✅ Sensible default for 95% of use cases
+✅ Wallet-by-wallet workflow fully supported
+✅ Queue unlimited entries before logging
+✅ Review all entries together before confirming
+✅ Single click to log all entries at once
+✅ Clear count of pending entries
+✅ Color-coded entry types in confirmation
+✅ Prevents accidental partial logging
+✅ Maintains all existing validation
+✅ Thread progression updates in real-time
+✅ Transactions gray out as entries are queued
+
+BACKWARDS COMPATIBILITY:
+
+✅ "Create & Return to Hops" still works (immediate create)
+✅ Existing workflows unchanged
+✅ Pending entries cleared on wallet close
+✅ No impact on other entry creation methods
 
 TESTING:
-- Open wallet with zero-balance transfers
-- Verify checkbox is checked by default
-- Verify zero-balance transfers are hidden
-- Uncheck box → zero-balance transfers appear
-- Check box → zero-balance transfers disappear
-- Click "Clear All Filters" → checkbox resets to checked
+- Open wallet explorer with source thread
+- Create 3-5 entries using "Create & Stay"
+- Verify button shows with correct count
+- Click "Return to Hop Builder"
+- Verify all entries shown in modal
+- Click "Log All N Entries"
+- Verify all entries added to hop
+- Verify entries sorted chronologically
 
 🤖 Generated with Claude Code
 
@@ -129,23 +173,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 118 +++++++------------------------------------------------------
- index.html |  37 +++++++++++++++++--
- 2 files changed, 48 insertions(+), 107 deletions(-)
+ CLAUDE.md  | 149 ++++++++++++++++++++++++++++++++++++-----
+ index.html | 220 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 347 insertions(+), 22 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (0 seconds ago)
-- 16dcb5a Auto-sync CLAUDE.md (13 minutes ago)
-- 2bd784f Fix: Include transaction hash in entry notes for audit trail (15 minutes ago)
-- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (23 minutes ago)
-- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (35 minutes ago)
-- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (44 minutes ago)
-- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (46 minutes ago)
-- a1e1795 Auto-sync CLAUDE.md (51 minutes ago)
-- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (52 minutes ago)
-- 0f487ff Fix: Wallet Explorer now works with finalized hop notation (3 hours ago)
+- f48d691 Feature: Batch entry logging workflow in Wallet Explorer (0 seconds ago)
+- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (8 minutes ago)
+- 16dcb5a Auto-sync CLAUDE.md (21 minutes ago)
+- 2bd784f Fix: Include transaction hash in entry notes for audit trail (23 minutes ago)
+- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (32 minutes ago)
+- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (44 minutes ago)
+- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (52 minutes ago)
+- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (55 minutes ago)
+- a1e1795 Auto-sync CLAUDE.md (60 minutes ago)
+- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (61 minutes ago)
 
 ## Key Features
 
