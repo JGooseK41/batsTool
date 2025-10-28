@@ -18860,22 +18860,100 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                       'When you trace this transaction, it will create a normal new thread.');
                 closeChangeAddressDecisionModal();
             } else if (decision === 'cluster') {
-                // User chose to cluster addresses
-                const clusterId = createAddressCluster(originalAddress, newAddress, threadId, amount);
+                // User chose to cluster addresses - show justification modal
+                showClusteringJustificationModal(txHash, originalAddress, newAddress, threadId, amount);
+                closeChangeAddressDecisionModal();
+            }
+        }
 
-                if (clusterId) {
-                    alert('✅ Addresses Clustered\n\n' +
-                          'Both addresses are now linked for dual monitoring.\n\n' +
-                          (investigation.tracingMethod === 'PIFO' ?
-                           'PIFO: Both addresses will be monitored to see which moves first.' :
-                           'LIBR: Balance analysis will consider both addresses together.') +
-                          '\n\nView cluster status in Wallet Explorer.');
+        /**
+         * Show clustering justification modal
+         */
+        function showClusteringJustificationModal(txHash, originalAddress, newAddress, threadId, amount) {
+            // Store context in modal for later submission
+            window.clusteringContext = {
+                txHash,
+                originalAddress,
+                newAddress,
+                threadId,
+                amount
+            };
 
-                    // Refresh wallet explorer to show cluster indicators
-                    closeChangeAddressDecisionModal();
-                    if (typeof renderTransactionTable === 'function') {
-                        renderTransactionTable();
-                    }
+            // Populate addresses
+            document.getElementById('clusteringOriginalAddress').textContent = originalAddress;
+            document.getElementById('clusteringNewAddress').textContent = newAddress;
+
+            // Clear previous inputs
+            document.getElementById('clusteringHeuristic').value = '';
+            document.getElementById('clusteringJustification').value = '';
+
+            // Show modal
+            showModal('clusteringJustificationModal');
+        }
+
+        /**
+         * Close clustering justification modal
+         */
+        function closeClusteringJustificationModal() {
+            closeModal('clusteringJustificationModal');
+            window.clusteringContext = null;
+        }
+
+        /**
+         * Submit clustering justification and create cluster
+         */
+        function submitClusteringJustification() {
+            const heuristic = document.getElementById('clusteringHeuristic').value;
+            const justification = document.getElementById('clusteringJustification').value.trim();
+
+            // Validation
+            if (!heuristic) {
+                alert('⚠️ Heuristic Required\n\nPlease select the clustering heuristic that applies to this decision.');
+                return;
+            }
+
+            if (!justification || justification.length < 20) {
+                alert('⚠️ Justification Required\n\nPlease provide a detailed justification (at least 20 characters) explaining the evidence for this clustering decision.');
+                return;
+            }
+
+            // Get context
+            const ctx = window.clusteringContext;
+            if (!ctx) {
+                alert('❌ Error: Clustering context lost. Please try again.');
+                closeClusteringJustificationModal();
+                return;
+            }
+
+            // Get heuristic display name
+            const heuristicSelect = document.getElementById('clusteringHeuristic');
+            const heuristicName = heuristicSelect.options[heuristicSelect.selectedIndex].text;
+
+            // Create cluster with justification
+            const clusterId = createAddressCluster(
+                ctx.originalAddress,
+                ctx.newAddress,
+                ctx.threadId,
+                ctx.amount,
+                ctx.txHash,
+                heuristic,
+                heuristicName,
+                justification
+            );
+
+            if (clusterId) {
+                alert('✅ Addresses Clustered with Documentation\n\n' +
+                      'Both addresses are now linked for dual monitoring.\n\n' +
+                      'Heuristic: ' + heuristicName + '\n\n' +
+                      (investigation.tracingMethod === 'PIFO' ?
+                       'PIFO: Both addresses will be monitored to see which moves first.' :
+                       'LIBR: Balance analysis will consider both addresses together.') +
+                      '\n\nView cluster status in Wallet Explorer.');
+
+                // Close modal and refresh
+                closeClusteringJustificationModal();
+                if (typeof renderTransactionTable === 'function') {
+                    renderTransactionTable();
                 }
             }
         }
@@ -18884,7 +18962,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
          * Create a new address cluster
          * Links multiple addresses as controlled by same entity
          */
-        function createAddressCluster(originalAddress, newAddress, threadId, amount) {
+        function createAddressCluster(originalAddress, newAddress, threadId, amount, txHash, heuristic, heuristicName, justification) {
             // Find wallet ID from Universal Wallet Index for the original address
             let walletId = 'Unknown';
             let walletLabel = 'Unknown Wallet';
@@ -18923,10 +19001,22 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     existingCluster.notes += `THREAD: ${threadId}\n`;
                     existingCluster.notes += `NEW ADDRESS: ${newAddress}\n`;
                     existingCluster.notes += `AMOUNT: ${amount} ${existingCluster.currency}\n`;
-                    existingCluster.notes += `REASON: UTXO change output to new address detected\n`;
+                    if (txHash) {
+                        existingCluster.notes += `TRANSACTION: ${txHash}\n`;
+                    }
                     existingCluster.notes += `METHODOLOGY: ${investigation.tracingMethod || 'PIFO'}\n`;
-                    existingCluster.notes += `TOTAL ADDRESSES IN CLUSTER: ${existingCluster.addresses.length}\n`;
-                    existingCluster.notes += `\nThis address is now linked to ${existingCluster.walletId || walletId} for dual monitoring purposes.\n`;
+                    existingCluster.notes += `TOTAL ADDRESSES IN CLUSTER: ${existingCluster.addresses.length}\n\n`;
+
+                    // Add clustering justification
+                    if (heuristicName && justification) {
+                        existingCluster.notes += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                        existingCluster.notes += `CLUSTERING JUSTIFICATION:\n`;
+                        existingCluster.notes += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                        existingCluster.notes += `📊 HEURISTIC: ${heuristicName}\n\n`;
+                        existingCluster.notes += `📝 INVESTIGATOR NOTES:\n${justification}\n\n`;
+                    }
+
+                    existingCluster.notes += `This address is now linked to ${existingCluster.walletId || walletId} for dual monitoring purposes.\n`;
                     existingCluster.notes += `All addresses in this cluster are controlled by the same entity.`;
 
                     console.log(`✅ Added address to existing cluster ${existingCluster.id} for wallet ${walletId}`);
@@ -18969,13 +19059,15 @@ NEW ADDRESS (UTXO Change):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${newAddress}
 Monitored Amount: ${amount} ${currency}
+${txHash ? `Transaction: ${txHash}` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CLUSTERING REASON:
+CLUSTERING JUSTIFICATION:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-UTXO change output detected going to a NEW address (not same as sender).
-Based on transaction analysis, this appears to be change controlled by the
-same entity. Investigator elected to cluster these addresses for dual monitoring.
+📊 HEURISTIC: ${heuristicName || 'Not Specified'}
+
+📝 INVESTIGATOR NOTES:
+${justification || 'UTXO change output detected going to a NEW address (not same as sender). Based on transaction analysis, this appears to be change controlled by the same entity. Investigator elected to cluster these addresses for dual monitoring.'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 METHODOLOGY IMPLICATIONS:
@@ -35843,11 +35935,58 @@ function createHopEntryFromWizard() {
         });
 
         if (clusteredThreads.length > 0) {
-            entryNotes += `\n\n🔗 CLUSTER SOURCE NOTATION:\n`;
+            entryNotes += `\n\n🔗 CLUSTER-SOURCED TRANSACTION DOCUMENTATION:\n`;
+            entryNotes += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+            entryNotes += `This entry traces funds from a clustered wallet containing multiple addresses.\n\n`;
+
             clusteredThreads.forEach(ct => {
-                entryNotes += `Thread ${ct.threadId} sources from Cluster ${ct.cluster.id} (Wallet: ${ct.cluster.walletId || 'Unknown'})\n`;
-                entryNotes += `  - Cluster contains ${ct.cluster.addresses.length} addresses\n`;
-                entryNotes += `  - Methodology: ${investigation.tracingMethod || 'PIFO'} (cluster acts as single entity)\n`;
+                entryNotes += `📊 THREAD: ${ct.threadId}\n`;
+                entryNotes += `🔗 CLUSTER: ${ct.cluster.id} (Wallet: ${ct.cluster.walletId || 'Unknown'})\n`;
+                entryNotes += `   Cluster contains ${ct.cluster.addresses.length} addresses:\n`;
+
+                // List all addresses in the cluster with indicators
+                ct.cluster.addresses.forEach((addr, index) => {
+                    const indicator = index === 0 ? '🏠' : '🔄';
+                    entryNotes += `   ${indicator} ${addr.substring(0, 20)}...${addr.substring(addr.length - 10)}\n`;
+                });
+
+                // Document the specific transaction flow if transaction data is available
+                if (wizardData.transactionData) {
+                    const txData = wizardData.transactionData;
+                    entryNotes += `\n📍 SPECIFIC TRANSACTION FLOW:\n`;
+
+                    // Try to identify which cluster address received funds (input)
+                    if (txData.sourceAddress && ct.cluster.addresses.includes(txData.sourceAddress)) {
+                        entryNotes += `   INPUT: Funds received by cluster address:\n`;
+                        entryNotes += `   → ${txData.sourceAddress}\n`;
+                    } else if (txData.fromAddress && ct.cluster.addresses.includes(txData.fromAddress)) {
+                        entryNotes += `   INPUT: Funds received by cluster address:\n`;
+                        entryNotes += `   → ${txData.fromAddress}\n`;
+                    }
+
+                    // Identify which cluster address sent funds (output being traced)
+                    if (txData.counterparty && ct.cluster.addresses.some(addr => txData.counterparty.includes(addr))) {
+                        const matchingAddr = ct.cluster.addresses.find(addr => txData.counterparty.includes(addr));
+                        if (matchingAddr) {
+                            entryNotes += `   OUTPUT: Funds sent from cluster address:\n`;
+                            entryNotes += `   → ${matchingAddr}\n`;
+                        }
+                    }
+
+                    if (txData.hash) {
+                        entryNotes += `   Transaction Hash: ${txData.hash}\n`;
+                    }
+                }
+
+                entryNotes += `\n📋 METHODOLOGY: ${investigation.tracingMethod || 'PIFO'}\n`;
+                if (investigation.tracingMethod === 'PIFO') {
+                    entryNotes += `   The cluster acts as a single entity - whichever address\n`;
+                    entryNotes += `   moved funds first was traced (PIFO compliance).\n`;
+                } else {
+                    entryNotes += `   The cluster balance is tracked as an aggregate across\n`;
+                    entryNotes += `   all addresses (LIBR compliance).\n`;
+                }
+                entryNotes += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
             });
         }
     }
@@ -50598,5 +50737,84 @@ To (RED Wallet): ${transfer.to}`;
         window.initializeGraphVisualization = initializeGraphVisualization;
         window.exportFlowDiagram = exportFlowDiagram;
     </script>
+
+    <!-- Clustering Justification Modal -->
+    <div id="clusteringJustificationModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <h2 style="color: #ff9800; margin-bottom: 20px;">🔗 Cluster Address Justification</h2>
+
+            <p style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 20px;">
+                <strong>Court-Ready Documentation Required:</strong><br>
+                You are clustering this address with the identified wallet. Please document the heuristic or behavioral evidence that led you to determine these addresses are controlled by the same entity.
+            </p>
+
+            <div style="background: #fff3cd; border-left: 4px solid #ffa726; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                <strong style="color: #e65100;">📋 Addresses Being Clustered:</strong><br>
+                <div style="margin-top: 10px; font-family: monospace; font-size: 12px;">
+                    🏠 <strong>Original:</strong> <span id="clusteringOriginalAddress"></span><br>
+                    🔄 <strong>New:</strong> <span id="clusteringNewAddress"></span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #2c3e50;">
+                    Clustering Heuristic: *
+                </label>
+                <select id="clusteringHeuristic" style="width: 100%; padding: 12px; border: 2px solid #3498db; border-radius: 6px; font-size: 14px;">
+                    <option value="">-- Select Heuristic --</option>
+                    <optgroup label="UTXO-Based Heuristics">
+                        <option value="utxo_change_output">UTXO Change Output (Same Transaction)</option>
+                        <option value="utxo_change_new_address">UTXO Change to New Address</option>
+                        <option value="common_input_ownership">Common Input Ownership Heuristic</option>
+                        <option value="peeling_chain">Peeling Chain Pattern</option>
+                        <option value="round_numbers">Round Number Payment Pattern</option>
+                    </optgroup>
+                    <optgroup label="Behavioral Heuristics">
+                        <option value="temporal_correlation">Temporal Correlation (Immediate Sequential Use)</option>
+                        <option value="address_reuse_pattern">Address Reuse Pattern</option>
+                        <option value="dust_consolidation">Dust Consolidation Pattern</option>
+                        <option value="multi_hop_same_amount">Multi-Hop Same Amount Pattern</option>
+                    </optgroup>
+                    <optgroup label="External Evidence">
+                        <option value="clustering_service">Blockchain Analysis Service Clustering</option>
+                        <option value="entity_attribution">Known Entity Attribution</option>
+                        <option value="wallet_software_fingerprint">Wallet Software Fingerprinting</option>
+                    </optgroup>
+                    <optgroup label="Other">
+                        <option value="custom">Custom (Explain Below)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #2c3e50;">
+                    Detailed Justification: *
+                </label>
+                <textarea id="clusteringJustification" rows="6" style="width: 100%; padding: 12px; border: 2px solid #3498db; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"
+                          placeholder="Provide detailed explanation of the evidence supporting this clustering decision. Include specific transaction behavior, timing patterns, or other observable characteristics that indicate common control.
+
+Example: 'This address received the change output from transaction ABC123. The transaction spent 2 UTXOs from the original address, sent 0.5 BTC to a third party, and sent 1.3 BTC (change) to this new address. The change address has never been used before and received funds in the same transaction as the identified payment.'"></textarea>
+            </div>
+
+            <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; margin-bottom: 20px; border-radius: 4px; font-size: 13px;">
+                <strong>💡 Best Practices:</strong><br>
+                • Be specific about observable behavior<br>
+                • Reference transaction hashes when applicable<br>
+                • Document timing/sequencing patterns<br>
+                • Note any supporting external evidence<br>
+                • This documentation will appear in final reports
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeClusteringJustificationModal()" style="padding: 12px 24px;">
+                    Cancel
+                </button>
+                <button class="btn btn-confirm" onclick="submitClusteringJustification()" style="padding: 12px 24px; background: #ff9800;">
+                    ✓ Create Cluster with Documentation
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
