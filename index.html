@@ -32451,12 +32451,15 @@ window.updateStep3Buttons = function() {
     const logEntryBtn = window.step3LogEntryBtn || document.querySelector('#wizardFooterButtons button:nth-child(2)');
     const writeoffBtn = window.step3WriteoffBtn || document.querySelector('#wizardFooterButtons button:nth-child(3)');
 
-    // Check if we have required data - we need both txHash and txData
+    // Check if we have required data
     let hasRequiredData = false;
     if (wizardData.entryMode === 'manual') {
-        hasRequiredData = wizardData.txHash && wizardData.manualData?.toWallet;
+        // MANUAL MODE: Only require destination wallet (txHash optional for CEX/off-chain)
+        // CEX internal transfers and off-chain transactions don't have on-chain tx hashes
+        hasRequiredData = !!(wizardData.manualData?.toWallet);
+        console.log('Manual mode: toWallet present =', !!wizardData.manualData?.toWallet);
     } else {
-        // For lookup mode, we need both txHash and successful txData
+        // LOOKUP MODE: Need both txHash and successful txData
         hasRequiredData = !!(wizardData.txHash && wizardData.txData);
     }
 
