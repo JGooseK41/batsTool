@@ -2706,18 +2706,44 @@
                         <select id="walletExplorerBlockchain"
                                 style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
                             <option value="">Select blockchain...</option>
-                            <option value="ethereum">Ethereum</option>
+                            <!-- Major Chains -->
                             <option value="bitcoin">Bitcoin</option>
+                            <option value="ethereum">Ethereum</option>
                             <option value="tron">Tron</option>
                             <option value="solana">Solana</option>
+                            <option value="xrp">XRP (Ripple)</option>
+                            <option value="sui">Sui</option>
+                            <!-- Layer 2s & Sidechains -->
                             <option value="base">Base</option>
                             <option value="arbitrum">Arbitrum</option>
                             <option value="optimism">Optimism</option>
                             <option value="polygon">Polygon</option>
                             <option value="bsc">BNB Chain</option>
                             <option value="avalanche">Avalanche</option>
-                            <option value="sui">Sui</option>
-                            <option value="xrp">XRP (Ripple)</option>
+                            <!-- Additional EVM Chains -->
+                            <option value="unichain">Unichain</option>
+                            <option value="sonic">Sonic</option>
+                            <option value="berachain">Berachain</option>
+                            <option value="abstract">Abstract</option>
+                            <option value="memecore">Memecore</option>
+                            <option value="sophon">Sophon</option>
+                            <option value="linea">Linea</option>
+                            <option value="scroll">Scroll</option>
+                            <option value="mantle">Mantle</option>
+                            <option value="blast">Blast</option>
+                            <option value="zksync">zkSync</option>
+                            <option value="gnosis">Gnosis</option>
+                            <option value="hyperevm">HyperEVM</option>
+                            <option value="celo">Celo</option>
+                            <option value="moonbeam">Moonbeam</option>
+                            <option value="moonriver">Moonriver</option>
+                            <option value="fraxtal">Fraxtal</option>
+                            <option value="taiko">Taiko</option>
+                            <option value="arbitrumnova">Arbitrum Nova</option>
+                            <option value="bittorrent">BitTorrent</option>
+                            <option value="opbnb">opBNB</option>
+                            <!-- Other Chains -->
+                            <option value="thorchain">THORChain</option>
                         </select>
                     </div>
                     <div>
@@ -3240,24 +3266,44 @@
                     <label>Select Blockchain</label>
                     <select id="chainSelector" style="width: 100%; padding: 12px; border: 2px solid #3498db; border-radius: 6px; font-size: 14px;" onchange="updateChainDisplay()">
                         <option value="">Auto-detect from transaction hash</option>
+                        <!-- Major Chains -->
                         <option value="bitcoin">Bitcoin</option>
                         <option value="ethereum">Ethereum</option>
+                        <option value="tron">Tron</option>
+                        <option value="solana">Solana</option>
+                        <option value="xrp">XRP (Ripple)</option>
+                        <option value="sui">Sui</option>
+                        <!-- Layer 2s & Sidechains -->
                         <option value="base">Base</option>
                         <option value="arbitrum">Arbitrum</option>
                         <option value="optimism">Optimism</option>
                         <option value="polygon">Polygon</option>
                         <option value="bsc">BNB Chain</option>
+                        <option value="avalanche">Avalanche</option>
                         <option value="unichain">Unichain</option>
                         <option value="sonic">Sonic</option>
+                        <option value="berachain">Berachain</option>
                         <option value="abstract">Abstract</option>
                         <option value="memecore">Memecore</option>
                         <option value="sophon">Sophon</option>
-                        <option value="berachain">Berachain</option>
-                        <option value="tron">Tron</option>
-                        <option value="xrp">XRP (Ripple)</option>
+                        <!-- Additional EVM Chains -->
+                        <option value="linea">Linea</option>
+                        <option value="scroll">Scroll</option>
+                        <option value="mantle">Mantle</option>
+                        <option value="blast">Blast</option>
+                        <option value="zksync">zkSync Era</option>
+                        <option value="gnosis">Gnosis Chain</option>
+                        <option value="hyperevm">HyperEVM</option>
+                        <option value="celo">Celo</option>
+                        <option value="moonbeam">Moonbeam</option>
+                        <option value="moonriver">Moonriver</option>
+                        <option value="fraxtal">Fraxtal</option>
+                        <option value="taiko">Taiko</option>
+                        <option value="arbitrumnova">Arbitrum Nova</option>
+                        <option value="bittorrent">BitTorrent Chain</option>
+                        <option value="opbnb">opBNB</option>
+                        <!-- Other -->
                         <option value="thorchain">THORChain</option>
-                        <option value="sui">Sui</option>
-                        <option value="solana">Solana</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -3382,21 +3428,44 @@
                         <div>
                             <label style="display: block; font-weight: 600; margin-bottom: 10px; color: #2c3e50;">Select Blockchain:</label>
                             <select id="addressFinderChain" style="width: 100%; padding: 12px; border: 2px solid #9b59b6; border-radius: 6px; font-size: 14px;">
+                                <!-- Major Chains -->
                                 <option value="bitcoin">Bitcoin (BTC)</option>
                                 <option value="ethereum">Ethereum (ETH)</option>
-                                <option value="bsc">Binance Smart Chain (BSC)</option>
+                                <option value="tron">Tron (TRX)</option>
+                                <option value="solana">Solana (SOL)</option>
+                                <option value="xrp">XRP (Ripple)</option>
+                                <option value="sui">Sui</option>
+                                <!-- Layer 2s & Sidechains -->
+                                <option value="base">Base</option>
+                                <option value="arbitrum">Arbitrum</option>
+                                <option value="optimism">Optimism</option>
                                 <option value="polygon">Polygon (MATIC)</option>
+                                <option value="bsc">BNB Chain (BSC)</option>
+                                <option value="avalanche">Avalanche (AVAX)</option>
                                 <option value="unichain">Unichain</option>
                                 <option value="sonic">Sonic (S)</option>
+                                <option value="berachain">Berachain (BERA)</option>
                                 <option value="abstract">Abstract</option>
                                 <option value="memecore">Memecore (M)</option>
                                 <option value="sophon">Sophon (SOPH)</option>
-                                <option value="berachain">Berachain (BERA)</option>
-                                <option value="tron">Tron (TRX)</option>
-                                <option value="xrp">XRP (Ripple)</option>
+                                <!-- Additional EVM Chains -->
+                                <option value="linea">Linea</option>
+                                <option value="scroll">Scroll</option>
+                                <option value="mantle">Mantle (MNT)</option>
+                                <option value="blast">Blast</option>
+                                <option value="zksync">zkSync Era</option>
+                                <option value="gnosis">Gnosis Chain</option>
+                                <option value="hyperevm">HyperEVM</option>
+                                <option value="celo">Celo</option>
+                                <option value="moonbeam">Moonbeam (GLMR)</option>
+                                <option value="moonriver">Moonriver (MOVR)</option>
+                                <option value="fraxtal">Fraxtal</option>
+                                <option value="taiko">Taiko</option>
+                                <option value="arbitrumnova">Arbitrum Nova</option>
+                                <option value="bittorrent">BitTorrent Chain (BTT)</option>
+                                <option value="opbnb">opBNB</option>
+                                <!-- Other -->
                                 <option value="thorchain">THORChain (RUNE)</option>
-                                <option value="sui">Sui</option>
-                                <option value="solana">Solana (SOL)</option>
                             </select>
                         </div>
                         <div>
@@ -8070,6 +8139,14 @@
             'XRP': 6,  // Ripple: 6 decimal places
             'SUI': 9,  // Sui: 9 decimal places (MIST)
             'RUNE': 8, // THORChain: 8 decimal places
+            'MATIC': 18, // Polygon: 18 decimal places
+            'AVAX': 18, // Avalanche: 18 decimal places
+            'MNT': 18, // Mantle: 18 decimal places
+            'xDAI': 18, // Gnosis: 18 decimal places
+            'CELO': 18, // Celo: 18 decimal places
+            'GLMR': 18, // Moonbeam: 18 decimal places
+            'MOVR': 18, // Moonriver: 18 decimal places
+            'BTT': 18, // BitTorrent: 18 decimal places
             'BERA': 18, // Berachain: 18 decimal places
             'S': 18,    // Sonic: 18 decimal places
             'M': 18,    // Memecore: 18 decimal places
@@ -12789,32 +12866,44 @@ function updateFormFieldsFromInvestigation() {
                                             onchange="updateTransaction(${victim.id}, ${transaction.id}, 'chain', this.value)"
                                             style="flex: 1; padding: 10px; border: 2px solid #2196f3; border-radius: 4px; background: white; font-size: 14px;">
                                         <option value="">Auto-detect</option>
+                                        <!-- Major Chains -->
                                         <option value="bitcoin">Bitcoin</option>
                                         <option value="ethereum">Ethereum</option>
-                                        <option value="bsc">BNB Chain</option>
-                                        <option value="polygon">Polygon</option>
+                                        <option value="tron">Tron</option>
+                                        <option value="solana">Solana</option>
+                                        <option value="xrp">XRP (Ripple)</option>
+                                        <option value="sui">Sui</option>
+                                        <!-- Layer 2s & Sidechains -->
+                                        <option value="base">Base</option>
                                         <option value="arbitrum">Arbitrum</option>
                                         <option value="optimism">Optimism</option>
-                                        <option value="base">Base</option>
+                                        <option value="polygon">Polygon</option>
+                                        <option value="bsc">BNB Chain</option>
                                         <option value="avalanche">Avalanche</option>
-                                        <option value="hyperevm">HyperEVM</option>
+                                        <option value="unichain">Unichain</option>
+                                        <option value="sonic">Sonic</option>
+                                        <option value="berachain">Berachain</option>
+                                        <option value="abstract">Abstract</option>
+                                        <option value="memecore">Memecore</option>
+                                        <option value="sophon">Sophon</option>
+                                        <!-- Additional EVM Chains -->
                                         <option value="linea">Linea</option>
                                         <option value="scroll">Scroll</option>
                                         <option value="mantle">Mantle</option>
                                         <option value="blast">Blast</option>
-                                        <option value="zksync">zkSync</option>
-                                        <option value="gnosis">Gnosis</option>
-                                        <option value="unichain">Unichain</option>
-                                        <option value="sonic">Sonic</option>
-                                        <option value="abstract">Abstract</option>
-                                        <option value="memecore">Memecore</option>
-                                        <option value="sophon">Sophon</option>
-                                        <option value="berachain">Berachain</option>
-                                        <option value="tron">Tron</option>
-                                        <option value="xrp">XRP (Ripple)</option>
+                                        <option value="zksync">zkSync Era</option>
+                                        <option value="gnosis">Gnosis Chain</option>
+                                        <option value="hyperevm">HyperEVM</option>
+                                        <option value="celo">Celo</option>
+                                        <option value="moonbeam">Moonbeam</option>
+                                        <option value="moonriver">Moonriver</option>
+                                        <option value="fraxtal">Fraxtal</option>
+                                        <option value="taiko">Taiko</option>
+                                        <option value="arbitrumnova">Arbitrum Nova</option>
+                                        <option value="bittorrent">BitTorrent Chain</option>
+                                        <option value="opbnb">opBNB</option>
+                                        <!-- Other -->
                                         <option value="thorchain">THORChain</option>
-                                        <option value="sui">Sui</option>
-                                        <option value="solana">Solana</option>
                                     </select>
                                 </div>
                             </div>
@@ -18151,6 +18240,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             console.log(`Fetching wallet history for ${address} on ${blockchain}`);
 
             switch (blockchain) {
+                // All EVM-compatible chains using Etherscan API v2
                 case 'ethereum':
                 case 'base':
                 case 'arbitrum':
@@ -18158,6 +18248,27 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 case 'polygon':
                 case 'bsc':
                 case 'avalanche':
+                case 'unichain':
+                case 'sonic':
+                case 'berachain':
+                case 'abstract':
+                case 'memecore':
+                case 'sophon':
+                case 'linea':
+                case 'scroll':
+                case 'mantle':
+                case 'blast':
+                case 'zksync':
+                case 'gnosis':
+                case 'hyperevm':
+                case 'celo':
+                case 'moonbeam':
+                case 'moonriver':
+                case 'fraxtal':
+                case 'taiko':
+                case 'arbitrumnova':
+                case 'bittorrent':
+                case 'opbnb':
                     return await getEthereumWalletHistory(address, blockchain);
 
                 case 'bitcoin':
@@ -18174,6 +18285,9 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
                 case 'xrp':
                     return await getXRPWalletHistory(address);
+
+                case 'thorchain':
+                    throw new Error('THORChain wallet history not yet implemented. Please use thorchain.net explorer.');
 
                 default:
                     throw new Error('Unsupported blockchain: ' + blockchain);
@@ -44621,7 +44735,11 @@ async function fetchTransactionData(hash, blockchain) {
             }
             
             // Parse and return the data (pass tokenData for all EVM chains)
-            const evmChains = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc'];
+            const evmChains = ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc', 'avalanche',
+                              'unichain', 'sonic', 'berachain', 'abstract', 'memecore', 'sophon',
+                              'linea', 'scroll', 'mantle', 'blast', 'zksync', 'gnosis', 'hyperevm',
+                              'celo', 'moonbeam', 'moonriver', 'fraxtal', 'taiko', 'arbitrumnova',
+                              'bittorrent', 'opbnb'];
             const txData = evmChains.includes(blockchain) ?
                 config.parseResponse(data, tokenData, null, config) :
                 config.parseResponse(data);
