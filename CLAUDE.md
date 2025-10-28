@@ -3,30 +3,122 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 13:24)
+## Latest Commit (Auto-updated: 2025-10-28 13:27)
 
-**Commit:** a3e864d02fcc3e419d4f755aaaf758f2cd9e0db1
+**Commit:** 6a3a2afbe87eb94960f9e3ddf449e26e3ac2a50e
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** UX: Auto-adjust entry amounts for dust/gas shortfalls
+
+Automatically adjusts traced amounts when shortfall is dust (< 0.01), preventing confusing warnings for gas fees.
+
+## ISSUE: Confusing Warning for Dust Amounts
+
+**User Experience Problem**:
+User tries to trace 2.101 ETH but only has 2.1 ETH available:
+- Shortfall: 0.001 ETH (basically gas fees)
+- System shows: "⚠️ Warning: This entry will result in negative ART (insufficient funds)"
+- User asks: "Why doesn't it auto-adjust?"
+
+**They're right** - for such tiny differences, the system should automatically adjust the traced amount rather than showing a scary warning.
+
+## FIX: Smart Auto-Adjustment
+
+**Enhanced calculateAndShowARTImpact()** (lines 17278-17286):
+
+**Detection Logic**:
+```javascript
+const DUST_THRESHOLD = 0.01; // Anything less than this is gas/rounding
+const shortfall = entryAmount - totalCurrentART;
+
+if (shortfall > 0 && shortfall < DUST_THRESHOLD) {
+    // Auto-adjust to match available
+    entryAmount = totalCurrentART;
+    entryData.amount = totalCurrentART.toString();
+    autoAdjusted = true;
+}
+```
+
+**New UI Message** (lines 17309-17312):
+Instead of error warning, shows informative success message:
+```
+✓ Auto-adjusted: Entry amount reduced by 0.001 ETH (dust/gas) to match available ART.
+```
+
+## THRESHOLD RATIONALE:
+
+**0.01 threshold chosen because**:
+- ETH gas fees: Typically 0.0001 - 0.005 ETH
+- BTC dust: < 0.001 BTC
+- Rounding errors: Usually < 0.01 in any currency
+- Real shortfalls: Usually > 0.1 (indicates actual problem)
+
+**Examples of what gets auto-adjusted**:
+- ✅ 2.101 → 2.1 ETH (0.001 shortfall = gas)
+- ✅ 1.0056 → 1.0 BTC (0.0056 shortfall = gas)
+- ✅ 100.005 → 100 USDT (0.005 shortfall = rounding)
+
+**Examples of what still shows warning**:
+- ❌ 2.5 ETH when only 2.1 available (0.4 shortfall = real problem)
+- ❌ 1.2 BTC when only 1.0 available (0.2 shortfall = real problem)
+
+## USER EXPERIENCE IMPACT:
+
+**Before**:
+```
+Total Available: 2.1 ETH
+Will Allocate: 2.101 ETH
+Remaining: -0.001 ETH
+⚠️ Warning: negative ART (insufficient funds)
+```
+User confused - "It's just gas fees!"
+
+**After**:
+```
+Total Available: 2.1 ETH
+Will Allocate: 2.1 ETH
+Remaining: 0 ETH
+✓ Auto-adjusted: Entry amount reduced by 0.001 ETH (dust/gas)
+```
+User happy - system handled it intelligently!
+
+## BENEFITS:
+
+✅ **Smarter UX**: System handles obvious gas/rounding differences
+✅ **Less Confusion**: No scary warnings for dust amounts
+✅ **Still Safe**: Real shortfalls (>0.01) still show warning
+✅ **Transparent**: User sees adjustment was made and why
+✅ **Accurate Accounting**: Entry matches actual available threads
+
+## FILES MODIFIED:
+- index.html:
+  * Lines 17278-17286: Auto-adjustment logic
+  * Lines 17309-17312: Success message for auto-adjustments
+  * Line 17264: Changed entryAmount to let (was const)
+  * Line 17276: Calculate shortfall explicitly
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 111 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 1 file changed, 101 insertions(+), 10 deletions(-)
+ CLAUDE.md  | 113 ++++++-------------------------------------------------------
+ index.html |  20 +++++++++--
+ 2 files changed, 29 insertions(+), 104 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a3e864d Update CLAUDE.md with latest commit info (0 seconds ago)
-- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (66 seconds ago)
-- 4127c39 Update CLAUDE.md with latest commit info (6 minutes ago)
-- 5b66f89 Fix: Bridge tracing with undefined transaction hash (7 minutes ago)
-- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (22 minutes ago)
-- 9524dae Critical Fix: Write-off and cold storage thread allocation (30 minutes ago)
+- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (0 seconds ago)
+- a3e864d Update CLAUDE.md with latest commit info (3 minutes ago)
+- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (4 minutes ago)
+- 4127c39 Update CLAUDE.md with latest commit info (9 minutes ago)
+- 5b66f89 Fix: Bridge tracing with undefined transaction hash (10 minutes ago)
+- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (25 minutes ago)
+- 9524dae Critical Fix: Write-off and cold storage thread allocation (33 minutes ago)
 - 0638d63 Feature: Court-ready clustering documentation with justification and source/destination tracking (7 hours ago)
-- 0d51afe Critical: Apply Ethereum-level data validity across ALL blockchains (7 hours ago)
+- 0d51afe Critical: Apply Ethereum-level data validity across ALL blockchains (8 hours ago)
 - a78a36e Feature: Comprehensive blockchain integration across all 35+ chains (8 hours ago)
-- 4cee3c6 Complete: Full XRP integration across all B.A.T.S. features (8 hours ago)
 
 ## Key Features
 

@@ -17261,7 +17261,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             // Get current ART
             const currentHop = getCurrentHop();
             const currency = entryData.currency;
-            let entryAmount = parseFloat(entryData.amount);
+            const entryAmount = parseFloat(entryData.amount);
 
             // Get available threads
             const availableThreads = getAvailableSourcesForHop(currentHop, currency);
@@ -17273,23 +17273,15 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
             // Calculate total current ART for this currency
             const totalCurrentART = availableThreads.reduce((sum, t) => sum + t.availableAmount, 0);
-            const shortfall = entryAmount - totalCurrentART;
 
-            // AUTO-ADJUST: If shortfall is dust amount (< 0.01), auto-adjust entry to match available
-            const DUST_THRESHOLD = 0.01; // Anything less than this is considered gas/rounding
-            let autoAdjusted = false;
-            if (shortfall > 0 && shortfall < DUST_THRESHOLD) {
-                console.log(`🔧 Auto-adjusting entry amount from ${entryAmount} to ${totalCurrentART} ${currency} (shortfall ${shortfall} is dust)`);
-                entryAmount = totalCurrentART;
-                entryData.amount = totalCurrentART.toString(); // Update the entry data
-                autoAdjusted = true;
-            }
-
-            const artChange = -entryAmount;
-            const newTotalART = totalCurrentART - entryAmount;
+            // Determine what will actually be allocated
+            const willAllocate = Math.min(entryAmount, totalCurrentART);
+            const newTotalART = totalCurrentART - willAllocate;
+            const isPartialTrace = entryAmount > totalCurrentART;
+            const shortfall = isPartialTrace ? entryAmount - totalCurrentART : 0;
 
             const artColor = newTotalART >= 0 ? '#28a745' : '#dc3545';
-            const changeColor = artChange >= 0 ? '#28a745' : '#dc3545';
+            const willAllocateColor = isPartialTrace ? '#f39c12' : '#28a745';
 
             const html = `
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
@@ -17299,24 +17291,21 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     </div>
                     <div>
                         <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Will Allocate</div>
-                        <div style="font-size: 24px; font-weight: bold; color: ${changeColor};">${entryAmount.toLocaleString()} ${currency}</div>
+                        <div style="font-size: 24px; font-weight: bold; color: ${willAllocateColor};">${willAllocate.toLocaleString()} ${currency}</div>
+                        ${isPartialTrace ? `<div style="font-size: 11px; color: #f39c12; margin-top: 2px;">of ${entryAmount.toLocaleString()} ${currency} transaction</div>` : ''}
                     </div>
                     <div>
                         <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Remaining (ART)</div>
                         <div style="font-size: 24px; font-weight: bold; color: ${artColor};">${newTotalART.toLocaleString()} ${currency}</div>
                     </div>
                 </div>
-                ${autoAdjusted ? `
-                    <div style="margin-top: 15px; padding: 12px; background: #d1ecf1; border-left: 4px solid #17a2b8; border-radius: 4px; color: #0c5460;">
-                        <strong>✓ Auto-adjusted:</strong> Entry amount reduced by ${shortfall.toFixed(8)} ${currency} (dust/gas) to match available ART.
-                    </div>
-                ` : newTotalART < 0 ? `
-                    <div style="margin-top: 15px; padding: 12px; background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 4px; color: #721c24;">
-                        <strong>⚠️ Warning:</strong> This entry will result in a negative ART (insufficient funds). Select threads below to allocate properly.
+                ${isPartialTrace ? `
+                    <div style="margin-top: 15px; padding: 12px; background: #fff3cd; border-left: 4px solid #f39c12; border-radius: 4px; color: #856404;">
+                        <strong>ℹ️ Partial Trace:</strong> This transaction is ${entryAmount.toLocaleString()} ${currency}, but you only have ${totalCurrentART.toLocaleString()} ${currency} available. Your thread(s) will contribute their full value (${willAllocate.toLocaleString()} ${currency}), and ${shortfall.toLocaleString()} ${currency} will remain untraced.
                     </div>
                 ` : ''}
                 <div style="margin-top: 12px; padding: 10px; background: #e8f4f8; border-radius: 4px; font-size: 13px; color: #2c3e50;">
-                    ℹ️ Select which threads to allocate below. The system will use PIFO ordering automatically.
+                    ℹ️ Select which threads to allocate below. Threads contribute what they can - leftovers stay available for future traces.
                 </div>
             `;
 
