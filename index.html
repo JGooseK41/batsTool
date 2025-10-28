@@ -10688,44 +10688,46 @@ function updateThreadAvailabilityFromSwap(entry) {
     let threadsToProcess = [];
     let totalAvailableInput = 0;
 
-    // Search by both internal ID and notation
-    if (investigation.availableThreads[inputCurrency]) {
-        for (const key in investigation.availableThreads[inputCurrency]) {
-            const thread = investigation.availableThreads[inputCurrency][key];
+    // FLAT STRUCTURE: Search all threads, filter by currency and match
+    for (const key in investigation.availableThreads) {
+        const thread = investigation.availableThreads[key];
+        if (!thread) continue; // Skip null entries
 
-            // Check if this thread matches any of our source threads
-            let isMatch = false;
-            let matchedNotation = null;
+        // Only process threads with matching currency
+        if (thread.currency !== inputCurrency) continue;
 
-            // Check by internal ID
-            if (sourceInternalIds.includes(key) || sourceInternalIds.includes(thread.internalId)) {
-                isMatch = true;
-                matchedNotation = thread.notation || sourceNotations[0];
-            }
-            // Check by notation
-            else if (sourceNotations.includes(thread.notation) || sourceNotations.includes(key)) {
-                isMatch = true;
-                matchedNotation = thread.notation || sourceNotations[0];
-            }
-            // Legacy check - key might be the notation itself
-            else if (sourceNotations.some(n => key.includes(n))) {
-                isMatch = true;
-                matchedNotation = sourceNotations.find(n => key.includes(n));
-            }
+        // Check if this thread matches any of our source threads
+        let isMatch = false;
+        let matchedNotation = null;
 
-            if (isMatch) {
-                const available = thread.totalAmount; // Use total amount for swaps
-                console.log(`Found matching thread: ${key} with ${available} ${inputCurrency}`);
+        // Check by internal ID
+        if (sourceInternalIds.includes(key) || sourceInternalIds.includes(thread.internalId)) {
+            isMatch = true;
+            matchedNotation = thread.notation || sourceNotations[0];
+        }
+        // Check by notation
+        else if (sourceNotations.includes(thread.notation) || sourceNotations.includes(key)) {
+            isMatch = true;
+            matchedNotation = thread.notation || sourceNotations[0];
+        }
+        // Legacy check - key might be the notation itself
+        else if (sourceNotations.some(n => key.includes(n))) {
+            isMatch = true;
+            matchedNotation = sourceNotations.find(n => key.includes(n));
+        }
 
-                threadsToProcess.push({
-                    key: key,
-                    internalId: thread.internalId || key,
-                    notation: matchedNotation || thread.notation || key,
-                    thread: thread,
-                    available: available
-                });
-                totalAvailableInput += available;
-            }
+        if (isMatch) {
+            const available = thread.totalAmount; // Use total amount for swaps
+            console.log(`Found matching thread: ${key} with ${available} ${inputCurrency}`);
+
+            threadsToProcess.push({
+                key: key,
+                internalId: thread.internalId || key,
+                notation: matchedNotation || thread.notation || key,
+                thread: thread,
+                available: available
+            });
+            totalAvailableInput += available;
         }
     }
 
@@ -10751,24 +10753,22 @@ function updateThreadAvailabilityFromSwap(entry) {
                 item.thread.availableAmount = roundAmount(remainingAmount);
                 console.log(`Thread ${item.notation} keeps ${remainingAmount} ${inputCurrency}`);
             } else {
-                // Remove if dust amount
-                delete investigation.availableThreads[inputCurrency][item.key];
-                console.log(`Removed thread ${item.key} from ${inputCurrency} (dust)`);
+                // FLAT STRUCTURE: Remove thread directly
+                delete investigation.availableThreads[item.key];
+                console.log(`Removed thread ${item.key} (dust)`);
             }
         });
     } else {
-        // Full swap - remove ALL matching threads from input currency
+        // FLAT STRUCTURE: Full swap - remove ALL matching threads
         threadsToProcess.forEach(item => {
-            delete investigation.availableThreads[inputCurrency][item.key];
-            console.log(`Removed thread ${item.key} from ${inputCurrency}`);
+            delete investigation.availableThreads[item.key];
+            console.log(`Removed thread ${item.key}`);
         });
     }
 
     // Create thread(s) in output currency
     if (outputAmount > 0) {
-        if (!investigation.availableThreads[outputCurrency]) {
-            investigation.availableThreads[outputCurrency] = {};
-        }
+        // FLAT STRUCTURE: No need to initialize currency containers
 
         // Check if we should create a single consolidated output thread
         // This happens when swapping commingled funds (multiple source threads)
@@ -10780,11 +10780,14 @@ function updateThreadAvailabilityFromSwap(entry) {
             const consolidatedNotation = consolidatedNotations.join(' ');
             const newInternalId = generateInternalThreadId(consolidatedNotation, outputCurrency);
 
-            // Check if this consolidated thread already exists
+            // FLAT STRUCTURE: Check if this consolidated thread already exists
             let exists = false;
-            for (const key in investigation.availableThreads[outputCurrency]) {
-                const thread = investigation.availableThreads[outputCurrency][key];
-                if (thread.notation === consolidatedNotation && thread.sourceType === 'swap_output') {
+            for (const key in investigation.availableThreads) {
+                const thread = investigation.availableThreads[key];
+                if (!thread) continue;
+                if (thread.notation === consolidatedNotation &&
+                    thread.sourceType === 'swap_output' &&
+                    thread.currency === outputCurrency) {
                     console.log(`Consolidated swap output thread already exists, skipping`);
                     exists = true;
                     break;
@@ -10792,7 +10795,8 @@ function updateThreadAvailabilityFromSwap(entry) {
             }
 
             if (!exists) {
-                investigation.availableThreads[outputCurrency][newInternalId] = {
+                // FLAT STRUCTURE: Create thread at root level
+                investigation.availableThreads[newInternalId] = {
                     // Dual-layer identifiers
                     notation: consolidatedNotation,
                     internalId: newInternalId,
@@ -10843,11 +10847,14 @@ function updateThreadAvailabilityFromSwap(entry) {
             threadsToProcess.forEach(item => {
             const notation = item.notation;
 
-            // Check if this swap output already exists (prevent duplicates)
+            // FLAT STRUCTURE: Check if this swap output already exists (prevent duplicates)
             let existingOutputThread = null;
-            for (const key in investigation.availableThreads[outputCurrency]) {
-                const thread = investigation.availableThreads[outputCurrency][key];
-                if (thread.notation === notation && thread.sourceType === 'swap_output') {
+            for (const key in investigation.availableThreads) {
+                const thread = investigation.availableThreads[key];
+                if (!thread) continue;
+                if (thread.notation === notation &&
+                    thread.sourceType === 'swap_output' &&
+                    thread.currency === outputCurrency) {
                     existingOutputThread = { key, thread };
                     console.log(`Swap output thread ${notation} already exists in ${outputCurrency}, skipping creation`);
                     break;
@@ -10867,7 +10874,8 @@ function updateThreadAvailabilityFromSwap(entry) {
             const outputPortion = threadsToProcess.length === 1 ? outputAmount :
                                  (outputAmount * (item.available / totalAvailableInput));
 
-            investigation.availableThreads[outputCurrency][newInternalId] = {
+            // FLAT STRUCTURE: Create thread at root level
+            investigation.availableThreads[newInternalId] = {
                 // Dual-layer identifiers
                 notation: notation,
                 internalId: newInternalId,
@@ -10909,7 +10917,7 @@ function updateThreadAvailabilityFromSwap(entry) {
             };
 
             console.log(`✅ Created swap output thread ${notation} in ${outputCurrency}: ${outputPortion} (ID: ${newInternalId})`);
-            console.log(`Thread details:`, investigation.availableThreads[outputCurrency][newInternalId]);
+            console.log(`Thread details:`, investigation.availableThreads[newInternalId]);
         });
         }
     }
