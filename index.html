@@ -2761,8 +2761,61 @@
                 <div style="font-size: 18px; color: #666;">Loading wallet history...</div>
             </div>
 
-            <!-- Asset Summary Section -->
-            <div id="walletExplorerAssetSummary" style="display: none; margin-bottom: 20px;">
+            <!-- SPLIT SCREEN LAYOUT -->
+            <div id="walletExplorerSplitContainer" style="display: none; position: relative; display: flex; gap: 0;">
+                <!-- Left Sidebar (Collapsible) -->
+                <div id="walletExplorerSidebar" style="width: 350px; min-width: 350px; background: #f8f9fa; border-radius: 8px; padding: 20px; margin-right: 20px; transition: all 0.3s ease; overflow-y: auto; max-height: calc(90vh - 250px); position: relative;">
+                    <!-- Collapse Button -->
+                    <button onclick="toggleWalletExplorerSidebar()"
+                            style="position: absolute; top: 10px; right: -15px; background: #3498db; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+                            title="Collapse/Expand Sidebar">
+                        <span id="walletExplorerSidebarToggle">◀</span>
+                    </button>
+
+                    <div id="walletExplorerSidebarContent">
+                        <!-- Wallet Statistics Section -->
+                        <div id="walletExplorerStats" style="background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <h3 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 16px; border-bottom: 2px solid #3498db; padding-bottom: 8px;">
+                                📊 Wallet Overview
+                            </h3>
+                            <div id="walletExplorerStatsContent" style="font-size: 13px; color: #555;">
+                                <!-- Stats populated by JavaScript -->
+                                <div style="margin-bottom: 10px;">
+                                    <strong>Address:</strong><br>
+                                    <span id="walletExplorerStatsAddress" style="font-family: monospace; font-size: 11px; word-break: break-all;"></span>
+                                </div>
+                                <div style="margin-bottom: 10px;">
+                                    <strong>Blockchain:</strong>
+                                    <span id="walletExplorerStatsChain"></span>
+                                </div>
+                                <div style="margin-bottom: 10px;">
+                                    <strong>First Seen:</strong>
+                                    <span id="walletExplorerStatsFirstSeen">-</span>
+                                </div>
+                                <div style="margin-bottom: 10px;">
+                                    <strong>Last Activity:</strong>
+                                    <span id="walletExplorerStatsLastSeen">-</span>
+                                </div>
+                                <div style="margin-bottom: 10px;">
+                                    <strong>Total Transactions:</strong>
+                                    <span id="walletExplorerStatsTotalTx">0</span>
+                                </div>
+                                <div>
+                                    <strong>Current Asset:</strong>
+                                    <span id="walletExplorerStatsCurrentAsset">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ART Tracker Panel (moved to sidebar) - populated by JavaScript -->
+                        <!-- Cluster Panel (moved to sidebar) - populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Right Main Panel -->
+                <div id="walletExplorerMainPanel" style="flex: 1; min-width: 0;">
+                    <!-- Asset Summary Section -->
+                    <div id="walletExplorerAssetSummary" style="display: none; margin-bottom: 20px;">
                 <h3 style="margin-bottom: 15px; color: #333;">📊 Asset Activity History</h3>
 
                 <!-- Wallet Info & History Completeness Warning -->
@@ -3008,6 +3061,8 @@
                     </button>
                 </div>
             </div>
+                </div> <!-- End walletExplorerMainPanel -->
+            </div> <!-- End walletExplorerSplitContainer -->
 
             <!-- Empty State -->
             <div id="walletExplorerEmpty" style="display: none; text-align: center; padding: 60px 20px; color: #999;">
@@ -14951,6 +15006,29 @@ function exportRedWalletIndexCSV() {
             resetWalletExplorer();
         }
 
+        // Toggle sidebar collapse/expand
+        function toggleWalletExplorerSidebar() {
+            const sidebar = document.getElementById('walletExplorerSidebar');
+            const sidebarContent = document.getElementById('walletExplorerSidebarContent');
+            const toggleButton = document.getElementById('walletExplorerSidebarToggle');
+
+            if (sidebar.style.width === '40px') {
+                // Expand
+                sidebar.style.width = '350px';
+                sidebar.style.minWidth = '350px';
+                sidebar.style.padding = '20px';
+                sidebarContent.style.display = 'block';
+                toggleButton.textContent = '◀';
+            } else {
+                // Collapse
+                sidebar.style.width = '40px';
+                sidebar.style.minWidth = '40px';
+                sidebar.style.padding = '10px 5px';
+                sidebarContent.style.display = 'none';
+                toggleButton.textContent = '▶';
+            }
+        }
+
         // Reset wallet explorer state
         function resetWalletExplorer() {
             walletExplorerState = {
@@ -14988,6 +15066,7 @@ function exportRedWalletIndexCSV() {
             document.getElementById('walletExplorerTransactions').style.display = 'none';
             document.getElementById('walletExplorerEmpty').style.display = 'none';
             document.getElementById('walletExplorerARTPanel').style.display = 'none';
+            document.getElementById('walletExplorerSplitContainer').style.display = 'none';
         }
 
         // Search wallet history
@@ -15427,6 +15506,76 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             }
 
             document.getElementById('walletExplorerTransactions').style.display = 'block';
+            document.getElementById('walletExplorerSplitContainer').style.display = 'flex';
+
+            // Populate wallet statistics in sidebar
+            populateWalletStats();
+
+            // Move ART and Cluster panels to sidebar if they exist
+            moveExplorerPanelsToSidebar();
+        }
+
+        // Populate wallet statistics in sidebar
+        function populateWalletStats() {
+            const state = walletExplorerState;
+            const asset = state.assets[state.selectedAsset];
+
+            document.getElementById('walletExplorerStatsAddress').textContent = state.address || '-';
+            document.getElementById('walletExplorerStatsChain').textContent = state.blockchain ?
+                state.blockchain.charAt(0).toUpperCase() + state.blockchain.slice(1) : '-';
+
+            // Calculate first/last seen from all transactions
+            if (asset && asset.transactions.length > 0) {
+                const sorted = [...asset.transactions].sort((a, b) => a.timestamp - b.timestamp);
+                const firstSeen = new Date(sorted[0].timestamp);
+                const lastSeen = new Date(sorted[sorted.length - 1].timestamp);
+
+                document.getElementById('walletExplorerStatsFirstSeen').textContent =
+                    firstSeen.toISOString().slice(0, 10);
+                document.getElementById('walletExplorerStatsLastSeen').textContent =
+                    lastSeen.toISOString().slice(0, 10);
+                document.getElementById('walletExplorerStatsTotalTx').textContent =
+                    asset.transactions.length.toLocaleString();
+            } else {
+                document.getElementById('walletExplorerStatsFirstSeen').textContent = '-';
+                document.getElementById('walletExplorerStatsLastSeen').textContent = '-';
+                document.getElementById('walletExplorerStatsTotalTx').textContent = '0';
+            }
+
+            document.getElementById('walletExplorerStatsCurrentAsset').textContent =
+                state.selectedAsset || '-';
+        }
+
+        // Move ART and Cluster panels to sidebar
+        function moveExplorerPanelsToSidebar() {
+            const sidebar = document.getElementById('walletExplorerSidebarContent');
+            const artPanel = document.getElementById('walletExplorerARTPanel');
+            const clusterPanel = document.getElementById('walletExplorerClusterPanel');
+
+            // Move panels to sidebar if they're not already there
+            if (artPanel && artPanel.parentElement.id !== 'walletExplorerSidebarContent') {
+                // Update styling for sidebar
+                artPanel.style.background = 'white';
+                artPanel.style.border = 'none';
+                artPanel.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+                artPanel.style.borderLeft = '4px solid #2196f3';
+                artPanel.style.padding = '15px';
+                artPanel.style.marginBottom = '15px';
+                artPanel.style.borderRadius = '8px';
+                sidebar.appendChild(artPanel);
+            }
+
+            if (clusterPanel && clusterPanel.parentElement.id !== 'walletExplorerSidebarContent') {
+                // Update styling for sidebar
+                clusterPanel.style.background = 'white';
+                clusterPanel.style.border = 'none';
+                clusterPanel.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+                clusterPanel.style.borderLeft = '4px solid #ffa726';
+                clusterPanel.style.padding = '15px';
+                clusterPanel.style.marginBottom = '15px';
+                clusterPanel.style.borderRadius = '8px';
+                sidebar.appendChild(clusterPanel);
+            }
         }
 
         // Display Thread Progression for Current Wallet
