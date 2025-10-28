@@ -3,21 +3,22 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 17:33)
+## Latest Commit (Auto-updated: 2025-10-28 17:34)
 
-**Commit:** 973fd58429e825bb2a7e50bbeac07bff8c979f7d
+**Commit:** e60257a7eb26b5d72209414200de550c58067cdf
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 78 ++++++++++++++++++++++++++++++++++++++-------------------------
- 1 file changed, 47 insertions(+), 31 deletions(-)
+ CLAUDE.md | 77 +++++++++++++--------------------------------------------------
+ 1 file changed, 15 insertions(+), 62 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 973fd58 Update CLAUDE.md with latest commit info (1 second ago)
+- e60257a Update CLAUDE.md with latest commit info (0 seconds ago)
+- 973fd58 Update CLAUDE.md with latest commit info (19 seconds ago)
 - 108adc3 🎉 IMPLEMENTATION PLAN COMPLETE - All 8 Phases Finished (4 minutes ago)
 - 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (4 minutes ago)
 - 9ef10ed Fix: Clarify ERC-20/gas fee handling - gas never tracked as output (6 minutes ago)
@@ -26,7 +27,6 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 - 1b43c79 Update CLAUDE.md with latest commit info (24 minutes ago)
 - 3e6a044 Fix: Enforce hard allocation validation with partial trace option (26 minutes ago)
 - de0f793 Fix: Correct change address handling - same-address change stays in thread (28 minutes ago)
-- c6d49cf Update CLAUDE.md with latest commit info (44 minutes ago)
 
 ## Key Features
 
