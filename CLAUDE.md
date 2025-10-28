@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-28 18:20)
 
-**Commit:** 4dd8378d3b22be0d004418b547c66fb5d4ff9f5d
+**Commit:** 1efba269c14cd18b56cebe33ad69e5a48173f1dd
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 74 ++++++++++++++++++++++++++++++++++++++++++++++++++-------------
- 1 file changed, 59 insertions(+), 15 deletions(-)
+ CLAUDE.md | 74 +++++++++++++--------------------------------------------------
+ 1 file changed, 15 insertions(+), 59 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4dd8378 Update CLAUDE.md with latest commit info (1 second ago)
-- 7128cd0 UX: Redesign Wallet Explorer with collapsible sidebar layout (68 seconds ago)
+- 1efba26 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 4dd8378 Update CLAUDE.md with latest commit info (13 seconds ago)
+- 7128cd0 UX: Redesign Wallet Explorer with collapsible sidebar layout (80 seconds ago)
 - d8bafef Final CLAUDE.md update (46 minutes ago)
 - 12b2440 Update CLAUDE.md with latest commit info (46 minutes ago)
 - e60257a Update CLAUDE.md with latest commit info (46 minutes ago)
-- 973fd58 Update CLAUDE.md with latest commit info (46 minutes ago)
+- 973fd58 Update CLAUDE.md with latest commit info (47 minutes ago)
 - 108adc3 🎉 IMPLEMENTATION PLAN COMPLETE - All 8 Phases Finished (50 minutes ago)
-- 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (50 minutes ago)
+- 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (51 minutes ago)
 - 9ef10ed Fix: Clarify ERC-20/gas fee handling - gas never tracked as output (52 minutes ago)
-- e7fc75c Fix: Enforce victim completion workflow before adding new victims (58 minutes ago)
 
 ## Key Features
 
