@@ -3,59 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 17:07)
+## Latest Commit (Auto-updated: 2025-10-28 17:10)
 
-**Commit:** 3e6a044f7208a2efe22df1e19bc26f5d14c6306b
+**Commit:** 1b43c7980a90f9d118d6f0255c27a8b9daeb5453
 **Author:** Your Name
-**Message:** Fix: Enforce hard allocation validation with partial trace option
-
-Problem: Bulk transaction addition allowed over-allocation:
-- Warning shown but user could click "OK to continue anyway"
-- Created invalid entries exceeding available thread amounts
-- Led to accounting errors and negative balances
-
-Solution: Implement hard block with partial trace option:
-- Block if total exceeds available amount (no override)
-- Offer two choices:
-  • PARTIAL TRACE: Proportionally reduce to fit available
-  • Cancel: Go back and adjust selection
-- Partial trace calculates reduction factor automatically
-- Each transaction proportionally reduced
-- Total equals exactly available amount
-
-Implementation:
-- Updated bulk add validation (index.html:18249-18301)
-- Changed confirm() from "continue anyway" to "partial trace / cancel"
-- Added proportional reduction logic
-- Stores partialTraceAmount on each transaction
-- Detailed console logging for audit trail
-
-Result: Prevents over-allocation while supporting partial tracing.
-
-Phase 1.3 complete ✓
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- index.html | 55 +++++++++++++++++++++++++++++++++++++------------------
- 1 file changed, 37 insertions(+), 18 deletions(-)
+ CLAUDE.md | 68 ++++++++++++++++++++++++++++++++++-----------------------------
+ 1 file changed, 37 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3e6a044 Fix: Enforce hard allocation validation with partial trace option (1 second ago)
-- de0f793 Fix: Correct change address handling - same-address change stays in thread (2 minutes ago)
-- c6d49cf Update CLAUDE.md with latest commit info (18 minutes ago)
-- d1973e3 Refactor: Migrate thread index from currency-keyed to flat provenance-based structure (18 minutes ago)
+- 1b43c79 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 3e6a044 Fix: Enforce hard allocation validation with partial trace option (3 minutes ago)
+- de0f793 Fix: Correct change address handling - same-address change stays in thread (4 minutes ago)
+- c6d49cf Update CLAUDE.md with latest commit info (21 minutes ago)
+- d1973e3 Refactor: Migrate thread index from currency-keyed to flat provenance-based structure (21 minutes ago)
 - 63babf9 Fix: Enhanced currency matching to handle cross-chain assets (3 hours ago)
 - f6d7ae9 Fix: Use thread destinationTxHash to highlight correct transaction in Wallet Explorer (3 hours ago)
 - 0379f66 Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer (3 hours ago)
 - ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (3 hours ago)
 - e788fda Fix: Replace auto-adjustment with proper partial trace support (4 hours ago)
-- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (4 hours ago)
 
 ## Key Features
 
