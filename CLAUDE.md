@@ -3,30 +3,61 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 17:10)
+## Latest Commit (Auto-updated: 2025-10-28 17:29)
 
-**Commit:** 1b43c7980a90f9d118d6f0255c27a8b9daeb5453
+**Commit:** 3c70353b6318c010e51584820f74d716f446aa29
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Fix: Allow manual entries without transaction hash for CEX/off-chain
+
+Problem: Manual mode still required transaction hash:
+- CEX internal transfers have no on-chain tx hash
+- Off-chain transactions can't be looked up
+- Investigators forced to enter fake/placeholder hashes
+
+Solution: Make txHash optional in manual mode:
+- Only require destination wallet (toWallet)
+- txHash becomes optional for CEX/off-chain transfers
+- Lookup mode still requires txHash (unchanged)
+- Added clarifying comments and logging
+
+Implementation (index.html:32454-32464):
+- Manual mode: hasRequiredData = toWallet present (no txHash check)
+- Lookup mode: hasRequiredData = txHash + txData (unchanged)
+- Console logging shows which validation path used
+
+Use cases now supported:
+- CEX internal transfers (Binance → Kraken)
+- OTC desk transactions
+- Cash/wire transfers converted to crypto
+- Any off-chain movement documented in investigation
+
+Result: Full flexibility for real-world investigations.
+
+Phase 4.2 complete ✓
+ALL PHASES COMPLETE (8/8) ✓
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 68 ++++++++++++++++++++++++++++++++++-----------------------------
- 1 file changed, 37 insertions(+), 31 deletions(-)
+ index.html | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1b43c79 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 3e6a044 Fix: Enforce hard allocation validation with partial trace option (3 minutes ago)
-- de0f793 Fix: Correct change address handling - same-address change stays in thread (4 minutes ago)
-- c6d49cf Update CLAUDE.md with latest commit info (21 minutes ago)
-- d1973e3 Refactor: Migrate thread index from currency-keyed to flat provenance-based structure (21 minutes ago)
+- 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (0 seconds ago)
+- 9ef10ed Fix: Clarify ERC-20/gas fee handling - gas never tracked as output (2 minutes ago)
+- e7fc75c Fix: Enforce victim completion workflow before adding new victims (8 minutes ago)
+- 60e020a Summary: Implementation Plan Progress - Phases 1-3 Complete (18 minutes ago)
+- 1b43c79 Update CLAUDE.md with latest commit info (19 minutes ago)
+- 3e6a044 Fix: Enforce hard allocation validation with partial trace option (22 minutes ago)
+- de0f793 Fix: Correct change address handling - same-address change stays in thread (24 minutes ago)
+- c6d49cf Update CLAUDE.md with latest commit info (40 minutes ago)
+- d1973e3 Refactor: Migrate thread index from currency-keyed to flat provenance-based structure (40 minutes ago)
 - 63babf9 Fix: Enhanced currency matching to handle cross-chain assets (3 hours ago)
-- f6d7ae9 Fix: Use thread destinationTxHash to highlight correct transaction in Wallet Explorer (3 hours ago)
-- 0379f66 Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer (3 hours ago)
-- ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (3 hours ago)
-- e788fda Fix: Replace auto-adjustment with proper partial trace support (4 hours ago)
 
 ## Key Features
 
