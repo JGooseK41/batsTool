@@ -15453,6 +15453,13 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             });
 
             document.getElementById('walletExplorerAssetSummary').style.display = 'block';
+            document.getElementById('walletExplorerSplitContainer').style.display = 'flex';
+
+            // Initialize wallet statistics in sidebar
+            populateWalletStats();
+
+            // Move ART and Cluster panels to sidebar if they exist
+            moveExplorerPanelsToSidebar();
         }
 
         // Select asset
@@ -15562,9 +15569,17 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             document.getElementById('walletExplorerStatsChain').textContent = state.blockchain ?
                 state.blockchain.charAt(0).toUpperCase() + state.blockchain.slice(1) : '-';
 
-            // Calculate first/last seen from all transactions
+            // Calculate first/last seen - use specific asset if selected, otherwise all transactions
+            let transactionsToAnalyze = [];
             if (asset && asset.transactions.length > 0) {
-                const sorted = [...asset.transactions].sort((a, b) => a.timestamp - b.timestamp);
+                transactionsToAnalyze = asset.transactions;
+            } else if (state.allTransactions && state.allTransactions.length > 0) {
+                // No asset selected yet - use all transactions
+                transactionsToAnalyze = state.allTransactions;
+            }
+
+            if (transactionsToAnalyze.length > 0) {
+                const sorted = [...transactionsToAnalyze].sort((a, b) => a.timestamp - b.timestamp);
                 const firstSeen = new Date(sorted[0].timestamp);
                 const lastSeen = new Date(sorted[sorted.length - 1].timestamp);
 
@@ -15573,7 +15588,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 document.getElementById('walletExplorerStatsLastSeen').textContent =
                     lastSeen.toISOString().slice(0, 10);
                 document.getElementById('walletExplorerStatsTotalTx').textContent =
-                    asset.transactions.length.toLocaleString();
+                    transactionsToAnalyze.length.toLocaleString();
             } else {
                 document.getElementById('walletExplorerStatsFirstSeen').textContent = '-';
                 document.getElementById('walletExplorerStatsLastSeen').textContent = '-';
@@ -15581,7 +15596,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             }
 
             document.getElementById('walletExplorerStatsCurrentAsset').textContent =
-                state.selectedAsset || '-';
+                state.selectedAsset || 'All Assets';
         }
 
         // Move ART and Cluster panels to sidebar

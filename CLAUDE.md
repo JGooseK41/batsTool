@@ -3,30 +3,57 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 18:20)
+## Latest Commit (Auto-updated: 2025-10-28 19:10)
 
-**Commit:** 23929cb3f9e1e8a82e278c610db02b661a421ce7
+**Commit:** b2d980b45b9f64c1b7e38fc922f140ca50dd21e7
 **Author:** Your Name
-**Message:** Final CLAUDE.md sync
+**Message:** Fix: Update migration/consolidation functions for flat structure
+
+Problem: Migration functions still used nested structure iteration:
+- isLegacyThreadSystem() iterated availableThreads[currency][key]
+- migrateThreadsToDualLayer() tried to read thread.internalId from null
+- consolidateDuplicateThreads() iterated nested structure
+- Result: 'Cannot read properties of null' when adding hops
+
+Solution: Update all migration helpers for flat structure:
+
+1. isLegacyThreadSystem():
+   - Check first entry directly - if has thread properties, it's flat
+   - No more nested currency iteration
+   - Returns false immediately if already flat
+
+2. migrateThreadsToDualLayer():
+   - Skip null threads during migration
+   - Outputs to flat structure: newThreads[internalId] = thread
+   - Ensures currency property set on each thread
+
+3. consolidateDuplicateThreads():
+   - Iterate flat: for (threadId in availableThreads)
+   - Group by notation+currency key
+   - Delete from root: delete availableThreads[threadId]
+
+These functions are defensive - they handle both old saves (migrate) and new saves (skip).
+
+Critical fix: Hop creation now works!
 
 ### Changed Files:
 ```
- CLAUDE.md | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ index.html | 139 +++++++++++++++++++++++++++++++++++--------------------------
+ 1 file changed, 81 insertions(+), 58 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 23929cb Final CLAUDE.md sync (0 seconds ago)
-- 1efba26 Update CLAUDE.md with latest commit info (10 seconds ago)
-- 4dd8378 Update CLAUDE.md with latest commit info (23 seconds ago)
-- 7128cd0 UX: Redesign Wallet Explorer with collapsible sidebar layout (2 minutes ago)
-- d8bafef Final CLAUDE.md update (46 minutes ago)
-- 12b2440 Update CLAUDE.md with latest commit info (46 minutes ago)
-- e60257a Update CLAUDE.md with latest commit info (46 minutes ago)
-- 973fd58 Update CLAUDE.md with latest commit info (47 minutes ago)
-- 108adc3 🎉 IMPLEMENTATION PLAN COMPLETE - All 8 Phases Finished (51 minutes ago)
-- 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (51 minutes ago)
+- b2d980b Fix: Update migration/consolidation functions for flat structure (1 second ago)
+- 6188a2a Fix: Complete thread structure migration - all remaining functions (5 minutes ago)
+- 5402485 Fix: Update getThreadChainHistory for flat thread structure (17 minutes ago)
+- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (19 minutes ago)
+- 831eaf8 Fix: Update getMaxAssignableAmount for flat thread structure (31 minutes ago)
+- 4628023 Fix: Remove extra closing brace causing syntax error at line 10558 (37 minutes ago)
+- 6faf871 Fix: Remove duplicate display property in wallet explorer split container (41 minutes ago)
+- 21789b2 Sync CLAUDE.md (50 minutes ago)
+- 23929cb Final CLAUDE.md sync (50 minutes ago)
+- 1efba26 Update CLAUDE.md with latest commit info (50 minutes ago)
 
 ## Key Features
 
