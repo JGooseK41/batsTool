@@ -3,40 +3,288 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 05:26)
+## Latest Commit (Auto-updated: 2025-10-28 06:22)
 
-**Commit:** c36bcf727ac0ce7e85bef7415ac2e355b4d65e1d
+**Commit:** 0638d637e36e25f57627dceeb3a218b902fccb6a
 **Author:** Your Name
-**Message:** Update XRPScan API origin parameter to Batstool.com
+**Message:** Feature: Court-ready clustering documentation with justification and source/destination tracking
 
-Changed origin parameter from theblockaudit.com to Batstool.com in:
-- XRP blockchain configuration (line 7443)
-- fetchTransactionData() function (line 44511)
-- lookupTransaction() function (line 41207)
+Implements comprehensive documentation requirements for Bitcoin address clustering with user-provided justification and detailed transaction flow tracking.
 
-All XRPScan API requests now use ?origin=Batstool.com
+## PROBLEM IDENTIFIED:
 
-User must reply to XRPScan email with domain: Batstool.com
+Clustering lacked proper documentation for court admissibility:
+❌ No documented reason WHY addresses were clustered
+❌ No recorded heuristic or behavioral evidence
+❌ No investigator justification for clustering decision
+❌ Hop entry notes didn't specify which cluster addresses were involved in traced transaction
+❌ Missing audit trail for input/output addresses within cluster
+
+## IMPLEMENTATION:
+
+### 1. CLUSTERING JUSTIFICATION MODAL (lines 50602-50678)
+✅ **Modal UI with Court-Ready Fields:**
+- Shows addresses being clustered (original + new)
+- **Heuristic Dropdown** with standard clustering methods:
+  - UTXO-Based: Change outputs, common input ownership, peeling chains, round numbers
+  - Behavioral: Temporal correlation, address reuse, dust consolidation, multi-hop patterns
+  - External Evidence: Blockchain analysis services, entity attribution, wallet fingerprinting
+  - Custom option for investigator-defined heuristics
+- **Detailed Justification Text Area** (required, min 20 characters)
+  - Placeholder with example documentation
+  - Best practices guidance
+  - Validation before submission
+
+### 2. CLUSTERING WORKFLOW ENHANCEMENT (lines 18851-18959)
+✅ **Updated handleClusterDecision():**
+- Shows justification modal instead of immediately clustering
+- Closes change address decision modal
+- Passes context to justification modal
+
+✅ **NEW: showClusteringJustificationModal():**
+- Stores clustering context (txHash, addresses, threadId, amount)
+- Populates modal with address information
+- Clears previous inputs
+
+✅ **NEW: submitClusteringJustification():**
+- Validates heuristic selection (required)
+- Validates justification text (min 20 chars)
+- Gets heuristic display name for documentation
+- Calls createAddressCluster with justification parameters
+- Shows confirmation with heuristic name
+
+✅ **NEW: closeClusteringJustificationModal():**
+- Cleans up modal and context
+
+### 3. ENHANCED createAddressCluster() (line 18965)
+✅ **New Function Signature:**
+```javascript
+function createAddressCluster(
+    originalAddress,
+    newAddress,
+    threadId,
+    amount,
+    txHash,              // NEW: Transaction hash
+    heuristic,           // NEW: Heuristic code
+    heuristicName,       // NEW: Heuristic display name
+    justification        // NEW: Investigator's detailed explanation
+)
+```
+
+✅ **Enhanced Cluster Documentation (Existing Cluster - lines 18995-19020):**
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 CLUSTER UPDATE: [timestamp]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ACTION: Address added to existing cluster
+WALLET ID: [id]
+THREAD: [thread]
+NEW ADDRESS: [address]
+AMOUNT: [amount]
+TRANSACTION: [hash]           ← NEW
+METHODOLOGY: PIFO/LIBR
+TOTAL ADDRESSES IN CLUSTER: [count]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLUSTERING JUSTIFICATION:      ← NEW SECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 HEURISTIC: [heuristic name]
+
+📝 INVESTIGATOR NOTES:
+[detailed justification from investigator]
+```
+
+✅ **Enhanced Cluster Documentation (New Cluster - lines 19058-19074):**
+```
+NEW ADDRESS (UTXO Change):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[address]
+Monitored Amount: [amount]
+Transaction: [hash]            ← NEW
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLUSTERING JUSTIFICATION:      ← ENHANCED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 HEURISTIC: [heuristic name]
+
+📝 INVESTIGATOR NOTES:
+[detailed justification from investigator]
+```
+
+### 4. HOP ENTRY CLUSTER DOCUMENTATION (lines 35937-35991)
+✅ **MASSIVELY Enhanced Cluster-Sourced Transaction Notes:**
+
+**Before:**
+```
+🔗 CLUSTER SOURCE NOTATION:
+Thread V1-T1 sources from Cluster cluster-123 (Wallet: Red-1)
+  - Cluster contains 3 addresses
+  - Methodology: PIFO (cluster acts as single entity)
+```
+
+**After:**
+```
+🔗 CLUSTER-SOURCED TRANSACTION DOCUMENTATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This entry traces funds from a clustered wallet containing multiple addresses.
+
+📊 THREAD: V1-T1
+🔗 CLUSTER: cluster-123 (Wallet: Red-1)
+   Cluster contains 3 addresses:
+   🏠 bc1qxy2kgdygjrsqtz...abc123def
+   🔄 bc1qz34p5ab7cdefg...ghi456jkl
+   🔄 bc1qa78mnb9opqrst...mno789pqr
+
+📍 SPECIFIC TRANSACTION FLOW:        ← NEW SECTION
+   INPUT: Funds received by cluster address:
+   → bc1qz34p5ab7cdefg...ghi456jkl  ← Shows WHICH address got the UTXO
+
+   OUTPUT: Funds sent from cluster address:
+   → bc1qa78mnb9opqrst...mno789pqr  ← Shows WHICH address sent the UTXO
+
+   Transaction Hash: abc123...def456
+
+📋 METHODOLOGY: PIFO
+   The cluster acts as a single entity - whichever address
+   moved funds first was traced (PIFO compliance).
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+✅ **Source/Destination Detection Logic:**
+- Checks `txData.sourceAddress` and `txData.fromAddress` for input address
+- Checks `txData.counterparty` for output address
+- Matches against all cluster addresses
+- Only documents if address is actually in the cluster
+- Includes transaction hash for verification
+
+## BENEFITS:
+
+### Court Admissibility:
+✅ **Documented Heuristic**: Every cluster has recorded reasoning method
+✅ **Investigator Justification**: Detailed explanation of behavioral evidence
+✅ **Transaction Hash**: Verifiable blockchain evidence
+✅ **Specific Addresses**: Clear audit trail showing WHICH addresses were involved
+✅ **Input/Output Tracking**: Documents money flow within cluster
+✅ **Methodology Compliance**: Explains PIFO/LIBR implications
+
+### Investigator Workflow:
+✅ **Standard Heuristics**: Dropdown with 13 common clustering methods
+✅ **Custom Option**: Allows investigator-defined heuristics
+✅ **Validation**: Prevents clustering without justification
+✅ **Audit Trail**: Every clustering decision is documented
+✅ **Report Integration**: Justifications appear in final B.A.T.S. reports
+
+### Transaction Tracing:
+✅ **Clear Source**: Shows which cluster address received the UTXO
+✅ **Clear Destination**: Shows which cluster address sent the traced UTXO
+✅ **Complete Context**: Lists all cluster addresses for reference
+✅ **Verification**: Transaction hash allows blockchain verification
+✅ **Methodology Notes**: Explains how cluster was treated (PIFO vs LIBR)
+
+## WORKFLOW:
+
+**Clustering an Address:**
+1. User clicks "Cluster" on change address decision
+2. Justification modal appears
+3. User selects heuristic from dropdown (required)
+4. User provides detailed explanation (min 20 chars, required)
+5. Addresses and reasoning are stored in cluster notes
+6. Cluster appears in final reports with full documentation
+
+**Tracing from Cluster:**
+1. User opens Wallet Explorer for clustered address
+2. Views unified transaction history from all cluster addresses
+3. Selects outgoing transaction to trace
+4. Creates hop entry
+5. Entry notes automatically include:
+   - All cluster addresses
+   - Which address received the UTXO (input)
+   - Which address sent the UTXO (output)
+   - Transaction hash
+   - Methodology implications
+
+## EXAMPLE DOCUMENTATION:
+
+**Cluster Creation:**
+```
+CLUSTERING JUSTIFICATION:
+📊 HEURISTIC: UTXO Change to New Address
+
+📝 INVESTIGATOR NOTES:
+Address bc1q...xyz received change output in transaction
+abc123...def456. The transaction spent 2 UTXOs from the original
+address, sent 0.5 BTC to a third party, and sent 1.3 BTC to this
+new address. The new address had no prior transaction history and
+received funds in the same transaction as the identified payment.
+Based on UTXO analysis and timing, this appears to be change
+controlled by the same entity.
+```
+
+**Hop Entry from Cluster:**
+```
+🔗 CLUSTER-SOURCED TRANSACTION DOCUMENTATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 THREAD: V1-T1
+🔗 CLUSTER: cluster-1234567890 (Wallet: Red-1)
+   Cluster contains 2 addresses:
+   🏠 bc1qxy2kgdygjrsqtz...
+   🔄 bc1qz34p5ab7cdefg...
+
+📍 SPECIFIC TRANSACTION FLOW:
+   INPUT: Funds received by cluster address:
+   → bc1qxy2kgdygjrsqtz... (original address)
+
+   OUTPUT: Funds sent from cluster address:
+   → bc1qz34p5ab7cdefg... (change address)
+
+   Transaction Hash: abc123...def456
+
+📋 METHODOLOGY: PIFO
+   The cluster acts as a single entity - whichever address
+   moved funds first was traced (PIFO compliance).
+```
+
+## FILES MODIFIED:
+
+- index.html:
+  * Lines 50602-50678: NEW clustering justification modal
+  * Lines 18851-18959: Enhanced clustering workflow functions
+  * Line 18965: Updated createAddressCluster signature
+  * Lines 18995-19020: Enhanced existing cluster update notes
+  * Lines 19058-19074: Enhanced new cluster creation notes
+  * Lines 35937-35991: Massively enhanced hop entry cluster documentation
+
+## IMPACT:
+
+🎯 **Court-Ready**: Complete audit trail for every clustering decision
+🎯 **Defensible**: Documented heuristics and investigator reasoning
+🎯 **Traceable**: Clear source/destination addresses in hop entries
+🎯 **Verifiable**: Transaction hashes for blockchain verification
+🎯 **Professional**: Standard heuristic terminology
+🎯 **Comprehensive**: Complete documentation from clustering to final report
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 235 +++++++++++++++++++++++++++----------------------------------
- index.html |   6 +-
- 2 files changed, 108 insertions(+), 133 deletions(-)
+ index.html | 270 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 244 insertions(+), 26 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c36bcf7 Update XRPScan API origin parameter to Batstool.com (1 second ago)
-- 3ec3b68 Feature: Complete XRPScan API integration with origin parameter (2 minutes ago)
-- 7e89d3f Feature: Multi-thread allocation in Wallet Explorer entry confirmation (8 minutes ago)
-- f219cd1 Fix: Commingling detection for victim transaction threads (8 hours ago)
-- e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (8 hours ago)
-- f48d691 Feature: Batch entry logging workflow in Wallet Explorer (9 hours ago)
-- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (10 hours ago)
-- 16dcb5a Auto-sync CLAUDE.md (10 hours ago)
-- 2bd784f Fix: Include transaction hash in entry notes for audit trail (10 hours ago)
-- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (10 hours ago)
+- 0638d63 Feature: Court-ready clustering documentation with justification and source/destination tracking (0 seconds ago)
+- 0d51afe Critical: Apply Ethereum-level data validity across ALL blockchains (24 minutes ago)
+- a78a36e Feature: Comprehensive blockchain integration across all 35+ chains (35 minutes ago)
+- 4cee3c6 Complete: Full XRP integration across all B.A.T.S. features (44 minutes ago)
+- c36bcf7 Update XRPScan API origin parameter to Batstool.com (56 minutes ago)
+- 3ec3b68 Feature: Complete XRPScan API integration with origin parameter (58 minutes ago)
+- 7e89d3f Feature: Multi-thread allocation in Wallet Explorer entry confirmation (64 minutes ago)
+- f219cd1 Fix: Commingling detection for victim transaction threads (9 hours ago)
+- e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (9 hours ago)
+- f48d691 Feature: Batch entry logging workflow in Wallet Explorer (10 hours ago)
 
 ## Key Features
 

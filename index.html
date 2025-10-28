@@ -22679,7 +22679,30 @@ function showARTCompletionModal(hop, validation) {
 function createMaxWriteoff(hopNumber, currency, amount) {
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
-    
+
+    // CRITICAL: Get available threads and allocate the write-off amount from them
+    const availableThreads = getAvailableSourcesForHop(hopNumber, currency);
+    const individualSourceAssignments = {};
+    let remainingToAllocate = amount;
+
+    // Allocate amount from available threads (PIFO order)
+    for (const thread of availableThreads) {
+        if (remainingToAllocate <= 0) break;
+
+        const amountFromThread = Math.min(thread.availableAmount, remainingToAllocate);
+        if (amountFromThread > 0) {
+            // Use internal ID if available, otherwise use threadId
+            const threadKey = thread.internalId || thread.threadId;
+            individualSourceAssignments[threadKey] = amountFromThread;
+            remainingToAllocate -= amountFromThread;
+            console.log(`Write-off: Allocated ${amountFromThread} from ${thread.threadId}`);
+        }
+    }
+
+    if (remainingToAllocate > 0.01) {
+        console.warn(`Write-off: Could not fully allocate ${amount} ${currency}. Remaining: ${remainingToAllocate}`);
+    }
+
     const writeoffEntry = {
         id: hop.entries.length + 1,
         hopNumber: hopNumber,
@@ -22691,6 +22714,8 @@ function createMaxWriteoff(hopNumber, currency, amount) {
         customCurrency: currency === 'CUSTOM' ? currency : '',
         category: 'operational',
         justification: `ART balancing write-off: ${amount.toLocaleString()} ${currency} to complete hop accounting`,
+        writeoffApplied: false, // Will be applied when hop closes
+        individualSourceAssignments: individualSourceAssignments, // Track which threads provide this amount
         // Enhanced fields
         sourceChain: [],
         displayNotation: '',
@@ -22713,19 +22738,25 @@ function createMaxWriteoff(hopNumber, currency, amount) {
         txHash: '',
         timestamp: '',
         timezone: 'UTC',
-        notes: `Auto-generated to balance ART for hop completion`
+        notes: `Auto-generated to balance ART for hop completion\n\nAllocated from ${Object.keys(individualSourceAssignments).length} thread(s)`
     };
-    
+
     hop.entries.push(writeoffEntry);
-    
+
     // Sort entries chronologically
     sortHopEntriesChronologically(hop);
-    
+
     closeARTCompletionModal();
+    closeFinalizationModal();
     renderHops();
     saveToStorage();
-    
-    alert(` Write-off created for ${amount.toLocaleString()} ${currency}. Hop ${hop.hopNumber} is now balanced.`);
+
+    alert(`✅ Write-off created for ${amount.toLocaleString()} ${currency}.\n\nAllocated from ${Object.keys(individualSourceAssignments).length} thread(s).\n\nHop ${hop.hopNumber} is now balanced.`);
+}
+
+// Wrapper function for write-off button compatibility
+function writeOffAmount(hopNumber, currency, amount) {
+    createMaxWriteoff(hopNumber, currency, amount);
 }
 
 // Create cold storage entry to account for funds
@@ -29001,11 +29032,34 @@ function createAutoWriteoff(hopNumber, currency, amount) {
 function markAsColdStorage(hopNumber, currency, amount) {
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
-    
+
+    // CRITICAL: Get available threads and allocate the cold storage amount from them
+    const availableThreads = getAvailableSourcesForHop(hopNumber, currency);
+    const individualSourceAssignments = {};
+    let remainingToAllocate = amount;
+
+    // Allocate amount from available threads (PIFO order)
+    for (const thread of availableThreads) {
+        if (remainingToAllocate <= 0) break;
+
+        const amountFromThread = Math.min(thread.availableAmount, remainingToAllocate);
+        if (amountFromThread > 0) {
+            // Use internal ID if available, otherwise use threadId
+            const threadKey = thread.internalId || thread.threadId;
+            individualSourceAssignments[threadKey] = amountFromThread;
+            remainingToAllocate -= amountFromThread;
+            console.log(`Cold Storage: Allocated ${amountFromThread} from ${thread.threadId}`);
+        }
+    }
+
+    if (remainingToAllocate > 0.01) {
+        console.warn(`Cold Storage: Could not fully allocate ${amount} ${currency}. Remaining: ${remainingToAllocate}`);
+    }
+
     // Find the most recent wallet that handled this currency
     let lastWallet = '';
     let lastWalletType = 'black';
-    
+
     for (let i = hop.entries.length - 1; i >= 0; i--) {
         const entry = hop.entries[i];
         const entryCurrency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
@@ -29015,7 +29069,7 @@ function markAsColdStorage(hopNumber, currency, amount) {
             break;
         }
     }
-    
+
     const coldStorageEntry = {
         id: hop.entries.length + 1,
         hopNumber: hopNumber,
@@ -29027,6 +29081,8 @@ function markAsColdStorage(hopNumber, currency, amount) {
         customCurrency: currency === 'CUSTOM' ? currency : '',
         category: '',
         justification: '',
+        individualSourceAssignments: individualSourceAssignments, // CRITICAL: Track which threads provide this amount
+        isTerminalWallet: true, // Mark as terminal so it doesn't create output threads
         // Enhanced fields
         sourceChain: [],
         displayNotation: '',
@@ -29049,14 +29105,14 @@ function markAsColdStorage(hopNumber, currency, amount) {
         txHash: '',
         timestamp: new Date().toISOString(),
         timezone: 'UTC',
-        notes: `Cold storage: ${amount.toLocaleString()} ${currency} remains in wallet for future movement`
+        notes: `Cold storage: ${amount.toLocaleString()} ${currency} remains in wallet for future movement\n\nAllocated from ${Object.keys(individualSourceAssignments).length} thread(s)`
     };
-    
+
     hop.entries.push(coldStorageEntry);
-    
+
     // Sort entries chronologically
     sortHopEntriesChronologically(hop);
-    
+
     // Update wallet classification in UWI
     let walletReclassified = false;
     if (investigation.universalWalletIndex && lastWallet) {
@@ -29067,21 +29123,22 @@ function markAsColdStorage(hopNumber, currency, amount) {
             walletEntry.statusHistory = walletEntry.statusHistory || [];
             walletEntry.statusHistory.push(`Cold Storage (Hop ${hop.hopNumber})`);
             walletReclassified = true;
-            
+
             // Show notification about wallet reclassification
             setTimeout(() => {
-                alert(`Wallet Classification Updated\n\nWallet ${lastWallet.substring(0, 20)}... has been reclassified from ${previousType.toUpperCase()} to BLUE (Cold Storage) based on the remaining balance of ${amount.toLocaleString()} ${currency}.`);
+                alert(`✅ Cold Storage Marked\n\nWallet ${lastWallet.substring(0, 20)}... has been reclassified from ${previousType.toUpperCase()} to BLUE (Cold Storage).\n\nAmount: ${amount.toLocaleString()} ${currency}\nAllocated from ${Object.keys(individualSourceAssignments).length} thread(s)`);
             }, 100);
         }
     }
-    
+
     closeHopFinalizationModal();
     renderHops();
+    buildAvailableThreadsIndex(); // Rebuild to apply the thread consumption
     saveToStorage();
-    
+
     // Close the modal and re-run finalization to refresh the view
     closeFinalizationModal();
-    
+
     // Re-run finalization to show updated state
     setTimeout(() => {
         finalizeHop(hopNumber);
@@ -29093,11 +29150,34 @@ function markAsColdStorage(hopNumber, currency, amount) {
 function markAsVASPArrival(hopNumber, currency, amount) {
     const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
     if (!hop) return;
-    
+
     // Prompt for VASP details
     const vaspName = prompt('Enter VASP/Exchange name:', 'Exchange');
     if (!vaspName) return;
-    
+
+    // CRITICAL: Get available threads and allocate the VASP arrival amount from them
+    const availableThreads = getAvailableSourcesForHop(hopNumber, currency);
+    const individualSourceAssignments = {};
+    let remainingToAllocate = amount;
+
+    // Allocate amount from available threads (PIFO order)
+    for (const thread of availableThreads) {
+        if (remainingToAllocate <= 0) break;
+
+        const amountFromThread = Math.min(thread.availableAmount, remainingToAllocate);
+        if (amountFromThread > 0) {
+            // Use internal ID if available, otherwise use threadId
+            const threadKey = thread.internalId || thread.threadId;
+            individualSourceAssignments[threadKey] = amountFromThread;
+            remainingToAllocate -= amountFromThread;
+            console.log(`VASP Arrival: Allocated ${amountFromThread} from ${thread.threadId}`);
+        }
+    }
+
+    if (remainingToAllocate > 0.01) {
+        console.warn(`VASP Arrival: Could not fully allocate ${amount} ${currency}. Remaining: ${remainingToAllocate}`);
+    }
+
     const vaspEntry = {
         id: hop.entries.length + 1,
         hopNumber: hopNumber,
@@ -29109,6 +29189,8 @@ function markAsVASPArrival(hopNumber, currency, amount) {
         customCurrency: currency === 'CUSTOM' ? currency : '',
         category: '',
         justification: '',
+        individualSourceAssignments: individualSourceAssignments, // CRITICAL: Track which threads provide this amount
+        isTerminalWallet: true, // Mark as terminal so it doesn't create output threads
         // Enhanced fields
         sourceChain: [],
         displayNotation: '',
@@ -29131,7 +29213,7 @@ function markAsVASPArrival(hopNumber, currency, amount) {
         txHash: '',
         timestamp: new Date().toISOString(),
         timezone: 'UTC',
-        notes: `Funds arrived at VASP: ${vaspName} - ${amount.toLocaleString()} ${currency} (Fully traced)`
+        notes: `Funds arrived at VASP: ${vaspName} - ${amount.toLocaleString()} ${currency} (Fully traced)\n\nAllocated from ${Object.keys(individualSourceAssignments).length} thread(s)`
     };
     
     hop.entries.push(vaspEntry);
