@@ -3,25 +3,29 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 14:25)
+## Latest Commit (Auto-updated: 2025-10-28 16:49)
 
-**Commit:** 63babf9f92ef4368f23a8a160d984117a51fb8fe
+**Commit:** d1973e30d420d4f73e3bc5df59964427011c5436
 **Author:** Your Name
-**Message:** Fix: Enhanced currency matching to handle cross-chain assets
+**Message:** Refactor: Migrate thread index from currency-keyed to flat provenance-based structure
 
-Problem: When tracing transactions after a bridge (e.g., ETH→TRON), the system couldn't find available threads because of currency name mismatch:
-- Thread stored as: "USDT(TRON)"
-- Transaction parsed as: "USDT"
-- Exact string match failed: "USDT" !== "USDT(TRON)"
-- Result: "No available threads for USDT" error
+Problem: Thread index used two-level structure (currency → threads) which complicated:
+- Cross-chain currency matching (USDT vs USDT(TRON))
+- Thread provenance tracking across conversions
+- Code complexity with nested loops for thread lookups
 
-Solution: Enhanced getAvailableSourcesForHop() to strip chain suffixes and compare base currencies:
-- Strip "(CHAIN)" suffix from both thread currency and target currency
-- Match if base currencies are equal (e.g., "USDT" matches "USDT(TRON)")
-- Maintains backwards compatibility with exact matches
-- Added detailed logging for debugging
+Solution: Flatten thread index to single-level structure (threadId → thread):
+- Direct access by internalId without currency iteration
+- New helper functions: getAllThreads(), getThreadsByCurrency(), getThreadsByProvenance()
+- Migration function preserves existing data automatically
+- Enhanced currency matching strips chain suffixes for comparison
+- All thread access patterns updated throughout codebase
 
-Now investigators can seamlessly trace cross-chain transactions after bridges.
+Benefits:
+- Simpler code with fewer nested loops
+- Better support for cross-chain tracing
+- Foundation for provenance-based filtering
+- Maintains backwards compatibility
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -29,23 +33,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 44 +++++++++++++++++++-------------------------
- index.html | 16 +++++++++++++++-
- 2 files changed, 34 insertions(+), 26 deletions(-)
+ CLAUDE.md  |  50 ++++---
+ index.html | 495 ++++++++++++++++++++++++++++++++++++++++---------------------
+ 2 files changed, 356 insertions(+), 189 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 63babf9 Fix: Enhanced currency matching to handle cross-chain assets (0 seconds ago)
-- f6d7ae9 Fix: Use thread destinationTxHash to highlight correct transaction in Wallet Explorer (11 minutes ago)
-- 0379f66 Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer (17 minutes ago)
-- ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (31 minutes ago)
-- e788fda Fix: Replace auto-adjustment with proper partial trace support (56 minutes ago)
-- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (58 minutes ago)
-- a3e864d Update CLAUDE.md with latest commit info (61 minutes ago)
-- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (62 minutes ago)
-- 4127c39 Update CLAUDE.md with latest commit info (67 minutes ago)
-- 5b66f89 Fix: Bridge tracing with undefined transaction hash (68 minutes ago)
+- d1973e3 Refactor: Migrate thread index from currency-keyed to flat provenance-based structure (0 seconds ago)
+- 63babf9 Fix: Enhanced currency matching to handle cross-chain assets (2 hours ago)
+- f6d7ae9 Fix: Use thread destinationTxHash to highlight correct transaction in Wallet Explorer (3 hours ago)
+- 0379f66 Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer (3 hours ago)
+- ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (3 hours ago)
+- e788fda Fix: Replace auto-adjustment with proper partial trace support (3 hours ago)
+- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (3 hours ago)
+- a3e864d Update CLAUDE.md with latest commit info (3 hours ago)
+- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (3 hours ago)
+- 4127c39 Update CLAUDE.md with latest commit info (4 hours ago)
 
 ## Key Features
 
