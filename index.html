@@ -23418,12 +23418,50 @@ function viewThreadInWalletExplorer(threadId) {
             if (hop && hop.entries && hop.entries.length > 0) {
                 // Get the first entry for this thread (they all go to same destination wallet)
                 const entry = hop.entries[0];
-                // Use toWallet field (where the funds went)
-                sourceWallet = entry.toWallet || entry.destinationWallet;
-                blockchain = entry.chain || 'ethereum';
                 txHash = entry.transactionHash;
 
-                console.log(`📌 Found hop ${hopNum} entry: toWallet=${entry.toWallet}, chain=${entry.chain}, tx=${entry.transactionHash}`);
+                // CRITICAL FIX: Look up the actual thread object to get the correct chain AND wallet
+                // The entry's chain is the SOURCE chain, but for bridge outputs we need the DESTINATION chain
+                // The entry's toWallet might be the bridge address, but thread's sourceWallet is the actual destination
+                // Search all currencies in availableThreads for this thread notation
+                let foundThread = null;
+                for (const currency in investigation.availableThreads) {
+                    for (const internalId in investigation.availableThreads[currency]) {
+                        const thread = investigation.availableThreads[currency][internalId];
+                        // Match by notation and hop level
+                        if (thread.notation === threadId || thread.notation.includes(threadId.replace(/[()]/g, ''))) {
+                            if (thread.hopLevel === hopNum) {
+                                foundThread = thread;
+                                break;
+                            }
+                        }
+                    }
+                    if (foundThread) break;
+                }
+
+                // If we found the thread, use its chainId and sourceWallet (correct for bridges)
+                // Otherwise fall back to entry data (for normal entries)
+                if (foundThread) {
+                    if (foundThread.chainId) {
+                        blockchain = foundThread.chainId;
+                        console.log(`✅ Found thread object with chainId: ${blockchain}`);
+                    } else {
+                        blockchain = entry.chain || 'ethereum';
+                    }
+
+                    if (foundThread.sourceWallet) {
+                        sourceWallet = foundThread.sourceWallet;
+                        console.log(`✅ Using thread sourceWallet: ${sourceWallet}`);
+                    } else {
+                        sourceWallet = entry.toWallet || entry.destinationWallet;
+                    }
+                } else {
+                    blockchain = entry.chain || 'ethereum';
+                    sourceWallet = entry.toWallet || entry.destinationWallet;
+                    console.log(`⚠️ Thread not found in availableThreads, using entry data: wallet=${sourceWallet}, chain=${blockchain}`);
+                }
+
+                console.log(`📌 Opening Wallet Explorer: wallet=${sourceWallet}, chain=${blockchain}, tx=${txHash}`);
             }
         }
     }

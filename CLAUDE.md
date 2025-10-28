@@ -3,162 +3,44 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 13:30)
+## Latest Commit (Auto-updated: 2025-10-28 13:55)
 
-**Commit:** e788fdac0837d67f67d31c747ce1b71894be02de
+**Commit:** ef2f2772f299fff41d0820a638a17a5c3c7c4b7d
 **Author:** Your Name
-**Message:** Fix: Replace auto-adjustment with proper partial trace support
+**Message:** Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity
 
-Reverts auto-adjustment and implements proper thread allocation philosophy: threads contribute what they can, transactions can be partially traced.
+- Add chain name mapping (TRON → tron, ETH → ethereum, etc.) to ensure bridge API chain names correctly map to blockchainAPIs keys
+- Add detailed logging at every step of bridge output process:
+  * Bridge API response and chain mapping
+  * Auto-fill data preparation and dropdown verification
+  * Form values when user submits
+  * Chain validation before thread creation
+  * Thread creation parameters
+  * Final thread state after creation
+- Add validation to ensure destination chain exists in blockchainAPIs
+- Add verification that dropdown auto-fill succeeded
 
-## CONCEPTUAL FIX: How Thread Allocation Should Work
-
-**User's Insight** (correct):
-"We have a thread of a specific value:
-- If we commit that thread to a LARGER transaction → We have a claim to the equivalent value of our thread (partial trace)
-- If we commit that thread to a SMALLER transaction → We have leftover value that is still available for reallocation"
-
-**Previous Implementation** (incorrect):
-- Auto-adjusted transaction amounts to match available threads
-- Example: 2.101 ETH transaction auto-reduced to 2.1 ETH
-- Problem: Modified the actual transaction amount in the blockchain
-
-**New Implementation** (correct):
-- Threads contribute what they can to transactions
-- Transaction amounts stay true to blockchain reality
-- Example: 2.101 ETH transaction, 2.1 ETH available → trace 2.1, leave 0.001 untraced
-
-## SCENARIOS PROPERLY HANDLED:
-
-### Scenario 1: Thread < Transaction (Partial Trace)
-**Blockchain Reality:**
-- Transaction: 2.101 ETH
-- Thread Available: 2.1 ETH
-
-**System Behavior:**
-```
-Total Available: 2.1 ETH
-Will Allocate: 2.1 ETH (of 2.101 ETH transaction)
-Remaining: 0 ETH
-
-ℹ️ Partial Trace: This transaction is 2.101 ETH, but you only have
-2.1 ETH available. Your thread(s) will contribute their full value
-(2.1 ETH), and 0.001 ETH will remain untraced.
-```
-
-**Result:**
-- ✅ Thread fully consumed (2.1 ETH allocated)
-- ✅ Transaction partially traced (2.1 of 2.101 ETH)
-- ✅ Shortfall documented (0.001 ETH untraced)
-- ✅ No blockchain amount modified
-
-### Scenario 2: Thread > Transaction (Leftover Available)
-**Blockchain Reality:**
-- Transaction: 2.1 ETH
-- Thread Available: 2.5 ETH
-
-**System Behavior:**
-```
-Total Available: 2.5 ETH
-Will Allocate: 2.1 ETH
-Remaining: 0.4 ETH
-```
-
-**Result:**
-- ✅ Thread partially consumed (2.1 of 2.5 ETH allocated)
-- ✅ Transaction fully traced (2.1 ETH)
-- ✅ Thread has leftover (0.4 ETH remains available)
-- ✅ Leftover can be used in future traces
-
-### Scenario 3: Thread = Transaction (Perfect Match)
-**Blockchain Reality:**
-- Transaction: 2.1 ETH
-- Thread Available: 2.1 ETH
-
-**System Behavior:**
-```
-Total Available: 2.1 ETH
-Will Allocate: 2.1 ETH
-Remaining: 0 ETH
-```
-
-**Result:**
-- ✅ Thread fully consumed
-- ✅ Transaction fully traced
-- ✅ Clean accounting
-
-## IMPLEMENTATION DETAILS:
-
-**Enhanced calculateAndShowARTImpact()** (lines 17277-17281):
-```javascript
-// Don't modify transaction amount - show what WILL be allocated
-const willAllocate = Math.min(entryAmount, totalCurrentART);
-const isPartialTrace = entryAmount > totalCurrentART;
-const shortfall = isPartialTrace ? entryAmount - totalCurrentART : 0;
-```
-
-**Key Changes:**
-- Removed auto-adjustment logic
-- Calculate `willAllocate` based on availability (not modify entry)
-- Detect partial traces (transaction > available)
-- Show informative message instead of error
-
-**UI Messaging** (lines 17302-17305):
-- Orange color (#f39c12) for partial traces (informative, not error)
-- Clear explanation: "Your thread(s) will contribute their full value"
-- Documents untraced amount: "X will remain untraced"
-- Updated helper text: "Threads contribute what they can"
-
-## WHY THIS IS CORRECT:
-
-**Respects Blockchain Reality:**
-- Transaction amounts are facts on the blockchain
-- We don't modify them to fit our accounting
-- We document what we can trace
-
-**Flexible Thread Usage:**
-- Thread = Pool of value
-- Can be fully or partially consumed
-- Leftovers stay available
-- Natural accounting flow
-
-**Proper Documentation:**
-- Partial traces clearly marked
-- Untraced amounts documented
-- Complete audit trail
-- Court-defensible
-
-## FILES MODIFIED:
-- index.html:
-  * Lines 17277-17281: Calculate allocation without modifying entry
-  * Lines 17283-17284: Color coding for partial traces
-  * Lines 17294-17295: Show "of X transaction" for partial traces
-  * Lines 17302-17305: Informative message for partial traces
-  * Line 17308: Updated helper text
-
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+This will help diagnose the issue where bridge output threads were created with wrong chain identity (e.g., Tron threads showing as Ethereum).
 
 ### Changed Files:
 ```
- CLAUDE.md  | 118 ++++++++++++++++++++++++++++++++++++++++++++++++++++++-------
- index.html |  37 +++++++------------
- 2 files changed, 118 insertions(+), 37 deletions(-)
+ CLAUDE.md  | 190 +++++++++++++++++++++++++++++++++++++------------------------
+ index.html |  94 +++++++++++++++++++++++++++++-
+ 2 files changed, 207 insertions(+), 77 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e788fda Fix: Replace auto-adjustment with proper partial trace support (0 seconds ago)
-- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (2 minutes ago)
-- a3e864d Update CLAUDE.md with latest commit info (6 minutes ago)
-- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (7 minutes ago)
-- 4127c39 Update CLAUDE.md with latest commit info (12 minutes ago)
-- 5b66f89 Fix: Bridge tracing with undefined transaction hash (13 minutes ago)
-- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (28 minutes ago)
-- 9524dae Critical Fix: Write-off and cold storage thread allocation (35 minutes ago)
-- 0638d63 Feature: Court-ready clustering documentation with justification and source/destination tracking (7 hours ago)
-- 0d51afe Critical: Apply Ethereum-level data validity across ALL blockchains (8 hours ago)
+- ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (1 second ago)
+- e788fda Fix: Replace auto-adjustment with proper partial trace support (25 minutes ago)
+- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (28 minutes ago)
+- a3e864d Update CLAUDE.md with latest commit info (31 minutes ago)
+- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (32 minutes ago)
+- 4127c39 Update CLAUDE.md with latest commit info (37 minutes ago)
+- 5b66f89 Fix: Bridge tracing with undefined transaction hash (38 minutes ago)
+- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (53 minutes ago)
+- 9524dae Critical Fix: Write-off and cold storage thread allocation (60 minutes ago)
+- 0638d63 Feature: Court-ready clustering documentation with justification and source/destination tracking (8 hours ago)
 
 ## Key Features
 
