@@ -11255,12 +11255,12 @@ function calculateTotalAssignedAmount(currency) {
 // 2.9 Get Thread Chain History
 function getThreadChainHistory(threadId, currency) {
     const chain = [];
-    
-    if (!investigation.availableThreads[currency] || !investigation.availableThreads[currency][threadId]) {
+
+    // FLAT STRUCTURE: Direct thread lookup
+    const thread = investigation.availableThreads[threadId];
+    if (!thread || thread.currency !== currency) {
         return chain;
     }
-    
-    const thread = investigation.availableThreads[currency][threadId];
     chain.push({
         threadId: threadId,
         amount: thread.totalAmount,
