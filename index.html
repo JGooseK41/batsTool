@@ -11460,9 +11460,17 @@ function handleSourceSelection(hopNumber, entryId, sourceThreadId) {
             // Don't auto-fill otherwise - let user decide how much to assign
         }
         
-        // Update source thread data
-        if (investigation.availableThreads[currency] && investigation.availableThreads[currency][sourceThreadId]) {
-            entry.sourceThreadData = investigation.availableThreads[currency][sourceThreadId];
+        // Update source thread data (FLAT STRUCTURE)
+        // Find thread by ID or notation
+        let sourceThread = investigation.availableThreads[sourceThreadId];
+        if (!sourceThread) {
+            // Try finding by notation if direct lookup fails
+            sourceThread = Object.values(investigation.availableThreads).find(t =>
+                t && t.notation === sourceThreadId && t.currency === currency
+            );
+        }
+        if (sourceThread) {
+            entry.sourceThreadData = sourceThread;
             entry.availableSourceAmount = maxAmount;
         }
         
@@ -21319,11 +21327,13 @@ function addNewHop() {
                         allCurrencies[currency] = { total: 0, available: 0, isConverted: !rootTotal[currency] };
                     }
 
-                    // Sum up total amounts in this currency
-                    for (const threadKey in investigation.availableThreads[currency]) {
-                        const thread = investigation.availableThreads[currency][threadKey];
-                        allCurrencies[currency].total += thread.totalAmount || 0;
-                        allCurrencies[currency].available += thread.availableAmount || 0;
+                    // FLAT STRUCTURE: Sum up total amounts in this currency
+                    for (const threadKey in investigation.availableThreads) {
+                        const thread = investigation.availableThreads[threadKey];
+                        if (thread && thread.currency === currency) {
+                            allCurrencies[currency].total += thread.totalAmount || 0;
+                            allCurrencies[currency].available += thread.availableAmount || 0;
+                        }
                     }
                 }
             }
@@ -22482,12 +22492,16 @@ function addNewHop() {
                                             // Find the original thread to get total amount
                                             let totalAmount = thread.availableAmount;
 
-                                            // Search in the threads database for the total
-                                            for (const currency in investigation.availableThreads) {
-                                                for (const threadKey in investigation.availableThreads[currency]) {
-                                                    const dbThread = investigation.availableThreads[currency][threadKey];
-                                                    if ((dbThread.notation === thread.threadId || dbThread.internalId === thread.internalId) && currency === thread.currency) {
-                                                        totalAmount = dbThread.totalAmount || totalAmount;
+                                            // FLAT STRUCTURE: Direct lookup by internal ID
+                                            const dbThread = investigation.availableThreads[thread.internalId];
+                                            if (dbThread && dbThread.currency === thread.currency) {
+                                                totalAmount = dbThread.totalAmount || totalAmount;
+                                            } else {
+                                                // Fallback: search by notation if internal ID doesn't match
+                                                for (const threadKey in investigation.availableThreads) {
+                                                    const t = investigation.availableThreads[threadKey];
+                                                    if (t && t.notation === thread.threadId && t.currency === thread.currency) {
+                                                        totalAmount = t.totalAmount || totalAmount;
                                                         break;
                                                     }
                                                 }
@@ -23745,19 +23759,19 @@ function viewThreadInWalletExplorer(threadId) {
                 // The entry's toWallet might be the bridge address, but thread's sourceWallet is the actual destination
                 // The entry's transactionHash is the SOURCE tx, but thread's destinationTxHash is the DESTINATION tx
                 // Search all currencies in availableThreads for this thread notation
+                // FLAT STRUCTURE: Search all threads for matching notation and hop level
                 let foundThread = null;
-                for (const currency in investigation.availableThreads) {
-                    for (const internalId in investigation.availableThreads[currency]) {
-                        const thread = investigation.availableThreads[currency][internalId];
-                        // Match by notation and hop level
-                        if (thread.notation === threadId || thread.notation.includes(threadId.replace(/[()]/g, ''))) {
-                            if (thread.hopLevel === hopNum) {
-                                foundThread = thread;
-                                break;
-                            }
+                for (const internalId in investigation.availableThreads) {
+                    const thread = investigation.availableThreads[internalId];
+                    if (!thread) continue;
+
+                    // Match by notation and hop level
+                    if (thread.notation === threadId || thread.notation.includes(threadId.replace(/[()]/g, ''))) {
+                        if (thread.hopLevel === hopNum) {
+                            foundThread = thread;
+                            break;
                         }
                     }
-                    if (foundThread) break;
                 }
 
                 // If we found the thread, use its chainId, sourceWallet, and destinationTxHash (correct for bridges)
