@@ -3020,10 +3020,21 @@
                 </div>
             </div>
 
-            <!-- Available Threads Section -->
-            <div id="availableThreadsSection" style="background: #fff3cd; border: 2px solid #f39c12; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                <h3 style="margin-bottom: 15px; color: #856404;">🧵 Available Threads for This Wallet</h3>
-                <div id="availableThreadsDetails">
+            <!-- Thread Selection Section -->
+            <div id="threadSelectionSection" style="background: #fff3cd; border: 2px solid #f39c12; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px; color: #856404;">🧵 Select Source Threads</h3>
+                <p style="margin: 0 0 15px 0; color: #856404; font-size: 14px;">
+                    Select which threads to allocate to this transaction. Threads will be consumed in the order selected.
+                </p>
+                <div id="threadSelectionList">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Allocation Preview Section -->
+            <div id="allocationPreviewSection" style="display: none; background: #e8f4f8; border: 2px solid #3498db; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px; color: #2c3e50;">📋 Allocation Preview</h3>
+                <div id="allocationPreviewDetails">
                     <!-- Will be populated by JavaScript -->
                 </div>
             </div>
@@ -17108,14 +17119,28 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
         function showEntryConfirmationModal(entryData, tx) {
             pendingEntryData = { entryData, tx };
 
+            // Initialize thread selection state
+            if (!window.walletExplorerThreadSelection) {
+                window.walletExplorerThreadSelection = {
+                    selectedThreads: [],
+                    allocations: {},
+                    totalAllocated: 0
+                };
+            } else {
+                // Reset selection
+                window.walletExplorerThreadSelection.selectedThreads = [];
+                window.walletExplorerThreadSelection.allocations = {};
+                window.walletExplorerThreadSelection.totalAllocated = 0;
+            }
+
             // Populate entry preview
             populateEntryPreview(entryData, tx);
 
             // Calculate and show ART impact
             calculateAndShowARTImpact(entryData);
 
-            // Show available threads for this wallet
-            showAvailableThreadsForWallet();
+            // Show thread selection interface
+            populateThreadSelectionList(entryData);
 
             // Show the modal
             showModal('entryConfirmationModal');
@@ -17168,65 +17193,62 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             section.innerHTML = html;
         }
 
-        // Calculate and show ART impact
+        // Calculate and show ART impact (updated to show multi-thread allocation preview)
         function calculateAndShowARTImpact(entryData) {
             const section = document.getElementById('artImpactDetails');
 
             // Get current ART
             const currentHop = getCurrentHop();
-            const sourceThreadId = entryData.sourceThreadId;
             const currency = entryData.currency;
             const entryAmount = parseFloat(entryData.amount);
 
-            if (!sourceThreadId) {
-                section.innerHTML = '<div style="color: #666;">No thread context available for ART calculation</div>';
-                return;
-            }
-
             // Get available threads
             const availableThreads = getAvailableSourcesForHop(currentHop, currency);
-            const sourceThread = availableThreads.find(t => t.threadId === sourceThreadId);
 
-            if (!sourceThread) {
-                section.innerHTML = '<div style="color: #666;">Thread not found</div>';
+            if (!availableThreads || availableThreads.length === 0) {
+                section.innerHTML = '<div style="color: #666;">No threads available for ART calculation</div>';
                 return;
             }
 
-            const currentART = sourceThread.availableAmount;
-            const newART = currentART - entryAmount;
+            // Calculate total current ART for this currency
+            const totalCurrentART = availableThreads.reduce((sum, t) => sum + t.availableAmount, 0);
             const artChange = -entryAmount;
+            const newTotalART = totalCurrentART - entryAmount;
 
-            const artColor = newART >= 0 ? '#28a745' : '#dc3545';
+            const artColor = newTotalART >= 0 ? '#28a745' : '#dc3545';
             const changeColor = artChange >= 0 ? '#28a745' : '#dc3545';
 
             const html = `
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
                     <div>
-                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Current ART</div>
-                        <div style="font-size: 24px; font-weight: bold; color: #2c3e50;">${currentART.toLocaleString()} ${currency}</div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Total Available (ART)</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #2c3e50;">${totalCurrentART.toLocaleString()} ${currency}</div>
                     </div>
                     <div>
-                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Change</div>
-                        <div style="font-size: 24px; font-weight: bold; color: ${changeColor};">${artChange.toLocaleString()} ${currency}</div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Will Allocate</div>
+                        <div style="font-size: 24px; font-weight: bold; color: ${changeColor};">${entryAmount.toLocaleString()} ${currency}</div>
                     </div>
                     <div>
-                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">New ART</div>
-                        <div style="font-size: 24px; font-weight: bold; color: ${artColor};">${newART.toLocaleString()} ${currency}</div>
+                        <div style="font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Remaining (ART)</div>
+                        <div style="font-size: 24px; font-weight: bold; color: ${artColor};">${newTotalART.toLocaleString()} ${currency}</div>
                     </div>
                 </div>
-                ${newART < 0 ? `
+                ${newTotalART < 0 ? `
                     <div style="margin-top: 15px; padding: 12px; background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 4px; color: #721c24;">
-                        <strong>⚠️ Warning:</strong> This entry will result in a negative ART. Please verify the amount is correct.
+                        <strong>⚠️ Warning:</strong> This entry will result in a negative ART (insufficient funds). Select threads below to allocate properly.
                     </div>
                 ` : ''}
+                <div style="margin-top: 12px; padding: 10px; background: #e8f4f8; border-radius: 4px; font-size: 13px; color: #2c3e50;">
+                    ℹ️ Select which threads to allocate below. The system will use PIFO ordering automatically.
+                </div>
             `;
 
             section.innerHTML = html;
         }
 
-        // Show available threads for current wallet
-        function showAvailableThreadsForWallet() {
-            const section = document.getElementById('availableThreadsDetails');
+        // Populate thread selection list with checkboxes
+        function populateThreadSelectionList(entryData) {
+            const section = document.getElementById('threadSelectionList');
 
             if (!walletExplorerState.address) {
                 section.innerHTML = '<div style="color: #666;">No wallet context available</div>';
@@ -17239,52 +17261,213 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 return;
             }
 
-            // Get all available threads
-            const allThreads = {};
+            // Get all available threads matching the entry's currency
+            const currency = entryData.currency;
+            const availableThreads = getAvailableSourcesForHop(currentHop, currency);
 
-            // Build index of available threads by currency
-            if (investigation.victims) {
-                investigation.victims.forEach(victim => {
-                    victim.transactions.forEach(tx => {
-                        if (!tx.currency) return;
-
-                        const threadId = `V${victim.id}-T${tx.id}`;
-                        const availableThreads = getAvailableSourcesForHop(currentHop, tx.currency);
-                        const thread = availableThreads.find(t => t.threadId === threadId);
-
-                        if (thread && thread.availableAmount > 0) {
-                            if (!allThreads[tx.currency]) {
-                                allThreads[tx.currency] = [];
-                            }
-                            allThreads[tx.currency].push(thread);
-                        }
-                    });
-                });
-            }
-
-            if (Object.keys(allThreads).length === 0) {
-                section.innerHTML = '<div style="color: #856404;">No available threads remaining for this hop</div>';
+            if (!availableThreads || availableThreads.length === 0) {
+                section.innerHTML = '<div style="color: #856404;">No available threads for ' + currency + '</div>';
                 return;
             }
 
-            let html = '';
-            for (const [currency, threads] of Object.entries(allThreads)) {
+            // Auto-select the pre-assigned thread if one exists
+            if (entryData.sourceThreadId && !window.walletExplorerThreadSelection.selectedThreads.length) {
+                window.walletExplorerThreadSelection.selectedThreads.push(entryData.sourceThreadId);
+            }
+
+            let html = '<div style="max-height: 300px; overflow-y: auto;">';
+
+            availableThreads.forEach(thread => {
+                const isSelected = window.walletExplorerThreadSelection.selectedThreads.includes(thread.threadId);
+
                 html += `
-                    <div style="margin-bottom: 15px;">
-                        <div style="font-weight: bold; margin-bottom: 8px; color: #856404;">${currency}</div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                            ${threads.map(thread => `
-                                <div style="padding: 8px 12px; background: white; border: 2px solid ${thread.threadId === pendingEntryData?.entryData?.sourceThreadId ? '#f39c12' : '#dee2e6'}; border-radius: 6px;">
-                                    <div style="font-weight: bold; font-size: 14px;">${thread.threadId}</div>
-                                    <div style="font-size: 12px; color: #666;">${thread.availableAmount.toLocaleString()} ${currency}</div>
+                    <div style="padding: 12px; margin: 8px 0; background: white; border: 2px solid ${isSelected ? '#4caf50' : '#e0e0e0'}; border-radius: 8px; transition: all 0.3s;">
+                        <label style="display: flex; align-items: center; gap: 15px; cursor: pointer;">
+                            <input type="checkbox"
+                                   value="${thread.threadId}"
+                                   ${isSelected ? 'checked' : ''}
+                                   onchange="toggleWalletExplorerThreadSelection('${thread.threadId}')"
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: bold; font-size: 16px; color: #2c3e50;">${thread.threadId}</div>
+                                <div style="font-size: 14px; color: #666; margin-top: 3px;">
+                                    <strong>${thread.availableAmount.toLocaleString()} ${currency}</strong> available
                                 </div>
-                            `).join('')}
+                            </div>
+                        </label>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            section.innerHTML = html;
+
+            // Calculate initial allocation if thread was pre-selected
+            if (window.walletExplorerThreadSelection.selectedThreads.length > 0) {
+                calculateWalletExplorerAllocation(entryData);
+            }
+        }
+
+        // Toggle thread selection in wallet explorer
+        function toggleWalletExplorerThreadSelection(threadId) {
+            const selection = window.walletExplorerThreadSelection;
+            const index = selection.selectedThreads.indexOf(threadId);
+
+            if (index > -1) {
+                // Remove thread
+                selection.selectedThreads.splice(index, 1);
+            } else {
+                // Add thread
+                selection.selectedThreads.push(threadId);
+            }
+
+            // Recalculate allocation
+            calculateWalletExplorerAllocation(pendingEntryData.entryData);
+        }
+
+        // Calculate thread allocation for wallet explorer entry
+        function calculateWalletExplorerAllocation(entryData) {
+            const selection = window.walletExplorerThreadSelection;
+            const currentHop = getCurrentHop();
+            const targetAmount = parseFloat(entryData.amount);
+            const currency = entryData.currency;
+
+            // Reset allocation
+            selection.allocations = {};
+            selection.totalAllocated = 0;
+
+            if (selection.selectedThreads.length === 0) {
+                // Hide allocation preview
+                document.getElementById('allocationPreviewSection').style.display = 'none';
+                return;
+            }
+
+            // Get thread details
+            const availableThreads = getAvailableSourcesForHop(currentHop, currency);
+
+            // Sort threads in PIFO order (by victim ID and transaction ID)
+            const sortedThreadIds = [...selection.selectedThreads].sort((a, b) => {
+                const parseThreadId = (id) => {
+                    const parts = id.match(/V(\d+)-T(\d+)/);
+                    if (parts) {
+                        return { victim: parseInt(parts[1]), transaction: parseInt(parts[2]) };
+                    }
+                    return { victim: 999, transaction: 999 };
+                };
+
+                const threadA = parseThreadId(a);
+                const threadB = parseThreadId(b);
+
+                if (threadA.victim !== threadB.victim) {
+                    return threadA.victim - threadB.victim;
+                }
+                return threadA.transaction - threadB.transaction;
+            });
+
+            // Calculate total available
+            let totalAvailable = 0;
+            for (const threadId of sortedThreadIds) {
+                const thread = availableThreads.find(t => t.threadId === threadId);
+                if (thread) {
+                    totalAvailable += thread.availableAmount;
+                }
+            }
+
+            // Allocate using PIFO method
+            let remainingAmount = Math.min(targetAmount, totalAvailable);
+
+            for (const threadId of sortedThreadIds) {
+                if (remainingAmount <= 0) break;
+
+                const thread = availableThreads.find(t => t.threadId === threadId);
+                if (!thread) continue;
+
+                const toAllocate = Math.min(thread.availableAmount, remainingAmount);
+                selection.allocations[threadId] = toAllocate;
+                selection.totalAllocated += toAllocate;
+                remainingAmount -= toAllocate;
+            }
+
+            // Show allocation preview
+            updateAllocationPreview(entryData, availableThreads, sortedThreadIds, totalAvailable);
+        }
+
+        // Update allocation preview display
+        function updateAllocationPreview(entryData, availableThreads, sortedThreadIds, totalAvailable) {
+            const selection = window.walletExplorerThreadSelection;
+            const section = document.getElementById('allocationPreviewSection');
+            const details = document.getElementById('allocationPreviewDetails');
+            const targetAmount = parseFloat(entryData.amount);
+            const currency = entryData.currency;
+
+            let html = '<div style="font-size: 14px;">';
+
+            // Show each thread allocation
+            sortedThreadIds.forEach(threadId => {
+                const thread = availableThreads.find(t => t.threadId === threadId);
+                const allocated = selection.allocations[threadId] || 0;
+                const remaining = thread.availableAmount - allocated;
+                const fullyUsed = allocated === thread.availableAmount;
+
+                html += `
+                    <div style="margin-bottom: 10px; padding: 10px; background: white; border-radius: 4px; border-left: 4px solid ${fullyUsed ? '#e74c3c' : '#27ae60'};">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>${threadId}</strong>
+                            <span style="color: ${fullyUsed ? '#e74c3c' : '#27ae60'};">
+                                Use ${allocated.toLocaleString()} of ${thread.availableAmount.toLocaleString()} ${currency}
+                            </span>
                         </div>
+                        ${fullyUsed ?
+                            '<div style="font-size: 11px; color: #e74c3c; margin-top: 3px;">✓ Fully depleted</div>' :
+                            `<div style="font-size: 11px; color: #666; margin-top: 3px;">${remaining.toLocaleString()} ${currency} will remain (change thread)</div>`
+                        }
+                    </div>
+                `;
+            });
+
+            // Summary
+            html += `
+                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>Total Allocated:</strong>
+                        <span style="color: #27ae60; font-size: 18px; font-weight: bold;">
+                            ${selection.totalAllocated.toLocaleString()} ${currency}
+                        </span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                        <strong>Transaction Amount:</strong>
+                        <span style="font-size: 18px; font-weight: bold;">
+                            ${targetAmount.toLocaleString()} ${currency}
+                        </span>
+                    </div>
+                `;
+
+            // Warning if under-allocated
+            if (selection.totalAllocated < targetAmount) {
+                const shortfall = targetAmount - selection.totalAllocated;
+                html += `
+                    <div style="color: #e74c3c; font-size: 12px; margin-top: 10px; padding: 10px; background: #f8d7da; border-radius: 4px;">
+                        ⚠️ Partial trace: Only ${selection.totalAllocated.toLocaleString()} of ${targetAmount.toLocaleString()} ${currency} available<br>
+                        <strong>Shortfall:</strong> ${shortfall.toLocaleString()} ${currency}
                     </div>
                 `;
             }
 
-            section.innerHTML = html;
+            // Warning if over-allocated (shouldn't happen but defensive)
+            if (selection.totalAllocated > targetAmount) {
+                const excess = selection.totalAllocated - targetAmount;
+                html += `
+                    <div style="color: #856404; font-size: 12px; margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 4px;">
+                        ℹ️ Excess allocation: ${excess.toLocaleString()} ${currency} beyond transaction amount<br>
+                        This may create a change thread.
+                    </div>
+                `;
+            }
+
+            html += '</div></div>';
+
+            details.innerHTML = html;
+            section.style.display = 'block';
         }
 
         // Close entry confirmation modal
@@ -17293,21 +17476,80 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             hideModal('entryConfirmationModal');
         }
 
+        // Apply multi-thread allocation to entry data
+        function applyMultiThreadAllocationToEntry(entryData) {
+            const selection = window.walletExplorerThreadSelection;
+            const enhancedEntry = { ...entryData };
+
+            console.log('Applying multi-thread allocation:', selection);
+
+            // If single thread, use simple format
+            if (selection.selectedThreads.length === 1) {
+                const threadId = selection.selectedThreads[0];
+                enhancedEntry.sourceThreadId = threadId;
+                enhancedEntry.multipleSourceThreads = [];
+                enhancedEntry.allocations = selection.allocations;
+
+                // Add allocation note
+                const allocated = selection.allocations[threadId] || 0;
+                const allocationNote = `\n\n[Thread Allocation]\n${threadId}: ${allocated.toLocaleString()} ${entryData.currency}`;
+                enhancedEntry.notes = (enhancedEntry.notes || '') + allocationNote;
+
+            } else {
+                // Multiple threads - use commingling format
+                enhancedEntry.sourceThreadId = ''; // Clear single thread
+                enhancedEntry.multipleSourceThreads = [...selection.selectedThreads];
+                enhancedEntry.allocations = selection.allocations;
+
+                // Create allocation notes
+                const allocationNotes = ['\n\n[Multi-Thread Allocation - PIFO Order]'];
+                selection.selectedThreads.forEach(threadId => {
+                    const allocated = selection.allocations[threadId] || 0;
+                    allocationNotes.push(`${threadId}: ${allocated.toLocaleString()} ${entryData.currency}`);
+                });
+                allocationNotes.push(`Total: ${selection.totalAllocated.toLocaleString()} ${entryData.currency}`);
+
+                enhancedEntry.notes = (enhancedEntry.notes || '') + allocationNotes.join('\n');
+            }
+
+            // Add partial trace note if applicable
+            const targetAmount = parseFloat(entryData.amount);
+            if (selection.totalAllocated < targetAmount) {
+                const shortfall = targetAmount - selection.totalAllocated;
+                const partialNote = `\n\n[Partial Trace]\nTransaction Amount: ${targetAmount.toLocaleString()} ${entryData.currency}\nAllocated: ${selection.totalAllocated.toLocaleString()} ${entryData.currency}\nShortfall: ${shortfall.toLocaleString()} ${entryData.currency}`;
+                enhancedEntry.notes = (enhancedEntry.notes || '') + partialNote;
+            }
+
+            console.log('Enhanced entry data:', enhancedEntry);
+            return enhancedEntry;
+        }
+
         // Confirm entry and stay in wallet explorer
         async function confirmEntryAndStay() {
             if (!pendingEntryData) return;
 
+            // Validate thread selection
+            const selection = window.walletExplorerThreadSelection;
+            if (!selection || selection.selectedThreads.length === 0) {
+                alert('⚠️ Please select at least one thread to allocate to this transaction.');
+                return;
+            }
+
             try {
                 const { entryData, tx } = pendingEntryData;
 
+                // Apply multi-thread allocation to entry data
+                const enhancedEntryData = applyMultiThreadAllocationToEntry(entryData);
+
                 // Add entry to pending entries array instead of creating immediately
                 walletExplorerState.pendingEntries.push({
-                    entryData: { ...entryData },
+                    entryData: enhancedEntryData,
                     tx: { ...tx },
                     timestamp: new Date().toISOString()
                 });
 
                 console.log(`📝 Entry added to pending (${walletExplorerState.pendingEntries.length} total pending)`);
+                console.log('Thread allocation:', selection.allocations);
 
                 // Close confirmation modal
                 hideModal('entryConfirmationModal');
@@ -17339,7 +17581,20 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
         async function confirmEntryAndReturn() {
             if (!pendingEntryData) return;
 
+            // Validate thread selection
+            const selection = window.walletExplorerThreadSelection;
+            if (!selection || selection.selectedThreads.length === 0) {
+                alert('⚠️ Please select at least one thread to allocate to this transaction.');
+                return;
+            }
+
             try {
+                // Apply multi-thread allocation to entry data
+                const enhancedEntryData = applyMultiThreadAllocationToEntry(pendingEntryData.entryData);
+
+                // Update pending data with enhanced entry
+                pendingEntryData.entryData = enhancedEntryData;
+
                 // Create the entry
                 await createEntryFromPendingData();
 

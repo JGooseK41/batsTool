@@ -3,65 +3,83 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 21:17)
+## Latest Commit (Auto-updated: 2025-10-27 21:19)
 
-**Commit:** e378163cbc3b147c09416ea3b0f19ea9f3c29433
+**Commit:** f219cd1c165d246adbd8c1aa2130b19bc618a34e
 **Author:** Your Name
-**Message:** Fix: ART tracking panel thread lookup using notation instead of internal ID
+**Message:** Fix: Commingling detection for victim transaction threads
 
-🐛 BUG FIX: Source thread not found in available threads
+🐛 BUG FIX: Commingling not detected for transactions from RED wallets
 
 PROBLEM:
 
-Console error: "Source thread V1-T1 not found in available threads"
+User trying to create 49,975.262 USDT trace entry with thread V1-T1
+(only 908.918 USDT available), even though V1-T2 (49,980 USDT) exists
+at the same wallet.
 
-The ART tracking panel was failing to initialize because it couldn't find
-the source thread. The issue was in the thread lookup logic.
+System should have detected commingling and prompted for thread selection,
+but instead allowed creation with massive over-allocation warning.
+
+Console showed: "Found 0 threads entering wallet" - commingling detection
+failed completely.
 
 ROOT CAUSE:
 
-Available threads are indexed by internal ID format:
-- Key: "V1-T1_USDT"
-- Thread object has notation: "V1-T1"
+Commingling detection checked for:
+  t.destinationWallet === walletAddress
 
-initializeARTTracking() was looking up using sourceThreadId ("V1-T1") as
-the direct key:
-  availableThreads[curr][sourceThreadId]  // Looking for key "V1-T1"
+But victim transaction threads (V1-T1, V1-T2) have:
+  t.sourceWallet (the receiving wallet from victim transaction)
 
-But the actual key was "V1-T1_USDT", so lookup failed.
+NOT destinationWallet (which is for hop entry outputs).
+
+So the filter found 0 threads and never triggered commingling detection.
 
 SOLUTION:
 
-Modified thread lookup to search through all threads and match by notation
-field instead of using the key directly.
+Modified commingling detection to check BOTH properties (lines 16528-16535):
 
-Old logic (line 15345):
-  if (availableThreads[curr][sourceThreadId]) {
-    // Only finds exact key matches
-  }
+Before:
+  threadsToSameWallet = availableThreads.filter(t =>
+    t.destinationWallet &&
+    t.destinationWallet.toLowerCase() === walletAddress.toLowerCase()
+  )
 
-New logic (lines 15345-15356):
-  for (const threadKey in availableThreads[curr]) {
-    const thread = availableThreads[curr][threadKey];
-    if (thread.notation === sourceThreadId || threadKey === sourceThreadId) {
-      // Matches by notation field OR key
-      sourceThread = thread;
-      break;
-    }
-  }
+After:
+  threadsToSameWallet = availableThreads.filter(t => {
+    const threadWallet = t.destinationWallet || t.sourceWallet;
+    return threadWallet &&
+           threadWallet.toLowerCase() === walletAddress.toLowerCase()
+  })
+
+BEHAVIOR:
+
+Before:
+- V1-T1 (908 USDT) and V1-T2 (49,980 USDT) both at same wallet
+- Select 49,975 USDT transaction
+- Commingling NOT detected (0 threads found)
+- Allows creation with -49,066 ART warning ❌
+
+After:
+- V1-T1 (908 USDT) and V1-T2 (49,980 USDT) both at same wallet
+- Select 49,975 USDT transaction
+- Commingling DETECTED (2 threads found) ✅
+- Shows thread selector modal ✅
+- User can select V1-T2 (which has enough) ✅
 
 IMPACT:
 
-✅ ART tracking panel now initializes correctly
-✅ Thread progression visualization works
-✅ Available threads display properly
-✅ "Create & Stay" workflow fully functional
+✅ Commingling detection works for victim transactions
+✅ Prevents over-allocation of small threads
+✅ Prompts user to select correct thread combination
+✅ Works for both victim threads and hop entry threads
+✅ Maintains existing behavior for hop-to-hop commingling
 
 TESTING:
-- Open wallet explorer from Available Threads modal
-- Verify ART tracking panel appears
-- Verify no "Source thread not found" error in console
-- Verify thread progression bars display
+- Open wallet with 2+ victim transaction threads
+- Select outbound transaction larger than first thread
+- Verify commingling selector modal appears
+- Verify can select appropriate thread combination
 
 🤖 Generated with Claude Code
 
@@ -69,23 +87,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 248 ++++++++++++++++++++++++++++++++++++-------------------------
- index.html |  15 +++-
- 2 files changed, 157 insertions(+), 106 deletions(-)
+ CLAUDE.md  | 224 +++++++++++++++++--------------------------------------------
+ index.html |  12 ++--
+ 2 files changed, 67 insertions(+), 169 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (0 seconds ago)
-- f48d691 Feature: Batch entry logging workflow in Wallet Explorer (73 minutes ago)
-- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (81 minutes ago)
+- f219cd1 Fix: Commingling detection for victim transaction threads (0 seconds ago)
+- e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (89 seconds ago)
+- f48d691 Feature: Batch entry logging workflow in Wallet Explorer (74 minutes ago)
+- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (83 minutes ago)
 - 16dcb5a Auto-sync CLAUDE.md (2 hours ago)
 - 2bd784f Fix: Include transaction hash in entry notes for audit trail (2 hours ago)
 - 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (2 hours ago)
 - b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (2 hours ago)
 - f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (2 hours ago)
 - 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (2 hours ago)
-- a1e1795 Auto-sync CLAUDE.md (2 hours ago)
 
 ## Key Features
 
