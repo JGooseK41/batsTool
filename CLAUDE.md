@@ -3,121 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 13:23)
+## Latest Commit (Auto-updated: 2025-10-28 13:24)
 
-**Commit:** 8ff7c47cc2ed6d98bf1a017a939477c9ce66f34c
+**Commit:** a3e864d02fcc3e419d4f755aaaf758f2cd9e0db1
 **Author:** Your Name
-**Message:** Fix: Bridge output logging blocked due to missing conversion wallet type
-
-Fixes bug preventing bridge output logging after detecting bridge transactions from Wallet Explorer.
-
-## BUG: Bridge Detection Not Setting Wallet Type
-
-**Problem**: After creating entry from Wallet Explorer and detecting bridge:
-- Bridgers API works and returns data ✅
-- "Auto Trace Bridge" button appears ✅
-- Clicking button shows error: "Only terminal wallets (purple) or conversion wallets (brown) can log bridge outputs" ❌
-
-**Console showed**:
-```
-🌉 Detected Bridgers bridge on entry 1
-✅ Found Bridgers transaction: [data shows ETH → TRON bridge]
-❌ Only terminal wallets or conversion wallets can log bridge outputs
-```
-
-**Root Cause**: Field set during detection vs. validation requirement
-- When entry created from Wallet Explorer: `toWalletType: ''` (empty)
-- Bridge detected: Sets `entry.bridgeProvider` but NOT `toWalletType`
-- Validation in `logBridgeOutput()`: Requires `toWalletType === 'purple' OR 'brown'`
-- Result: Validation fails even though bridge was detected
-
-## FIX IMPLEMENTED:
-
-**Enhanced detectBridgeProviderForEntry()** (lines 8654-8656):
-```javascript
-if (provider) {
-    entry.bridgeProvider = provider;
-    // CRITICAL: Mark wallet as conversion wallet (brown) so bridge output can be logged
-    entry.toWalletType = 'brown';
-    console.log(`🌉 Detected ${provider.name} bridge on entry ${entry.id} - marked as conversion wallet`);
-    return provider;
-}
-```
-
-**Why 'brown' (conversion wallet)**:
-- Purple = Terminal wallet (CEX)
-- Brown = Conversion wallet (Bridge/DEX)
-- Validation allows BOTH types to log bridge outputs
-- Bridge contracts are conversion wallets, not terminals
-
-## VALIDATION CHECK:
-
-**Location**: `logBridgeOutput()` function (line 36907)
-```javascript
-if (!entry || (entry.toWalletType !== 'purple' && entry.toWalletType !== 'brown')) {
-    showNotification('❌ Only terminal wallets...', 'error');
-    return;
-}
-```
-
-This check ensures only appropriate wallet types can log bridge outputs. Now entries created from Wallet Explorer with detected bridges will pass this validation.
-
-## IMPACT:
-
-**Before**:
-- ❌ Bridge detected but can't log output
-- ❌ "Auto Trace Bridge" button fails validation
-- ❌ Must manually change wallet type first
-- ❌ Broken workflow from Wallet Explorer
-
-**After**:
-- ✅ Bridge detected and wallet type set automatically
-- ✅ "Auto Trace Bridge" button works immediately
-- ✅ Validation passes - can log bridge output
-- ✅ Seamless workflow: detect → query → log
-
-## AFFECTED PROVIDERS:
-- ✅ Bridgers
-- ✅ LayerZero
-- ✅ Stargate
-- ✅ Wormhole
-- ✅ Synapse
-
-## FILES MODIFIED:
-- index.html:
-  * Lines 8654-8656: Set toWalletType='brown' when bridge detected
-
-## WORKFLOW NOW:
-1. Create entry from Wallet Explorer transaction
-2. System detects bridge contract (Bridgers, LayerZero, etc.)
-3. **NEW**: Entry.toWalletType automatically set to 'brown'
-4. Bridge API queried and returns destination data
-5. "Auto Trace Bridge" button shown and WORKS
-6. Bridge output logged successfully
-
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md  | 100 ++++++-------------------------------------------------------
- index.html |   4 ++-
- 2 files changed, 12 insertions(+), 92 deletions(-)
+ CLAUDE.md | 111 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 101 insertions(+), 10 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (0 seconds ago)
-- 4127c39 Update CLAUDE.md with latest commit info (5 minutes ago)
-- 5b66f89 Fix: Bridge tracing with undefined transaction hash (6 minutes ago)
-- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (21 minutes ago)
-- 9524dae Critical Fix: Write-off and cold storage thread allocation (28 minutes ago)
+- a3e864d Update CLAUDE.md with latest commit info (0 seconds ago)
+- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (66 seconds ago)
+- 4127c39 Update CLAUDE.md with latest commit info (6 minutes ago)
+- 5b66f89 Fix: Bridge tracing with undefined transaction hash (7 minutes ago)
+- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (22 minutes ago)
+- 9524dae Critical Fix: Write-off and cold storage thread allocation (30 minutes ago)
 - 0638d63 Feature: Court-ready clustering documentation with justification and source/destination tracking (7 hours ago)
 - 0d51afe Critical: Apply Ethereum-level data validity across ALL blockchains (7 hours ago)
 - a78a36e Feature: Comprehensive blockchain integration across all 35+ chains (8 hours ago)
 - 4cee3c6 Complete: Full XRP integration across all B.A.T.S. features (8 hours ago)
-- c36bcf7 Update XRPScan API origin parameter to Batstool.com (8 hours ago)
 
 ## Key Features
 
