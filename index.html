@@ -15474,6 +15474,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
             if (!assetName) {
                 document.getElementById('walletExplorerTransactions').style.display = 'none';
+                document.getElementById('walletExplorerAssetSummary').style.display = 'block';
                 return;
             }
 
@@ -15551,6 +15552,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             }
 
             document.getElementById('walletExplorerTransactions').style.display = 'block';
+            document.getElementById('walletExplorerAssetSummary').style.display = 'none';
             document.getElementById('walletExplorerSplitContainer').style.display = 'flex';
 
             // Populate wallet statistics in sidebar

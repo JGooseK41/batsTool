@@ -3,29 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 19:25)
+## Latest Commit (Auto-updated: 2025-10-28 19:29)
 
-**Commit:** a1346c4b98536b8361475f5e294d93c7040edadd
+**Commit:** e5faf43bb58dcb2d040e5e3c83bf33a3abf37a93
 **Author:** Your Name
-**Message:** Fix: Wallet explorer split-screen visibility on initial load
+**Message:** Fix: Hop validation showing incorrect "Threads need allocation" warning
 
-Problem: After implementing split-screen sidebar, wallet search would fetch data successfully but UI wouldn't display. Console showed transactions fetched and aggregated, but nothing rendered.
+Problem: User traced full thread amount (16,821.533 USDT) but system showed:
+- "Remaining: 16,821.533 USDT"
+- "⚠️ Threads need allocation"
+- Blocked finalization even though hop was complete
 
 Root Cause:
-- displayAssetSummary() rendered asset cards and showed walletExplorerAssetSummary
-- BUT did not show parent walletExplorerSplitContainer (display: none)
-- Split container only shown by displayAssetTransactions() (after asset selected)
-- Result: Asset cards rendered inside hidden container
+1. Line 22287: Used getAvailableSourcesForHop(hop.hopNumber + 1) - got threads for NEXT hop
+2. Line 22333: Calculated "Remaining" from next hop's threads
+3. Line 22664: Required availableForNextHop.length === 0 for hop completion
+
+This logic was WRONG because:
+- When you trace funds to a destination, system correctly creates thread for next hop
+- Validation incorrectly interpreted this as "current hop incomplete"
+- "Remaining" showed next hop's available threads, not current hop's unallocated threads
 
 Solution:
-1. Show split container in displayAssetSummary() immediately after wallet load (line 15456)
-2. Initialize sidebar (populate stats, move panels) on wallet load (lines 15459-15462)
-3. Enhanced populateWalletStats() to show overall wallet stats when no asset selected:
-   - Use all transactions if no specific asset chosen
-   - Show "All Assets" instead of "-" for current asset field
-   - Update to specific asset stats when asset clicked
+1. Changed getAvailableSourcesForHop(hop.hopNumber + 1) → hop.hopNumber (line 22287)
+   - Now "Remaining" shows unallocated threads in CURRENT hop, not next hop
+2. Removed availableForNextHop.length === 0 check from validation (line 22664)
+   - Hop complete when unallocatedInCurrentHop.length === 0
+   - Having threads for next hop is EXPECTED when tracing funds
 
-Now wallet explorer properly displays on initial load with split-screen layout and general stats, then updates when asset selected.
+Now system correctly:
+- Shows "Remaining: 0 USDT" when all current hop threads traced
+- Displays "✅ All threads fully traced!"
+- Allows finalization when current hop complete
+- Threads created for next hop don't block current hop completion
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -33,23 +43,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 57 ++++++++++++++++++++++++++++++++++++++++++---------------
- index.html | 23 +++++++++++++++++++----
- 2 files changed, 61 insertions(+), 19 deletions(-)
+ CLAUDE.md  | 68 +++++++++++++++++++++++++++++---------------------------------
+ index.html |  9 +++++----
+ 2 files changed, 37 insertions(+), 40 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (0 seconds ago)
-- b2d980b Fix: Update migration/consolidation functions for flat structure (15 minutes ago)
-- 6188a2a Fix: Complete thread structure migration - all remaining functions (20 minutes ago)
-- 5402485 Fix: Update getThreadChainHistory for flat thread structure (32 minutes ago)
-- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (33 minutes ago)
-- 831eaf8 Fix: Update getMaxAssignableAmount for flat thread structure (46 minutes ago)
-- 4628023 Fix: Remove extra closing brace causing syntax error at line 10558 (52 minutes ago)
-- 6faf871 Fix: Remove duplicate display property in wallet explorer split container (56 minutes ago)
-- 21789b2 Sync CLAUDE.md (65 minutes ago)
-- 23929cb Final CLAUDE.md sync (65 minutes ago)
+- e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (0 seconds ago)
+- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (4 minutes ago)
+- b2d980b Fix: Update migration/consolidation functions for flat structure (18 minutes ago)
+- 6188a2a Fix: Complete thread structure migration - all remaining functions (23 minutes ago)
+- 5402485 Fix: Update getThreadChainHistory for flat thread structure (35 minutes ago)
+- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (37 minutes ago)
+- 831eaf8 Fix: Update getMaxAssignableAmount for flat thread structure (49 minutes ago)
+- 4628023 Fix: Remove extra closing brace causing syntax error at line 10558 (55 minutes ago)
+- 6faf871 Fix: Remove duplicate display property in wallet explorer split container (59 minutes ago)
+- 21789b2 Sync CLAUDE.md (68 minutes ago)
 
 ## Key Features
 
