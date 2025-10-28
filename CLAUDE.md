@@ -3,98 +3,138 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 13:27)
+## Latest Commit (Auto-updated: 2025-10-28 13:30)
 
-**Commit:** 6a3a2afbe87eb94960f9e3ddf449e26e3ac2a50e
+**Commit:** e788fdac0837d67f67d31c747ce1b71894be02de
 **Author:** Your Name
-**Message:** UX: Auto-adjust entry amounts for dust/gas shortfalls
+**Message:** Fix: Replace auto-adjustment with proper partial trace support
 
-Automatically adjusts traced amounts when shortfall is dust (< 0.01), preventing confusing warnings for gas fees.
+Reverts auto-adjustment and implements proper thread allocation philosophy: threads contribute what they can, transactions can be partially traced.
 
-## ISSUE: Confusing Warning for Dust Amounts
+## CONCEPTUAL FIX: How Thread Allocation Should Work
 
-**User Experience Problem**:
-User tries to trace 2.101 ETH but only has 2.1 ETH available:
-- Shortfall: 0.001 ETH (basically gas fees)
-- System shows: "⚠️ Warning: This entry will result in negative ART (insufficient funds)"
-- User asks: "Why doesn't it auto-adjust?"
+**User's Insight** (correct):
+"We have a thread of a specific value:
+- If we commit that thread to a LARGER transaction → We have a claim to the equivalent value of our thread (partial trace)
+- If we commit that thread to a SMALLER transaction → We have leftover value that is still available for reallocation"
 
-**They're right** - for such tiny differences, the system should automatically adjust the traced amount rather than showing a scary warning.
+**Previous Implementation** (incorrect):
+- Auto-adjusted transaction amounts to match available threads
+- Example: 2.101 ETH transaction auto-reduced to 2.1 ETH
+- Problem: Modified the actual transaction amount in the blockchain
 
-## FIX: Smart Auto-Adjustment
+**New Implementation** (correct):
+- Threads contribute what they can to transactions
+- Transaction amounts stay true to blockchain reality
+- Example: 2.101 ETH transaction, 2.1 ETH available → trace 2.1, leave 0.001 untraced
 
-**Enhanced calculateAndShowARTImpact()** (lines 17278-17286):
+## SCENARIOS PROPERLY HANDLED:
 
-**Detection Logic**:
-```javascript
-const DUST_THRESHOLD = 0.01; // Anything less than this is gas/rounding
-const shortfall = entryAmount - totalCurrentART;
+### Scenario 1: Thread < Transaction (Partial Trace)
+**Blockchain Reality:**
+- Transaction: 2.101 ETH
+- Thread Available: 2.1 ETH
 
-if (shortfall > 0 && shortfall < DUST_THRESHOLD) {
-    // Auto-adjust to match available
-    entryAmount = totalCurrentART;
-    entryData.amount = totalCurrentART.toString();
-    autoAdjusted = true;
-}
-```
-
-**New UI Message** (lines 17309-17312):
-Instead of error warning, shows informative success message:
-```
-✓ Auto-adjusted: Entry amount reduced by 0.001 ETH (dust/gas) to match available ART.
-```
-
-## THRESHOLD RATIONALE:
-
-**0.01 threshold chosen because**:
-- ETH gas fees: Typically 0.0001 - 0.005 ETH
-- BTC dust: < 0.001 BTC
-- Rounding errors: Usually < 0.01 in any currency
-- Real shortfalls: Usually > 0.1 (indicates actual problem)
-
-**Examples of what gets auto-adjusted**:
-- ✅ 2.101 → 2.1 ETH (0.001 shortfall = gas)
-- ✅ 1.0056 → 1.0 BTC (0.0056 shortfall = gas)
-- ✅ 100.005 → 100 USDT (0.005 shortfall = rounding)
-
-**Examples of what still shows warning**:
-- ❌ 2.5 ETH when only 2.1 available (0.4 shortfall = real problem)
-- ❌ 1.2 BTC when only 1.0 available (0.2 shortfall = real problem)
-
-## USER EXPERIENCE IMPACT:
-
-**Before**:
+**System Behavior:**
 ```
 Total Available: 2.1 ETH
-Will Allocate: 2.101 ETH
-Remaining: -0.001 ETH
-⚠️ Warning: negative ART (insufficient funds)
-```
-User confused - "It's just gas fees!"
+Will Allocate: 2.1 ETH (of 2.101 ETH transaction)
+Remaining: 0 ETH
 
-**After**:
+ℹ️ Partial Trace: This transaction is 2.101 ETH, but you only have
+2.1 ETH available. Your thread(s) will contribute their full value
+(2.1 ETH), and 0.001 ETH will remain untraced.
+```
+
+**Result:**
+- ✅ Thread fully consumed (2.1 ETH allocated)
+- ✅ Transaction partially traced (2.1 of 2.101 ETH)
+- ✅ Shortfall documented (0.001 ETH untraced)
+- ✅ No blockchain amount modified
+
+### Scenario 2: Thread > Transaction (Leftover Available)
+**Blockchain Reality:**
+- Transaction: 2.1 ETH
+- Thread Available: 2.5 ETH
+
+**System Behavior:**
+```
+Total Available: 2.5 ETH
+Will Allocate: 2.1 ETH
+Remaining: 0.4 ETH
+```
+
+**Result:**
+- ✅ Thread partially consumed (2.1 of 2.5 ETH allocated)
+- ✅ Transaction fully traced (2.1 ETH)
+- ✅ Thread has leftover (0.4 ETH remains available)
+- ✅ Leftover can be used in future traces
+
+### Scenario 3: Thread = Transaction (Perfect Match)
+**Blockchain Reality:**
+- Transaction: 2.1 ETH
+- Thread Available: 2.1 ETH
+
+**System Behavior:**
 ```
 Total Available: 2.1 ETH
 Will Allocate: 2.1 ETH
 Remaining: 0 ETH
-✓ Auto-adjusted: Entry amount reduced by 0.001 ETH (dust/gas)
 ```
-User happy - system handled it intelligently!
 
-## BENEFITS:
+**Result:**
+- ✅ Thread fully consumed
+- ✅ Transaction fully traced
+- ✅ Clean accounting
 
-✅ **Smarter UX**: System handles obvious gas/rounding differences
-✅ **Less Confusion**: No scary warnings for dust amounts
-✅ **Still Safe**: Real shortfalls (>0.01) still show warning
-✅ **Transparent**: User sees adjustment was made and why
-✅ **Accurate Accounting**: Entry matches actual available threads
+## IMPLEMENTATION DETAILS:
+
+**Enhanced calculateAndShowARTImpact()** (lines 17277-17281):
+```javascript
+// Don't modify transaction amount - show what WILL be allocated
+const willAllocate = Math.min(entryAmount, totalCurrentART);
+const isPartialTrace = entryAmount > totalCurrentART;
+const shortfall = isPartialTrace ? entryAmount - totalCurrentART : 0;
+```
+
+**Key Changes:**
+- Removed auto-adjustment logic
+- Calculate `willAllocate` based on availability (not modify entry)
+- Detect partial traces (transaction > available)
+- Show informative message instead of error
+
+**UI Messaging** (lines 17302-17305):
+- Orange color (#f39c12) for partial traces (informative, not error)
+- Clear explanation: "Your thread(s) will contribute their full value"
+- Documents untraced amount: "X will remain untraced"
+- Updated helper text: "Threads contribute what they can"
+
+## WHY THIS IS CORRECT:
+
+**Respects Blockchain Reality:**
+- Transaction amounts are facts on the blockchain
+- We don't modify them to fit our accounting
+- We document what we can trace
+
+**Flexible Thread Usage:**
+- Thread = Pool of value
+- Can be fully or partially consumed
+- Leftovers stay available
+- Natural accounting flow
+
+**Proper Documentation:**
+- Partial traces clearly marked
+- Untraced amounts documented
+- Complete audit trail
+- Court-defensible
 
 ## FILES MODIFIED:
 - index.html:
-  * Lines 17278-17286: Auto-adjustment logic
-  * Lines 17309-17312: Success message for auto-adjustments
-  * Line 17264: Changed entryAmount to let (was const)
-  * Line 17276: Calculate shortfall explicitly
+  * Lines 17277-17281: Calculate allocation without modifying entry
+  * Lines 17283-17284: Color coding for partial traces
+  * Lines 17294-17295: Show "of X transaction" for partial traces
+  * Lines 17302-17305: Informative message for partial traces
+  * Line 17308: Updated helper text
 
 🤖 Generated with Claude Code
 
@@ -102,23 +142,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 113 ++++++-------------------------------------------------------
- index.html |  20 +++++++++--
- 2 files changed, 29 insertions(+), 104 deletions(-)
+ CLAUDE.md  | 118 ++++++++++++++++++++++++++++++++++++++++++++++++++++++-------
+ index.html |  37 +++++++------------
+ 2 files changed, 118 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (0 seconds ago)
-- a3e864d Update CLAUDE.md with latest commit info (3 minutes ago)
-- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (4 minutes ago)
-- 4127c39 Update CLAUDE.md with latest commit info (9 minutes ago)
-- 5b66f89 Fix: Bridge tracing with undefined transaction hash (10 minutes ago)
-- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (25 minutes ago)
-- 9524dae Critical Fix: Write-off and cold storage thread allocation (33 minutes ago)
+- e788fda Fix: Replace auto-adjustment with proper partial trace support (0 seconds ago)
+- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (2 minutes ago)
+- a3e864d Update CLAUDE.md with latest commit info (6 minutes ago)
+- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (7 minutes ago)
+- 4127c39 Update CLAUDE.md with latest commit info (12 minutes ago)
+- 5b66f89 Fix: Bridge tracing with undefined transaction hash (13 minutes ago)
+- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (28 minutes ago)
+- 9524dae Critical Fix: Write-off and cold storage thread allocation (35 minutes ago)
 - 0638d63 Feature: Court-ready clustering documentation with justification and source/destination tracking (7 hours ago)
 - 0d51afe Critical: Apply Ethereum-level data validity across ALL blockchains (8 hours ago)
-- a78a36e Feature: Comprehensive blockchain integration across all 35+ chains (8 hours ago)
 
 ## Key Features
 

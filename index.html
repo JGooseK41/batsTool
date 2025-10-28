@@ -8771,8 +8771,39 @@
 
             // Store bridge data temporarily for pre-fill
             if (bridgeData) {
+                // Map bridge API chain names to blockchainAPIs keys
+                const chainMapping = {
+                    'ETH': 'ethereum',
+                    'ETHEREUM': 'ethereum',
+                    'BTC': 'bitcoin',
+                    'BITCOIN': 'bitcoin',
+                    'TRON': 'tron',
+                    'TRX': 'tron',
+                    'BSC': 'bsc',
+                    'BNB': 'bsc',
+                    'POLYGON': 'polygon',
+                    'MATIC': 'polygon',
+                    'ARBITRUM': 'arbitrum',
+                    'ARB': 'arbitrum',
+                    'OPTIMISM': 'optimism',
+                    'OP': 'optimism',
+                    'BASE': 'base',
+                    'AVALANCHE': 'avalanche',
+                    'AVAX': 'avalanche',
+                    'SOLANA': 'solana',
+                    'SOL': 'solana',
+                    'SUI': 'sui',
+                    'XRP': 'xrp',
+                    'RIPPLE': 'xrp'
+                };
+
+                // Get the mapped chain or fall back to lowercase
+                const mappedChain = chainMapping[bridgeData.toChain.toUpperCase()] || bridgeData.toChain.toLowerCase();
+
+                console.log(`🗺️ Chain Mapping: ${bridgeData.toChain} → ${mappedChain}`);
+
                 window.pendingBridgeAutoFill = {
-                    destinationChain: bridgeData.toChain.toLowerCase(),
+                    destinationChain: mappedChain,
                     destinationTxHash: bridgeData.receiveHash || '',
                     destinationWallet: bridgeData.toAddress || '',
                     destinationAmount: bridgeData.toAmount || 0,
@@ -8782,6 +8813,12 @@
                     hasRiskFlag: bridgeData.hasRiskFlag || false,
                     refundReason: bridgeData.refundReason || null
                 };
+
+                console.log(`✅ Bridge Auto-fill Data Prepared:
+   Chain: ${mappedChain}
+   Address: ${bridgeData.toAddress}
+   TxHash: ${bridgeData.receiveHash}
+   Amount: ${bridgeData.toAmount} ${bridgeData.toCurrency}`);
             }
 
             // Call the existing function to show the bridge output dialog
@@ -37144,11 +37181,23 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             if (window.pendingBridgeAutoFill) {
                 const autoFill = window.pendingBridgeAutoFill;
 
+                console.log(`🔧 Auto-filling bridge output modal with:`, autoFill);
+
                 // Pre-fill destination chain dropdown
                 const chainSelect = document.getElementById('bridgeDestChain');
                 if (chainSelect && autoFill.destinationChain) {
                     chainSelect.value = autoFill.destinationChain;
                     window.bridgeDestChain = autoFill.destinationChain;
+
+                    // Verify the dropdown was set correctly
+                    if (chainSelect.value !== autoFill.destinationChain) {
+                        console.error(`⚠️ Chain dropdown auto-fill FAILED:
+   Attempted to set: "${autoFill.destinationChain}"
+   Actual value after: "${chainSelect.value}"
+   Available options: ${Array.from(chainSelect.options).map(o => o.value).join(', ')}`);
+                    } else {
+                        console.log(`✅ Chain dropdown set to: "${chainSelect.value}"`);
+                    }
                 }
 
                 // Pre-fill destination transaction hash
@@ -37930,9 +37979,31 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             // Always use brown wallet type for bridges
             const walletType = 'brown';
 
+            console.log(`📋 Bridge Output Form Values Read:
+   Destination Chain: "${destChain}"
+   Destination Wallet: "${destWallet}"
+   Destination TxHash: "${txHash}"
+   Destination Amount: "${destAmount}"
+   Destination Asset: "${destAsset}"`);
+
             if (!txHash || !destChain || !destWallet || !destAmount || !destAsset) {
                 showNotification('❌ Please fill in all destination transaction details', 'error');
+                console.error(`❌ Validation failed - missing fields:
+   TxHash: ${!!txHash}
+   Chain: ${!!destChain}
+   Wallet: ${!!destWallet}
+   Amount: ${!!destAmount}
+   Asset: ${!!destAsset}`);
                 return;
+            }
+
+            // CRITICAL: Validate that the destination chain exists in blockchainAPIs
+            if (!window.blockchainAPIs[destChain]) {
+                showNotification(`❌ Invalid destination chain: "${destChain}". Please select a valid blockchain from the dropdown.`, 'error');
+                console.error(`❌ Chain "${destChain}" not found in blockchainAPIs. Available chains:`, Object.keys(window.blockchainAPIs));
+                return;
+            } else {
+                console.log(`✅ Destination chain "${destChain}" validated successfully (${window.blockchainAPIs[destChain].name})`);
             }
 
             const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
@@ -38142,6 +38213,15 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 showNotification(`✅ Bridge output updated! Thread ${sourceNotation} updated to ${outputAmount} ${outputCurrency} on ${destChain}.`, 'success', 8000);
             } else {
                 // Create the bridge output thread (mirrors swap output structure)
+                console.log(`🧵 Creating Bridge Output Thread:
+   Notation: ${sourceNotation}
+   Currency: ${outputCurrency}
+   Amount: ${outputAmount}
+   Chain ID: ${destChain}
+   Chain Name: ${window.blockchainAPIs?.[destChain]?.name || destChain}
+   Source Wallet: ${destWallet}
+   Hop Level: ${hop.hopNumber}`);
+
                 investigation.availableThreads[outputCurrency][outputInternalId] = {
                     // Dual-layer tracking (same as swap outputs)
                     notation: sourceNotation,  // KEEP ORIGINAL NOTATION for audit trail
@@ -38193,7 +38273,17 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     fullOutputAmount: isPartialTrace ? fullOutputAmount : outputAmount
                 };
 
-                console.log(`Created bridge output thread: ${sourceNotation} with ${outputAmount} ${outputCurrency} on ${destChain} at hop ${hop.hopNumber}`);
+                const createdThread = investigation.availableThreads[outputCurrency][outputInternalId];
+                console.log(`✅ Bridge output thread created successfully:
+   Notation: ${createdThread.notation}
+   Internal ID: ${createdThread.internalId}
+   Currency: ${createdThread.currency}
+   Chain ID: ${createdThread.chainId}
+   Chain Name: ${createdThread.chainName}
+   Source Wallet: ${createdThread.sourceWallet}
+   Amount: ${createdThread.totalAmount}
+   Hop Level: ${createdThread.hopLevel}`);
+
                 showNotification(`✨ Bridge conversion complete: ${inputAmount} ${inputCurrency} → ${outputAmount} ${outputCurrency} (available in Hop ${hop.hopNumber})`, 'info', 5000);
             }
 
