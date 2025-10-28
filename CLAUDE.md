@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-28 17:34)
 
-**Commit:** e60257a7eb26b5d72209414200de550c58067cdf
+**Commit:** 12b244004d56c59f3b475e26184eba4f538cfcc0
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 77 +++++++++++++--------------------------------------------------
- 1 file changed, 15 insertions(+), 62 deletions(-)
+ CLAUDE.md | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e60257a Update CLAUDE.md with latest commit info (0 seconds ago)
-- 973fd58 Update CLAUDE.md with latest commit info (19 seconds ago)
+- 12b2440 Update CLAUDE.md with latest commit info (0 seconds ago)
+- e60257a Update CLAUDE.md with latest commit info (12 seconds ago)
+- 973fd58 Update CLAUDE.md with latest commit info (31 seconds ago)
 - 108adc3 🎉 IMPLEMENTATION PLAN COMPLETE - All 8 Phases Finished (4 minutes ago)
-- 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (4 minutes ago)
+- 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (5 minutes ago)
 - 9ef10ed Fix: Clarify ERC-20/gas fee handling - gas never tracked as output (6 minutes ago)
 - e7fc75c Fix: Enforce victim completion workflow before adding new victims (12 minutes ago)
 - 60e020a Summary: Implementation Plan Progress - Phases 1-3 Complete (23 minutes ago)
 - 1b43c79 Update CLAUDE.md with latest commit info (24 minutes ago)
-- 3e6a044 Fix: Enforce hard allocation validation with partial trace option (26 minutes ago)
-- de0f793 Fix: Correct change address handling - same-address change stays in thread (28 minutes ago)
+- 3e6a044 Fix: Enforce hard allocation validation with partial trace option (27 minutes ago)
 
 ## Key Features
 
