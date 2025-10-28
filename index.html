@@ -18246,7 +18246,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     return;
                 }
 
-                // If we have source thread ID, validate against available amount
+                // CRITICAL: Validate allocation - HARD BLOCK if exceeds available
                 if (sourceThreadId) {
                     const availableThreads = getAvailableSourcesForHop(currentHopNumber, currency);
                     const sourceThread = availableThreads.find(t => t.threadId === sourceThreadId);
@@ -18254,30 +18254,49 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     if (sourceThread) {
                         const availableAmount = sourceThread.availableAmount;
 
-                        // Check if total exceeds available amount
+                        // Hard block if total exceeds available amount
                         if (totalAmount > availableAmount) {
-                            const confirmed = confirm(
-                                `⚠️ OVER-ALLOCATION WARNING\n\n` +
-                                `You are trying to allocate more than available:\n\n` +
+                            const overBy = totalAmount - availableAmount;
+
+                            const choice = confirm(
+                                `🚫 ALLOCATION LIMIT EXCEEDED\n\n` +
+                                `Cannot allocate more than available:\n\n` +
                                 `Thread: ${sourceThreadId}\n` +
                                 `Available: ${availableAmount.toLocaleString()} ${currency}\n` +
                                 `Total selected: ${totalAmount.toLocaleString()} ${currency}\n` +
-                                `Over by: ${(totalAmount - availableAmount).toLocaleString()} ${currency}\n\n` +
-                                `This will create an over-allocation error!\n\n` +
-                                `Click OK to continue anyway, or Cancel to go back and adjust your selection.`
+                                `Over by: ${overBy.toLocaleString()} ${currency}\n\n` +
+                                `OPTIONS:\n` +
+                                `• Click OK to PARTIAL TRACE (only ${availableAmount.toLocaleString()} ${currency})\n` +
+                                `• Click Cancel to go back and adjust selection\n\n` +
+                                `Partial tracing will proportionally reduce each transaction amount.`
                             );
 
-                            if (!confirmed) return;
-                        } else {
-                            // Show allocation preview
-                            const remaining = availableAmount - totalAmount;
-                            const allocationPct = ((totalAmount / availableAmount) * 100).toFixed(1);
+                            if (!choice) {
+                                // User cancelled - go back
+                                return;
+                            }
 
-                            console.log(`✅ Allocation check passed:`);
-                            console.log(`   Available: ${availableAmount} ${currency}`);
-                            console.log(`   Allocating: ${totalAmount} ${currency} (${allocationPct}%)`);
-                            console.log(`   Remaining: ${remaining} ${currency}`);
+                            // User chose partial tracing - reduce amounts proportionally
+                            const reductionFactor = availableAmount / totalAmount;
+                            console.log(`⚠️ Partial trace: Reducing amounts by ${(reductionFactor * 100).toFixed(2)}%`);
+
+                            // Proportionally reduce each transaction
+                            selectedTxs.forEach(tx => {
+                                tx.partialTraceAmount = tx.amount * reductionFactor;
+                            });
+
+                            // Update total
+                            totalAmount = availableAmount;
                         }
+
+                        // Show allocation preview
+                        const remaining = availableAmount - totalAmount;
+                        const allocationPct = ((totalAmount / availableAmount) * 100).toFixed(1);
+
+                        console.log(`✅ Allocation validation passed:`);
+                        console.log(`   Available: ${availableAmount} ${currency}`);
+                        console.log(`   Allocating: ${totalAmount} ${currency} (${allocationPct}%)`);
+                        console.log(`   Remaining: ${remaining} ${currency}`);
                     }
                 }
 
