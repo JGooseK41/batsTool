@@ -7440,7 +7440,7 @@
                 apiUrl: 'https://api.xrpscan.com/api/v1/tx/',
                 addressApiUrl: 'https://api.xrpscan.com/api/v1/account/',
                 explorerUrl: 'https://xrpscan.com/',  // Base URL for block/tx/address links
-                apiOrigin: 'theblockaudit.com',  // Required origin parameter for XRPScan API
+                apiOrigin: 'Batstool.com',  // Required origin parameter for XRPScan API
                 apiKey: null,
                 fallbackUrls: [
                     'https://xrplcluster.com/v1/tx/',
@@ -41204,7 +41204,7 @@ async function lookupTransaction() {
 
             } else if (detectedChain === 'xrp') {
                 // XRP/Ripple with XRPScan API - requires origin parameter
-                const origin = config.apiOrigin || 'theblockaudit.com';
+                const origin = config.apiOrigin || 'Batstool.com';
                 url = `${apiUrl}${txHash}?origin=${origin}`;
                 if (corsEnabled) url = corsProxyUrl + url;
 
@@ -44508,7 +44508,7 @@ async function fetchTransactionData(hash, blockchain) {
 
             } else if (blockchain === 'xrp') {
                 // XRP/Ripple with XRPScan API - requires origin parameter
-                const origin = config.apiOrigin || 'theblockaudit.com';
+                const origin = config.apiOrigin || 'Batstool.com';
                 url = `${apiUrl}${hash}?origin=${origin}`;
                 if (corsEnabled) url = corsProxyUrl + url;
 

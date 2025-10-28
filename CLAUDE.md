@@ -3,141 +3,116 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 05:18)
+## Latest Commit (Auto-updated: 2025-10-28 05:24)
 
-**Commit:** 7e89d3f0a90215dd08a3d4fd6c1779c1dc780d68
+**Commit:** 3ec3b68c427d37aa1fc1bc2296599aa9edbec219
 **Author:** Your Name
-**Message:** Feature: Multi-thread allocation in Wallet Explorer entry confirmation
+**Message:** Feature: Complete XRPScan API integration with origin parameter
 
-🎯 COMPLETE IMPLEMENTATION: Replicate hop wizard allocation logic in wallet explorer
+🎯 XRPSCAN API INTEGRATION: Full support for XRP/Ripple blockchain lookups
 
-PROBLEM:
-- Wallet Explorer entry confirmation modal only supported single thread allocation
-- No way to handle commingling, partial spends, or bridges properly
-- Users had to manually calculate thread allocation
-- System could allow over-allocation (e.g., 49,975 USDT with only 908 USDT thread)
+CONTEXT:
+Received API access from XRPScan with requirement to add ?origin= parameter
+to all API queries for CDN filtering (20,000 free requests/day).
 
-SOLUTION:
-Implemented full multi-thread selection and allocation in entry confirmation modal,
-matching the sophisticated logic that already exists in the hop wizard.
+IMPLEMENTATION:
 
-NEW FEATURES:
+1. **XRP Configuration Consolidation** (lines 7433-7498)
+   - Consolidated duplicate "xrp" and "ripple" entries
+   - Added `apiOrigin: 'theblockaudit.com'` for required origin parameter
+   - Added `explorerUrl: 'https://xrpscan.com/'` for linking functionality
+   - Maintained comprehensive XRP response parsing
+   - Supports XRP native payments and issued currency tokens
+   - Handles multi-destination payments (Payment splitter transactions)
 
-1. **Thread Selection Interface** (lines 17252-17312)
-   - Interactive checkboxes for each available thread
-   - Shows available amount for each thread
-   - Auto-selects pre-assigned thread if one exists
-   - Visual feedback with green borders for selected threads
-   - Real-time allocation calculation on selection change
+2. **Origin Parameter in API Calls** (lines 44480-44492, 41205-41213)
+   - Added XRP-specific branches in both `fetchTransactionData()` and `lookupTransaction()`
+   - Automatically appends `?origin=theblockaudit.com` to all XRPScan API requests
+   - Proper fallback handling for XRP lookups
+   - Console logging for debugging XRP transactions
 
-2. **PIFO Allocation Calculation** (lines 17331-17396)
-   - Automatic PIFO ordering by victim ID and transaction ID
-   - Calculates how to allocate selected threads to transaction amount
-   - Handles partial spends correctly
-   - Tracks remaining amounts for each thread
-   - Identifies which threads will be fully depleted
+3. **XRPScan Linking Helper** (lines 40963-40979)
+   - New `getXRPScanLink(type, value)` function
+   - Generates proper links for:
+     - Transactions: `https://xrpscan.com/tx/{hash}`
+     - Accounts: `https://xrpscan.com/account/{address}`
+     - Ledgers: `https://xrpscan.com/ledger/{number}`
+   - Ready for integration throughout the UI
 
-3. **Allocation Preview Display** (lines 17398-17474)
-   - Shows detailed breakdown of each thread's allocation
-   - Color-coded indicators (red = fully depleted, green = partial)
-   - Displays remaining amounts (future change threads)
-   - Total allocated vs transaction amount comparison
-   - Warning messages for partial traces (shortfall)
-   - Warning messages for excess allocation
+XRPSCAN API FEATURES NOW SUPPORTED:
 
-4. **Enhanced Entry Data** (lines 17479-17525)
-   - Applies multi-thread allocation to entry before creation
-   - Handles both single and multiple thread cases
-   - Stores allocation details in entry data
-   - Adds comprehensive allocation notes to entry
-   - Documents partial traces with shortfall amounts
-   - Validation prevents entries without thread selection
+✅ Transaction lookups with origin parameter
+✅ Account/address balance queries
+✅ XRP native currency transactions
+✅ Issued currency token transfers
+✅ Multi-destination payment support
+✅ Transaction metadata and status validation
+✅ Proper timestamp handling (Ripple epoch conversion)
+✅ Fee calculation (drops to XRP conversion)
+✅ Link generation for transactions, accounts, and ledgers
 
-5. **Updated ART Impact Display** (lines 17196-17247)
-   - Shows total available ART across all threads
-   - Displays transaction amount to allocate
-   - Calculates remaining ART after allocation
-   - Clear guidance to select threads below
-   - Warning for insufficient funds scenarios
+API REQUIREMENTS MET:
 
-BEHAVIOR:
+✅ Origin parameter added to ALL API queries
+✅ Domain: theblockaudit.com
+✅ Ready for xrpscan.com linking integration
+✅ 20,000 free daily requests supported
+✅ CDN-friendly query structure
 
-**Before:**
-- Entry confirmation showed simple thread list
-- Single thread auto-assigned
-- No way to select multiple threads
-- Could create entries with massive over-allocation ❌
+USAGE EXAMPLES:
 
-**After:**
-- Interactive thread selection with checkboxes ✅
-- Real-time allocation preview ✅
-- Automatic PIFO ordering ✅
-- Partial spend handling ✅
-- Change thread identification ✅
-- Prevents entries without proper allocation ✅
-- Full documentation in entry notes ✅
+**Transaction Lookup:**
+```
+GET https://api.xrpscan.com/api/v1/tx/{hash}?origin=theblockaudit.com
+```
 
-WORKFLOW EXAMPLE:
+**Account Lookup:**
+```
+GET https://api.xrpscan.com/api/v1/account/{address}?origin=theblockaudit.com
+```
 
-1. User clicks "Follow & Trace" on transaction in Wallet Explorer
-2. Entry confirmation modal opens
-3. **NEW:** Thread Selection Section shows all available threads with checkboxes
-4. User selects multiple threads (e.g., V1-T1, V1-T2)
-5. **NEW:** Allocation Preview shows:
-   - V1-T1: Use 908 of 908 USDT (fully depleted)
-   - V1-T2: Use 49,067 of 49,980 USDT (913 USDT will remain)
-   - Total Allocated: 49,975 USDT
-6. User confirms entry
-7. Entry created with proper multi-thread allocation
-8. System automatically handles partial spends and change threads
+**Generate Link:**
+```javascript
+const txLink = getXRPScanLink('tx', transactionHash);
+const accountLink = getXRPScanLink('account', walletAddress);
+```
 
-USE CASES NOW SUPPORTED:
+XRP TRANSACTION PARSING:
 
-✅ **Commingling:** Select multiple victim threads merging at same wallet
-✅ **Partial Spends:** Allocate portion of thread, remainder becomes change
-✅ **Bridges:** Properly allocate across thread boundaries
-✅ **Complex Flows:** Any combination of multi-thread scenarios
-✅ **Audit Trail:** Full documentation of allocation in entry notes
+- **Native XRP:** Converts drops (1 XRP = 1,000,000 drops)
+- **Tokens:** Extracts issued currency value and code
+- **Multi-destination:** Handles Payment splitter transactions
+- **Validation:** Checks TransactionResult === 'tesSUCCESS'
+- **Timestamps:** Converts Ripple epoch to Unix timestamp
+- **Fees:** Automatically calculated from Fee field
 
-TECHNICAL IMPLEMENTATION:
+BLOCKCHAIN DETECTION:
 
-- **Global State:** window.walletExplorerThreadSelection tracks selections
-- **PIFO Sorting:** Matches hop wizard's victim/transaction ordering
-- **Allocation Algorithm:** Same logic as applyPIFOAllocation()
-- **Entry Enhancement:** applyMultiThreadAllocationToEntry() adds allocation data
-- **Validation:** Prevents confirmation without thread selection
-- **Notes Documentation:** Automatic allocation notes for audit trail
+- Address pattern: `r[a-zA-Z0-9]{24,34}`
+- Transaction pattern: `[A-F0-9]{64}`
+- Proper auto-detection in transaction lookup modal
+
+NEXT STEPS FOR FULL INTEGRATION:
+
+1. Add XRPScan links to wallet display (use getXRPScanLink helper)
+2. Add XRPScan links to transaction entries (use getXRPScanLink helper)
+3. Add XRPScan links to hop documentation (use getXRPScanLink helper)
+4. Test with real XRP transactions from investigations
+
+FILES MODIFIED:
+- index.html:
+  * Lines 7433-7498: XRP blockchain configuration
+  * Lines 7942: Removed duplicate ripple entry
+  * Lines 40963-40979: getXRPScanLink() helper function
+  * Lines 41205-41213: lookupTransaction() XRP branch
+  * Lines 44480-44492: fetchTransactionData() XRP branch
 
 TESTING:
 
-Test Scenario 1: Single thread
-- Select V1-T1 (1000 USDT available)
-- Transaction amount: 500 USDT
-- Preview shows: Use 500 of 1000 (500 will remain)
-- Entry created with partial allocation ✅
-
-Test Scenario 2: Multiple threads (commingling)
-- Select V1-T1 (908 USDT) and V1-T2 (49,980 USDT)
-- Transaction amount: 49,975 USDT
-- Preview shows both allocations in PIFO order
-- Entry created with proper multi-thread allocation ✅
-
-Test Scenario 3: Insufficient funds
-- Select V1-T1 (100 USDT)
-- Transaction amount: 1000 USDT
-- Preview shows shortfall warning
-- Entry documents partial trace ✅
-
-IMPACT:
-
-🎯 Wallet Explorer now has SAME power as Hop Wizard
-🎯 Users can log complex transactions easily
-🎯 Prevents allocation errors automatically
-🎯 Maintains full audit trail in entry notes
-🎯 Significantly improves workflow for commingling cases
-
-FILES MODIFIED:
-- index.html (lines 17119-17525, 3023-3040)
+Test with sample XRP transaction:
+- Hash format: [A-F0-9]{64}
+- Address format: r[a-zA-Z0-9]{24,34}
+- API: https://api.xrpscan.com/api/v1/tx/{hash}?origin=theblockaudit.com
 
 🤖 Generated with Claude Code
 
@@ -145,14 +120,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 106 ++++++++++-------
- index.html | 381 +++++++++++++++++++++++++++++++++++++++++++++++++++----------
- 2 files changed, 380 insertions(+), 107 deletions(-)
+ CLAUDE.md  | 204 +++++++++++++++++++++++++++++++++++++++----------------------
+ index.html |  75 +++++++++++++++--------
+ 2 files changed, 179 insertions(+), 100 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7e89d3f Feature: Multi-thread allocation in Wallet Explorer entry confirmation (0 seconds ago)
+- 3ec3b68 Feature: Complete XRPScan API integration with origin parameter (0 seconds ago)
+- 7e89d3f Feature: Multi-thread allocation in Wallet Explorer entry confirmation (6 minutes ago)
 - f219cd1 Fix: Commingling detection for victim transaction threads (8 hours ago)
 - e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (8 hours ago)
 - f48d691 Feature: Batch entry logging workflow in Wallet Explorer (9 hours ago)
@@ -161,7 +137,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 2bd784f Fix: Include transaction hash in entry notes for audit trail (10 hours ago)
 - 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (10 hours ago)
 - b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (10 hours ago)
-- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (10 hours ago)
 
 ## Key Features
 
