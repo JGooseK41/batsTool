@@ -18549,6 +18549,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             }
 
             const allTransactions = [];
+            const seenHashes = new Map(); // Deduplicate by hash+asset
 
             // Process each transaction (UTXO-aware)
             transactions.forEach(tx => {
@@ -18585,18 +18586,30 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     const totalReceived = totalOutputValue / 100000000;
                     const sender = tx.vin?.[0]?.prevout?.scriptpubkey_address || 'Unknown';
 
-                    allTransactions.push({
-                        hash: tx.txid,
-                        timestamp: tx.status?.block_time ? tx.status.block_time * 1000 : Date.now(),
-                        type: 'IN',
-                        asset: 'BTC',
-                        amount: totalReceived,
-                        counterparty: sender,
-                        entityLabel: null,
-                        explorerUrl: `https://mempool.space/tx/${tx.txid}`,
-                        isChange: false,
-                        isUTXO: true
-                    });
+                    // Only include if amount > dust threshold
+                    if (totalReceived > 0.00000001) {
+                        const key = `${tx.txid}-BTC-IN`;
+
+                        // Deduplication check
+                        if (!seenHashes.has(key)) {
+                            seenHashes.set(key, true);
+                            allTransactions.push({
+                                hash: tx.txid,
+                                timestamp: tx.status?.block_time ? tx.status.block_time * 1000 : Date.now(),
+                                type: 'IN',
+                                asset: 'BTC',
+                                amount: totalReceived,
+                                counterparty: sender,
+                                entityLabel: null,
+                                explorerUrl: `https://mempool.space/tx/${tx.txid}`,
+                                isChange: false,
+                                isUTXO: true
+                            });
+                            console.log(`✅ Added BTC IN: ${tx.txid.substring(0, 10)}... ${totalReceived.toFixed(8)} BTC`);
+                        } else {
+                            console.log(`Skipped duplicate BTC IN: ${tx.txid.substring(0, 10)}...`);
+                        }
+                    }
                 }
 
                 // For OUTGOING transactions (has inputs from us)
@@ -18633,34 +18646,43 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                             // Check if this looks like change to a NEW address
                             const potentialNewAddressChange = output.likelyChange && ourOutputs.length === 0;
 
-                            allTransactions.push({
-                                hash: tx.txid,
-                                timestamp: tx.status?.block_time ? tx.status.block_time * 1000 : Date.now(),
-                                type: 'OUT',
-                                asset: 'BTC',
-                                amount: outputBTC,
-                                counterparty: output.scriptpubkey_address || 'Unknown',
-                                entityLabel: null,
-                                explorerUrl: `https://mempool.space/tx/${tx.txid}`,
-                                isChange: false,
-                                isUTXO: true,
-                                // Flag potential change to new address
-                                potentialNewAddressChange: potentialNewAddressChange,
-                                // Additional UTXO metadata
-                                utxoData: {
-                                    totalSent: sentBTC,
-                                    changeAmount: changeValue / 100000000,
-                                    outputCount: otherOutputs.length,
-                                    hasChange: ourOutputs.length > 0,
-                                    originalAddress: address,  // Store for clustering
-                                    outputIndex: index,
-                                    allOutputs: analyzedOutputs.map(o => ({
-                                        address: o.scriptpubkey_address,
-                                        amount: o.outputBTC,
-                                        likelyChange: o.likelyChange
-                                    }))
-                                }
-                            });
+                            const key = `${tx.txid}-BTC-OUT-${index}`;
+
+                            // Deduplication check
+                            if (!seenHashes.has(key)) {
+                                seenHashes.set(key, true);
+                                allTransactions.push({
+                                    hash: tx.txid,
+                                    timestamp: tx.status?.block_time ? tx.status.block_time * 1000 : Date.now(),
+                                    type: 'OUT',
+                                    asset: 'BTC',
+                                    amount: outputBTC,
+                                    counterparty: output.scriptpubkey_address || 'Unknown',
+                                    entityLabel: null,
+                                    explorerUrl: `https://mempool.space/tx/${tx.txid}`,
+                                    isChange: false,
+                                    isUTXO: true,
+                                    // Flag potential change to new address
+                                    potentialNewAddressChange: potentialNewAddressChange,
+                                    // Additional UTXO metadata
+                                    utxoData: {
+                                        totalSent: sentBTC,
+                                        changeAmount: changeValue / 100000000,
+                                        outputCount: otherOutputs.length,
+                                        hasChange: ourOutputs.length > 0,
+                                        originalAddress: address,  // Store for clustering
+                                        outputIndex: index,
+                                        allOutputs: analyzedOutputs.map(o => ({
+                                            address: o.scriptpubkey_address,
+                                            amount: o.outputBTC,
+                                            likelyChange: o.likelyChange
+                                        }))
+                                    }
+                                });
+                                console.log(`✅ Added BTC OUT: ${tx.txid.substring(0, 10)}... ${outputBTC.toFixed(8)} BTC (output ${index})`);
+                            } else {
+                                console.log(`Skipped duplicate BTC OUT: ${tx.txid.substring(0, 10)}... (output ${index})`);
+                            }
                         }
                     });
 
@@ -18670,24 +18692,33 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
                         // Only include significant change
                         if (changeBTC > 0.00000001) {
-                            allTransactions.push({
-                                hash: tx.txid,
-                                timestamp: tx.status?.block_time ? tx.status.block_time * 1000 : Date.now(),
-                                type: 'CHANGE', // Special type for change
-                                asset: 'BTC',
-                                amount: changeBTC,
-                                counterparty: address, // Change returns to self
-                                entityLabel: null,
-                                explorerUrl: `https://mempool.space/tx/${tx.txid}`,
-                                isChange: true,
-                                isUTXO: true,
-                                utxoData: {
-                                    totalSent: sentBTC,
-                                    changeAmount: changeBTC,
-                                    outputCount: otherOutputs.length,
-                                    originalAddress: address
-                                }
-                            });
+                            const key = `${tx.txid}-BTC-CHANGE`;
+
+                            // Deduplication check
+                            if (!seenHashes.has(key)) {
+                                seenHashes.set(key, true);
+                                allTransactions.push({
+                                    hash: tx.txid,
+                                    timestamp: tx.status?.block_time ? tx.status.block_time * 1000 : Date.now(),
+                                    type: 'CHANGE', // Special type for change
+                                    asset: 'BTC',
+                                    amount: changeBTC,
+                                    counterparty: address, // Change returns to self
+                                    entityLabel: null,
+                                    explorerUrl: `https://mempool.space/tx/${tx.txid}`,
+                                    isChange: true,
+                                    isUTXO: true,
+                                    utxoData: {
+                                        totalSent: sentBTC,
+                                        changeAmount: changeBTC,
+                                        outputCount: otherOutputs.length,
+                                        originalAddress: address
+                                    }
+                                });
+                                console.log(`✅ Added BTC CHANGE: ${tx.txid.substring(0, 10)}... ${changeBTC.toFixed(8)} BTC`);
+                            } else {
+                                console.log(`Skipped duplicate BTC CHANGE: ${tx.txid.substring(0, 10)}...`);
+                            }
                         }
                     }
                 }
@@ -19466,6 +19497,7 @@ ${cluster.notes}
             const baseUrl = 'https://api.trongrid.io';
 
             const allTransactions = [];
+            const seenHashes = new Map(); // Deduplicate by hash+asset
 
             // Get TRX transactions
             const trxUrl = `${baseUrl}/v1/accounts/${address}/transactions?limit=200`;
@@ -19476,6 +19508,7 @@ ${cluster.notes}
                 const trxData = await trxResponse.json();
 
                 if (trxData.data && Array.isArray(trxData.data)) {
+                    console.log(`Processing ${trxData.data.length} TRX transactions...`);
                     trxData.data.forEach(tx => {
                         // Parse TRX transfers
                         if (tx.raw_data && tx.raw_data.contract) {
@@ -19488,16 +19521,25 @@ ${cluster.notes}
                                         const amount = value.amount / 1000000; // Sun to TRX
 
                                         if (amount > 0) {
-                                            allTransactions.push({
-                                                hash: tx.txID,
-                                                timestamp: tx.block_timestamp || Date.now(),
-                                                type: isIncoming ? 'IN' : 'OUT',
-                                                asset: 'TRX',
-                                                amount: amount,
-                                                counterparty: isIncoming ? value.owner_address : value.to_address,
-                                                entityLabel: null,
-                                                explorerUrl: `https://tronscan.org/#/transaction/${tx.txID}`
-                                            });
+                                            const key = `${tx.txID}-TRX`;
+
+                                            // Deduplication check
+                                            if (!seenHashes.has(key)) {
+                                                seenHashes.set(key, true);
+                                                allTransactions.push({
+                                                    hash: tx.txID,
+                                                    timestamp: tx.block_timestamp || Date.now(),
+                                                    type: isIncoming ? 'IN' : 'OUT',
+                                                    asset: 'TRX',
+                                                    amount: amount,
+                                                    counterparty: isIncoming ? value.owner_address : value.to_address,
+                                                    entityLabel: null,
+                                                    explorerUrl: `https://tronscan.org/#/transaction/${tx.txID}`
+                                                });
+                                                console.log(`✅ Added TRX ${isIncoming ? 'IN' : 'OUT'}: ${tx.txID.substring(0, 10)}... ${amount.toFixed(6)} TRX`);
+                                            } else {
+                                                console.log(`Skipped duplicate TRX: ${tx.txID.substring(0, 10)}...`);
+                                            }
                                         }
                                     }
                                 }
@@ -19517,22 +19559,46 @@ ${cluster.notes}
                 const tokenData = await tokenResponse.json();
 
                 if (tokenData.data && Array.isArray(tokenData.data)) {
+                    console.log(`Processing ${tokenData.data.length} TRC-20 token transactions...`);
                     tokenData.data.forEach(tx => {
                         const isIncoming = tx.to === address;
                         const decimals = parseInt(tx.token_info?.decimals) || 6;
                         const amount = parseFloat(tx.value) / Math.pow(10, decimals);
+                        const asset = tx.token_info?.symbol || tx.token_info?.name || 'TRC20';
+
+                        // SCAM FILTER: Skip TRX from token API - it's already in native transactions
+                        // Check for TRX, Trx, trx, and Unicode variants
+                        const assetUpper = asset.toUpperCase();
+                        const assetNormalized = asset.normalize('NFKC');
+
+                        if (assetUpper === 'TRX' ||
+                            assetUpper.includes('TRX') ||
+                            assetNormalized.includes('TRX') ||
+                            /T[\u0000-\uFFFF]?RX?/i.test(asset)) { // Regex to catch T*RX variants
+                            console.log(`⚠️ Skipped TRX variant from token API: ${tx.transaction_id.substring(0, 10)}... (asset: "${asset}", already in native txs)`);
+                            return;
+                        }
 
                         if (amount > 0) {
-                            allTransactions.push({
-                                hash: tx.transaction_id,
-                                timestamp: tx.block_timestamp || Date.now(),
-                                type: isIncoming ? 'IN' : 'OUT',
-                                asset: tx.token_info?.symbol || tx.token_info?.name || 'TRC20',
-                                amount: amount,
-                                counterparty: isIncoming ? tx.from : tx.to,
-                                entityLabel: null,
-                                explorerUrl: `https://tronscan.org/#/transaction/${tx.transaction_id}`
-                            });
+                            const key = `${tx.transaction_id}-${asset}`;
+
+                            // Deduplication check
+                            if (!seenHashes.has(key)) {
+                                seenHashes.set(key, true);
+                                allTransactions.push({
+                                    hash: tx.transaction_id,
+                                    timestamp: tx.block_timestamp || Date.now(),
+                                    type: isIncoming ? 'IN' : 'OUT',
+                                    asset: asset,
+                                    amount: amount,
+                                    counterparty: isIncoming ? tx.from : tx.to,
+                                    entityLabel: null,
+                                    explorerUrl: `https://tronscan.org/#/transaction/${tx.transaction_id}`
+                                });
+                                console.log(`✅ Added TRC-20 ${isIncoming ? 'IN' : 'OUT'}: ${tx.transaction_id.substring(0, 10)}... ${amount.toFixed(6)} ${asset}`);
+                            } else {
+                                console.log(`Skipped duplicate TRC-20: ${tx.transaction_id.substring(0, 10)}... ${asset}`);
+                            }
                         }
                     });
                 }
@@ -19557,6 +19623,7 @@ ${cluster.notes}
             const rpcUrl = window.apiKeys?.solana || localStorage.getItem('bats_solana_rpc') || 'https://api.mainnet-beta.solana.com';
 
             const allTransactions = [];
+            const seenHashes = new Map(); // Deduplicate by hash+asset
 
             // Step 1: Get transaction signatures (limit to 100 for performance)
             const signaturesResponse = await fetch(rpcUrl, {
@@ -19630,16 +19697,25 @@ ${cluster.notes}
                                             }
 
                                             if (amount > 0.00001) { // Filter dust
-                                                allTransactions.push({
-                                                    hash: sig.signature,
-                                                    timestamp: (sig.blockTime || 0) * 1000,
-                                                    type: isIncoming ? 'IN' : 'OUT',
-                                                    asset: 'SOL',
-                                                    amount: amount,
-                                                    counterparty: counterparty,
-                                                    entityLabel: null,
-                                                    explorerUrl: `https://solscan.io/tx/${sig.signature}`
-                                                });
+                                                const key = `${sig.signature}-SOL`;
+
+                                                // Deduplication check
+                                                if (!seenHashes.has(key)) {
+                                                    seenHashes.set(key, true);
+                                                    allTransactions.push({
+                                                        hash: sig.signature,
+                                                        timestamp: (sig.blockTime || 0) * 1000,
+                                                        type: isIncoming ? 'IN' : 'OUT',
+                                                        asset: 'SOL',
+                                                        amount: amount,
+                                                        counterparty: counterparty,
+                                                        entityLabel: null,
+                                                        explorerUrl: `https://solscan.io/tx/${sig.signature}`
+                                                    });
+                                                    console.log(`✅ Added SOL ${isIncoming ? 'IN' : 'OUT'}: ${sig.signature.substring(0, 10)}... ${amount.toFixed(6)} SOL`);
+                                                } else {
+                                                    console.log(`Skipped duplicate SOL: ${sig.signature.substring(0, 10)}...`);
+                                                }
                                             }
                                         }
                                     }
@@ -19676,16 +19752,40 @@ ${cluster.notes}
                                 // Create transactions for token changes
                                 Object.entries(tokenChanges).forEach(([mint, change]) => {
                                     if (Math.abs(change.diff) > 0.00001) {
-                                        allTransactions.push({
-                                            hash: sig.signature,
-                                            timestamp: (sig.blockTime || 0) * 1000,
-                                            type: change.diff > 0 ? 'IN' : 'OUT',
-                                            asset: change.symbol,
-                                            amount: Math.abs(change.diff),
-                                            counterparty: 'Token Program',
-                                            entityLabel: null,
-                                            explorerUrl: `https://solscan.io/tx/${sig.signature}`
-                                        });
+                                        const asset = change.symbol;
+
+                                        // SCAM FILTER: Skip SOL from SPL token API - it's already in native transactions
+                                        // Check for SOL, Sol, sol, and Unicode variants
+                                        const assetUpper = asset.toUpperCase();
+                                        const assetNormalized = asset.normalize('NFKC');
+
+                                        if (assetUpper === 'SOL' ||
+                                            assetUpper.includes('SOL') ||
+                                            assetNormalized.includes('SOL') ||
+                                            /S[\u0000-\uFFFF]?OL?/i.test(asset)) { // Regex to catch S*OL variants
+                                            console.log(`⚠️ Skipped SOL variant from SPL token API: ${sig.signature.substring(0, 10)}... (asset: "${asset}", already in native txs)`);
+                                            return;
+                                        }
+
+                                        const key = `${sig.signature}-${asset}`;
+
+                                        // Deduplication check
+                                        if (!seenHashes.has(key)) {
+                                            seenHashes.set(key, true);
+                                            allTransactions.push({
+                                                hash: sig.signature,
+                                                timestamp: (sig.blockTime || 0) * 1000,
+                                                type: change.diff > 0 ? 'IN' : 'OUT',
+                                                asset: asset,
+                                                amount: Math.abs(change.diff),
+                                                counterparty: 'Token Program',
+                                                entityLabel: null,
+                                                explorerUrl: `https://solscan.io/tx/${sig.signature}`
+                                            });
+                                            console.log(`✅ Added SPL token ${change.diff > 0 ? 'IN' : 'OUT'}: ${sig.signature.substring(0, 10)}... ${Math.abs(change.diff).toFixed(6)} ${asset}`);
+                                        } else {
+                                            console.log(`Skipped duplicate SPL token: ${sig.signature.substring(0, 10)}... ${asset}`);
+                                        }
                                     }
                                 });
                             }
@@ -19805,21 +19905,26 @@ ${cluster.notes}
                 });
             }
 
-            // Remove duplicates based on digest
+            // Remove duplicates based on digest+asset (Ethereum-level scrutiny)
             const uniqueTransactions = [];
-            const seenDigests = new Set();
+            const seenHashes = new Map();
 
             allTransactions.forEach(tx => {
-                if (!seenDigests.has(tx.hash)) {
-                    seenDigests.add(tx.hash);
+                const key = `${tx.hash}-${tx.asset}`;
+
+                if (!seenHashes.has(key)) {
+                    seenHashes.set(key, true);
                     uniqueTransactions.push(tx);
+                    console.log(`✅ Added Sui ${tx.type}: ${tx.hash.substring(0, 10)}... ${tx.amount.toFixed(6)} ${tx.asset}`);
+                } else {
+                    console.log(`Skipped duplicate Sui: ${tx.hash.substring(0, 10)}... ${tx.asset}`);
                 }
             });
 
             // Sort by timestamp (newest first)
             uniqueTransactions.sort((a, b) => b.timestamp - a.timestamp);
 
-            console.log(`Found ${uniqueTransactions.length} Sui transactions`);
+            console.log(`Found ${uniqueTransactions.length} unique Sui transactions`);
 
             return uniqueTransactions;
         }
@@ -19907,8 +20012,10 @@ ${cluster.notes}
                 }
 
                 const allTransactions = [];
+                const seenHashes = new Map(); // Deduplicate by hash+asset
 
                 // Process each transaction
+                console.log(`Processing ${data.transactions.length} XRP transactions...`);
                 data.transactions.forEach(txData => {
                     const tx = txData.tx || txData.transaction || txData;
 
@@ -19932,6 +20039,19 @@ ${cluster.notes}
                         // Issued currency token
                         amount = parseFloat(tx.Amount.value);
                         asset = tx.Amount.currency || 'Unknown';
+
+                        // SCAM FILTER: Check if issued currency is trying to impersonate native XRP
+                        // Check for XRP, Xrp, xrp, and Unicode variants
+                        const assetUpper = asset.toUpperCase();
+                        const assetNormalized = asset.normalize('NFKC');
+
+                        if (assetUpper === 'XRP' ||
+                            assetUpper.includes('XRP') ||
+                            assetNormalized.includes('XRP') ||
+                            /X[\u0000-\uFFFF]?RP?/i.test(asset)) { // Regex to catch X*RP variants
+                            console.log(`⚠️ Skipped XRP variant from issued currency: ${hash.substring(0, 10)}... (asset: "${asset}", scam token)`);
+                            return;
+                        }
                     }
 
                     // Only include transactions with positive amounts
@@ -19945,16 +20065,25 @@ ${cluster.notes}
                     // Get transaction hash
                     const hash = tx.hash || txData.hash || 'unknown';
 
-                    allTransactions.push({
-                        hash: hash,
-                        timestamp: timestamp,
-                        type: isOutgoing ? 'OUT' : 'IN',
-                        asset: asset,
-                        amount: amount,
-                        counterparty: counterparty,
-                        entityLabel: null,
-                        explorerUrl: `https://xrpscan.com/tx/${hash}`
-                    });
+                    const key = `${hash}-${asset}`;
+
+                    // Deduplication check
+                    if (!seenHashes.has(key)) {
+                        seenHashes.set(key, true);
+                        allTransactions.push({
+                            hash: hash,
+                            timestamp: timestamp,
+                            type: isOutgoing ? 'OUT' : 'IN',
+                            asset: asset,
+                            amount: amount,
+                            counterparty: counterparty,
+                            entityLabel: null,
+                            explorerUrl: `https://xrpscan.com/tx/${hash}`
+                        });
+                        console.log(`✅ Added XRP ${isOutgoing ? 'OUT' : 'IN'}: ${hash.substring(0, 10)}... ${amount.toFixed(6)} ${asset}`);
+                    } else {
+                        console.log(`Skipped duplicate XRP: ${hash.substring(0, 10)}... ${asset}`);
+                    }
                 });
 
                 // Sort by timestamp (newest first)
