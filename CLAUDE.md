@@ -3,74 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 18:19)
+## Latest Commit (Auto-updated: 2025-10-28 18:20)
 
-**Commit:** 7128cd012d8715b1e024029986a76b2720e53ff3
+**Commit:** 4dd8378d3b22be0d004418b547c66fb5d4ff9f5d
 **Author:** Your Name
-**Message:** UX: Redesign Wallet Explorer with collapsible sidebar layout
-
-Problem: Wallet Explorer was cluttered with ART tracker and allocation info:
-- ART panel took up prime real estate in transaction view
-- Cluster info blocked transaction list
-- No persistent wallet overview/stats
-- Difficult to focus on transaction analysis
-
-Solution: Split-screen layout with collapsible left sidebar:
-
-LEFT SIDEBAR (350px, collapsible to 40px):
-- 📊 Wallet Overview panel:
-  • Address (truncated)
-  • Blockchain
-  • First Seen / Last Activity dates
-  • Total transaction count
-  • Current asset being viewed
-- 📊 ART Tracker (dynamically moved from main view)
-- 🔗 Cluster Panel (dynamically moved from main view)
-- Collapse button (◀/▶) for full-width transactions
-
-RIGHT PANEL (flex: 1):
-- Asset selector
-- Filters (date, amount)
-- Transaction table (uncluttered)
-- Pagination
-
-Implementation:
-- New split container with flexbox (index.html:2765-3068)
-- toggleWalletExplorerSidebar() for collapse/expand
-- populateWalletStats() calculates dates from transactions
-- moveExplorerPanelsToSidebar() relocates panels dynamically
-- Panels styled for sidebar (white bg, subtle borders)
-- Smooth transitions (0.3s ease)
-
-Benefits:
-- Clean transaction view
-- Persistent wallet context
-- Collapsible for full-screen transactions
-- ART tracking visible without scrolling
-- Professional dashboard layout
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- index.html | 153 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 151 insertions(+), 2 deletions(-)
+ CLAUDE.md | 74 ++++++++++++++++++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 59 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7128cd0 UX: Redesign Wallet Explorer with collapsible sidebar layout (0 seconds ago)
-- d8bafef Final CLAUDE.md update (45 minutes ago)
-- 12b2440 Update CLAUDE.md with latest commit info (45 minutes ago)
-- e60257a Update CLAUDE.md with latest commit info (45 minutes ago)
-- 973fd58 Update CLAUDE.md with latest commit info (45 minutes ago)
-- 108adc3 🎉 IMPLEMENTATION PLAN COMPLETE - All 8 Phases Finished (49 minutes ago)
-- 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (49 minutes ago)
-- 9ef10ed Fix: Clarify ERC-20/gas fee handling - gas never tracked as output (51 minutes ago)
-- e7fc75c Fix: Enforce victim completion workflow before adding new victims (57 minutes ago)
-- 60e020a Summary: Implementation Plan Progress - Phases 1-3 Complete (68 minutes ago)
+- 4dd8378 Update CLAUDE.md with latest commit info (1 second ago)
+- 7128cd0 UX: Redesign Wallet Explorer with collapsible sidebar layout (68 seconds ago)
+- d8bafef Final CLAUDE.md update (46 minutes ago)
+- 12b2440 Update CLAUDE.md with latest commit info (46 minutes ago)
+- e60257a Update CLAUDE.md with latest commit info (46 minutes ago)
+- 973fd58 Update CLAUDE.md with latest commit info (46 minutes ago)
+- 108adc3 🎉 IMPLEMENTATION PLAN COMPLETE - All 8 Phases Finished (50 minutes ago)
+- 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (50 minutes ago)
+- 9ef10ed Fix: Clarify ERC-20/gas fee handling - gas never tracked as output (52 minutes ago)
+- e7fc75c Fix: Enforce victim completion workflow before adding new victims (58 minutes ago)
 
 ## Key Features
 
