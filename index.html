@@ -10046,26 +10046,191 @@ function consolidateDuplicateThreads() {
     return duplicatesFound;
 }
 
-// Helper function to get thread by notation
+// ============================================================================
+// THREAD ACCESS HELPERS - Provenance-Based Thread Index
+// ============================================================================
+// The thread index is now FLAT (keyed by internal ID only), not currency-keyed.
+// All threads have complete provenance: currency, chainId, originalCurrency, etc.
+// These helpers provide convenient access patterns for the flat structure.
+
+function getAllThreads() {
+    if (!investigation.availableThreads) return [];
+
+    // Return array of all thread objects
+    return Object.values(investigation.availableThreads);
+}
+
+function getThreadByInternalId(internalId) {
+    if (!internalId || !investigation.availableThreads) return null;
+    return investigation.availableThreads[internalId] || null;
+}
+
 function getThreadByNotation(notation) {
     if (!notation || !investigation.availableThreads) return null;
 
-    // Search through all currencies
-    for (const currency in investigation.availableThreads) {
-        for (const threadId in investigation.availableThreads[currency]) {
-            const thread = investigation.availableThreads[currency][threadId];
-            if (thread.notation === notation) {
-                return thread;
-            }
+    // Search through all threads (flat structure)
+    for (const internalId in investigation.availableThreads) {
+        const thread = investigation.availableThreads[internalId];
+        if (thread.notation === notation) {
+            return thread;
         }
     }
 
     return null;
 }
 
-// 2.1 Build Available Threads Index
+function getThreadsByCurrency(currency) {
+    if (!currency || !investigation.availableThreads) return [];
+
+    const threads = [];
+    for (const internalId in investigation.availableThreads) {
+        const thread = investigation.availableThreads[internalId];
+
+        // Match if exact currency match OR base currency matches
+        const baseCurrency = thread.currency.replace(/\([^)]+\)$/, '');
+        const targetBase = currency.replace(/\([^)]+\)$/, '');
+
+        if (thread.currency === currency || baseCurrency === targetBase) {
+            threads.push(thread);
+        }
+    }
+
+    return threads;
+}
+
+function getThreadsByProvenance(filters) {
+    // filters can include: currency, chainId, hopLevel, sourceType, etc.
+    if (!investigation.availableThreads) return [];
+
+    const threads = [];
+    for (const internalId in investigation.availableThreads) {
+        const thread = investigation.availableThreads[internalId];
+        let matches = true;
+
+        // Check each filter
+        if (filters.currency) {
+            const baseCurrency = thread.currency.replace(/\([^)]+\)$/, '');
+            const targetBase = filters.currency.replace(/\([^)]+\)$/, '');
+            if (thread.currency !== filters.currency && baseCurrency !== targetBase) {
+                matches = false;
+            }
+        }
+
+        if (filters.chainId && thread.chainId !== filters.chainId) {
+            matches = false;
+        }
+
+        if (filters.hopLevel !== undefined && thread.hopLevel !== filters.hopLevel) {
+            matches = false;
+        }
+
+        if (filters.sourceType && thread.sourceType !== filters.sourceType) {
+            matches = false;
+        }
+
+        if (filters.minAvailable !== undefined && thread.availableAmount < filters.minAvailable) {
+            matches = false;
+        }
+
+        if (matches) {
+            threads.push(thread);
+        }
+    }
+
+    return threads;
+}
+
+function addThread(thread) {
+    if (!thread || !thread.internalId) {
+        console.error('Cannot add thread without internalId:', thread);
+        return false;
+    }
+
+    if (!investigation.availableThreads) {
+        investigation.availableThreads = {};
+    }
+
+    investigation.availableThreads[thread.internalId] = thread;
+    console.log(`✅ Thread added: ${thread.notation} (${thread.currency}) - ID: ${thread.internalId}`);
+    return true;
+}
+
+function removeThread(internalId) {
+    if (!internalId || !investigation.availableThreads) return false;
+
+    if (investigation.availableThreads[internalId]) {
+        const thread = investigation.availableThreads[internalId];
+        delete investigation.availableThreads[internalId];
+        console.log(`✅ Thread removed: ${thread.notation} (${thread.currency}) - ID: ${internalId}`);
+        return true;
+    }
+
+    return false;
+}
+
+function updateThread(internalId, updates) {
+    const thread = getThreadByInternalId(internalId);
+    if (!thread) {
+        console.error('Thread not found:', internalId);
+        return false;
+    }
+
+    Object.assign(thread, updates);
+    console.log(`✅ Thread updated: ${thread.notation} (${thread.currency})`);
+    return true;
+}
+
+// ============================================================================
+// MIGRATION: Currency-Keyed to Flat Structure
+// ============================================================================
+function migrateCurrencyKeyedToFlat() {
+    if (!investigation.availableThreads) return;
+
+    // Check if already flat (has internalId as top-level key)
+    const firstKey = Object.keys(investigation.availableThreads)[0];
+    if (firstKey && investigation.availableThreads[firstKey]?.internalId === firstKey) {
+        console.log('✅ Thread index already in flat structure');
+        return;
+    }
+
+    console.log('🔄 Migrating thread index from currency-keyed to flat structure...');
+
+    const flatThreads = {};
+    let threadCount = 0;
+
+    // Iterate through currency-keyed structure
+    for (const currency in investigation.availableThreads) {
+        for (const threadKey in investigation.availableThreads[currency]) {
+            const thread = investigation.availableThreads[currency][threadKey];
+
+            // Ensure thread has internalId
+            if (!thread.internalId) {
+                thread.internalId = threadKey;
+            }
+
+            // Ensure thread has currency field
+            if (!thread.currency) {
+                thread.currency = currency;
+            }
+
+            // Add to flat structure
+            flatThreads[thread.internalId] = thread;
+            threadCount++;
+        }
+    }
+
+    // Replace with flat structure
+    investigation.availableThreads = flatThreads;
+
+    console.log(`✅ Migrated ${threadCount} threads to flat structure`);
+    showNotification(`✅ Thread index upgraded to provenance-based structure (${threadCount} threads)`, 'success', 3000);
+}
+
+// ============================================================================
+// 2.1 Build Available Threads Index (FLAT STRUCTURE)
+// ============================================================================
 function buildAvailableThreadsIndex() {
-    // Check if we need to migrate existing data
+    // Check if we need to migrate existing data from old dual-layer format
     if (investigation.availableThreads && isLegacyThreadSystem()) {
         migrateThreadsToDualLayer();
         // After migration, the existing threads are preserved, so return
@@ -10073,35 +10238,40 @@ function buildAvailableThreadsIndex() {
         return;
     }
 
+    // Check if we need to migrate from currency-keyed to flat structure
+    if (investigation.availableThreads && Object.keys(investigation.availableThreads).length > 0) {
+        const firstKey = Object.keys(investigation.availableThreads)[0];
+        const firstValue = investigation.availableThreads[firstKey];
+
+        // If first level is an object with thread properties (flat), we're good
+        // If first level is an object containing more objects (currency-keyed), migrate
+        if (firstValue && typeof firstValue === 'object' && !firstValue.internalId && !firstValue.notation) {
+            // This looks like currency-keyed structure
+            migrateCurrencyKeyedToFlat();
+            return;
+        }
+    }
+
     // CRITICAL FIX: Preserve manually created swap and bridge output threads
     // Store existing swap/bridge output threads before rebuilding
     const existingSwapOutputs = {};
     if (investigation.availableThreads) {
-        for (const currency in investigation.availableThreads) {
-            for (const threadKey in investigation.availableThreads[currency]) {
-                const thread = investigation.availableThreads[currency][threadKey];
-                // Preserve swap output threads and bridge output threads that were manually created
-                if (thread.sourceType === 'swap_output' || thread.swapConverted ||
-                    thread.sourceType === 'bridge_output' || thread.bridgeConverted) {
-                    if (!existingSwapOutputs[currency]) {
-                        existingSwapOutputs[currency] = {};
-                    }
-                    existingSwapOutputs[currency][threadKey] = thread;
-                }
+        // Flat structure iteration
+        for (const threadKey in investigation.availableThreads) {
+            const thread = investigation.availableThreads[threadKey];
+            // Preserve swap output threads and bridge output threads that were manually created
+            if (thread.sourceType === 'swap_output' || thread.swapConverted ||
+                thread.sourceType === 'bridge_output' || thread.bridgeConverted) {
+                existingSwapOutputs[threadKey] = thread;
             }
         }
     }
 
     investigation.availableThreads = {};
 
-    // Restore preserved swap output threads
-    for (const currency in existingSwapOutputs) {
-        if (!investigation.availableThreads[currency]) {
-            investigation.availableThreads[currency] = {};
-        }
-        for (const threadKey in existingSwapOutputs[currency]) {
-            investigation.availableThreads[currency][threadKey] = existingSwapOutputs[currency][threadKey];
-        }
+    // Restore preserved swap output threads (flat structure)
+    for (const threadKey in existingSwapOutputs) {
+        investigation.availableThreads[threadKey] = existingSwapOutputs[threadKey];
     }
 
     // Start with ALL victim transactions (RED wallets) from ALL victims
@@ -10113,12 +10283,8 @@ function buildAvailableThreadsIndex() {
                 const notation = `V${victim.id}-T${transaction.id}`;
                 const internalId = generateInternalThreadId(notation, currency);
 
-                if (!investigation.availableThreads[currency]) {
-                    investigation.availableThreads[currency] = {};
-                }
-
-                // Index by internal ID, but store notation for display
-                investigation.availableThreads[currency][internalId] = {
+                // FLAT STRUCTURE: Index directly by internal ID
+                investigation.availableThreads[internalId] = {
                     // Dual-layer tracking
                     notation: notation,              // Human-readable (V-T-H)
                     internalId: internalId,          // Unique identifier
@@ -10220,25 +10386,21 @@ function buildAvailableThreadsIndex() {
                 let chainName = entry.chain ? (window.blockchainAPIs?.[entry.chain]?.name || entry.chain) : null;
 
                 if (!chainId) {
-                    // Try to inherit from parent threads
+                    // Try to inherit from parent threads (flat structure)
                     const parentIds = entry.multipleSourceInternalIds || [entry.sourceThreadInternalId];
                     for (const parentId of parentIds) {
-                        // Look through all currencies for parent thread
-                        for (const curr in investigation.availableThreads) {
-                            const parentThread = investigation.availableThreads[curr]?.[parentId];
-                            if (parentThread && parentThread.chainId) {
-                                chainId = parentThread.chainId;
-                                chainName = parentThread.chainName;
-                                console.log(`Change entry inherited chain ${chainId} from parent thread`);
-                                break;
-                            }
+                        const parentThread = investigation.availableThreads[parentId];
+                        if (parentThread && parentThread.chainId) {
+                            chainId = parentThread.chainId;
+                            chainName = parentThread.chainName;
+                            console.log(`Change entry inherited chain ${chainId} from parent thread`);
+                            break;
                         }
-                        if (chainId) break;
                     }
                 }
 
-                // Create the change thread at the same hop level
-                investigation.availableThreads[currency][newInternalId] = {
+                // Create the change thread at the same hop level (FLAT STRUCTURE)
+                investigation.availableThreads[newInternalId] = {
                     notation: entry.notation,
                     internalId: newInternalId,
                     totalAmount: roundAmount(parseFloat(entry.amount)),
@@ -10271,28 +10433,26 @@ function buildAvailableThreadsIndex() {
                 const isApplied = entry.writeoffApplied === true;
 
                 if (isApplied) {
-                    // Write-off was applied when hop closed - deduct from available threads
+                    // Write-off was applied when hop closed - deduct from available threads (FLAT STRUCTURE)
                     if (entry.individualSourceAssignments && typeof entry.individualSourceAssignments === 'object') {
                         Object.entries(entry.individualSourceAssignments).forEach(([threadId, allocatedAmount]) => {
                             // Find the thread and deduct the allocated amount
-                            for (const curr in investigation.availableThreads) {
-                                const thread = investigation.availableThreads[curr][threadId];
-                                if (thread) {
-                                    const amountUsed = parseFloat(allocatedAmount) || 0;
-                                    console.log(`Write-off (APPLIED): Deducting ${amountUsed} from thread ${threadId} (had ${thread.availableAmount} available)`);
+                            const thread = investigation.availableThreads[threadId];
+                            if (thread) {
+                                const amountUsed = parseFloat(allocatedAmount) || 0;
+                                console.log(`Write-off (APPLIED): Deducting ${amountUsed} from thread ${threadId} (had ${thread.availableAmount} available)`);
 
-                                    // Use proper rounding to avoid floating point errors
-                                    thread.availableAmount = roundAmount(Math.max(0, thread.availableAmount - amountUsed));
+                                // Use proper rounding to avoid floating point errors
+                                thread.availableAmount = roundAmount(Math.max(0, thread.availableAmount - amountUsed));
 
-                                    // Mark as exhausted if less than 0.01 remains
-                                    if (thread.availableAmount < 0.01) {
-                                        thread.availableAmount = 0;
-                                        thread.fullyExhausted = true;
-                                        thread.exhaustedByWriteoff = entry.notation;
-                                        console.log(`Thread ${threadId} fully exhausted by write-off`);
-                                    } else {
-                                        console.log(`Thread ${threadId} has ${thread.availableAmount} remaining after write-off`);
-                                    }
+                                // Mark as exhausted if less than 0.01 remains
+                                if (thread.availableAmount < 0.01) {
+                                    thread.availableAmount = 0;
+                                    thread.fullyExhausted = true;
+                                    thread.exhaustedByWriteoff = entry.notation;
+                                    console.log(`Thread ${threadId} fully exhausted by write-off`);
+                                } else {
+                                    console.log(`Thread ${threadId} has ${thread.availableAmount} remaining after write-off`);
                                 }
                             }
                         });
@@ -10320,15 +10480,14 @@ function buildAvailableThreadsIndex() {
                         // LOW FIX #4: This is where partial allocations are handled - remainders stay available
                         if (entry.individualSourceAssignments && typeof entry.individualSourceAssignments === 'object') {
                             Object.entries(entry.individualSourceAssignments).forEach(([threadId, allocatedAmount]) => {
-                                // Find the thread and deduct the allocated amount
-                                for (const currency in investigation.availableThreads) {
-                                    const thread = investigation.availableThreads[currency][threadId];
-                                    if (thread) {
-                                        const amountUsed = parseFloat(allocatedAmount) || 0;
-                                        console.log(`Terminal wallet: Deducting ${amountUsed} from thread ${threadId} (had ${thread.availableAmount} available)`);
+                                // Find the thread and deduct the allocated amount (FLAT STRUCTURE)
+                                const thread = investigation.availableThreads[threadId];
+                                if (thread) {
+                                    const amountUsed = parseFloat(allocatedAmount) || 0;
+                                    console.log(`Terminal wallet: Deducting ${amountUsed} from thread ${threadId} (had ${thread.availableAmount} available)`);
 
-                                        // Use proper rounding to avoid floating point errors
-                                        thread.availableAmount = roundAmount(Math.max(0, thread.availableAmount - amountUsed));
+                                    // Use proper rounding to avoid floating point errors
+                                    thread.availableAmount = roundAmount(Math.max(0, thread.availableAmount - amountUsed));
 
                                         // Only mark as fully exhausted if less than 0.01 remains
                                         if (thread.availableAmount < 0.01) {
@@ -10422,8 +10581,9 @@ function updateThreadAvailabilityFromHop(entry) {
     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
     const amount = parseFloat(entry.amount);
 
-    if (!investigation.availableThreads[currency]) {
-        investigation.availableThreads[currency] = {};
+    // FLAT STRUCTURE - no need to check/create currency keys
+    if (!investigation.availableThreads) {
+        investigation.availableThreads = {};
     }
 
     // Create internal ID for this new thread
@@ -10440,25 +10600,21 @@ function updateThreadAvailabilityFromHop(entry) {
         chainName = window.blockchainAPIs?.[chainId]?.name || chainId;
         console.log(`Using bridge destination chain: ${chainId}`);
     } else if (!chainId) {
-        // Try to inherit from parent threads
+        // Try to inherit from parent threads (FLAT STRUCTURE)
         const parentIds = entry.sourceThreadInternalId ? [entry.sourceThreadInternalId] :
                          (entry.multipleSourceInternalIds || []);
         for (const parentId of parentIds) {
-            // Look through all currencies for parent thread
-            for (const curr in investigation.availableThreads) {
-                const parentThread = investigation.availableThreads[curr]?.[parentId];
-                if (parentThread && parentThread.chainId) {
-                    chainId = parentThread.chainId;
-                    chainName = parentThread.chainName;
-                    console.log(`Inherited chain ${chainId} from parent thread ${parentId}`);
-                    break;
-                }
+            const parentThread = investigation.availableThreads[parentId];
+            if (parentThread && parentThread.chainId) {
+                chainId = parentThread.chainId;
+                chainName = parentThread.chainName;
+                console.log(`Inherited chain ${chainId} from parent thread ${parentId}`);
+                break;
             }
-            if (chainId) break;
         }
     }
 
-    investigation.availableThreads[currency][internalId] = {
+    investigation.availableThreads[internalId] = {
         // Dual-layer tracking
         notation: notation,                 // Human-readable
         internalId: internalId,            // Unique identifier
@@ -10760,9 +10916,12 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
 
     const availableSources = [];
 
-    // Simply consult the universal threads database
-    for (const currency in investigation.availableThreads) {
-        // Skip if filtering by currency and this doesn't match
+    // FLAT STRUCTURE: Iterate all threads and filter by provenance
+    for (const threadKey in investigation.availableThreads) {
+        const thread = investigation.availableThreads[threadKey];
+        const currency = thread.currency;
+
+        // Skip if filtering by currency and this doesn't match (provenance-based)
         // Enhanced matching: Strip chain suffix for comparison to handle USDT vs USDT(TRON)
         if (targetCurrency) {
             const baseCurrency = currency.replace(/\([^)]+\)$/, ''); // Remove (CHAIN) suffix
@@ -10770,100 +10929,96 @@ function getAvailableSourcesForHop(hopNumber, targetCurrency) {
 
             // Match if either exact match OR base currencies match
             if (currency !== targetCurrency && baseCurrency !== targetBase) {
-                console.log(`⏭️  Skipping currency "${currency}" (base: "${baseCurrency}") - doesn't match target "${targetCurrency}" (base: "${targetBase}")`);
+                console.log(`⏭️  Skipping thread ${thread.notation} with currency "${currency}" (base: "${baseCurrency}") - doesn't match target "${targetCurrency}" (base: "${targetBase}")`);
                 continue;
             }
 
             if (baseCurrency === targetBase && currency !== targetCurrency) {
-                console.log(`✅ Base currency match: "${currency}" matches target "${targetCurrency}" (base: "${baseCurrency}")`);
+                console.log(`✅ Base currency match: Thread ${thread.notation} currency "${currency}" matches target "${targetCurrency}" (base: "${baseCurrency}")`);
             }
         }
 
-        for (const threadKey in investigation.availableThreads[currency]) {
-            const thread = investigation.availableThreads[currency][threadKey];
-
-            // Filter by hop level appropriately
-            if (hopNumber === 1) {
-                // Hop 1: Show victim threads AND same-hop conversions (swap/bridge outputs)
-                if (thread.sourceType !== 'victim_transaction' &&
-                    thread.sourceType !== 'swap_output' &&
-                    thread.sourceType !== 'bridge_output' &&
-                    thread.sourceType !== 'change_output') {
-                    continue;
-                }
-                // For conversion outputs, only show if they're from hop 1
-                if ((thread.sourceType === 'swap_output' ||
-                     thread.sourceType === 'bridge_output' ||
-                     thread.sourceType === 'change_output') &&
-                    thread.hopLevel !== 1 && thread.hopLevel !== 0) {
-                    continue;
-                }
+        // Filter by hop level appropriately
+        if (hopNumber === 1) {
+            // Hop 1: Show victim threads AND same-hop conversions (swap/bridge outputs)
+            if (thread.sourceType !== 'victim_transaction' &&
+                thread.sourceType !== 'swap_output' &&
+                thread.sourceType !== 'bridge_output' &&
+                thread.sourceType !== 'change_output') {
+                continue;
+            }
+            // For conversion outputs, only show if they're from hop 1
+            if ((thread.sourceType === 'swap_output' ||
+                 thread.sourceType === 'bridge_output' ||
+                 thread.sourceType === 'change_output') &&
+                thread.hopLevel !== 1 && thread.hopLevel !== 0) {
+                continue;
+            }
+        } else {
+            // Other hops: Show threads from previous hop or same-hop conversions
+            // Include victim threads that still have available amounts (partial traces)
+            if (thread.sourceType === 'victim_transaction') {
+                // Allow victim threads if they still have available funds
+                if (thread.availableAmount <= 0.01) continue;
             } else {
-                // Other hops: Show threads from previous hop or same-hop conversions
-                // Include victim threads that still have available amounts (partial traces)
-                if (thread.sourceType === 'victim_transaction') {
-                    // Allow victim threads if they still have available funds
-                    if (thread.availableAmount <= 0.01) continue;
-                } else {
-                    // Check hop level - should be from previous hop or same hop (for swaps/bridges)
-                    const expectedHopLevel = hopNumber - 1;
-                    if (thread.hopLevel !== expectedHopLevel && thread.hopLevel !== hopNumber) {
-                        // Skip unless it's a same-hop conversion (swap/bridge/change)
-                        if (thread.sourceType !== 'swap_output' &&
-                            thread.sourceType !== 'bridge_output' &&
-                            thread.sourceType !== 'change_output') {
-                            continue;
-                        }
+                // Check hop level - should be from previous hop or same hop (for swaps/bridges)
+                const expectedHopLevel = hopNumber - 1;
+                if (thread.hopLevel !== expectedHopLevel && thread.hopLevel !== hopNumber) {
+                    // Skip unless it's a same-hop conversion (swap/bridge/change)
+                    if (thread.sourceType !== 'swap_output' &&
+                        thread.sourceType !== 'bridge_output' &&
+                        thread.sourceType !== 'change_output') {
+                        continue;
                     }
                 }
             }
+        }
 
-            // Calculate available amount using internal ID or notation
-            const availableAmount = getMaxAssignableAmount(
-                thread.internalId || threadKey,
-                currency
-            );
+        // Calculate available amount using internal ID or notation
+        const availableAmount = getMaxAssignableAmount(
+            thread.internalId || threadKey,
+            currency
+        );
 
-            // Only include threads with meaningful available amount (more than dust)
-            if (availableAmount > 0.01) {
-                // Use notation for display, internal ID for tracking
-                const notation = thread.notation || threadKey;
-                let displayText = notation;
+        // Only include threads with meaningful available amount (more than dust)
+        if (availableAmount > 0.01) {
+            // Use notation for display, internal ID for tracking
+            const notation = thread.notation || threadKey;
+            let displayText = notation;
 
-                // Add partial trace indicator if applicable
-                const partialIndicator = thread.wasPartialTrace ?
-                    ` [${(thread.proportionalMultiplier * 100).toFixed(1)}% TRACE]` : '';
+            // Add partial trace indicator if applicable
+            const partialIndicator = thread.wasPartialTrace ?
+                ` [${(thread.proportionalMultiplier * 100).toFixed(1)}% TRACE]` : '';
 
-                if (thread.sourceType === 'victim_transaction') {
-                    displayText = `${notation} (RED Wallet)${partialIndicator}`;
-                } else if (thread.sourceType === 'bridge_output') {
-                    displayText = `${notation} (Bridge Output - ${currency})${partialIndicator}`;
-                } else if (thread.sourceType === 'swap_output') {
-                    displayText = `${notation} (Swap Output - ${currency})${partialIndicator}`;
-                } else if (thread.sourceType === 'change_output') {
-                    displayText = `${notation} (Change - ${currency})${partialIndicator}`;
-                }
-
-                availableSources.push({
-                    // Dual-layer support
-                    threadId: notation,  // For backward compatibility and display
-                    internalId: thread.internalId || threadKey,  // For precise tracking
-
-                    // Display and metadata
-                    displayText: displayText,
-                    availableAmount: availableAmount,
-                    currency: currency,
-                    sourceWallet: thread.sourceWallet,
-                    sourceType: thread.sourceType || 'hop_output',
-                    hopLevel: thread.hopLevel || 0,
-                    datetime: thread.createdAt || null,
-                    timezone: 'UTC',
-
-                    // Chain information for transaction lookups
-                    chainId: thread.chainId || null,
-                    chainName: thread.chainName || null
-                });
+            if (thread.sourceType === 'victim_transaction') {
+                displayText = `${notation} (RED Wallet)${partialIndicator}`;
+            } else if (thread.sourceType === 'bridge_output') {
+                displayText = `${notation} (Bridge Output - ${currency})${partialIndicator}`;
+            } else if (thread.sourceType === 'swap_output') {
+                displayText = `${notation} (Swap Output - ${currency})${partialIndicator}`;
+            } else if (thread.sourceType === 'change_output') {
+                displayText = `${notation} (Change - ${currency})${partialIndicator}`;
             }
+
+            availableSources.push({
+                // Dual-layer support
+                threadId: notation,  // For backward compatibility and display
+                internalId: thread.internalId || threadKey,  // For precise tracking
+
+                // Display and metadata
+                displayText: displayText,
+                availableAmount: availableAmount,
+                currency: currency,
+                sourceWallet: thread.sourceWallet,
+                sourceType: thread.sourceType || 'hop_output',
+                hopLevel: thread.hopLevel || 0,
+                datetime: thread.createdAt || null,
+                timezone: 'UTC',
+
+                // Chain information for transaction lookups
+                chainId: thread.chainId || null,
+                chainName: thread.chainName || null
+            });
         }
     }
 

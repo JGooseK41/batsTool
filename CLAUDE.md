@@ -3,37 +3,49 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 14:14)
+## Latest Commit (Auto-updated: 2025-10-28 14:25)
 
-**Commit:** f6d7ae9d3f0a10bd577eb644f2ae35aefa70c440
+**Commit:** 63babf9f92ef4368f23a8a160d984117a51fb8fe
 **Author:** Your Name
-**Message:** Fix: Use thread destinationTxHash to highlight correct transaction in Wallet Explorer
+**Message:** Fix: Enhanced currency matching to handle cross-chain assets
 
-Problem: When viewing a bridge output thread in Wallet Explorer, the inbound transaction was not highlighted in yellow/gold because we were using the SOURCE transaction hash (Ethereum) instead of the DESTINATION transaction hash (Tron).
+Problem: When tracing transactions after a bridge (e.g., ETH→TRON), the system couldn't find available threads because of currency name mismatch:
+- Thread stored as: "USDT(TRON)"
+- Transaction parsed as: "USDT"
+- Exact string match failed: "USDT" !== "USDT(TRON)"
+- Result: "No available threads for USDT" error
 
-Solution: Use thread.destinationTxHash (if available) instead of entry.transactionHash when opening Wallet Explorer for bridge output threads.
+Solution: Enhanced getAvailableSourcesForHop() to strip chain suffixes and compare base currencies:
+- Strip "(CHAIN)" suffix from both thread currency and target currency
+- Match if base currencies are equal (e.g., "USDT" matches "USDT(TRON)")
+- Maintains backwards compatibility with exact matches
+- Added detailed logging for debugging
 
-Now the correct Tron transaction will be highlighted when viewing a bridge output thread.
+Now investigators can seamlessly trace cross-chain transactions after bridges.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 53 ++++++++++++++++++++++++++---------------------------
- index.html | 18 ++++++++++++++----
- 2 files changed, 40 insertions(+), 31 deletions(-)
+ CLAUDE.md  | 44 +++++++++++++++++++-------------------------
+ index.html | 16 +++++++++++++++-
+ 2 files changed, 34 insertions(+), 26 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f6d7ae9 Fix: Use thread destinationTxHash to highlight correct transaction in Wallet Explorer (0 seconds ago)
-- 0379f66 Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer (6 minutes ago)
-- ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (19 minutes ago)
-- e788fda Fix: Replace auto-adjustment with proper partial trace support (45 minutes ago)
-- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (47 minutes ago)
-- a3e864d Update CLAUDE.md with latest commit info (50 minutes ago)
-- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (51 minutes ago)
-- 4127c39 Update CLAUDE.md with latest commit info (56 minutes ago)
-- 5b66f89 Fix: Bridge tracing with undefined transaction hash (57 minutes ago)
-- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (72 minutes ago)
+- 63babf9 Fix: Enhanced currency matching to handle cross-chain assets (0 seconds ago)
+- f6d7ae9 Fix: Use thread destinationTxHash to highlight correct transaction in Wallet Explorer (11 minutes ago)
+- 0379f66 Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer (17 minutes ago)
+- ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (31 minutes ago)
+- e788fda Fix: Replace auto-adjustment with proper partial trace support (56 minutes ago)
+- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (58 minutes ago)
+- a3e864d Update CLAUDE.md with latest commit info (61 minutes ago)
+- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (62 minutes ago)
+- 4127c39 Update CLAUDE.md with latest commit info (67 minutes ago)
+- 5b66f89 Fix: Bridge tracing with undefined transaction hash (68 minutes ago)
 
 ## Key Features
 
