@@ -31233,22 +31233,21 @@ function getMaxAssignableAmount(sourceThreadIdentifier, currency, excludeEntryId
     let threadData = null;
     let internalId = null;
 
-    // Search through all currencies to find this thread
-    Object.entries(investigation.availableThreads || {}).forEach(([curr, threads]) => {
-        // First try direct lookup (for internal IDs)
-        if (threads[sourceThreadIdentifier]) {
-            threadCurrency = curr;
-            threadData = threads[sourceThreadIdentifier];
-            internalId = sourceThreadIdentifier;
-        } else {
-            // If not found, search by notation (for backward compatibility)
-            Object.entries(threads).forEach(([id, thread]) => {
-                if (thread.notation === sourceThreadIdentifier) {
-                    threadCurrency = curr;
-                    threadData = thread;
-                    internalId = id;
-                }
-            });
+    // FLAT STRUCTURE: Search through all threads directly
+    Object.entries(investigation.availableThreads || {}).forEach(([id, thread]) => {
+        if (!thread) return; // Skip null entries
+
+        // Direct ID match
+        if (id === sourceThreadIdentifier) {
+            threadData = thread;
+            threadCurrency = thread.currency;
+            internalId = id;
+        }
+        // Or notation match (backward compatibility)
+        else if (thread.notation === sourceThreadIdentifier) {
+            threadData = thread;
+            threadCurrency = thread.currency;
+            internalId = id;
         }
     });
 
