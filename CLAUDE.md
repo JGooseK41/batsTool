@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-28 18:20)
 
-**Commit:** 1efba269c14cd18b56cebe33ad69e5a48173f1dd
+**Commit:** 23929cb3f9e1e8a82e278c610db02b661a421ce7
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Final CLAUDE.md sync
 
 ### Changed Files:
 ```
- CLAUDE.md | 74 +++++++++++++--------------------------------------------------
- 1 file changed, 15 insertions(+), 59 deletions(-)
+ CLAUDE.md | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1efba26 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 4dd8378 Update CLAUDE.md with latest commit info (13 seconds ago)
-- 7128cd0 UX: Redesign Wallet Explorer with collapsible sidebar layout (80 seconds ago)
+- 23929cb Final CLAUDE.md sync (0 seconds ago)
+- 1efba26 Update CLAUDE.md with latest commit info (10 seconds ago)
+- 4dd8378 Update CLAUDE.md with latest commit info (23 seconds ago)
+- 7128cd0 UX: Redesign Wallet Explorer with collapsible sidebar layout (2 minutes ago)
 - d8bafef Final CLAUDE.md update (46 minutes ago)
 - 12b2440 Update CLAUDE.md with latest commit info (46 minutes ago)
 - e60257a Update CLAUDE.md with latest commit info (46 minutes ago)
 - 973fd58 Update CLAUDE.md with latest commit info (47 minutes ago)
-- 108adc3 🎉 IMPLEMENTATION PLAN COMPLETE - All 8 Phases Finished (50 minutes ago)
+- 108adc3 🎉 IMPLEMENTATION PLAN COMPLETE - All 8 Phases Finished (51 minutes ago)
 - 3c70353 Fix: Allow manual entries without transaction hash for CEX/off-chain (51 minutes ago)
-- 9ef10ed Fix: Clarify ERC-20/gas fee handling - gas never tracked as output (52 minutes ago)
 
 ## Key Features
 
