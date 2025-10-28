@@ -15800,18 +15800,17 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             let sourceThread = null;
             let currency = null;
 
-            // Search through all currencies and all threads to find matching notation
-            for (const curr in availableThreads) {
-                for (const threadKey in availableThreads[curr]) {
-                    const thread = availableThreads[curr][threadKey];
-                    // Match by notation (V1-T1) not by internal ID (V1-T1_USDT)
-                    if (thread.notation === sourceThreadId || threadKey === sourceThreadId) {
-                        sourceThread = thread;
-                        currency = curr;
-                        break;
-                    }
+            // FLAT STRUCTURE: Search through all threads directly
+            for (const internalId in availableThreads) {
+                const thread = availableThreads[internalId];
+                if (!thread) continue; // Skip null entries
+
+                // Match by notation (V1-T1) or by internal ID (V1-T1_USDT)
+                if (thread.notation === sourceThreadId || internalId === sourceThreadId) {
+                    sourceThread = thread;
+                    currency = thread.currency;
+                    break;
                 }
-                if (sourceThread) break;
             }
 
             if (!sourceThread) {
@@ -24044,10 +24043,15 @@ function quickWriteOffThread(threadId) {
     let thread = null;
     let currency = null;
 
-    for (const curr in availableThreads) {
-        if (availableThreads[curr][threadId]) {
-            thread = availableThreads[curr][threadId];
-            currency = curr;
+    // FLAT STRUCTURE: Search through all threads directly
+    for (const internalId in availableThreads) {
+        const t = availableThreads[internalId];
+        if (!t) continue;
+
+        // Match by notation or internal ID
+        if (t.notation === threadId || internalId === threadId) {
+            thread = t;
+            currency = t.currency;
             break;
         }
     }
@@ -24132,10 +24136,15 @@ function quickColdStorageThread(threadId) {
     let thread = null;
     let currency = null;
 
-    for (const curr in availableThreads) {
-        if (availableThreads[curr][threadId]) {
-            thread = availableThreads[curr][threadId];
-            currency = curr;
+    // FLAT STRUCTURE: Search through all threads directly
+    for (const internalId in availableThreads) {
+        const t = availableThreads[internalId];
+        if (!t) continue;
+
+        // Match by notation or internal ID
+        if (t.notation === threadId || internalId === threadId) {
+            thread = t;
+            currency = t.currency;
             break;
         }
     }

@@ -3,39 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 19:29)
+## Latest Commit (Auto-updated: 2025-10-28 19:37)
 
-**Commit:** e5faf43bb58dcb2d040e5e3c83bf33a3abf37a93
+**Commit:** a0e9406067d6c6f3cdeb1fc0f5447745a7f705b7
 **Author:** Your Name
-**Message:** Fix: Hop validation showing incorrect "Threads need allocation" warning
+**Message:** Fix: Transaction list not displaying when asset selected in wallet explorer
 
-Problem: User traced full thread amount (16,821.533 USDT) but system showed:
-- "Remaining: 16,821.533 USDT"
-- "⚠️ Threads need allocation"
-- Blocked finalization even though hop was complete
+Problem: After clicking on an asset card in wallet explorer, the individual transactions didn't appear. The split-screen layout showed but transaction table remained empty/hidden.
 
 Root Cause:
-1. Line 22287: Used getAvailableSourcesForHop(hop.hopNumber + 1) - got threads for NEXT hop
-2. Line 22333: Calculated "Remaining" from next hop's threads
-3. Line 22664: Required availableForNextHop.length === 0 for hop completion
-
-This logic was WRONG because:
-- When you trace funds to a destination, system correctly creates thread for next hop
-- Validation incorrectly interpreted this as "current hop incomplete"
-- "Remaining" showed next hop's available threads, not current hop's unallocated threads
+When displayAssetTransactions() was called:
+- Set walletExplorerTransactions to display: block ✓
+- But did NOT hide walletExplorerAssetSummary
+- Both divs are siblings in walletExplorerMainPanel
+- Asset summary remained visible and blocked/overlapped transaction list
 
 Solution:
-1. Changed getAvailableSourcesForHop(hop.hopNumber + 1) → hop.hopNumber (line 22287)
-   - Now "Remaining" shows unallocated threads in CURRENT hop, not next hop
-2. Removed availableForNextHop.length === 0 check from validation (line 22664)
-   - Hop complete when unallocatedInCurrentHop.length === 0
-   - Having threads for next hop is EXPECTED when tracing funds
+1. Hide asset summary when showing transactions (line 15554)
+   - Now transaction list has full space in main panel
+2. Show asset summary when no asset selected (line 15477)
+   - Allows user to return to asset list by selecting "Choose an asset..." from dropdown
 
-Now system correctly:
-- Shows "Remaining: 0 USDT" when all current hop threads traced
-- Displays "✅ All threads fully traced!"
-- Allows finalization when current hop complete
-- Threads created for next hop don't block current hop completion
+Now workflow is:
+1. Wallet loads → Asset summary shows with cards
+2. Click asset card → Asset summary hides, transaction list shows
+3. Select "Choose an asset..." → Transaction list hides, asset summary shows
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -43,23 +35,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 68 +++++++++++++++++++++++++++++---------------------------------
- index.html |  9 +++++----
- 2 files changed, 37 insertions(+), 40 deletions(-)
+ CLAUDE.md  | 68 +++++++++++++++++++++++++++++++++++---------------------------
+ index.html |  2 ++
+ 2 files changed, 41 insertions(+), 29 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (0 seconds ago)
-- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (4 minutes ago)
-- b2d980b Fix: Update migration/consolidation functions for flat structure (18 minutes ago)
-- 6188a2a Fix: Complete thread structure migration - all remaining functions (23 minutes ago)
-- 5402485 Fix: Update getThreadChainHistory for flat thread structure (35 minutes ago)
-- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (37 minutes ago)
-- 831eaf8 Fix: Update getMaxAssignableAmount for flat thread structure (49 minutes ago)
-- 4628023 Fix: Remove extra closing brace causing syntax error at line 10558 (55 minutes ago)
-- 6faf871 Fix: Remove duplicate display property in wallet explorer split container (59 minutes ago)
-- 21789b2 Sync CLAUDE.md (68 minutes ago)
+- a0e9406 Fix: Transaction list not displaying when asset selected in wallet explorer (0 seconds ago)
+- e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (8 minutes ago)
+- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (12 minutes ago)
+- b2d980b Fix: Update migration/consolidation functions for flat structure (27 minutes ago)
+- 6188a2a Fix: Complete thread structure migration - all remaining functions (32 minutes ago)
+- 5402485 Fix: Update getThreadChainHistory for flat thread structure (43 minutes ago)
+- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (45 minutes ago)
+- 831eaf8 Fix: Update getMaxAssignableAmount for flat thread structure (57 minutes ago)
+- 4628023 Fix: Remove extra closing brace causing syntax error at line 10558 (63 minutes ago)
+- 6faf871 Fix: Remove duplicate display property in wallet explorer split container (67 minutes ago)
 
 ## Key Features
 
