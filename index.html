@@ -2989,9 +2989,12 @@
                 <div style="font-size: 18px;">No transactions found</div>
             </div>
 
-            <!-- Close Button -->
-            <div style="text-align: center; margin-top: 30px;">
+            <!-- Action Buttons -->
+            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 30px;">
                 <button class="btn btn-secondary" onclick="closeWalletExplorer()">Close</button>
+                <button id="walletExplorerReturnButton" class="btn btn-primary" onclick="returnToHopBuilder()" style="display: none; background: #28a745; border-color: #28a745;">
+                    ✅ Return to Hop Builder (<span id="walletExplorerPendingCount">0</span> entries)
+                </button>
             </div>
         </div>
     </div>
@@ -3035,6 +3038,55 @@
                 </button>
                 <button class="btn btn-primary" onclick="confirmEntryAndReturn()" style="padding: 12px 30px;">
                     ✅ Create & Return to Hops
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Entry Confirmation Modal -->
+    <div id="batchEntryConfirmationModal" class="modal">
+        <div class="modal-content" style="max-width: 1000px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 25px; margin: -20px -20px 20px -20px; border-radius: 8px 8px 0 0;">
+                <h2 style="margin: 0; font-size: 26px;">✅ Log All Entries to Investigation</h2>
+                <p style="margin: 10px 0 0 0; opacity: 0.95; font-size: 15px;">Review and confirm all entries created in Wallet Explorer</p>
+            </div>
+
+            <!-- Summary -->
+            <div style="background: #e8f4f8; border: 2px solid #3498db; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 14px; color: #2c3e50; margin-bottom: 5px;">Total Entries Created:</div>
+                        <div style="font-size: 32px; font-weight: bold; color: #3498db;" id="batchEntryCount">0</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; color: #2c3e50; margin-bottom: 5px;">Destination Hop:</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #2c3e50;" id="batchEntryHop">Hop 1</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entry List -->
+            <div style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
+                <div id="batchEntryList">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Warning -->
+            <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <strong style="color: #856404;">⚠️ Important:</strong>
+                <p style="margin: 8px 0 0 0; color: #856404; font-size: 14px;">
+                    These entries will be permanently added to your investigation. Make sure you've reviewed each entry carefully before confirming.
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="closeBatchEntryConfirmation()" style="padding: 12px 30px; font-size: 16px;">
+                    ❌ Cancel
+                </button>
+                <button class="btn btn-primary" onclick="confirmBatchEntries()" style="padding: 12px 40px; font-size: 16px; background: #28a745; border-color: #28a745; font-weight: bold;">
+                    ✅ Log All <span id="batchEntryCountButton">0</span> Entries
                 </button>
             </div>
         </div>
@@ -14333,6 +14385,7 @@ function exportRedWalletIndexCSV() {
             assets: {},
             showScamTokens: false,  // Hide scam tokens by default
             hideZeroBalance: true,  // Hide zero-balance transfers by default
+            pendingEntries: [],  // Track entries created in wallet explorer session
             firstActivityDate: null,  // When wallet was first seen on chain
             oldestFetchedDate: null,  // Oldest transaction we actually fetched
             isCompleteHistory: false,  // Whether we have complete history
@@ -14656,6 +14709,7 @@ function exportRedWalletIndexCSV() {
                 assets: {},
                 showScamTokens: false,
                 hideZeroBalance: true,  // Hide zero-balance transfers by default
+                pendingEntries: [],  // Track entries created in wallet explorer session
                 firstActivityDate: null,
                 oldestFetchedDate: null,
                 isCompleteHistory: false,
@@ -17235,11 +17289,22 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             if (!pendingEntryData) return;
 
             try {
-                // Create the entry
-                await createEntryFromPendingData();
+                const { entryData, tx } = pendingEntryData;
+
+                // Add entry to pending entries array instead of creating immediately
+                walletExplorerState.pendingEntries.push({
+                    entryData: { ...entryData },
+                    tx: { ...tx },
+                    timestamp: new Date().toISOString()
+                });
+
+                console.log(`📝 Entry added to pending (${walletExplorerState.pendingEntries.length} total pending)`);
 
                 // Close confirmation modal
                 hideModal('entryConfirmationModal');
+
+                // Update the Return to Hop Builder button
+                updateReturnButton();
 
                 // Refresh wallet explorer transactions to show updated used/grayed out states
                 renderTransactionTable();
@@ -17250,14 +17315,14 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 }
 
                 // Show success notification
-                showNotification(`✅ Entry created successfully! You can continue adding more entries from this wallet.`, 'success');
+                showNotification(`✅ Entry queued! (${walletExplorerState.pendingEntries.length} total). Click "Return to Hop Builder" when done.`, 'success');
 
                 // Clear pending data
                 pendingEntryData = null;
 
             } catch (error) {
-                console.error('Error creating entry:', error);
-                alert('Error creating entry: ' + error.message);
+                console.error('Error queueing entry:', error);
+                alert('Error queueing entry: ' + error.message);
             }
         }
 
@@ -17293,6 +17358,147 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             } catch (error) {
                 console.error('Error creating entry:', error);
                 alert('Error creating entry: ' + error.message);
+            }
+        }
+
+        // Update the Return to Hop Builder button visibility and count
+        function updateReturnButton() {
+            const button = document.getElementById('walletExplorerReturnButton');
+            const countSpan = document.getElementById('walletExplorerPendingCount');
+
+            if (walletExplorerState.pendingEntries.length > 0) {
+                button.style.display = 'block';
+                countSpan.textContent = walletExplorerState.pendingEntries.length;
+            } else {
+                button.style.display = 'none';
+            }
+        }
+
+        // Return to hop builder - show batch confirmation modal
+        function returnToHopBuilder() {
+            if (walletExplorerState.pendingEntries.length === 0) {
+                alert('No pending entries to log');
+                return;
+            }
+
+            // Populate batch confirmation modal
+            const currentHop = getCurrentHop();
+            const entryCount = walletExplorerState.pendingEntries.length;
+
+            // Update counts
+            document.getElementById('batchEntryCount').textContent = entryCount;
+            document.getElementById('batchEntryHop').textContent = `Hop ${currentHop}`;
+            document.getElementById('batchEntryCountButton').textContent = entryCount;
+
+            // Build entry list
+            const listDiv = document.getElementById('batchEntryList');
+            listDiv.innerHTML = '';
+
+            walletExplorerState.pendingEntries.forEach((pending, index) => {
+                const { entryData, tx } = pending;
+
+                const entryCard = document.createElement('div');
+                entryCard.style.cssText = 'background: #f8f9fa; border: 2px solid #e1e8ed; border-radius: 8px; padding: 15px; margin-bottom: 15px;';
+
+                const entryTypeColor = entryData.entryType === 'trace' ? '#28a745' :
+                                        entryData.entryType === 'writeoff' ? '#ffc107' : '#007bff';
+
+                entryCard.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="background: ${entryTypeColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase;">
+                                ${entryData.entryType}
+                            </div>
+                            <div style="font-size: 18px; font-weight: bold; color: #2c3e50;">
+                                Entry #${index + 1}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 20px; font-weight: bold; color: ${entryTypeColor};">
+                                ${parseFloat(entryData.amount).toLocaleString()} ${entryData.currency}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; color: #666;">
+                        <div>
+                            <strong>From:</strong> ${entryData.fromWallet.slice(0, 20)}...
+                        </div>
+                        <div>
+                            <strong>To:</strong> ${entryData.toWallet.slice(0, 20)}...
+                        </div>
+                        ${entryData.sourceThreadId ? `
+                            <div style="grid-column: 1 / -1;">
+                                <strong>Thread:</strong> ${entryData.sourceThreadId}
+                            </div>
+                        ` : ''}
+                        <div style="grid-column: 1 / -1;">
+                            <strong>Hash:</strong> <code style="font-size: 11px;">${tx.hash.slice(0, 30)}...</code>
+                        </div>
+                    </div>
+                `;
+
+                listDiv.appendChild(entryCard);
+            });
+
+            // Show batch confirmation modal
+            showModal('batchEntryConfirmationModal');
+        }
+
+        // Close batch entry confirmation modal
+        function closeBatchEntryConfirmation() {
+            hideModal('batchEntryConfirmationModal');
+        }
+
+        // Confirm and log all batch entries
+        async function confirmBatchEntries() {
+            if (walletExplorerState.pendingEntries.length === 0) {
+                alert('No pending entries to log');
+                return;
+            }
+
+            try {
+                const currentHop = getCurrentHop();
+                const hop = investigation.hops.find(h => h.hopNumber === currentHop);
+
+                if (!hop) {
+                    throw new Error('Hop not found');
+                }
+
+                console.log(`📝 Batch logging ${walletExplorerState.pendingEntries.length} entries to Hop ${currentHop}...`);
+
+                // Add all pending entries to the hop
+                walletExplorerState.pendingEntries.forEach(pending => {
+                    hop.entries.push(pending.entryData);
+                });
+
+                // Sort entries chronologically
+                sortHopEntriesChronologically(hop);
+
+                // Save and render
+                saveToStorage();
+                renderHops();
+
+                // Close modals
+                hideModal('batchEntryConfirmationModal');
+                closeWalletExplorer();
+
+                // Show success notification
+                showNotification(`✅ Successfully logged ${walletExplorerState.pendingEntries.length} entries to Hop ${currentHop}!`, 'success');
+
+                // Scroll to the hop
+                setTimeout(() => {
+                    const hopElement = document.getElementById(`hop-${currentHop}`);
+                    if (hopElement) {
+                        hopElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+
+                // Clear pending entries
+                walletExplorerState.pendingEntries = [];
+
+            } catch (error) {
+                console.error('Error logging batch entries:', error);
+                alert('Error logging batch entries: ' + error.message);
             }
         }
 

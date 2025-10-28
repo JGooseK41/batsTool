@@ -3,30 +3,149 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 19:44)
+## Latest Commit (Auto-updated: 2025-10-27 19:56)
 
-**Commit:** 16dcb5a9425e4b26cfbecb84816ec774939b853f
+**Commit:** b02f45954dd277cbd438f9655aa765d628553196
 **Author:** Your Name
-**Message:** Auto-sync CLAUDE.md
+**Message:** Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer
+
+✨ UX ENHANCEMENT: Filter out spam and zero-value transactions
+
+USER REQUEST: "there were a number of 0 balance transfers in the wallet
+explorer, we should have the ability to toggle 0 balance transfers in
+the display and it should be set to not show 0 balance transfers by
+default"
+
+PROBLEM:
+
+Zero-balance transfers clutter the wallet explorer and make it harder to
+find meaningful transactions. These are often:
+- Contract interactions (approvals, calls)
+- Spam tokens sent to many addresses
+- Failed transactions
+- NFT mints/transfers (value in token, not ETH)
+
+SOLUTION:
+
+Added toggle checkbox to hide/show zero-balance transfers with sensible
+default to hide them.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPLEMENTATION:
+
+1. UI Component (lines 2797-2809):
+   - Added checkbox "Hide zero-balance transfers"
+   - Positioned in filter section next to "Clear All Filters" button
+   - Default state: checked (hide zero-balance)
+   - Calls toggleZeroBalanceFilter() on change
+
+2. State Management:
+   - Added hideZeroBalance flag to walletExplorerState (lines 14335, 14652)
+   - Default value: true (hide by default)
+   - Persists during wallet explorer session
+   - Resets to default when opening new wallet
+
+3. Toggle Function (lines 16257-16263):
+   - toggleZeroBalanceFilter()
+   - Updates walletExplorerState.hideZeroBalance from checkbox
+   - Logs filter state for debugging
+   - Re-renders table immediately
+
+4. Filter Logic (lines 15945-15949):
+   - Added to renderTransactionTable()
+   - Filters transactions where tx.amount > 0
+   - Only applies when hideZeroBalance is true
+   - Logs number of filtered transactions
+
+5. Integration:
+   - clearAllFilters() resets checkbox to default (hide)
+   - openWalletExplorer() syncs checkbox with state (lines 16628-16632)
+   - Works with all other filters (date, amount ranges)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEHAVIOR:
+
+Default State (Zero-Balance Hidden):
+- Checkbox: ✓ checked
+- Display: Only shows transactions with amount > 0
+- Clean, focused transaction list
+
+User Unchecks (Show Zero-Balance):
+- Checkbox: ☐ unchecked
+- Display: Shows ALL transactions including zero-balance
+- Useful for debugging or investigating contract interactions
+
+Clear All Filters:
+- Resets checkbox to ✓ checked (hide zero-balance)
+- Restores default clean view
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EXAMPLE:
+
+Wallet with 1000 transactions:
+- 800 normal transfers (with value)
+- 200 zero-balance transfers (spam/approvals)
+
+Before:
+- All 1000 transactions shown
+- Hard to find relevant transfers
+- Cluttered view
+
+After (Default):
+- Only 800 value transfers shown
+- Zero-balance filtered out
+- Clean, focused view
+
+After (Unchecked):
+- All 1000 transactions shown
+- User can inspect contract interactions if needed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BENEFITS:
+
+✅ Cleaner wallet explorer by default
+✅ Faster to find meaningful transactions
+✅ Reduces visual clutter from spam tokens
+✅ User can still view all transactions if needed
+✅ Improves performance (fewer rows to render)
+✅ Consistent with "hide scam tokens" pattern
+✅ Sensible default for 95% of use cases
+
+TESTING:
+- Open wallet with zero-balance transfers
+- Verify checkbox is checked by default
+- Verify zero-balance transfers are hidden
+- Uncheck box → zero-balance transfers appear
+- Check box → zero-balance transfers disappear
+- Click "Clear All Filters" → checkbox resets to checked
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 184 ++++++++++++++++++++++++++------------------------------------
- 1 file changed, 78 insertions(+), 106 deletions(-)
+ CLAUDE.md  | 118 +++++++------------------------------------------------------
+ index.html |  37 +++++++++++++++++--
+ 2 files changed, 48 insertions(+), 107 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 16dcb5a Auto-sync CLAUDE.md (0 seconds ago)
-- 2bd784f Fix: Include transaction hash in entry notes for audit trail (2 minutes ago)
-- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (11 minutes ago)
-- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (23 minutes ago)
-- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (31 minutes ago)
-- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (34 minutes ago)
-- a1e1795 Auto-sync CLAUDE.md (38 minutes ago)
-- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (39 minutes ago)
-- 0f487ff Fix: Wallet Explorer now works with finalized hop notation (2 hours ago)
-- 4b2fb46 Fix: Quick Trace button now works with new entry confirmation workflow (2 hours ago)
+- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (0 seconds ago)
+- 16dcb5a Auto-sync CLAUDE.md (13 minutes ago)
+- 2bd784f Fix: Include transaction hash in entry notes for audit trail (15 minutes ago)
+- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (23 minutes ago)
+- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (35 minutes ago)
+- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (44 minutes ago)
+- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (46 minutes ago)
+- a1e1795 Auto-sync CLAUDE.md (51 minutes ago)
+- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (52 minutes ago)
+- 0f487ff Fix: Wallet Explorer now works with finalized hop notation (3 hours ago)
 
 ## Key Features
 
