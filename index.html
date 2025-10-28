@@ -13188,13 +13188,34 @@ function updateFormFieldsFromInvestigation() {
     // Update Add New Victim button visibility
     const addVictimSection = document.getElementById('addVictimSection');
     if (addVictimSection) {
-        // Always show the Add New Victim button - no restrictions
-        addVictimSection.innerHTML = `
-            <button class="btn" onclick="addVictim()"
-                    style="font-size: 1rem; padding: 10px 25px; background: #3498db; color: white;">
-                + Add ${investigation.victims.length > 0 ? 'Another' : 'New'} Victim
-            </button>
-        `;
+        // WORKFLOW ENFORCEMENT: Check if there are incomplete victims
+        const hasIncompleteVictim = investigation.victims.some(v => !v.isCompleted);
+        const rootTotalConfirmed = investigation.rootTotalConfirmed || false;
+
+        if (hasIncompleteVictim && !rootTotalConfirmed) {
+            // Block adding new victim until previous is completed
+            addVictimSection.innerHTML = `
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; max-width: 600px; margin: 0 auto;">
+                    <h4 style="color: #856404; margin: 0 0 10px 0;">⚠️ Complete Current Victim First</h4>
+                    <p style="color: #856404; margin: 0 0 15px 0;">
+                        Please complete the current victim's data entry before adding another victim.
+                        Click "Complete Victim" on the victim above when all transactions are entered.
+                    </p>
+                    <button class="btn" disabled
+                            style="font-size: 1rem; padding: 10px 25px; background: #ccc; color: #666; cursor: not-allowed;">
+                        + Add Another Victim (Complete Current First)
+                    </button>
+                </div>
+            `;
+        } else {
+            // Allow adding new victim (all current victims completed OR root total confirmed)
+            addVictimSection.innerHTML = `
+                <button class="btn" onclick="addVictim()"
+                        style="font-size: 1rem; padding: 10px 25px; background: #3498db; color: white;">
+                    + Add ${investigation.victims.length > 0 ? 'Another' : 'New'} Victim
+                </button>
+            `;
+        }
     }
     
     updateGenerateRootSection();
