@@ -8700,20 +8700,27 @@
                 let bridgeData = null;
                 const provider = entry.bridgeProvider?.provider;
 
+                // Get transaction hash from entry (support both field names)
+                const txHash = entry.transactionHash || entry.txHash;
+
+                if (!txHash) {
+                    throw new Error('Transaction hash not found in entry');
+                }
+
                 if (provider === 'bridgers') {
-                    bridgeData = await queryBridgersAPI(entry.fromWallet, entry.txHash);
+                    bridgeData = await queryBridgersAPI(entry.fromWallet, txHash);
                 } else if (provider === 'layerzero') {
-                    bridgeData = await queryLayerZeroAPI(entry.txHash);
+                    bridgeData = await queryLayerZeroAPI(txHash);
                 } else if (provider === 'stargate') {
-                    bridgeData = await queryStargateAPI(entry.txHash);
+                    bridgeData = await queryStargateAPI(txHash);
                 } else if (provider === 'wormhole') {
-                    bridgeData = await queryWormholeAPI(entry.fromWallet, entry.txHash);
+                    bridgeData = await queryWormholeAPI(entry.fromWallet, txHash);
                 } else if (provider === 'synapse') {
-                    bridgeData = await querySynapseAPI(entry.txHash);
+                    bridgeData = await querySynapseAPI(txHash);
                 } else {
                     // Fallback: try to detect and query
                     console.warn('Unknown bridge provider, attempting Bridgers API');
-                    bridgeData = await queryBridgersAPI(entry.fromWallet, entry.txHash);
+                    bridgeData = await queryBridgersAPI(entry.fromWallet, txHash);
                 }
 
                 // Remove loading indicator

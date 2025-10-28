@@ -3,99 +3,95 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 12:55)
+## Latest Commit (Auto-updated: 2025-10-28 13:02)
 
-**Commit:** 9524daec192d70f6cff85f41d0a1e6a305452c34
+**Commit:** fd8d8fa56863b445d0920fd2b8bfe055bd9dca80
 **Author:** Your Name
-**Message:** Critical Fix: Write-off and cold storage thread allocation
+**Message:** UX: Remove redundant confirmation popups in setup and entry phases
 
-Fixes two critical bugs that broke hop finalization and thread tracking:
+Removes unnecessary alert() popups that appeared after modal actions,
+reducing click fatigue during investigation setup and wallet entry.
 
-## BUG #1: Missing writeOffAmount() Function
-**Problem**: Write-off button called undefined function writeOffAmount()
-**Impact**: Users could not write off leftover amounts to close hops
-**Error**: "Uncaught ReferenceError: writeOffAmount is not defined"
+## REMOVED ALERTS:
 
-**Fix**:
-- Created writeOffAmount() wrapper function (line 22758)
-- Enhanced createMaxWriteoff() to properly allocate from available threads
-- Added individualSourceAssignments tracking
-- Set writeoffApplied: false flag (applied when hop closes per spec)
+### Setup Phase:
+1. **Root Total Confirmation** (line 13315-13332)
+   - Before: Alert after confirming root total
+   - After: Modal closes, LIBR opens dashboard automatically
+   - Reason: Modal already confirms action, alert is redundant
 
-## BUG #2: Cold Storage Threads Not Consumed
-**Problem**: Marking thread as cold storage didn't consume it from available threads
-**Impact**: Cold storage threads incorrectly appeared as available in next hop
-**Root Cause**: Missing individualSourceAssignments field - system didn't know which threads to deduct
+2. **Transaction Added** (line 16585)
+   - Before: Alert "Transaction added to Victim X"
+   - After: Silent - transaction appears in victim list
+   - Reason: User can see it was added visually
 
-**Fix**:
-- Enhanced markAsColdStorage() to allocate from available threads (lines 29032-29146)
-- Enhanced markAsVASPArrival() with same fix (lines 29150-29217)
-- Both now:
-  * Call getAvailableSourcesForHop() to get available threads
-  * Allocate amount using PIFO order (first available used first)
-  * Set individualSourceAssignments with thread ID → amount mapping
-  * Mark as isTerminalWallet: true to prevent output thread creation
-  * Call buildAvailableThreadsIndex() to apply consumption
+3. **Bulk Transactions Added** (line 18068)
+   - Before: Alert "Added X transactions to Victim Y"
+   - After: Silent - transactions appear in list
+   - Reason: Visible feedback in UI
 
-## TECHNICAL DETAILS:
+### Wallet Entry Phase:
+4. **New Thread Mode Selected** (line 18858-18860)
+   - Before: Alert confirming user's choice
+   - After: Modal closes immediately
+   - Reason: User just chose it in modal, confirmation is redundant
 
-**Thread Allocation Logic** (Applied to all 3 functions):
-```javascript
-const availableThreads = getAvailableSourcesForHop(hopNumber, currency);
-const individualSourceAssignments = {};
-let remainingToAllocate = amount;
+5. **Addresses Clustered** (line 18945-18951)
+   - Before: Alert confirming cluster creation
+   - After: Modal closes, cluster visible in explorer
+   - Reason: User filled out justification form, already knows
 
-for (const thread of availableThreads) {
-    if (remainingToAllocate <= 0) break;
-    const amountFromThread = Math.min(thread.availableAmount, remainingToAllocate);
-    if (amountFromThread > 0) {
-        const threadKey = thread.internalId || thread.threadId;
-        individualSourceAssignments[threadKey] = amountFromThread;
-        remainingToAllocate -= amountFromThread;
-    }
-}
-```
+6. **LIBR Cluster Guidance** (line 19115-19125)
+   - Before: Alert with LIBR aggregate balance instructions
+   - After: Guidance shown in Wallet Explorer ART panel
+   - Reason: Already shown in UI where user needs it
 
-**Why individualSourceAssignments is Critical**:
-The buildAvailableThreadsIndex() function (lines 10218-10258) checks for this field:
-- If present: Deducts allocated amounts from source threads
-- If missing: Threads remain at full availability (BUG)
+### Hop Finalization:
+7. **Write-off Created** (line 22754)
+   - Before: Alert "Write-off created, hop balanced"
+   - After: Modal closes, hop updates visually
+   - Reason: User sees hop is now balanced in UI
 
-**Terminal Wallet Handling**:
-- Cold storage and VASP entries now set isTerminalWallet: true
-- buildAvailableThreadsIndex() respects this at line 10264-10341
-- Terminal entries consume source threads but don't create output threads
-- This prevents ghost threads from appearing in subsequent hops
+8. **Cold Storage Marked** (line 29091)
+   - Before: Alert about wallet reclassification
+   - After: Silent - visible in wallet index
+   - Reason: Wallet color change shows reclassification
+
+## KEPT ALERTS:
+
+**Validation Errors** (kept for critical feedback):
+- Missing wallet addresses
+- Heuristic/justification required
+- Thread selection errors
+- Over-allocation errors
+- Chronology errors
+
+**Error Conditions** (kept for problem notification):
+- API failures
+- File loading errors
+- Missing data warnings
+
+## IMPACT:
+
+**Before**: User clicks through 3-4 "OK" popups during setup
+**After**: Modals provide feedback, user continues smoothly
+
+**User Experience**:
+✅ Faster workflow - fewer clicks
+✅ Less interruption - actions flow naturally
+✅ Visual feedback still clear - UI updates show success
+✅ Errors still caught - validation alerts remain
 
 ## FILES MODIFIED:
 - index.html:
-  * Lines 22679-22760: createMaxWriteoff() enhanced + writeOffAmount() added
-  * Lines 29032-29146: markAsColdStorage() enhanced
-  * Lines 29150-29217: markAsVASPArrival() enhanced
-
-## TESTING SCENARIOS:
-
-**Write-off Test**:
-1. Create hop with leftover amount
-2. Click "Write Off" button → ✅ Works (previously crashed)
-3. Check available threads → ✅ Properly reduced
-4. Hop can now be closed
-
-**Cold Storage Test**:
-1. Mark thread as cold storage in Hop 1 → ✅ Entry created
-2. Check available threads in Hop 2 → ✅ Thread NOT available
-3. Previously: Thread incorrectly showed as available
-
-**VASP Arrival Test**:
-1. Mark funds as arriving at exchange → ✅ Allocates properly
-2. Threads consumed correctly → ✅ No ghost threads
-
-## IMPACT:
-- ✅ Write-off functionality restored
-- ✅ Cold storage workflow fixed
-- ✅ Thread accounting accurate
-- ✅ Hop finalization works correctly
-- ✅ No more ghost threads in available sources
+  * Line 13315: Root total confirmation simplified
+  * Line 16569: Transaction added alert removed
+  * Line 18052: Bulk add alert removed
+  * Line 18842: New thread choice alert removed
+  * Line 18927: Clustering confirmation removed
+  * Line 19087: LIBR cluster guidance removed
+  * Line 22716: Write-off confirmation removed
+  * Line 29089: Cold storage notification removed
 
 🤖 Generated with Claude Code
 
@@ -103,23 +99,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 292 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
- index.html | 126 +++++++++++++++++++++-----
- 2 files changed, 374 insertions(+), 44 deletions(-)
+ CLAUDE.md  | 351 ++++++++++++++++---------------------------------------------
+ index.html |  65 +++---------
+ 2 files changed, 105 insertions(+), 311 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 9524dae Critical Fix: Write-off and cold storage thread allocation (1 second ago)
+- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (1 second ago)
+- 9524dae Critical Fix: Write-off and cold storage thread allocation (7 minutes ago)
 - 0638d63 Feature: Court-ready clustering documentation with justification and source/destination tracking (7 hours ago)
 - 0d51afe Critical: Apply Ethereum-level data validity across ALL blockchains (7 hours ago)
 - a78a36e Feature: Comprehensive blockchain integration across all 35+ chains (7 hours ago)
 - 4cee3c6 Complete: Full XRP integration across all B.A.T.S. features (7 hours ago)
-- c36bcf7 Update XRPScan API origin parameter to Batstool.com (7 hours ago)
+- c36bcf7 Update XRPScan API origin parameter to Batstool.com (8 hours ago)
 - 3ec3b68 Feature: Complete XRPScan API integration with origin parameter (8 hours ago)
 - 7e89d3f Feature: Multi-thread allocation in Wallet Explorer entry confirmation (8 hours ago)
 - f219cd1 Fix: Commingling detection for victim transaction threads (16 hours ago)
-- e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (16 hours ago)
 
 ## Key Features
 
