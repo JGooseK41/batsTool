@@ -3,140 +3,40 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 05:24)
+## Latest Commit (Auto-updated: 2025-10-28 05:26)
 
-**Commit:** 3ec3b68c427d37aa1fc1bc2296599aa9edbec219
+**Commit:** c36bcf727ac0ce7e85bef7415ac2e355b4d65e1d
 **Author:** Your Name
-**Message:** Feature: Complete XRPScan API integration with origin parameter
+**Message:** Update XRPScan API origin parameter to Batstool.com
 
-🎯 XRPSCAN API INTEGRATION: Full support for XRP/Ripple blockchain lookups
+Changed origin parameter from theblockaudit.com to Batstool.com in:
+- XRP blockchain configuration (line 7443)
+- fetchTransactionData() function (line 44511)
+- lookupTransaction() function (line 41207)
 
-CONTEXT:
-Received API access from XRPScan with requirement to add ?origin= parameter
-to all API queries for CDN filtering (20,000 free requests/day).
+All XRPScan API requests now use ?origin=Batstool.com
 
-IMPLEMENTATION:
-
-1. **XRP Configuration Consolidation** (lines 7433-7498)
-   - Consolidated duplicate "xrp" and "ripple" entries
-   - Added `apiOrigin: 'theblockaudit.com'` for required origin parameter
-   - Added `explorerUrl: 'https://xrpscan.com/'` for linking functionality
-   - Maintained comprehensive XRP response parsing
-   - Supports XRP native payments and issued currency tokens
-   - Handles multi-destination payments (Payment splitter transactions)
-
-2. **Origin Parameter in API Calls** (lines 44480-44492, 41205-41213)
-   - Added XRP-specific branches in both `fetchTransactionData()` and `lookupTransaction()`
-   - Automatically appends `?origin=theblockaudit.com` to all XRPScan API requests
-   - Proper fallback handling for XRP lookups
-   - Console logging for debugging XRP transactions
-
-3. **XRPScan Linking Helper** (lines 40963-40979)
-   - New `getXRPScanLink(type, value)` function
-   - Generates proper links for:
-     - Transactions: `https://xrpscan.com/tx/{hash}`
-     - Accounts: `https://xrpscan.com/account/{address}`
-     - Ledgers: `https://xrpscan.com/ledger/{number}`
-   - Ready for integration throughout the UI
-
-XRPSCAN API FEATURES NOW SUPPORTED:
-
-✅ Transaction lookups with origin parameter
-✅ Account/address balance queries
-✅ XRP native currency transactions
-✅ Issued currency token transfers
-✅ Multi-destination payment support
-✅ Transaction metadata and status validation
-✅ Proper timestamp handling (Ripple epoch conversion)
-✅ Fee calculation (drops to XRP conversion)
-✅ Link generation for transactions, accounts, and ledgers
-
-API REQUIREMENTS MET:
-
-✅ Origin parameter added to ALL API queries
-✅ Domain: theblockaudit.com
-✅ Ready for xrpscan.com linking integration
-✅ 20,000 free daily requests supported
-✅ CDN-friendly query structure
-
-USAGE EXAMPLES:
-
-**Transaction Lookup:**
-```
-GET https://api.xrpscan.com/api/v1/tx/{hash}?origin=theblockaudit.com
-```
-
-**Account Lookup:**
-```
-GET https://api.xrpscan.com/api/v1/account/{address}?origin=theblockaudit.com
-```
-
-**Generate Link:**
-```javascript
-const txLink = getXRPScanLink('tx', transactionHash);
-const accountLink = getXRPScanLink('account', walletAddress);
-```
-
-XRP TRANSACTION PARSING:
-
-- **Native XRP:** Converts drops (1 XRP = 1,000,000 drops)
-- **Tokens:** Extracts issued currency value and code
-- **Multi-destination:** Handles Payment splitter transactions
-- **Validation:** Checks TransactionResult === 'tesSUCCESS'
-- **Timestamps:** Converts Ripple epoch to Unix timestamp
-- **Fees:** Automatically calculated from Fee field
-
-BLOCKCHAIN DETECTION:
-
-- Address pattern: `r[a-zA-Z0-9]{24,34}`
-- Transaction pattern: `[A-F0-9]{64}`
-- Proper auto-detection in transaction lookup modal
-
-NEXT STEPS FOR FULL INTEGRATION:
-
-1. Add XRPScan links to wallet display (use getXRPScanLink helper)
-2. Add XRPScan links to transaction entries (use getXRPScanLink helper)
-3. Add XRPScan links to hop documentation (use getXRPScanLink helper)
-4. Test with real XRP transactions from investigations
-
-FILES MODIFIED:
-- index.html:
-  * Lines 7433-7498: XRP blockchain configuration
-  * Lines 7942: Removed duplicate ripple entry
-  * Lines 40963-40979: getXRPScanLink() helper function
-  * Lines 41205-41213: lookupTransaction() XRP branch
-  * Lines 44480-44492: fetchTransactionData() XRP branch
-
-TESTING:
-
-Test with sample XRP transaction:
-- Hash format: [A-F0-9]{64}
-- Address format: r[a-zA-Z0-9]{24,34}
-- API: https://api.xrpscan.com/api/v1/tx/{hash}?origin=theblockaudit.com
-
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+User must reply to XRPScan email with domain: Batstool.com
 
 ### Changed Files:
 ```
- CLAUDE.md  | 204 +++++++++++++++++++++++++++++++++++++++----------------------
- index.html |  75 +++++++++++++++--------
- 2 files changed, 179 insertions(+), 100 deletions(-)
+ CLAUDE.md  | 235 +++++++++++++++++++++++++++----------------------------------
+ index.html |   6 +-
+ 2 files changed, 108 insertions(+), 133 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3ec3b68 Feature: Complete XRPScan API integration with origin parameter (0 seconds ago)
-- 7e89d3f Feature: Multi-thread allocation in Wallet Explorer entry confirmation (6 minutes ago)
+- c36bcf7 Update XRPScan API origin parameter to Batstool.com (1 second ago)
+- 3ec3b68 Feature: Complete XRPScan API integration with origin parameter (2 minutes ago)
+- 7e89d3f Feature: Multi-thread allocation in Wallet Explorer entry confirmation (8 minutes ago)
 - f219cd1 Fix: Commingling detection for victim transaction threads (8 hours ago)
 - e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (8 hours ago)
 - f48d691 Feature: Batch entry logging workflow in Wallet Explorer (9 hours ago)
-- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (9 hours ago)
+- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (10 hours ago)
 - 16dcb5a Auto-sync CLAUDE.md (10 hours ago)
 - 2bd784f Fix: Include transaction hash in entry notes for audit trail (10 hours ago)
 - 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (10 hours ago)
-- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (10 hours ago)
 
 ## Key Features
 

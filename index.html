@@ -2717,7 +2717,7 @@
                             <option value="bsc">BNB Chain</option>
                             <option value="avalanche">Avalanche</option>
                             <option value="sui">Sui</option>
-                            <option value="ripple">XRP</option>
+                            <option value="xrp">XRP (Ripple)</option>
                         </select>
                     </div>
                     <div>
@@ -18172,8 +18172,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 case 'sui':
                     return await getSuiWalletHistory(address);
 
-                case 'ripple':
-                    throw new Error('XRP wallet history not yet implemented');
+                case 'xrp':
+                    return await getXRPWalletHistory(address);
 
                 default:
                     throw new Error('Unsupported blockchain: ' + blockchain);
@@ -19763,6 +19763,106 @@ ${cluster.notes}
             }
 
             return null;
+        }
+
+        /**
+         * Get XRP/Ripple wallet history from XRPScan API
+         */
+        async function getXRPWalletHistory(address) {
+            console.log('Fetching XRP wallet history from XRPScan for:', address);
+
+            const config = blockchainAPIs['xrp'];
+            const origin = config.apiOrigin || 'Batstool.com';
+
+            // XRPScan API endpoint for account transactions
+            const apiUrl = `${config.addressApiUrl}${address}/transactions?origin=${origin}`;
+
+            try {
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`XRPScan API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('XRPScan response:', data);
+
+                if (!data || !data.transactions || !Array.isArray(data.transactions)) {
+                    console.warn('No transactions found in XRPScan response');
+                    return [];
+                }
+
+                const allTransactions = [];
+
+                // Process each transaction
+                data.transactions.forEach(txData => {
+                    const tx = txData.tx || txData.transaction || txData;
+
+                    // Only process successful Payment transactions
+                    if (tx.TransactionType !== 'Payment') return;
+                    if (tx.meta && tx.meta.TransactionResult !== 'tesSUCCESS') return;
+
+                    // Determine direction
+                    const isOutgoing = tx.Account === address;
+                    const counterparty = isOutgoing ? tx.Destination : tx.Account;
+
+                    // Parse amount
+                    let amount = 0;
+                    let asset = 'XRP';
+
+                    if (typeof tx.Amount === 'string') {
+                        // Native XRP (in drops: 1 XRP = 1,000,000 drops)
+                        amount = parseInt(tx.Amount) / 1000000;
+                        asset = 'XRP';
+                    } else if (typeof tx.Amount === 'object' && tx.Amount.value) {
+                        // Issued currency token
+                        amount = parseFloat(tx.Amount.value);
+                        asset = tx.Amount.currency || 'Unknown';
+                    }
+
+                    // Only include transactions with positive amounts
+                    if (amount <= 0) return;
+
+                    // Get timestamp (Ripple epoch: seconds since 2000-01-01)
+                    // Convert to Unix timestamp (milliseconds since 1970-01-01)
+                    const RIPPLE_EPOCH_OFFSET = 946684800; // Seconds between 1970-01-01 and 2000-01-01
+                    const timestamp = tx.date ? (tx.date + RIPPLE_EPOCH_OFFSET) * 1000 : Date.now();
+
+                    // Get transaction hash
+                    const hash = tx.hash || txData.hash || 'unknown';
+
+                    allTransactions.push({
+                        hash: hash,
+                        timestamp: timestamp,
+                        type: isOutgoing ? 'OUT' : 'IN',
+                        asset: asset,
+                        amount: amount,
+                        counterparty: counterparty,
+                        entityLabel: null,
+                        explorerUrl: `https://xrpscan.com/tx/${hash}`
+                    });
+                });
+
+                // Sort by timestamp (newest first)
+                allTransactions.sort((a, b) => b.timestamp - a.timestamp);
+
+                console.log(`Found ${allTransactions.length} XRP transactions`);
+
+                // Set wallet metadata
+                if (allTransactions.length > 0) {
+                    walletExplorerState.firstActivityDate = allTransactions[allTransactions.length - 1].timestamp;
+                    walletExplorerState.oldestFetchedDate = allTransactions[allTransactions.length - 1].timestamp;
+                    walletExplorerState.fetchedCount = allTransactions.length;
+                    // XRPScan provides reasonable history for most wallets
+                    walletExplorerState.isCompleteHistory = allTransactions.length < 100; // Assume complete if < 100 txs
+                }
+
+                return allTransactions;
+
+            } catch (error) {
+                console.error('Error fetching XRP wallet history:', error);
+                throw new Error(`Failed to fetch XRP transactions: ${error.message}`);
+            }
         }
 
         function calculateRootTotal() {
