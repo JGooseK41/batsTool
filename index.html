@@ -6792,20 +6792,32 @@
                     if (!blockTimestamp) {
                         console.warn('No block timestamp available for token transfers');
                     }
-                    
-                    // Only add the ETH transaction if it has value > 0
+
+                    // CORRECT ERC-20 HANDLING: Only add native currency if it's an actual transfer, not just gas
+                    // For ERC-20 transactions, tx.value is usually 0 (only gas is spent)
+                    // If tx.value > 0 WITH token transfers, it's a complex transaction - let user choose
                     const tx = data.result;
-                    if (tx && parseInt(tx.value, 16) > 0) {
+                    const nativeValue = parseInt(tx.value, 16);
+                    const nativeCurrency = chainConfig && chainConfig.nativeCurrency ? chainConfig.nativeCurrency : 'ETH';
+
+                    // Only include native currency transfer if value > 0
+                    // Gas fees are NOT included - they're paid separately and not tracked as outputs
+                    if (tx && nativeValue > 0) {
+                        const nativeAmount = nativeValue / 1e18;
+                        console.log(`Transaction includes ${nativeAmount} ${nativeCurrency} + ${transfers.length} token transfer(s)`);
+
                         transfers.unshift({
                             from: tx.from,
                             to: tx.to,
-                            amount: parseInt(tx.value, 16) / 1e18,
-                            currency: chainConfig && chainConfig.nativeCurrency ? chainConfig.nativeCurrency : 'ETH',
-                            contractAddress: `Native ${chainConfig && chainConfig.nativeCurrency ? chainConfig.nativeCurrency : 'ETH'} Transfer`,
+                            amount: nativeAmount,
+                            currency: nativeCurrency,
+                            contractAddress: `Native ${nativeCurrency} Transfer`,
                             rawData: tx
                         });
+                    } else {
+                        console.log(`Token-only transaction: ${transfers.length} token transfer(s), no ${nativeCurrency} value (gas only)`);
                     }
-                    
+
                     // Always return multiple transfers to show selection modal
                     return {
                         multipleTransfers: true,
