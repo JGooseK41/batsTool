@@ -13308,29 +13308,13 @@ function updateFormFieldsFromInvestigation() {
                 // Force re-render hops to show ready state
                 renderHops();
 
-                // Show success message with clear next steps based on methodology
+                // Show success - navigate based on methodology
                 setTimeout(() => {
                     if (investigation.tracingMethod === 'LIBR') {
                         // LIBR workflow: Show Red Wallets Dashboard
-                        alert('✅ Root Total Confirmed!\n\n' +
-                              'Your investigation baseline has been established.\n\n' +
-                              '🔶 LIBR METHODOLOGY:\n' +
-                              'The Red Wallets Dashboard will now open.\n\n' +
-                              'Click "Analyze Wallet Balance" for each red wallet to determine if tracing is required.');
-
-                        // Small delay to let alert close
-                        setTimeout(() => {
-                            showRedWalletsDashboard();
-                        }, 500);
-                    } else {
-                        // PIFO workflow: Standard message
-                        alert('✅ Root Total Confirmed!\n\n' +
-                              'Your investigation baseline has been established.\n\n' +
-                              '🎯 NEXT STEP:\n' +
-                              'Scroll down to the "Trace Documentation" section below.\n' +
-                              'Click "Create Hop 1" to start tracking where the funds went from the RED wallets.\n\n' +
-                              'Hop 1 = First movement of funds AFTER leaving the RED wallets');
+                        showRedWalletsDashboard();
                     }
+                    // For PIFO: user can scroll down to start tracing (no alert needed)
                 }, 300);
             } catch (error) {
                 console.error('Error switching to victims tab:', error);
@@ -16582,7 +16566,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         }
                     }, 100);
 
-                    alert(`✅ Transaction added to ${victim.name || 'Victim ' + victim.id}!\n\nAmount: ${transaction.amount} ${transaction.currency}\nWallet: ${transaction.receivingWallet.slice(0, 20)}...\n\nPlease review and adjust if needed.`);
+                    // Transaction added - user can see it in the victim list (no alert needed)
 
                 } else {
                     // HOP BUILDING MODE: Check for commingling scenario
@@ -18065,7 +18049,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     }
                 }, 100);
 
-                alert(`✅ Added ${selectedTxs.length} transactions to ${victim.name || 'Victim ' + victim.id}!\n\nTransactions have been sorted chronologically.\n\nPlease review and adjust if needed.`);
+                // Transactions added - user can see them in the victim list (no alert needed)
+                // Transactions are automatically sorted chronologically
 
             } else {
                 // HOP BUILDING MODE: Create multiple hop entries with validation
@@ -18855,9 +18840,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             if (decision === 'newThread') {
                 // User chose to treat as new thread - no special action needed
                 console.log('User chose to create new thread for address:', newAddress);
-                alert('✅ New Thread Mode\n\n' +
-                      'This address will be treated as a separate payment.\n\n' +
-                      'When you trace this transaction, it will create a normal new thread.');
+                // Close modal - user already made the choice (no confirmation alert needed)
                 closeChangeAddressDecisionModal();
             } else if (decision === 'cluster') {
                 // User chose to cluster addresses - show justification modal
@@ -18942,14 +18925,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             );
 
             if (clusterId) {
-                alert('✅ Addresses Clustered with Documentation\n\n' +
-                      'Both addresses are now linked for dual monitoring.\n\n' +
-                      'Heuristic: ' + heuristicName + '\n\n' +
-                      (investigation.tracingMethod === 'PIFO' ?
-                       'PIFO: Both addresses will be monitored to see which moves first.' :
-                       'LIBR: Balance analysis will consider both addresses together.') +
-                      '\n\nView cluster status in Wallet Explorer.');
-
+                // Cluster created - user provided justification in modal (no confirmation alert needed)
                 // Close modal and refresh
                 closeClusteringJustificationModal();
                 if (typeof renderTransactionTable === 'function') {
@@ -19109,22 +19085,8 @@ METHODOLOGY IMPLICATIONS:
                 // LOW FIX #1: Clear cache for all cluster addresses
                 clearClusterCache(investigation.addressClusters[clusterId]);
 
-                // CRITICAL: Show LIBR-specific guidance when cluster is created
-                if (investigation.tracingMethod === 'LIBR') {
-                    setTimeout(() => {
-                        alert('🔗 LIBR Cluster Created\n\n' +
-                              'Cluster ID: ' + clusterId + '\n' +
-                              'Wallet ID: ' + walletId + '\n' +
-                              'Addresses: 2 (original + change)\n\n' +
-                              '⚠️ IMPORTANT - LIBR Methodology:\n\n' +
-                              'Under LIBR, you MUST calculate the AGGREGATE balance across ALL addresses in this cluster.\n\n' +
-                              'The cluster acts as a single wallet entity:\n' +
-                              '• Combined balance determines traceability\n' +
-                              '• Funds are only traced when aggregate balance drops below traced amount\n' +
-                              '• Use LIBR Balance Analyzer to calculate cluster balance\n\n' +
-                              'Do NOT analyze addresses individually - this would violate LIBR methodology.');
-                    }, 100);
-                }
+                // Cluster created - guidance already shown in clustering justification modal
+                // LIBR-specific requirements are explained in the Wallet Explorer ART panel
 
                 saveState();
                 return clusterId;
@@ -22751,7 +22713,7 @@ function createMaxWriteoff(hopNumber, currency, amount) {
     renderHops();
     saveToStorage();
 
-    alert(`✅ Write-off created for ${amount.toLocaleString()} ${currency}.\n\nAllocated from ${Object.keys(individualSourceAssignments).length} thread(s).\n\nHop ${hop.hopNumber} is now balanced.`);
+    // Write-off created - modal closes and hop updates (no alert needed)
 }
 
 // Wrapper function for write-off button compatibility
@@ -29124,10 +29086,7 @@ function markAsColdStorage(hopNumber, currency, amount) {
             walletEntry.statusHistory.push(`Cold Storage (Hop ${hop.hopNumber})`);
             walletReclassified = true;
 
-            // Show notification about wallet reclassification
-            setTimeout(() => {
-                alert(`✅ Cold Storage Marked\n\nWallet ${lastWallet.substring(0, 20)}... has been reclassified from ${previousType.toUpperCase()} to BLUE (Cold Storage).\n\nAmount: ${amount.toLocaleString()} ${currency}\nAllocated from ${Object.keys(individualSourceAssignments).length} thread(s)`);
-            }, 100);
+            // Wallet reclassified - visible in wallet index (no alert needed)
         }
     }
 

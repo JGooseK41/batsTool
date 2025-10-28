@@ -3,265 +3,99 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 06:22)
+## Latest Commit (Auto-updated: 2025-10-28 12:55)
 
-**Commit:** 0638d637e36e25f57627dceeb3a218b902fccb6a
+**Commit:** 9524daec192d70f6cff85f41d0a1e6a305452c34
 **Author:** Your Name
-**Message:** Feature: Court-ready clustering documentation with justification and source/destination tracking
+**Message:** Critical Fix: Write-off and cold storage thread allocation
 
-Implements comprehensive documentation requirements for Bitcoin address clustering with user-provided justification and detailed transaction flow tracking.
+Fixes two critical bugs that broke hop finalization and thread tracking:
 
-## PROBLEM IDENTIFIED:
+## BUG #1: Missing writeOffAmount() Function
+**Problem**: Write-off button called undefined function writeOffAmount()
+**Impact**: Users could not write off leftover amounts to close hops
+**Error**: "Uncaught ReferenceError: writeOffAmount is not defined"
 
-Clustering lacked proper documentation for court admissibility:
-❌ No documented reason WHY addresses were clustered
-❌ No recorded heuristic or behavioral evidence
-❌ No investigator justification for clustering decision
-❌ Hop entry notes didn't specify which cluster addresses were involved in traced transaction
-❌ Missing audit trail for input/output addresses within cluster
+**Fix**:
+- Created writeOffAmount() wrapper function (line 22758)
+- Enhanced createMaxWriteoff() to properly allocate from available threads
+- Added individualSourceAssignments tracking
+- Set writeoffApplied: false flag (applied when hop closes per spec)
 
-## IMPLEMENTATION:
+## BUG #2: Cold Storage Threads Not Consumed
+**Problem**: Marking thread as cold storage didn't consume it from available threads
+**Impact**: Cold storage threads incorrectly appeared as available in next hop
+**Root Cause**: Missing individualSourceAssignments field - system didn't know which threads to deduct
 
-### 1. CLUSTERING JUSTIFICATION MODAL (lines 50602-50678)
-✅ **Modal UI with Court-Ready Fields:**
-- Shows addresses being clustered (original + new)
-- **Heuristic Dropdown** with standard clustering methods:
-  - UTXO-Based: Change outputs, common input ownership, peeling chains, round numbers
-  - Behavioral: Temporal correlation, address reuse, dust consolidation, multi-hop patterns
-  - External Evidence: Blockchain analysis services, entity attribution, wallet fingerprinting
-  - Custom option for investigator-defined heuristics
-- **Detailed Justification Text Area** (required, min 20 characters)
-  - Placeholder with example documentation
-  - Best practices guidance
-  - Validation before submission
+**Fix**:
+- Enhanced markAsColdStorage() to allocate from available threads (lines 29032-29146)
+- Enhanced markAsVASPArrival() with same fix (lines 29150-29217)
+- Both now:
+  * Call getAvailableSourcesForHop() to get available threads
+  * Allocate amount using PIFO order (first available used first)
+  * Set individualSourceAssignments with thread ID → amount mapping
+  * Mark as isTerminalWallet: true to prevent output thread creation
+  * Call buildAvailableThreadsIndex() to apply consumption
 
-### 2. CLUSTERING WORKFLOW ENHANCEMENT (lines 18851-18959)
-✅ **Updated handleClusterDecision():**
-- Shows justification modal instead of immediately clustering
-- Closes change address decision modal
-- Passes context to justification modal
+## TECHNICAL DETAILS:
 
-✅ **NEW: showClusteringJustificationModal():**
-- Stores clustering context (txHash, addresses, threadId, amount)
-- Populates modal with address information
-- Clears previous inputs
-
-✅ **NEW: submitClusteringJustification():**
-- Validates heuristic selection (required)
-- Validates justification text (min 20 chars)
-- Gets heuristic display name for documentation
-- Calls createAddressCluster with justification parameters
-- Shows confirmation with heuristic name
-
-✅ **NEW: closeClusteringJustificationModal():**
-- Cleans up modal and context
-
-### 3. ENHANCED createAddressCluster() (line 18965)
-✅ **New Function Signature:**
+**Thread Allocation Logic** (Applied to all 3 functions):
 ```javascript
-function createAddressCluster(
-    originalAddress,
-    newAddress,
-    threadId,
-    amount,
-    txHash,              // NEW: Transaction hash
-    heuristic,           // NEW: Heuristic code
-    heuristicName,       // NEW: Heuristic display name
-    justification        // NEW: Investigator's detailed explanation
-)
+const availableThreads = getAvailableSourcesForHop(hopNumber, currency);
+const individualSourceAssignments = {};
+let remainingToAllocate = amount;
+
+for (const thread of availableThreads) {
+    if (remainingToAllocate <= 0) break;
+    const amountFromThread = Math.min(thread.availableAmount, remainingToAllocate);
+    if (amountFromThread > 0) {
+        const threadKey = thread.internalId || thread.threadId;
+        individualSourceAssignments[threadKey] = amountFromThread;
+        remainingToAllocate -= amountFromThread;
+    }
+}
 ```
 
-✅ **Enhanced Cluster Documentation (Existing Cluster - lines 18995-19020):**
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 CLUSTER UPDATE: [timestamp]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ACTION: Address added to existing cluster
-WALLET ID: [id]
-THREAD: [thread]
-NEW ADDRESS: [address]
-AMOUNT: [amount]
-TRANSACTION: [hash]           ← NEW
-METHODOLOGY: PIFO/LIBR
-TOTAL ADDRESSES IN CLUSTER: [count]
+**Why individualSourceAssignments is Critical**:
+The buildAvailableThreadsIndex() function (lines 10218-10258) checks for this field:
+- If present: Deducts allocated amounts from source threads
+- If missing: Threads remain at full availability (BUG)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CLUSTERING JUSTIFICATION:      ← NEW SECTION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 HEURISTIC: [heuristic name]
-
-📝 INVESTIGATOR NOTES:
-[detailed justification from investigator]
-```
-
-✅ **Enhanced Cluster Documentation (New Cluster - lines 19058-19074):**
-```
-NEW ADDRESS (UTXO Change):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[address]
-Monitored Amount: [amount]
-Transaction: [hash]            ← NEW
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CLUSTERING JUSTIFICATION:      ← ENHANCED
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 HEURISTIC: [heuristic name]
-
-📝 INVESTIGATOR NOTES:
-[detailed justification from investigator]
-```
-
-### 4. HOP ENTRY CLUSTER DOCUMENTATION (lines 35937-35991)
-✅ **MASSIVELY Enhanced Cluster-Sourced Transaction Notes:**
-
-**Before:**
-```
-🔗 CLUSTER SOURCE NOTATION:
-Thread V1-T1 sources from Cluster cluster-123 (Wallet: Red-1)
-  - Cluster contains 3 addresses
-  - Methodology: PIFO (cluster acts as single entity)
-```
-
-**After:**
-```
-🔗 CLUSTER-SOURCED TRANSACTION DOCUMENTATION:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-This entry traces funds from a clustered wallet containing multiple addresses.
-
-📊 THREAD: V1-T1
-🔗 CLUSTER: cluster-123 (Wallet: Red-1)
-   Cluster contains 3 addresses:
-   🏠 bc1qxy2kgdygjrsqtz...abc123def
-   🔄 bc1qz34p5ab7cdefg...ghi456jkl
-   🔄 bc1qa78mnb9opqrst...mno789pqr
-
-📍 SPECIFIC TRANSACTION FLOW:        ← NEW SECTION
-   INPUT: Funds received by cluster address:
-   → bc1qz34p5ab7cdefg...ghi456jkl  ← Shows WHICH address got the UTXO
-
-   OUTPUT: Funds sent from cluster address:
-   → bc1qa78mnb9opqrst...mno789pqr  ← Shows WHICH address sent the UTXO
-
-   Transaction Hash: abc123...def456
-
-📋 METHODOLOGY: PIFO
-   The cluster acts as a single entity - whichever address
-   moved funds first was traced (PIFO compliance).
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-✅ **Source/Destination Detection Logic:**
-- Checks `txData.sourceAddress` and `txData.fromAddress` for input address
-- Checks `txData.counterparty` for output address
-- Matches against all cluster addresses
-- Only documents if address is actually in the cluster
-- Includes transaction hash for verification
-
-## BENEFITS:
-
-### Court Admissibility:
-✅ **Documented Heuristic**: Every cluster has recorded reasoning method
-✅ **Investigator Justification**: Detailed explanation of behavioral evidence
-✅ **Transaction Hash**: Verifiable blockchain evidence
-✅ **Specific Addresses**: Clear audit trail showing WHICH addresses were involved
-✅ **Input/Output Tracking**: Documents money flow within cluster
-✅ **Methodology Compliance**: Explains PIFO/LIBR implications
-
-### Investigator Workflow:
-✅ **Standard Heuristics**: Dropdown with 13 common clustering methods
-✅ **Custom Option**: Allows investigator-defined heuristics
-✅ **Validation**: Prevents clustering without justification
-✅ **Audit Trail**: Every clustering decision is documented
-✅ **Report Integration**: Justifications appear in final B.A.T.S. reports
-
-### Transaction Tracing:
-✅ **Clear Source**: Shows which cluster address received the UTXO
-✅ **Clear Destination**: Shows which cluster address sent the traced UTXO
-✅ **Complete Context**: Lists all cluster addresses for reference
-✅ **Verification**: Transaction hash allows blockchain verification
-✅ **Methodology Notes**: Explains how cluster was treated (PIFO vs LIBR)
-
-## WORKFLOW:
-
-**Clustering an Address:**
-1. User clicks "Cluster" on change address decision
-2. Justification modal appears
-3. User selects heuristic from dropdown (required)
-4. User provides detailed explanation (min 20 chars, required)
-5. Addresses and reasoning are stored in cluster notes
-6. Cluster appears in final reports with full documentation
-
-**Tracing from Cluster:**
-1. User opens Wallet Explorer for clustered address
-2. Views unified transaction history from all cluster addresses
-3. Selects outgoing transaction to trace
-4. Creates hop entry
-5. Entry notes automatically include:
-   - All cluster addresses
-   - Which address received the UTXO (input)
-   - Which address sent the UTXO (output)
-   - Transaction hash
-   - Methodology implications
-
-## EXAMPLE DOCUMENTATION:
-
-**Cluster Creation:**
-```
-CLUSTERING JUSTIFICATION:
-📊 HEURISTIC: UTXO Change to New Address
-
-📝 INVESTIGATOR NOTES:
-Address bc1q...xyz received change output in transaction
-abc123...def456. The transaction spent 2 UTXOs from the original
-address, sent 0.5 BTC to a third party, and sent 1.3 BTC to this
-new address. The new address had no prior transaction history and
-received funds in the same transaction as the identified payment.
-Based on UTXO analysis and timing, this appears to be change
-controlled by the same entity.
-```
-
-**Hop Entry from Cluster:**
-```
-🔗 CLUSTER-SOURCED TRANSACTION DOCUMENTATION:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 THREAD: V1-T1
-🔗 CLUSTER: cluster-1234567890 (Wallet: Red-1)
-   Cluster contains 2 addresses:
-   🏠 bc1qxy2kgdygjrsqtz...
-   🔄 bc1qz34p5ab7cdefg...
-
-📍 SPECIFIC TRANSACTION FLOW:
-   INPUT: Funds received by cluster address:
-   → bc1qxy2kgdygjrsqtz... (original address)
-
-   OUTPUT: Funds sent from cluster address:
-   → bc1qz34p5ab7cdefg... (change address)
-
-   Transaction Hash: abc123...def456
-
-📋 METHODOLOGY: PIFO
-   The cluster acts as a single entity - whichever address
-   moved funds first was traced (PIFO compliance).
-```
+**Terminal Wallet Handling**:
+- Cold storage and VASP entries now set isTerminalWallet: true
+- buildAvailableThreadsIndex() respects this at line 10264-10341
+- Terminal entries consume source threads but don't create output threads
+- This prevents ghost threads from appearing in subsequent hops
 
 ## FILES MODIFIED:
-
 - index.html:
-  * Lines 50602-50678: NEW clustering justification modal
-  * Lines 18851-18959: Enhanced clustering workflow functions
-  * Line 18965: Updated createAddressCluster signature
-  * Lines 18995-19020: Enhanced existing cluster update notes
-  * Lines 19058-19074: Enhanced new cluster creation notes
-  * Lines 35937-35991: Massively enhanced hop entry cluster documentation
+  * Lines 22679-22760: createMaxWriteoff() enhanced + writeOffAmount() added
+  * Lines 29032-29146: markAsColdStorage() enhanced
+  * Lines 29150-29217: markAsVASPArrival() enhanced
+
+## TESTING SCENARIOS:
+
+**Write-off Test**:
+1. Create hop with leftover amount
+2. Click "Write Off" button → ✅ Works (previously crashed)
+3. Check available threads → ✅ Properly reduced
+4. Hop can now be closed
+
+**Cold Storage Test**:
+1. Mark thread as cold storage in Hop 1 → ✅ Entry created
+2. Check available threads in Hop 2 → ✅ Thread NOT available
+3. Previously: Thread incorrectly showed as available
+
+**VASP Arrival Test**:
+1. Mark funds as arriving at exchange → ✅ Allocates properly
+2. Threads consumed correctly → ✅ No ghost threads
 
 ## IMPACT:
-
-🎯 **Court-Ready**: Complete audit trail for every clustering decision
-🎯 **Defensible**: Documented heuristics and investigator reasoning
-🎯 **Traceable**: Clear source/destination addresses in hop entries
-🎯 **Verifiable**: Transaction hashes for blockchain verification
-🎯 **Professional**: Standard heuristic terminology
-🎯 **Comprehensive**: Complete documentation from clustering to final report
+- ✅ Write-off functionality restored
+- ✅ Cold storage workflow fixed
+- ✅ Thread accounting accurate
+- ✅ Hop finalization works correctly
+- ✅ No more ghost threads in available sources
 
 🤖 Generated with Claude Code
 
@@ -269,22 +103,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 270 +++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 1 file changed, 244 insertions(+), 26 deletions(-)
+ CLAUDE.md  | 292 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ index.html | 126 +++++++++++++++++++++-----
+ 2 files changed, 374 insertions(+), 44 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0638d63 Feature: Court-ready clustering documentation with justification and source/destination tracking (0 seconds ago)
-- 0d51afe Critical: Apply Ethereum-level data validity across ALL blockchains (24 minutes ago)
-- a78a36e Feature: Comprehensive blockchain integration across all 35+ chains (35 minutes ago)
-- 4cee3c6 Complete: Full XRP integration across all B.A.T.S. features (44 minutes ago)
-- c36bcf7 Update XRPScan API origin parameter to Batstool.com (56 minutes ago)
-- 3ec3b68 Feature: Complete XRPScan API integration with origin parameter (58 minutes ago)
-- 7e89d3f Feature: Multi-thread allocation in Wallet Explorer entry confirmation (64 minutes ago)
-- f219cd1 Fix: Commingling detection for victim transaction threads (9 hours ago)
-- e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (9 hours ago)
-- f48d691 Feature: Batch entry logging workflow in Wallet Explorer (10 hours ago)
+- 9524dae Critical Fix: Write-off and cold storage thread allocation (1 second ago)
+- 0638d63 Feature: Court-ready clustering documentation with justification and source/destination tracking (7 hours ago)
+- 0d51afe Critical: Apply Ethereum-level data validity across ALL blockchains (7 hours ago)
+- a78a36e Feature: Comprehensive blockchain integration across all 35+ chains (7 hours ago)
+- 4cee3c6 Complete: Full XRP integration across all B.A.T.S. features (7 hours ago)
+- c36bcf7 Update XRPScan API origin parameter to Batstool.com (7 hours ago)
+- 3ec3b68 Feature: Complete XRPScan API integration with origin parameter (8 hours ago)
+- 7e89d3f Feature: Multi-thread allocation in Wallet Explorer entry confirmation (8 hours ago)
+- f219cd1 Fix: Commingling detection for victim transaction threads (16 hours ago)
+- e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (16 hours ago)
 
 ## Key Features
 
