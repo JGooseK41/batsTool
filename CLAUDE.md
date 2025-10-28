@@ -3,112 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 13:17)
+## Latest Commit (Auto-updated: 2025-10-28 13:18)
 
-**Commit:** 5b66f89ef46f21e8d065318c44d230b84f8693f5
+**Commit:** 4127c396cc45fc64855eba41512b64f75cb3eb95
 **Author:** Your Name
-**Message:** Fix: Bridge tracing with undefined transaction hash
-
-Fixes critical bug preventing bridge transaction tracing through Bridgers and other bridge providers.
-
-## BUG: Transaction Hash Undefined in Bridge Query
-
-**Problem**: When tracing through bridges, getting error:
-```
-Error querying Bridgers API: TypeError: Cannot read properties of undefined (reading 'toLowerCase')
-    at queryBridgersAPI (?app=true:8284:44)
-```
-
-**Root Cause**: Field name mismatch between entry creation and bridge query
-- Entries created with: `transactionHash` (line 16651)
-- Bridge function looking for: `txHash` (line 8704)
-- Result: `entry.txHash` was undefined → API query failed
-
-## FIX IMPLEMENTED:
-
-**Enhanced autoTraceBridge() function** (lines 8703-8724):
-- Added transaction hash extraction with fallback:
-  ```javascript
-  const txHash = entry.transactionHash || entry.txHash;
-  ```
-- Added validation to catch missing hash early:
-  ```javascript
-  if (!txHash) {
-      throw new Error('Transaction hash not found in entry');
-  }
-  ```
-- Now works with both field names for compatibility
-
-**Affected Bridge Providers**:
-- ✅ Bridgers (primary use case)
-- ✅ LayerZero
-- ✅ Stargate
-- ✅ Wormhole
-- ✅ Synapse
-
-## WHY THE INCONSISTENCY:
-
-**Entry Creation** (line 16651):
-```javascript
-const traceEntry = {
-    // ... other fields
-    transactionHash: tx.hash,  // ← Uses transactionHash
-    // ...
-};
-```
-
-**Bridge Query** (before fix):
-```javascript
-bridgeData = await queryBridgersAPI(entry.fromWallet, entry.txHash);  // ← Was looking for txHash
-```
-
-## IMPACT:
-
-**Before**:
-- ❌ Bridge tracing completely broken
-- ❌ "Trace Bridge" button causes JavaScript error
-- ❌ Cannot query Bridgers/LayerZero/etc APIs
-- ❌ Investigation blocked at bridge transactions
-
-**After**:
-- ✅ Bridge tracing works for all providers
-- ✅ Transaction hash properly passed to API
-- ✅ Supports both field names for robustness
-- ✅ Clear error if hash truly missing
-
-## FILES MODIFIED:
-- index.html:
-  * Lines 8703-8724: Enhanced bridge transaction hash extraction
-
-## TESTING:
-1. Create hop entry from Wallet Explorer
-2. Detect Bridgers bridge transaction
-3. Click "Trace Bridge" → ✅ Now queries API with correct hash
-4. Bridge data retrieved and displayed
-
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md  | 180 ++++++++++++++++++++++++++++++-------------------------------
- index.html |  19 ++++---
- 2 files changed, 101 insertions(+), 98 deletions(-)
+ CLAUDE.md | 169 ++++++++++++++++++++++++++++++--------------------------------
+ 1 file changed, 81 insertions(+), 88 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5b66f89 Fix: Bridge tracing with undefined transaction hash (0 seconds ago)
-- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (15 minutes ago)
-- 9524dae Critical Fix: Write-off and cold storage thread allocation (22 minutes ago)
+- 4127c39 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 5b66f89 Fix: Bridge tracing with undefined transaction hash (65 seconds ago)
+- fd8d8fa UX: Remove redundant confirmation popups in setup and entry phases (16 minutes ago)
+- 9524dae Critical Fix: Write-off and cold storage thread allocation (23 minutes ago)
 - 0638d63 Feature: Court-ready clustering documentation with justification and source/destination tracking (7 hours ago)
 - 0d51afe Critical: Apply Ethereum-level data validity across ALL blockchains (7 hours ago)
 - a78a36e Feature: Comprehensive blockchain integration across all 35+ chains (8 hours ago)
 - 4cee3c6 Complete: Full XRP integration across all B.A.T.S. features (8 hours ago)
 - c36bcf7 Update XRPScan API origin parameter to Batstool.com (8 hours ago)
 - 3ec3b68 Feature: Complete XRPScan API integration with origin parameter (8 hours ago)
-- 7e89d3f Feature: Multi-thread allocation in Wallet Explorer entry confirmation (8 hours ago)
 
 ## Key Features
 

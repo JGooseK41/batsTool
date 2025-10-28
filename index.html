@@ -8651,7 +8651,9 @@
             if (provider) {
                 // Store on entry
                 entry.bridgeProvider = provider;
-                console.log(`🌉 Detected ${provider.name} bridge on entry ${entry.id}`);
+                // CRITICAL: Mark wallet as conversion wallet (brown) so bridge output can be logged
+                entry.toWalletType = 'brown';
+                console.log(`🌉 Detected ${provider.name} bridge on entry ${entry.id} - marked as conversion wallet`);
                 return provider;
             }
 
