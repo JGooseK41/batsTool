@@ -22283,8 +22283,8 @@ function addNewHop() {
                 hopDiv.setAttribute('data-hop-id', hop.hopNumber);
                 
                 // Calculate what's been accounted for in this hop
-                // Use the thread database as the source of truth for amounts
-                const availableThreads = getAvailableSourcesForHop(hop.hopNumber + 1, null);
+                // Get threads available for the CURRENT hop (not next hop)
+                const availableThreads = getAvailableSourcesForHop(hop.hopNumber, null);
 
                 // Group available threads by currency for display
                 const availableByCurrency = {};
@@ -22659,9 +22659,10 @@ function addNewHop() {
                                         // All threads fully traced - ready to finalize
                                         else {
                                             // Check if we actually have entries and they're all accounted for
+                                            // NOTE: We DON'T check availableForNextHop.length because having threads
+                                            // for the next hop is EXPECTED when you trace funds to destinations
                                             const allAccountedFor = hasEntries &&
-                                                                   unallocatedInCurrentHop.length === 0 &&
-                                                                   availableForNextHop.length === 0;
+                                                                   unallocatedInCurrentHop.length === 0;
 
                                             if (allAccountedFor) {
                                                 return `

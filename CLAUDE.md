@@ -3,57 +3,53 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 19:10)
+## Latest Commit (Auto-updated: 2025-10-28 19:25)
 
-**Commit:** b2d980b45b9f64c1b7e38fc922f140ca50dd21e7
+**Commit:** a1346c4b98536b8361475f5e294d93c7040edadd
 **Author:** Your Name
-**Message:** Fix: Update migration/consolidation functions for flat structure
+**Message:** Fix: Wallet explorer split-screen visibility on initial load
 
-Problem: Migration functions still used nested structure iteration:
-- isLegacyThreadSystem() iterated availableThreads[currency][key]
-- migrateThreadsToDualLayer() tried to read thread.internalId from null
-- consolidateDuplicateThreads() iterated nested structure
-- Result: 'Cannot read properties of null' when adding hops
+Problem: After implementing split-screen sidebar, wallet search would fetch data successfully but UI wouldn't display. Console showed transactions fetched and aggregated, but nothing rendered.
 
-Solution: Update all migration helpers for flat structure:
+Root Cause:
+- displayAssetSummary() rendered asset cards and showed walletExplorerAssetSummary
+- BUT did not show parent walletExplorerSplitContainer (display: none)
+- Split container only shown by displayAssetTransactions() (after asset selected)
+- Result: Asset cards rendered inside hidden container
 
-1. isLegacyThreadSystem():
-   - Check first entry directly - if has thread properties, it's flat
-   - No more nested currency iteration
-   - Returns false immediately if already flat
+Solution:
+1. Show split container in displayAssetSummary() immediately after wallet load (line 15456)
+2. Initialize sidebar (populate stats, move panels) on wallet load (lines 15459-15462)
+3. Enhanced populateWalletStats() to show overall wallet stats when no asset selected:
+   - Use all transactions if no specific asset chosen
+   - Show "All Assets" instead of "-" for current asset field
+   - Update to specific asset stats when asset clicked
 
-2. migrateThreadsToDualLayer():
-   - Skip null threads during migration
-   - Outputs to flat structure: newThreads[internalId] = thread
-   - Ensures currency property set on each thread
+Now wallet explorer properly displays on initial load with split-screen layout and general stats, then updates when asset selected.
 
-3. consolidateDuplicateThreads():
-   - Iterate flat: for (threadId in availableThreads)
-   - Group by notation+currency key
-   - Delete from root: delete availableThreads[threadId]
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-These functions are defensive - they handle both old saves (migrate) and new saves (skip).
-
-Critical fix: Hop creation now works!
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 139 +++++++++++++++++++++++++++++++++++--------------------------
- 1 file changed, 81 insertions(+), 58 deletions(-)
+ CLAUDE.md  | 57 ++++++++++++++++++++++++++++++++++++++++++---------------
+ index.html | 23 +++++++++++++++++++----
+ 2 files changed, 61 insertions(+), 19 deletions(-)
 ```
 
 ## Recent Commits History
 
-- b2d980b Fix: Update migration/consolidation functions for flat structure (1 second ago)
-- 6188a2a Fix: Complete thread structure migration - all remaining functions (5 minutes ago)
-- 5402485 Fix: Update getThreadChainHistory for flat thread structure (17 minutes ago)
-- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (19 minutes ago)
-- 831eaf8 Fix: Update getMaxAssignableAmount for flat thread structure (31 minutes ago)
-- 4628023 Fix: Remove extra closing brace causing syntax error at line 10558 (37 minutes ago)
-- 6faf871 Fix: Remove duplicate display property in wallet explorer split container (41 minutes ago)
-- 21789b2 Sync CLAUDE.md (50 minutes ago)
-- 23929cb Final CLAUDE.md sync (50 minutes ago)
-- 1efba26 Update CLAUDE.md with latest commit info (50 minutes ago)
+- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (0 seconds ago)
+- b2d980b Fix: Update migration/consolidation functions for flat structure (15 minutes ago)
+- 6188a2a Fix: Complete thread structure migration - all remaining functions (20 minutes ago)
+- 5402485 Fix: Update getThreadChainHistory for flat thread structure (32 minutes ago)
+- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (33 minutes ago)
+- 831eaf8 Fix: Update getMaxAssignableAmount for flat thread structure (46 minutes ago)
+- 4628023 Fix: Remove extra closing brace causing syntax error at line 10558 (52 minutes ago)
+- 6faf871 Fix: Remove duplicate display property in wallet explorer split container (56 minutes ago)
+- 21789b2 Sync CLAUDE.md (65 minutes ago)
+- 23929cb Final CLAUDE.md sync (65 minutes ago)
 
 ## Key Features
 
