@@ -3,29 +3,36 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 16:49)
+## Latest Commit (Auto-updated: 2025-10-28 17:07)
 
-**Commit:** d1973e30d420d4f73e3bc5df59964427011c5436
+**Commit:** 3e6a044f7208a2efe22df1e19bc26f5d14c6306b
 **Author:** Your Name
-**Message:** Refactor: Migrate thread index from currency-keyed to flat provenance-based structure
+**Message:** Fix: Enforce hard allocation validation with partial trace option
 
-Problem: Thread index used two-level structure (currency → threads) which complicated:
-- Cross-chain currency matching (USDT vs USDT(TRON))
-- Thread provenance tracking across conversions
-- Code complexity with nested loops for thread lookups
+Problem: Bulk transaction addition allowed over-allocation:
+- Warning shown but user could click "OK to continue anyway"
+- Created invalid entries exceeding available thread amounts
+- Led to accounting errors and negative balances
 
-Solution: Flatten thread index to single-level structure (threadId → thread):
-- Direct access by internalId without currency iteration
-- New helper functions: getAllThreads(), getThreadsByCurrency(), getThreadsByProvenance()
-- Migration function preserves existing data automatically
-- Enhanced currency matching strips chain suffixes for comparison
-- All thread access patterns updated throughout codebase
+Solution: Implement hard block with partial trace option:
+- Block if total exceeds available amount (no override)
+- Offer two choices:
+  • PARTIAL TRACE: Proportionally reduce to fit available
+  • Cancel: Go back and adjust selection
+- Partial trace calculates reduction factor automatically
+- Each transaction proportionally reduced
+- Total equals exactly available amount
 
-Benefits:
-- Simpler code with fewer nested loops
-- Better support for cross-chain tracing
-- Foundation for provenance-based filtering
-- Maintains backwards compatibility
+Implementation:
+- Updated bulk add validation (index.html:18249-18301)
+- Changed confirm() from "continue anyway" to "partial trace / cancel"
+- Added proportional reduction logic
+- Stores partialTraceAmount on each transaction
+- Detailed console logging for audit trail
+
+Result: Prevents over-allocation while supporting partial tracing.
+
+Phase 1.3 complete ✓
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -33,23 +40,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  |  50 ++++---
- index.html | 495 ++++++++++++++++++++++++++++++++++++++++---------------------
- 2 files changed, 356 insertions(+), 189 deletions(-)
+ index.html | 55 +++++++++++++++++++++++++++++++++++++------------------
+ 1 file changed, 37 insertions(+), 18 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d1973e3 Refactor: Migrate thread index from currency-keyed to flat provenance-based structure (0 seconds ago)
-- 63babf9 Fix: Enhanced currency matching to handle cross-chain assets (2 hours ago)
+- 3e6a044 Fix: Enforce hard allocation validation with partial trace option (1 second ago)
+- de0f793 Fix: Correct change address handling - same-address change stays in thread (2 minutes ago)
+- c6d49cf Update CLAUDE.md with latest commit info (18 minutes ago)
+- d1973e3 Refactor: Migrate thread index from currency-keyed to flat provenance-based structure (18 minutes ago)
+- 63babf9 Fix: Enhanced currency matching to handle cross-chain assets (3 hours ago)
 - f6d7ae9 Fix: Use thread destinationTxHash to highlight correct transaction in Wallet Explorer (3 hours ago)
 - 0379f66 Fix: Use thread object's chainId and sourceWallet when opening Wallet Explorer (3 hours ago)
 - ef2f277 Fix: Add comprehensive logging and chain mapping for bridge cross-chain identity (3 hours ago)
-- e788fda Fix: Replace auto-adjustment with proper partial trace support (3 hours ago)
-- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (3 hours ago)
-- a3e864d Update CLAUDE.md with latest commit info (3 hours ago)
-- 8ff7c47 Fix: Bridge output logging blocked due to missing conversion wallet type (3 hours ago)
-- 4127c39 Update CLAUDE.md with latest commit info (4 hours ago)
+- e788fda Fix: Replace auto-adjustment with proper partial trace support (4 hours ago)
+- 6a3a2af UX: Auto-adjust entry amounts for dust/gas shortfalls (4 hours ago)
 
 ## Key Features
 
