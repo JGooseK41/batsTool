@@ -3,169 +3,65 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-27 20:05)
+## Latest Commit (Auto-updated: 2025-10-27 21:17)
 
-**Commit:** f48d69190de94211ec78885cc5e07cc894aef804
+**Commit:** e378163cbc3b147c09416ea3b0f19ea9f3c29433
 **Author:** Your Name
-**Message:** Feature: Batch entry logging workflow in Wallet Explorer
+**Message:** Fix: ART tracking panel thread lookup using notation instead of internal ID
 
-✨ UX ENHANCEMENT: Queue multiple entries and log them all at once
-
-USER REQUEST: "there also needs to be a way when you get back to the hop
-entry builder after making all your selections in the wallet explorer that
-you can click one button to log all entries created from in the wallet
-explorer. Maybe a button at the bottom of the wallet explorer that says
-return to hop builder then when you click that a pop up asks if you want
-to log all entries you created in the wallet explorer"
+🐛 BUG FIX: Source thread not found in available threads
 
 PROBLEM:
 
-When building entries wallet-by-wallet, investigators had to:
-1. Create entry → Return to hops → Verify
-2. Go back to wallet → Create another entry → Return → Verify
-3. Repeat for each transaction
+Console error: "Source thread V1-T1 not found in available threads"
 
-This was tedious and broke the flow. No way to review all entries together
-before logging them to the investigation.
+The ART tracking panel was failing to initialize because it couldn't find
+the source thread. The issue was in the thread lookup logic.
+
+ROOT CAUSE:
+
+Available threads are indexed by internal ID format:
+- Key: "V1-T1_USDT"
+- Thread object has notation: "V1-T1"
+
+initializeARTTracking() was looking up using sourceThreadId ("V1-T1") as
+the direct key:
+  availableThreads[curr][sourceThreadId]  // Looking for key "V1-T1"
+
+But the actual key was "V1-T1_USDT", so lookup failed.
 
 SOLUTION:
 
-New batch workflow where entries are queued in the wallet explorer, then
-logged all at once with a confirmation modal showing all pending entries.
+Modified thread lookup to search through all threads and match by notation
+field instead of using the key directly.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Old logic (line 15345):
+  if (availableThreads[curr][sourceThreadId]) {
+    // Only finds exact key matches
+  }
 
-IMPLEMENTATION:
+New logic (lines 15345-15356):
+  for (const threadKey in availableThreads[curr]) {
+    const thread = availableThreads[curr][threadKey];
+    if (thread.notation === sourceThreadId || threadKey === sourceThreadId) {
+      // Matches by notation field OR key
+      sourceThread = thread;
+      break;
+    }
+  }
 
-1. Pending Entries Tracking (lines 14336, 14660):
-   - Added pendingEntries[] array to walletExplorerState
-   - Tracks all entries created during wallet explorer session
-   - Cleared on wallet close or after batch confirmation
+IMPACT:
 
-2. Return to Hop Builder Button (lines 2995-2997):
-   - Hidden by default
-   - Shows when pendingEntries.length > 0
-   - Displays count: "✅ Return to Hop Builder (N entries)"
-   - Green styling to indicate ready to proceed
-
-3. Modified "Create & Stay" Workflow (lines 17287-17327):
-   - No longer creates entry immediately
-   - Adds entry to pendingEntries array
-   - Shows notification with total count
-   - Updates Return button visibility
-   - Updates thread progression panel
-   - Grays out transaction in table
-
-4. Batch Confirmation Modal (lines 3046-3093):
-   - Shows summary: total count + destination hop
-   - Lists all pending entries with details:
-     * Entry type (trace/writeoff) with color coding
-     * Amount and currency
-     * From/To addresses
-     * Thread assignment
-     * Transaction hash
-   - Warning about permanent addition
-   - Buttons: Cancel or "Log All N Entries"
-
-5. Supporting Functions:
-   - updateReturnButton() (lines 17364-17375)
-     * Shows/hides button based on pending count
-     * Updates count display
-
-   - returnToHopBuilder() (lines 17377-17445)
-     * Validates pending entries exist
-     * Populates batch confirmation modal
-     * Shows entry cards with color-coded types
-
-   - confirmBatchEntries() (lines 17452-17503)
-     * Adds all pending entries to hop
-     * Sorts chronologically
-     * Saves and renders
-     * Closes all modals
-     * Scrolls to hop
-     * Clears pending entries
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-WORKFLOW:
-
-Old (Multiple Round Trips):
-1. Open wallet explorer
-2. Select transaction → Create entry → Return to hops
-3. Verify entry in hop
-4. Open wallet explorer again
-5. Select another transaction → Create entry → Return to hops
-6. Repeat...
-
-New (Batch Workflow):
-1. Open wallet explorer
-2. Select transaction → "Create & Stay in Explorer"
-3. Entry queued (1 total)
-4. Select another transaction → "Create & Stay in Explorer"
-5. Entry queued (2 total)
-6. Select more transactions...
-7. Click "Return to Hop Builder (5 entries)"
-8. Review ALL 5 entries in confirmation modal
-9. Click "Log All 5 Entries"
-10. All entries added at once ✅
-11. Return to hop builder to see results
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-EXAMPLE:
-
-Investigating wallet with 10 outbound transactions:
-
-User workflow:
-1. Open wallet via "View & Trace" button
-2. Select first OUT tx → "Create & Stay" → Queued (1)
-3. Select second OUT tx → "Create & Stay" → Queued (2)
-4. Select third OUT tx → "Create & Stay" → Queued (3)
-5. ... continue for all 10 transactions
-6. Button shows: "Return to Hop Builder (10 entries)"
-7. Click button → Modal shows all 10 entries
-8. Review: 8 traces + 2 write-offs
-9. Click "Log All 10 Entries"
-10. All entries added to Hop 2 at once
-11. Return to hop view to verify
-12. Done! ✨
-
-VS Old Workflow:
-- Would require 10 separate create/return/verify cycles
-- Easy to lose track of progress
-- No way to review all together
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-BENEFITS:
-
-✅ Wallet-by-wallet workflow fully supported
-✅ Queue unlimited entries before logging
-✅ Review all entries together before confirming
-✅ Single click to log all entries at once
-✅ Clear count of pending entries
-✅ Color-coded entry types in confirmation
-✅ Prevents accidental partial logging
-✅ Maintains all existing validation
-✅ Thread progression updates in real-time
-✅ Transactions gray out as entries are queued
-
-BACKWARDS COMPATIBILITY:
-
-✅ "Create & Return to Hops" still works (immediate create)
-✅ Existing workflows unchanged
-✅ Pending entries cleared on wallet close
-✅ No impact on other entry creation methods
+✅ ART tracking panel now initializes correctly
+✅ Thread progression visualization works
+✅ Available threads display properly
+✅ "Create & Stay" workflow fully functional
 
 TESTING:
-- Open wallet explorer with source thread
-- Create 3-5 entries using "Create & Stay"
-- Verify button shows with correct count
-- Click "Return to Hop Builder"
-- Verify all entries shown in modal
-- Click "Log All N Entries"
-- Verify all entries added to hop
-- Verify entries sorted chronologically
+- Open wallet explorer from Available Threads modal
+- Verify ART tracking panel appears
+- Verify no "Source thread not found" error in console
+- Verify thread progression bars display
 
 🤖 Generated with Claude Code
 
@@ -173,23 +69,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 149 ++++++++++++++++++++++++++++++++++++-----
- index.html | 220 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 347 insertions(+), 22 deletions(-)
+ CLAUDE.md  | 248 ++++++++++++++++++++++++++++++++++++-------------------------
+ index.html |  15 +++-
+ 2 files changed, 157 insertions(+), 106 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f48d691 Feature: Batch entry logging workflow in Wallet Explorer (0 seconds ago)
-- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (8 minutes ago)
-- 16dcb5a Auto-sync CLAUDE.md (21 minutes ago)
-- 2bd784f Fix: Include transaction hash in entry notes for audit trail (23 minutes ago)
-- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (32 minutes ago)
-- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (44 minutes ago)
-- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (52 minutes ago)
-- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (55 minutes ago)
-- a1e1795 Auto-sync CLAUDE.md (60 minutes ago)
-- 9b04c73 Remove redundant Quick Trace button from Available Threads modal (61 minutes ago)
+- e378163 Fix: ART tracking panel thread lookup using notation instead of internal ID (0 seconds ago)
+- f48d691 Feature: Batch entry logging workflow in Wallet Explorer (73 minutes ago)
+- b02f459 Feature: Toggle to hide/show zero-balance transfers in Wallet Explorer (81 minutes ago)
+- 16dcb5a Auto-sync CLAUDE.md (2 hours ago)
+- 2bd784f Fix: Include transaction hash in entry notes for audit trail (2 hours ago)
+- 127e40a Feature: Thread allocation progress visualization in Wallet Explorer (2 hours ago)
+- b716ef0 Fix: Active thread highlighting and auto-pagination in Wallet Explorer (2 hours ago)
+- f1ad696 Fix: Incorrect incomplete history warning in Wallet Explorer (2 hours ago)
+- 9982aee Enhancement: Add labels and total volume to asset cards in Wallet Explorer (2 hours ago)
+- a1e1795 Auto-sync CLAUDE.md (2 hours ago)
 
 ## Key Features
 

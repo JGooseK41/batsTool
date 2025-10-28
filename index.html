@@ -16526,11 +16526,13 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         const sourceThread = availableThreads.find(t => t.threadId === sourceThreadId);
 
                         // Find other threads going to the same wallet (commingling detection)
-                        const threadsToSameWallet = availableThreads.filter(t =>
-                            t.destinationWallet &&
-                            t.destinationWallet.toLowerCase() === walletAddress.toLowerCase() &&
-                            t.currency === txCurrency
-                        );
+                        // Check both destinationWallet (for hop entries) and sourceWallet (for victim transactions)
+                        const threadsToSameWallet = availableThreads.filter(t => {
+                            const threadWallet = t.destinationWallet || t.sourceWallet;
+                            return threadWallet &&
+                                   threadWallet.toLowerCase() === walletAddress.toLowerCase() &&
+                                   t.currency === txCurrency;
+                        });
 
                         console.log(`Found ${threadsToSameWallet.length} threads entering wallet ${walletAddress}:`, threadsToSameWallet.map(t => `${t.threadId} (${t.availableAmount} ${t.currency})`));
 
