@@ -608,8 +608,9 @@
             background-color: rgba(0,0,0,0.5);
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
-        
+
         .modal.show {
             display: flex;
         }
@@ -1032,6 +1033,7 @@
     background-color: rgba(0,0,0,0.5);
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 
 .modal.show {
@@ -2859,7 +2861,7 @@
                 </div>
 
                 <!-- Right Main Panel -->
-                <div id="walletExplorerMainPanel" style="flex: 1; min-width: 0;">
+                <div id="walletExplorerMainPanel" style="flex: 1; min-width: 0; overflow-y: auto; height: 100%;">
                     <!-- Asset Summary Section -->
                     <div id="walletExplorerAssetSummary" style="display: none; margin-bottom: 20px;">
                 <h3 style="margin-bottom: 15px; color: #333;">📊 Asset Activity History</h3>
@@ -14726,13 +14728,17 @@ function exportRedWalletIndexCSV() {
             const modal = document.getElementById(modalId);
             if (modal) {
                 modal.classList.add('show');
+                // Prevent body scroll when modal is open
+                document.body.style.overflow = 'hidden';
             }
         }
-        
+
         function hideModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
                 modal.classList.remove('show');
+                // Restore body scroll when modal closes
+                document.body.style.overflow = '';
             }
         }
         
