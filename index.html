@@ -2709,14 +2709,14 @@
 
     <!-- Wallet Explorer Modal -->
     <div id="walletExplorerModal" class="modal">
-        <div class="modal-content" style="max-width: 1200px; max-height: 90vh;">
-            <div class="modal-header">
+        <div class="modal-content" style="max-width: 1200px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="flex-shrink: 0;">
                 <h2>🔍 Wallet Explorer</h2>
                 <p>View wallet transaction history across all blockchains</p>
             </div>
 
             <!-- Wallet Input Section -->
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; flex-shrink: 0;">
                 <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 15px; align-items: end;">
                     <div>
                         <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
@@ -2782,15 +2782,15 @@
             </div>
 
             <!-- Loading Indicator -->
-            <div id="walletExplorerLoading" style="display: none; text-align: center; padding: 40px;">
+            <div id="walletExplorerLoading" style="display: none; text-align: center; padding: 40px; flex-shrink: 0;">
                 <div style="font-size: 48px; margin-bottom: 15px;">⏳</div>
                 <div style="font-size: 18px; color: #666;">Loading wallet history...</div>
             </div>
 
             <!-- SPLIT SCREEN LAYOUT -->
-            <div id="walletExplorerSplitContainer" style="display: none; position: relative; gap: 0;">
+            <div id="walletExplorerSplitContainer" style="display: none; position: relative; gap: 0; flex: 1; min-height: 0; overflow: hidden;">
                 <!-- Left Sidebar (Resizable) - Compact with flex layout -->
-                <div id="walletExplorerSidebar" style="width: 240px; min-width: 180px; max-width: 600px; background: #f8f9fa; border-radius: 8px; padding: 0; height: calc(90vh - 200px); position: relative; display: flex; flex-direction: column;">
+                <div id="walletExplorerSidebar" style="width: 240px; min-width: 180px; max-width: 600px; background: #f8f9fa; border-radius: 8px; padding: 0; height: 100%; position: relative; display: flex; flex-direction: column;">
                     <!-- Collapse Button -->
                     <button onclick="toggleWalletExplorerSidebar()"
                             style="position: absolute; top: 10px; right: 10px; background: #3498db; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
@@ -3107,7 +3107,7 @@
             </div> <!-- End walletExplorerSplitContainer -->
 
             <!-- Empty State -->
-            <div id="walletExplorerEmpty" style="display: none; text-align: center; padding: 60px 20px; color: #999;">
+            <div id="walletExplorerEmpty" style="display: none; text-align: center; padding: 60px 20px; color: #999; flex-shrink: 0;">
                 <div style="font-size: 64px; margin-bottom: 20px;">📭</div>
                 <div style="font-size: 18px;">No transactions found</div>
             </div>
@@ -15049,6 +15049,12 @@ function exportRedWalletIndexCSV() {
 
             // Reset state
             resetWalletExplorer();
+
+            // Clear cache for this wallet to ensure fresh data
+            if (actualAddress && blockchain) {
+                clearWalletCache(actualAddress, blockchain);
+                console.log(`🗑️ Cleared cache for ${actualAddress} on ${blockchain}`);
+            }
 
             // Restore cluster info if this is a cluster view
             if (isClusterView && walletExplorerState.clusterInfo) {
