@@ -2763,11 +2763,11 @@
 
             <!-- SPLIT SCREEN LAYOUT -->
             <div id="walletExplorerSplitContainer" style="display: none; position: relative; gap: 0;">
-                <!-- Left Sidebar (Collapsible) -->
-                <div id="walletExplorerSidebar" style="width: 350px; min-width: 350px; background: #f8f9fa; border-radius: 8px; padding: 20px; margin-right: 20px; transition: all 0.3s ease; overflow-y: auto; max-height: calc(90vh - 250px); position: relative;">
+                <!-- Left Sidebar (Resizable) -->
+                <div id="walletExplorerSidebar" style="width: 320px; min-width: 200px; max-width: 600px; background: #f8f9fa; border-radius: 8px; padding: 20px; overflow-y: auto; max-height: calc(90vh - 250px); position: relative;">
                     <!-- Collapse Button -->
                     <button onclick="toggleWalletExplorerSidebar()"
-                            style="position: absolute; top: 10px; right: -15px; background: #3498db; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+                            style="position: absolute; top: 10px; right: 10px; background: #3498db; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
                             title="Collapse/Expand Sidebar">
                         <span id="walletExplorerSidebarToggle">◀</span>
                     </button>
@@ -2810,6 +2810,14 @@
                         <!-- ART Tracker Panel (moved to sidebar) - populated by JavaScript -->
                         <!-- Cluster Panel (moved to sidebar) - populated by JavaScript -->
                     </div>
+                </div>
+
+                <!-- Resizer Bar -->
+                <div id="walletExplorerResizer"
+                     style="width: 6px; background: #ddd; cursor: col-resize; position: relative; user-select: none; transition: background 0.2s;"
+                     onmouseenter="this.style.background='#3498db'"
+                     onmouseleave="this.style.background='#ddd'">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 4px; height: 40px; background: #999; border-radius: 2px;"></div>
                 </div>
 
                 <!-- Right Main Panel -->
@@ -15026,6 +15034,9 @@ function exportRedWalletIndexCSV() {
             // Show modal
             showModal('walletExplorerModal');
 
+            // Initialize resizer for split-screen layout
+            initializeWalletExplorerResizer();
+
             // Sync checkbox state with walletExplorerState
             const hideZeroCheckbox = document.getElementById('walletExplorerHideZeroBalance');
             if (hideZeroCheckbox) {
@@ -15049,22 +15060,80 @@ function exportRedWalletIndexCSV() {
             const sidebar = document.getElementById('walletExplorerSidebar');
             const sidebarContent = document.getElementById('walletExplorerSidebarContent');
             const toggleButton = document.getElementById('walletExplorerSidebarToggle');
+            const resizer = document.getElementById('walletExplorerResizer');
 
             if (sidebar.style.width === '40px') {
-                // Expand
-                sidebar.style.width = '350px';
-                sidebar.style.minWidth = '350px';
+                // Expand - restore to last width or default
+                const lastWidth = sidebar.getAttribute('data-last-width') || '320px';
+                sidebar.style.width = lastWidth;
+                sidebar.style.minWidth = '200px';
                 sidebar.style.padding = '20px';
+                sidebar.style.transition = 'all 0.3s ease';
                 sidebarContent.style.display = 'block';
                 toggleButton.textContent = '◀';
+                if (resizer) resizer.style.display = 'block';
+                // Remove transition after animation completes
+                setTimeout(() => { sidebar.style.transition = ''; }, 300);
             } else {
-                // Collapse
+                // Collapse - save current width
+                sidebar.setAttribute('data-last-width', sidebar.style.width);
+                sidebar.style.transition = 'all 0.3s ease';
                 sidebar.style.width = '40px';
                 sidebar.style.minWidth = '40px';
                 sidebar.style.padding = '10px 5px';
                 sidebarContent.style.display = 'none';
                 toggleButton.textContent = '▶';
+                if (resizer) resizer.style.display = 'none';
+                // Remove transition after animation completes
+                setTimeout(() => { sidebar.style.transition = ''; }, 300);
             }
+        }
+
+        // Initialize resizer for wallet explorer sidebar
+        function initializeWalletExplorerResizer() {
+            const resizer = document.getElementById('walletExplorerResizer');
+            const sidebar = document.getElementById('walletExplorerSidebar');
+            const container = document.getElementById('walletExplorerSplitContainer');
+
+            if (!resizer || !sidebar || !container) return;
+
+            let isResizing = false;
+            let startX = 0;
+            let startWidth = 0;
+
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startX = e.clientX;
+                startWidth = parseInt(window.getComputedStyle(sidebar).width, 10);
+
+                // Prevent text selection during resize
+                document.body.style.userSelect = 'none';
+                document.body.style.cursor = 'col-resize';
+
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+
+                const deltaX = e.clientX - startX;
+                const newWidth = startWidth + deltaX;
+
+                // Enforce min/max constraints
+                const minWidth = 200;
+                const maxWidth = 600;
+                const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+
+                sidebar.style.width = constrainedWidth + 'px';
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.userSelect = '';
+                    document.body.style.cursor = '';
+                }
+            });
         }
 
         // Reset wallet explorer state

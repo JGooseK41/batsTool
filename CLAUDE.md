@@ -3,31 +3,51 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 19:37)
+## Latest Commit (Auto-updated: 2025-10-28 19:52)
 
-**Commit:** a0e9406067d6c6f3cdeb1fc0f5447745a7f705b7
+**Commit:** 5332e67dfcfd1130349192535af6239cfbf87d02
 **Author:** Your Name
-**Message:** Fix: Transaction list not displaying when asset selected in wallet explorer
+**Message:** Fix: Wallet explorer crash from nested thread structure in ART tracking
 
-Problem: After clicking on an asset card in wallet explorer, the individual transactions didn't appear. The split-screen layout showed but transaction table remained empty/hidden.
+Problem: When clicking asset in wallet explorer, got error:
+"Uncaught TypeError: Cannot read properties of null (reading 'notation')"
+at initializeARTTracking line 15808
 
 Root Cause:
-When displayAssetTransactions() was called:
-- Set walletExplorerTransactions to display: block ✓
-- But did NOT hide walletExplorerAssetSummary
-- Both divs are siblings in walletExplorerMainPanel
-- Asset summary remained visible and blocked/overlapped transaction list
+Three more functions still using old nested structure:
+1. initializeARTTracking() (lines 15804-15815)
+2. quickWriteOffThread() (lines 24046-24052)
+3. quickColdStorageThread() (lines 24134-24140)
+
+All tried to iterate like:
+```javascript
+for (const curr in availableThreads) {
+    for (const threadKey in availableThreads[curr]) {
+        const thread = availableThreads[curr][threadKey];
+```
+
+With flat structure, first loop gets internal IDs (not currencies), so:
+- curr = "V1-T1_USDT" (thread ID, not currency)
+- availableThreads[curr] = thread object
+- Second loop iterates thread properties (notation, currency, etc.)
+- availableThreads[curr][threadKey] = "V1-T1" (property value, not thread)
+- Trying to read .notation from string/null → crash
 
 Solution:
-1. Hide asset summary when showing transactions (line 15554)
-   - Now transaction list has full space in main panel
-2. Show asset summary when no asset selected (line 15477)
-   - Allows user to return to asset list by selecting "Choose an asset..." from dropdown
+Migrated all three functions to flat structure:
+```javascript
+for (const internalId in availableThreads) {
+    const thread = availableThreads[internalId];
+    if (!thread) continue;
+    if (thread.notation === threadId || internalId === threadId) {
+        currency = thread.currency; // Get from thread object
+```
 
-Now workflow is:
-1. Wallet loads → Asset summary shows with cards
-2. Click asset card → Asset summary hides, transaction list shows
-3. Select "Choose an asset..." → Transaction list hides, asset summary shows
+Now wallet explorer:
+- Loads asset list correctly ✓
+- Displays transactions when asset clicked ✓
+- Initializes ART tracking without crash ✓
+- Quick actions (write-off, cold storage) work ✓
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -35,23 +55,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 68 +++++++++++++++++++++++++++++++++++---------------------------
- index.html |  2 ++
- 2 files changed, 41 insertions(+), 29 deletions(-)
+ CLAUDE.md  | 70 ++++++++++++++++++++++++++++----------------------------------
+ index.html | 47 ++++++++++++++++++++++++-----------------
+ 2 files changed, 59 insertions(+), 58 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a0e9406 Fix: Transaction list not displaying when asset selected in wallet explorer (0 seconds ago)
-- e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (8 minutes ago)
-- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (12 minutes ago)
-- b2d980b Fix: Update migration/consolidation functions for flat structure (27 minutes ago)
-- 6188a2a Fix: Complete thread structure migration - all remaining functions (32 minutes ago)
-- 5402485 Fix: Update getThreadChainHistory for flat thread structure (43 minutes ago)
-- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (45 minutes ago)
-- 831eaf8 Fix: Update getMaxAssignableAmount for flat thread structure (57 minutes ago)
-- 4628023 Fix: Remove extra closing brace causing syntax error at line 10558 (63 minutes ago)
-- 6faf871 Fix: Remove duplicate display property in wallet explorer split container (67 minutes ago)
+- 5332e67 Fix: Wallet explorer crash from nested thread structure in ART tracking (1 second ago)
+- a0e9406 Fix: Transaction list not displaying when asset selected in wallet explorer (15 minutes ago)
+- e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (23 minutes ago)
+- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (27 minutes ago)
+- b2d980b Fix: Update migration/consolidation functions for flat structure (42 minutes ago)
+- 6188a2a Fix: Complete thread structure migration - all remaining functions (47 minutes ago)
+- 5402485 Fix: Update getThreadChainHistory for flat thread structure (59 minutes ago)
+- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (60 minutes ago)
+- 831eaf8 Fix: Update getMaxAssignableAmount for flat thread structure (73 minutes ago)
+- 4628023 Fix: Remove extra closing brace causing syntax error at line 10558 (79 minutes ago)
 
 ## Key Features
 
