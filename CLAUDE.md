@@ -3,79 +3,68 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 21:16)
+## Latest Commit (Auto-updated: 2025-10-28 21:29)
 
-**Commit:** d3ba2f933ba172e67d34ef3d4e6004d48f648b20
+**Commit:** 3a27c7986152f66e3b8651de6976ad8c0b73ed76
 **Author:** Your Name
-**Message:** Fix: Complete migration of ALL remaining nested thread structures
+**Message:** UX: Enhanced wallet explorer visibility with table borders and thread highlighting
 
-Problem: User kept hitting nested structure crashes at every step of the investigation workflow. We were fixing reactively, one crash at a time. User requested proactive scan to find and fix ALL remaining instances.
+Problem 1: No visible table lines between transactions
+- Transactions blended together visually
+- Hard to distinguish between individual transaction rows
+- User requested faint table lines for clear delineation
 
-Comprehensive Search Results:
-Found 5 more critical functions still using nested structure:
-1. calculateTotalAssignedAmount (line 11268)
-2. displayThreadProgression (line 15717)
-3. viewAvailableThreads (line 23406)
-4. bulkWriteOffThreads (line 24391)
-5. validateHopForFinalization (line 30079)
+Problem 2: Incoming thread transactions not showing yellow/gold in Hop 2+
+- Only the specifically highlighted transaction showed yellow/gold
+- Other incoming thread transactions (from previous hops) showed blue
+- Made it hard to identify which transactions were thread sources
+- User requested ALL incoming thread transactions show yellow/gold with VT notation
 
-All used pattern:
+Solution 1: Added faint row borders (line 16578)
 ```javascript
-availableThreads[currency][threadId]
+row.style.borderBottom = '1px solid #e9ecef';
 ```
+- Applied to all transaction rows
+- Light gray color (#e9ecef) for subtle but clear separation
+- Improves visual scanning of transaction list
 
-Solution: Migrated ALL 5 functions to flat structure
+Solution 2: Enhanced thread transaction highlighting
 
-**1. calculateTotalAssignedAmount (lines 11268-11286)**
-Before: `Object.values(investigation.availableThreads[currency])`
-After: Iterate all threads, filter by currency
-```javascript
-for (const internalId in investigation.availableThreads) {
-    const thread = investigation.availableThreads[internalId];
-    if (!thread || thread.currency !== currency) continue;
-```
+**A. Updated initial highlighting logic (lines 16580-16592):**
+- ALL incoming thread transactions get yellow/gold: `(isInvestigationThread && tx.type === 'IN')`
+- Outgoing thread transactions keep blue
+- Highlighted/current thread also gets yellow/gold
 
-**2. displayThreadProgression (lines 15717-15734)**
-Before: `investigation.availableThreads[selectedCurrency]`
-After: Iterate all threads, filter by currency AND wallet
-```javascript
-if (thread.currency === selectedCurrency &&
-    thread.sourceWallet === walletAddress)
-```
+**B. Updated thread badges (lines 16638-16647):**
+- Incoming threads: Yellow/gold badge with 🎯 icon
+- Outgoing threads: Blue badge with 📍 icon
+- Displays full VT notation (e.g., "V1-T1", "V1-T1-H1")
 
-**3. viewAvailableThreads (lines 23405-23432)**
-Before: `availableThreads[currency][sourceId]`
-After: Search for thread by notation + currency match
-```javascript
-for (const internalId in availableThreads) {
-    if (t.notation === sourceId && t.currency === currency)
-```
+**C. Protected thread transactions from graying (lines 16657-16686):**
+- Created `isThreadTransaction` flag for all incoming thread txs
+- Change outputs don't gray out thread transactions
+- Used transactions don't gray out thread transactions
+- ART selections don't override thread transactions
 
-**4. bulkWriteOffThreads (lines 24400-24408)**
-Before: `availableThreads[currency][threadId]`
-After: Search for thread by notation + currency match
+**D. Re-applied highlighting at END (lines 16688-16703):**
+- Ensures thread highlighting takes absolute precedence
+- Overrides any opacity/cursor settings
+- Incoming threads: Yellow/gold with full opacity
+- Outgoing threads: Blue with full opacity
 
-**5. validateHopForFinalization (lines 30094-30110)**
-Before: `investigation.availableThreads[currency][threadId]`
-After: Search for thread by notation + currency match
+Now wallet explorer clearly shows:
+✅ Faint borders between all transaction rows
+✅ ALL incoming thread transactions in bright yellow/gold
+✅ Outgoing thread transactions in blue
+✅ VT notation badges on all thread transactions
+✅ Thread transactions always visible (never grayed out)
+✅ Works correctly in all hops (Hop 1, 2, 3, etc.)
 
-Impact: These functions are called during:
-- Thread availability calculations ✓
-- Wallet explorer thread progression display ✓
-- View available threads modal ✓
-- Bulk write-off operations ✓
-- Hop finalization validation ✓
-
-Now the ENTIRE investigative workflow should work without hitting nested structure crashes:
-1. Add victim transactions ✓
-2. Confirm root total ✓
-3. Create hop ✓
-4. View available threads ✓
-5. Open wallet explorer ✓
-6. Create trace entries ✓
-7. Finalize hop ✓
-8. Create next hop ✓
-9. Repeat for multi-hop traces ✓
+This makes it easy to:
+- Scan through transaction list with clear visual separation
+- Immediately identify which transactions are thread sources
+- See the provenance notation for each thread
+- Follow the investigation thread through multiple hops
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -83,23 +72,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 84 +++++++++++++++++++++++++++++++++++++++++++++++++++-----------
- index.html | 79 ++++++++++++++++++++++++++++++++++++++--------------------
- 2 files changed, 121 insertions(+), 42 deletions(-)
+ CLAUDE.md  | 125 +++++++++++++++++++++++++++++++++++--------------------------
+ index.html |  50 +++++++++++++++++++------
+ 2 files changed, 110 insertions(+), 65 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d3ba2f9 Fix: Complete migration of ALL remaining nested thread structures (1 second ago)
-- 02dbede Fix: Hop finalization crash from nested thread structure (51 minutes ago)
-- ffa9dc2 Sync CLAUDE.md (57 minutes ago)
-- a86e0ff Final CLAUDE.md update (57 minutes ago)
-- b35aa18 Update CLAUDE.md timestamp (57 minutes ago)
-- 36b3398 Update CLAUDE.md with latest commit info (58 minutes ago)
-- 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (63 minutes ago)
-- 5332e67 Fix: Wallet explorer crash from nested thread structure in ART tracking (84 minutes ago)
+- 3a27c79 UX: Enhanced wallet explorer visibility with table borders and thread highlighting (0 seconds ago)
+- d3ba2f9 Fix: Complete migration of ALL remaining nested thread structures (13 minutes ago)
+- 02dbede Fix: Hop finalization crash from nested thread structure (64 minutes ago)
+- ffa9dc2 Sync CLAUDE.md (70 minutes ago)
+- a86e0ff Final CLAUDE.md update (70 minutes ago)
+- b35aa18 Update CLAUDE.md timestamp (70 minutes ago)
+- 36b3398 Update CLAUDE.md with latest commit info (71 minutes ago)
+- 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (76 minutes ago)
+- 5332e67 Fix: Wallet explorer crash from nested thread structure in ART tracking (2 hours ago)
 - a0e9406 Fix: Transaction list not displaying when asset selected in wallet explorer (2 hours ago)
-- e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (2 hours ago)
 
 ## Key Features
 
