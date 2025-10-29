@@ -10545,14 +10545,17 @@ function buildAvailableThreadsIndex() {
             else if (entry.entryType === 'trace' && parseFloat(entry.amount) > 0 && entry.notation) {
                 // Don't create thread if this trace has been swapped (check both local and global)
                 if (!swappedThreadIds.has(entry.notation) && !globalSwappedThreadIds.has(entry.notation)) {
-                    // Don't create output threads for terminal wallets (purple, gray, blue) UNLESS they're bridges
+                    // Don't create output threads for terminal wallets ONLY if explicitly marked
+                    // Purple (exchange deposits) and gray (mixers/tumblers) ARE terminal
+                    // Blue (cold storage) should ONLY be terminal if explicitly marked as isTerminalWallet
+                    // Empty/black wallets should NEVER be treated as terminal
                     const isTerminal = (entry.toWalletType === 'purple' && !entry.isBridge) ||
                                      entry.toWalletType === 'gray' ||
-                                     entry.toWalletType === 'blue' ||
+                                     (entry.toWalletType === 'blue' && entry.isTerminalWallet === true) ||
                                      (entry.isTerminalWallet === true && !entry.isBridge);
 
                     if (isTerminal) {
-                        console.log(`Skipping thread creation for terminal wallet (${entry.toWalletType}): ${entry.notation}`);
+                        console.log(`Skipping thread creation for terminal wallet (${entry.toWalletType}, explicit: ${entry.isTerminalWallet}): ${entry.notation}`);
 
                         // For terminal wallets, deduct the allocated amounts from source threads
                         // Only mark as fully exhausted if the entire thread was actually used
@@ -10648,9 +10651,10 @@ function updateThreadAvailabilityFromHop(entry) {
     }
 
     // Skip terminal wallets - they don't create output threads (UNLESS they're unlogged bridges)
+    // Blue (cold storage) should ONLY be terminal if explicitly marked as isTerminalWallet
     if ((entry.toWalletType === 'purple' && !entry.isBridge) ||
         entry.toWalletType === 'gray' ||
-        entry.toWalletType === 'blue' ||
+        (entry.toWalletType === 'blue' && entry.isTerminalWallet === true) ||
         (entry.isTerminalWallet && !entry.isBridge)) {
         console.log(`Not creating output thread for terminal wallet entry: ${entry.notation}`);
         return;
@@ -14665,7 +14669,9 @@ function exportRedWalletIndexCSV() {
                         }
 
                         // CRITICAL FIX: Skip terminal wallets - they don't create threads for next hop
-                        if (entry.isTerminalWallet || entry.toWalletType === 'purple' || entry.toWalletType === 'gray') {
+                        // Blue wallets are only terminal if explicitly marked
+                        const isBlueTerminal = entry.toWalletType === 'blue' && entry.isTerminalWallet === true;
+                        if (entry.isTerminalWallet || entry.toWalletType === 'purple' || entry.toWalletType === 'gray' || isBlueTerminal) {
                             console.log(`Skipping terminal wallet ${entry.notation} from ART - funds arrived at terminal`);
                             return; // Don't add this back to ART
                         }
@@ -21042,9 +21048,11 @@ function addNewHop() {
         }
 
         // Sum up all terminal wallet amounts
+        // Blue wallets are only terminal if explicitly marked
         investigation.hops.forEach(hop => {
             hop.entries.forEach(entry => {
-                if (entry.isTerminalWallet || entry.toWalletType === 'purple' || entry.toWalletType === 'gray') {
+                const isBlueTerminal = entry.toWalletType === 'blue' && entry.isTerminalWallet === true;
+                if (entry.isTerminalWallet || entry.toWalletType === 'purple' || entry.toWalletType === 'gray' || isBlueTerminal) {
                     const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
                     const amount = parseFloat(entry.amount) || 0;
                     if (!totalTerminal[currency]) totalTerminal[currency] = 0;
@@ -26948,7 +26956,9 @@ function generateTerminalSummary() {
     const terminalEntries = [];
     investigation.hops?.forEach(hop => {
         hop.entries?.forEach(entry => {
-            if (entry.isTerminalWallet || entry.toWalletType === 'purple' || entry.toWalletType === 'blue') {
+            // Blue wallets are only terminal if explicitly marked
+            const isBlueTerminal = entry.toWalletType === 'blue' && entry.isTerminalWallet === true;
+            if (entry.isTerminalWallet || entry.toWalletType === 'purple' || entry.toWalletType === 'gray' || isBlueTerminal) {
                 terminalEntries.push({
                     walletAddress: entry.toWallet,
                     walletLabel: entry.exchangeName || entry.exchangeAttribution?.name ||
