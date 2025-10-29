@@ -21504,6 +21504,13 @@ function addNewHop() {
                                         🌉 Log Bridge/Swap
                                     </button>
                                 ` : ''}
+                                ${entry.entryType === 'cold_storage' && !entry.coldStorageMovementLogged ? `
+                                    <button class="btn btn-sm" style="background: #2196f3; color: white; border: 1px solid #1976d2;"
+                                            onclick="event.stopPropagation(); logColdStorageMovement(${hop.hopNumber}, ${entry.id})"
+                                            title="Log movement from cold storage - creates new traceable thread">
+                                        🔓 Log Movement
+                                    </button>
+                                ` : ''}
                                 <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); removeHopEntry(${hop.hopNumber}, ${entry.id})">
                                     🗑️ Delete
                                 </button>
@@ -39104,6 +39111,324 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
 
             // Always shows as bridge since we force brown wallet type
             showNotification(`✅ Bridge output logged! Wallet reclassified to bridge (brown). Thread ${entry.notation} converted to ${outputAmount} ${outputCurrency} on ${destChain}. Continue tracing in Hop ${hop.hopNumber}.`, 'success', 8000);
+        }
+
+        // Log movement from cold storage
+        function logColdStorageMovement(hopNumber, entryId) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            const entry = hop.entries.find(e => e.id === entryId);
+
+            if (!entry || entry.entryType !== 'cold_storage') {
+                showNotification('❌ Only cold storage entries can log movement', 'error');
+                return;
+            }
+
+            // Show cold storage movement logging modal
+            const modal = document.createElement('div');
+            modal.id = 'coldStorageMovementModal';
+            modal.className = 'modal show';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 700px; padding: 30px;">
+                    <h2 style="margin-bottom: 20px;">🔓 Log Movement from Cold Storage</h2>
+
+                    <!-- Cold Storage Details Section -->
+                    <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <h3 style="margin-top: 0; color: #0d47a1; font-size: 16px;">Original Cold Storage Entry</h3>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">Wallet Address:</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text"
+                                       value="${entry.toWallet || 'Not specified'}"
+                                       readonly
+                                       style="flex: 1; padding: 8px; font-family: monospace; font-size: 12px; background: white; border: 1px solid #ddd; border-radius: 4px;">
+                                <button onclick="navigator.clipboard.writeText('${entry.toWallet || ''}'); this.textContent = '✓ Copied!'; setTimeout(() => this.textContent = '📋 Copy', 2000);"
+                                        style="padding: 8px 12px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                    📋 Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">Amount in Cold Storage:</label>
+                            <div style="padding: 8px; background: white; border: 1px solid #ddd; border-radius: 4px;">
+                                ${entry.amount} ${entry.currency || 'Unknown'}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">Marked as Cold Storage:</label>
+                            <div style="padding: 8px; background: white; border: 1px solid #ddd; border-radius: 4px;">
+                                ${entry.timestamp ? new Date(entry.timestamp).toLocaleString('en-US', {
+                                    timeZone: 'UTC',
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    hour12: false
+                                }) + ' UTC' : 'Not available'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="margin: 20px 0; color: #666; background: #e8f5e9; padding: 15px; border-radius: 6px; border: 1px solid #4caf50;">
+                        <strong>💡 Info:</strong> Log the transaction where these funds moved from the wallet. This creates a new traceable thread while maintaining an audit trail of the cold storage period.
+                    </p>
+
+                    <div style="border-top: 2px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
+                        <h3 style="font-size: 16px; margin-bottom: 15px; color: #2c3e50;">Movement Transaction Details</h3>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-weight: bold; display: block; margin-bottom: 10px; color: #2c3e50;">
+                                Transaction Hash:
+                            </label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text"
+                                       id="coldStorageTxHash"
+                                       placeholder="Paste the transaction hash where funds moved"
+                                       style="flex: 1; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px;">
+                                <button class="btn btn-primary" onclick="lookupColdStorageTransaction()"
+                                        style="padding: 12px 20px; font-size: 14px;">
+                                    🔍 Auto-fill
+                                </button>
+                            </div>
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                Enter the hash and click Auto-fill to populate the fields below
+                            </small>
+                        </div>
+
+                        <!-- Lookup result area -->
+                        <div id="coldStorageLookupResult" style="display: none; margin-bottom: 20px;">
+                            <div style="background: #e8f5e9; border: 1px solid #4caf50; border-radius: 6px; padding: 10px; color: #2e7d32;">
+                                ✅ Transaction found! Fields have been auto-filled.
+                            </div>
+                        </div>
+
+                        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="margin-bottom: 15px;">
+                                <label style="font-weight: bold; display: block; margin-bottom: 8px; color: #555;">
+                                    Destination Wallet Address:
+                                </label>
+                                <input type="text"
+                                       id="coldStorageDestWallet"
+                                       placeholder="Enter or auto-fill the destination wallet address"
+                                       style="width: 100%; padding: 10px; font-family: monospace; font-size: 13px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+
+                            <div style="display: flex; gap: 15px;">
+                                <div style="flex: 2;">
+                                    <label style="font-weight: bold; display: block; margin-bottom: 8px; color: #555;">
+                                        Amount Moved:
+                                    </label>
+                                    <input type="number"
+                                           id="coldStorageAmount"
+                                           placeholder="${entry.amount}"
+                                           value="${entry.amount}"
+                                           step="0.000001"
+                                           max="${entry.amount}"
+                                           style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+
+                                <div style="flex: 1;">
+                                    <label style="font-weight: bold; display: block; margin-bottom: 8px; color: #555;">
+                                        Asset/Currency:
+                                    </label>
+                                    <input type="text"
+                                           id="coldStorageAsset"
+                                           value="${entry.currency || ''}"
+                                           readonly
+                                           style="width: 100%; padding: 10px; font-size: 14px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 15px;">
+                                <label style="font-weight: bold; display: block; margin-bottom: 8px; color: #555;">
+                                    Movement Date/Time:
+                                </label>
+                                <input type="datetime-local"
+                                       id="coldStorageTimestamp"
+                                       style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+
+                            <small style="color: #666; display: block; margin-top: 10px;">
+                                These fields will be auto-filled when you lookup the transaction, or you can enter them manually
+                            </small>
+                        </div>
+
+                        <div style="display: flex; justify-content: center; gap: 10px;">
+                            <button class="btn btn-primary" onclick="confirmColdStorageMovement(${hopNumber}, ${entryId})"
+                                    style="padding: 12px 24px; font-size: 16px;">
+                                🔓 Log Movement
+                            </button>
+                            <button class="btn btn-secondary" onclick="document.getElementById('coldStorageMovementModal').remove()"
+                                    style="padding: 12px 24px; font-size: 16px;">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Lookup cold storage transaction to auto-fill fields
+        async function lookupColdStorageTransaction() {
+            const txHash = document.getElementById('coldStorageTxHash').value.trim();
+            const entry = investigation.hops.flatMap(h => h.entries).find(e => e.entryType === 'cold_storage');
+
+            if (!txHash) {
+                showNotification('❌ Please enter a transaction hash', 'error');
+                return;
+            }
+
+            if (!entry || !entry.chain) {
+                showNotification('❌ Cannot determine blockchain for transaction lookup', 'error');
+                return;
+            }
+
+            try {
+                // Use the same chain as the cold storage entry
+                const txData = await fetchTransactionData(txHash, entry.chain);
+
+                if (txData && txData.to) {
+                    // Auto-fill destination wallet
+                    document.getElementById('coldStorageDestWallet').value = txData.to;
+
+                    // Auto-fill timestamp if available
+                    if (txData.timestamp && document.getElementById('coldStorageTimestamp')) {
+                        const date = new Date(txData.timestamp);
+                        document.getElementById('coldStorageTimestamp').value = date.toISOString().slice(0, 16);
+                    }
+
+                    // Show success message
+                    const resultDiv = document.getElementById('coldStorageLookupResult');
+                    if (resultDiv) {
+                        resultDiv.style.display = 'block';
+                        setTimeout(() => {
+                            resultDiv.style.display = 'none';
+                        }, 5000);
+                    }
+
+                    showNotification('✅ Transaction details auto-filled', 'success');
+                } else {
+                    showNotification('⚠️ Transaction found but details could not be parsed', 'warning');
+                }
+            } catch (error) {
+                console.error('Transaction lookup failed:', error);
+                showNotification(`❌ Could not lookup transaction: ${error.message}`, 'error');
+            }
+        }
+
+        // Confirm cold storage movement and create new entry
+        async function confirmColdStorageMovement(hopNumber, entryId) {
+            const txHash = document.getElementById('coldStorageTxHash').value.trim();
+            const destWallet = document.getElementById('coldStorageDestWallet').value.trim();
+            const amount = document.getElementById('coldStorageAmount').value;
+            const asset = document.getElementById('coldStorageAsset').value.trim();
+            const timestamp = document.getElementById('coldStorageTimestamp').value;
+
+            if (!txHash || !destWallet || !amount || !asset) {
+                showNotification('❌ Please fill in all movement transaction details', 'error');
+                return;
+            }
+
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            const coldStorageEntry = hop.entries.find(e => e.id === entryId);
+
+            if (!coldStorageEntry) {
+                showNotification('❌ Cold storage entry not found', 'error');
+                return;
+            }
+
+            // Validate amount doesn't exceed cold storage
+            if (parseFloat(amount) > parseFloat(coldStorageEntry.amount)) {
+                showNotification(`❌ Amount cannot exceed cold storage balance (${coldStorageEntry.amount} ${asset})`, 'error');
+                return;
+            }
+
+            // Save undo state
+            saveUndoState(`Log movement from cold storage in Hop ${hop.hopNumber}`);
+
+            // Mark the cold storage entry as having movement logged
+            coldStorageEntry.coldStorageMovementLogged = true;
+
+            // Add notes to cold storage entry
+            const noteType = 'COLD STORAGE MOVEMENT';
+            const existingNotes = coldStorageEntry.notes || '';
+            coldStorageEntry.notes = existingNotes + `\n[${noteType}] Movement discovered and logged:\n` +
+                `  Movement Tx: ${txHash}\n` +
+                `  Destination: ${destWallet}\n` +
+                `  Amount: ${amount} ${asset}\n` +
+                `  Movement Date: ${timestamp || 'Not specified'}\n` +
+                `  Logged: ${new Date().toISOString()}`;
+
+            // Create new entry for the movement (in the SAME hop to maintain proper sourcing)
+            const newEntryId = hop.entries.length + 1;
+            const newEntry = {
+                id: newEntryId,
+                hopNumber: hopNumber,
+                entryType: 'trace',
+                amount: amount.toString(),
+                currency: asset,
+                sourceThreadId: coldStorageEntry.sourceThreadId, // Use same source as cold storage
+                sourceThreadInternalId: coldStorageEntry.sourceThreadInternalId,
+                multipleSourceThreads: coldStorageEntry.multipleSourceThreads || [coldStorageEntry.sourceThreadId],
+                notation: coldStorageEntry.notation, // Inherit notation
+                notes: `Created from Cold Storage Movement (H${hopNumber}-E${entryId})\nOriginal cold storage marked: ${coldStorageEntry.timestamp ? new Date(coldStorageEntry.timestamp).toISOString() : 'Unknown'}\nMovement discovered: ${new Date().toISOString()}\nTransaction: ${txHash}\n\n🔓 This entry represents funds that moved from cold storage after being marked as stored.`,
+                timestamp: timestamp || new Date().toISOString().slice(0, 16),
+                chain: coldStorageEntry.chain,
+                transactionHash: txHash,
+                toWallet: destWallet,
+                toWalletType: '', // Will be auto-classified if needed
+                fromColdStorage: true, // Flag to indicate this came from cold storage
+                coldStorageSourceEntryId: entryId // Reference back to cold storage entry
+            };
+
+            // Check for attribution/contract detection on destination
+            try {
+                const attribution = await getWalletAttribution(destWallet, coldStorageEntry.chain);
+                if (attribution && !attribution.isPersonalLabel) {
+                    newEntry.toWalletType = 'purple'; // Exchange
+                    newEntry.notes += `\n\n🟣 AUTO-CLASSIFIED: Terminal Wallet (${attribution.name || attribution.label})`;
+                }
+            } catch (err) {
+                console.log('Attribution check failed:', err);
+            }
+
+            // Check for contract detection
+            const detectedContract = detectContractType(destWallet);
+            if (detectedContract && !newEntry.toWalletType) {
+                if (detectedContract.type === 'dex') {
+                    newEntry.toWalletType = 'brown';
+                    newEntry.notes += `\n\n🔄 AUTO-CLASSIFIED: DEX (${detectedContract.name})`;
+                } else if (detectedContract.type === 'bridge') {
+                    newEntry.toWalletType = 'brown';
+                    newEntry.isBridge = true;
+                    newEntry.bridgeProvider = detectedContract;
+                    newEntry.notes += `\n\n🌉 AUTO-CLASSIFIED: Bridge (${detectedContract.name})`;
+                }
+            }
+
+            // Add new entry to hop
+            hop.entries.push(newEntry);
+
+            // Sort entries chronologically
+            sortHopEntriesChronologically(hop);
+
+            // Close modal
+            const modal = document.getElementById('coldStorageMovementModal');
+            if (modal) {
+                modal.remove();
+            }
+
+            // Rebuild thread index and save
+            buildAvailableThreadsIndex();
+            renderHops();
+            saveToStorage();
+
+            showNotification(`✅ Cold storage movement logged! Entry ${coldStorageEntry.notation} movement recorded. New thread created for ${amount} ${asset}.`, 'success', 8000);
         }
 
         function validateTransactionChronology(victim) {
