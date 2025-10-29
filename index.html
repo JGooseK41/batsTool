@@ -16827,18 +16827,18 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                                 <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link">🔗</a>
                             </div>
                         ` : `
-                            <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
-                                <button class="wallet-explorer-action-btn btn-primary" onclick="addWalletTransactionToInvestigation('${tx.hash}')" style="font-size: 13px; padding: 8px 16px; background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; border: none; border-radius: 8px; font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3);">
+                            <div style="display: flex; flex-direction: column; gap: 6px; justify-content: center; align-items: center; padding: 4px 0;">
+                                <button class="wallet-explorer-action-btn btn-primary" onclick="addWalletTransactionToInvestigation('${tx.hash}')" style="font-size: 12px; padding: 6px 12px; width: 110px; background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2);">
                                     ${getWalletActionButtonLabel()}
                                 </button>
                                 ${tx.type === 'OUT' && walletExplorerState.sourceThreadId ? `
                                     <button class="wallet-explorer-action-btn" onclick="writeOffWalletTransaction('${tx.hash}')"
-                                            style="font-size: 13px; padding: 8px 16px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 8px; font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);"
+                                            style="font-size: 12px; padding: 6px 12px; width: 110px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 1px 4px rgba(239, 68, 68, 0.2);"
                                             title="Write off this outbound transaction">
                                         📝 Write Off
                                     </button>
                                 ` : ''}
-                                <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link" style="color: #1e40af; font-size: 18px; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🔗</a>
+                                <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link" style="color: #3b82f6; font-size: 16px; transition: all 0.2s; margin-top: 2px;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🔗</a>
                             </div>
                         `}
                     </td>
