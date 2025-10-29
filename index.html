@@ -16474,6 +16474,31 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     clusterNote = `\n\n🔗 ADDRESS CLUSTERING:\nThis transaction is from a clustered address.\nCluster ID: ${cluster.id}\nCluster contains ${cluster.addresses.length} addresses (UTXO change tracking).\n${isPIFO ? 'PIFO: Dual monitoring - first movement from any clustered address will be tracked.' : 'LIBR: Balance analysis considers all clustered addresses together.'}\nCluster addresses:\n${cluster.addresses.map((addr, i) => `${i + 1}. ${addr.substring(0, 20)}...${addr.substring(addr.length - 10)}`).join('\n')}`;
                 }
 
+                // Auto-classify wallet type based on detection
+                let walletType = ''; // Default to regular wallet
+                let attributionNote = '';
+
+                // Check for contract type (DEX, bridge, mixer)
+                const detectedContract = detectContractType(selection.tx.counterparty);
+                if (detectedContract) {
+                    if (detectedContract.type === 'dex') {
+                        walletType = 'brown'; // DEX = conversion wallet
+                        attributionNote = `\n\n🔄 AUTO-CLASSIFIED: DEX (${detectedContract.name})`;
+                    } else if (detectedContract.type === 'bridge') {
+                        walletType = 'brown'; // Bridge = conversion wallet
+                        attributionNote = `\n\n🌉 AUTO-CLASSIFIED: Bridge (${detectedContract.name})`;
+                    } else if (detectedContract.type === 'mixer') {
+                        walletType = 'gray'; // Mixer = terminal
+                        attributionNote = `\n\n⚠️ AUTO-CLASSIFIED: Mixer/Obfuscator (${detectedContract.name})`;
+                    }
+                }
+
+                // Check for wallet attribution (exchange, service)
+                if (selection.tx.attribution && !selection.tx.attribution.isPersonalLabel) {
+                    walletType = 'purple'; // Exchange/service = terminal
+                    attributionNote = `\n\n🟣 AUTO-CLASSIFIED: Terminal Wallet (${selection.tx.attribution.name || selection.tx.attribution.label})`;
+                }
+
                 const entry = {
                     id: hop.entries.length + 1,
                     hopNumber: hopNumber,
@@ -16483,12 +16508,14 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     sourceThreadId: sourceThreadId,
                     multipleSourceThreads: [sourceThreadId],
                     notation: '',
-                    notes: `Created from Wallet Explorer ART Tracker\nThread: ${sourceThreadId}\nTransaction: ${selection.tx.hash}\nAmount: ${selection.amount.toLocaleString()} ${currency}\nAction: ${selection.action}\nCounterparty: ${selection.tx.counterparty || 'N/A'}${clusterNote}`,
+                    notes: `Created from Wallet Explorer ART Tracker\nThread: ${sourceThreadId}\nTransaction: ${selection.tx.hash}\nAmount: ${selection.amount.toLocaleString()} ${currency}\nAction: ${selection.action}\nCounterparty: ${selection.tx.counterparty || 'N/A'}${attributionNote}${clusterNote}`,
                     timestamp: new Date(selection.tx.timestamp).toISOString().slice(0, 16),
                     chain: walletExplorerState.blockchain,
                     transactionHash: selection.tx.hash,
                     toWallet: selection.action === 'trace' ? (selection.tx.counterparty || '') : '',
-                    toWalletType: '' // Default to regular wallet (black) - user can classify later if needed
+                    toWalletType: walletType,
+                    // Store additional metadata for bridges
+                    ...(detectedContract?.type === 'bridge' && { isBridge: true, bridgeProvider: detectedContract })
                 };
 
                 hop.entries.push(entry);
@@ -16721,6 +16748,31 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     }
 
                     contractBadge = `<div style="margin-top: 4px;"><span style="background: ${badgeColor}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">${badgeIcon} ${detectedContract.name}</span></div>`;
+                }
+
+                // Check wallet attribution asynchronously (exchanges, services, etc.)
+                if (tx.counterparty && !tx.attributionChecked) {
+                    tx.attributionChecked = true; // Prevent multiple checks
+                    getWalletAttribution(tx.counterparty, walletExplorerState.blockchain).then(attribution => {
+                        if (attribution && row) {
+                            // Store attribution on transaction for later use when committing
+                            tx.attribution = attribution;
+
+                            // Add attribution badge to the row
+                            const counterpartyCell = row.cells[4]; // Counterparty column
+                            if (counterpartyCell && !counterpartyCell.querySelector('.attribution-badge')) {
+                                let badgeHtml;
+                                if (attribution.isPersonalLabel) {
+                                    // Personal label - informational only
+                                    badgeHtml = `<div class="attribution-badge" style="margin-top: 4px;"><span style="background: #e3f2fd; border: 1px solid #2196f3; color: #1565c0; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">🏷️ ${attribution.name || attribution.label}</span></div>`;
+                                } else {
+                                    // Terminal wallet (exchange/service) - show warning
+                                    badgeHtml = `<div class="attribution-badge" style="margin-top: 4px;"><span style="background: #e1bee7; border: 1px solid #9c27b0; color: #6a1b9a; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">🟣 TERMINAL: ${attribution.name || attribution.label}</span></div>`;
+                                }
+                                counterpartyCell.innerHTML += badgeHtml;
+                            }
+                        }
+                    }).catch(err => console.log('Attribution check failed:', err));
                 }
 
                 // Add thread badge for investigation threads
