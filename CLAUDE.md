@@ -3,68 +3,73 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 21:29)
+## Latest Commit (Auto-updated: 2025-10-28 21:34)
 
-**Commit:** 3a27c7986152f66e3b8651de6976ad8c0b73ed76
+**Commit:** a19640248ac13217c74435073821171c291a4488
 **Author:** Your Name
-**Message:** UX: Enhanced wallet explorer visibility with table borders and thread highlighting
+**Message:** Fix: Only highlight incoming threads, gray out committed outgoing threads
 
-Problem 1: No visible table lines between transactions
-- Transactions blended together visually
-- Hard to distinguish between individual transaction rows
-- User requested faint table lines for clear delineation
+Problem: User reported that outgoing threads were being highlighted in blue/yellow
+- Outgoing threads are already committed (traced in previous hop)
+- They're not "threads" in the current hop - only become threads when they're incoming in next hop
+- User requested: only incoming threads should be yellow/gold, outgoing should be grayed
+- Exception: Partially allocated outgoing transactions should remain available
 
-Problem 2: Incoming thread transactions not showing yellow/gold in Hop 2+
-- Only the specifically highlighted transaction showed yellow/gold
-- Other incoming thread transactions (from previous hops) showed blue
-- Made it hard to identify which transactions were thread sources
-- User requested ALL incoming thread transactions show yellow/gold with VT notation
+Conceptual Clarification:
+A "thread" represents funds you're actively tracing in the CURRENT hop:
+- Incoming transaction = Active thread (funds arriving at wallet to trace)
+- Outgoing transaction = Already committed (traced in previous hop, will become thread in next hop)
 
-Solution 1: Added faint row borders (line 16578)
+Solution:
+
+**1. Updated Initial Highlighting (lines 16580-16588):**
+- Removed blue highlighting for outgoing threads
+- ONLY incoming threads get yellow/gold: `(isInvestigationThread && tx.type === 'IN')`
+- Outgoing threads will be handled by "used transaction" graying logic
+
+**2. Updated Thread Badges (lines 16634-16641):**
+- Only show yellow/gold badge for incoming threads
+- Removed blue badge for outgoing threads
+- Outgoing threads will show "allocated" badge from used transaction logic
+
+**3. Added Partial Allocation Detection (lines 16655-16666):**
 ```javascript
-row.style.borderBottom = '1px solid #e9ecef';
+const isPartiallyAllocated = isUsedTransaction &&
+                            usageInfo.amount &&
+                            tx.amount &&
+                            Math.abs(usageInfo.amount - tx.amount) > 0.01;
+
+const isCommittedOutgoingThread = isInvestigationThread &&
+                                  tx.type === 'OUT' &&
+                                  isUsedTransaction &&
+                                  !isPartiallyAllocated;
 ```
-- Applied to all transaction rows
-- Light gray color (#e9ecef) for subtle but clear separation
-- Improves visual scanning of transaction list
+- Checks if allocated amount is less than total transaction amount
+- Partially allocated transactions remain available (not grayed)
 
-Solution 2: Enhanced thread transaction highlighting
+**4. Updated Graying Logic (lines 16678-16690):**
+- Added `isCommittedOutgoingThread` to gray-out condition
+- Exception: `!isPartiallyAllocated` keeps partial allocations available
+- Updated tooltip: "committed in previous hop" vs "allocated"
 
-**A. Updated initial highlighting logic (lines 16580-16592):**
-- ALL incoming thread transactions get yellow/gold: `(isInvestigationThread && tx.type === 'IN')`
-- Outgoing thread transactions keep blue
-- Highlighted/current thread also gets yellow/gold
+**5. Protected Partial Allocations (line 16682):**
+- Added `&& !isPartiallyAllocated` to prevent graying
+- Partially used transactions remain clickable for further allocation
 
-**B. Updated thread badges (lines 16638-16647):**
-- Incoming threads: Yellow/gold badge with 🎯 icon
-- Outgoing threads: Blue badge with 📍 icon
-- Displays full VT notation (e.g., "V1-T1", "V1-T1-H1")
+**6. Removed Outgoing Thread Re-highlighting (lines 16687-16696):**
+- Deleted blue re-highlighting for outgoing threads
+- Only incoming threads get re-highlighted with yellow/gold
 
-**C. Protected thread transactions from graying (lines 16657-16686):**
-- Created `isThreadTransaction` flag for all incoming thread txs
-- Change outputs don't gray out thread transactions
-- Used transactions don't gray out thread transactions
-- ART selections don't override thread transactions
+Now wallet explorer correctly shows:
+✅ Incoming threads: Bright yellow/gold with 🎯 badge
+✅ Outgoing committed threads: Grayed out with "committed in previous hop" tooltip
+✅ Partially allocated: Remain available (not grayed)
+✅ Clear visual distinction between active threads and committed transactions
 
-**D. Re-applied highlighting at END (lines 16688-16703):**
-- Ensures thread highlighting takes absolute precedence
-- Overrides any opacity/cursor settings
-- Incoming threads: Yellow/gold with full opacity
-- Outgoing threads: Blue with full opacity
-
-Now wallet explorer clearly shows:
-✅ Faint borders between all transaction rows
-✅ ALL incoming thread transactions in bright yellow/gold
-✅ Outgoing thread transactions in blue
-✅ VT notation badges on all thread transactions
-✅ Thread transactions always visible (never grayed out)
-✅ Works correctly in all hops (Hop 1, 2, 3, etc.)
-
-This makes it easy to:
-- Scan through transaction list with clear visual separation
-- Immediately identify which transactions are thread sources
-- See the provenance notation for each thread
-- Follow the investigation thread through multiple hops
+This matches investigation workflow:
+- Hop 1: Victim wallet → Outgoing to Wallet A (create thread for Hop 2)
+- Hop 2: Wallet A → Incoming from Hop 1 (yellow/gold) + Outgoing to Wallet B (grayed, committed)
+- Hop 3: Wallet B → Incoming from Hop 2 (yellow/gold) + Outgoing to Wallet C (grayed, committed)
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -72,23 +77,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 125 +++++++++++++++++++++++++++++++++++--------------------------
- index.html |  50 +++++++++++++++++++------
- 2 files changed, 110 insertions(+), 65 deletions(-)
+ CLAUDE.md  | 145 ++++++++++++++++++++++++++++---------------------------------
+ index.html |  64 ++++++++++++++-------------
+ 2 files changed, 102 insertions(+), 107 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3a27c79 UX: Enhanced wallet explorer visibility with table borders and thread highlighting (0 seconds ago)
-- d3ba2f9 Fix: Complete migration of ALL remaining nested thread structures (13 minutes ago)
-- 02dbede Fix: Hop finalization crash from nested thread structure (64 minutes ago)
-- ffa9dc2 Sync CLAUDE.md (70 minutes ago)
-- a86e0ff Final CLAUDE.md update (70 minutes ago)
-- b35aa18 Update CLAUDE.md timestamp (70 minutes ago)
-- 36b3398 Update CLAUDE.md with latest commit info (71 minutes ago)
-- 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (76 minutes ago)
+- a196402 Fix: Only highlight incoming threads, gray out committed outgoing threads (1 second ago)
+- 3a27c79 UX: Enhanced wallet explorer visibility with table borders and thread highlighting (5 minutes ago)
+- d3ba2f9 Fix: Complete migration of ALL remaining nested thread structures (18 minutes ago)
+- 02dbede Fix: Hop finalization crash from nested thread structure (69 minutes ago)
+- ffa9dc2 Sync CLAUDE.md (75 minutes ago)
+- a86e0ff Final CLAUDE.md update (75 minutes ago)
+- b35aa18 Update CLAUDE.md timestamp (75 minutes ago)
+- 36b3398 Update CLAUDE.md with latest commit info (75 minutes ago)
+- 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (81 minutes ago)
 - 5332e67 Fix: Wallet explorer crash from nested thread structure in ART tracking (2 hours ago)
-- a0e9406 Fix: Transaction list not displaying when asset selected in wallet explorer (2 hours ago)
 
 ## Key Features
 
