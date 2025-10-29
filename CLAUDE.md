@@ -3,80 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 20:13)
+## Latest Commit (Auto-updated: 2025-10-28 20:18)
 
-**Commit:** 6c99cd43ebdf3af35890c2a1b5e4e1ee1352ef80
+**Commit:** 36b33984fd116c790f118dfc86a150edf6b31680
 **Author:** Your Name
-**Message:** Feature: Add resizable sidebar to wallet explorer with drag-to-resize
-
-Problem: User reported issues with wallet explorer sidebar:
-- Collapse button obstructed (positioned outside sidebar at right: -15px)
-- Transaction data not fully visible (sidebar too wide at 350px default)
-- No way to adjust sidebar width (fixed size, only collapse/expand)
-
-Solution: Implemented fully resizable split-screen layout
-
-1. **Improved Default Sizing** (lines 2767):
-   - Reduced default width: 350px → 320px (more screen space for transactions)
-   - Flexible min-width: 350px → 200px (can collapse narrower)
-   - Added max-width: 600px (prevents sidebar from dominating screen)
-   - Moved collapse button: right -15px → right 10px (inside sidebar, always visible)
-   - Removed margin-right (resizer bar provides spacing)
-
-2. **Resizer Bar** (lines 2815-2821):
-   - 6px wide drag handle between sidebar and main panel
-   - Visual feedback: gray → blue on hover
-   - Grip indicator (4px vertical bar) shows it's draggable
-   - col-resize cursor indicates resizability
-
-3. **Drag-to-Resize Functionality** (lines 15089-15134):
-   - initializeWalletExplorerResizer() handles mouse events
-   - Mousedown on resizer starts resize operation
-   - Mousemove updates sidebar width dynamically
-   - Enforces 200px-600px constraints
-   - Prevents text selection during drag
-   - Mouseup completes resize
-
-4. **Smart Collapse/Expand** (lines 15056-15087):
-   - Saves current width before collapsing (data-last-width attribute)
-   - Restores saved width when expanding (or 320px default)
-   - Hides/shows resizer bar when collapsed/expanded
-   - Smooth transition animation (removed after completion to allow resize)
-
-5. **Initialization** (line 15038):
-   - Called when wallet explorer opens
-   - Attaches event listeners to resizer bar
-
-Now users can:
-✅ Drag the resizer bar to adjust sidebar width (200px-600px)
-✅ Collapse to 40px for maximum transaction viewing space
-✅ Expand to last width or default 320px
-✅ See collapse button without obstruction
-✅ View full transaction data with flexible layout
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md  | 80 ++++++++++++++++++++++++++++++++++++-----------------------
- index.html | 83 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 126 insertions(+), 37 deletions(-)
+ CLAUDE.md | 117 ++++++++++++++++++++++++++++++++------------------------------
+ 1 file changed, 61 insertions(+), 56 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (1 second ago)
-- 5332e67 Fix: Wallet explorer crash from nested thread structure in ART tracking (21 minutes ago)
-- a0e9406 Fix: Transaction list not displaying when asset selected in wallet explorer (36 minutes ago)
-- e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (44 minutes ago)
-- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (48 minutes ago)
-- b2d980b Fix: Update migration/consolidation functions for flat structure (63 minutes ago)
-- 6188a2a Fix: Complete thread structure migration - all remaining functions (68 minutes ago)
-- 5402485 Fix: Update getThreadChainHistory for flat thread structure (80 minutes ago)
-- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (81 minutes ago)
-- 831eaf8 Fix: Update getMaxAssignableAmount for flat thread structure (2 hours ago)
+- 36b3398 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (6 minutes ago)
+- 5332e67 Fix: Wallet explorer crash from nested thread structure in ART tracking (27 minutes ago)
+- a0e9406 Fix: Transaction list not displaying when asset selected in wallet explorer (42 minutes ago)
+- e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (50 minutes ago)
+- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (53 minutes ago)
+- b2d980b Fix: Update migration/consolidation functions for flat structure (68 minutes ago)
+- 6188a2a Fix: Complete thread structure migration - all remaining functions (73 minutes ago)
+- 5402485 Fix: Update getThreadChainHistory for flat thread structure (85 minutes ago)
+- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (87 minutes ago)
 
 ## Key Features
 
