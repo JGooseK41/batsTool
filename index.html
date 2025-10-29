@@ -16871,16 +16871,82 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                             </div>
                         ` : `
                             <div style="display: flex; flex-direction: column; gap: 6px; justify-content: center; align-items: center; padding: 4px 0;">
-                                <button class="wallet-explorer-action-btn btn-primary" onclick="addWalletTransactionToInvestigation('${tx.hash}')" style="font-size: 12px; padding: 6px 12px; width: 110px; background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2);">
-                                    ${getWalletActionButtonLabel()}
-                                </button>
-                                ${tx.type === 'OUT' && walletExplorerState.sourceThreadId ? `
-                                    <button class="wallet-explorer-action-btn" onclick="writeOffWalletTransaction('${tx.hash}')"
-                                            style="font-size: 12px; padding: 6px 12px; width: 110px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 1px 4px rgba(239, 68, 68, 0.2);"
-                                            title="Write off this outbound transaction">
-                                        📝 Write Off
-                                    </button>
-                                ` : ''}
+                                ${(() => {
+                                    // Check if button should be disabled in ART mode
+                                    let isDisabled = false;
+                                    let disabledTitle = '';
+                                    let buttonStyle = 'font-size: 12px; padding: 6px 12px; width: 110px; background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2);';
+
+                                    if (walletExplorerState.artMode) {
+                                        // Check if already staged
+                                        if (walletExplorerState.artSelections.has(tx.hash)) {
+                                            isDisabled = true;
+                                            disabledTitle = 'Already staged for allocation';
+                                            buttonStyle = 'font-size: 12px; padding: 6px 12px; width: 110px; background: #9ca3af; color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; opacity: 0.5; cursor: not-allowed;';
+                                        } else {
+                                            // Check if would exceed ART
+                                            const available = walletExplorerState.artAvailable;
+                                            const selections = walletExplorerState.artSelections;
+                                            let totalSelected = 0;
+                                            for (const selection of selections.values()) {
+                                                totalSelected += selection.amount;
+                                            }
+                                            const remaining = available - totalSelected;
+
+                                            if (tx.amount > remaining + 0.01) {
+                                                isDisabled = true;
+                                                disabledTitle = 'Insufficient thread value remaining (' + remaining.toLocaleString() + ' ' + walletExplorerState.artCurrency + ')';
+                                                buttonStyle = 'font-size: 12px; padding: 6px 12px; width: 110px; background: #9ca3af; color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; opacity: 0.5; cursor: not-allowed;';
+                                            }
+                                        }
+                                    }
+
+                                    return '<button class="wallet-explorer-action-btn btn-primary" ' +
+                                           'onclick="addWalletTransactionToInvestigation(\'' + tx.hash + '\')" ' +
+                                           (isDisabled ? 'disabled ' : '') +
+                                           'style="' + buttonStyle + '" ' +
+                                           (disabledTitle ? 'title="' + disabledTitle + '"' : '') + '>' +
+                                           getWalletActionButtonLabel() +
+                                           '</button>';
+                                })()}
+                                ${tx.type === 'OUT' && walletExplorerState.sourceThreadId ? (() => {
+                                    // Check if write-off button should be disabled in ART mode
+                                    let isDisabled = false;
+                                    let disabledTitle = 'Write off this outbound transaction';
+                                    let buttonStyle = 'font-size: 12px; padding: 6px 12px; width: 110px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 1px 4px rgba(239, 68, 68, 0.2);';
+
+                                    if (walletExplorerState.artMode) {
+                                        // Check if already staged
+                                        if (walletExplorerState.artSelections.has(tx.hash)) {
+                                            isDisabled = true;
+                                            disabledTitle = 'Already staged for allocation';
+                                            buttonStyle = 'font-size: 12px; padding: 6px 12px; width: 110px; background: #9ca3af; color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; opacity: 0.5; cursor: not-allowed;';
+                                        } else {
+                                            // Check if would exceed ART
+                                            const available = walletExplorerState.artAvailable;
+                                            const selections = walletExplorerState.artSelections;
+                                            let totalSelected = 0;
+                                            for (const selection of selections.values()) {
+                                                totalSelected += selection.amount;
+                                            }
+                                            const remaining = available - totalSelected;
+
+                                            if (tx.amount > remaining + 0.01) {
+                                                isDisabled = true;
+                                                disabledTitle = 'Insufficient thread value remaining (' + remaining.toLocaleString() + ' ' + walletExplorerState.artCurrency + ')';
+                                                buttonStyle = 'font-size: 12px; padding: 6px 12px; width: 110px; background: #9ca3af; color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; opacity: 0.5; cursor: not-allowed;';
+                                            }
+                                        }
+                                    }
+
+                                    return '<button class="wallet-explorer-action-btn" ' +
+                                           'onclick="writeOffWalletTransaction(\'' + tx.hash + '\')" ' +
+                                           (isDisabled ? 'disabled ' : '') +
+                                           'style="' + buttonStyle + '" ' +
+                                           'title="' + disabledTitle + '">' +
+                                           '📝 Write Off' +
+                                           '</button>';
+                                })() : ''}
                                 <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link" style="color: #3b82f6; font-size: 16px; transition: all 0.2s; margin-top: 2px;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🔗</a>
                             </div>
                         `}
@@ -17012,6 +17078,59 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
         // Add transaction to investigation
         async function addWalletTransactionToInvestigation(txHash) {
             try {
+                // Find the transaction data from wallet explorer state
+                const tx = walletExplorerState.allTransactions.find(t => t.hash === txHash);
+                if (!tx) {
+                    throw new Error('Transaction data not found in wallet history');
+                }
+
+                // ART MODE: Stage transaction instead of immediately creating entry
+                if (walletExplorerState.artMode) {
+                    // Check if already selected
+                    if (walletExplorerState.artSelections.has(txHash)) {
+                        alert('⚠️ This transaction is already staged for allocation.');
+                        return;
+                    }
+
+                    // Check if would exceed available ART
+                    const available = walletExplorerState.artAvailable;
+                    const selections = walletExplorerState.artSelections;
+                    let totalSelected = 0;
+                    for (const selection of selections.values()) {
+                        totalSelected += selection.amount;
+                    }
+                    const remaining = available - totalSelected;
+
+                    if (tx.amount > remaining + 0.01) {
+                        alert(
+                            `⚠️ INSUFFICIENT THREAD VALUE\n\n` +
+                            `Transaction amount: ${tx.amount.toLocaleString()} ${tx.asset}\n` +
+                            `Remaining available: ${remaining.toLocaleString()} ${walletExplorerState.artCurrency}\n\n` +
+                            `You cannot allocate more than the available thread value.\n\n` +
+                            `Either:\n` +
+                            `• Remove some staged transactions first\n` +
+                            `• Or commit what you have and handle this transaction separately`
+                        );
+                        return;
+                    }
+
+                    // Add to ART selections
+                    walletExplorerState.artSelections.set(txHash, {
+                        tx: tx,
+                        amount: tx.amount,
+                        action: 'trace'
+                    });
+
+                    console.log(`✅ Staged transaction ${txHash} (${tx.amount} ${tx.asset}) for allocation`);
+
+                    // Update display
+                    updateARTDisplay();
+                    renderTransactionTable(); // Re-render to update button states
+
+                    return; // Don't proceed with normal entry creation
+                }
+
+                // NORMAL MODE (non-ART): Original flow
                 // Check for duplicate transaction first
                 const duplicates = findDuplicateTransaction(txHash);
                 if (duplicates && duplicates.length > 0) {
@@ -17062,12 +17181,6 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         return;
                     }
                     // User clicked Cancel, continue to add just this one
-                }
-
-                // Find the transaction data from wallet explorer state
-                const tx = walletExplorerState.allTransactions.find(t => t.hash === txHash);
-                if (!tx) {
-                    throw new Error('Transaction data not found in wallet history');
                 }
 
                 const blockchain = walletExplorerState.blockchain;
@@ -17681,6 +17794,52 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 const tx = walletExplorerState.allTransactions.find(t => t.hash === txHash);
                 if (!tx) {
                     throw new Error('Transaction data not found in wallet history');
+                }
+
+                // ART MODE: Stage write-off instead of immediately creating entry
+                if (walletExplorerState.artMode) {
+                    // Check if already selected
+                    if (walletExplorerState.artSelections.has(txHash)) {
+                        alert('⚠️ This transaction is already staged for allocation.');
+                        return;
+                    }
+
+                    // Check if would exceed available ART
+                    const available = walletExplorerState.artAvailable;
+                    const selections = walletExplorerState.artSelections;
+                    let totalSelected = 0;
+                    for (const selection of selections.values()) {
+                        totalSelected += selection.amount;
+                    }
+                    const remaining = available - totalSelected;
+
+                    if (tx.amount > remaining + 0.01) {
+                        alert(
+                            `⚠️ INSUFFICIENT THREAD VALUE\n\n` +
+                            `Transaction amount: ${tx.amount.toLocaleString()} ${tx.asset}\n` +
+                            `Remaining available: ${remaining.toLocaleString()} ${walletExplorerState.artCurrency}\n\n` +
+                            `You cannot write off more than the available thread value.\n\n` +
+                            `Either:\n` +
+                            `• Remove some staged transactions first\n` +
+                            `• Or commit what you have and handle this transaction separately`
+                        );
+                        return;
+                    }
+
+                    // Add to ART selections as write-off
+                    walletExplorerState.artSelections.set(txHash, {
+                        tx: tx,
+                        amount: tx.amount,
+                        action: 'writeoff'
+                    });
+
+                    console.log(`✅ Staged write-off ${txHash} (${tx.amount} ${tx.asset}) for allocation`);
+
+                    // Update display
+                    updateARTDisplay();
+                    renderTransactionTable(); // Re-render to update button states
+
+                    return; // Don't proceed with normal entry creation
                 }
 
                 // Get the hop
