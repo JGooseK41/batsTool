@@ -2840,10 +2840,10 @@
 
                 <!-- Resizer Bar -->
                 <div id="walletExplorerResizer"
-                     style="width: 6px; background: #ddd; cursor: col-resize; position: relative; user-select: none; transition: background 0.2s;"
+                     style="width: 6px; background: #ddd; cursor: col-resize; position: sticky; top: 0; align-self: stretch; user-select: none; transition: background 0.2s; z-index: 10;"
                      onmouseenter="this.style.background='#3498db'"
                      onmouseleave="this.style.background='#ddd'">
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 4px; height: 40px; background: #999; border-radius: 2px;"></div>
+                    <div style="position: sticky; top: 50vh; left: 50%; transform: translate(-50%, -50%); width: 4px; height: 40px; background: #999; border-radius: 2px;"></div>
                 </div>
 
                 <!-- Right Main Panel -->
@@ -15617,22 +15617,65 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             walletExplorerState.filteredTransactions = sortedTxs;
             walletExplorerState.balanceMap = balanceMap;
 
-            // Auto-navigate to page containing highlighted transaction
+            // Auto-navigate to page containing highlighted transaction or first unallocated thread
+            let targetPageIndex = -1;
+
             if (walletExplorerState.highlightTxHash) {
                 const highlightIndex = sortedTxs.findIndex(tx =>
                     tx.hash.toLowerCase() === walletExplorerState.highlightTxHash.toLowerCase()
                 );
 
                 if (highlightIndex !== -1) {
-                    // Calculate which page the transaction is on
-                    const pageNumber = Math.floor(highlightIndex / walletExplorerState.itemsPerPage) + 1;
-                    walletExplorerState.currentPage = pageNumber;
-                    console.log(`📄 Auto-navigated to page ${pageNumber} for highlighted transaction (index ${highlightIndex})`);
-                } else {
-                    walletExplorerState.currentPage = 1;
+                    // Check if this transaction is already allocated
+                    const usageInfo = isTransactionUsedInInvestigation(sortedTxs[highlightIndex].hash);
+
+                    if (!usageInfo.isUsed) {
+                        // Highlighted transaction found and unallocated - use it
+                        targetPageIndex = highlightIndex;
+                        console.log(`📄 Auto-navigating to highlighted transaction at index ${highlightIndex}`);
+                    } else {
+                        console.log(`⚠️ Highlighted transaction is already allocated, searching for first unallocated thread...`);
+                    }
                 }
+            }
+
+            // If highlighted transaction not found or already allocated, find first unallocated incoming thread
+            if (targetPageIndex === -1) {
+                // Get all investigation threads for this wallet
+                const investigationThreads = findInvestigationThreadsForWallet(walletExplorerState.address);
+
+                if (investigationThreads.length > 0) {
+                    // Find first unallocated incoming thread transaction
+                    for (let i = 0; i < sortedTxs.length; i++) {
+                        const tx = sortedTxs[i];
+
+                        // Check if this is an incoming thread transaction
+                        const matchedThread = investigationThreads.find(thread =>
+                            thread.txHash === tx.hash.toLowerCase() && tx.type === 'IN'
+                        );
+
+                        if (matchedThread) {
+                            // Check if it's unallocated
+                            const usageInfo = isTransactionUsedInInvestigation(tx.hash);
+
+                            if (!usageInfo.isUsed) {
+                                targetPageIndex = i;
+                                console.log(`📄 Found first unallocated thread transaction: ${matchedThread.threadId} at index ${i}`);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Set the page based on target index
+            if (targetPageIndex !== -1) {
+                const pageNumber = Math.floor(targetPageIndex / walletExplorerState.itemsPerPage) + 1;
+                walletExplorerState.currentPage = pageNumber;
+                console.log(`📄 Auto-navigated to page ${pageNumber} (transaction index ${targetPageIndex})`);
             } else {
                 walletExplorerState.currentPage = 1;
+                console.log(`📄 No unallocated threads found, defaulting to page 1`);
             }
 
             // Display transactions
