@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-28 21:36)
 
-**Commit:** f4c77150a2f7c6b48d0a7c8252e551dfa29c628e
+**Commit:** 96f0858df78b7ebe31fbe109d2140de9d07508bc
 **Author:** Your Name
-**Message:** Sync CLAUDE.md
+**Message:** Final CLAUDE.md sync
 
 ### Changed Files:
 ```
- CLAUDE.md | 97 ++++++++++-----------------------------------------------------
- 1 file changed, 15 insertions(+), 82 deletions(-)
+ CLAUDE.md | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 ```
 
 ## Recent Commits History
 
-- f4c7715 Sync CLAUDE.md (0 seconds ago)
-- e4304a3 Update CLAUDE.md with latest commit info (15 seconds ago)
-- a196402 Fix: Only highlight incoming threads, gray out committed outgoing threads (2 minutes ago)
+- 96f0858 Final CLAUDE.md sync (0 seconds ago)
+- f4c7715 Sync CLAUDE.md (6 seconds ago)
+- e4304a3 Update CLAUDE.md with latest commit info (21 seconds ago)
+- a196402 Fix: Only highlight incoming threads, gray out committed outgoing threads (3 minutes ago)
 - 3a27c79 UX: Enhanced wallet explorer visibility with table borders and thread highlighting (7 minutes ago)
 - d3ba2f9 Fix: Complete migration of ALL remaining nested thread structures (20 minutes ago)
 - 02dbede Fix: Hop finalization crash from nested thread structure (71 minutes ago)
 - ffa9dc2 Sync CLAUDE.md (77 minutes ago)
 - a86e0ff Final CLAUDE.md update (78 minutes ago)
 - b35aa18 Update CLAUDE.md timestamp (78 minutes ago)
-- 36b3398 Update CLAUDE.md with latest commit info (78 minutes ago)
 
 ## Key Features
 
