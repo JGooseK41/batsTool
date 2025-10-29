@@ -24608,23 +24608,23 @@ function finalizeHop(hopNumber) {
     // CRITICAL: Check for unallocated partial trace outputs before validation
     const availableThreads = investigation.availableThreads || {};
     const partialTraceOutputs = [];
-    for (const currency in availableThreads) {
-        for (const threadId in availableThreads[currency]) {
-            const thread = availableThreads[currency][threadId];
+    // FLAT STRUCTURE: Iterate directly through thread IDs
+    for (const internalId in availableThreads) {
+        const thread = availableThreads[internalId];
+        if (!thread) continue; // Skip null entries
 
-            // Check for partial trace bridge/swap outputs that haven't been allocated
-            if ((thread.sourceType === 'bridge_output' || thread.sourceType === 'swap_output') &&
-                thread.wasPartialTrace &&
-                thread.availableAmount > 0.01 &&
-                thread.hopLevel === hopNumber) {
+        // Check for partial trace bridge/swap outputs that haven't been allocated
+        if ((thread.sourceType === 'bridge_output' || thread.sourceType === 'swap_output') &&
+            thread.wasPartialTrace &&
+            thread.availableAmount > 0.01 &&
+            thread.hopLevel === hopNumber) {
 
-                partialTraceOutputs.push({
-                    notation: thread.notation,
-                    amount: thread.availableAmount,
-                    currency: currency,
-                    ownership: (thread.proportionalMultiplier * 100).toFixed(2)
-                });
-            }
+            partialTraceOutputs.push({
+                notation: thread.notation,
+                amount: thread.availableAmount,
+                currency: thread.currency,
+                ownership: (thread.proportionalMultiplier * 100).toFixed(2)
+            });
         }
     }
 
@@ -24640,22 +24640,22 @@ function finalizeHop(hopNumber) {
 
     // Also check for any unallocated bridge/swap outputs (not just partial traces)
     const unallocatedConversionOutputs = [];
-    for (const currency in availableThreads) {
-        for (const threadId in availableThreads[currency]) {
-            const thread = availableThreads[currency][threadId];
+    // FLAT STRUCTURE: Iterate directly through thread IDs
+    for (const internalId in availableThreads) {
+        const thread = availableThreads[internalId];
+        if (!thread) continue; // Skip null entries
 
-            // Check for ANY bridge/swap outputs that haven't been allocated
-            if ((thread.sourceType === 'bridge_output' || thread.sourceType === 'swap_output') &&
-                thread.availableAmount > 0.01 &&
-                thread.hopLevel === hopNumber &&
-                !thread.wasPartialTrace) { // Already handled partial traces above
+        // Check for ANY bridge/swap outputs that haven't been allocated
+        if ((thread.sourceType === 'bridge_output' || thread.sourceType === 'swap_output') &&
+            thread.availableAmount > 0.01 &&
+            thread.hopLevel === hopNumber &&
+            !thread.wasPartialTrace) { // Already handled partial traces above
 
-                unallocatedConversionOutputs.push({
-                    notation: thread.notation,
-                    amount: thread.availableAmount,
-                    currency: currency
-                });
-            }
+            unallocatedConversionOutputs.push({
+                notation: thread.notation,
+                amount: thread.availableAmount,
+                currency: thread.currency
+            });
         }
     }
 

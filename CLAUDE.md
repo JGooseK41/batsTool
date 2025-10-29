@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-28 20:19)
 
-**Commit:** a86e0ffb04b418b5979f343ea608e445e48b5ebf
+**Commit:** ffa9dc2bb20e75feeb2138b778f445ce35b697b7
 **Author:** Your Name
-**Message:** Final CLAUDE.md update
+**Message:** Sync CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
+ CLAUDE.md | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a86e0ff Final CLAUDE.md update (0 seconds ago)
-- b35aa18 Update CLAUDE.md timestamp (11 seconds ago)
-- 36b3398 Update CLAUDE.md with latest commit info (22 seconds ago)
+- ffa9dc2 Sync CLAUDE.md (0 seconds ago)
+- a86e0ff Final CLAUDE.md update (8 seconds ago)
+- b35aa18 Update CLAUDE.md timestamp (19 seconds ago)
+- 36b3398 Update CLAUDE.md with latest commit info (30 seconds ago)
 - 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (6 minutes ago)
 - 5332e67 Fix: Wallet explorer crash from nested thread structure in ART tracking (27 minutes ago)
 - a0e9406 Fix: Transaction list not displaying when asset selected in wallet explorer (42 minutes ago)
 - e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (50 minutes ago)
 - a1346c4 Fix: Wallet explorer split-screen visibility on initial load (54 minutes ago)
 - b2d980b Fix: Update migration/consolidation functions for flat structure (69 minutes ago)
-- 6188a2a Fix: Complete thread structure migration - all remaining functions (74 minutes ago)
 
 ## Key Features
 
