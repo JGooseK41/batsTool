@@ -3,30 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 20:18)
+## Latest Commit (Auto-updated: 2025-10-28 20:19)
 
-**Commit:** 36b33984fd116c790f118dfc86a150edf6b31680
+**Commit:** b35aa180622d17022f929029d008f73af5de9333
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Update CLAUDE.md timestamp
 
 ### Changed Files:
 ```
- CLAUDE.md | 117 ++++++++++++++++++++++++++++++++------------------------------
- 1 file changed, 61 insertions(+), 56 deletions(-)
+ CLAUDE.md | 80 ++++++++++++---------------------------------------------------
+ 1 file changed, 15 insertions(+), 65 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 36b3398 Update CLAUDE.md with latest commit info (0 seconds ago)
+- b35aa18 Update CLAUDE.md timestamp (0 seconds ago)
+- 36b3398 Update CLAUDE.md with latest commit info (11 seconds ago)
 - 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (6 minutes ago)
 - 5332e67 Fix: Wallet explorer crash from nested thread structure in ART tracking (27 minutes ago)
 - a0e9406 Fix: Transaction list not displaying when asset selected in wallet explorer (42 minutes ago)
 - e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (50 minutes ago)
-- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (53 minutes ago)
-- b2d980b Fix: Update migration/consolidation functions for flat structure (68 minutes ago)
-- 6188a2a Fix: Complete thread structure migration - all remaining functions (73 minutes ago)
+- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (54 minutes ago)
+- b2d980b Fix: Update migration/consolidation functions for flat structure (69 minutes ago)
+- 6188a2a Fix: Complete thread structure migration - all remaining functions (74 minutes ago)
 - 5402485 Fix: Update getThreadChainHistory for flat thread structure (85 minutes ago)
-- e6ee625 Fix: Update updateThreadAvailabilityFromSwap for flat thread structure (87 minutes ago)
 
 ## Key Features
 
