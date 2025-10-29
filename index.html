@@ -1190,7 +1190,7 @@
 }
 
 .wallet-explorer-external-link:hover {
-    color: #3498db;
+    color: #1e40af;
 }
 
 /* Modern Graph Visualization Styles */
@@ -3041,17 +3041,17 @@
                 </div>
 
                 <!-- Bulk Action Bar -->
-                <div id="walletExplorerBulkActions" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 20px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3); backdrop-filter: blur(10px);">
+                <div id="walletExplorerBulkActions" style="display: none; background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border: none; padding: 20px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(30, 64, 175, 0.3); backdrop-filter: blur(10px);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 10px #4ade80; animation: pulse 2s infinite;"></div>
+                            <div style="width: 8px; height: 8px; background: #fbbf24; border-radius: 50%; box-shadow: 0 0 10px #fbbf24; animation: pulse 2s infinite;"></div>
                             <strong id="walletExplorerSelectionCount" style="font-size: 16px; color: white; font-weight: 600; letter-spacing: 0.5px;">0 transactions selected</strong>
                         </div>
                         <div style="display: flex; gap: 12px;">
                             <button onclick="clearTransactionSelection()" style="padding: 10px 20px; background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.3s; backdrop-filter: blur(10px);" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
                                 ✕ Clear
                             </button>
-                            <button onclick="addSelectedTransactionsToInvestigation()" style="background: white; color: #667eea; padding: 12px 28px; font-weight: 700; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: all 0.3s; letter-spacing: 0.5px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.2)'">
+                            <button onclick="addSelectedTransactionsToInvestigation()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 12px 28px; font-weight: 700; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); transition: all 0.3s; letter-spacing: 0.5px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(245, 158, 11, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(245, 158, 11, 0.3)'">
                                 ➕ Add to Investigation
                             </button>
                         </div>
@@ -3066,10 +3066,10 @@
                                 <th style="padding: 16px 12px; text-align: center; font-weight: 600; width: 40px; color: #475569; font-size: 14px;">
                                     <input type="checkbox" id="walletExplorerSelectAll" onchange="toggleSelectAllTransactions()"
                                            title="Select/Deselect all transactions on this page"
-                                           style="width: 18px; height: 18px; cursor: pointer; accent-color: #667eea;">
+                                           style="width: 18px; height: 18px; cursor: pointer; accent-color: #1e40af;">
                                 </th>
-                                <th onclick="toggleTransactionSortOrder()" style="padding: 16px 12px; text-align: left; font-weight: 600; cursor: pointer; user-select: none; color: #475569; font-size: 14px; transition: color 0.2s;" title="Click to sort" onmouseover="this.style.color='#667eea'" onmouseout="this.style.color='#475569'">
-                                    Date/Time (UTC) <span id="walletExplorerSortIndicator" style="color: #667eea;">▼</span>
+                                <th onclick="toggleTransactionSortOrder()" style="padding: 16px 12px; text-align: left; font-weight: 600; cursor: pointer; user-select: none; color: #475569; font-size: 14px; transition: color 0.2s;" title="Click to sort" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='#475569'">
+                                    Date/Time (UTC) <span id="walletExplorerSortIndicator" style="color: #1e40af;">▼</span>
                                 </th>
                                 <th style="padding: 16px 12px; text-align: left; font-weight: 600; color: #475569; font-size: 14px;">Type</th>
                                 <th style="padding: 16px 12px; text-align: right; font-weight: 600; color: #475569; font-size: 14px;">Amount</th>
@@ -3087,18 +3087,18 @@
                 <!-- Pagination -->
                 <div id="walletExplorerPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 16px 20px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                     <button id="walletExplorerPrevPage" onclick="previousWalletPage()" disabled
-                            style="padding: 10px 20px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s; box-shadow: 0 2px 6px rgba(102, 126, 234, 0.1);"
-                            onmouseover="if(!this.disabled) { this.style.background='#667eea'; this.style.color='white'; this.style.transform='translateX(-2px)'; }"
-                            onmouseout="if(!this.disabled) { this.style.background='white'; this.style.color='#667eea'; this.style.transform='translateX(0)'; }">
+                            style="padding: 10px 20px; background: white; color: #1e40af; border: 2px solid #1e40af; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s; box-shadow: 0 2px 6px rgba(30, 64, 175, 0.1);"
+                            onmouseover="if(!this.disabled) { this.style.background='#1e40af'; this.style.color='white'; this.style.transform='translateX(-2px)'; }"
+                            onmouseout="if(!this.disabled) { this.style.background='white'; this.style.color='#1e40af'; this.style.transform='translateX(0)'; }">
                         ← Previous
                     </button>
                     <div id="walletExplorerPageInfo" style="font-weight: 600; color: #475569; font-size: 14px; letter-spacing: 0.5px;">
                         Page 1 of 1
                     </div>
                     <button id="walletExplorerNextPage" onclick="nextWalletPage()" disabled
-                            style="padding: 10px 20px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s; box-shadow: 0 2px 6px rgba(102, 126, 234, 0.1);"
-                            onmouseover="if(!this.disabled) { this.style.background='#667eea'; this.style.color='white'; this.style.transform='translateX(2px)'; }"
-                            onmouseout="if(!this.disabled) { this.style.background='white'; this.style.color='#667eea'; this.style.transform='translateX(0)'; }">
+                            style="padding: 10px 20px; background: white; color: #1e40af; border: 2px solid #1e40af; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s; box-shadow: 0 2px 6px rgba(30, 64, 175, 0.1);"
+                            onmouseover="if(!this.disabled) { this.style.background='#1e40af'; this.style.color='white'; this.style.transform='translateX(2px)'; }"
+                            onmouseout="if(!this.disabled) { this.style.background='white'; this.style.color='#1e40af'; this.style.transform='translateX(0)'; }">
                         Next →
                     </button>
                 </div>
@@ -16828,7 +16828,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                             </div>
                         ` : `
                             <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
-                                <button class="wallet-explorer-action-btn btn-primary" onclick="addWalletTransactionToInvestigation('${tx.hash}')" style="font-size: 13px; padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                                <button class="wallet-explorer-action-btn btn-primary" onclick="addWalletTransactionToInvestigation('${tx.hash}')" style="font-size: 13px; padding: 8px 16px; background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; border: none; border-radius: 8px; font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3);">
                                     ${getWalletActionButtonLabel()}
                                 </button>
                                 ${tx.type === 'OUT' && walletExplorerState.sourceThreadId ? `
@@ -16838,7 +16838,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                                         📝 Write Off
                                     </button>
                                 ` : ''}
-                                <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link" style="color: #667eea; font-size: 18px; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🔗</a>
+                                <a href="${tx.explorerUrl}" target="_blank" class="wallet-explorer-external-link" style="color: #1e40af; font-size: 18px; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🔗</a>
                             </div>
                         `}
                     </td>
