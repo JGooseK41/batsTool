@@ -16488,7 +16488,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     chain: walletExplorerState.blockchain,
                     transactionHash: selection.tx.hash,
                     toWallet: selection.action === 'trace' ? (selection.tx.counterparty || '') : '',
-                    toWalletType: selection.action === 'trace' ? 'blue' : 'gray'
+                    toWalletType: '' // Default to regular wallet (black) - user can classify later if needed
                 };
 
                 hop.entries.push(entry);
