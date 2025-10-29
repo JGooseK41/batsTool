@@ -16510,8 +16510,9 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         walletType = 'brown'; // Bridge = conversion wallet
                         attributionNote = `\n\n🌉 AUTO-CLASSIFIED: Bridge (${detectedContract.name})`;
                     } else if (detectedContract.type === 'mixer') {
-                        walletType = 'gray'; // Mixer = terminal
-                        attributionNote = `\n\n⚠️ AUTO-CLASSIFIED: Mixer/Obfuscator (${detectedContract.name})`;
+                        // DO NOT auto-classify as terminal - let investigator decide
+                        walletType = ''; // Regular entry - user can write off manually
+                        attributionNote = `\n\n⚠️ MIXER DETECTED: ${detectedContract.name}\nInvestigator should decide whether to:\n- Continue tracing (if resources available)\n- Write off as uneconomical to trace`;
                     }
                 }
 
