@@ -3,97 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 21:34)
+## Latest Commit (Auto-updated: 2025-10-28 21:36)
 
-**Commit:** a19640248ac13217c74435073821171c291a4488
+**Commit:** e4304a363de9935ca7b1dd09ffb78ad0afc81e21
 **Author:** Your Name
-**Message:** Fix: Only highlight incoming threads, gray out committed outgoing threads
-
-Problem: User reported that outgoing threads were being highlighted in blue/yellow
-- Outgoing threads are already committed (traced in previous hop)
-- They're not "threads" in the current hop - only become threads when they're incoming in next hop
-- User requested: only incoming threads should be yellow/gold, outgoing should be grayed
-- Exception: Partially allocated outgoing transactions should remain available
-
-Conceptual Clarification:
-A "thread" represents funds you're actively tracing in the CURRENT hop:
-- Incoming transaction = Active thread (funds arriving at wallet to trace)
-- Outgoing transaction = Already committed (traced in previous hop, will become thread in next hop)
-
-Solution:
-
-**1. Updated Initial Highlighting (lines 16580-16588):**
-- Removed blue highlighting for outgoing threads
-- ONLY incoming threads get yellow/gold: `(isInvestigationThread && tx.type === 'IN')`
-- Outgoing threads will be handled by "used transaction" graying logic
-
-**2. Updated Thread Badges (lines 16634-16641):**
-- Only show yellow/gold badge for incoming threads
-- Removed blue badge for outgoing threads
-- Outgoing threads will show "allocated" badge from used transaction logic
-
-**3. Added Partial Allocation Detection (lines 16655-16666):**
-```javascript
-const isPartiallyAllocated = isUsedTransaction &&
-                            usageInfo.amount &&
-                            tx.amount &&
-                            Math.abs(usageInfo.amount - tx.amount) > 0.01;
-
-const isCommittedOutgoingThread = isInvestigationThread &&
-                                  tx.type === 'OUT' &&
-                                  isUsedTransaction &&
-                                  !isPartiallyAllocated;
-```
-- Checks if allocated amount is less than total transaction amount
-- Partially allocated transactions remain available (not grayed)
-
-**4. Updated Graying Logic (lines 16678-16690):**
-- Added `isCommittedOutgoingThread` to gray-out condition
-- Exception: `!isPartiallyAllocated` keeps partial allocations available
-- Updated tooltip: "committed in previous hop" vs "allocated"
-
-**5. Protected Partial Allocations (line 16682):**
-- Added `&& !isPartiallyAllocated` to prevent graying
-- Partially used transactions remain clickable for further allocation
-
-**6. Removed Outgoing Thread Re-highlighting (lines 16687-16696):**
-- Deleted blue re-highlighting for outgoing threads
-- Only incoming threads get re-highlighted with yellow/gold
-
-Now wallet explorer correctly shows:
-✅ Incoming threads: Bright yellow/gold with 🎯 badge
-✅ Outgoing committed threads: Grayed out with "committed in previous hop" tooltip
-✅ Partially allocated: Remain available (not grayed)
-✅ Clear visual distinction between active threads and committed transactions
-
-This matches investigation workflow:
-- Hop 1: Victim wallet → Outgoing to Wallet A (create thread for Hop 2)
-- Hop 2: Wallet A → Incoming from Hop 1 (yellow/gold) + Outgoing to Wallet B (grayed, committed)
-- Hop 3: Wallet B → Incoming from Hop 2 (yellow/gold) + Outgoing to Wallet C (grayed, committed)
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md  | 145 ++++++++++++++++++++++++++++---------------------------------
- index.html |  64 ++++++++++++++-------------
- 2 files changed, 102 insertions(+), 107 deletions(-)
+ CLAUDE.md | 139 ++++++++++++++++++++++++++++++++------------------------------
+ 1 file changed, 72 insertions(+), 67 deletions(-)
 ```
 
 ## Recent Commits History
 
-- a196402 Fix: Only highlight incoming threads, gray out committed outgoing threads (1 second ago)
-- 3a27c79 UX: Enhanced wallet explorer visibility with table borders and thread highlighting (5 minutes ago)
-- d3ba2f9 Fix: Complete migration of ALL remaining nested thread structures (18 minutes ago)
-- 02dbede Fix: Hop finalization crash from nested thread structure (69 minutes ago)
-- ffa9dc2 Sync CLAUDE.md (75 minutes ago)
-- a86e0ff Final CLAUDE.md update (75 minutes ago)
-- b35aa18 Update CLAUDE.md timestamp (75 minutes ago)
-- 36b3398 Update CLAUDE.md with latest commit info (75 minutes ago)
-- 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (81 minutes ago)
-- 5332e67 Fix: Wallet explorer crash from nested thread structure in ART tracking (2 hours ago)
+- e4304a3 Update CLAUDE.md with latest commit info (1 second ago)
+- a196402 Fix: Only highlight incoming threads, gray out committed outgoing threads (2 minutes ago)
+- 3a27c79 UX: Enhanced wallet explorer visibility with table borders and thread highlighting (7 minutes ago)
+- d3ba2f9 Fix: Complete migration of ALL remaining nested thread structures (20 minutes ago)
+- 02dbede Fix: Hop finalization crash from nested thread structure (71 minutes ago)
+- ffa9dc2 Sync CLAUDE.md (77 minutes ago)
+- a86e0ff Final CLAUDE.md update (77 minutes ago)
+- b35aa18 Update CLAUDE.md timestamp (77 minutes ago)
+- 36b3398 Update CLAUDE.md with latest commit info (78 minutes ago)
+- 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (83 minutes ago)
 
 ## Key Features
 
