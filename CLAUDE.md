@@ -3,53 +3,36 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 23:05)
+## Latest Commit (Auto-updated: 2025-10-29 05:25)
 
-**Commit:** dcf231d695d8a89ae61903c66fd4b1ed0b96bed0
+**Commit:** fe1a3829be6c501498357024b3a0834f0aa9970e
 **Author:** Your Name
-**Message:** CRITICAL FIX: Blue wallets only terminal if explicitly marked
-
-Fixed major bug where intermediate wallets were incorrectly treated as terminal, blocking thread creation for subsequent hops.
+**Message:** Fix: Remove automatic cold storage classification from wallet explorer traces
 
 **Issue:**
-After tracing Hop 1 and finalizing it, Hop 2 showed no available threads because the system was treating ALL blue-classified wallets as terminal (end points), preventing thread creation.
+When tracing transactions through wallet explorer, entries were automatically tagged with "BLUE - Cold Storage" badge, even for regular intermediate wallets.
 
 **Root Cause:**
-Terminal wallet detection used: `entry.toWalletType === 'blue'`
-This made ANY wallet classified as "blue" (cold storage) terminate the investigation flow, even if it was just an intermediate hop.
-
-**Terminal Wallet Types:**
-- Purple (exchanges/VASPs): Always terminal unless bridge
-- Gray (mixers/tumblers): Always terminal
-- Blue (cold storage): Should ONLY be terminal if explicitly marked
-- Empty/black (regular wallets): NEVER terminal
+Line 16491 was setting `toWalletType: 'blue'` for all trace actions, incorrectly assuming all traced destinations are cold storage wallets.
 
 **Solution:**
-Changed blue wallet detection from:
+Changed `toWalletType` to default to empty string (regular black wallet). Users can manually classify wallet type later if needed.
+
+**Before:**
 ```javascript
-entry.toWalletType === 'blue'
+toWalletType: selection.action === 'trace' ? 'blue' : 'gray'
 ```
 
-To:
+**After:**
 ```javascript
-(entry.toWalletType === 'blue' && entry.isTerminalWallet === true)
+toWalletType: '' // Default to regular wallet (black) - user can classify later if needed
 ```
-
-**Updated 6 Critical Locations:**
-1. Thread creation in buildAvailableThreadsIndex() - Line 10554
-2. createThreadFromEntry() skip check - Line 10657
-3. ART calculation skip check - Line 14673
-4. Terminal wallet totals calculation - Line 21054
-5. Terminal summary generation - Line 26956
 
 **Result:**
-- ✅ Blue wallets create threads for next hop (unless explicitly terminal)
-- ✅ Purple/gray wallets still properly terminal
-- ✅ Multi-hop investigations now work correctly
-- ✅ User can mark ANY wallet as explicitly terminal if needed
-- ✅ Default behavior: blue wallets are intermediate, not terminal
-
-This fix ensures ALL wallet types can be traced through multiple hops unless the user explicitly marks them as terminal endpoints.
+- ✅ Traced wallets default to regular classification (black)
+- ✅ No inappropriate cold storage badges
+- ✅ User maintains full control over wallet classification
+- ✅ Proper workflow: trace first, classify later if needed
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -57,22 +40,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 24 +++++++++++++++++-------
- 1 file changed, 17 insertions(+), 7 deletions(-)
+ index.html | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 ```
 
 ## Recent Commits History
 
-- dcf231d CRITICAL FIX: Blue wallets only terminal if explicitly marked (0 seconds ago)
-- 2891f4b UX: Increase sidebar default width for better text readability (4 minutes ago)
-- 6f3cc7f Fix: Remove overflow hidden from split container to enable scrolling (8 minutes ago)
-- eac3fb5 Fix: Remove overflow hidden from modal backdrop to allow content scrolling (13 minutes ago)
-- 3531041 Fix: Prevent body scroll when wallet explorer modal is open (17 minutes ago)
-- a721111 Fix: Sidebar uses full vertical space and cache cleared on wallet open (22 minutes ago)
-- 7815a65 UX: Sticky ART commit buttons always visible at sidebar bottom (32 minutes ago)
-- ce7f1bc UX: Compact sidebar layout for better horizontal space usage (38 minutes ago)
-- 99f51cc Feature: Real-time ART tracking with staged transaction allocation (53 minutes ago)
-- 54b5796 UX: Auto-navigate to thread page and make resizer always visible (59 minutes ago)
+- fe1a382 Fix: Remove automatic cold storage classification from wallet explorer traces (0 seconds ago)
+- dff5772 Update CLAUDE.md with latest commit info (11 minutes ago)
+- dcf231d CRITICAL FIX: Blue wallets only terminal if explicitly marked (6 hours ago)
+- 2891f4b UX: Increase sidebar default width for better text readability (6 hours ago)
+- 6f3cc7f Fix: Remove overflow hidden from split container to enable scrolling (6 hours ago)
+- eac3fb5 Fix: Remove overflow hidden from modal backdrop to allow content scrolling (7 hours ago)
+- 3531041 Fix: Prevent body scroll when wallet explorer modal is open (7 hours ago)
+- a721111 Fix: Sidebar uses full vertical space and cache cleared on wallet open (7 hours ago)
+- 7815a65 UX: Sticky ART commit buttons always visible at sidebar bottom (7 hours ago)
+- ce7f1bc UX: Compact sidebar layout for better horizontal space usage (7 hours ago)
 
 ## Key Features
 
