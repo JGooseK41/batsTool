@@ -16574,15 +16574,18 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 }
                 row.className = rowClass;
 
+                // Add baseline border for all rows (for visual separation)
+                row.style.borderBottom = '1px solid #e9ecef';
+
                 // Add highlight styling for investigation threads
-                // Highlighted transaction (active thread source) gets yellow/gold regardless of isCurrentThread
-                if (isHighlighted || isCurrentThread) {
-                    // Current thread or highlighted incoming transaction - bright yellow/orange highlight
+                // ALL incoming thread transactions get yellow/gold highlighting
+                if ((isInvestigationThread && tx.type === 'IN') || isHighlighted || isCurrentThread) {
+                    // Thread source incoming transaction or highlighted - bright yellow/orange highlight
                     row.style.background = 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)';
                     row.style.borderLeft = '5px solid #f39c12';
                     row.style.boxShadow = '0 0 15px rgba(243, 156, 18, 0.3)';
-                } else if (isInvestigationThread) {
-                    // Other investigation thread - subtle blue highlight
+                } else if (isInvestigationThread && tx.type === 'OUT') {
+                    // Outgoing thread transaction - subtle blue highlight
                     row.style.background = 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)';
                     row.style.borderLeft = '5px solid #2196f3';
                     row.style.boxShadow = '0 0 10px rgba(33, 150, 243, 0.2)';
@@ -16633,10 +16636,13 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 }
 
                 // Add thread badge for investigation threads
+                // Match badge color to row highlight: yellow/gold for incoming, blue for outgoing
                 let threadBadge = '';
-                if (isCurrentThread) {
+                if (isCurrentThread || (isInvestigationThread && tx.type === 'IN')) {
+                    // Incoming thread - yellow/gold badge
                     threadBadge = `<span style="background: #f39c12; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 8px;">🎯 ${matchedThread.threadId}</span>`;
-                } else if (isInvestigationThread) {
+                } else if (isInvestigationThread && tx.type === 'OUT') {
+                    // Outgoing thread - blue badge
                     threadBadge = `<span style="background: #2196f3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 8px;">📍 ${matchedThread.threadId}</span>`;
                 }
 
@@ -16648,9 +16654,13 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     ? walletExplorerState.artSelections.has(tx.hash)
                     : walletExplorerState.selectedTransactions && walletExplorerState.selectedTransactions.has(tx.hash);
 
+                // Determine if this is a thread transaction that should always be visible
+                const isThreadTransaction = (isInvestigationThread && tx.type === 'IN') || isHighlighted || isCurrentThread;
+
                 // Style change outputs with gray background and info styling
                 // (isChangeOutput already declared above at line 15663)
-                if (isChangeOutput) {
+                // BUT: Don't gray out thread transactions - they're active threads we're following!
+                if (isChangeOutput && !isThreadTransaction) {
                     row.style.background = 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)';
                     row.style.borderLeft = '5px solid #9e9e9e';
                     row.style.opacity = '0.7';
@@ -16658,8 +16668,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 }
 
                 // Style used transactions (already allocated in investigation)
-                // BUT: Don't gray out the highlighted transaction - it's the active thread we're following!
-                if (isUsedTransaction && !isChangeOutput && !isHighlighted) {
+                // BUT: Don't gray out thread transactions - they're active threads we're following!
+                if (isUsedTransaction && !isChangeOutput && !isThreadTransaction) {
                     row.style.background = 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)';
                     row.style.borderLeft = '5px solid #6c757d';
                     row.style.opacity = '0.6';
@@ -16668,11 +16678,27 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     row.title = `Already allocated in ${notation} as ${usageInfo.entryType} (${usageInfo.amount} ${usageInfo.currency})`;
                 }
 
-                // In ART mode, add visual selection indicator (but not for change)
-                if (walletExplorerState.artMode && isSelected && !isChangeOutput) {
+                // In ART mode, add visual selection indicator (but not for change or thread transactions)
+                if (walletExplorerState.artMode && isSelected && !isChangeOutput && !isThreadTransaction) {
                     row.style.background = 'linear-gradient(135deg, #d1f2eb 0%, #a3e4d7 100%)';
                     row.style.borderLeft = '5px solid #1abc9c';
                     row.style.boxShadow = '0 0 10px rgba(26, 188, 156, 0.3)';
+                }
+
+                // CRITICAL: Re-apply highlight styling LAST to ensure it takes precedence over all other styling
+                // ALL incoming thread transactions must be highly visible with yellow/gold highlighting
+                if ((isInvestigationThread && tx.type === 'IN') || isHighlighted || isCurrentThread) {
+                    row.style.background = 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)';
+                    row.style.borderLeft = '5px solid #f39c12';
+                    row.style.boxShadow = '0 0 15px rgba(243, 156, 18, 0.3)';
+                    row.style.opacity = '1'; // Override any opacity settings
+                    row.style.cursor = 'pointer'; // Override not-allowed cursor
+                } else if (isInvestigationThread && tx.type === 'OUT') {
+                    // Outgoing thread transaction - re-apply blue highlight if it was overridden
+                    row.style.background = 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)';
+                    row.style.borderLeft = '5px solid #2196f3';
+                    row.style.boxShadow = '0 0 10px rgba(33, 150, 243, 0.2)';
+                    row.style.opacity = '1';
                 }
 
                 // Add click handler for ART mode row selection (disabled for change or used)
