@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-10-28 21:36)
 
-**Commit:** e4304a363de9935ca7b1dd09ffb78ad0afc81e21
+**Commit:** f4c77150a2f7c6b48d0a7c8252e551dfa29c628e
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Sync CLAUDE.md
 
 ### Changed Files:
 ```
- CLAUDE.md | 139 ++++++++++++++++++++++++++++++++------------------------------
- 1 file changed, 72 insertions(+), 67 deletions(-)
+ CLAUDE.md | 97 ++++++++++-----------------------------------------------------
+ 1 file changed, 15 insertions(+), 82 deletions(-)
 ```
 
 ## Recent Commits History
 
-- e4304a3 Update CLAUDE.md with latest commit info (1 second ago)
+- f4c7715 Sync CLAUDE.md (0 seconds ago)
+- e4304a3 Update CLAUDE.md with latest commit info (15 seconds ago)
 - a196402 Fix: Only highlight incoming threads, gray out committed outgoing threads (2 minutes ago)
 - 3a27c79 UX: Enhanced wallet explorer visibility with table borders and thread highlighting (7 minutes ago)
 - d3ba2f9 Fix: Complete migration of ALL remaining nested thread structures (20 minutes ago)
 - 02dbede Fix: Hop finalization crash from nested thread structure (71 minutes ago)
 - ffa9dc2 Sync CLAUDE.md (77 minutes ago)
-- a86e0ff Final CLAUDE.md update (77 minutes ago)
-- b35aa18 Update CLAUDE.md timestamp (77 minutes ago)
+- a86e0ff Final CLAUDE.md update (78 minutes ago)
+- b35aa18 Update CLAUDE.md timestamp (78 minutes ago)
 - 36b3398 Update CLAUDE.md with latest commit info (78 minutes ago)
-- 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (83 minutes ago)
 
 ## Key Features
 
