@@ -3,30 +3,84 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-28 20:19)
+## Latest Commit (Auto-updated: 2025-10-28 20:25)
 
-**Commit:** ffa9dc2bb20e75feeb2138b778f445ce35b697b7
+**Commit:** 02dbede58dd43010789b83d3b1cd2dc949610865
 **Author:** Your Name
-**Message:** Sync CLAUDE.md
+**Message:** Fix: Hop finalization crash from nested thread structure
+
+Problem: When clicking "Finalize Hop" button, got error:
+"Uncaught TypeError: Cannot read properties of null (reading 'sourceType')"
+at finalizeHop line 24616
+Nothing would happen - hop couldn't be finalized.
+
+Root Cause:
+finalizeHop() function still using old nested structure in TWO loops:
+1. Lines 24611-24628: Checking for unallocated partial trace outputs
+2. Lines 24643-24659: Checking for unallocated conversion outputs
+
+Both loops iterated like:
+```javascript
+for (const currency in availableThreads) {
+    for (const threadId in availableThreads[currency]) {
+        const thread = availableThreads[currency][threadId];
+        if (thread.sourceType === 'bridge_output' || ...)
+```
+
+With flat structure:
+- First loop gets internal IDs (e.g., "V1-T1_USDT"), not currencies
+- availableThreads[currency] returns thread object, not nested object
+- Second loop tries to iterate thread properties
+- thread becomes property value (string/number/null)
+- Trying to read .sourceType from null → crash
+
+Solution:
+Migrated both loops to flat structure:
+```javascript
+for (const internalId in availableThreads) {
+    const thread = availableThreads[internalId];
+    if (!thread) continue;
+    if (thread.sourceType === 'bridge_output' || ...)
+```
+
+Changes:
+1. Lines 24611-24629: First loop updated to flat structure
+   - Get currency from thread.currency instead of loop variable
+   - Direct iteration through internal IDs
+
+2. Lines 24643-24660: Second loop updated to flat structure
+   - Same pattern as first loop
+   - Get currency from thread.currency
+
+Now hop finalization:
+✅ Checks for unallocated partial traces correctly
+✅ Checks for unallocated conversion outputs correctly
+✅ Finalizes hop without crash
+✅ Creates threads for next hop properly
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ CLAUDE.md  | 16 +++++++--------
+ index.html | 66 +++++++++++++++++++++++++++++++-------------------------------
+ 2 files changed, 41 insertions(+), 41 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ffa9dc2 Sync CLAUDE.md (0 seconds ago)
-- a86e0ff Final CLAUDE.md update (8 seconds ago)
-- b35aa18 Update CLAUDE.md timestamp (19 seconds ago)
-- 36b3398 Update CLAUDE.md with latest commit info (30 seconds ago)
-- 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (6 minutes ago)
-- 5332e67 Fix: Wallet explorer crash from nested thread structure in ART tracking (27 minutes ago)
-- a0e9406 Fix: Transaction list not displaying when asset selected in wallet explorer (42 minutes ago)
-- e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (50 minutes ago)
-- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (54 minutes ago)
-- b2d980b Fix: Update migration/consolidation functions for flat structure (69 minutes ago)
+- 02dbede Fix: Hop finalization crash from nested thread structure (0 seconds ago)
+- ffa9dc2 Sync CLAUDE.md (6 minutes ago)
+- a86e0ff Final CLAUDE.md update (6 minutes ago)
+- b35aa18 Update CLAUDE.md timestamp (7 minutes ago)
+- 36b3398 Update CLAUDE.md with latest commit info (7 minutes ago)
+- 6c99cd4 Feature: Add resizable sidebar to wallet explorer with drag-to-resize (12 minutes ago)
+- 5332e67 Fix: Wallet explorer crash from nested thread structure in ART tracking (33 minutes ago)
+- a0e9406 Fix: Transaction list not displaying when asset selected in wallet explorer (49 minutes ago)
+- e5faf43 Fix: Hop validation showing incorrect "Threads need allocation" warning (57 minutes ago)
+- a1346c4 Fix: Wallet explorer split-screen visibility on initial load (60 minutes ago)
 
 ## Key Features
 

@@ -11267,19 +11267,21 @@ function getWalletTypeDisplayName(walletAddress) {
 // 2.8 Calculate Total Assigned Amount by Currency
 function calculateTotalAssignedAmount(currency) {
     let totalAssigned = 0;
-    
-    if (!investigation.availableThreads[currency]) {
-        return 0;
+
+    // FLAT STRUCTURE: Iterate all threads and filter by currency
+    for (const internalId in investigation.availableThreads) {
+        const thread = investigation.availableThreads[internalId];
+        if (!thread || thread.currency !== currency) continue;
+
+        if (thread.assignments) {
+            thread.assignments.forEach(assignment => {
+                if (assignment.isActive) {
+                    totalAssigned += assignment.amount;
+                }
+            });
+        }
     }
-    
-    Object.values(investigation.availableThreads[currency]).forEach(thread => {
-        thread.assignments.forEach(assignment => {
-            if (assignment.isActive) {
-                totalAssigned += assignment.amount;
-            }
-        });
-    });
-    
+
     return totalAssigned;
 }
 
@@ -15714,18 +15716,19 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
             // Find all threads entering this wallet with the selected currency
             const walletThreads = [];
-            const availableThreads = investigation.availableThreads[selectedCurrency] || {};
 
-            for (const threadKey in availableThreads) {
-                const thread = availableThreads[threadKey];
+            // FLAT STRUCTURE: Iterate all threads and filter by currency and wallet
+            for (const internalId in investigation.availableThreads) {
+                const thread = investigation.availableThreads[internalId];
+                if (!thread) continue;
 
-                // Check if this thread's source wallet matches current wallet
-                // Need to handle both exact matches and case-insensitive matches
-                if (thread.sourceWallet &&
+                // Filter by currency and source wallet
+                if (thread.currency === selectedCurrency &&
+                    thread.sourceWallet &&
                     thread.sourceWallet.toLowerCase() === walletAddress.toLowerCase()) {
                     walletThreads.push({
                         ...thread,
-                        threadId: thread.notation || threadKey
+                        threadId: thread.notation || internalId
                     });
                 }
             }
@@ -23402,9 +23405,17 @@ function showHopFinalizationPreview(hop, validation) {
     // Calculate remaining for each source thread
     Object.keys(entriesBySource).forEach(sourceId => {
         Object.keys(totalsBySource[sourceId]).forEach(currency => {
-            // Find the thread in availableThreads
-            if (availableThreads[currency] && availableThreads[currency][sourceId]) {
-                const thread = availableThreads[currency][sourceId];
+            // FLAT STRUCTURE: Find thread by matching notation and currency
+            let thread = null;
+            for (const internalId in availableThreads) {
+                const t = availableThreads[internalId];
+                if (t && t.notation === sourceId && t.currency === currency) {
+                    thread = t;
+                    break;
+                }
+            }
+
+            if (thread) {
                 const allocated = totalsBySource[sourceId][currency];
                 const remaining = thread.availableAmount - allocated;
 
@@ -24386,10 +24397,14 @@ function batchWriteOffSelected() {
         const currency = checkbox.dataset.currency;
         const amount = parseFloat(checkbox.dataset.amount);
 
-        // Find full thread data
+        // FLAT STRUCTURE: Find thread by matching notation and currency
         let thread = null;
-        if (availableThreads[currency] && availableThreads[currency][threadId]) {
-            thread = availableThreads[currency][threadId];
+        for (const internalId in availableThreads) {
+            const t = availableThreads[internalId];
+            if (t && t.notation === threadId && t.currency === currency) {
+                thread = t;
+                break;
+            }
         }
 
         selectedThreads.push({
@@ -30076,8 +30091,18 @@ function validateHopCompletion(hopNumber) {
             // Validate source thread assignments don't exceed availability
             Object.entries(sourceThreadUsage).forEach(([currency, threads]) => {
                 Object.entries(threads).forEach(([threadId, usedAmount]) => {
-                    if (investigation.availableThreads[currency] && investigation.availableThreads[currency][threadId]) {
-                        const totalAvailable = investigation.availableThreads[currency][threadId].totalAmount;
+                    // FLAT STRUCTURE: Find thread by matching notation and currency
+                    let thread = null;
+                    for (const internalId in investigation.availableThreads) {
+                        const t = investigation.availableThreads[internalId];
+                        if (t && t.notation === threadId && t.currency === currency) {
+                            thread = t;
+                            break;
+                        }
+                    }
+
+                    if (thread) {
+                        const totalAvailable = thread.totalAmount;
                         if (usedAmount > totalAvailable + 0.01) {
                             errors.push(`${threadId}: Assigned ${usedAmount.toLocaleString()} exceeds available ${totalAvailable.toLocaleString()} ${currency}`);
                         }
