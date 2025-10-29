@@ -2790,7 +2790,7 @@
             <!-- SPLIT SCREEN LAYOUT -->
             <div id="walletExplorerSplitContainer" style="display: none; position: relative; gap: 0; flex: 1; min-height: 0;">
                 <!-- Left Sidebar (Resizable) - Compact with flex layout -->
-                <div id="walletExplorerSidebar" style="width: 240px; min-width: 180px; max-width: 600px; background: #f8f9fa; border-radius: 8px; padding: 0; height: 100%; position: relative; display: flex; flex-direction: column;">
+                <div id="walletExplorerSidebar" style="width: 280px; min-width: 200px; max-width: 600px; background: #f8f9fa; border-radius: 8px; padding: 0; height: 100%; position: relative; display: flex; flex-direction: column;">
                     <!-- Collapse Button -->
                     <button onclick="toggleWalletExplorerSidebar()"
                             style="position: absolute; top: 10px; right: 10px; background: #3498db; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
@@ -15109,10 +15109,10 @@ function exportRedWalletIndexCSV() {
             const resizer = document.getElementById('walletExplorerResizer');
 
             if (sidebar.style.width === '40px') {
-                // Expand - restore to last width or default (compact)
-                const lastWidth = sidebar.getAttribute('data-last-width') || '240px';
+                // Expand - restore to last width or default
+                const lastWidth = sidebar.getAttribute('data-last-width') || '280px';
                 sidebar.style.width = lastWidth;
-                sidebar.style.minWidth = '180px';
+                sidebar.style.minWidth = '200px';
                 sidebar.style.transition = 'all 0.3s ease';
                 sidebarContent.style.display = 'block';
                 toggleButton.textContent = '◀';
