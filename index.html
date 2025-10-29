@@ -16362,7 +16362,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
         }
 
         // Commit ART selections and create entries
-        function commitARTSelections() {
+        async function commitARTSelections() {
             if (!walletExplorerState.artMode) {
                 alert('⚠️ ART tracking not enabled');
                 return;
@@ -16461,6 +16461,28 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             if (!hop) {
                 alert(`⚠️ Hop ${hopNumber} not found`);
                 return;
+            }
+
+            // ATTRIBUTION CHECK: Check wallet attribution for selected transactions only
+            // This avoids 100+ API calls by only checking the 1-10 transactions user actually selected
+            const uniqueCounterparties = [...new Set(selections.map(s => s.tx.counterparty).filter(Boolean))];
+            console.log(`🔍 Checking attribution for ${uniqueCounterparties.length} unique counterparty address(es)...`);
+
+            for (const address of uniqueCounterparties) {
+                try {
+                    const attribution = await getWalletAttribution(address, walletExplorerState.blockchain);
+                    // Store attribution on matching transactions for use below
+                    selections.forEach(sel => {
+                        if (sel.tx.counterparty === address) {
+                            sel.tx.attribution = attribution;
+                        }
+                    });
+                    if (attribution) {
+                        console.log(`  ✅ ${address.substring(0, 10)}... → ${attribution.name || attribution.label}`);
+                    }
+                } catch (err) {
+                    console.log(`  ℹ️ ${address.substring(0, 10)}... → No attribution found`);
+                }
             }
 
             // Create entries for each selection
@@ -16750,30 +16772,11 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     contractBadge = `<div style="margin-top: 4px;"><span style="background: ${badgeColor}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">${badgeIcon} ${detectedContract.name}</span></div>`;
                 }
 
-                // Check wallet attribution asynchronously (exchanges, services, etc.)
-                if (tx.counterparty && !tx.attributionChecked) {
-                    tx.attributionChecked = true; // Prevent multiple checks
-                    getWalletAttribution(tx.counterparty, walletExplorerState.blockchain).then(attribution => {
-                        if (attribution && row) {
-                            // Store attribution on transaction for later use when committing
-                            tx.attribution = attribution;
-
-                            // Add attribution badge to the row
-                            const counterpartyCell = row.cells[4]; // Counterparty column
-                            if (counterpartyCell && !counterpartyCell.querySelector('.attribution-badge')) {
-                                let badgeHtml;
-                                if (attribution.isPersonalLabel) {
-                                    // Personal label - informational only
-                                    badgeHtml = `<div class="attribution-badge" style="margin-top: 4px;"><span style="background: #e3f2fd; border: 1px solid #2196f3; color: #1565c0; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">🏷️ ${attribution.name || attribution.label}</span></div>`;
-                                } else {
-                                    // Terminal wallet (exchange/service) - show warning
-                                    badgeHtml = `<div class="attribution-badge" style="margin-top: 4px;"><span style="background: #e1bee7; border: 1px solid #9c27b0; color: #6a1b9a; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">🟣 TERMINAL: ${attribution.name || attribution.label}</span></div>`;
-                                }
-                                counterpartyCell.innerHTML += badgeHtml;
-                            }
-                        }
-                    }).catch(err => console.log('Attribution check failed:', err));
-                }
+                // NOTE: Wallet attribution (exchange detection via API) is deferred to commit time
+                // to avoid rate limiting. A wallet with 100 transactions would require 100 API calls
+                // if checked on display, quickly exhausting Arkham/Etherscan/Solscan rate limits.
+                // Contract detection (DEX/Bridge/Mixer above) is free and runs locally.
+                // Attribution will be checked when user actually commits the transaction.
 
                 // Add thread badge for investigation threads
                 // Only show badge for incoming threads (these are active threads to trace)
