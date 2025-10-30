@@ -17688,12 +17688,6 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 // Only INCOMING threads are active - outgoing threads are already committed
                 const isActiveIncomingThread = (isInvestigationThread && tx.type === 'IN') || isHighlighted || isCurrentThread;
 
-                // Check for partial allocation (if used amount is less than total transaction amount)
-                const isPartiallyAllocated = isUsedTransaction &&
-                                            usageInfo.amount &&
-                                            tx.amount &&
-                                            Math.abs(usageInfo.amount - tx.amount) > 0.01;
-
                 // Check if this is an outgoing thread (already committed, should be grayed)
                 // UNLESS it's only partially allocated - then it's still available for further allocation
                 const isCommittedOutgoingThread = isInvestigationThread &&
