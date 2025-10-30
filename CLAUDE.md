@@ -3,27 +3,29 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-30 16:21)
+## Latest Commit (Auto-updated: 2025-10-30 16:26)
 
-**Commit:** 02cfff20cf95344dd626a89a6d96c6d96679ded3
+**Commit:** 1231421cd73cf242413378ad2126042d9bca199c
 **Author:** Your Name
-**Message:** Debug: Add comprehensive logging to thread assignment calculation
+**Message:** Fix: Swap wizard now creates threads in flat structure
 
-Problem: Thread over-allocation showing negative available amounts (V1-T1: 18.98 total but 20.52 assigned = -1.54 available)
+Problem: Swap wizard was creating output threads in nested currency structure (availableThreads[currency][threadId]) while the rest of the system expects flat structure (availableThreads[internalId]).
 
-Analysis: Added detailed logging to getMaxAssignableAmount() to trace exactly which entries contribute to each thread's assigned total:
-- Log every entry checked with hop number and notation
-- Show single-source matches with matched field and amount
-- Show multiple-source entries with all identifier arrays and assignment lookups
-- Display running total after each addition
-- Identify currency mismatches and skipped entries
+This caused threads to be lost or miscounted because:
+1. Calculation code iterates flat structure
+2. Nested threads weren't findable by internal ID
+3. Build function might create duplicates
 
-This will reveal:
-1. If same entry counted multiple times
-2. If identifier fields have conflicts
-3. If assignment keys are inconsistent
+Solution:
+- Changed createSwapOutputThread() to use flat structure
+- Now generates deterministic internal ID via generateInternalThreadId()
+- Creates thread at root level: availableThreads[internalId] = {}
+- Added proper dual-layer tracking (notation + internalId)
+- Added provenance fields (createdAt, parentThreads, childThreads)
 
-Next: Run investigation to see debug output and identify root cause
+This ensures swap outputs are properly tracked and counted in thread calculations.
+
+Next: Fix bridge output creation similarly
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -31,14 +33,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 121 +++++++++++++++++++++++++++++++++++++------------------------
- index.html |  25 ++++++++++++-
- 2 files changed, 97 insertions(+), 49 deletions(-)
+ CLAUDE.md  | 105 +++++++++++++++++++------------------------------------------
+ index.html |  46 +++++++++++++++++----------
+ 2 files changed, 62 insertions(+), 89 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (1 second ago)
+- 1231421 Fix: Swap wizard now creates threads in flat structure (0 seconds ago)
+- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (6 minutes ago)
 - 5763f21 UX: Replace single amount filter with separate min/max inputs (6 hours ago)
 - 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (6 hours ago)
 - bbd41f4 Update CLAUDE.md with latest commit info (6 hours ago)
@@ -47,7 +50,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 966b4fd Feat: Implement Bitcoin UTXO multi-output transaction handling (19 hours ago)
 - 3c89d76 Update CLAUDE.md with latest commit info (19 hours ago)
 - 4cda57c Fix: Transaction graying now tracks partial allocation (20 hours ago)
-- a4e4764 Fix: Add exit button and enable partial thread allocation (20 hours ago)
 
 ## Key Features
 

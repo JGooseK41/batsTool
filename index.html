@@ -39984,48 +39984,35 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
             const sourceInternalId = entry.sourceThreadInternalId;
             const sourceNotation = entry.notation;
 
-            // Find and consume the source thread in the input currency
-            if (investigation.availableThreads[inputCurrency]) {
-                // Look for the source thread
-                for (const key in investigation.availableThreads[inputCurrency]) {
-                    const thread = investigation.availableThreads[inputCurrency][key];
+            // FLAT STRUCTURE FIX: Find and consume the source thread using flat structure iteration
+            // Search all threads at root level, not nested by currency
+            for (const key in investigation.availableThreads) {
+                const thread = investigation.availableThreads[key];
+                if (!thread) continue; // Skip null entries
 
-                    // Check if this is our source thread
-                    if (key === sourceInternalId || thread.internalId === sourceInternalId ||
-                        thread.notation === sourceNotation || key.includes(sourceNotation)) {
+                // Only process threads with matching currency
+                if (thread.currency !== inputCurrency) continue;
 
-                        // For bridges, we consume the ENTIRE thread (not partial like some swaps)
-                        delete investigation.availableThreads[inputCurrency][key];
-                        console.log(`Consumed thread ${key} from ${inputCurrency} for bridge conversion`);
-                        break;
-                    }
+                // Check if this is our source thread
+                if (key === sourceInternalId || thread.internalId === sourceInternalId ||
+                    thread.notation === sourceNotation || key.includes(sourceNotation)) {
+
+                    // For bridges, we consume the ENTIRE thread (not partial like some swaps)
+                    delete investigation.availableThreads[key];
+                    console.log(`Consumed thread ${key} from ${inputCurrency} for bridge conversion`);
+                    break;
                 }
             }
 
-            // Create the output thread in the new currency (exactly like swaps do)
-            if (!investigation.availableThreads[outputCurrency]) {
-                investigation.availableThreads[outputCurrency] = {};
-            }
-
+            // FLAT STRUCTURE FIX: Create bridge output thread at root level, not nested by currency
             // For bridge outputs, we need TRULY unique IDs for the dual-layer system
             // Each bridge output is a separate thread with its own unique internal ID
             // The notation stays the same for display, but internal ID must be unique
             // Force unique ID generation for every bridge output
             const outputInternalId = generateInternalThreadId(`bridge_${entryId}`, outputCurrency, true); // Force unique with timestamp
 
-            // For bridge outputs, check if this exact bridge output already exists (same tx hash)
-            // Multiple bridge outputs from the same source notation are allowed
-            let existingThread = null;
-            let existingThreadKey = null;
-
-            // Check if this exact bridge output already exists (using the unique key that includes entry ID)
-            if (investigation.availableThreads[outputCurrency][outputInternalId]) {
-                existingThread = investigation.availableThreads[outputCurrency][outputInternalId];
-                existingThreadKey = outputInternalId;
-                console.log(`Found existing bridge output for entry ${entryId}, will update it`);
-            }
-            // REMOVED: We no longer check for same tx hash across different entries
-            // Each bridge conversion entry should create its own thread
+            // Check if this exact bridge output already exists (using flat structure at root level)
+            let existingThread = investigation.availableThreads[outputInternalId];
 
             if (existingThread) {
                 console.log(`Updating existing thread for ${sourceNotation} in ${outputCurrency}, amount from ${existingThread.totalAmount} to ${outputAmount}`);
@@ -40043,13 +40030,6 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                 existingThread.proportionalMultiplier = proportionalMultiplier;
                 existingThread.fullOutputAmount = isPartialTrace ? fullOutputAmount : outputAmount;
 
-                // If the thread has a different key, delete it and re-add with correct key
-                if (existingThreadKey !== outputInternalId) {
-                    delete investigation.availableThreads[outputCurrency][existingThreadKey];
-                    investigation.availableThreads[outputCurrency][outputInternalId] = existingThread;
-                    existingThread.internalId = outputInternalId;
-                }
-
                 showNotification(`✅ Bridge output updated! Thread ${sourceNotation} updated to ${outputAmount} ${outputCurrency} on ${destChain}.`, 'success', 8000);
             } else {
                 // Create the bridge output thread (mirrors swap output structure)
@@ -40062,7 +40042,8 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
    Source Wallet: ${destWallet}
    Hop Level: ${hop.hopNumber}`);
 
-                investigation.availableThreads[outputCurrency][outputInternalId] = {
+                // Create thread at root level using internal ID as key (flat structure)
+                investigation.availableThreads[outputInternalId] = {
                     // Dual-layer tracking (same as swap outputs)
                     notation: sourceNotation,  // KEEP ORIGINAL NOTATION for audit trail
                     internalId: outputInternalId,
@@ -40113,7 +40094,7 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     fullOutputAmount: isPartialTrace ? fullOutputAmount : outputAmount
                 };
 
-                const createdThread = investigation.availableThreads[outputCurrency][outputInternalId];
+                const createdThread = investigation.availableThreads[outputInternalId];
                 console.log(`✅ Bridge output thread created successfully:
    Notation: ${createdThread.notation}
    Internal ID: ${createdThread.internalId}
