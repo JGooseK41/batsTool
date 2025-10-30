@@ -15657,7 +15657,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
                 if (highlightIndex !== -1) {
                     // Check if this transaction is already allocated
-                    const usageInfo = isTransactionUsedInInvestigation(sortedTxs[highlightIndex].hash);
+                    const usageInfo = isTransactionUsedInInvestigation(sortedTxs[highlightIndex].hash, sortedTxs[highlightIndex].amount);
 
                     if (!usageInfo.isUsed) {
                         // Highlighted transaction found and unallocated - use it
@@ -15686,7 +15686,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
                         if (matchedThread) {
                             // Check if it's unallocated
-                            const usageInfo = isTransactionUsedInInvestigation(tx.hash);
+                            const usageInfo = isTransactionUsedInInvestigation(tx.hash, tx.amount);
 
                             if (!usageInfo.isUsed) {
                                 targetPageIndex = i;
@@ -16577,8 +16577,54 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             console.log(`✅ ART commit complete: ${entriesCreated} entries created`);
         }
 
+        // Calculate how much of a transaction has been allocated across all entries
+        function getTransactionAllocationStatus(txHash, transactionAmount) {
+            if (!investigation || !investigation.hops || !txHash) {
+                return {
+                    isAllocated: false,
+                    fullyAllocated: false,
+                    allocatedAmount: 0,
+                    remainingAmount: transactionAmount || 0,
+                    entries: []
+                };
+            }
+
+            const hashLower = txHash.toLowerCase();
+            let totalAllocated = 0;
+            const allocatedEntries = [];
+
+            // Search all hop entries for this transaction
+            for (const hop of investigation.hops) {
+                if (!hop.entries) continue;
+
+                for (const entry of hop.entries) {
+                    if (entry.transactionHash && entry.transactionHash.toLowerCase() === hashLower) {
+                        const allocatedAmt = parseFloat(entry.amount) || 0;
+                        totalAllocated += allocatedAmt;
+                        allocatedEntries.push({
+                            location: `H${hop.hopNumber}-E${entry.id}`,
+                            amount: allocatedAmt,
+                            currency: entry.currency,
+                            notation: entry.notation
+                        });
+                    }
+                }
+            }
+
+            const remaining = (transactionAmount || 0) - totalAllocated;
+            const fullyAllocated = transactionAmount && Math.abs(remaining) < 0.01; // Within rounding tolerance
+
+            return {
+                isAllocated: totalAllocated > 0,
+                fullyAllocated: fullyAllocated,
+                allocatedAmount: totalAllocated,
+                remainingAmount: Math.max(0, remaining),
+                entries: allocatedEntries
+            };
+        }
+
         // Check if a transaction has been used in the investigation (hop entry or write-off)
-        function isTransactionUsedInInvestigation(txHash) {
+        function isTransactionUsedInInvestigation(txHash, transactionAmount) {
             if (!investigation || !investigation.hops || !txHash) {
                 return { isUsed: false, location: '', entryType: '' };
             }
@@ -16594,31 +16640,30 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 return { isUsed: false, location: '', entryType: '', isActiveThread: true };
             }
 
-            // Search all hop entries
-            for (const hop of investigation.hops) {
-                if (!hop.entries) continue;
+            // Get allocation status
+            const allocationStatus = getTransactionAllocationStatus(txHash, transactionAmount);
 
-                for (const entry of hop.entries) {
-                    if (entry.transactionHash && entry.transactionHash.toLowerCase() === hashLower) {
-                        // Found a match - return details about where it's used
-                        const location = `H${hop.hopNumber}-E${entry.id}`;
-                        const entryType = entry.entryType === 'writeoff' ? 'Write-Off' :
-                                         entry.entryType === 'swap' ? 'Swap' :
-                                         entry.entryType === 'bridge' ? 'Bridge' :
-                                         'Entry';
+            // Only mark as "used" (gray out) if FULLY allocated
+            if (allocationStatus.fullyAllocated) {
+                const firstEntry = allocationStatus.entries[0];
+                return {
+                    isUsed: true,
+                    location: firstEntry.location,
+                    entryType: allocationStatus.entries.length > 1 ? 'Multiple Entries' : 'Entry',
+                    notation: firstEntry.notation,
+                    amount: allocationStatus.allocatedAmount,
+                    currency: firstEntry.currency,
+                    allocationStatus: allocationStatus
+                };
+            }
 
-                        return {
-                            isUsed: true,
-                            location: location,
-                            entryType: entryType,
-                            hopNumber: hop.hopNumber,
-                            entryId: entry.id,
-                            notation: entry.notation,
-                            amount: entry.amount,
-                            currency: entry.currency
-                        };
-                    }
-                }
+            // Partially allocated - NOT marked as used, but include allocation info
+            if (allocationStatus.isAllocated) {
+                return {
+                    isUsed: false,
+                    isPartiallyAllocated: true,
+                    allocationStatus: allocationStatus
+                };
             }
 
             return { isUsed: false, location: '', entryType: '' };
@@ -16751,8 +16796,9 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 const isChangeOutput = tx.isChange === true || tx.type === 'CHANGE';
 
                 // Check if this transaction has been used in the investigation
-                const usageInfo = isTransactionUsedInInvestigation(tx.hash);
+                const usageInfo = isTransactionUsedInInvestigation(tx.hash, tx.amount);
                 const isUsedTransaction = usageInfo.isUsed;
+                const isPartiallyAllocated = usageInfo.isPartiallyAllocated;
 
                 let typeIcon = tx.type === 'IN' ? '🟢' : '🔴';
                 let amountPrefix = tx.type === 'IN' ? '+' : '-';
@@ -16891,11 +16937,17 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     changeBadge = `<div style="margin-top: 4px;"><span style="background: #9e9e9e; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">🔄 CHANGE (Not Traceable)</span></div>`;
                 }
 
-                // Create used transaction badge
+                // Create used/allocation badge
                 let usedBadge = '';
                 if (isUsedTransaction && !isChangeOutput) {
+                    // Fully allocated - gray it out
                     const notation = usageInfo.notation || usageInfo.location;
-                    usedBadge = `<div style="margin-top: 4px;"><span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">✓ ALLOCATED (${notation})</span></div>`;
+                    usedBadge = `<div style="margin-top: 4px;"><span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">✓ FULLY ALLOCATED (${notation})</span></div>`;
+                } else if (isPartiallyAllocated && !isChangeOutput && usageInfo.allocationStatus) {
+                    // Partially allocated - show how much is allocated and remaining
+                    const status = usageInfo.allocationStatus;
+                    const notation = status.entries.map(e => e.location).join(', ');
+                    usedBadge = `<div style="margin-top: 4px;"><span style="background: #ff9800; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">⚠️ PARTIAL: ${status.allocatedAmount.toLocaleString()} of ${tx.amount.toLocaleString()} ${tx.asset} (${notation}) - ${status.remainingAmount.toLocaleString()} available</span></div>`;
                 }
 
                 // Check if this is potential change to NEW address
