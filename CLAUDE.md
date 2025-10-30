@@ -3,59 +3,69 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-29 05:25)
+## Latest Commit (Auto-updated: 2025-10-29 20:18)
 
-**Commit:** fe1a3829be6c501498357024b3a0834f0aa9970e
+**Commit:** 4cda57c0b9954ddda08c7f70348b69a4ada09785
 **Author:** Your Name
-**Message:** Fix: Remove automatic cold storage classification from wallet explorer traces
+**Message:** Fix: Transaction graying now tracks partial allocation
 
-**Issue:**
-When tracing transactions through wallet explorer, entries were automatically tagged with "BLUE - Cold Storage" badge, even for regular intermediate wallets.
+Transactions are only grayed out when FULLY allocated, not partially.
 
-**Root Cause:**
-Line 16491 was setting `toWalletType: 'blue'` for all trace actions, incorrectly assuming all traced destinations are cold storage wallets.
+ISSUE:
+If transaction worth 5000 USDT had 1000 USDT allocated to it, the entire transaction was grayed out and marked as 'used', preventing further allocation of the remaining 4000 USDT.
 
-**Solution:**
-Changed `toWalletType` to default to empty string (regular black wallet). Users can manually classify wallet type later if needed.
+ROOT CAUSE:
+isTransactionUsedInInvestigation() checked if transaction hash existed in any entry, without tracking allocated amounts.
 
-**Before:**
-```javascript
-toWalletType: selection.action === 'trace' ? 'blue' : 'gray'
-```
+SOLUTION:
+1. New function getTransactionAllocationStatus() (Lines 16581-16624)
+   - Sums allocated amounts across ALL entries using same tx hash
+   - Calculates remaining unallocated amount
+   - Determines if fully or partially allocated
 
-**After:**
-```javascript
-toWalletType: '' // Default to regular wallet (black) - user can classify later if needed
-```
+2. Updated isTransactionUsedInInvestigation() (Lines 16627-16670)
+   - Calls getTransactionAllocationStatus()
+   - Only marks as 'used' if fullyAllocated = true
+   - Returns partial allocation status if applicable
 
-**Result:**
-- ✅ Traced wallets default to regular classification (black)
-- ✅ No inappropriate cold storage badges
-- ✅ User maintains full control over wallet classification
-- ✅ Proper workflow: trace first, classify later if needed
+3. Enhanced UI badges (Lines 16940-16951)
+   - Fully allocated: Gray badge '✓ FULLY ALLOCATED (H1-E2)'
+   - Partially allocated: Orange badge '⚠️ PARTIAL: 1,000 of 5,000 USDT (H1-E2) - 4,000 available'
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EXAMPLE:
+Transaction: 5,000 USDT outbound
+Entry 1: Allocates 1,000 USDT
+Result: Orange 'PARTIAL' badge, transaction still selectable
+Entry 2: Allocates 4,000 USDT
+Result: Gray 'FULLY ALLOCATED' badge, transaction grayed out
 
+BENEFITS:
+- Multiple threads can allocate portions of same transaction
+- Clear visibility of allocated vs available amounts
+- No blocking when transaction has remaining value
+- Proper support for commingled funds
+
+🤖 Generated with Claude Code
 Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ index.html | 110 +++++++++++++++++++++++++++++++++++++++++++++----------------
+ 1 file changed, 81 insertions(+), 29 deletions(-)
 ```
 
 ## Recent Commits History
 
-- fe1a382 Fix: Remove automatic cold storage classification from wallet explorer traces (0 seconds ago)
-- dff5772 Update CLAUDE.md with latest commit info (11 minutes ago)
-- dcf231d CRITICAL FIX: Blue wallets only terminal if explicitly marked (6 hours ago)
-- 2891f4b UX: Increase sidebar default width for better text readability (6 hours ago)
-- 6f3cc7f Fix: Remove overflow hidden from split container to enable scrolling (6 hours ago)
-- eac3fb5 Fix: Remove overflow hidden from modal backdrop to allow content scrolling (7 hours ago)
-- 3531041 Fix: Prevent body scroll when wallet explorer modal is open (7 hours ago)
-- a721111 Fix: Sidebar uses full vertical space and cache cleared on wallet open (7 hours ago)
-- 7815a65 UX: Sticky ART commit buttons always visible at sidebar bottom (7 hours ago)
-- ce7f1bc UX: Compact sidebar layout for better horizontal space usage (7 hours ago)
+- 4cda57c Fix: Transaction graying now tracks partial allocation (0 seconds ago)
+- a4e4764 Fix: Add exit button and enable partial thread allocation (2 minutes ago)
+- e200c36 Feature: Log movement from cold storage with audit trail (14 hours ago)
+- a8f34fd Fix: Remove auto-termination of mixer entries - let investigator decide (15 hours ago)
+- 614963c Fix: Defer attribution checking to commit time to avoid API rate limiting (15 hours ago)
+- 76149f2 Feature: Auto-detect and classify terminal/conversion wallets in wallet explorer (15 hours ago)
+- 7c1039a Update CLAUDE.md with latest commit info (15 hours ago)
+- fe1a382 Fix: Remove automatic cold storage classification from wallet explorer traces (15 hours ago)
+- dff5772 Update CLAUDE.md with latest commit info (15 hours ago)
+- dcf231d CRITICAL FIX: Blue wallets only terminal if explicitly marked (21 hours ago)
 
 ## Key Features
 
