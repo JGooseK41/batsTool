@@ -13492,26 +13492,26 @@ function updateFormFieldsFromInvestigation() {
         return;
     }
 
-    // Display totals by currency
+    // Display totals by currency with proper precision (8 decimals for BTC, etc.)
     let totalDisplay = '';
     Object.entries(totalsByCurrency).forEach(([currency, amount]) => {
-        totalDisplay += `<div style="font-size: 1.8rem; font-weight: bold; color: #27ae60; margin: 10px 0;">${amount.toLocaleString()} ${currency}</div>`;
+        totalDisplay += `<div style="font-size: 1.8rem; font-weight: bold; color: #27ae60; margin: 10px 0;">${formatCurrencyAmount(amount, currency)} ${currency}</div>`;
     });
-    
+
     document.getElementById('totalRootAmount').innerHTML = totalDisplay;
-    
+
     // Add visual progress bars for root total
     let progressBars = '<div style="background: white; padding: 20px; border-radius: 8px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
     progressBars += '<h4 style="margin-bottom: 15px; color: #2c3e50;">📊 Investigation Progress Overview</h4>';
     progressBars += '<p style="color: #666; margin-bottom: 15px; font-size: 14px;">These bars will track your progress as you trace funds through the investigation.</p>';
-    
+
     Object.entries(totalsByCurrency).forEach(([currency, total]) => {
         progressBars += `
             <div style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <strong style="font-size: 16px;">${currency}</strong>
                     <span style="font-size: 14px; color: #666;">
-                        ${total.toLocaleString()} total
+                        ${formatCurrencyAmount(total, currency)} total
                     </span>
                 </div>
                 

@@ -3,29 +3,29 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-30 16:26)
+## Latest Commit (Auto-updated: 2025-10-30 16:29)
 
-**Commit:** 1231421cd73cf242413378ad2126042d9bca199c
+**Commit:** ac9a13484e1c7d4a2fd2bd086b79073d68693af9
 **Author:** Your Name
-**Message:** Fix: Swap wizard now creates threads in flat structure
+**Message:** Fix: Bridge wizard now creates threads in flat structure
 
-Problem: Swap wizard was creating output threads in nested currency structure (availableThreads[currency][threadId]) while the rest of the system expects flat structure (availableThreads[internalId]).
+Problem: Bridge wizard was creating and consuming threads using nested currency structure (availableThreads[currency][threadId]) while the rest of the system expects flat structure (availableThreads[internalId]).
 
-This caused threads to be lost or miscounted because:
-1. Calculation code iterates flat structure
-2. Nested threads weren't findable by internal ID
-3. Build function might create duplicates
+This caused the same issues as swaps:
+1. Threads created in wrong structure
+2. Calculation code couldn't find nested threads
+3. Potential for duplicates or lost threads
 
 Solution:
-- Changed createSwapOutputThread() to use flat structure
-- Now generates deterministic internal ID via generateInternalThreadId()
-- Creates thread at root level: availableThreads[internalId] = {}
-- Added proper dual-layer tracking (notation + internalId)
-- Added provenance fields (createdAt, parentThreads, childThreads)
+- Fixed thread consumption: Now iterates flat structure, filters by currency
+- Fixed thread creation: Creates at root level with internal ID key
+- Removed nested structure initialization (availableThreads[currency] = {})
+- Removed nested structure reassignment logic
+- Uses flat structure for both existence checks and updates
 
-This ensures swap outputs are properly tracked and counted in thread calculations.
+Now bridges properly integrate with the flat thread tracking system.
 
-Next: Fix bridge output creation similarly
+Combined with previous swap fix, this ensures ALL thread operations use consistent flat structure.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -33,15 +33,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 105 +++++++++++++++++++------------------------------------------
- index.html |  46 +++++++++++++++++----------
- 2 files changed, 62 insertions(+), 89 deletions(-)
+ CLAUDE.md  | 42 +++++++++++++++++++++-------------------
+ index.html | 65 ++++++++++++++++++++++----------------------------------------
+ 2 files changed, 45 insertions(+), 62 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1231421 Fix: Swap wizard now creates threads in flat structure (0 seconds ago)
-- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (6 minutes ago)
+- ac9a134 Fix: Bridge wizard now creates threads in flat structure (0 seconds ago)
+- 1231421 Fix: Swap wizard now creates threads in flat structure (2 minutes ago)
+- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (8 minutes ago)
 - 5763f21 UX: Replace single amount filter with separate min/max inputs (6 hours ago)
 - 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (6 hours ago)
 - bbd41f4 Update CLAUDE.md with latest commit info (6 hours ago)
@@ -49,7 +50,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - 6148579 Fix: Remove duplicate isPartiallyAllocated declaration causing syntax error (12 hours ago)
 - 966b4fd Feat: Implement Bitcoin UTXO multi-output transaction handling (19 hours ago)
 - 3c89d76 Update CLAUDE.md with latest commit info (19 hours ago)
-- 4cda57c Fix: Transaction graying now tracks partial allocation (20 hours ago)
 
 ## Key Features
 
