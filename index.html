@@ -32779,10 +32779,12 @@ function getMaxAssignableAmount(sourceThreadIdentifier, currency, excludeEntryId
     let totalAssignedInCurrentSession = 0;
 
     // Calculate what's already been assigned across ALL hop entries in the current session
+    console.log(`\n🔍 DEBUG: Calculating assignments for thread ${sourceThreadIdentifier} (${internalId})`);
     investigation.hops.forEach(hop => {
         hop.entries.forEach(entry => {
             // Skip the entry being edited to avoid double-counting
             if (excludeEntryId && excludeHopId && entry.id === excludeEntryId && hop.hopNumber === excludeHopId) {
+                console.log(`  ⏭️  Skipping entry ${entry.notation || entry.id} in Hop ${hop.hopNumber} (currently being edited)`);
                 return; // Skip this entry
             }
 
@@ -32801,11 +32803,22 @@ function getMaxAssignableAmount(sourceThreadIdentifier, currency, excludeEntryId
 
                     if (usesThisThread) {
                         // Single source entry
-                        totalAssignedInCurrentSession += parseFloat(entry.amount);
+                        const amount = parseFloat(entry.amount);
+                        console.log(`  ✅ SINGLE SOURCE: Hop ${hop.hopNumber}, Entry ${entry.notation || entry.id} uses ${amount} ${actualCurrency}`);
+                        console.log(`     - sourceThreadInternalId: ${entry.sourceThreadInternalId}`);
+                        console.log(`     - sourceThreadId: ${entry.sourceThreadId}`);
+                        console.log(`     - Matched: ${entry.sourceThreadInternalId === internalId ? 'internalId' : (entry.sourceThreadId === sourceThreadIdentifier ? 'sourceThreadIdentifier' : 'notation')}`);
+                        totalAssignedInCurrentSession += amount;
                     } else {
                         // Check multiple source assignments
                         const multipleIds = entry.multipleSourceInternalIds || entry.multipleSourceThreads || [];
                         const assignments = entry.individualSourceAssignments || {};
+
+                        console.log(`  🔍 Checking MULTIPLE SOURCES for Hop ${hop.hopNumber}, Entry ${entry.notation || entry.id}:`);
+                        console.log(`     - multipleSourceInternalIds: ${JSON.stringify(entry.multipleSourceInternalIds)}`);
+                        console.log(`     - multipleSourceThreads: ${JSON.stringify(entry.multipleSourceThreads)}`);
+                        console.log(`     - Using multipleIds: ${JSON.stringify(multipleIds)}`);
+                        console.log(`     - individualSourceAssignments: ${JSON.stringify(assignments)}`);
 
                         // Check if this thread is in multiple sources
                         if (multipleIds.includes(internalId) || multipleIds.includes(sourceThreadIdentifier) || multipleIds.includes(thread.notation)) {
@@ -32813,9 +32826,19 @@ function getMaxAssignableAmount(sourceThreadIdentifier, currency, excludeEntryId
                             const assignedAmount = assignments[internalId] ||
                                                  assignments[sourceThreadIdentifier] ||
                                                  assignments[thread.notation] || 0;
+
+                            console.log(`  ✅ MULTIPLE SOURCE MATCH: Uses ${assignedAmount} ${actualCurrency}`);
+                            console.log(`     - Matched key: ${assignments[internalId] ? internalId : (assignments[sourceThreadIdentifier] ? sourceThreadIdentifier : (assignments[thread.notation] ? thread.notation : 'none(0)'))}`);
+                            console.log(`     - Running total before: ${totalAssignedInCurrentSession}`);
                             totalAssignedInCurrentSession += parseFloat(assignedAmount);
+                            console.log(`     - Running total after: ${totalAssignedInCurrentSession}`);
+                        } else {
+                            console.log(`  ⏭️  No match for this thread`);
                         }
                     }
+                } else {
+                    // Different currency
+                    console.log(`  ⏭️  Skipping entry ${entry.notation || entry.id} in Hop ${hop.hopNumber} (currency: ${entryCurrency} !== ${actualCurrency})`);
                 }
             }
         });

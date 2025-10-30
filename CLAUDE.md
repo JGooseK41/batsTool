@@ -3,44 +3,69 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-30 04:16)
+## Latest Commit (Auto-updated: 2025-10-30 10:47)
 
-**Commit:** d0ff0b660bf418f2f1e63166dcf9a6a33fad0f21
+**Commit:** 5763f21dfaac7744ea768bbf3984c4fa07470e7d
 **Author:** Your Name
-**Message:** Fix: Multiple UTXO wallet explorer issues
+**Message:** UX: Replace single amount filter with separate min/max inputs
 
-Problems:
-1. TypeError: Cannot read properties of undefined (reading 'has')
-   - walletExplorerState.expandedTransactions was undefined when creating
-     transaction headers
-2. BTC amounts showing as 0.000010 instead of proper 8 decimal precision
-   - Asset display used .toFixed(6) for all currencies
-3. Bitcoin addresses opening with 'ethereum' blockchain
-   - Victim transactions defaulted to 'ethereum' when chain property not set
+Problem: User put "0.06" in amount field and "0.07" in address field,
+thinking they were separate min/max inputs. This caused all transfers
+to be filtered out (no addresses contain "0.07").
 
-Solutions:
+Root Cause: Single amount filter field with range syntax "0.06-0.07"
+was not intuitive. Users expected separate min/max inputs for range filtering.
 
-1. Added expandedTransactions initialization checks in:
-   - createTransactionHeaderRow() (line 16997)
-   - createTransactionContentRow() (line 16957)
-   - toggleTransactionExpansion() (line 16773)
-   - Ensures Set is created before .has() is called
+Solution: Split amount filter into two separate number inputs
 
-2. Bitcoin precision fixes:
-   - aggregateAssets() console log: Use 8 decimals for BTC (line 15444)
-   - displayAssetSummary() balance display: Use 8 decimals for BTC (line 15585)
-   - displayAssetSummary() volume display: Use 8 decimals for BTC (line 15595)
+## Changes:
 
-3. Blockchain detection fix:
-   - viewThreadInWalletExplorer(): Use detectBlockchainFromAddress() as
-     fallback when transaction.chain is not set (line 25197)
-   - Properly detects Bitcoin addresses (bc1...) instead of defaulting to
-     Ethereum
+### 1. New Min/Max Input Fields (Lines 2656-2666)
+- Replaced single "Filter by Amount" text input
+- Added "Amount Range" label with two number inputs:
+  - transferAmountMin: Minimum amount (placeholder: "Min (e.g., 0.06)")
+  - transferAmountMax: Maximum amount (placeholder: "Max (e.g., 0.07)")
+- Visual layout: [Min] to [Max] with "to" text between
+- Both inputs trigger filterTransfers() on input
 
-Now Bitcoin wallets display correctly with:
-- Proper 8-decimal satoshi precision
-- Correct blockchain detection from address format
-- No expandedTransactions errors when viewing grouped transactions
+### 2. Updated Filter Logic (Lines 50805-50818)
+- Reads from transferAmountMin and transferAmountMax fields
+- Treats empty min as -Infinity (no lower bound)
+- Treats empty max as Infinity (no upper bound)
+- Allows filtering by:
+  - Only min: "Show >= 0.06"
+  - Only max: "Show <= 0.07"
+  - Both: "Show 0.06 to 0.07"
+
+### 3. Updated clearTransferFilters() (Lines 50848-50851)
+- Clears transferAmountMin instead of transferAmountFilter
+- Clears transferAmountMax (new field)
+
+### 4. Updated showTransferSelectionModal() (Lines 50705-50707)
+- Clears transferAmountMin instead of transferAmountFilter
+- Clears transferAmountMax (new field)
+
+### 5. Enhanced Address Placeholder (Line 2670)
+- Added "(partial match works)" to help text
+- Educates users they can type partial addresses
+
+## User Experience:
+
+**Before:**
+- Amount field: "0.06-0.07" (non-intuitive syntax)
+- Users confused about how to enter ranges
+
+**After:**
+- Min field: "0.06"
+- Max field: "0.07"
+- Clear, intuitive separate inputs
+
+## Grid Layout Adjustment:
+Changed from 1fr 1fr 1fr to 1fr 2fr 2fr to accommodate:
+- Asset filter: 1 column
+- Amount range (2 inputs + "to"): 2 columns
+- Address filter: 2 columns
+- Clear button: auto width
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -48,22 +73,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 28 ++++++++++++++++++++++++----
- 1 file changed, 24 insertions(+), 4 deletions(-)
+ index.html | 67 ++++++++++++++++++++++++++++----------------------------------
+ 1 file changed, 30 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d0ff0b6 Fix: Multiple UTXO wallet explorer issues (0 seconds ago)
-- 6148579 Fix: Remove duplicate isPartiallyAllocated declaration causing syntax error (9 minutes ago)
-- 966b4fd Feat: Implement Bitcoin UTXO multi-output transaction handling (7 hours ago)
-- 3c89d76 Update CLAUDE.md with latest commit info (7 hours ago)
-- 4cda57c Fix: Transaction graying now tracks partial allocation (8 hours ago)
-- a4e4764 Fix: Add exit button and enable partial thread allocation (8 hours ago)
-- e200c36 Feature: Log movement from cold storage with audit trail (22 hours ago)
-- a8f34fd Fix: Remove auto-termination of mixer entries - let investigator decide (23 hours ago)
-- 614963c Fix: Defer attribution checking to commit time to avoid API rate limiting (23 hours ago)
-- 76149f2 Feature: Auto-detect and classify terminal/conversion wallets in wallet explorer (23 hours ago)
+- 5763f21 UX: Replace single amount filter with separate min/max inputs (0 seconds ago)
+- 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (17 minutes ago)
+- bbd41f4 Update CLAUDE.md with latest commit info (23 minutes ago)
+- d0ff0b6 Fix: Multiple UTXO wallet explorer issues (7 hours ago)
+- 6148579 Fix: Remove duplicate isPartiallyAllocated declaration causing syntax error (7 hours ago)
+- 966b4fd Feat: Implement Bitcoin UTXO multi-output transaction handling (13 hours ago)
+- 3c89d76 Update CLAUDE.md with latest commit info (13 hours ago)
+- 4cda57c Fix: Transaction graying now tracks partial allocation (14 hours ago)
+- a4e4764 Fix: Add exit button and enable partial thread allocation (15 hours ago)
+- e200c36 Feature: Log movement from cold storage with audit trail (28 hours ago)
 
 ## Key Features
 
