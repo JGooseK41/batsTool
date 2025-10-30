@@ -2710,7 +2710,12 @@
     <!-- Wallet Explorer Modal -->
     <div id="walletExplorerModal" class="modal">
         <div class="modal-content" style="max-width: 1200px; max-height: 90vh; display: flex; flex-direction: column;">
-            <div class="modal-header" style="flex-shrink: 0;">
+            <div class="modal-header" style="flex-shrink: 0; position: relative;">
+                <button onclick="closeWalletExplorer()"
+                        style="position: absolute; top: 15px; right: 15px; background: #dc3545; color: white; border: none; border-radius: 4px; padding: 8px 16px; font-size: 18px; font-weight: bold; cursor: pointer; z-index: 1000;"
+                        title="Close Wallet Explorer">
+                    ✕ Close
+                </button>
                 <h2>🔍 Wallet Explorer</h2>
                 <p>View wallet transaction history across all blockchains</p>
             </div>
@@ -16522,6 +16527,12 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     attributionNote = `\n\n🟣 AUTO-CLASSIFIED: Terminal Wallet (${selection.tx.attribution.name || selection.tx.attribution.label})`;
                 }
 
+                // Build partial allocation note if applicable
+                let partialNote = '';
+                if (selection.isPartialAllocation && selection.fullTxAmount) {
+                    partialNote = `\n\n⚠️ PARTIAL ALLOCATION:\nTransaction total: ${selection.fullTxAmount.toLocaleString()} ${currency}\nAllocated from thread: ${selection.amount.toLocaleString()} ${currency}\nUnallocated remainder: ${(selection.fullTxAmount - selection.amount).toLocaleString()} ${currency}\n\nThis transaction was only partially allocated because the thread value was insufficient for the full transaction amount.`;
+                }
+
                 const entry = {
                     id: hop.entries.length + 1,
                     hopNumber: hopNumber,
@@ -16531,14 +16542,19 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     sourceThreadId: sourceThreadId,
                     multipleSourceThreads: [sourceThreadId],
                     notation: '',
-                    notes: `Created from Wallet Explorer ART Tracker\nThread: ${sourceThreadId}\nTransaction: ${selection.tx.hash}\nAmount: ${selection.amount.toLocaleString()} ${currency}\nAction: ${selection.action}\nCounterparty: ${selection.tx.counterparty || 'N/A'}${attributionNote}${clusterNote}`,
+                    notes: `Created from Wallet Explorer ART Tracker\nThread: ${sourceThreadId}\nTransaction: ${selection.tx.hash}\nAmount: ${selection.amount.toLocaleString()} ${currency}\nAction: ${selection.action}\nCounterparty: ${selection.tx.counterparty || 'N/A'}${attributionNote}${clusterNote}${partialNote}`,
                     timestamp: new Date(selection.tx.timestamp).toISOString().slice(0, 16),
                     chain: walletExplorerState.blockchain,
                     transactionHash: selection.tx.hash,
                     toWallet: selection.action === 'trace' ? (selection.tx.counterparty || '') : '',
                     toWalletType: walletType,
-                    // Store additional metadata for bridges
-                    ...(detectedContract?.type === 'bridge' && { isBridge: true, bridgeProvider: detectedContract })
+                    // Store additional metadata for bridges and partial allocations
+                    ...(detectedContract?.type === 'bridge' && { isBridge: true, bridgeProvider: detectedContract }),
+                    ...(selection.isPartialAllocation && {
+                        isPartialAllocation: true,
+                        fullTransactionAmount: selection.fullTxAmount,
+                        allocatedAmount: selection.amount
+                    })
                 };
 
                 hop.entries.push(entry);
@@ -17163,7 +17179,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         return;
                     }
 
-                    // Check if would exceed available ART
+                    // Check available ART and handle partial allocation if needed
                     const available = walletExplorerState.artAvailable;
                     const selections = walletExplorerState.artSelections;
                     let totalSelected = 0;
@@ -17172,27 +17188,43 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     }
                     const remaining = available - totalSelected;
 
+                    let allocationAmount = tx.amount;
+                    let isPartialAllocation = false;
+
+                    // PARTIAL ALLOCATION: If transaction is larger than remaining thread value
                     if (tx.amount > remaining + 0.01) {
-                        alert(
-                            `⚠️ INSUFFICIENT THREAD VALUE\n\n` +
+                        isPartialAllocation = true;
+                        allocationAmount = remaining;
+
+                        const proceed = confirm(
+                            `⚠️ PARTIAL ALLOCATION\n\n` +
                             `Transaction amount: ${tx.amount.toLocaleString()} ${tx.asset}\n` +
-                            `Remaining available: ${remaining.toLocaleString()} ${walletExplorerState.artCurrency}\n\n` +
-                            `You cannot allocate more than the available thread value.\n\n` +
-                            `Either:\n` +
-                            `• Remove some staged transactions first\n` +
-                            `• Or commit what you have and handle this transaction separately`
+                            `Remaining thread value: ${remaining.toLocaleString()} ${walletExplorerState.artCurrency}\n\n` +
+                            `This transaction is larger than the available thread value.\n\n` +
+                            `Do you want to allocate ${remaining.toLocaleString()} ${tx.asset} (partial allocation)?\n\n` +
+                            `• YES: Allocate ${remaining.toLocaleString()} from this thread\n` +
+                            `• NO: Cancel and handle this transaction differently`
                         );
-                        return;
+
+                        if (!proceed) {
+                            return; // User cancelled
+                        }
                     }
 
-                    // Add to ART selections
+                    // Add to ART selections (with potentially partial amount)
                     walletExplorerState.artSelections.set(txHash, {
                         tx: tx,
-                        amount: tx.amount,
+                        amount: allocationAmount,
+                        fullTxAmount: tx.amount,
+                        isPartialAllocation: isPartialAllocation,
                         action: 'trace'
                     });
 
-                    console.log(`✅ Staged transaction ${txHash} (${tx.amount} ${tx.asset}) for allocation`);
+                    if (isPartialAllocation) {
+                        console.log(`✅ Staged transaction ${txHash} - PARTIAL: ${allocationAmount.toLocaleString()} of ${tx.amount.toLocaleString()} ${tx.asset}`);
+                    } else {
+                        console.log(`✅ Staged transaction ${txHash} (${allocationAmount.toLocaleString()} ${tx.asset}) for allocation`);
+                    }
 
                     // Update display
                     updateARTDisplay();
