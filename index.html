@@ -17613,13 +17613,15 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 const row = document.createElement('tr');
 
                 // Check if this transaction is part of the investigation
-                const matchedThread = investigationThreads.find(t => t.txHash === tx.hash.toLowerCase());
+                // Defensive check: tx.hash might be undefined for some transaction types
+                const txHash = tx.hash || tx.txid || '';
+                const matchedThread = txHash ? investigationThreads.find(t => t.txHash === txHash.toLowerCase()) : null;
                 const isInvestigationThread = !!matchedThread;
                 const isCurrentThread = matchedThread?.isCurrent;
 
                 // Check if this is the traced transaction to highlight (legacy highlighting)
-                const isHighlighted = walletExplorerState.highlightTxHash &&
-                                      tx.hash.toLowerCase() === walletExplorerState.highlightTxHash;
+                const isHighlighted = walletExplorerState.highlightTxHash && txHash &&
+                                      txHash.toLowerCase() === walletExplorerState.highlightTxHash;
 
                 // Add highlight class if this is the traced transaction
                 let rowClass = 'wallet-tx-row ' + (tx.type === 'IN' ? 'wallet-tx-in' : 'wallet-tx-out');
@@ -17647,7 +17649,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 const isChangeOutput = tx.isChange === true || tx.type === 'CHANGE';
 
                 // Check if this transaction has been used in the investigation
-                const usageInfo = isTransactionUsedInInvestigation(tx.hash, tx.amount);
+                const usageInfo = txHash ? isTransactionUsedInInvestigation(txHash, tx.amount) : { isUsed: false, isPartiallyAllocated: false };
                 const isUsedTransaction = usageInfo.isUsed;
                 const isPartiallyAllocated = usageInfo.isPartiallyAllocated;
 
@@ -17659,8 +17661,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     amountPrefix = '↩️'; // Return arrow for change
                 }
 
-                const balance = walletExplorerState.balanceMap && walletExplorerState.balanceMap[tx.hash]
-                    ? walletExplorerState.balanceMap[tx.hash].toFixed(6)
+                const balance = walletExplorerState.balanceMap && txHash && walletExplorerState.balanceMap[txHash]
+                    ? walletExplorerState.balanceMap[txHash].toFixed(6)
                     : '—';
 
                 const entityLabel = tx.entityLabel ? `<span class="wallet-entity-label">${tx.entityLabel}</span>` : '';
@@ -17705,9 +17707,9 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 const balanceCell = showBalance ? `<td style="padding: 12px; text-align: right;">${balance}</td>` : '';
 
                 // Check if this transaction is selected
-                const isSelected = walletExplorerState.artMode
-                    ? walletExplorerState.artSelections.has(tx.hash)
-                    : walletExplorerState.selectedTransactions && walletExplorerState.selectedTransactions.has(tx.hash);
+                const isSelected = txHash && (walletExplorerState.artMode
+                    ? walletExplorerState.artSelections.has(txHash)
+                    : walletExplorerState.selectedTransactions && walletExplorerState.selectedTransactions.has(txHash));
 
                 // Determine if this is an active incoming thread that should always be visible
                 // Only INCOMING threads are active - outgoing threads are already committed
@@ -17811,23 +17813,23 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 row.innerHTML = `
                     <td style="padding: 12px; text-align: center;">
                         ${isChangeOutput ? `
-                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
+                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${txHash}"
                                    disabled
                                    title="Change outputs cannot be selected - funds stay in same thread"
                                    style="cursor: not-allowed; opacity: 0.3;">
                         ` : isUsedTransaction ? `
-                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
+                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${txHash}"
                                    disabled
                                    title="Already allocated in ${usageInfo.notation || usageInfo.location}"
                                    style="cursor: not-allowed; opacity: 0.3;">
                         ` : walletExplorerState.artMode ? `
-                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
+                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${txHash}"
                                    ${isSelected ? 'checked' : ''}
                                    onclick="event.stopPropagation(); toggleARTSelection(${JSON.stringify(tx).replace(/"/g, '&quot;')})">
                         ` : `
-                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${tx.hash}"
+                            <input type="checkbox" class="wallet-tx-checkbox" data-hash="${txHash}"
                                    ${isSelected ? 'checked' : ''}
-                                   onchange="toggleTransactionSelection('${tx.hash}')">
+                                   onchange="toggleTransactionSelection('${txHash}')">
                         `}
                     </td>
                     <td style="padding: 12px;">${date}${threadBadge}</td>
@@ -17863,7 +17865,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
                                     if (walletExplorerState.artMode) {
                                         // Check if already staged
-                                        if (walletExplorerState.artSelections.has(tx.hash)) {
+                                        if (txHash && walletExplorerState.artSelections.has(txHash)) {
                                             isDisabled = true;
                                             disabledTitle = 'Already staged for allocation';
                                             buttonStyle = 'font-size: 12px; padding: 6px 12px; width: 110px; background: #9ca3af; color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; opacity: 0.5; cursor: not-allowed;';
@@ -17901,7 +17903,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
                                     if (walletExplorerState.artMode) {
                                         // Check if already staged
-                                        if (walletExplorerState.artSelections.has(tx.hash)) {
+                                        if (txHash && walletExplorerState.artSelections.has(txHash)) {
                                             isDisabled = true;
                                             disabledTitle = 'Already staged for allocation';
                                             buttonStyle = 'font-size: 12px; padding: 6px 12px; width: 110px; background: #9ca3af; color: white; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; opacity: 0.5; cursor: not-allowed;';

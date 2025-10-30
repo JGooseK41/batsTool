@@ -3,29 +3,25 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-30 16:29)
+## Latest Commit (Auto-updated: 2025-10-30 19:56)
 
-**Commit:** ac9a13484e1c7d4a2fd2bd086b79073d68693af9
+**Commit:** 34a2c8c1e4508f8aef31f3206ae42c39bc0f3bcc
 **Author:** Your Name
-**Message:** Fix: Bridge wizard now creates threads in flat structure
+**Message:** Fix: Display full BTC precision in Root Total/ART display
 
-Problem: Bridge wizard was creating and consuming threads using nested currency structure (availableThreads[currency][threadId]) while the rest of the system expects flat structure (availableThreads[internalId]).
-
-This caused the same issues as swaps:
-1. Threads created in wrong structure
-2. Calculation code couldn't find nested threads
-3. Potential for duplicates or lost threads
+Problem: ART display showing "0.061 BTC" instead of full precision "0.06117942 BTC"
+Root cause: Using amount.toLocaleString() which rounds to default locale precision (often 3 decimals)
 
 Solution:
-- Fixed thread consumption: Now iterates flat structure, filters by currency
-- Fixed thread creation: Creates at root level with internal ID key
-- Removed nested structure initialization (availableThreads[currency] = {})
-- Removed nested structure reassignment logic
-- Uses flat structure for both existence checks and updates
+- Changed line 13498 to use formatCurrencyAmount(amount, currency)
+- Changed line 13514 to use formatCurrencyAmount(total, currency)
+- formatCurrencyAmount() uses getCurrencyPrecision() which returns:
+  * 8 decimals for BTC (satoshi precision)
+  * 18 decimals for ETH
+  * 6 decimals for USDT/USDC
+  * Proper precision for each currency
 
-Now bridges properly integrate with the flat thread tracking system.
-
-Combined with previous swap fix, this ensures ALL thread operations use consistent flat structure.
+Now ART display shows full precision: 0.06117942 BTC
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -33,23 +29,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 42 +++++++++++++++++++++-------------------
- index.html | 65 ++++++++++++++++++++++----------------------------------------
- 2 files changed, 45 insertions(+), 62 deletions(-)
+ CLAUDE.md  | 42 +++++++++++++++++++++---------------------
+ index.html | 12 ++++++------
+ 2 files changed, 27 insertions(+), 27 deletions(-)
 ```
 
 ## Recent Commits History
 
-- ac9a134 Fix: Bridge wizard now creates threads in flat structure (0 seconds ago)
-- 1231421 Fix: Swap wizard now creates threads in flat structure (2 minutes ago)
-- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (8 minutes ago)
-- 5763f21 UX: Replace single amount filter with separate min/max inputs (6 hours ago)
-- 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (6 hours ago)
-- bbd41f4 Update CLAUDE.md with latest commit info (6 hours ago)
-- d0ff0b6 Fix: Multiple UTXO wallet explorer issues (12 hours ago)
-- 6148579 Fix: Remove duplicate isPartiallyAllocated declaration causing syntax error (12 hours ago)
-- 966b4fd Feat: Implement Bitcoin UTXO multi-output transaction handling (19 hours ago)
-- 3c89d76 Update CLAUDE.md with latest commit info (19 hours ago)
+- 34a2c8c Fix: Display full BTC precision in Root Total/ART display (1 second ago)
+- ac9a134 Fix: Bridge wizard now creates threads in flat structure (3 hours ago)
+- 1231421 Fix: Swap wizard now creates threads in flat structure (3 hours ago)
+- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (4 hours ago)
+- 5763f21 UX: Replace single amount filter with separate min/max inputs (9 hours ago)
+- 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (9 hours ago)
+- bbd41f4 Update CLAUDE.md with latest commit info (10 hours ago)
+- d0ff0b6 Fix: Multiple UTXO wallet explorer issues (16 hours ago)
+- 6148579 Fix: Remove duplicate isPartiallyAllocated declaration causing syntax error (16 hours ago)
+- 966b4fd Feat: Implement Bitcoin UTXO multi-output transaction handling (22 hours ago)
 
 ## Key Features
 
