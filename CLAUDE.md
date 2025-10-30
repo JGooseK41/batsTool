@@ -3,33 +3,67 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-29 21:22)
+## Latest Commit (Auto-updated: 2025-10-30 04:16)
 
-**Commit:** 3c89d76c709c142d658e3f93332c5c47d92c355f
+**Commit:** d0ff0b660bf418f2f1e63166dcf9a6a33fad0f21
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Fix: Multiple UTXO wallet explorer issues
 
-🤖 Generated with Claude Code
+Problems:
+1. TypeError: Cannot read properties of undefined (reading 'has')
+   - walletExplorerState.expandedTransactions was undefined when creating
+     transaction headers
+2. BTC amounts showing as 0.000010 instead of proper 8 decimal precision
+   - Asset display used .toFixed(6) for all currencies
+3. Bitcoin addresses opening with 'ethereum' blockchain
+   - Victim transactions defaulted to 'ethereum' when chain property not set
+
+Solutions:
+
+1. Added expandedTransactions initialization checks in:
+   - createTransactionHeaderRow() (line 16997)
+   - createTransactionContentRow() (line 16957)
+   - toggleTransactionExpansion() (line 16773)
+   - Ensures Set is created before .has() is called
+
+2. Bitcoin precision fixes:
+   - aggregateAssets() console log: Use 8 decimals for BTC (line 15444)
+   - displayAssetSummary() balance display: Use 8 decimals for BTC (line 15585)
+   - displayAssetSummary() volume display: Use 8 decimals for BTC (line 15595)
+
+3. Blockchain detection fix:
+   - viewThreadInWalletExplorer(): Use detectBlockchainFromAddress() as
+     fallback when transaction.chain is not set (line 25197)
+   - Properly detects Bitcoin addresses (bc1...) instead of defaulting to
+     Ethereum
+
+Now Bitcoin wallets display correctly with:
+- Proper 8-decimal satoshi precision
+- Correct blockchain detection from address format
+- No expandedTransactions errors when viewing grouped transactions
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
 Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 80 +++++++++++++++++++++++++++++++++++----------------------------
- 1 file changed, 45 insertions(+), 35 deletions(-)
+ index.html | 28 ++++++++++++++++++++++++----
+ 1 file changed, 24 insertions(+), 4 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 3c89d76 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 4cda57c Fix: Transaction graying now tracks partial allocation (63 minutes ago)
-- a4e4764 Fix: Add exit button and enable partial thread allocation (66 minutes ago)
-- e200c36 Feature: Log movement from cold storage with audit trail (15 hours ago)
-- a8f34fd Fix: Remove auto-termination of mixer entries - let investigator decide (16 hours ago)
-- 614963c Fix: Defer attribution checking to commit time to avoid API rate limiting (16 hours ago)
-- 76149f2 Feature: Auto-detect and classify terminal/conversion wallets in wallet explorer (16 hours ago)
-- 7c1039a Update CLAUDE.md with latest commit info (16 hours ago)
-- fe1a382 Fix: Remove automatic cold storage classification from wallet explorer traces (16 hours ago)
-- dff5772 Update CLAUDE.md with latest commit info (16 hours ago)
+- d0ff0b6 Fix: Multiple UTXO wallet explorer issues (0 seconds ago)
+- 6148579 Fix: Remove duplicate isPartiallyAllocated declaration causing syntax error (9 minutes ago)
+- 966b4fd Feat: Implement Bitcoin UTXO multi-output transaction handling (7 hours ago)
+- 3c89d76 Update CLAUDE.md with latest commit info (7 hours ago)
+- 4cda57c Fix: Transaction graying now tracks partial allocation (8 hours ago)
+- a4e4764 Fix: Add exit button and enable partial thread allocation (8 hours ago)
+- e200c36 Feature: Log movement from cold storage with audit trail (22 hours ago)
+- a8f34fd Fix: Remove auto-termination of mixer entries - let investigator decide (23 hours ago)
+- 614963c Fix: Defer attribution checking to commit time to avoid API rate limiting (23 hours ago)
+- 76149f2 Feature: Auto-detect and classify terminal/conversion wallets in wallet explorer (23 hours ago)
 
 ## Key Features
 
