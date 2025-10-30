@@ -15440,7 +15440,9 @@ function exportRedWalletIndexCSV() {
 
             console.log('📊 Asset aggregation complete:');
             Object.keys(assets).forEach(asset => {
-                console.log(`  ${asset}: ${assets[asset].balance.toFixed(6)} (${assets[asset].txCount} transactions)`);
+                // Use 8 decimals for BTC (satoshi precision), 6 for others
+                const decimals = asset === 'BTC' ? 8 : 6;
+                console.log(`  ${asset}: ${assets[asset].balance.toFixed(decimals)} (${assets[asset].txCount} transactions)`);
             });
 
             // Filter out assets with 0 balance
@@ -15579,16 +15581,18 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 ` : '';
 
                 const totalVolume = asset.totalIn + asset.totalOut;
+                // Use 8 decimals for BTC (satoshi precision), 6 for others
+                const decimals = asset.name === 'BTC' ? 8 : 6;
 
                 card.innerHTML = `
                     <h4>${asset.name}${badge}${scamBadge}</h4>
                     <div style="margin: 8px 0;">
                         <div style="font-size: 0.75rem; color: rgba(255,255,255,0.8); text-transform: uppercase; margin-bottom: 2px;">Current Balance</div>
-                        <div class="asset-balance">${asset.balance.toFixed(6)}${negativeBalanceInfo}</div>
+                        <div class="asset-balance">${asset.balance.toFixed(decimals)}${negativeBalanceInfo}</div>
                     </div>
                     <div style="margin: 8px 0; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2);">
                         <div style="font-size: 0.75rem; color: rgba(255,255,255,0.8); text-transform: uppercase; margin-bottom: 2px;">Total Volume</div>
-                        <div style="font-size: 1rem; font-weight: 600;">${totalVolume.toFixed(6)}</div>
+                        <div style="font-size: 1rem; font-weight: 600;">${totalVolume.toFixed(decimals)}</div>
                     </div>
                     <div class="asset-tx-count">${asset.txCount} transaction${asset.txCount > 1 ? 's' : ''}</div>
                 `;
@@ -16769,6 +16773,11 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
          * Toggle transaction expansion
          */
         function toggleTransactionExpansion(txHash) {
+            // Initialize expandedTransactions if needed
+            if (!walletExplorerState.expandedTransactions) {
+                walletExplorerState.expandedTransactions = new Set();
+            }
+
             if (walletExplorerState.expandedTransactions.has(txHash)) {
                 walletExplorerState.expandedTransactions.delete(txHash);
             } else {
@@ -16948,6 +16957,11 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             row.className = 'utxo-transaction-content';
             row.id = `tx-content-${group.txHash}`;
 
+            // Initialize expandedTransactions if needed
+            if (!walletExplorerState.expandedTransactions) {
+                walletExplorerState.expandedTransactions = new Set();
+            }
+
             const isExpanded = walletExplorerState.expandedTransactions.has(group.txHash);
             row.style.display = isExpanded ? '' : 'none';
 
@@ -16992,6 +17006,11 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             row.style.background = '#f8f9fa';
             row.style.borderBottom = '1px solid #dee2e6';
             row.style.transition = 'all 0.2s ease';
+
+            // Initialize expandedTransactions if needed
+            if (!walletExplorerState.expandedTransactions) {
+                walletExplorerState.expandedTransactions = new Set();
+            }
 
             const isExpanded = walletExplorerState.expandedTransactions.has(group.txHash);
             const expandIcon = isExpanded ? '▼' : '▶';
@@ -25174,7 +25193,8 @@ function viewThreadInWalletExplorer(threadId) {
                 const transaction = victim.transactions.find(t => t.id === transactionId);
                 if (transaction) {
                     sourceWallet = transaction.receivingWallet;
-                    blockchain = transaction.chain || 'ethereum'; // Default to ethereum if not set
+                    // Detect blockchain from address format if not explicitly set
+                    blockchain = transaction.chain || detectBlockchainFromAddress(transaction.receivingWallet);
                     txHash = transaction.txHash;
                 }
             }
