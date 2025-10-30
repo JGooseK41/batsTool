@@ -2644,24 +2644,30 @@
             
             <!-- Filter Section -->
             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end;">
+                <div style="display: grid; grid-template-columns: 1fr 2fr 2fr auto; gap: 10px; align-items: end;">
                     <div>
                         <label style="display: block; margin-bottom: 5px; font-weight: 500;">Filter by Asset:</label>
-                        <select id="transferAssetFilter" 
+                        <select id="transferAssetFilter"
                                style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px;"
                                onchange="filterTransfers()">
                             <option value="">All Assets</option>
                         </select>
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Filter by Amount:</label>
-                        <input type="text" id="transferAmountFilter" placeholder="e.g., 1000 or 0.06-0.07 (range)"
-                               style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px;"
-                               oninput="filterTransfers()">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Amount Range:</label>
+                        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 5px; align-items: center;">
+                            <input type="number" id="transferAmountMin" placeholder="Min (e.g., 0.06)" step="any"
+                                   style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px;"
+                                   oninput="filterTransfers()">
+                            <span style="color: #666;">to</span>
+                            <input type="number" id="transferAmountMax" placeholder="Max (e.g., 0.07)" step="any"
+                                   style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px;"
+                                   oninput="filterTransfers()">
+                        </div>
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 5px; font-weight: 500;">Filter by Address:</label>
-                        <input type="text" id="transferAddressFilter" placeholder="To or From address" 
+                        <input type="text" id="transferAddressFilter" placeholder="To or From address (partial match works)"
                                style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px;"
                                oninput="filterTransfers()">
                     </div>
@@ -50696,7 +50702,8 @@ async function lookupVictimTransaction(victimId, transactionId) {
             });
             
             // Clear filters
-            document.getElementById('transferAmountFilter').value = '';
+            document.getElementById('transferAmountMin').value = '';
+            document.getElementById('transferAmountMax').value = '';
             document.getElementById('transferAddressFilter').value = '';
             assetFilter.value = '';
             
@@ -50777,10 +50784,11 @@ async function lookupVictimTransaction(victimId, transactionId) {
             console.log('🔍 filterTransfers() called');
 
             const assetFilter = document.getElementById('transferAssetFilter').value;
-            const amountFilter = document.getElementById('transferAmountFilter').value.trim();
+            const amountMin = document.getElementById('transferAmountMin').value.trim();
+            const amountMax = document.getElementById('transferAmountMax').value.trim();
             const addressFilter = document.getElementById('transferAddressFilter').value.trim().toLowerCase();
 
-            console.log(`Filters - Asset: "${assetFilter}", Amount: "${amountFilter}", Address: "${addressFilter}"`);
+            console.log(`Filters - Asset: "${assetFilter}", Min: "${amountMin}", Max: "${amountMax}", Address: "${addressFilter}"`);
             console.log(`Total transfers to filter: ${window.allTransfers ? window.allTransfers.length : 'undefined'}`);
 
             if (!window.allTransfers) {
@@ -50795,33 +50803,17 @@ async function lookupVictimTransaction(victimId, transactionId) {
                     return false;
                 }
 
-                // Amount filter
-                if (amountFilter) {
-                    // Check if it's a range (e.g., "0.06-0.07" or "0.06,0.07")
-                    if (amountFilter.includes('-') || amountFilter.includes(',')) {
-                        const separator = amountFilter.includes('-') ? '-' : ',';
-                        const parts = amountFilter.split(separator).map(p => parseFloat(p.trim()));
+                // Amount range filter
+                if (amountMin || amountMax) {
+                    const min = amountMin ? parseFloat(amountMin) : -Infinity;
+                    const max = amountMax ? parseFloat(amountMax) : Infinity;
 
-                        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-                            const min = Math.min(parts[0], parts[1]);
-                            const max = Math.max(parts[0], parts[1]);
-
-                            if (transfer.amount < min || transfer.amount > max) {
-                                console.log(`  ❌ Filtered out (amount range): ${transfer.to.substring(0, 20)}... (${transfer.amount} not in range ${min}-${max})`);
-                                return false;
-                            } else {
-                                console.log(`  ✅ Matched (amount range): ${transfer.to.substring(0, 20)}... (${transfer.amount} in range ${min}-${max})`);
-                            }
-                        }
-                    } else {
-                        // Exact amount matching
-                        const filterAmount = parseFloat(amountFilter);
-                        if (!isNaN(filterAmount)) {
-                            // Allow for slight variations due to decimal precision
-                            if (Math.abs(transfer.amount - filterAmount) > 0.000001) {
-                                console.log(`  ❌ Filtered out (amount): ${transfer.to.substring(0, 20)}... (${transfer.amount} !== ${filterAmount})`);
-                                return false;
-                            }
+                    if (!isNaN(min) && !isNaN(max)) {
+                        if (transfer.amount < min || transfer.amount > max) {
+                            console.log(`  ❌ Filtered out (amount range): ${transfer.to.substring(0, 20)}... (${transfer.amount} not in range ${min}-${max})`);
+                            return false;
+                        } else {
+                            console.log(`  ✅ Matched (amount range): ${transfer.to.substring(0, 20)}... (${transfer.amount} in range ${min}-${max})`);
                         }
                     }
                 }
@@ -50855,7 +50847,8 @@ async function lookupVictimTransaction(victimId, transactionId) {
         
         function clearTransferFilters() {
             document.getElementById('transferAssetFilter').value = '';
-            document.getElementById('transferAmountFilter').value = '';
+            document.getElementById('transferAmountMin').value = '';
+            document.getElementById('transferAmountMax').value = '';
             document.getElementById('transferAddressFilter').value = '';
             window.filteredTransfers = window.allTransfers;
             renderTransferCards(window.allTransfers);
