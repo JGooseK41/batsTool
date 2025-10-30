@@ -15366,6 +15366,33 @@ function exportRedWalletIndexCSV() {
             walletExplorerState.address = document.getElementById('walletExplorerAddress').value.trim();
             walletExplorerState.blockchain = document.getElementById('walletExplorerBlockchain').value;
 
+            // Group Bitcoin transactions by hash for UTXO multi-output handling
+            if (walletExplorerState.blockchain === 'bitcoin') {
+                walletExplorerState.transactionGroups = groupBitcoinTransactionsByHash(transactions);
+                console.log(`✅ Bitcoin transactions grouped: ${transactions.length} outputs → ${walletExplorerState.transactionGroups.length} transaction groups`);
+            } else {
+                // Account-based chains: one transaction = one group (for consistency)
+                walletExplorerState.transactionGroups = transactions.map(tx => ({
+                    txHash: tx.hash,
+                    timestamp: tx.timestamp,
+                    type: tx.type,
+                    asset: tx.asset,
+                    explorerUrl: tx.explorerUrl,
+                    totalSent: tx.type === 'OUT' ? tx.amount : 0,
+                    totalReceived: tx.type === 'IN' ? tx.amount : 0,
+                    sender: tx.type === 'IN' ? tx.counterparty : null,
+                    outputs: [{
+                        index: 0,
+                        amount: tx.amount,
+                        address: tx.counterparty,
+                        isChange: false,
+                        originalTx: tx
+                    }],
+                    outputCount: 1,
+                    isUTXO: false
+                }));
+            }
+
             // Aggregate assets
             aggregateAssets(transactions);
 
@@ -16725,6 +16752,763 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             return threads;
         }
 
+        /**
+         * ========================================
+         * BITCOIN UTXO TRANSACTION GROUP DISPLAY
+         * ========================================
+         */
+
+        /**
+         * Initialize expansion state tracking
+         */
+        if (!walletExplorerState.expandedTransactions) {
+            walletExplorerState.expandedTransactions = new Set();
+        }
+
+        /**
+         * Toggle transaction expansion
+         */
+        function toggleTransactionExpansion(txHash) {
+            if (walletExplorerState.expandedTransactions.has(txHash)) {
+                walletExplorerState.expandedTransactions.delete(txHash);
+            } else {
+                walletExplorerState.expandedTransactions.add(txHash);
+            }
+            renderTransactionTable(); // Re-render to show/hide content
+        }
+
+        /**
+         * Check allocation status for specific UTXO output
+         */
+        function getOutputAllocationStatus(txHash, outputIndex) {
+            if (!investigation || !investigation.hops) {
+                return {
+                    isAllocated: false,
+                    fullyAllocated: false,
+                    allocatedAmount: 0,
+                    remainingAmount: 0,
+                    entries: []
+                };
+            }
+
+            const hashLower = txHash.toLowerCase();
+            let totalAllocated = 0;
+            const allocatedEntries = [];
+            let outputAmount = 0;
+
+            // Find the output amount from transaction groups
+            const group = walletExplorerState.transactionGroups?.find(g =>
+                g.txHash.toLowerCase() === hashLower
+            );
+            if (group) {
+                const output = group.outputs.find(o => o.index === outputIndex);
+                if (output) {
+                    outputAmount = output.amount;
+                }
+            }
+
+            // Search all hop entries for this tx hash + output index
+            for (const hop of investigation.hops) {
+                if (!hop.entries) continue;
+
+                for (const entry of hop.entries) {
+                    if (entry.transactionHash &&
+                        entry.transactionHash.toLowerCase() === hashLower &&
+                        entry.utxoOutputIndex === outputIndex) {
+
+                        const allocatedAmt = parseFloat(entry.amount) || 0;
+                        totalAllocated += allocatedAmt;
+                        allocatedEntries.push({
+                            location: `H${hop.hopNumber}-E${entry.id}`,
+                            amount: allocatedAmt,
+                            currency: entry.currency,
+                            notation: entry.notation
+                        });
+                    }
+                }
+            }
+
+            const remaining = outputAmount - totalAllocated;
+            const fullyAllocated = outputAmount && Math.abs(remaining) < 0.00000001;
+
+            return {
+                isAllocated: totalAllocated > 0,
+                fullyAllocated: fullyAllocated,
+                allocatedAmount: totalAllocated,
+                remainingAmount: Math.max(0, remaining),
+                entries: allocatedEntries
+            };
+        }
+
+        /**
+         * Render inline outputs (for transactions with ≤4 outputs)
+         */
+        function renderInlineOutputs(group) {
+            let html = '<div style="padding: 10px;">';
+            html += '<h4 style="margin: 0 0 15px 0;">Select outputs to trace:</h4>';
+
+            group.outputs.forEach((output, idx) => {
+                const outputNum = output.index + 1; // Display as 1-indexed
+
+                // Detect change
+                const isChange = output.isChange ||
+                                output.address.toLowerCase() === walletExplorerState.address.toLowerCase();
+
+                // Check if already allocated
+                const allocationStatus = getOutputAllocationStatus(group.txHash, output.index);
+
+                // Detect contract type
+                const detectedContract = detectContractType(output.address);
+                let contractBadge = '';
+                if (detectedContract) {
+                    const icons = { dex: '🔄', bridge: '🌉', mixer: '⚠️' };
+                    const colors = { dex: '#ff9800', bridge: '#2196f3', mixer: '#f44336' };
+                    contractBadge = `
+                        <div style="margin-top: 8px;">
+                            <span style="background: ${colors[detectedContract.type]}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                ${icons[detectedContract.type]} ${detectedContract.name}
+                            </span>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div style="border: 2px solid ${isChange ? '#28a745' : '#dee2e6'};
+                                border-radius: 8px;
+                                padding: 15px;
+                                margin-bottom: 15px;
+                                background: ${isChange ? '#d4edda' : 'white'};">
+
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <div style="margin-bottom: 8px;">
+                                    <strong>Output ${outputNum}:</strong>
+                                    <span style="margin-left: 10px; font-size: 18px; font-weight: bold;">
+                                        ${output.amount.toFixed(8)} BTC
+                                    </span>
+                                </div>
+
+                                <div style="color: #666; font-family: monospace; font-size: 13px; word-break: break-all;">
+                                    → ${output.address}
+                                </div>
+
+                                ${isChange ? `
+                                    <div style="margin-top: 8px;">
+                                        <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                            🔗 CHANGE (same wallet) - Kept in active thread
+                                        </span>
+                                    </div>
+                                ` : ''}
+
+                                ${contractBadge}
+
+                                ${allocationStatus.isAllocated ? `
+                                    <div style="margin-top: 8px;">
+                                        <span style="background: ${allocationStatus.fullyAllocated ? '#6c757d' : '#ff9800'}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                            ${allocationStatus.fullyAllocated ? '✓ FULLY' : '⚠️ PARTIALLY'} ALLOCATED
+                                            <br>
+                                            ${allocationStatus.allocatedAmount.toFixed(8)} BTC (${allocationStatus.entries.map(e => e.location).join(', ')})
+                                            ${!allocationStatus.fullyAllocated ? `<br>${allocationStatus.remainingAmount.toFixed(8)} BTC remaining` : ''}
+                                        </span>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-left: 15px;">
+                                ${!isChange && !allocationStatus.fullyAllocated ? `
+                                    <button class="btn btn-primary btn-sm"
+                                            onclick="openOutputThreadAllocation('${group.txHash}', ${output.index})"
+                                            style="width: 140px; white-space: nowrap;">
+                                        📊 Allocate Threads
+                                    </button>
+                                ` : ''}
+
+                                ${isChange ? `
+                                    <button class="btn btn-secondary btn-sm"
+                                            onclick="handleChangeAddressDecision('${group.txHash}', ${output.index}, '${output.address}')"
+                                            style="width: 140px; white-space: nowrap;">
+                                        🔗 Cluster Address
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        /**
+         * Create expandable content row
+         */
+        function createTransactionContentRow(group) {
+            const row = document.createElement('tr');
+            row.className = 'utxo-transaction-content';
+            row.id = `tx-content-${group.txHash}`;
+
+            const isExpanded = walletExplorerState.expandedTransactions.has(group.txHash);
+            row.style.display = isExpanded ? '' : 'none';
+
+            // Check output count
+            if (group.outputCount > 4) {
+                // Show "Analyze Transaction" button
+                row.innerHTML = `
+                    <td colspan="6" style="padding: 20px; background: #fff3cd; border-bottom: 2px solid #dee2e6;">
+                        <div style="text-align: center;">
+                            <p style="margin: 0 0 15px 0; color: #856404;">
+                                ⚠️ This transaction has ${group.outputCount} outputs
+                            </p>
+                            <p style="margin: 0 0 20px 0; color: #666; font-size: 14px;">
+                                Too many to display inline.
+                            </p>
+                            <button class="btn btn-primary" onclick="openTransactionAnalysisModal('${group.txHash}')">
+                                🔍 Analyze Transaction in Detail
+                            </button>
+                        </div>
+                    </td>
+                `;
+            } else {
+                // Show inline output selection
+                row.innerHTML = `
+                    <td colspan="6" style="padding: 20px; background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        ${renderInlineOutputs(group)}
+                    </td>
+                `;
+            }
+
+            return row;
+        }
+
+        /**
+         * Create transaction header row
+         */
+        function createTransactionHeaderRow(group) {
+            const row = document.createElement('tr');
+            row.className = 'utxo-transaction-header';
+            row.id = `tx-header-${group.txHash}`;
+            row.style.cursor = 'pointer';
+            row.style.background = '#f8f9fa';
+            row.style.borderBottom = '1px solid #dee2e6';
+            row.style.transition = 'all 0.2s ease';
+
+            const isExpanded = walletExplorerState.expandedTransactions.has(group.txHash);
+            const expandIcon = isExpanded ? '▼' : '▶';
+
+            // Format date
+            const date = new Date(group.timestamp).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                timeZone: 'UTC'
+            });
+
+            row.innerHTML = `
+                <td colspan="6" style="padding: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <span style="font-size: 18px; margin-right: 10px; display: inline-block; width: 20px;">${expandIcon}</span>
+                            <span style="font-weight: bold; font-size: 16px;">📤 Transaction</span>
+                            <span style="margin-left: 10px; font-family: monospace; color: #666;">
+                                ${group.txHash.substring(0, 16)}...
+                            </span>
+                            <span style="margin-left: 15px; color: #666; font-weight: bold;">
+                                ${group.totalSent.toFixed(8)} BTC sent
+                            </span>
+                            <span style="margin-left: 15px; color: #999; font-size: 12px;">
+                                (${group.outputCount} output${group.outputCount > 1 ? 's' : ''})
+                            </span>
+                        </div>
+                        <div>
+                            <span style="color: #666; font-size: 14px;">
+                                ${date}
+                            </span>
+                            ${group.explorerUrl ? `
+                                <a href="${group.explorerUrl}" target="_blank"
+                                   onclick="event.stopPropagation();"
+                                   style="margin-left: 10px; text-decoration: none;">
+                                    🔗
+                                </a>
+                            ` : ''}
+                        </div>
+                    </div>
+                </td>
+            `;
+
+            row.onclick = () => toggleTransactionExpansion(group.txHash);
+
+            // Hover effect
+            row.onmouseenter = () => {
+                if (!isExpanded) {
+                    row.style.background = '#e9ecef';
+                }
+            };
+            row.onmouseleave = () => {
+                if (!isExpanded) {
+                    row.style.background = '#f8f9fa';
+                }
+            };
+
+            return row;
+        }
+
+        /**
+         * Render Bitcoin transaction group (header + expandable content)
+         */
+        function renderBitcoinTransactionGroup(group, tbody) {
+            // Only render outgoing transactions as groups
+            // Incoming transactions are simpler and can use standard rendering
+            if (group.type !== 'OUT' && group.type !== 'CHANGE') {
+                return false; // Let standard renderer handle it
+            }
+
+            // Create header row (always visible)
+            const headerRow = createTransactionHeaderRow(group);
+            tbody.appendChild(headerRow);
+
+            // Create expandable content row (hidden by default)
+            const contentRow = createTransactionContentRow(group);
+            tbody.appendChild(contentRow);
+
+            return true;
+        }
+
+        /**
+         * Get available threads in wallet for UTXO allocation
+         */
+        function getAvailableThreadsForWallet(walletAddress) {
+            if (!investigation || !investigation.hops) {
+                return [];
+            }
+
+            const threads = [];
+            const walletLower = walletAddress.toLowerCase();
+
+            // Search all hops for threads that end at this wallet
+            investigation.hops.forEach(hop => {
+                if (!hop.entries) return;
+
+                hop.entries.forEach(entry => {
+                    // Check if this entry creates a thread at the target wallet
+                    if (entry.destinationWallet &&
+                        entry.destinationWallet.toLowerCase() === walletLower &&
+                        entry.entryType === 'trace') {
+
+                        // Calculate available amount for this thread
+                        const threadId = entry.notation || `H${hop.hopNumber}-E${entry.id}`;
+                        const originalAmount = parseFloat(entry.amount) || 0;
+
+                        // Find subsequent allocations of this thread
+                        let allocated = 0;
+                        for (let i = hop.hopNumber; i < investigation.hops.length; i++) {
+                            const laterHop = investigation.hops[i];
+                            if (!laterHop.entries) continue;
+
+                            laterHop.entries.forEach(laterEntry => {
+                                if (laterEntry.sourceThreadId === threadId ||
+                                    (laterEntry.multipleSourceThreads && laterEntry.multipleSourceThreads.includes(threadId))) {
+                                    // This thread was used - calculate how much
+                                    if (laterEntry.multipleSourceThreads && laterEntry.multipleSourceThreads.length > 1) {
+                                        // Commingled - divide equally (simplified)
+                                        const perThread = parseFloat(laterEntry.amount) / laterEntry.multipleSourceThreads.length;
+                                        allocated += perThread;
+                                    } else {
+                                        allocated += parseFloat(laterEntry.amount) || 0;
+                                    }
+                                }
+                            });
+                        }
+
+                        const available = originalAmount - allocated;
+                        if (available > 0.00000001) {
+                            threads.push({
+                                threadId: threadId,
+                                available: available,
+                                original: originalAmount,
+                                allocated: allocated,
+                                internalId: `H${hop.hopNumber}-E${entry.id}`
+                            });
+                        }
+                    }
+                });
+            });
+
+            console.log(`Found ${threads.length} available threads in wallet ${walletAddress}:`, threads);
+            return threads;
+        }
+
+        /**
+         * Open thread allocation modal for specific UTXO output
+         */
+        function openOutputThreadAllocation(txHash, outputIndex) {
+            // Find the transaction group and output
+            const group = walletExplorerState.transactionGroups.find(g =>
+                g.txHash.toLowerCase() === txHash.toLowerCase()
+            );
+
+            if (!group) {
+                alert('Transaction not found');
+                return;
+            }
+
+            const output = group.outputs.find(o => o.index === outputIndex);
+            if (!output) {
+                alert('Output not found');
+                return;
+            }
+
+            // Store context for modal
+            window.currentOutputAllocation = {
+                txHash: txHash,
+                outputIndex: outputIndex,
+                output: output,
+                group: group
+            };
+
+            // Open modal
+            showOutputAllocationModal();
+        }
+
+        /**
+         * Show output allocation modal
+         */
+        function showOutputAllocationModal() {
+            const ctx = window.currentOutputAllocation;
+            const output = ctx.output;
+
+            // Get available threads in this wallet
+            const availableThreads = getAvailableThreadsForWallet(walletExplorerState.address);
+
+            // Check current allocation status
+            const allocationStatus = getOutputAllocationStatus(ctx.txHash, ctx.outputIndex);
+            const remainingToAllocate = allocationStatus.remainingAmount || output.amount;
+
+            const modal = document.createElement('div');
+            modal.id = 'outputAllocationModal';
+            modal.className = 'modal show';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 700px; padding: 30px;">
+                    <h2 style="margin-bottom: 20px;">📊 Allocate Threads to Output</h2>
+
+                    <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <h3 style="margin-top: 0; color: #0d47a1; font-size: 16px;">Output Details</h3>
+
+                        <div style="margin-bottom: 10px;">
+                            <strong>Transaction:</strong> ${ctx.txHash.substring(0, 20)}...
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>Output ${ctx.outputIndex + 1}:</strong> ${output.amount.toFixed(8)} BTC
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>Destination:</strong>
+                            <div style="font-family: monospace; font-size: 12px; margin-top: 5px; word-break: break-all;">
+                                ${output.address}
+                            </div>
+                        </div>
+
+                        ${allocationStatus.isAllocated ? `
+                            <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 4px;">
+                                <strong>Already Allocated:</strong> ${allocationStatus.allocatedAmount.toFixed(8)} BTC
+                                <br>
+                                <strong>Remaining:</strong> ${remainingToAllocate.toFixed(8)} BTC
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="font-size: 16px; margin-bottom: 15px;">Available Threads in Wallet</h3>
+
+                        <div id="threadAllocationList">
+                            ${availableThreads.length === 0 ? `
+                                <p style="color: #dc3545;">No available threads in this wallet</p>
+                            ` : availableThreads.map((thread, idx) => `
+                                <div style="border: 1px solid #dee2e6; border-radius: 6px; padding: 12px; margin-bottom: 10px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <label style="margin: 0; display: flex; align-items: center;">
+                                            <input type="checkbox"
+                                                   id="thread_${idx}"
+                                                   onchange="updateAllocationTotal()"
+                                                   style="margin-right: 10px;">
+                                            <strong>${thread.threadId}</strong>
+                                        </label>
+                                        <span style="color: #666;">
+                                            ${thread.available.toFixed(8)} BTC available
+                                        </span>
+                                    </div>
+
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <label style="flex: 0 0 80px;">Allocate:</label>
+                                        <input type="number"
+                                               id="amount_${idx}"
+                                               step="0.00000001"
+                                               min="0"
+                                               max="${thread.available}"
+                                               value="0"
+                                               onchange="updateAllocationTotal()"
+                                               style="flex: 1; padding: 6px;">
+                                        <span style="flex: 0 0 40px;">BTC</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        ${availableThreads.length > 0 ? `
+                            <div style="margin-top: 15px; text-align: right;">
+                                <button class="btn btn-secondary btn-sm" onclick="autoAllocatePIFO()">
+                                    Auto-Allocate (PIFO)
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <strong>Output Amount:</strong>
+                            <span id="outputAmount">${output.amount.toFixed(8)} BTC</span>
+                        </div>
+                        ${allocationStatus.isAllocated ? `
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #6c757d;">
+                                <span>Previously Allocated:</span>
+                                <span>${allocationStatus.allocatedAmount.toFixed(8)} BTC</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <strong>Remaining to Allocate:</strong>
+                                <span>${remainingToAllocate.toFixed(8)} BTC</span>
+                            </div>
+                        ` : ''}
+                        <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; padding-top: 10px; border-top: 2px solid #dee2e6;">
+                            <span>Total Allocated Now:</span>
+                            <span id="totalAllocated" style="color: #28a745;">0.00000000 BTC</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: center; gap: 10px;">
+                        <button class="btn btn-primary" onclick="commitOutputAllocation()">
+                            ✅ Commit Allocation
+                        </button>
+                        <button class="btn btn-secondary" onclick="closeOutputAllocationModal()">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Store thread data for auto-allocation
+            window.outputAllocationThreads = availableThreads;
+        }
+
+        /**
+         * Update allocation total in modal
+         */
+        function updateAllocationTotal() {
+            const threads = window.outputAllocationThreads || [];
+            let total = 0;
+
+            threads.forEach((thread, idx) => {
+                const checkbox = document.getElementById(`thread_${idx}`);
+                const amountInput = document.getElementById(`amount_${idx}`);
+
+                if (checkbox && amountInput) {
+                    if (checkbox.checked) {
+                        const amount = parseFloat(amountInput.value) || 0;
+                        total += amount;
+                    }
+                }
+            });
+
+            const totalDisplay = document.getElementById('totalAllocated');
+            if (totalDisplay) {
+                totalDisplay.textContent = total.toFixed(8) + ' BTC';
+
+                // Color code based on allocation status
+                const ctx = window.currentOutputAllocation;
+                const allocationStatus = getOutputAllocationStatus(ctx.txHash, ctx.outputIndex);
+                const remainingToAllocate = allocationStatus.remainingAmount || ctx.output.amount;
+
+                if (Math.abs(total - remainingToAllocate) < 0.00000001) {
+                    totalDisplay.style.color = '#28a745'; // Perfect allocation
+                } else if (total > remainingToAllocate) {
+                    totalDisplay.style.color = '#dc3545'; // Over-allocated
+                } else {
+                    totalDisplay.style.color = '#ffc107'; // Partial
+                }
+            }
+        }
+
+        /**
+         * Auto-allocate using PIFO (Proceeds In, First Out)
+         */
+        function autoAllocatePIFO() {
+            const threads = window.outputAllocationThreads || [];
+            const ctx = window.currentOutputAllocation;
+            const allocationStatus = getOutputAllocationStatus(ctx.txHash, ctx.outputIndex);
+            let remainingToAllocate = allocationStatus.remainingAmount || ctx.output.amount;
+
+            // PIFO: Proceeds In, First Out
+            // Allocate from earliest threads first
+            threads.forEach((thread, idx) => {
+                const checkbox = document.getElementById(`thread_${idx}`);
+                const amountInput = document.getElementById(`amount_${idx}`);
+
+                if (remainingToAllocate > 0 && thread.available > 0) {
+                    const allocate = Math.min(remainingToAllocate, thread.available);
+
+                    checkbox.checked = true;
+                    amountInput.value = allocate.toFixed(8);
+
+                    remainingToAllocate -= allocate;
+                } else {
+                    checkbox.checked = false;
+                    amountInput.value = '0';
+                }
+            });
+
+            updateAllocationTotal();
+        }
+
+        /**
+         * Commit output allocation
+         */
+        async function commitOutputAllocation() {
+            const ctx = window.currentOutputAllocation;
+            const threads = window.outputAllocationThreads || [];
+
+            // Collect allocations
+            const allocations = [];
+            let totalAllocated = 0;
+
+            threads.forEach((thread, idx) => {
+                const checkbox = document.getElementById(`thread_${idx}`);
+                const amountInput = document.getElementById(`amount_${idx}`);
+
+                if (checkbox && checkbox.checked && amountInput) {
+                    const amount = parseFloat(amountInput.value) || 0;
+                    if (amount > 0) {
+                        allocations.push({
+                            threadId: thread.threadId,
+                            amount: amount,
+                            internalId: thread.internalId
+                        });
+                        totalAllocated += amount;
+                    }
+                }
+            });
+
+            if (allocations.length === 0) {
+                alert('Please select and allocate at least one thread');
+                return;
+            }
+
+            // Validate allocation
+            const allocationStatus = getOutputAllocationStatus(ctx.txHash, ctx.outputIndex);
+            const remainingToAllocate = allocationStatus.remainingAmount || ctx.output.amount;
+
+            if (totalAllocated > remainingToAllocate + 0.00000001) {
+                alert(`Cannot allocate ${totalAllocated.toFixed(8)} BTC. Only ${remainingToAllocate.toFixed(8)} BTC remaining.`);
+                return;
+            }
+
+            // Attribution check for destination address
+            console.log(`🔍 Checking attribution for ${ctx.output.address}...`);
+            let walletType = '';
+            let attributionNote = '';
+
+            try {
+                const attribution = await getWalletAttribution(ctx.output.address, 'bitcoin');
+                if (attribution && !attribution.isPersonalLabel) {
+                    walletType = 'purple';
+                    attributionNote = `\n\n🟣 AUTO-CLASSIFIED: Terminal Wallet (${attribution.name || attribution.label})`;
+                }
+            } catch (err) {
+                console.log('Attribution check failed:', err);
+            }
+
+            // Contract detection
+            const detectedContract = detectContractType(ctx.output.address);
+            if (detectedContract && !walletType) {
+                if (detectedContract.type === 'dex') {
+                    walletType = 'brown';
+                    attributionNote = `\n\n🔄 AUTO-CLASSIFIED: DEX (${detectedContract.name})`;
+                } else if (detectedContract.type === 'bridge') {
+                    walletType = 'brown';
+                    attributionNote = `\n\n🌉 AUTO-CLASSIFIED: Bridge (${detectedContract.name})`;
+                }
+            }
+
+            // Create entry
+            const hopNumber = getCurrentHop();
+            if (!hopNumber) {
+                alert('No active hop found');
+                return;
+            }
+
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            if (!hop) {
+                alert(`Hop ${hopNumber} not found`);
+                return;
+            }
+
+            // Save undo state
+            saveUndoState(`Allocate threads to Bitcoin output ${ctx.outputIndex + 1}`);
+
+            // Build entry
+            const entry = {
+                id: hop.entries.length + 1,
+                hopNumber: hopNumber,
+                entryType: 'trace',
+                amount: totalAllocated.toString(),
+                currency: 'BTC',
+                sourceThreadId: allocations[0].threadId, // Primary thread
+                multipleSourceThreads: allocations.map(a => a.threadId),
+                notation: '', // Will be auto-generated
+                notes: `Created from Bitcoin UTXO Output\nTransaction: ${ctx.txHash}\nOutput ${ctx.outputIndex + 1}: ${ctx.output.amount.toFixed(8)} BTC\nAllocated: ${totalAllocated.toFixed(8)} BTC from ${allocations.length} thread(s)\nDestination: ${ctx.output.address}\n\nThread Allocations:\n${allocations.map(a => `  • ${a.threadId}: ${a.amount.toFixed(8)} BTC`).join('\n')}${attributionNote}`,
+                timestamp: new Date(ctx.group.timestamp).toISOString().slice(0, 16),
+                chain: 'bitcoin',
+                transactionHash: ctx.txHash,
+                utxoOutputIndex: ctx.outputIndex, // CRITICAL: Store output index
+                destinationWallet: ctx.output.address,
+                toWalletType: walletType
+            };
+
+            hop.entries.push(entry);
+
+            // Save and render
+            saveToStorage();
+            buildAvailableThreadsIndex();
+            renderHops();
+
+            // Close modal
+            closeOutputAllocationModal();
+
+            // Refresh wallet explorer to show updated allocation status
+            renderTransactionTable();
+
+            showNotification(`✅ Allocated ${totalAllocated.toFixed(8)} BTC from ${allocations.length} thread(s) to Output ${ctx.outputIndex + 1}`, 'success');
+        }
+
+        /**
+         * Close output allocation modal
+         */
+        function closeOutputAllocationModal() {
+            const modal = document.getElementById('outputAllocationModal');
+            if (modal) {
+                modal.remove();
+            }
+            window.currentOutputAllocation = null;
+            window.outputAllocationThreads = null;
+        }
+
+        /**
+         * Open Transaction Analysis Modal for transactions with >4 outputs
+         * TODO: Implement full modal with filtering, pagination, and batch allocation
+         */
+        function openTransactionAnalysisModal(txHash) {
+            alert('Transaction Analysis Modal coming soon!\n\nThis feature will provide:\n• Filtering by amount range\n• Address search\n• Batch output selection\n• Thread allocation across multiple outputs\n\nFor now, please use manual entry or wait for this feature to be completed.');
+        }
+
         function renderTransactionTable() {
             const tbody = document.getElementById('walletExplorerTableBody');
             tbody.innerHTML = '';
@@ -16739,26 +17523,68 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             // Find all investigation threads for this wallet
             const investigationThreads = findInvestigationThreadsForWallet(walletExplorerState.address);
 
-            // Sort transactions based on current sort order
-            let transactions = [...walletExplorerState.filteredTransactions];
+            // Check if this is Bitcoin and we should use grouped display
+            const isBitcoin = walletExplorerState.blockchain === 'bitcoin';
+            const useGroupedDisplay = isBitcoin && walletExplorerState.transactionGroups;
 
-            // Filter out zero-balance transfers if hideZeroBalance is enabled
-            if (walletExplorerState.hideZeroBalance) {
-                transactions = transactions.filter(tx => tx.amount > 0);
-                console.log(`Filtered out zero-balance transfers: ${walletExplorerState.filteredTransactions.length - transactions.length} removed, ${transactions.length} remaining`);
-            }
+            // Prepare data to display
+            let displayData;
+            if (useGroupedDisplay) {
+                // Use transaction groups for Bitcoin
+                displayData = [...walletExplorerState.transactionGroups];
 
-            if (walletExplorerState.sortOrder === 'desc') {
-                transactions.sort((a, b) => b.timestamp - a.timestamp); // Newest first
+                // Apply filters and sorting to groups
+                if (walletExplorerState.hideZeroBalance) {
+                    displayData = displayData.filter(group => {
+                        // Keep groups that have any non-zero outputs
+                        if (group.type === 'IN') return group.totalReceived > 0;
+                        if (group.type === 'OUT' || group.type === 'CHANGE') {
+                            return group.outputs.some(o => o.amount > 0);
+                        }
+                        return true;
+                    });
+                }
+
+                if (walletExplorerState.sortOrder === 'desc') {
+                    displayData.sort((a, b) => b.timestamp - a.timestamp);
+                } else {
+                    displayData.sort((a, b) => a.timestamp - b.timestamp);
+                }
             } else {
-                transactions.sort((a, b) => a.timestamp - b.timestamp); // Oldest first
+                // Use flat transactions for account-based chains
+                displayData = [...walletExplorerState.filteredTransactions];
+
+                // Filter out zero-balance transfers if hideZeroBalance is enabled
+                if (walletExplorerState.hideZeroBalance) {
+                    displayData = displayData.filter(tx => tx.amount > 0);
+                    console.log(`Filtered out zero-balance transfers: ${walletExplorerState.filteredTransactions.length - displayData.length} removed, ${displayData.length} remaining`);
+                }
+
+                if (walletExplorerState.sortOrder === 'desc') {
+                    displayData.sort((a, b) => b.timestamp - a.timestamp); // Newest first
+                } else {
+                    displayData.sort((a, b) => a.timestamp - b.timestamp); // Oldest first
+                }
             }
 
+            // Paginate
             const start = (walletExplorerState.currentPage - 1) * walletExplorerState.itemsPerPage;
             const end = start + walletExplorerState.itemsPerPage;
-            const pageTransactions = transactions.slice(start, end);
+            const pageData = displayData.slice(start, end);
 
-            pageTransactions.forEach(tx => {
+            // Render each item
+            pageData.forEach(item => {
+                // If Bitcoin group, try grouped rendering
+                if (useGroupedDisplay && item.isUTXO) {
+                    const rendered = renderBitcoinTransactionGroup(item, tbody);
+                    if (rendered) {
+                        return; // Successfully rendered as group
+                    }
+                    // Fall through to standard rendering if group renderer returned false
+                }
+
+                // Standard transaction rendering (account-based or Bitcoin incoming)
+                const tx = item.originalTx || item.outputs?.[0]?.originalTx || item;
                 const row = document.createElement('tr');
 
                 // Check if this transaction is part of the investigation
@@ -19630,6 +20456,72 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             console.log(`Found ${allTransactions.length} Bitcoin transactions (${changeCount} change outputs)`);
 
             return allTransactions;
+        }
+
+        /**
+         * Group Bitcoin transactions by transaction hash
+         * Each transaction can have multiple outputs that need independent handling
+         */
+        function groupBitcoinTransactionsByHash(transactions) {
+            console.log(`📦 Grouping ${transactions.length} Bitcoin outputs by transaction hash...`);
+
+            const groups = new Map();
+
+            transactions.forEach(tx => {
+                const hash = tx.hash.toLowerCase();
+
+                if (!groups.has(hash)) {
+                    groups.set(hash, {
+                        txHash: hash,
+                        timestamp: tx.timestamp,
+                        type: tx.type, // 'IN' or 'OUT' or 'CHANGE'
+                        asset: tx.asset,
+                        explorerUrl: tx.explorerUrl,
+                        isUTXO: true,
+
+                        // For outgoing: sum all outputs
+                        totalSent: 0,
+                        outputs: [],
+                        outputCount: 0,
+
+                        // For incoming: single amount
+                        totalReceived: tx.type === 'IN' ? tx.amount : 0,
+                        sender: tx.type === 'IN' ? tx.counterparty : null
+                    });
+                }
+
+                const group = groups.get(hash);
+
+                if (tx.type === 'OUT') {
+                    // Add to outputs array
+                    group.outputs.push({
+                        index: tx.utxoData?.outputIndex ?? group.outputs.length,
+                        amount: tx.amount,
+                        address: tx.counterparty,
+                        isChange: tx.isChange || false,
+                        potentialNewAddressChange: tx.potentialNewAddressChange || false,
+                        originalTx: tx // Keep reference to full transaction object
+                    });
+                    group.totalSent += tx.amount;
+                    group.outputCount = group.outputs.length;
+                } else if (tx.type === 'CHANGE') {
+                    // Add change as special output
+                    group.outputs.push({
+                        index: tx.utxoData?.outputIndex ?? group.outputs.length,
+                        amount: tx.amount,
+                        address: tx.counterparty,
+                        isChange: true,
+                        originalTx: tx
+                    });
+                    group.totalSent += tx.amount;
+                    group.outputCount = group.outputs.length;
+                }
+            });
+
+            const groupArray = Array.from(groups.values());
+            console.log(`✅ Grouped into ${groupArray.length} unique transactions`);
+
+            return groupArray;
         }
 
         /**

@@ -3,69 +3,33 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-29 20:18)
+## Latest Commit (Auto-updated: 2025-10-29 21:22)
 
-**Commit:** 4cda57c0b9954ddda08c7f70348b69a4ada09785
+**Commit:** 3c89d76c709c142d658e3f93332c5c47d92c355f
 **Author:** Your Name
-**Message:** Fix: Transaction graying now tracks partial allocation
-
-Transactions are only grayed out when FULLY allocated, not partially.
-
-ISSUE:
-If transaction worth 5000 USDT had 1000 USDT allocated to it, the entire transaction was grayed out and marked as 'used', preventing further allocation of the remaining 4000 USDT.
-
-ROOT CAUSE:
-isTransactionUsedInInvestigation() checked if transaction hash existed in any entry, without tracking allocated amounts.
-
-SOLUTION:
-1. New function getTransactionAllocationStatus() (Lines 16581-16624)
-   - Sums allocated amounts across ALL entries using same tx hash
-   - Calculates remaining unallocated amount
-   - Determines if fully or partially allocated
-
-2. Updated isTransactionUsedInInvestigation() (Lines 16627-16670)
-   - Calls getTransactionAllocationStatus()
-   - Only marks as 'used' if fullyAllocated = true
-   - Returns partial allocation status if applicable
-
-3. Enhanced UI badges (Lines 16940-16951)
-   - Fully allocated: Gray badge '✓ FULLY ALLOCATED (H1-E2)'
-   - Partially allocated: Orange badge '⚠️ PARTIAL: 1,000 of 5,000 USDT (H1-E2) - 4,000 available'
-
-EXAMPLE:
-Transaction: 5,000 USDT outbound
-Entry 1: Allocates 1,000 USDT
-Result: Orange 'PARTIAL' badge, transaction still selectable
-Entry 2: Allocates 4,000 USDT
-Result: Gray 'FULLY ALLOCATED' badge, transaction grayed out
-
-BENEFITS:
-- Multiple threads can allocate portions of same transaction
-- Clear visibility of allocated vs available amounts
-- No blocking when transaction has remaining value
-- Proper support for commingled funds
+**Message:** Update CLAUDE.md with latest commit info
 
 🤖 Generated with Claude Code
 Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 110 +++++++++++++++++++++++++++++++++++++++++++++----------------
- 1 file changed, 81 insertions(+), 29 deletions(-)
+ CLAUDE.md | 80 +++++++++++++++++++++++++++++++++++----------------------------
+ 1 file changed, 45 insertions(+), 35 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4cda57c Fix: Transaction graying now tracks partial allocation (0 seconds ago)
-- a4e4764 Fix: Add exit button and enable partial thread allocation (2 minutes ago)
-- e200c36 Feature: Log movement from cold storage with audit trail (14 hours ago)
-- a8f34fd Fix: Remove auto-termination of mixer entries - let investigator decide (15 hours ago)
-- 614963c Fix: Defer attribution checking to commit time to avoid API rate limiting (15 hours ago)
-- 76149f2 Feature: Auto-detect and classify terminal/conversion wallets in wallet explorer (15 hours ago)
-- 7c1039a Update CLAUDE.md with latest commit info (15 hours ago)
-- fe1a382 Fix: Remove automatic cold storage classification from wallet explorer traces (15 hours ago)
-- dff5772 Update CLAUDE.md with latest commit info (15 hours ago)
-- dcf231d CRITICAL FIX: Blue wallets only terminal if explicitly marked (21 hours ago)
+- 3c89d76 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 4cda57c Fix: Transaction graying now tracks partial allocation (63 minutes ago)
+- a4e4764 Fix: Add exit button and enable partial thread allocation (66 minutes ago)
+- e200c36 Feature: Log movement from cold storage with audit trail (15 hours ago)
+- a8f34fd Fix: Remove auto-termination of mixer entries - let investigator decide (16 hours ago)
+- 614963c Fix: Defer attribution checking to commit time to avoid API rate limiting (16 hours ago)
+- 76149f2 Feature: Auto-detect and classify terminal/conversion wallets in wallet explorer (16 hours ago)
+- 7c1039a Update CLAUDE.md with latest commit info (16 hours ago)
+- fe1a382 Fix: Remove automatic cold storage classification from wallet explorer traces (16 hours ago)
+- dff5772 Update CLAUDE.md with latest commit info (16 hours ago)
 
 ## Key Features
 
