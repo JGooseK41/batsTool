@@ -2655,7 +2655,7 @@
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 5px; font-weight: 500;">Filter by Amount:</label>
-                        <input type="text" id="transferAmountFilter" placeholder="e.g., 1000 or 1000.50" 
+                        <input type="text" id="transferAmountFilter" placeholder="e.g., 1000 or 0.06-0.07 (range)"
                                style="width: 100%; padding: 8px; border: 2px solid #e8f0fe; border-radius: 6px;"
                                oninput="filterTransfers()">
                     </div>
@@ -50774,42 +50774,81 @@ async function lookupVictimTransaction(victimId, transactionId) {
         }
         
         function filterTransfers() {
+            console.log('🔍 filterTransfers() called');
+
             const assetFilter = document.getElementById('transferAssetFilter').value;
             const amountFilter = document.getElementById('transferAmountFilter').value.trim();
             const addressFilter = document.getElementById('transferAddressFilter').value.trim().toLowerCase();
-            
+
+            console.log(`Filters - Asset: "${assetFilter}", Amount: "${amountFilter}", Address: "${addressFilter}"`);
+            console.log(`Total transfers to filter: ${window.allTransfers ? window.allTransfers.length : 'undefined'}`);
+
+            if (!window.allTransfers) {
+                console.error('❌ window.allTransfers is not defined!');
+                return;
+            }
+
             window.filteredTransfers = window.allTransfers.filter(transfer => {
                 // Asset filter
                 if (assetFilter && transfer.currency !== assetFilter) {
+                    console.log(`  ❌ Filtered out (asset): ${transfer.to.substring(0, 20)}... (${transfer.currency} !== ${assetFilter})`);
                     return false;
                 }
-                
+
                 // Amount filter
                 if (amountFilter) {
-                    const filterAmount = parseFloat(amountFilter);
-                    if (!isNaN(filterAmount)) {
-                        // Allow for slight variations due to decimal precision
-                        if (Math.abs(transfer.amount - filterAmount) > 0.000001) {
-                            return false;
+                    // Check if it's a range (e.g., "0.06-0.07" or "0.06,0.07")
+                    if (amountFilter.includes('-') || amountFilter.includes(',')) {
+                        const separator = amountFilter.includes('-') ? '-' : ',';
+                        const parts = amountFilter.split(separator).map(p => parseFloat(p.trim()));
+
+                        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                            const min = Math.min(parts[0], parts[1]);
+                            const max = Math.max(parts[0], parts[1]);
+
+                            if (transfer.amount < min || transfer.amount > max) {
+                                console.log(`  ❌ Filtered out (amount range): ${transfer.to.substring(0, 20)}... (${transfer.amount} not in range ${min}-${max})`);
+                                return false;
+                            } else {
+                                console.log(`  ✅ Matched (amount range): ${transfer.to.substring(0, 20)}... (${transfer.amount} in range ${min}-${max})`);
+                            }
+                        }
+                    } else {
+                        // Exact amount matching
+                        const filterAmount = parseFloat(amountFilter);
+                        if (!isNaN(filterAmount)) {
+                            // Allow for slight variations due to decimal precision
+                            if (Math.abs(transfer.amount - filterAmount) > 0.000001) {
+                                console.log(`  ❌ Filtered out (amount): ${transfer.to.substring(0, 20)}... (${transfer.amount} !== ${filterAmount})`);
+                                return false;
+                            }
                         }
                     }
                 }
-                
+
                 // Address filter (check both from and to)
                 if (addressFilter) {
-                    const fromMatch = transfer.from.toLowerCase().includes(addressFilter);
-                    const toMatch = transfer.to.toLowerCase().includes(addressFilter);
+                    const fromLower = (transfer.from || '').toLowerCase();
+                    const toLower = (transfer.to || '').toLowerCase();
+                    const fromMatch = fromLower.includes(addressFilter);
+                    const toMatch = toLower.includes(addressFilter);
+
                     if (!fromMatch && !toMatch) {
+                        console.log(`  ❌ Filtered out (address): ${transfer.to.substring(0, 20)}... (no match for "${addressFilter}")`);
                         return false;
+                    } else {
+                        console.log(`  ✅ Matched (address): ${transfer.to.substring(0, 20)}... (${fromMatch ? 'from' : 'to'} matched "${addressFilter}")`);
                     }
                 }
-                
+
                 return true;
             });
-            
+
+            console.log(`✅ Filtered: ${window.filteredTransfers.length} of ${window.allTransfers.length} transfers matched`);
+
             // Re-render filtered transfers
             renderTransferCards(window.filteredTransfers);
-            
+
             // Update filter info
             updateFilterInfo(window.filteredTransfers.length, window.allTransfers.length);
         }
