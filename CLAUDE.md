@@ -3,69 +3,27 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-30 10:47)
+## Latest Commit (Auto-updated: 2025-10-30 16:21)
 
-**Commit:** 5763f21dfaac7744ea768bbf3984c4fa07470e7d
+**Commit:** 02cfff20cf95344dd626a89a6d96c6d96679ded3
 **Author:** Your Name
-**Message:** UX: Replace single amount filter with separate min/max inputs
+**Message:** Debug: Add comprehensive logging to thread assignment calculation
 
-Problem: User put "0.06" in amount field and "0.07" in address field,
-thinking they were separate min/max inputs. This caused all transfers
-to be filtered out (no addresses contain "0.07").
+Problem: Thread over-allocation showing negative available amounts (V1-T1: 18.98 total but 20.52 assigned = -1.54 available)
 
-Root Cause: Single amount filter field with range syntax "0.06-0.07"
-was not intuitive. Users expected separate min/max inputs for range filtering.
+Analysis: Added detailed logging to getMaxAssignableAmount() to trace exactly which entries contribute to each thread's assigned total:
+- Log every entry checked with hop number and notation
+- Show single-source matches with matched field and amount
+- Show multiple-source entries with all identifier arrays and assignment lookups
+- Display running total after each addition
+- Identify currency mismatches and skipped entries
 
-Solution: Split amount filter into two separate number inputs
+This will reveal:
+1. If same entry counted multiple times
+2. If identifier fields have conflicts
+3. If assignment keys are inconsistent
 
-## Changes:
-
-### 1. New Min/Max Input Fields (Lines 2656-2666)
-- Replaced single "Filter by Amount" text input
-- Added "Amount Range" label with two number inputs:
-  - transferAmountMin: Minimum amount (placeholder: "Min (e.g., 0.06)")
-  - transferAmountMax: Maximum amount (placeholder: "Max (e.g., 0.07)")
-- Visual layout: [Min] to [Max] with "to" text between
-- Both inputs trigger filterTransfers() on input
-
-### 2. Updated Filter Logic (Lines 50805-50818)
-- Reads from transferAmountMin and transferAmountMax fields
-- Treats empty min as -Infinity (no lower bound)
-- Treats empty max as Infinity (no upper bound)
-- Allows filtering by:
-  - Only min: "Show >= 0.06"
-  - Only max: "Show <= 0.07"
-  - Both: "Show 0.06 to 0.07"
-
-### 3. Updated clearTransferFilters() (Lines 50848-50851)
-- Clears transferAmountMin instead of transferAmountFilter
-- Clears transferAmountMax (new field)
-
-### 4. Updated showTransferSelectionModal() (Lines 50705-50707)
-- Clears transferAmountMin instead of transferAmountFilter
-- Clears transferAmountMax (new field)
-
-### 5. Enhanced Address Placeholder (Line 2670)
-- Added "(partial match works)" to help text
-- Educates users they can type partial addresses
-
-## User Experience:
-
-**Before:**
-- Amount field: "0.06-0.07" (non-intuitive syntax)
-- Users confused about how to enter ranges
-
-**After:**
-- Min field: "0.06"
-- Max field: "0.07"
-- Clear, intuitive separate inputs
-
-## Grid Layout Adjustment:
-Changed from 1fr 1fr 1fr to 1fr 2fr 2fr to accommodate:
-- Asset filter: 1 column
-- Amount range (2 inputs + "to"): 2 columns
-- Address filter: 2 columns
-- Clear button: auto width
+Next: Run investigation to see debug output and identify root cause
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -73,22 +31,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 67 ++++++++++++++++++++++++++++----------------------------------
- 1 file changed, 30 insertions(+), 37 deletions(-)
+ CLAUDE.md  | 121 +++++++++++++++++++++++++++++++++++++------------------------
+ index.html |  25 ++++++++++++-
+ 2 files changed, 97 insertions(+), 49 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5763f21 UX: Replace single amount filter with separate min/max inputs (0 seconds ago)
-- 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (17 minutes ago)
-- bbd41f4 Update CLAUDE.md with latest commit info (23 minutes ago)
-- d0ff0b6 Fix: Multiple UTXO wallet explorer issues (7 hours ago)
-- 6148579 Fix: Remove duplicate isPartiallyAllocated declaration causing syntax error (7 hours ago)
-- 966b4fd Feat: Implement Bitcoin UTXO multi-output transaction handling (13 hours ago)
-- 3c89d76 Update CLAUDE.md with latest commit info (13 hours ago)
-- 4cda57c Fix: Transaction graying now tracks partial allocation (14 hours ago)
-- a4e4764 Fix: Add exit button and enable partial thread allocation (15 hours ago)
-- e200c36 Feature: Log movement from cold storage with audit trail (28 hours ago)
+- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (1 second ago)
+- 5763f21 UX: Replace single amount filter with separate min/max inputs (6 hours ago)
+- 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (6 hours ago)
+- bbd41f4 Update CLAUDE.md with latest commit info (6 hours ago)
+- d0ff0b6 Fix: Multiple UTXO wallet explorer issues (12 hours ago)
+- 6148579 Fix: Remove duplicate isPartiallyAllocated declaration causing syntax error (12 hours ago)
+- 966b4fd Feat: Implement Bitcoin UTXO multi-output transaction handling (19 hours ago)
+- 3c89d76 Update CLAUDE.md with latest commit info (19 hours ago)
+- 4cda57c Fix: Transaction graying now tracks partial allocation (20 hours ago)
+- a4e4764 Fix: Add exit button and enable partial thread allocation (20 hours ago)
 
 ## Key Features
 

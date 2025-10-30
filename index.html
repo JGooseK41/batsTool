@@ -36814,16 +36814,14 @@ function updateThreadsAfterSwap(hop, swapEntry) {
         }
     }
 
-    // Create new thread(s) in the output currency
-    if (!investigation.availableThreads[swapDetails.toCurrency]) {
-        investigation.availableThreads[swapDetails.toCurrency] = {};
-    }
-
-    // Use the SAME thread ID as the source (no swap suffix)
-    const newThreadId = swapEntry.sourceThreadId ||
+    // FLAT STRUCTURE FIX: Create thread using internal ID system instead of nested currency structure
+    const notation = swapEntry.sourceThreadId ||
         (swapEntry.multipleSourceThreads ? swapEntry.multipleSourceThreads.join('+') : null);
 
-    if (!newThreadId) return;
+    if (!notation) return;
+
+    // Generate deterministic internal ID for the output thread
+    const newInternalId = generateInternalThreadId(notation, swapDetails.toCurrency);
 
     // Get chain info from the swap entry or inherit from source thread
     let chainId = swapEntry.chain || null;
@@ -36842,20 +36840,30 @@ function updateThreadsAfterSwap(hop, swapEntry) {
         }
     }
 
-    // Create the thread with SAME ID in the output currency
-    investigation.availableThreads[swapDetails.toCurrency][newThreadId] = {
-        threadId: newThreadId,
+    // Create the thread in FLAT structure at root level with proper internal ID
+    investigation.availableThreads[newInternalId] = {
+        // Dual-layer tracking
+        notation: notation,
+        internalId: newInternalId,
+
+        // Thread amounts
         totalAmount: swapDetails.toAmount,
-        availableAmount: swapDetails.toAmount, // Important: include availableAmount
+        availableAmount: swapDetails.toAmount,
+        assignments: [],
+
+        // Source information
         currency: swapDetails.toCurrency,
-        sourceWallet: swapEntry.toWallet, // DEX/CEX address becomes the source for the new thread
+        sourceWallet: swapEntry.toWallet,
         sourceType: 'swap_output',
         hopLevel: hop.hopNumber,
+
+        // Swap metadata
         swapConverted: true,
         originalCurrency: swapDetails.fromCurrency,
         partialSwap: swapEntry.partialSwaps && swapEntry.partialSwaps.length > 0,
         isActive: true,
-        assignments: [],
+
+        // Detailed swap information
         swapDetails: {
             fromCurrency: swapDetails.fromCurrency,
             fromAmount: swapDetails.fromAmount,
@@ -36863,12 +36871,18 @@ function updateThreadsAfterSwap(hop, swapEntry) {
             toAmount: swapDetails.toAmount,
             provider: swapDetails.providerName || 'Unknown'
         },
+
         // Chain tracking
         chainId: chainId,
-        chainName: chainName
+        chainName: chainName,
+
+        // Provenance
+        createdAt: new Date().toISOString(),
+        parentThreads: [swapEntry.sourceThreadId || swapEntry.multipleSourceThreads.join('+')],
+        childThreads: []
     };
 
-    console.log(`Created swap output thread ${newThreadId} with ${swapDetails.toAmount} ${swapDetails.toCurrency}`);
+    console.log(`Created swap output thread ${notation} (ID: ${newInternalId}) with ${swapDetails.toAmount} ${swapDetails.toCurrency}`);
 }
 
 function createSingleHopEntry(hop, wizardData, output, outputIndex) {
