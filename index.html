@@ -16981,6 +16981,63 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
         }
 
         /**
+         * Generate blockchain explorer URL for transaction hash
+         */
+        function getBlockchainExplorerUrl(blockchain, txHash) {
+            if (!txHash) return '#';
+
+            // Map blockchain identifiers to their explorer URLs
+            const explorerUrls = {
+                // Bitcoin
+                'bitcoin': `https://mempool.space/tx/${txHash}`,
+
+                // Ethereum
+                'ethereum': `https://etherscan.io/tx/${txHash}`,
+
+                // EVM L2s - Etherscan-based
+                'base': `https://basescan.org/tx/${txHash}`,
+                'arbitrum': `https://arbiscan.io/tx/${txHash}`,
+                'optimism': `https://optimistic.etherscan.io/tx/${txHash}`,
+                'polygon': `https://polygonscan.com/tx/${txHash}`,
+                'avalanche': `https://snowtrace.io/tx/${txHash}`,
+                'bsc': `https://bscscan.com/tx/${txHash}`,
+                'zksync': `https://explorer.zksync.io/tx/${txHash}`,
+                'linea': `https://lineascan.build/tx/${txHash}`,
+                'scroll': `https://scrollscan.com/tx/${txHash}`,
+                'blast': `https://blastscan.io/tx/${txHash}`,
+                'mantle': `https://explorer.mantle.xyz/tx/${txHash}`,
+                'gnosis': `https://gnosisscan.io/tx/${txHash}`,
+                'celo': `https://celoscan.io/tx/${txHash}`,
+                'hyperevm': `https://explorer.hyperliquid.xyz/tx/${txHash}`,
+
+                // Other EVM chains
+                'unichain': `https://unichain.org/explorer/tx/${txHash}`,
+                'sonic': `https://sonicscan.org/tx/${txHash}`,
+                'abstract': `https://abscan.org/tx/${txHash}`,
+                'memecore': `https://memescan.io/tx/${txHash}`,
+                'sophon': `https://explorer.sophon.xyz/tx/${txHash}`,
+                'berachain': `https://artio.beratrail.io/tx/${txHash}`,
+
+                // Non-EVM chains
+                'tron': `https://tronscan.org/#/transaction/${txHash}`,
+                'solana': `https://solscan.io/tx/${txHash}`,
+                'sui': `https://suiscan.xyz/mainnet/tx/${txHash}`,
+                'xrp': `https://xrpscan.com/tx/${txHash}`,
+                'ripple': `https://xrpscan.com/tx/${txHash}`,
+            };
+
+            // Return the appropriate URL or default to etherscan if unknown EVM chain
+            const url = explorerUrls[blockchain?.toLowerCase()];
+            if (url) {
+                return url;
+            }
+
+            // For unknown chains that might be EVM-compatible, try etherscan as fallback
+            console.warn(`Unknown blockchain type: ${blockchain}, using Etherscan as fallback`);
+            return `https://etherscan.io/tx/${txHash}`;
+        }
+
+        /**
          * Create expandable content row
          */
         function createTransactionContentRow(group) {
@@ -17054,18 +17111,21 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 timeZone: 'UTC'
             });
 
+            // Generate explorer URL for this blockchain
+            const explorerUrl = getBlockchainExplorerUrl(walletExplorerState.blockchain, group.txHash);
+
             row.innerHTML = `
                 <td colspan="7" style="padding: 15px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="flex: 1;">
                             <span style="font-size: 18px; margin-right: 10px; display: inline-block; width: 20px;">${expandIcon}</span>
                             <span style="font-weight: bold; font-size: 16px;">📤 Transaction</span>
-                            <a href="https://blockstream.info/tx/${group.txHash}" target="_blank"
+                            <a href="${explorerUrl}" target="_blank"
                                onclick="event.stopPropagation();"
                                style="display: inline-block; margin-left: 10px; padding: 6px 10px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; text-decoration: none; border-radius: 6px; font-family: monospace; font-size: 11px; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
                                onmouseover="this.style.background='linear-gradient(135deg, #2980b9 0%, #1f6391 100%)'; this.style.boxShadow='0 3px 6px rgba(0,0,0,0.15)'"
                                onmouseout="this.style.background='linear-gradient(135deg, #3498db 0%, #2980b9 100%)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'"
-                               title="View transaction on Blockstream: ${group.txHash}">
+                               title="View transaction details: ${group.txHash}">
                                 ${group.txHash.substring(0, 12)}...
                             </a>
                             <span style="margin-left: 15px; color: #666; font-weight: bold;">
@@ -17833,22 +17893,22 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     clusterBadge = `<div style="margin-top: 4px;"><span style="background: #2196f3; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; cursor: pointer;" onclick="showClusterMonitoringView('${cluster.id}')">🔗 Clustered (${cluster.addresses.length} addresses) - Click for Details</span></div>`;
                 }
 
-                // Create transaction hash cell for Bitcoin
+                // Create transaction hash cell for all blockchains
                 let txHashCell = '';
-                if (walletExplorerState.blockchain === 'bitcoin' && txHash) {
+                if (txHash) {
                     const truncatedHash = txHash.substring(0, 12) + '...';
-                    const blockstreamUrl = `https://blockstream.info/tx/${txHash}`;
+                    const explorerUrl = getBlockchainExplorerUrl(walletExplorerState.blockchain, txHash);
                     txHashCell = `<td style="padding: 12px;">
-                        <a href="${blockstreamUrl}" target="_blank"
+                        <a href="${explorerUrl}" target="_blank"
                            style="display: inline-block; padding: 6px 10px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; text-decoration: none; border-radius: 6px; font-family: monospace; font-size: 11px; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
                            onmouseover="this.style.background='linear-gradient(135deg, #2980b9 0%, #1f6391 100%)'; this.style.boxShadow='0 3px 6px rgba(0,0,0,0.15)'"
                            onmouseout="this.style.background='linear-gradient(135deg, #3498db 0%, #2980b9 100%)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'"
-                           title="View transaction on Blockstream: ${txHash}">
+                           title="View transaction details: ${txHash}">
                             ${truncatedHash}
                         </a>
                     </td>`;
                 } else {
-                    // Empty cell for non-Bitcoin blockchains
+                    // Empty cell if no transaction hash available
                     txHashCell = '<td style="padding: 12px; color: #999; font-style: italic; font-size: 11px;">—</td>';
                 }
 
