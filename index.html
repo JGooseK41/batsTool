@@ -17682,6 +17682,28 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     filteredHashes.has(group.txHash.toLowerCase())
                 );
 
+                // Additional counterparty filter for outgoing transactions (check output addresses)
+                const counterpartyFilter = document.getElementById('walletExplorerCounterparty')?.value.trim().toLowerCase();
+                if (counterpartyFilter) {
+                    displayData = displayData.filter(group => {
+                        // For incoming transactions, counterparty is at group level
+                        if (group.type === 'IN') {
+                            const counterparty = group.counterparty || '';
+                            return counterparty.toLowerCase().includes(counterpartyFilter);
+                        }
+
+                        // For outgoing transactions, check if any output address matches
+                        if (group.type === 'OUT' || group.type === 'CHANGE') {
+                            return group.outputs.some(output => {
+                                const address = output.address || '';
+                                return address.toLowerCase().includes(counterpartyFilter);
+                            });
+                        }
+
+                        return true;
+                    });
+                }
+
                 // Apply zero-balance filter to groups
                 if (walletExplorerState.hideZeroBalance) {
                     displayData = displayData.filter(group => {
@@ -18130,11 +18152,26 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
             // Extract unique counterparty addresses
             const uniqueCounterparties = new Set();
+
+            // Add counterparties from flat transactions
             transactions.forEach(tx => {
                 if (tx.counterparty) {
                     uniqueCounterparties.add(tx.counterparty);
                 }
             });
+
+            // Add addresses from Bitcoin UTXO outputs (for outgoing transactions)
+            if (walletExplorerState.transactionGroups) {
+                walletExplorerState.transactionGroups.forEach(group => {
+                    if (group.type === 'OUT' || group.type === 'CHANGE') {
+                        group.outputs.forEach(output => {
+                            if (output.address) {
+                                uniqueCounterparties.add(output.address);
+                            }
+                        });
+                    }
+                });
+            }
 
             // Sort addresses alphabetically
             const sortedAddresses = Array.from(uniqueCounterparties).sort();
