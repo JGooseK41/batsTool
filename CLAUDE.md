@@ -3,30 +3,29 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-30 21:55)
+## Latest Commit (Auto-updated: 2025-10-31 06:19)
 
-**Commit:** 0c80d1330a4594af4849e437ce3e142a9b4dce49
+**Commit:** 2a4e6b4b2f008298287b8ed91dff9749b42a5ad3
 **Author:** Your Name
-**Message:** Fix: Handle undefined tx.amount and tx.counterparty in wallet explorer
+**Message:** Fix: Remove incorrect 'incomplete history' warning for Bitcoin wallets
 
-Problem: Wallet explorer crashed when clicking BTC asset card to view transactions:
-"Cannot read properties of undefined (reading 'toFixed')" at line 17837
+Problem: Bitcoin wallet with only 16 transactions showing warning:
+"⚠️ INCOMPLETE HISTORY WARNING - This wallet has more than 1,000 transactions"
 
-Root cause: Some Bitcoin transactions don't have tx.amount or tx.counterparty populated
+Root cause: Bitcoin wallet loading never set walletExplorerState.isCompleteHistory flag, so it remained false (default value from line 15227). The warning at line 15492 checks !isCompleteHistory and shows the warning incorrectly.
 
 Solution:
-Line 17837: Added defensive checks for transaction display:
-- tx.amount ? tx.amount.toFixed(...) : '0.000000' - safe amount display
-- tx.asset === 'BTC' ? 8 : 6 - proper BTC precision (8 decimals vs 6 for others)
-- tx.asset || '' - handle missing asset name
+Lines 15380-15386: Added history completeness tracking for Bitcoin wallets:
+- Set isCompleteHistory = true if transactions < 10,000
+- Set fetchedCount to actual transaction count
+- Set oldestFetchedDate and firstActivityDate from transaction timestamps
 
-Line 17840: Added check for counterparty:
-- tx.counterparty ? (substring...) : 'Unknown' - safe address display
+Now Bitcoin wallets correctly show complete history status:
+- 16 transactions: isCompleteHistory = true ✓
+- No false warning displayed
+- Proper first activity and oldest transaction dates shown
 
-Line 15442: Added check for debug logging:
-- if (asset === 'ETH' && tx.amount) - prevent crash in ETH debug logs
-
-Now wallet explorer displays Bitcoin transactions properly even if some fields are missing, showing full 8-decimal precision for BTC amounts.
+This matches the logic used for EVM chains (line 20252-20266) which check if endpoints returned < 1000 transactions.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -34,23 +33,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 47 ++++++++++++++++++++++++++---------------------
- index.html |  6 +++---
- 2 files changed, 29 insertions(+), 24 deletions(-)
+ CLAUDE.md  | 62 +++++++++++++++++++++++++++++++-------------------------------
+ index.html |  8 ++++++++
+ 2 files changed, 39 insertions(+), 31 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 0c80d13 Fix: Handle undefined tx.amount and tx.counterparty in wallet explorer (0 seconds ago)
-- 08f62fd Fix: Handle undefined tx.hash in wallet explorer transaction rendering (2 hours ago)
-- 34a2c8c Fix: Display full BTC precision in Root Total/ART display (2 hours ago)
-- ac9a134 Fix: Bridge wizard now creates threads in flat structure (5 hours ago)
-- 1231421 Fix: Swap wizard now creates threads in flat structure (5 hours ago)
-- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (6 hours ago)
-- 5763f21 UX: Replace single amount filter with separate min/max inputs (11 hours ago)
-- 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (11 hours ago)
-- bbd41f4 Update CLAUDE.md with latest commit info (12 hours ago)
-- d0ff0b6 Fix: Multiple UTXO wallet explorer issues (18 hours ago)
+- 2a4e6b4 Fix: Remove incorrect 'incomplete history' warning for Bitcoin wallets (0 seconds ago)
+- 0c80d13 Fix: Handle undefined tx.amount and tx.counterparty in wallet explorer (8 hours ago)
+- 08f62fd Fix: Handle undefined tx.hash in wallet explorer transaction rendering (10 hours ago)
+- 34a2c8c Fix: Display full BTC precision in Root Total/ART display (10 hours ago)
+- ac9a134 Fix: Bridge wizard now creates threads in flat structure (14 hours ago)
+- 1231421 Fix: Swap wizard now creates threads in flat structure (14 hours ago)
+- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (14 hours ago)
+- 5763f21 UX: Replace single amount filter with separate min/max inputs (20 hours ago)
+- 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (20 hours ago)
+- bbd41f4 Update CLAUDE.md with latest commit info (20 hours ago)
 
 ## Key Features
 

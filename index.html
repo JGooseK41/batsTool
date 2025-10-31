@@ -15407,6 +15407,20 @@ function exportRedWalletIndexCSV() {
                 }));
             }
 
+            // Set history completeness for blockchains that don't set it internally
+            // EVM chains set this in getEthereumWalletHistory, XRP sets it in getXRPWalletHistory
+            // Bitcoin sets it above in the if block
+            // But Tron, Solana, Sui, and others need defaults
+            if (walletExplorerState.fetchedCount === 0) {
+                // Default: Consider complete if we have a reasonable number of transactions
+                // Most wallet APIs have limits (Tron: 200, Solana: 100, etc.)
+                walletExplorerState.isCompleteHistory = transactions.length < 1000;
+                walletExplorerState.fetchedCount = transactions.length;
+                walletExplorerState.oldestFetchedDate = transactions.length > 0 ? transactions[transactions.length - 1].timestamp : null;
+                walletExplorerState.firstActivityDate = transactions.length > 0 ? transactions[transactions.length - 1].timestamp : null;
+                console.log(`📊 History completeness set for ${walletExplorerState.blockchain}: ${transactions.length} txs, complete: ${walletExplorerState.isCompleteHistory}`);
+            }
+
             // Aggregate assets
             aggregateAssets(transactions);
 
