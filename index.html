@@ -20819,6 +20819,22 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             document.getElementById('clusteringHeuristic').value = '';
             document.getElementById('clusteringJustification').value = '';
 
+            // Clear and hide commercial clustering fields
+            document.getElementById('commercialClusteringFields').style.display = 'none';
+            document.getElementById('commercialClusteringProvider').value = '';
+            document.getElementById('commercialClusteringAcknowledgment').checked = false;
+
+            // Add event listener to heuristic dropdown to show/hide commercial fields
+            const heuristicSelect = document.getElementById('clusteringHeuristic');
+            heuristicSelect.onchange = function() {
+                const commercialFields = document.getElementById('commercialClusteringFields');
+                if (this.value === 'commercial_clustering') {
+                    commercialFields.style.display = 'block';
+                } else {
+                    commercialFields.style.display = 'none';
+                }
+            };
+
             // Show modal
             showModal('clusteringJustificationModal');
         }
@@ -20844,6 +20860,22 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 return;
             }
 
+            // Additional validation for commercial clustering
+            if (heuristic === 'commercial_clustering') {
+                const provider = document.getElementById('commercialClusteringProvider').value;
+                const acknowledgment = document.getElementById('commercialClusteringAcknowledgment').checked;
+
+                if (!provider) {
+                    alert('⚠️ Commercial Provider Required\n\nPlease select the commercial service provider that provided this clustering intelligence.');
+                    return;
+                }
+
+                if (!acknowledgment) {
+                    alert('⚖️ Acknowledgment Required\n\nYou must acknowledge the testimony limitation before proceeding with commercial clustering.\n\nBy using commercial clustering, you cannot personally testify to the clustering methodology - the commercial provider must provide expert testimony.');
+                    return;
+                }
+            }
+
             if (!justification || justification.length < 20) {
                 alert('⚠️ Justification Required\n\nPlease provide a detailed justification (at least 20 characters) explaining the evidence for this clustering decision.');
                 return;
@@ -20861,6 +20893,16 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             const heuristicSelect = document.getElementById('clusteringHeuristic');
             const heuristicName = heuristicSelect.options[heuristicSelect.selectedIndex].text;
 
+            // Get commercial provider info if applicable
+            let commercialProvider = null;
+            if (heuristic === 'commercial_clustering') {
+                const providerSelect = document.getElementById('commercialClusteringProvider');
+                commercialProvider = {
+                    providerId: providerSelect.value,
+                    providerName: providerSelect.options[providerSelect.selectedIndex].text
+                };
+            }
+
             // Create cluster with justification
             const clusterId = createAddressCluster(
                 ctx.originalAddress,
@@ -20870,7 +20912,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 ctx.txHash,
                 heuristic,
                 heuristicName,
-                justification
+                justification,
+                commercialProvider
             );
 
             if (clusterId) {
@@ -20887,7 +20930,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
          * Create a new address cluster
          * Links multiple addresses as controlled by same entity
          */
-        function createAddressCluster(originalAddress, newAddress, threadId, amount, txHash, heuristic, heuristicName, justification) {
+        function createAddressCluster(originalAddress, newAddress, threadId, amount, txHash, heuristic, heuristicName, justification, commercialProvider) {
             // Find wallet ID from Universal Wallet Index for the original address
             let walletId = 'Unknown';
             let walletLabel = 'Unknown Wallet';
@@ -20939,6 +20982,14 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         existingCluster.notes += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
                         existingCluster.notes += `📊 HEURISTIC: ${heuristicName}\n\n`;
                         existingCluster.notes += `📝 INVESTIGATOR NOTES:\n${justification}\n\n`;
+
+                        if (commercialProvider) {
+                            existingCluster.notes += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                            existingCluster.notes += `⚖️ COMMERCIAL CLUSTERING INTELLIGENCE:\n`;
+                            existingCluster.notes += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                            existingCluster.notes += `🏢 SERVICE PROVIDER: ${commercialProvider.providerName}\n`;
+                            existingCluster.notes += `⚠️ TESTIMONY LIMITATION: This cluster addition is based on commercial intelligence. The investigator cannot personally testify to the clustering methodology. The commercial provider (${commercialProvider.providerName}) must provide expert testimony regarding this cluster's validity.\n\n`;
+                        }
                     }
 
                     existingCluster.notes += `This address is now linked to ${existingCluster.walletId || walletId} for dual monitoring purposes.\n`;
@@ -20993,6 +21044,14 @@ CLUSTERING JUSTIFICATION:
 
 📝 INVESTIGATOR NOTES:
 ${justification || 'UTXO change output detected going to a NEW address (not same as sender). Based on transaction analysis, this appears to be change controlled by the same entity. Investigator elected to cluster these addresses for dual monitoring.'}
+${commercialProvider ? `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚖️ COMMERCIAL CLUSTERING INTELLIGENCE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏢 SERVICE PROVIDER: ${commercialProvider.providerName}
+⚠️ TESTIMONY LIMITATION: This cluster is based on commercial intelligence. The investigator cannot personally testify to the clustering methodology. The commercial provider (${commercialProvider.providerName}) must provide expert testimony regarding this cluster's validity and the methodology used to identify common control.
+` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 METHODOLOGY IMPLICATIONS:
@@ -21026,6 +21085,9 @@ METHODOLOGY IMPLICATIONS:
                     },
                     created: timestamp.toISOString(),
                     lastActivity: timestamp.toISOString(),
+                    heuristic: heuristic,
+                    heuristicName: heuristicName,
+                    commercialProvider: commercialProvider,  // Store commercial provider info if applicable
                     notes: clusterNotes + methodologyNote
                 };
 
@@ -53210,7 +53272,7 @@ To (RED Wallet): ${transfer.to}`;
                         <option value="multi_hop_same_amount">Multi-Hop Same Amount Pattern</option>
                     </optgroup>
                     <optgroup label="External Evidence">
-                        <option value="clustering_service">Blockchain Analysis Service Clustering</option>
+                        <option value="commercial_clustering">Commercial Clustering Intelligence (Chainalysis, etc.)</option>
                         <option value="entity_attribution">Known Entity Attribution</option>
                         <option value="wallet_software_fingerprint">Wallet Software Fingerprinting</option>
                     </optgroup>
@@ -53218,6 +53280,43 @@ To (RED Wallet): ${transfer.to}`;
                         <option value="custom">Custom (Explain Below)</option>
                     </optgroup>
                 </select>
+            </div>
+
+            <!-- Commercial Clustering Fields (conditional) -->
+            <div id="commercialClusteringFields" style="display: none; margin-bottom: 20px;">
+                <div style="background: #fff3cd; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+                    <strong style="color: #e65100;">⚖️ Legal Notice - Testimony Limitation:</strong><br>
+                    <p style="margin: 10px 0 0 0; font-size: 13px; color: #d84315; line-height: 1.5;">
+                        By using commercial clustering intelligence, you acknowledge that <strong>you cannot personally testify to the validity of this cluster</strong>.
+                        You must rely on the commercial provider to testify to the clustering mechanics and methodology.
+                        Ensure the commercial provider is willing and able to provide expert testimony if required.
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #2c3e50;">
+                        Commercial Service Provider: *
+                    </label>
+                    <select id="commercialClusteringProvider" style="width: 100%; padding: 12px; border: 2px solid #ff9800; border-radius: 6px; font-size: 14px;">
+                        <option value="">-- Select Provider --</option>
+                        <option value="chainalysis">Chainalysis</option>
+                        <option value="elliptic">Elliptic</option>
+                        <option value="ciphertrace">CipherTrace</option>
+                        <option value="txguard">TxGuard</option>
+                        <option value="arkham">Arkham Intelligence</option>
+                        <option value="other">Other (Specify in Justification)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 12px; border: 2px solid #ff9800; border-radius: 6px; background: #fff9e6;">
+                        <input type="checkbox" id="commercialClusteringAcknowledgment" style="margin-top: 4px; width: 18px; height: 18px; cursor: pointer;">
+                        <span style="font-size: 13px; color: #d84315; line-height: 1.5;">
+                            <strong>I acknowledge</strong> that I am relying on commercial clustering intelligence and <strong>cannot testify to the clustering methodology</strong>.
+                            I understand the commercial provider must be available for expert testimony regarding this cluster.
+                        </span>
+                    </label>
+                </div>
             </div>
 
             <div style="margin-bottom: 20px;">
