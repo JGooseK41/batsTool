@@ -3,25 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-30 19:56)
+## Latest Commit (Auto-updated: 2025-10-30 19:59)
 
-**Commit:** 34a2c8c1e4508f8aef31f3206ae42c39bc0f3bcc
+**Commit:** 08f62fd3034d8f3cb1a557675c041432479a2601
 **Author:** Your Name
-**Message:** Fix: Display full BTC precision in Root Total/ART display
+**Message:** Fix: Handle undefined tx.hash in wallet explorer transaction rendering
 
-Problem: ART display showing "0.061 BTC" instead of full precision "0.06117942 BTC"
-Root cause: Using amount.toLocaleString() which rounds to default locale precision (often 3 decimals)
+Problem: When opening wallet explorer asset card to view transactions, TypeError occurred:
+"Cannot read properties of undefined (reading 'toLowerCase')" at line 17616
+
+Root cause: Bitcoin and some other transaction types don't have tx.hash property populated. The code was calling tx.hash.toLowerCase() without checking if tx.hash exists.
 
 Solution:
-- Changed line 13498 to use formatCurrencyAmount(amount, currency)
-- Changed line 13514 to use formatCurrencyAmount(total, currency)
-- formatCurrencyAmount() uses getCurrencyPrecision() which returns:
-  * 8 decimals for BTC (satoshi precision)
-  * 18 decimals for ETH
-  * 6 decimals for USDT/USDC
-  * Proper precision for each currency
+- Line 17617: Added defensive check - use tx.hash || tx.txid || '' to handle missing hash
+- Created txHash variable for consistent use throughout the function
+- Updated all references to tx.hash (15+ instances) to use txHash variable instead:
+  * Line 17618: investigationThreads.find()
+  * Line 17624: isHighlighted check
+  * Line 17652: isTransactionUsedInInvestigation()
+  * Line 17664: balanceMap lookup
+  * Line 17710-17712: isSelected checks
+  * Line 17816, 17821, 17826, 17830: checkbox data-hash attributes
+  * Line 17868: artSelections.has() checks (2 instances)
 
-Now ART display shows full precision: 0.06117942 BTC
+Now wallet explorer can display Bitcoin and other transaction types without crashing when opening asset cards.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -29,23 +34,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 42 +++++++++++++++++++++---------------------
- index.html | 12 ++++++------
- 2 files changed, 27 insertions(+), 27 deletions(-)
+ CLAUDE.md  | 56 ++++++++++++++++++++++++++------------------------------
+ index.html | 34 ++++++++++++++++++----------------
+ 2 files changed, 44 insertions(+), 46 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 34a2c8c Fix: Display full BTC precision in Root Total/ART display (1 second ago)
-- ac9a134 Fix: Bridge wizard now creates threads in flat structure (3 hours ago)
-- 1231421 Fix: Swap wizard now creates threads in flat structure (3 hours ago)
+- 08f62fd Fix: Handle undefined tx.hash in wallet explorer transaction rendering (0 seconds ago)
+- 34a2c8c Fix: Display full BTC precision in Root Total/ART display (4 minutes ago)
+- ac9a134 Fix: Bridge wizard now creates threads in flat structure (4 hours ago)
+- 1231421 Fix: Swap wizard now creates threads in flat structure (4 hours ago)
 - 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (4 hours ago)
 - 5763f21 UX: Replace single amount filter with separate min/max inputs (9 hours ago)
 - 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (9 hours ago)
 - bbd41f4 Update CLAUDE.md with latest commit info (10 hours ago)
 - d0ff0b6 Fix: Multiple UTXO wallet explorer issues (16 hours ago)
 - 6148579 Fix: Remove duplicate isPartiallyAllocated declaration causing syntax error (16 hours ago)
-- 966b4fd Feat: Implement Bitcoin UTXO multi-output transaction handling (22 hours ago)
 
 ## Key Features
 

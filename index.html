@@ -15439,7 +15439,7 @@ function exportRedWalletIndexCSV() {
                 }
 
                 // Debug ETH transactions
-                if (asset === 'ETH') {
+                if (asset === 'ETH' && tx.amount) {
                     console.log(`ETH tx: ${tx.type} ${tx.amount.toFixed(8)} ETH | Running balance: ${assets[asset].balance.toFixed(8)} | Internal: ${tx.isInternal || false}`);
                 }
             });
@@ -17834,10 +17834,10 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     </td>
                     <td style="padding: 12px;">${date}${threadBadge}</td>
                     <td style="padding: 12px;">${typeIcon} ${isChangeOutput ? 'CHANGE' : tx.type}${changeBadge}${usedBadge}</td>
-                    <td style="padding: 12px; text-align: right; font-weight: 600;">${amountPrefix}${tx.amount.toFixed(6)} ${tx.asset}</td>
+                    <td style="padding: 12px; text-align: right; font-weight: 600;">${amountPrefix}${tx.amount ? tx.amount.toFixed(tx.asset === 'BTC' ? 8 : 6) : '0.000000'} ${tx.asset || ''}</td>
                     ${balanceCell}
                     <td style="padding: 12px; font-family: monospace; font-size: 0.9rem;">
-                        ${tx.counterparty.substring(0, 10)}...${tx.counterparty.substring(tx.counterparty.length - 8)}
+                        ${tx.counterparty ? (tx.counterparty.substring(0, 10) + '...' + tx.counterparty.substring(tx.counterparty.length - 8)) : 'Unknown'}
                         ${entityLabel}
                         ${contractBadge}
                         ${potentialChangeBadge}
