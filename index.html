@@ -22941,6 +22941,11 @@ function addNewHop() {
                                                 'Log the output transaction from this terminal wallet (CEX or Bridge)'}">
                                         🌉 Log Bridge/Swap
                                     </button>
+                                    <button class="btn btn-sm" style="background: #dc3545; color: white; border: 1px solid #c82333;"
+                                            onclick="event.stopPropagation(); openBridgeWriteoffModal(${hop.hopNumber}, ${entry.id})"
+                                            title="Write off this bridge entry as a dead end (e.g., bridged to Monero, mixer, untraceable path)">
+                                        ⚠️ Write Off Dead End
+                                    </button>
                                 ` : ''}
                                 ${entry.entryType === 'cold_storage' && !entry.coldStorageMovementLogged ? `
                                     <button class="btn btn-sm" style="background: #2196f3; color: white; border: 1px solid #1976d2;"
@@ -39656,6 +39661,173 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
         window.useFullAmount = function() {
             const fullAmount = document.getElementById('bridgeDestAmount').value;
             document.getElementById('attributedAmount').value = fullAmount;
+        }
+
+        /**
+         * Open write-off modal for dead-end bridge entries
+         */
+        function openBridgeWriteoffModal(hopNumber, entryId) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            const entry = hop.entries.find(e => e.id === entryId);
+
+            if (!entry) {
+                showNotification('❌ Entry not found', 'error');
+                return;
+            }
+
+            const modal = document.createElement('div');
+            modal.id = 'bridgeWriteoffModal';
+            modal.className = 'modal show';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 700px; padding: 30px;">
+                    <h2 style="margin-bottom: 20px;">⚠️ Write Off Dead-End Bridge</h2>
+
+                    <div style="background: #fff3cd; border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <h3 style="margin-top: 0; color: #dc3545; font-size: 16px;">⚠️ Dead End - Untraceable Path</h3>
+                        <p style="margin: 10px 0; color: #856404;">
+                            Use this write-off when funds have entered an untraceable path such as:
+                        </p>
+                        <ul style="color: #856404; line-height: 1.8;">
+                            <li>Bridged to privacy coins (Monero, Zcash, etc.)</li>
+                            <li>Entered mixing services or tumblers</li>
+                            <li>Converted to non-traceable assets</li>
+                            <li>Dead blockchain or defunct project</li>
+                            <li>Bridge failure or lost funds</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <h3 style="margin-top: 0; color: #0d47a1; font-size: 16px;">Bridge Entry Details</h3>
+                        <div style="margin-bottom: 10px;">
+                            <strong>Amount:</strong> ${entry.amount} ${entry.currency || 'Unknown'}
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>Destination:</strong>
+                            <div style="font-family: monospace; font-size: 12px; word-break: break-all; margin-top: 5px;">
+                                ${entry.toWallet || 'Not specified'}
+                            </div>
+                        </div>
+                        ${entry.notation ? `
+                            <div style="margin-bottom: 10px;">
+                                <strong>Thread:</strong> ${entry.notation}
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-weight: bold; display: block; margin-bottom: 10px; color: #2c3e50;">
+                            Write-Off Category: *
+                        </label>
+                        <select id="writeoffCategory" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px;">
+                            <option value="">-- Select Reason --</option>
+                            <option value="privacy_coin">Privacy Coin (Monero, Zcash, etc.)</option>
+                            <option value="mixer">Mixing Service / Tumbler</option>
+                            <option value="dead_chain">Dead Blockchain / Defunct Project</option>
+                            <option value="bridge_failure">Bridge Failure / Lost Funds</option>
+                            <option value="untraceable">Other Untraceable Path</option>
+                            <option value="operational">Operational Limitation</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-weight: bold; display: block; margin-bottom: 10px; color: #2c3e50;">
+                            Justification / Notes: *
+                        </label>
+                        <textarea id="writeoffJustification"
+                                  rows="5"
+                                  placeholder="Explain why this bridge entry is a dead end and cannot be traced further. Include any relevant details, bridge names, destination chains, etc."
+                                  style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px; font-family: inherit; resize: vertical;"></textarea>
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            This documentation will be included in your investigation audit trail
+                        </small>
+                    </div>
+
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #2c3e50;">Impact on ART:</h4>
+                        <p style="margin: 0; color: #666; font-size: 14px;">
+                            Writing off this entry will reduce your Available Running Total (ART) by <strong>${entry.amount} ${entry.currency}</strong>.
+                            The thread will be marked as a dead end and removed from active tracking.
+                        </p>
+                    </div>
+
+                    <div style="display: flex; justify-content: center; gap: 10px;">
+                        <button class="btn btn-danger" onclick="confirmBridgeWriteoff(${hopNumber}, ${entryId})"
+                                style="padding: 12px 24px; font-size: 16px;">
+                            ⚠️ Confirm Write-Off
+                        </button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('bridgeWriteoffModal').remove()"
+                                style="padding: 12px 24px; font-size: 16px;">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        /**
+         * Confirm bridge write-off and create write-off entry
+         */
+        function confirmBridgeWriteoff(hopNumber, entryId) {
+            const category = document.getElementById('writeoffCategory').value;
+            const justification = document.getElementById('writeoffJustification').value.trim();
+
+            if (!category) {
+                alert('Please select a write-off category');
+                return;
+            }
+
+            if (!justification) {
+                alert('Please provide justification for this write-off');
+                return;
+            }
+
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            const bridgeEntry = hop.entries.find(e => e.id === entryId);
+
+            if (!bridgeEntry) {
+                showNotification('❌ Bridge entry not found', 'error');
+                return;
+            }
+
+            // Create write-off entry
+            saveUndoState(`Write off dead-end bridge in Hop ${hopNumber}`);
+
+            const categoryLabels = {
+                'privacy_coin': 'Privacy Coin',
+                'mixer': 'Mixing Service',
+                'dead_chain': 'Dead Blockchain',
+                'bridge_failure': 'Bridge Failure',
+                'untraceable': 'Untraceable Path',
+                'operational': 'Operational Limitation'
+            };
+
+            const writeoffEntry = {
+                id: hop.entries.length + 1,
+                hopNumber: hopNumber,
+                entryType: 'writeoff',
+                amount: bridgeEntry.amount,
+                currency: bridgeEntry.currency,
+                sourceThreadId: bridgeEntry.notation || `H${hopNumber}-E${bridgeEntry.id}`,
+                notation: '', // Will be auto-generated
+                notes: `⚠️ Dead-End Bridge Write-Off\n\nCategory: ${categoryLabels[category]}\n\nBridge Destination: ${bridgeEntry.toWallet}\nBridged Amount: ${bridgeEntry.amount} ${bridgeEntry.currency}\n\nJustification:\n${justification}\n\n🔴 This thread has reached a dead end and cannot be traced further.`,
+                timestamp: new Date().toISOString().slice(0, 16),
+                chain: bridgeEntry.chain,
+                toWallet: '⚠️ Dead End',
+                toWalletType: ''
+            };
+
+            hop.entries.push(writeoffEntry);
+
+            // Save and render
+            saveToStorage();
+            buildAvailableThreadsIndex();
+            renderHops();
+
+            // Close modal
+            document.getElementById('bridgeWriteoffModal').remove();
+
+            showNotification(`✅ Bridge entry written off as dead end: ${bridgeEntry.amount} ${bridgeEntry.currency}`, 'success');
         }
 
         function showBridgeTransferSelectionModal(transfers) {
