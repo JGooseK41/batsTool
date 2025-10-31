@@ -2951,10 +2951,20 @@
                                 <span style="font-size: 13px;">Hide zero-balance transfers</span>
                             </label>
                         </div>
-                        <button class="btn btn-secondary" onclick="clearAllFilters()"
-                                style="padding: 8px 16px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; font-weight: 500; font-size: 13px;">
-                            🔄 Clear All Filters
-                        </button>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" onclick="filterWalletTransactions()"
+                                    style="padding: 8px 16px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); border: none; color: white; border-radius: 6px; font-weight: 600; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s;"
+                                    onmouseover="this.style.background='linear-gradient(135deg, #45a049 0%, #3d8b40 100%)'; this.style.transform='scale(1.05)'"
+                                    onmouseout="this.style.background='linear-gradient(135deg, #4caf50 0%, #45a049 100%)'; this.style.transform='scale(1)'">
+                                ✓ Apply Filters
+                            </button>
+                            <button class="btn btn-secondary" onclick="clearAllFilters()"
+                                    style="padding: 8px 16px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; font-weight: 500; font-size: 13px; transition: all 0.2s;"
+                                    onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                                    onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                                🔄 Clear All Filters
+                            </button>
+                        </div>
                     </div>
                 </div>
 
