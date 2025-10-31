@@ -3,30 +3,75 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-31 06:25)
+## Latest Commit (Auto-updated: 2025-10-31 09:38)
 
-**Commit:** 15c64256aa86389ae7c2521fdef3c32a4930c08b
+**Commit:** 05ed9b05e96f8d9f5a37132e0da7801a90e0b033
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** UX: Add explicit Apply Filters button for better control
+
+Problem: Datalist autocomplete selection didn't always trigger table update
+- Selecting address from dropdown didn't reliably fire oninput event
+- Users had no way to explicitly commit multiple filter changes
+- Unclear whether filters were applied or pending
+- Some browsers handle datalist selection differently
+
+Solution: Added prominent Apply Filters button alongside Clear All Filters
+
+1. New Apply Filters Button:
+   - Green gradient background (✓ Apply Filters) for positive action
+   - Positioned next to Clear All Filters button
+   - Explicitly calls filterWalletTransactions()
+   - Hover effect with scale transform for interactivity
+   - Box shadow for prominence
+
+2. Button Group Layout:
+   - Wrapped both buttons in flex container with gap
+   - Apply Filters (left, green, primary action)
+   - Clear All Filters (right, transparent, secondary action)
+   - Both with smooth hover transitions
+
+3. User Flexibility:
+   - Can still type and get instant filtering (oninput remains)
+   - Can set multiple filters then click Apply (explicit commit)
+   - Can select from autocomplete then click Apply (handles event issues)
+   - Clear visual feedback that filters are being applied
+
+4. Styling:
+   - Green gradient: #4caf50 → #45a049 (positive action color)
+   - Darker on hover: #45a049 → #3d8b40
+   - 600 font weight vs 500 for secondary button
+   - Box shadow for depth and importance
+
+Workflow improvement:
+1. User selects address from autocomplete dropdown
+2. Optionally adjusts date/amount filters
+3. Clicks "✓ Apply Filters" to rebuild table
+4. Or clicks "🔄 Clear All Filters" to reset
+
+Now users have explicit control over when filters are applied, ensuring autocomplete selections and multi-filter changes work reliably.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 50 +++++++++++++++++++++++++++-----------------------
- 1 file changed, 27 insertions(+), 23 deletions(-)
+ index.html | 18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 15c6425 Update CLAUDE.md with latest commit info (1 second ago)
-- 7fe9fd3 Fix: Ensure history completeness check applies to ALL blockchains (77 seconds ago)
-- 2a4e6b4 Fix: Remove incorrect 'incomplete history' warning for Bitcoin wallets (6 minutes ago)
-- 0c80d13 Fix: Handle undefined tx.amount and tx.counterparty in wallet explorer (9 hours ago)
-- 08f62fd Fix: Handle undefined tx.hash in wallet explorer transaction rendering (10 hours ago)
-- 34a2c8c Fix: Display full BTC precision in Root Total/ART display (10 hours ago)
-- ac9a134 Fix: Bridge wizard now creates threads in flat structure (14 hours ago)
-- 1231421 Fix: Swap wizard now creates threads in flat structure (14 hours ago)
-- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (14 hours ago)
-- 5763f21 UX: Replace single amount filter with separate min/max inputs (20 hours ago)
+- 05ed9b0 UX: Add explicit Apply Filters button for better control (1 second ago)
+- 9b6b05c Feature: Add autocomplete to counterparty filter for all blockchains (8 minutes ago)
+- e1dbfa4 Feature: Add counterparty address filter to wallet explorer (10 minutes ago)
+- 6ab4113 UX: Restructure Bitcoin UTXO outgoing transactions for uniform table layout (15 minutes ago)
+- 6893500 Fix: Variable initialization order causing transaction table crash (51 minutes ago)
+- bdfa3fe Feature: Add commercial clustering intelligence with testimony limitations (54 minutes ago)
+- c489254 Fix: Decouple clustering from investigation methodology (PIFO/LIBR) (62 minutes ago)
+- 4d3b5ec UX: Add manual clustering explanation to UTXO change detection info panel (69 minutes ago)
+- 904ca2e UX: Fix table alignment and add visual contrast for transaction types (70 minutes ago)
+- 546dad8 Fix: Prevent crash when checking transaction allocation status (76 minutes ago)
 
 ## Key Features
 

@@ -17676,10 +17676,13 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             // Prepare data to display
             let displayData;
             if (useGroupedDisplay) {
-                // Use transaction groups for Bitcoin
-                displayData = [...walletExplorerState.transactionGroups];
+                // Use transaction groups for Bitcoin, but filter by transactions in filteredTransactions
+                const filteredHashes = new Set(walletExplorerState.filteredTransactions.map(tx => tx.hash.toLowerCase()));
+                displayData = walletExplorerState.transactionGroups.filter(group =>
+                    filteredHashes.has(group.txHash.toLowerCase())
+                );
 
-                // Apply filters and sorting to groups
+                // Apply zero-balance filter to groups
                 if (walletExplorerState.hideZeroBalance) {
                     displayData = displayData.filter(group => {
                         // Keep groups that have any non-zero outputs
