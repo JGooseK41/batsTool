@@ -2964,7 +2964,7 @@
                             <div style="margin-top: 10px; font-size: 12px; color: #1976d2;">
                                 <strong>🔄 Change Outputs:</strong> Marked with gray background and disabled checkboxes - these funds stay in the original thread (not traceable as new transactions).<br>
                                 <strong>🔴 Payment Outputs:</strong> Actual payments to other addresses - these create new threads and are selectable for tracing.<br>
-                                <strong>🔗 Manual Clustering:</strong> When change goes to a NEW address, you'll see a "Potential Change to New Address" badge. Click it to cluster addresses together for dual-monitoring (PIFO) or unified balance tracking (LIBR), or treat as separate thread.
+                                <strong>🔗 Address Clustering:</strong> When you identify wallet behavior suggesting common control (like change to a NEW address), click "Potential Change to New Address" badge to cluster addresses. You decide whether to cluster based on your analysis of wallet patterns.
                             </div>
                         </div>
                     </div>
@@ -20718,9 +20718,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
                         <strong>❓ Decision Required:</strong><br><br>
                         <strong>Option 1: New Thread</strong> → Treat as separate payment to different entity<br>
-                        <strong>Option 2: Cluster Addresses</strong> → Link addresses as controlled by same entity
-                        ${isPIFO ? '<br><br><strong>PIFO Mode:</strong> If clustered, both addresses will be monitored to see which moves first.' : ''}
-                        ${isLIBR ? '<br><br><strong>LIBR Mode:</strong> If clustered, balance analysis will consider both addresses together.' : ''}
+                        <strong>Option 2: Cluster Addresses</strong> → Link addresses as controlled by same entity<br><br>
+                        If clustered, all addresses in the cluster will be monitored together as one entity. Your investigation methodology (${investigation.tracingMethod || 'selected method'}) determines how the clustered addresses are traced.
                     </div>
 
                     <div style="margin-bottom: 25px;">
@@ -20736,7 +20735,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                             <button onclick="handleClusterDecision('${tx.hash}', '${tx.counterparty}', ${tx.amount}, 'cluster')"
                                     style="padding: 20px; background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px;">
                                 🔗 Cluster Addresses<br>
-                                <small style="font-weight: normal; opacity: 0.9;">Link as same entity (dual monitoring)</small>
+                                <small style="font-weight: normal; opacity: 0.9;">Link as controlled by same entity</small>
                             </button>
                         </div>
                     </div>
