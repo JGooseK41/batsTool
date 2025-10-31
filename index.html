@@ -17716,6 +17716,9 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 const isHighlighted = walletExplorerState.highlightTxHash && txHash &&
                                       txHash.toLowerCase() === walletExplorerState.highlightTxHash;
 
+                // Handle UTXO change outputs differently - MUST be defined early
+                const isChangeOutput = tx.isChange === true || tx.type === 'CHANGE';
+
                 // Add highlight class if this is the traced transaction
                 let rowClass = 'wallet-tx-row ' + (tx.type === 'IN' ? 'wallet-tx-in' : 'wallet-tx-out');
                 if (isHighlighted) {
@@ -17744,9 +17747,6 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 }
 
                 const date = new Date(tx.timestamp).toLocaleString('en-US', { timeZone: 'UTC', timeZoneName: 'short' });
-
-                // Handle UTXO change outputs differently
-                const isChangeOutput = tx.isChange === true || tx.type === 'CHANGE';
 
                 // Check if this transaction has been used in the investigation
                 const usageInfo = txHash ? isTransactionUsedInInvestigation(txHash, tx.amount) : { isUsed: false, isPartiallyAllocated: false };
