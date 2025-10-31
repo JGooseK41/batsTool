@@ -16674,7 +16674,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             }
 
             const remaining = (transactionAmount || 0) - totalAllocated;
-            const fullyAllocated = transactionAmount && Math.abs(remaining) < 0.01; // Within rounding tolerance
+            const fullyAllocated = transactionAmount && allocatedEntries.length > 0 && Math.abs(remaining) < 0.01; // Within rounding tolerance
 
             return {
                 isAllocated: totalAllocated > 0,
@@ -16706,7 +16706,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             const allocationStatus = getTransactionAllocationStatus(txHash, transactionAmount);
 
             // Only mark as "used" (gray out) if FULLY allocated
-            if (allocationStatus.fullyAllocated) {
+            if (allocationStatus.fullyAllocated && allocationStatus.entries.length > 0) {
                 const firstEntry = allocationStatus.entries[0];
                 return {
                     isUsed: true,
