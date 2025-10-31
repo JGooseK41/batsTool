@@ -17006,6 +17006,44 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 `;
             });
 
+            // Calculate and display transaction fee
+            const totalOutputs = group.outputs.reduce((sum, output) => sum + output.amount, 0);
+            const totalSent = group.totalSent || totalOutputs;
+
+            // Check if fee entry already exists
+            const existingFeeEntry = investigation.hops
+                .flatMap(h => h.entries || [])
+                .find(e => e.transactionHash?.toLowerCase() === group.txHash.toLowerCase() && e.entryType === 'fee');
+
+            html += `
+                <div style="border: 2px solid #ffc107; border-radius: 8px; padding: 15px; background: #fff9e6; margin-top: 10px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 24px; margin-right: 10px;">⛽</span>
+                        <strong style="color: #856404; font-size: 16px;">Bitcoin Transaction Fee</strong>
+                    </div>
+                    <div style="color: #666; font-size: 14px; margin-bottom: 10px;">
+                        <div style="margin-bottom: 5px;">
+                            <strong>Total Outputs:</strong> ${totalOutputs.toFixed(8)} BTC
+                        </div>
+                        <div style="margin-bottom: 10px; color: #999; font-size: 13px;">
+                            The transaction fee (inputs - outputs) will be automatically calculated and logged as a write-off when you allocate any output from this transaction.
+                        </div>
+                    </div>
+                    ${existingFeeEntry ? `
+                        <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 10px; margin-top: 10px;">
+                            <span style="color: #155724; font-weight: 600;">✓ Fee Already Recorded</span><br>
+                            <span style="color: #155724; font-size: 13px;">${existingFeeEntry.amount} BTC written off as transaction fee</span>
+                        </div>
+                    ` : `
+                        <div style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px; padding: 10px; margin-top: 10px;">
+                            <span style="color: #004085; font-size: 13px;">
+                                <strong>Note:</strong> When you trace any output, the fee will be calculated based on the thread amounts you allocate and will reduce your ART accordingly.
+                            </span>
+                        </div>
+                    `}
+                </div>
+            `;
+
             html += '</div>';
             return html;
         }
@@ -17516,6 +17554,83 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
         }
 
         /**
+         * Create Bitcoin transaction fee entry
+         * Calculates fee (inputs - outputs) and creates a write-off entry
+         * Only creates fee entry once per transaction
+         */
+        function createBitcoinTransactionFeeEntry(txHash, group, hopNumber, allocations) {
+            // Check if fee entry already exists for this transaction
+            const existingFeeEntry = investigation.hops
+                .flatMap(h => h.entries || [])
+                .find(e => e.transactionHash?.toLowerCase() === txHash.toLowerCase() && e.entryType === 'fee');
+
+            if (existingFeeEntry) {
+                console.log(`⛽ Fee entry already exists for transaction ${txHash.substring(0, 12)}...`);
+                return null;
+            }
+
+            // Calculate total outputs
+            const totalOutputs = group.outputs.reduce((sum, output) => sum + output.amount, 0);
+
+            // Calculate total inputs (sum of all thread allocations for this transaction across all outputs)
+            let totalInputs = 0;
+            const inputThreads = new Set();
+
+            investigation.hops.forEach(hop => {
+                if (!hop.entries) return;
+                hop.entries.forEach(entry => {
+                    if (entry.transactionHash?.toLowerCase() === txHash.toLowerCase() &&
+                        entry.utxoOutputIndex !== undefined) {
+                        const amount = parseFloat(entry.amount) || 0;
+                        totalInputs += amount;
+
+                        // Track which threads are being used
+                        if (entry.multipleSourceThreads) {
+                            entry.multipleSourceThreads.forEach(t => inputThreads.add(t));
+                        } else if (entry.sourceThreadId) {
+                            inputThreads.add(entry.sourceThreadId);
+                        }
+                    }
+                });
+            });
+
+            // Add current allocation to inputs
+            allocations.forEach(alloc => {
+                totalInputs += alloc.amount;
+                inputThreads.add(alloc.threadId);
+            });
+
+            // Calculate fee
+            const fee = totalInputs - totalOutputs;
+
+            if (fee <= 0.00000001) {
+                console.log(`⛽ No fee to record for transaction ${txHash.substring(0, 12)}... (fee: ${fee.toFixed(8)} BTC)`);
+                return null;
+            }
+
+            // Create fee write-off entry
+            const threadArray = Array.from(inputThreads);
+            const feeEntry = {
+                id: investigation.hops.find(h => h.hopNumber === hopNumber).entries.length + 2, // +2 because we're adding after the main entry
+                hopNumber: hopNumber,
+                entryType: 'fee',
+                amount: fee.toFixed(8),
+                currency: 'BTC',
+                sourceThreadId: threadArray[0], // Primary thread
+                multipleSourceThreads: threadArray.length > 1 ? threadArray : undefined,
+                notation: '', // Will be auto-generated
+                notes: `⛽ Bitcoin Transaction Fee\n\nTransaction: ${txHash}\nTotal Inputs: ${totalInputs.toFixed(8)} BTC\nTotal Outputs: ${totalOutputs.toFixed(8)} BTC\nFee Paid: ${fee.toFixed(8)} BTC\n\nThis fee was paid to miners and reduces the Available Running Total (ART).\n\nThreads affected:\n${threadArray.map(t => `  • ${t}`).join('\n')}`,
+                timestamp: new Date(group.timestamp).toISOString().slice(0, 16),
+                chain: 'bitcoin',
+                transactionHash: txHash,
+                destinationWallet: '⛽ Miner Fee',
+                toWalletType: ''
+            };
+
+            return feeEntry;
+        }
+
+        /**
          * Commit output allocation
          */
         async function commitOutputAllocation() {
@@ -17620,6 +17735,13 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             };
 
             hop.entries.push(entry);
+
+            // Auto-create fee write-off entry (only once per transaction)
+            const feeEntry = createBitcoinTransactionFeeEntry(ctx.txHash, ctx.group, hopNumber, allocations);
+            if (feeEntry) {
+                hop.entries.push(feeEntry);
+                console.log(`⛽ Created fee write-off: ${feeEntry.amount} BTC for transaction ${ctx.txHash.substring(0, 12)}...`);
+            }
 
             // Save and render
             saveToStorage();
