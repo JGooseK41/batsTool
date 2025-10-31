@@ -3,57 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-31 06:23)
+## Latest Commit (Auto-updated: 2025-10-31 06:25)
 
-**Commit:** 7fe9fd3413a8ab4b6a8958713fb658acb1d5a3f2
+**Commit:** 15c64256aa86389ae7c2521fdef3c32a4930c08b
 **Author:** Your Name
-**Message:** Fix: Ensure history completeness check applies to ALL blockchains
-
-Problem: The incomplete history warning fix only applied to Bitcoin. Other blockchains (Tron, Solana, Sui) could still show false warnings.
-
-Solution:
-Lines 15410-15422: Added universal fallback for history completeness tracking:
-- Checks if fetchedCount === 0 (indicating blockchain-specific function didn't set it)
-- Sets default values for any blockchain that doesn't set them internally:
-  * isCompleteHistory = true if transactions < 1000
-  * fetchedCount = actual transaction count
-  * oldestFetchedDate and firstActivityDate from timestamps
-- Added console log for debugging
-
-Coverage by blockchain:
-✅ Bitcoin - Sets in processWalletData (lines 15380-15386, limit 10000)
-✅ EVM chains - Sets in getEthereumWalletHistory (lines 20252-20272)
-✅ XRP - Sets in getXRPWalletHistory (line 21989, limit 100)
-✅ Tron - Now uses default (API limit 200)
-✅ Solana - Now uses default (API limit 100)
-✅ Sui - Now uses default
-✅ Any future blockchains - Automatically covered by fallback
-
-Now ALL wallets show accurate history status, preventing false "incomplete history" warnings.
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md  | 57 ++++++++++++++++++++++++++++-----------------------------
- index.html | 14 ++++++++++++++
- 2 files changed, 42 insertions(+), 29 deletions(-)
+ CLAUDE.md | 50 +++++++++++++++++++++++++++-----------------------
+ 1 file changed, 27 insertions(+), 23 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7fe9fd3 Fix: Ensure history completeness check applies to ALL blockchains (1 second ago)
-- 2a4e6b4 Fix: Remove incorrect 'incomplete history' warning for Bitcoin wallets (4 minutes ago)
-- 0c80d13 Fix: Handle undefined tx.amount and tx.counterparty in wallet explorer (8 hours ago)
+- 15c6425 Update CLAUDE.md with latest commit info (1 second ago)
+- 7fe9fd3 Fix: Ensure history completeness check applies to ALL blockchains (77 seconds ago)
+- 2a4e6b4 Fix: Remove incorrect 'incomplete history' warning for Bitcoin wallets (6 minutes ago)
+- 0c80d13 Fix: Handle undefined tx.amount and tx.counterparty in wallet explorer (9 hours ago)
 - 08f62fd Fix: Handle undefined tx.hash in wallet explorer transaction rendering (10 hours ago)
 - 34a2c8c Fix: Display full BTC precision in Root Total/ART display (10 hours ago)
 - ac9a134 Fix: Bridge wizard now creates threads in flat structure (14 hours ago)
 - 1231421 Fix: Swap wizard now creates threads in flat structure (14 hours ago)
 - 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (14 hours ago)
 - 5763f21 UX: Replace single amount filter with separate min/max inputs (20 hours ago)
-- 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (20 hours ago)
 
 ## Key Features
 
