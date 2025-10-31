@@ -3,30 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-30 19:59)
+## Latest Commit (Auto-updated: 2025-10-30 21:55)
 
-**Commit:** 08f62fd3034d8f3cb1a557675c041432479a2601
+**Commit:** 0c80d1330a4594af4849e437ce3e142a9b4dce49
 **Author:** Your Name
-**Message:** Fix: Handle undefined tx.hash in wallet explorer transaction rendering
+**Message:** Fix: Handle undefined tx.amount and tx.counterparty in wallet explorer
 
-Problem: When opening wallet explorer asset card to view transactions, TypeError occurred:
-"Cannot read properties of undefined (reading 'toLowerCase')" at line 17616
+Problem: Wallet explorer crashed when clicking BTC asset card to view transactions:
+"Cannot read properties of undefined (reading 'toFixed')" at line 17837
 
-Root cause: Bitcoin and some other transaction types don't have tx.hash property populated. The code was calling tx.hash.toLowerCase() without checking if tx.hash exists.
+Root cause: Some Bitcoin transactions don't have tx.amount or tx.counterparty populated
 
 Solution:
-- Line 17617: Added defensive check - use tx.hash || tx.txid || '' to handle missing hash
-- Created txHash variable for consistent use throughout the function
-- Updated all references to tx.hash (15+ instances) to use txHash variable instead:
-  * Line 17618: investigationThreads.find()
-  * Line 17624: isHighlighted check
-  * Line 17652: isTransactionUsedInInvestigation()
-  * Line 17664: balanceMap lookup
-  * Line 17710-17712: isSelected checks
-  * Line 17816, 17821, 17826, 17830: checkbox data-hash attributes
-  * Line 17868: artSelections.has() checks (2 instances)
+Line 17837: Added defensive checks for transaction display:
+- tx.amount ? tx.amount.toFixed(...) : '0.000000' - safe amount display
+- tx.asset === 'BTC' ? 8 : 6 - proper BTC precision (8 decimals vs 6 for others)
+- tx.asset || '' - handle missing asset name
 
-Now wallet explorer can display Bitcoin and other transaction types without crashing when opening asset cards.
+Line 17840: Added check for counterparty:
+- tx.counterparty ? (substring...) : 'Unknown' - safe address display
+
+Line 15442: Added check for debug logging:
+- if (asset === 'ETH' && tx.amount) - prevent crash in ETH debug logs
+
+Now wallet explorer displays Bitcoin transactions properly even if some fields are missing, showing full 8-decimal precision for BTC amounts.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -34,23 +34,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md  | 56 ++++++++++++++++++++++++++------------------------------
- index.html | 34 ++++++++++++++++++----------------
- 2 files changed, 44 insertions(+), 46 deletions(-)
+ CLAUDE.md  | 47 ++++++++++++++++++++++++++---------------------
+ index.html |  6 +++---
+ 2 files changed, 29 insertions(+), 24 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 08f62fd Fix: Handle undefined tx.hash in wallet explorer transaction rendering (0 seconds ago)
-- 34a2c8c Fix: Display full BTC precision in Root Total/ART display (4 minutes ago)
-- ac9a134 Fix: Bridge wizard now creates threads in flat structure (4 hours ago)
-- 1231421 Fix: Swap wizard now creates threads in flat structure (4 hours ago)
-- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (4 hours ago)
-- 5763f21 UX: Replace single amount filter with separate min/max inputs (9 hours ago)
-- 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (9 hours ago)
-- bbd41f4 Update CLAUDE.md with latest commit info (10 hours ago)
-- d0ff0b6 Fix: Multiple UTXO wallet explorer issues (16 hours ago)
-- 6148579 Fix: Remove duplicate isPartiallyAllocated declaration causing syntax error (16 hours ago)
+- 0c80d13 Fix: Handle undefined tx.amount and tx.counterparty in wallet explorer (0 seconds ago)
+- 08f62fd Fix: Handle undefined tx.hash in wallet explorer transaction rendering (2 hours ago)
+- 34a2c8c Fix: Display full BTC precision in Root Total/ART display (2 hours ago)
+- ac9a134 Fix: Bridge wizard now creates threads in flat structure (5 hours ago)
+- 1231421 Fix: Swap wizard now creates threads in flat structure (5 hours ago)
+- 02cfff2 Debug: Add comprehensive logging to thread assignment calculation (6 hours ago)
+- 5763f21 UX: Replace single amount filter with separate min/max inputs (11 hours ago)
+- 7f02b12 Feat: Add range filtering and debug logging to transfer selection modal (11 hours ago)
+- bbd41f4 Update CLAUDE.md with latest commit info (12 hours ago)
+- d0ff0b6 Fix: Multiple UTXO wallet explorer issues (18 hours ago)
 
 ## Key Features
 

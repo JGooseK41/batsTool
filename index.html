@@ -15376,6 +15376,14 @@ function exportRedWalletIndexCSV() {
             if (walletExplorerState.blockchain === 'bitcoin') {
                 walletExplorerState.transactionGroups = groupBitcoinTransactionsByHash(transactions);
                 console.log(`✅ Bitcoin transactions grouped: ${transactions.length} outputs → ${walletExplorerState.transactionGroups.length} transaction groups`);
+
+                // Set history completeness for Bitcoin
+                // Mempool.space API returns all available transactions (no pagination limit like Etherscan)
+                // Consider complete unless we hit an unexpectedly large number
+                walletExplorerState.isCompleteHistory = transactions.length < 10000;
+                walletExplorerState.fetchedCount = transactions.length;
+                walletExplorerState.oldestFetchedDate = transactions.length > 0 ? transactions[transactions.length - 1].timestamp : null;
+                walletExplorerState.firstActivityDate = transactions.length > 0 ? transactions[transactions.length - 1].timestamp : null;
             } else {
                 // Account-based chains: one transaction = one group (for consistency)
                 walletExplorerState.transactionGroups = transactions.map(tx => ({
