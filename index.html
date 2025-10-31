@@ -2934,9 +2934,12 @@
                     <!-- Counterparty Filter -->
                     <div style="margin-top: 12px;">
                         <label style="display: block; margin-bottom: 5px; font-weight: 500; color: white; font-size: 12px;">Counterparty Address:</label>
-                        <input type="text" id="walletExplorerCounterparty" placeholder="Search by address (partial match supported)"
+                        <input type="text" id="walletExplorerCounterparty" list="counterpartyAddressList" placeholder="Start typing to see address suggestions..."
                                oninput="filterWalletTransactions()" onchange="filterWalletTransactions()"
                                style="width: 100%; padding: 8px; border: 2px solid rgba(255,255,255,0.3); border-radius: 6px; background: white; font-family: monospace; font-size: 13px;">
+                        <datalist id="counterpartyAddressList">
+                            <!-- Populated dynamically with unique counterparty addresses -->
+                        </datalist>
                     </div>
 
                     <!-- Additional Filters -->
@@ -15718,6 +15721,9 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             walletExplorerState.filteredTransactions = sortedTxs;
             walletExplorerState.balanceMap = balanceMap;
 
+            // Populate counterparty autocomplete datalist
+            populateCounterpartyDatalist(asset.transactions);
+
             // Auto-navigate to page containing highlighted transaction or first unallocated thread
             let targetPageIndex = -1;
 
@@ -18102,6 +18108,33 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 walletExplorerState.currentPage++;
                 renderTransactionTable();
             }
+        }
+
+        // Populate counterparty address autocomplete datalist
+        function populateCounterpartyDatalist(transactions) {
+            const datalist = document.getElementById('counterpartyAddressList');
+            if (!datalist) return;
+
+            // Extract unique counterparty addresses
+            const uniqueCounterparties = new Set();
+            transactions.forEach(tx => {
+                if (tx.counterparty) {
+                    uniqueCounterparties.add(tx.counterparty);
+                }
+            });
+
+            // Sort addresses alphabetically
+            const sortedAddresses = Array.from(uniqueCounterparties).sort();
+
+            // Clear and populate datalist
+            datalist.innerHTML = '';
+            sortedAddresses.forEach(address => {
+                const option = document.createElement('option');
+                option.value = address;
+                datalist.appendChild(option);
+            });
+
+            console.log(`✅ Populated counterparty datalist with ${sortedAddresses.length} unique addresses`);
         }
 
         // Filter transactions by date range and amount
