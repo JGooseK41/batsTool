@@ -17262,22 +17262,37 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
          * Get available threads in wallet for UTXO allocation
          */
         function getAvailableThreadsForWallet(walletAddress) {
+            console.log(`🔍 Looking for available threads in wallet: ${walletAddress}`);
+
             if (!investigation || !investigation.hops) {
+                console.log('❌ No investigation or hops found');
                 return [];
             }
 
             const threads = [];
             const walletLower = walletAddress.toLowerCase();
 
+            console.log(`📊 Searching through ${investigation.hops.length} hops...`);
+
             // Search all hops for threads that end at this wallet
             investigation.hops.forEach(hop => {
                 if (!hop.entries) return;
 
+                console.log(`  Hop ${hop.hopNumber}: ${hop.entries.length} entries`);
+
                 hop.entries.forEach(entry => {
+                    // Log all entries for debugging
+                    console.log(`    Entry H${hop.hopNumber}-E${entry.id}: type=${entry.entryType}, dest=${entry.destinationWallet}, toWallet=${entry.toWallet}, amount=${entry.amount}`);
+
                     // Check if this entry creates a thread at the target wallet
-                    if (entry.destinationWallet &&
-                        entry.destinationWallet.toLowerCase() === walletLower &&
+                    // Support both destinationWallet and toWallet field names
+                    const entryDestination = entry.destinationWallet || entry.toWallet;
+
+                    if (entryDestination &&
+                        entryDestination.toLowerCase() === walletLower &&
                         entry.entryType === 'trace') {
+
+                        console.log(`    ✅ MATCH: Entry creates thread at target wallet`);
 
                         // Calculate available amount for this thread
                         const threadId = entry.notation || `H${hop.hopNumber}-E${entry.id}`;
@@ -17305,6 +17320,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         }
 
                         const available = originalAmount - allocated;
+                        console.log(`    💰 Thread ${threadId}: original=${originalAmount.toFixed(8)}, allocated=${allocated.toFixed(8)}, available=${available.toFixed(8)}`);
+
                         if (available > 0.00000001) {
                             threads.push({
                                 threadId: threadId,
@@ -17313,6 +17330,9 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                                 allocated: allocated,
                                 internalId: `H${hop.hopNumber}-E${entry.id}`
                             });
+                            console.log(`    ✅ Added thread to available list`);
+                        } else {
+                            console.log(`    ⚠️ Thread fully allocated or too small`);
                         }
                     }
                 });
