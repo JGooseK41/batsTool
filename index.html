@@ -3084,6 +3084,7 @@
                                 <th onclick="toggleTransactionSortOrder()" style="padding: 16px 12px; text-align: left; font-weight: 600; cursor: pointer; user-select: none; color: #475569; font-size: 14px; transition: color 0.2s;" title="Click to sort" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='#475569'">
                                     Date/Time (UTC) <span id="walletExplorerSortIndicator" style="color: #1e40af;">▼</span>
                                 </th>
+                                <th id="walletExplorerTxHashHeader" style="padding: 16px 12px; text-align: left; font-weight: 600; color: #475569; font-size: 14px;">Tx Hash</th>
                                 <th style="padding: 16px 12px; text-align: left; font-weight: 600; color: #475569; font-size: 14px;">Type</th>
                                 <th style="padding: 16px 12px; text-align: right; font-weight: 600; color: #475569; font-size: 14px;">Amount</th>
                                 <th id="walletExplorerBalanceHeader" style="padding: 16px 12px; text-align: right; font-weight: 600; color: #475569; font-size: 14px;">Balance</th>
@@ -16999,7 +17000,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             if (group.outputCount > 4) {
                 // Show "Analyze Transaction" button
                 row.innerHTML = `
-                    <td colspan="6" style="padding: 20px; background: #fff3cd; border-bottom: 2px solid #dee2e6;">
+                    <td colspan="7" style="padding: 20px; background: #fff3cd; border-bottom: 2px solid #dee2e6;">
                         <div style="text-align: center;">
                             <p style="margin: 0 0 15px 0; color: #856404;">
                                 ⚠️ This transaction has ${group.outputCount} outputs
@@ -17016,7 +17017,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             } else {
                 // Show inline output selection
                 row.innerHTML = `
-                    <td colspan="6" style="padding: 20px; background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <td colspan="7" style="padding: 20px; background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
                         ${renderInlineOutputs(group)}
                     </td>
                 `;
@@ -17054,14 +17055,19 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             });
 
             row.innerHTML = `
-                <td colspan="6" style="padding: 15px;">
+                <td colspan="7" style="padding: 15px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="flex: 1;">
                             <span style="font-size: 18px; margin-right: 10px; display: inline-block; width: 20px;">${expandIcon}</span>
                             <span style="font-weight: bold; font-size: 16px;">📤 Transaction</span>
-                            <span style="margin-left: 10px; font-family: monospace; color: #666;">
-                                ${group.txHash.substring(0, 16)}...
-                            </span>
+                            <a href="https://blockstream.info/tx/${group.txHash}" target="_blank"
+                               onclick="event.stopPropagation();"
+                               style="display: inline-block; margin-left: 10px; padding: 6px 10px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; text-decoration: none; border-radius: 6px; font-family: monospace; font-size: 11px; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+                               onmouseover="this.style.background='linear-gradient(135deg, #2980b9 0%, #1f6391 100%)'; this.style.boxShadow='0 3px 6px rgba(0,0,0,0.15)'"
+                               onmouseout="this.style.background='linear-gradient(135deg, #3498db 0%, #2980b9 100%)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'"
+                               title="View transaction on Blockstream: ${group.txHash}">
+                                ${group.txHash.substring(0, 12)}...
+                            </a>
                             <span style="margin-left: 15px; color: #666; font-weight: bold;">
                                 ${group.totalSent.toFixed(8)} BTC sent
                             </span>
@@ -17073,13 +17079,6 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                             <span style="color: #666; font-size: 14px;">
                                 ${date}
                             </span>
-                            ${group.explorerUrl ? `
-                                <a href="${group.explorerUrl}" target="_blank"
-                                   onclick="event.stopPropagation();"
-                                   style="margin-left: 10px; text-decoration: none;">
-                                    🔗
-                                </a>
-                            ` : ''}
                         </div>
                     </div>
                 </td>
@@ -17834,6 +17833,25 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                     clusterBadge = `<div style="margin-top: 4px;"><span style="background: #2196f3; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; cursor: pointer;" onclick="showClusterMonitoringView('${cluster.id}')">🔗 Clustered (${cluster.addresses.length} addresses) - Click for Details</span></div>`;
                 }
 
+                // Create transaction hash cell for Bitcoin
+                let txHashCell = '';
+                if (walletExplorerState.blockchain === 'bitcoin' && txHash) {
+                    const truncatedHash = txHash.substring(0, 12) + '...';
+                    const blockstreamUrl = `https://blockstream.info/tx/${txHash}`;
+                    txHashCell = `<td style="padding: 12px;">
+                        <a href="${blockstreamUrl}" target="_blank"
+                           style="display: inline-block; padding: 6px 10px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; text-decoration: none; border-radius: 6px; font-family: monospace; font-size: 11px; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+                           onmouseover="this.style.background='linear-gradient(135deg, #2980b9 0%, #1f6391 100%)'; this.style.boxShadow='0 3px 6px rgba(0,0,0,0.15)'"
+                           onmouseout="this.style.background='linear-gradient(135deg, #3498db 0%, #2980b9 100%)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'"
+                           title="View transaction on Blockstream: ${txHash}">
+                            ${truncatedHash}
+                        </a>
+                    </td>`;
+                } else {
+                    // Empty cell for non-Bitcoin blockchains
+                    txHashCell = '<td style="padding: 12px; color: #999; font-style: italic; font-size: 11px;">—</td>';
+                }
+
                 row.innerHTML = `
                     <td style="padding: 12px; text-align: center;">
                         ${isChangeOutput ? `
@@ -17857,6 +17875,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         `}
                     </td>
                     <td style="padding: 12px;">${date}${threadBadge}</td>
+                    ${txHashCell}
                     <td style="padding: 12px;">${typeIcon} ${isChangeOutput ? 'CHANGE' : tx.type}${changeBadge}${usedBadge}</td>
                     <td style="padding: 12px; text-align: right; font-weight: 600;">${amountPrefix}${tx.amount ? tx.amount.toFixed(tx.asset === 'BTC' ? 8 : 6) : '0.000000'} ${tx.asset || ''}</td>
                     ${balanceCell}
