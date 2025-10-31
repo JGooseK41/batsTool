@@ -17053,11 +17053,15 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             const isExpanded = walletExplorerState.expandedTransactions.has(group.txHash);
             row.style.display = isExpanded ? '' : 'none';
 
+            // Calculate colspan based on whether balance column is shown
+            const showBalance = walletExplorerState.isCompleteHistory;
+            const colspan = showBalance ? 8 : 7;
+
             // Check output count
             if (group.outputCount > 4) {
                 // Show "Analyze Transaction" button
                 row.innerHTML = `
-                    <td colspan="8" style="padding: 20px; background: #fff3cd; border-bottom: 2px solid #dee2e6;">
+                    <td colspan="${colspan}" style="padding: 20px; background: #fff3cd; border-bottom: 2px solid #dee2e6;">
                         <div style="text-align: center;">
                             <p style="margin: 0 0 15px 0; color: #856404;">
                                 ⚠️ This transaction has ${group.outputCount} outputs
@@ -17074,7 +17078,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             } else {
                 // Show inline output selection
                 row.innerHTML = `
-                    <td colspan="8" style="padding: 20px; background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <td colspan="${colspan}" style="padding: 20px; background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
                         ${renderInlineOutputs(group)}
                     </td>
                 `;
@@ -17091,7 +17095,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             row.className = 'utxo-transaction-header';
             row.id = `tx-header-${group.txHash}`;
             row.style.cursor = 'pointer';
-            row.style.background = '#f8f9fa';
+            row.style.background = 'linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%)';
+            row.style.borderLeft = '3px solid #ff9800';
             row.style.borderBottom = '1px solid #dee2e6';
             row.style.transition = 'all 0.2s ease';
 
@@ -17114,8 +17119,12 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             // Generate explorer URL for this blockchain
             const explorerUrl = getBlockchainExplorerUrl(walletExplorerState.blockchain, group.txHash);
 
+            // Calculate colspan based on whether balance column is shown
+            const showBalance = walletExplorerState.isCompleteHistory;
+            const colspan = showBalance ? 8 : 7;
+
             row.innerHTML = `
-                <td colspan="8" style="padding: 15px;">
+                <td colspan="${colspan}" style="padding: 15px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="flex: 1;">
                             <span style="font-size: 18px; margin-right: 10px; display: inline-block; width: 20px;">${expandIcon}</span>
@@ -17149,12 +17158,12 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             // Hover effect
             row.onmouseenter = () => {
                 if (!isExpanded) {
-                    row.style.background = '#e9ecef';
+                    row.style.background = 'linear-gradient(135deg, #ffe4d6 0%, #ffd4bf 100%)';
                 }
             };
             row.onmouseleave = () => {
                 if (!isExpanded) {
-                    row.style.background = '#f8f9fa';
+                    row.style.background = 'linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%)';
                 }
             };
 
@@ -17715,6 +17724,13 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
                 // Add baseline border for all rows (for visual separation)
                 row.style.borderBottom = '1px solid #e9ecef';
+
+                // Add visual contrast between incoming and outgoing transactions
+                if (tx.type === 'IN' && !isChangeOutput) {
+                    // Incoming transactions: subtle green tint
+                    row.style.background = 'linear-gradient(135deg, #f0f9f4 0%, #e8f5e9 100%)';
+                    row.style.borderLeft = '3px solid #4caf50';
+                }
 
                 // Add highlight styling for investigation threads
                 // ONLY incoming thread transactions get yellow/gold highlighting
