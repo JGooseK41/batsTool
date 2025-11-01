@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-11-01 11:06)
 
-**Commit:** 86c3a6bcc8f9bf90ec964287513c228223f2bf74
+**Commit:** 7b05c76164937b7b5d976610544464481c56fd0d
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 56 ++++++++------------------------------------------------
- 1 file changed, 8 insertions(+), 48 deletions(-)
+ CLAUDE.md | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 86c3a6b Update CLAUDE.md with latest commit info (0 seconds ago)
-- d8f4cc2 Update CLAUDE.md with latest commit info (6 seconds ago)
-- c285c5a Feature: Add multi-selection support for victim deposits (23 seconds ago)
-- 6da252e Update CLAUDE.md with latest commit info (20 minutes ago)
+- 7b05c76 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 86c3a6b Update CLAUDE.md with latest commit info (6 seconds ago)
+- d8f4cc2 Update CLAUDE.md with latest commit info (12 seconds ago)
+- c285c5a Feature: Add multi-selection support for victim deposits (29 seconds ago)
+- 6da252e Update CLAUDE.md with latest commit info (21 minutes ago)
 - 6e946de Update CLAUDE.md with latest commit info (21 minutes ago)
 - c788ab2 Update CLAUDE.md with latest commit info (21 minutes ago)
 - a4fd606 Update CLAUDE.md with latest commit info (21 minutes ago)
 - 11fde78 Update CLAUDE.md with latest commit info (21 minutes ago)
 - 7ac963d Update CLAUDE.md with latest commit info (21 minutes ago)
-- 6c937fd Feature: Implement pending victim transaction builder with sidebar controls (22 minutes ago)
 
 ## Key Features
 
