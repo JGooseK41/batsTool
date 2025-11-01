@@ -17279,17 +17279,17 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 investigation.victims.forEach(victim => {
                     if (!victim.transactions) return;
 
-                    victim.transactions.forEach((tx, txIndex) => {
+                    victim.transactions.forEach((tx) => {
                         // Check if this victim transaction went to the target wallet
-                        const txDestination = tx.toWallet || tx.destinationWallet;
+                        const txDestination = tx.receivingWallet || tx.toWallet || tx.destinationWallet;
 
-                        console.log(`  V${victim.victimNumber}-T${txIndex + 1}: dest=${txDestination}, amount=${tx.amount}`);
+                        console.log(`  V${victim.id}-T${tx.id}: dest=${txDestination}, amount=${tx.amount}`);
 
                         if (txDestination && txDestination.toLowerCase() === walletLower) {
                             console.log(`    ✅ MATCH: Victim transaction creates thread at target wallet`);
 
                             // Calculate available amount for this victim thread
-                            const threadId = `V${victim.victimNumber}-T${txIndex + 1}`;
+                            const threadId = `V${victim.id}-T${tx.id}`;
                             const originalAmount = parseFloat(tx.amount) || 0;
 
                             // Find subsequent allocations of this thread in hops
@@ -17321,7 +17321,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                                     available: available,
                                     original: originalAmount,
                                     allocated: allocated,
-                                    internalId: `V${victim.victimNumber}-T${txIndex + 1}`
+                                    internalId: `V${victim.id}-T${tx.id}`
                                 });
                                 console.log(`    ✅ Added victim thread to available list`);
                             } else {
