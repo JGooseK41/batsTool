@@ -51096,13 +51096,10 @@ function addOutputToVictim(txHash, outputIndex, amount, receivingAddress) {
         return;
     }
 
-    // FIRST: Check if victim FORM exists in the DOM (user may have created form but not saved yet)
-    // Look for the most recently added/edited victim form
-    const victimSections = document.querySelectorAll('[id^="victim_"]');
-
-    if (victimSections.length === 0) {
-        // No victim forms found in DOM - guide user to create one
-        if (confirm('No victim form found.\n\nYou need to create a victim form before adding transactions.\n\nClick OK to go to Victims tab and create a victim, or Cancel to stay here.')) {
+    // FIRST: Check if victim exists in the investigation data
+    if (!investigation || !investigation.victims || investigation.victims.length === 0) {
+        // No victims created yet - guide user to create one
+        if (confirm('No victim found.\n\nYou need to create a victim before adding transactions.\n\nClick OK to go to Victims tab and create a victim, or Cancel to stay here.')) {
             closeWalletExplorer();
             switchTab('victims');
             // Scroll to add victim button
@@ -51117,12 +51114,14 @@ function addOutputToVictim(txHash, outputIndex, amount, receivingAddress) {
         return;
     }
 
-    // Get the last victim section (most recently added/edited)
-    const lastVictimSection = victimSections[victimSections.length - 1];
-    const victimId = parseInt(lastVictimSection.id.replace('victim_', ''));
+    // Get the most recent victim (highest ID)
+    const victim = investigation.victims[investigation.victims.length - 1];
+    const victimId = victim.id;
 
-    // Find transaction inputs within this victim
-    const txInputs = lastVictimSection.querySelectorAll('[id^="txHash_victim_"]');
+    console.log(`📝 Adding to Victim ${victimId} (has ${victim.transactions.length} transaction slots)`);
+
+    // Find all transaction hash inputs for this victim in the DOM
+    const txInputs = document.querySelectorAll(`[id^="txHash_victim_${victimId}_"]`);
     if (txInputs.length === 0) {
         alert('No transaction slots found for this victim');
         return;
@@ -51204,8 +51203,11 @@ function addOutputToVictim(txHash, outputIndex, amount, receivingAddress) {
     // Show success notification
     showNotification(`✅ Added to Victim ${victimId}: ${amount.toFixed(8)} BTC (wallet explorer still open - add more if needed)`, 'success');
 
-    // Scroll victim section into view in background (but keep explorer in focus)
-    lastVictimSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Scroll to the victim form in background (find the first transaction input for this victim)
+    const firstTxInput = document.querySelector(`[id="txHash_victim_${victimId}_1"]`);
+    if (firstTxInput) {
+        firstTxInput.closest('.trace-entry')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 }
 
 async function lookupVictimTransaction(victimId, transactionId) {
