@@ -13199,7 +13199,7 @@ function updateFormFieldsFromInvestigation() {
                                             🔍 Lookup Hash
                                         </button>
                                         <button type="button" class="btn btn-primary"
-                                                onclick="openWalletExplorer()"
+                                                onclick="openWalletExplorer('', '', null, null, 'victims')"
                                                 style="padding: 10px 20px; font-size: 16px; background: #3498db; white-space: nowrap;">
                                             🔍 Wallet Explorer
                                         </button>
@@ -15068,7 +15068,7 @@ function exportRedWalletIndexCSV() {
         }
 
         // Open wallet explorer modal
-        function openWalletExplorer(address = '', blockchain = '', tracedTxHash = null, sourceThreadId = null) {
+        function openWalletExplorer(address = '', blockchain = '', tracedTxHash = null, sourceThreadId = null, context = 'hops') {
             // CRITICAL FIX: Check if address is actually a cluster ID
             let actualAddress = address;
             let isClusterView = false;
@@ -15106,6 +15106,10 @@ function exportRedWalletIndexCSV() {
             if (isClusterView && walletExplorerState.clusterInfo) {
                 walletExplorerState.clusterInfo = walletExplorerState.clusterInfo; // Preserve after reset
             }
+
+            // Store context (victims or hops) for button labeling
+            walletExplorerState.context = context;
+            console.log(`📍 Wallet Explorer context: ${context}`);
 
             // Store traced transaction hash for highlighting
             if (tracedTxHash) {
@@ -16981,11 +16985,19 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
                             <div style="display: flex; flex-direction: column; gap: 8px; margin-left: 15px;">
                                 ${!allocationStatus.fullyAllocated ? `
-                                    <button class="btn btn-primary"
-                                            onclick="openOutputThreadAllocation('${group.txHash}', ${output.index})"
-                                            style="min-width: 120px; padding: 8px 16px; white-space: nowrap; display: flex; align-items: center; justify-content: center; line-height: 1.4;">
-                                        <span style="display: inline-block; vertical-align: middle;">📊 Trace</span>
-                                    </button>
+                                    ${walletExplorerState.context === 'victims' ? `
+                                        <button class="btn btn-primary"
+                                                onclick="addOutputToVictim('${group.txHash}', ${output.index}, ${output.amount}, '${output.address}')"
+                                                style="min-width: 120px; padding: 8px 16px; white-space: nowrap; display: flex; align-items: center; justify-content: center; line-height: 1.4; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                                            <span style="display: inline-block; vertical-align: middle;">➕ Add to Victim</span>
+                                        </button>
+                                    ` : `
+                                        <button class="btn btn-primary"
+                                                onclick="openOutputThreadAllocation('${group.txHash}', ${output.index})"
+                                                style="min-width: 120px; padding: 8px 16px; white-space: nowrap; display: flex; align-items: center; justify-content: center; line-height: 1.4;">
+                                            <span style="display: inline-block; vertical-align: middle;">📊 Trace</span>
+                                        </button>
+                                    `}
                                 ` : ''}
 
                                 ${isChange ? `
@@ -51007,6 +51019,119 @@ function closeHopTransferModal() {
     const modal = document.getElementById('hopTransferModal');
     if (modal) modal.remove();
     window.hopTransferData = null;
+}
+
+/**
+ * Add Bitcoin UTXO output to victim transaction
+ * Called from wallet explorer when in 'victims' context
+ */
+function addOutputToVictim(txHash, outputIndex, amount, receivingAddress) {
+    console.log(`➕ Adding Bitcoin output to victim: txHash=${txHash.substring(0, 12)}..., output=${outputIndex}, amount=${amount}`);
+
+    // Find the transaction group to get full details
+    const group = walletExplorerState.transactionGroups.find(g =>
+        g.txHash.toLowerCase() === txHash.toLowerCase()
+    );
+
+    if (!group) {
+        alert('Transaction details not found');
+        return;
+    }
+
+    // Get the specific output
+    const output = group.outputs.find(o => o.index === outputIndex);
+    if (!output) {
+        alert('Output not found');
+        return;
+    }
+
+    // Find the currently open victim transaction in the DOM
+    // Look for the most recently added/edited victim transaction
+    const victimSections = document.querySelectorAll('[id^="victim_"]');
+    if (victimSections.length === 0) {
+        alert('Please create a victim first before adding transactions');
+        return;
+    }
+
+    // Get the last victim section (most recently added/edited)
+    const lastVictimSection = victimSections[victimSections.length - 1];
+    const victimId = parseInt(lastVictimSection.id.replace('victim_', ''));
+
+    // Find transaction inputs within this victim
+    const txInputs = lastVictimSection.querySelectorAll('[id^="txHash_victim_"]');
+    if (txInputs.length === 0) {
+        alert('No transaction slots found for this victim');
+        return;
+    }
+
+    // Find the first empty transaction slot, or the last one if all are filled
+    let targetTxElement = null;
+    let transactionId = null;
+
+    for (const input of txInputs) {
+        const idParts = input.id.split('_');
+        transactionId = parseInt(idParts[idParts.length - 1]);
+
+        if (!input.value || input.value.trim() === '') {
+            targetTxElement = input;
+            break;
+        }
+    }
+
+    // If no empty slot found, use the last one
+    if (!targetTxElement && txInputs.length > 0) {
+        targetTxElement = txInputs[txInputs.length - 1];
+        const idParts = targetTxElement.id.split('_');
+        transactionId = parseInt(idParts[idParts.length - 1]);
+    }
+
+    if (!targetTxElement || !transactionId) {
+        alert('Could not find transaction input field');
+        return;
+    }
+
+    // Fill in the transaction hash
+    targetTxElement.value = txHash;
+
+    // Fill in the receiving wallet (if available in the form)
+    const receivingWalletInput = document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`);
+    if (receivingWalletInput) {
+        receivingWalletInput.value = receivingAddress;
+    }
+
+    // Fill in the amount
+    const amountInput = document.getElementById(`amount_victim_${victimId}_${transactionId}`);
+    if (amountInput) {
+        amountInput.value = amount.toFixed(8);
+    }
+
+    // Fill in the currency
+    const currencySelect = document.getElementById(`currency_victim_${victimId}_${transactionId}`);
+    if (currencySelect) {
+        currencySelect.value = 'BTC';
+    }
+
+    // Set the blockchain
+    const chainSelect = document.getElementById(`chain_victim_${victimId}_${transactionId}`);
+    if (chainSelect) {
+        chainSelect.value = 'bitcoin';
+    }
+
+    // Set the timestamp if available
+    const timestampInput = document.getElementById(`timestamp_victim_${victimId}_${transactionId}`);
+    if (timestampInput && group.timestamp) {
+        const date = new Date(group.timestamp);
+        timestampInput.value = date.toISOString().slice(0, 16);
+    }
+
+    // Close wallet explorer
+    closeWalletExplorer();
+
+    // Show success notification
+    showNotification(`✅ Added Bitcoin transaction to Victim ${victimId}: ${amount.toFixed(8)} BTC`, 'success');
+
+    // Scroll to the victim section
+    lastVictimSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function lookupVictimTransaction(victimId, transactionId) {
