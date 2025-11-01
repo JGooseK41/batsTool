@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-11-01 11:07)
 
-**Commit:** bb8de01d8aa3dec6739c942e4bb96cfb6d310f9a
+**Commit:** fb09c8b10437d06e4a8cfd9b7cfe5b0518cfa6ed
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 24 ++++++++++++------------
- 1 file changed, 12 insertions(+), 12 deletions(-)
+ CLAUDE.md | 28 ++++++++++++++--------------
+ 1 file changed, 14 insertions(+), 14 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bb8de01 Update CLAUDE.md with latest commit info (0 seconds ago)
-- dfc321e Update CLAUDE.md with latest commit info (8 seconds ago)
-- 4c2fb34 Update CLAUDE.md with latest commit info (19 seconds ago)
-- 3d5006d Update CLAUDE.md with latest commit info (24 seconds ago)
-- 12d98d4 Update CLAUDE.md with latest commit info (31 seconds ago)
-- b16eb1d Update CLAUDE.md with latest commit info (42 seconds ago)
-- 7b05c76 Update CLAUDE.md with latest commit info (49 seconds ago)
-- 86c3a6b Update CLAUDE.md with latest commit info (55 seconds ago)
-- d8f4cc2 Update CLAUDE.md with latest commit info (61 seconds ago)
-- c285c5a Feature: Add multi-selection support for victim deposits (78 seconds ago)
+- fb09c8b Update CLAUDE.md with latest commit info (0 seconds ago)
+- bb8de01 Update CLAUDE.md with latest commit info (5 seconds ago)
+- dfc321e Update CLAUDE.md with latest commit info (13 seconds ago)
+- 4c2fb34 Update CLAUDE.md with latest commit info (24 seconds ago)
+- 3d5006d Update CLAUDE.md with latest commit info (29 seconds ago)
+- 12d98d4 Update CLAUDE.md with latest commit info (36 seconds ago)
+- b16eb1d Update CLAUDE.md with latest commit info (47 seconds ago)
+- 7b05c76 Update CLAUDE.md with latest commit info (54 seconds ago)
+- 86c3a6b Update CLAUDE.md with latest commit info (60 seconds ago)
+- d8f4cc2 Update CLAUDE.md with latest commit info (66 seconds ago)
 
 ## Key Features
 
