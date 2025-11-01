@@ -3,70 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-01 11:05)
+## Latest Commit (Auto-updated: 2025-11-01 11:06)
 
-**Commit:** c285c5aa9a3ca6f2c87de56e7e0ec918259d6414
+**Commit:** d8f4cc26b1ce3df9192641febf7b7623bebc1b34
 **Author:** Your Name
-**Message:** Feature: Add multi-selection support for victim deposits
-
-Extended the pending transaction workflow to support bulk selection from the transaction table, allowing investigators to select multiple victim deposits at once using checkboxes.
-
-**Multi-Selection Workflow:**
-- Bulk action button text changes based on context:
-  * Victims context: "➕ Add to Pending Deposits"
-  * Hops context: "➕ Add to Investigation" (existing)
-- Select multiple transactions via checkboxes
-- Click bulk action button to add all to pending list
-- Wallet explorer stays open for additional selections
-- Selection cleared after adding to pending
-- Click "✅ Done Adding Deposits" to populate victim form
-
-**Flexible Transaction Perspectives:**
-Investigators can now work from either perspective:
-- **Victim's wallet (outgoing)**: Select transactions where victim sent money OUT
-- **Bad guy's wallet (incoming)**: Select transactions where money came IN
-- **Mixed approach**: Combine UTXO outputs + bulk selections in same pending list
-
-**Technical Details:**
-- Enhanced addSelectedTransactionsToInvestigation() to detect victims context
-- Context-aware bulk button in updateWalletExplorerActionButtons()
-- Pending transactions store full details: txHash, amount, type (IN/OUT), counterparty
-- populateVictimFormFromPending() handles both UTXO and bulk transaction formats
-- Robust amount handling (numbers or strings)
-- Auto-populates notes indicating transaction direction
-
-**Files Changed:**
-- index.html:
-  * Added ID to bulk action button and text span (3116-3118)
-  * Context-aware button text updates (15192-15194)
-  * Bulk add function with victims context detection (20284-20323)
-  * Enhanced form population with notes field (51417-51423)
-
-This provides maximum flexibility for investigators to document victim deposits from whatever wallet data they have access to first.
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md  | 22 +++++++++----------
- index.html | 71 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
- 2 files changed, 78 insertions(+), 15 deletions(-)
+ CLAUDE.md | 70 +++++++++++++++++++++++++++++++++++++++++++++++++--------------
+ 1 file changed, 55 insertions(+), 15 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c285c5a Feature: Add multi-selection support for victim deposits (0 seconds ago)
+- d8f4cc2 Update CLAUDE.md with latest commit info (0 seconds ago)
+- c285c5a Feature: Add multi-selection support for victim deposits (17 seconds ago)
 - 6da252e Update CLAUDE.md with latest commit info (20 minutes ago)
 - 6e946de Update CLAUDE.md with latest commit info (20 minutes ago)
-- c788ab2 Update CLAUDE.md with latest commit info (20 minutes ago)
+- c788ab2 Update CLAUDE.md with latest commit info (21 minutes ago)
 - a4fd606 Update CLAUDE.md with latest commit info (21 minutes ago)
 - 11fde78 Update CLAUDE.md with latest commit info (21 minutes ago)
 - 7ac963d Update CLAUDE.md with latest commit info (21 minutes ago)
 - 6c937fd Feature: Implement pending victim transaction builder with sidebar controls (21 minutes ago)
 - 81d3456 Fix: Correct victim form detection by using investigation data instead of DOM IDs (2 hours ago)
-- 4b030eb Fix: Check for victim FORM in DOM before checking saved data (2 hours ago)
 
 ## Key Features
 
