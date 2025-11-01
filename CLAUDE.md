@@ -3,43 +3,44 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-01 09:31)
+## Latest Commit (Auto-updated: 2025-11-01 10:44)
 
-**Commit:** 81d3456a2ac77273bc2248ebdd32eea1732c1e44
+**Commit:** 6c937fd2a786728dd1155bd35f5167c0e8ee8b65
 **Author:** Your Name
-**Message:** Fix: Correct victim form detection by using investigation data instead of DOM IDs
+**Message:** Feature: Implement pending victim transaction builder with sidebar controls
 
-Problem: When user clicked "Add Victim" and then tried to add transactions from wallet explorer, they got error "No victim form found" even though the victim existed.
+Redesigned victim deposit workflow to match hop builder pattern for better UX and reduced confusion:
 
-Root Cause: Code was looking for DOM elements with id^="victim_" but victim container divs don't have IDs. Only the form fields have IDs like "txHash_victim_1_1".
+**Pending Transaction Builder Pattern:**
+- "Add to Victim" now adds transactions to pending list instead of immediately filling form
+- Multiple deposits can be queued from same wallet without closing explorer
+- Click green checkmark to remove pending transaction (undo)
+- All pending transactions populate victim form when "Done" is clicked
+- Pending transactions preserved across wallet explorer resets
 
-Solution: Changed detection logic to use investigation data (lines 51099-51124):
+**Sidebar Action Panel:**
+- Moved "Done Adding Deposits" button from bottom overlay to sidebar sticky footer
+- Large visual counter shows pending deposit count (32px prominent display)
+- Includes "Close Explorer" convenience button
+- Panel collapses/expands with sidebar toggle
+- Matches ART Actions panel UX pattern
 
-1. **Check investigation.victims first** (line 51100):
-   - Verify investigation.victims exists and has victims
-   - This is the source of truth after addVictim() runs
+**Improved Workflow:**
+1. Click "Add to Victim" on outputs → pending list (green checkmark)
+2. Click again to remove (undo accidental adds)
+3. Click "Done Adding Deposits" → close wallet explorer
+4. Navigate to Victims tab → form pre-filled with all pending transactions
+5. Review and click "Add Victim to Investigation" to confirm
 
-2. **Get most recent victim** (lines 51117-51119):
-   - Use investigation.victims array (most reliable)
-   - Get victim.id directly from data
-   - Log which victim we're adding to
+**Technical Details:**
+- Added walletExplorerState.pendingVictimTransactions array
+- Created addOutputToVictim() and removeOutputFromVictim() functions
+- Added populateVictimFormFromPending() for form population
+- Enhanced resetWalletExplorer() to preserve pending state
+- Updated toggleWalletExplorerSidebar() to handle victim actions panel
+- Removed obsolete bottom overlay buttons
 
-3. **Find transaction inputs for specific victim** (line 51124):
-   - Use selector: `[id^="txHash_victim_${victimId}_"]`
-   - Targets specific victim's form fields
-   - Works reliably since these IDs always exist when victim is rendered
-
-4. **Fix scroll behavior** (lines 51206-51210):
-   - Removed reference to nonexistent lastVictimSection
-   - Find victim form by querying for first transaction input
-   - Use closest('.trace-entry') to find parent container
-   - Scroll smoothly to victim form
-
-Now the workflow works correctly:
-1. Click "Add Victim" → Adds to investigation.victims and renders
-2. Click "Wallet Explorer" → Opens with context='victims'
-3. Click "➕ Add to Victim" → Finds victim correctly and fills form
-4. Success!
+This eliminates the confusion from immediate form-filling and provides clear visual feedback throughout the workflow.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -47,22 +48,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 30 ++++++++++++++++--------------
- 1 file changed, 16 insertions(+), 14 deletions(-)
+ CLAUDE.md  | 103 ++++++++--------
+ index.html | 387 ++++++++++++++++++++++++++++++++++++++++++++-----------------
+ 2 files changed, 327 insertions(+), 163 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 81d3456 Fix: Correct victim form detection by using investigation data instead of DOM IDs (0 seconds ago)
-- 4b030eb Fix: Check for victim FORM in DOM before checking saved data (4 minutes ago)
-- 75c7ce5 Fix: Improve victim detection and guidance in wallet explorer (9 minutes ago)
-- 5ccbfca Feature: Add purpose-built "Done" button for victim deposit workflow (13 minutes ago)
-- f04a094 Feature: Allow sequential adding of multiple victim deposits without closing wallet explorer (17 minutes ago)
-- 58de8d7 Feature: Context-aware wallet explorer buttons for victims vs hops (21 minutes ago)
-- f86f4ba Fix: Correct victim data field names in thread allocation (31 minutes ago)
-- 25f58d1 Fix: Add victim thread support to Bitcoin UTXO allocation (40 minutes ago)
-- 060314d Feature: Add write-off functionality for dead-end bridge entries (17 hours ago)
-- fa19eca Debug: Add comprehensive logging to Bitcoin thread availability check (17 hours ago)
+- 6c937fd Feature: Implement pending victim transaction builder with sidebar controls (1 second ago)
+- 81d3456 Fix: Correct victim form detection by using investigation data instead of DOM IDs (73 minutes ago)
+- 4b030eb Fix: Check for victim FORM in DOM before checking saved data (77 minutes ago)
+- 75c7ce5 Fix: Improve victim detection and guidance in wallet explorer (82 minutes ago)
+- 5ccbfca Feature: Add purpose-built "Done" button for victim deposit workflow (86 minutes ago)
+- f04a094 Feature: Allow sequential adding of multiple victim deposits without closing wallet explorer (2 hours ago)
+- 58de8d7 Feature: Context-aware wallet explorer buttons for victims vs hops (2 hours ago)
+- f86f4ba Fix: Correct victim data field names in thread allocation (2 hours ago)
+- 25f58d1 Fix: Add victim thread support to Bitcoin UTXO allocation (2 hours ago)
+- 060314d Feature: Add write-off functionality for dead-end bridge entries (18 hours ago)
 
 ## Key Features
 
