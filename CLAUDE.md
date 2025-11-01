@@ -3,52 +3,43 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-10-31 09:38)
+## Latest Commit (Auto-updated: 2025-11-01 09:31)
 
-**Commit:** 05ed9b05e96f8d9f5a37132e0da7801a90e0b033
+**Commit:** 81d3456a2ac77273bc2248ebdd32eea1732c1e44
 **Author:** Your Name
-**Message:** UX: Add explicit Apply Filters button for better control
+**Message:** Fix: Correct victim form detection by using investigation data instead of DOM IDs
 
-Problem: Datalist autocomplete selection didn't always trigger table update
-- Selecting address from dropdown didn't reliably fire oninput event
-- Users had no way to explicitly commit multiple filter changes
-- Unclear whether filters were applied or pending
-- Some browsers handle datalist selection differently
+Problem: When user clicked "Add Victim" and then tried to add transactions from wallet explorer, they got error "No victim form found" even though the victim existed.
 
-Solution: Added prominent Apply Filters button alongside Clear All Filters
+Root Cause: Code was looking for DOM elements with id^="victim_" but victim container divs don't have IDs. Only the form fields have IDs like "txHash_victim_1_1".
 
-1. New Apply Filters Button:
-   - Green gradient background (✓ Apply Filters) for positive action
-   - Positioned next to Clear All Filters button
-   - Explicitly calls filterWalletTransactions()
-   - Hover effect with scale transform for interactivity
-   - Box shadow for prominence
+Solution: Changed detection logic to use investigation data (lines 51099-51124):
 
-2. Button Group Layout:
-   - Wrapped both buttons in flex container with gap
-   - Apply Filters (left, green, primary action)
-   - Clear All Filters (right, transparent, secondary action)
-   - Both with smooth hover transitions
+1. **Check investigation.victims first** (line 51100):
+   - Verify investigation.victims exists and has victims
+   - This is the source of truth after addVictim() runs
 
-3. User Flexibility:
-   - Can still type and get instant filtering (oninput remains)
-   - Can set multiple filters then click Apply (explicit commit)
-   - Can select from autocomplete then click Apply (handles event issues)
-   - Clear visual feedback that filters are being applied
+2. **Get most recent victim** (lines 51117-51119):
+   - Use investigation.victims array (most reliable)
+   - Get victim.id directly from data
+   - Log which victim we're adding to
 
-4. Styling:
-   - Green gradient: #4caf50 → #45a049 (positive action color)
-   - Darker on hover: #45a049 → #3d8b40
-   - 600 font weight vs 500 for secondary button
-   - Box shadow for depth and importance
+3. **Find transaction inputs for specific victim** (line 51124):
+   - Use selector: `[id^="txHash_victim_${victimId}_"]`
+   - Targets specific victim's form fields
+   - Works reliably since these IDs always exist when victim is rendered
 
-Workflow improvement:
-1. User selects address from autocomplete dropdown
-2. Optionally adjusts date/amount filters
-3. Clicks "✓ Apply Filters" to rebuild table
-4. Or clicks "🔄 Clear All Filters" to reset
+4. **Fix scroll behavior** (lines 51206-51210):
+   - Removed reference to nonexistent lastVictimSection
+   - Find victim form by querying for first transaction input
+   - Use closest('.trace-entry') to find parent container
+   - Scroll smoothly to victim form
 
-Now users have explicit control over when filters are applied, ensuring autocomplete selections and multi-filter changes work reliably.
+Now the workflow works correctly:
+1. Click "Add Victim" → Adds to investigation.victims and renders
+2. Click "Wallet Explorer" → Opens with context='victims'
+3. Click "➕ Add to Victim" → Finds victim correctly and fills form
+4. Success!
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -56,22 +47,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 18 ++++++++++++++----
- 1 file changed, 14 insertions(+), 4 deletions(-)
+ index.html | 30 ++++++++++++++++--------------
+ 1 file changed, 16 insertions(+), 14 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 05ed9b0 UX: Add explicit Apply Filters button for better control (1 second ago)
-- 9b6b05c Feature: Add autocomplete to counterparty filter for all blockchains (8 minutes ago)
-- e1dbfa4 Feature: Add counterparty address filter to wallet explorer (10 minutes ago)
-- 6ab4113 UX: Restructure Bitcoin UTXO outgoing transactions for uniform table layout (15 minutes ago)
-- 6893500 Fix: Variable initialization order causing transaction table crash (51 minutes ago)
-- bdfa3fe Feature: Add commercial clustering intelligence with testimony limitations (54 minutes ago)
-- c489254 Fix: Decouple clustering from investigation methodology (PIFO/LIBR) (62 minutes ago)
-- 4d3b5ec UX: Add manual clustering explanation to UTXO change detection info panel (69 minutes ago)
-- 904ca2e UX: Fix table alignment and add visual contrast for transaction types (70 minutes ago)
-- 546dad8 Fix: Prevent crash when checking transaction allocation status (76 minutes ago)
+- 81d3456 Fix: Correct victim form detection by using investigation data instead of DOM IDs (0 seconds ago)
+- 4b030eb Fix: Check for victim FORM in DOM before checking saved data (4 minutes ago)
+- 75c7ce5 Fix: Improve victim detection and guidance in wallet explorer (9 minutes ago)
+- 5ccbfca Feature: Add purpose-built "Done" button for victim deposit workflow (13 minutes ago)
+- f04a094 Feature: Allow sequential adding of multiple victim deposits without closing wallet explorer (17 minutes ago)
+- 58de8d7 Feature: Context-aware wallet explorer buttons for victims vs hops (21 minutes ago)
+- f86f4ba Fix: Correct victim data field names in thread allocation (31 minutes ago)
+- 25f58d1 Fix: Add victim thread support to Bitcoin UTXO allocation (40 minutes ago)
+- 060314d Feature: Add write-off functionality for dead-end bridge entries (17 hours ago)
+- fa19eca Debug: Add comprehensive logging to Bitcoin thread availability check (17 hours ago)
 
 ## Key Features
 

@@ -2859,6 +2859,33 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Sticky Victim Actions Footer (only shown in victims context) -->
+                    <div id="walletExplorerVictimActions" style="display: none; background: white; border-top: 3px solid #28a745; padding: 12px; box-shadow: 0 -4px 8px rgba(0,0,0,0.1);">
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Pending Counter Display -->
+                            <div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid #4caf50; border-radius: 8px; padding: 12px; text-align: center;">
+                                <div style="font-size: 32px; font-weight: bold; color: #2e7d32; margin-bottom: 5px;">
+                                    <span id="walletExplorerVictimPendingCountSidebar">0</span>
+                                </div>
+                                <div style="font-size: 13px; color: #388e3c; font-weight: 600;">
+                                    Pending Victim Deposits
+                                </div>
+                            </div>
+
+                            <!-- Done Button -->
+                            <button class="btn btn-success" onclick="populateVictimFormFromPending()" style="padding: 12px 16px; font-weight: bold; font-size: 14px; background: linear-gradient(135deg, #28a745 0%, #20883e 100%); border: none; width: 100%; box-shadow: 0 2px 6px rgba(40,167,69,0.3); transition: all 0.2s;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(40,167,69,0.4)'"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(40,167,69,0.3)'">
+                                ✅ Done Adding Deposits
+                            </button>
+
+                            <!-- Close Button -->
+                            <button class="btn btn-secondary" onclick="closeWalletExplorer()" style="padding: 8px 16px; font-size: 12px; width: 100%;">
+                                ✕ Close Explorer
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Resizer Bar -->
@@ -3148,22 +3175,8 @@
                 <div style="font-size: 18px;">No transactions found</div>
             </div>
 
-            <!-- Action Buttons -->
+            <!-- Action Buttons (for Hop Builder context only - Victim actions moved to sidebar) -->
             <div id="walletExplorerActionButtons" style="display: flex; justify-content: center; gap: 15px; margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; box-shadow: 0 -4px 12px rgba(0,0,0,0.05);">
-                <!-- Victims Context: Prominent "Done" Button -->
-                <button id="walletExplorerVictimDoneButton" class="btn btn-success" onclick="closeWalletExplorer()"
-                        style="display: none; padding: 16px 40px; font-size: 18px; font-weight: 700; background: linear-gradient(135deg, #28a745 0%, #20883e 100%); border: none; box-shadow: 0 4px 12px rgba(40,167,69,0.3); transition: all 0.3s;"
-                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(40,167,69,0.4)'"
-                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(40,167,69,0.3)'">
-                    ✅ Done Adding Victim Deposits
-                </button>
-
-                <!-- Hops Context: Standard Close Button -->
-                <button id="walletExplorerStandardCloseButton" class="btn btn-secondary" onclick="closeWalletExplorer()"
-                        style="display: none;">
-                    Close
-                </button>
-
                 <!-- Hop Builder Return Button (shown when pending entries exist) -->
                 <button id="walletExplorerReturnButton" class="btn btn-primary" onclick="returnToHopBuilder()"
                         style="display: none; background: #28a745; border-color: #28a745;">
@@ -15144,6 +15157,9 @@ function exportRedWalletIndexCSV() {
             // Update action buttons based on context
             updateWalletExplorerActionButtons();
 
+            // Update pending victim transactions counter
+            updateWalletExplorerPendingCounter();
+
             // Initialize resizer for split-screen layout
             initializeWalletExplorerResizer();
 
@@ -15161,23 +15177,43 @@ function exportRedWalletIndexCSV() {
 
         // Update action buttons based on context
         function updateWalletExplorerActionButtons() {
-            const victimButton = document.getElementById('walletExplorerVictimDoneButton');
-            const standardButton = document.getElementById('walletExplorerStandardCloseButton');
+            const victimActionsPanel = document.getElementById('walletExplorerVictimActions');
             const context = walletExplorerState.context || 'hops';
 
             if (context === 'victims') {
-                // Show prominent "Done Adding Victim Deposits" button
-                if (victimButton) victimButton.style.display = 'block';
-                if (standardButton) standardButton.style.display = 'none';
-                console.log('📍 Showing victim-specific action button');
+                // Show victim actions panel in sidebar
+                if (victimActionsPanel) {
+                    victimActionsPanel.style.display = 'block';
+                    console.log('📍 Showing victim actions panel in sidebar');
+                }
             } else {
-                // Show standard "Close" button
-                if (victimButton) victimButton.style.display = 'none';
-                if (standardButton) standardButton.style.display = 'block';
-                console.log('📍 Showing standard close button');
+                // Hide victim actions panel
+                if (victimActionsPanel) {
+                    victimActionsPanel.style.display = 'none';
+                    console.log('📍 Hiding victim actions panel');
+                }
             }
 
             // Note: "Return to Hop Builder" button visibility is controlled separately based on pendingEntries
+        }
+
+        // Update the pending victim transactions counter display
+        function updateWalletExplorerPendingCounter() {
+            const count = walletExplorerState.pendingVictimTransactions?.length || 0;
+
+            // Update sidebar counter (primary display)
+            const sidebarCounter = document.getElementById('walletExplorerVictimPendingCountSidebar');
+            if (sidebarCounter) {
+                sidebarCounter.textContent = count;
+            }
+
+            // Update old button counter (if still present, for backwards compatibility)
+            const buttonCounter = document.getElementById('walletExplorerVictimPendingCount');
+            if (buttonCounter) {
+                buttonCounter.textContent = count;
+            }
+
+            console.log(`📊 Updated victim pending counter: ${count} transactions`);
         }
 
         // Close wallet explorer
@@ -15207,6 +15243,11 @@ function exportRedWalletIndexCSV() {
                 if (artActions && artActions.getAttribute('data-was-visible') === 'true') {
                     artActions.style.display = 'block';
                 }
+                // Show Victim actions if they were visible
+                const victimActions = document.getElementById('walletExplorerVictimActions');
+                if (victimActions && victimActions.getAttribute('data-was-visible') === 'true') {
+                    victimActions.style.display = 'block';
+                }
                 // Remove transition after animation completes
                 setTimeout(() => { sidebar.style.transition = ''; }, 300);
             } else {
@@ -15223,6 +15264,12 @@ function exportRedWalletIndexCSV() {
                 if (artActions) {
                     artActions.setAttribute('data-was-visible', artActions.style.display !== 'none' ? 'true' : 'false');
                     artActions.style.display = 'none';
+                }
+                // Hide Victim actions and remember visibility
+                const victimActions = document.getElementById('walletExplorerVictimActions');
+                if (victimActions) {
+                    victimActions.setAttribute('data-was-visible', victimActions.style.display !== 'none' ? 'true' : 'false');
+                    victimActions.style.display = 'none';
                 }
                 // Remove transition after animation completes
                 setTimeout(() => { sidebar.style.transition = ''; }, 300);
@@ -15278,6 +15325,10 @@ function exportRedWalletIndexCSV() {
 
         // Reset wallet explorer state
         function resetWalletExplorer() {
+            // Preserve pending victim transactions if they exist (user may be creating victim before completing workflow)
+            const preservedPendingTransactions = walletExplorerState?.pendingVictimTransactions || [];
+            const preservedAddedToVictim = walletExplorerState?.addedToVictim || [];
+
             walletExplorerState = {
                 address: '',
                 blockchain: '',
@@ -15290,7 +15341,8 @@ function exportRedWalletIndexCSV() {
                 showScamTokens: false,
                 hideZeroBalance: true,  // Hide zero-balance transfers by default
                 pendingEntries: [],  // Track entries created in wallet explorer session
-                addedToVictim: [],  // Track outputs added to victim in this session
+                addedToVictim: preservedAddedToVictim,  // Preserve across resets
+                pendingVictimTransactions: preservedPendingTransactions,  // Preserve across resets
                 firstActivityDate: null,
                 oldestFetchedDate: null,
                 isCompleteHistory: false,
@@ -15307,6 +15359,10 @@ function exportRedWalletIndexCSV() {
                 // CRITICAL FIX: Cluster support
                 clusterInfo: null  // Store cluster info if opened via cluster
             };
+
+            if (preservedPendingTransactions.length > 0) {
+                console.log(`📋 Preserved ${preservedPendingTransactions.length} pending victim transaction(s) across wallet explorer reset`);
+            }
 
             // Hide all sections
             document.getElementById('walletExplorerLoading').style.display = 'none';
@@ -17031,8 +17087,12 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                                 ${!allocationStatus.fullyAllocated ? `
                                     ${walletExplorerState.context === 'victims' ? `
                                         ${addedToVictim ? `
-                                            <button class="btn btn-success" disabled
-                                                    style="min-width: 120px; padding: 8px 16px; white-space: nowrap; display: flex; align-items: center; justify-content: center; line-height: 1.4; background: linear-gradient(135deg, #27ae60 0%, #229954 100%); opacity: 0.8;">
+                                            <button class="btn btn-success"
+                                                    onclick="removeOutputFromVictim('${group.txHash}', ${output.index})"
+                                                    style="min-width: 120px; padding: 8px 16px; white-space: nowrap; display: flex; align-items: center; justify-content: center; line-height: 1.4; background: linear-gradient(135deg, #27ae60 0%, #229954 100%); cursor: pointer; transition: all 0.2s;"
+                                                    onmouseover="this.style.opacity='0.7'; this.style.transform='scale(0.98)';"
+                                                    onmouseout="this.style.opacity='1'; this.style.transform='scale(1)';"
+                                                    title="Click to remove from pending victim deposits">
                                                 <span style="display: inline-block; vertical-align: middle;">✓ Added to Victim</span>
                                             </button>
                                         ` : `
@@ -51073,11 +51133,12 @@ function closeHopTransferModal() {
 }
 
 /**
- * Add Bitcoin UTXO output to victim transaction
+ * Add Bitcoin UTXO output to victim transaction pending list
  * Called from wallet explorer when in 'victims' context
+ * Builds a pending list (like hop builder) instead of immediately filling form
  */
 function addOutputToVictim(txHash, outputIndex, amount, receivingAddress) {
-    console.log(`➕ Adding Bitcoin output to victim: txHash=${txHash.substring(0, 12)}..., output=${outputIndex}, amount=${amount}`);
+    console.log(`➕ Adding Bitcoin output to pending victim transactions: txHash=${txHash.substring(0, 12)}..., output=${outputIndex}, amount=${amount}`);
 
     // Find the transaction group to get full details
     const group = walletExplorerState.transactionGroups.find(g =>
@@ -51096,19 +51157,128 @@ function addOutputToVictim(txHash, outputIndex, amount, receivingAddress) {
         return;
     }
 
-    // FIRST: Check if victim exists in the investigation data
+    // Initialize pending transactions array if needed
+    if (!walletExplorerState.pendingVictimTransactions) {
+        walletExplorerState.pendingVictimTransactions = [];
+    }
+
+    // Create transaction data object (similar to hop entry format)
+    const pendingTransaction = {
+        txHash: txHash,
+        outputIndex: outputIndex,
+        amount: amount,
+        receivingAddress: receivingAddress,
+        currency: 'BTC',
+        chain: 'bitcoin',
+        timestamp: group.timestamp ? new Date(group.timestamp).toISOString().slice(0, 16) : '',
+        // Store full group data for potential future use
+        _groupData: group
+    };
+
+    // Add to pending list
+    walletExplorerState.pendingVictimTransactions.push(pendingTransaction);
+
+    console.log(`📝 Added to pending victim transactions. Total pending: ${walletExplorerState.pendingVictimTransactions.length}`);
+
+    // Track which outputs have been added (for button state updates)
+    if (!walletExplorerState.addedToVictim) {
+        walletExplorerState.addedToVictim = [];
+    }
+    const outputKey = `${txHash.toLowerCase()}_${outputIndex}`;
+    walletExplorerState.addedToVictim.push(outputKey);
+
+    // Re-render transaction table to update button states and counter
+    renderTransactionTable();
+
+    // Update the pending counter display
+    updateWalletExplorerPendingCounter();
+
+    // Show success notification with pending count
+    showNotification(`✅ Added to pending victim deposits: ${amount.toFixed(8)} BTC (${walletExplorerState.pendingVictimTransactions.length} pending)`, 'success');
+}
+
+/**
+ * Remove Bitcoin UTXO output from victim transaction pending list
+ * Called when user clicks green "✓ Added to Victim" button to undo
+ */
+function removeOutputFromVictim(txHash, outputIndex) {
+    console.log(`➖ Removing Bitcoin output from pending victim transactions: txHash=${txHash.substring(0, 12)}..., output=${outputIndex}`);
+
+    // Initialize arrays if needed
+    if (!walletExplorerState.pendingVictimTransactions) {
+        walletExplorerState.pendingVictimTransactions = [];
+    }
+    if (!walletExplorerState.addedToVictim) {
+        walletExplorerState.addedToVictim = [];
+    }
+
+    // Find and remove from pending transactions list
+    const beforeCount = walletExplorerState.pendingVictimTransactions.length;
+    walletExplorerState.pendingVictimTransactions = walletExplorerState.pendingVictimTransactions.filter(tx =>
+        !(tx.txHash.toLowerCase() === txHash.toLowerCase() && tx.outputIndex === outputIndex)
+    );
+    const afterCount = walletExplorerState.pendingVictimTransactions.length;
+    const removed = beforeCount - afterCount;
+
+    // Remove from addedToVictim tracking array
+    const outputKey = `${txHash.toLowerCase()}_${outputIndex}`;
+    const keyIndex = walletExplorerState.addedToVictim.indexOf(outputKey);
+    if (keyIndex > -1) {
+        walletExplorerState.addedToVictim.splice(keyIndex, 1);
+    }
+
+    console.log(`📝 Removed ${removed} transaction(s). Total pending: ${walletExplorerState.pendingVictimTransactions.length}`);
+
+    // Re-render transaction table to update button states
+    renderTransactionTable();
+
+    // Update the pending counter display
+    updateWalletExplorerPendingCounter();
+
+    // Show notification
+    if (removed > 0) {
+        showNotification(`❌ Removed from pending victim deposits (${walletExplorerState.pendingVictimTransactions.length} remaining)`, 'info');
+    } else {
+        showNotification('⚠️ Transaction not found in pending list', 'warning');
+    }
+}
+
+/**
+ * Populate victim form with pending transactions and close wallet explorer
+ * Called when user clicks "✅ Done Adding Victim Deposits"
+ */
+function populateVictimFormFromPending() {
+    console.log('📋 Populating victim form from pending transactions...');
+
+    // Check if there are any pending transactions
+    const pendingCount = walletExplorerState.pendingVictimTransactions?.length || 0;
+
+    if (pendingCount === 0) {
+        showNotification('ℹ️ No pending victim transactions to add', 'info');
+        closeWalletExplorer();
+        return;
+    }
+
+    console.log(`📝 Processing ${pendingCount} pending victim transactions`);
+
+    // Check if victim exists in the investigation data
     if (!investigation || !investigation.victims || investigation.victims.length === 0) {
-        // No victims created yet - guide user to create one
-        if (confirm('No victim found.\n\nYou need to create a victim before adding transactions.\n\nClick OK to go to Victims tab and create a victim, or Cancel to stay here.')) {
-            closeWalletExplorer();
+        // No victims created yet - guide user to create one first
+        if (confirm(`You have ${pendingCount} pending victim deposit(s).\n\nYou need to create a victim before adding transactions.\n\nClick OK to go to Victims tab and create a victim (your pending deposits will be preserved), or Cancel to stay in Wallet Explorer.`)) {
+            // Hide modal but DON'T reset state (preserve pending transactions)
+            hideModal('walletExplorerModal');
             switchTab('victims');
-            // Scroll to add victim button
+
+            // Scroll to add victim button and highlight it
             setTimeout(() => {
                 const addVictimBtn = document.querySelector('button[onclick="addVictim()"]');
                 if (addVictimBtn) {
                     addVictimBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     addVictimBtn.style.animation = 'highlight-pulse 2s';
                 }
+
+                // Show reminder about pending transactions
+                showNotification(`⚠️ ${pendingCount} pending victim deposit(s) preserved. After creating the victim, reopen Wallet Explorer and click "Done" again to populate the form.`, 'warning', 8000);
             }, 300);
         }
         return;
@@ -51118,96 +51288,99 @@ function addOutputToVictim(txHash, outputIndex, amount, receivingAddress) {
     const victim = investigation.victims[investigation.victims.length - 1];
     const victimId = victim.id;
 
-    console.log(`📝 Adding to Victim ${victimId} (has ${victim.transactions.length} transaction slots)`);
+    console.log(`📝 Populating Victim ${victimId} form with ${pendingCount} pending transactions`);
 
-    // Find all transaction hash inputs for this victim in the DOM
-    const txInputs = document.querySelectorAll(`[id^="txHash_victim_${victimId}_"]`);
-    if (txInputs.length === 0) {
-        alert('No transaction slots found for this victim');
-        return;
-    }
+    // Close wallet explorer first
+    closeWalletExplorer();
 
-    // Find the first empty transaction slot, or the last one if all are filled
-    let targetTxElement = null;
-    let transactionId = null;
+    // Switch to victims tab
+    switchTab('victims');
 
-    for (const input of txInputs) {
-        const idParts = input.id.split('_');
-        transactionId = parseInt(idParts[idParts.length - 1]);
+    // Wait for DOM to update, then populate the form fields
+    setTimeout(() => {
+        let populatedCount = 0;
 
-        if (!input.value || input.value.trim() === '') {
-            targetTxElement = input;
-            break;
+        // Find all transaction hash inputs for this victim
+        const txInputs = document.querySelectorAll(`[id^="txHash_victim_${victimId}_"]`);
+
+        if (txInputs.length === 0) {
+            showNotification(`❌ Could not find victim form fields. Please try again.`, 'error');
+            return;
         }
-    }
 
-    // If no empty slot found, use the last one
-    if (!targetTxElement && txInputs.length > 0) {
-        targetTxElement = txInputs[txInputs.length - 1];
-        const idParts = targetTxElement.id.split('_');
-        transactionId = parseInt(idParts[idParts.length - 1]);
-    }
+        // Populate each pending transaction into form fields
+        walletExplorerState.pendingVictimTransactions.forEach((pendingTx, index) => {
+            // Find the next empty transaction slot
+            let targetTxElement = null;
+            let transactionId = null;
 
-    if (!targetTxElement || !transactionId) {
-        alert('Could not find transaction input field');
-        return;
-    }
+            for (const input of txInputs) {
+                const idParts = input.id.split('_');
+                transactionId = parseInt(idParts[idParts.length - 1]);
 
-    // Fill in the transaction hash
-    targetTxElement.value = txHash;
+                if (!input.value || input.value.trim() === '') {
+                    targetTxElement = input;
+                    break;
+                }
+            }
 
-    // Fill in the receiving wallet (if available in the form)
-    const receivingWalletInput = document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`);
-    if (receivingWalletInput) {
-        receivingWalletInput.value = receivingAddress;
-    }
+            // If we found an empty slot, populate it
+            if (targetTxElement && transactionId) {
+                // Transaction hash
+                targetTxElement.value = pendingTx.txHash;
 
-    // Fill in the amount
-    const amountInput = document.getElementById(`amount_victim_${victimId}_${transactionId}`);
-    if (amountInput) {
-        amountInput.value = amount.toFixed(8);
-    }
+                // Receiving wallet address
+                const receivingWalletInput = document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`);
+                if (receivingWalletInput) {
+                    receivingWalletInput.value = pendingTx.receivingAddress;
+                }
 
-    // Fill in the currency
-    const currencySelect = document.getElementById(`currency_victim_${victimId}_${transactionId}`);
-    if (currencySelect) {
-        currencySelect.value = 'BTC';
-    }
+                // Amount
+                const amountInput = document.getElementById(`amount_victim_${victimId}_${transactionId}`);
+                if (amountInput) {
+                    amountInput.value = pendingTx.amount.toFixed(8);
+                }
 
-    // Set the blockchain
-    const chainSelect = document.getElementById(`chain_victim_${victimId}_${transactionId}`);
-    if (chainSelect) {
-        chainSelect.value = 'bitcoin';
-    }
+                // Currency
+                const currencySelect = document.getElementById(`currency_victim_${victimId}_${transactionId}`);
+                if (currencySelect) {
+                    currencySelect.value = pendingTx.currency;
+                }
 
-    // Set the timestamp if available
-    const timestampInput = document.getElementById(`timestamp_victim_${victimId}_${transactionId}`);
-    if (timestampInput && group.timestamp) {
-        const date = new Date(group.timestamp);
-        timestampInput.value = date.toISOString().slice(0, 16);
-    }
+                // Blockchain
+                const chainSelect = document.getElementById(`chain_victim_${victimId}_${transactionId}`);
+                if (chainSelect) {
+                    chainSelect.value = pendingTx.chain;
+                }
 
-    // Track which outputs have been added to victim (so we can update button state)
-    if (!walletExplorerState.addedToVictim) {
+                // Timestamp
+                const timestampInput = document.getElementById(`timestamp_victim_${victimId}_${transactionId}`);
+                if (timestampInput && pendingTx.timestamp) {
+                    timestampInput.value = pendingTx.timestamp;
+                }
+
+                populatedCount++;
+                console.log(`✅ Populated transaction ${populatedCount}: ${pendingTx.txHash.substring(0, 12)}... (${pendingTx.amount} ${pendingTx.currency})`);
+            } else {
+                console.warn(`⚠️ No empty form slot found for pending transaction ${index + 1}`);
+            }
+        });
+
+        // Clear the pending transactions array
+        walletExplorerState.pendingVictimTransactions = [];
         walletExplorerState.addedToVictim = [];
-    }
-    const outputKey = `${txHash.toLowerCase()}_${outputIndex}`;
-    walletExplorerState.addedToVictim.push(outputKey);
 
-    // DON'T close wallet explorer - allow adding multiple outputs
-    // User can close it when done
+        // Scroll to the victim form
+        const firstTxInput = document.querySelector(`[id="txHash_victim_${victimId}_1"]`);
+        if (firstTxInput) {
+            firstTxInput.closest('.trace-entry')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
 
-    // Re-render transaction table to update button states
-    renderTransactionTable();
+        // Show success notification
+        showNotification(`✅ Populated ${populatedCount} victim deposit(s) in the form. Review and click "Add Victim to Investigation" to confirm.`, 'success', 6000);
 
-    // Show success notification
-    showNotification(`✅ Added to Victim ${victimId}: ${amount.toFixed(8)} BTC (wallet explorer still open - add more if needed)`, 'success');
-
-    // Scroll to the victim form in background (find the first transaction input for this victim)
-    const firstTxInput = document.querySelector(`[id="txHash_victim_${victimId}_1"]`);
-    if (firstTxInput) {
-        firstTxInput.closest('.trace-entry')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+        console.log(`📋 Form population complete. ${populatedCount} transactions added to victim form.`);
+    }, 300);
 }
 
 async function lookupVictimTransaction(victimId, transactionId) {
