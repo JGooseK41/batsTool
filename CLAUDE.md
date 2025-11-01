@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-11-01 10:45)
 
-**Commit:** 11fde786ff436da8b16057a3ed1fb25ba4eab066
+**Commit:** a4fd60645e4aff364d8d041b4351f9993298175f
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 52 +++++++---------------------------------------------
- 1 file changed, 7 insertions(+), 45 deletions(-)
+ CLAUDE.md | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 11fde78 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 7ac963d Update CLAUDE.md with latest commit info (11 seconds ago)
-- 6c937fd Feature: Implement pending victim transaction builder with sidebar controls (30 seconds ago)
+- a4fd606 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 11fde78 Update CLAUDE.md with latest commit info (11 seconds ago)
+- 7ac963d Update CLAUDE.md with latest commit info (22 seconds ago)
+- 6c937fd Feature: Implement pending victim transaction builder with sidebar controls (41 seconds ago)
 - 81d3456 Fix: Correct victim form detection by using investigation data instead of DOM IDs (74 minutes ago)
 - 4b030eb Fix: Check for victim FORM in DOM before checking saved data (78 minutes ago)
 - 75c7ce5 Fix: Improve victim detection and guidance in wallet explorer (82 minutes ago)
 - 5ccbfca Feature: Add purpose-built "Done" button for victim deposit workflow (86 minutes ago)
 - f04a094 Feature: Allow sequential adding of multiple victim deposits without closing wallet explorer (2 hours ago)
 - 58de8d7 Feature: Context-aware wallet explorer buttons for victims vs hops (2 hours ago)
-- f86f4ba Fix: Correct victim data field names in thread allocation (2 hours ago)
 
 ## Key Features
 
