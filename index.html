@@ -51096,9 +51096,13 @@ function addOutputToVictim(txHash, outputIndex, amount, receivingAddress) {
         return;
     }
 
-    // Check if any victims exist in the investigation
-    if (!investigation || !investigation.victims || investigation.victims.length === 0) {
-        if (confirm('No victims found in this investigation.\n\nWould you like to create a victim now?\n\nClick OK to close wallet explorer and create a victim, or Cancel to stay here.')) {
+    // FIRST: Check if victim FORM exists in the DOM (user may have created form but not saved yet)
+    // Look for the most recently added/edited victim form
+    const victimSections = document.querySelectorAll('[id^="victim_"]');
+
+    if (victimSections.length === 0) {
+        // No victim forms found in DOM - guide user to create one
+        if (confirm('No victim form found.\n\nYou need to create a victim form before adding transactions.\n\nClick OK to go to Victims tab and create a victim, or Cancel to stay here.')) {
             closeWalletExplorer();
             switchTab('victims');
             // Scroll to add victim button
@@ -51110,15 +51114,6 @@ function addOutputToVictim(txHash, outputIndex, amount, receivingAddress) {
                 }
             }, 300);
         }
-        return;
-    }
-
-    // Find the currently open victim transaction in the DOM
-    // Look for the most recently added/edited victim transaction
-    const victimSections = document.querySelectorAll('[id^="victim_"]');
-    if (victimSections.length === 0) {
-        // Victims exist in data but not rendered - might be on wrong tab
-        alert('Victim forms not visible.\n\nPlease make sure you are on the "Victims" tab and have clicked "Add Victim" to create the form fields.');
         return;
     }
 
