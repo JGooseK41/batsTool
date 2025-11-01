@@ -3149,9 +3149,24 @@
             </div>
 
             <!-- Action Buttons -->
-            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 30px;">
-                <button class="btn btn-secondary" onclick="closeWalletExplorer()">Close</button>
-                <button id="walletExplorerReturnButton" class="btn btn-primary" onclick="returnToHopBuilder()" style="display: none; background: #28a745; border-color: #28a745;">
+            <div id="walletExplorerActionButtons" style="display: flex; justify-content: center; gap: 15px; margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; box-shadow: 0 -4px 12px rgba(0,0,0,0.05);">
+                <!-- Victims Context: Prominent "Done" Button -->
+                <button id="walletExplorerVictimDoneButton" class="btn btn-success" onclick="closeWalletExplorer()"
+                        style="display: none; padding: 16px 40px; font-size: 18px; font-weight: 700; background: linear-gradient(135deg, #28a745 0%, #20883e 100%); border: none; box-shadow: 0 4px 12px rgba(40,167,69,0.3); transition: all 0.3s;"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(40,167,69,0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(40,167,69,0.3)'">
+                    ✅ Done Adding Victim Deposits
+                </button>
+
+                <!-- Hops Context: Standard Close Button -->
+                <button id="walletExplorerStandardCloseButton" class="btn btn-secondary" onclick="closeWalletExplorer()"
+                        style="display: none;">
+                    Close
+                </button>
+
+                <!-- Hop Builder Return Button (shown when pending entries exist) -->
+                <button id="walletExplorerReturnButton" class="btn btn-primary" onclick="returnToHopBuilder()"
+                        style="display: none; background: #28a745; border-color: #28a745;">
                     ✅ Return to Hop Builder (<span id="walletExplorerPendingCount">0</span> entries)
                 </button>
             </div>
@@ -15126,6 +15141,9 @@ function exportRedWalletIndexCSV() {
             // Show modal
             showModal('walletExplorerModal');
 
+            // Update action buttons based on context
+            updateWalletExplorerActionButtons();
+
             // Initialize resizer for split-screen layout
             initializeWalletExplorerResizer();
 
@@ -15139,6 +15157,27 @@ function exportRedWalletIndexCSV() {
             if (actualAddress && blockchain) {
                 setTimeout(() => searchWalletHistory(), 300);
             }
+        }
+
+        // Update action buttons based on context
+        function updateWalletExplorerActionButtons() {
+            const victimButton = document.getElementById('walletExplorerVictimDoneButton');
+            const standardButton = document.getElementById('walletExplorerStandardCloseButton');
+            const context = walletExplorerState.context || 'hops';
+
+            if (context === 'victims') {
+                // Show prominent "Done Adding Victim Deposits" button
+                if (victimButton) victimButton.style.display = 'block';
+                if (standardButton) standardButton.style.display = 'none';
+                console.log('📍 Showing victim-specific action button');
+            } else {
+                // Show standard "Close" button
+                if (victimButton) victimButton.style.display = 'none';
+                if (standardButton) standardButton.style.display = 'block';
+                console.log('📍 Showing standard close button');
+            }
+
+            // Note: "Return to Hop Builder" button visibility is controlled separately based on pendingEntries
         }
 
         // Close wallet explorer
