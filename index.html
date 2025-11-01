@@ -51315,31 +51315,70 @@ function populateVictimFormFromPending() {
 
     console.log(`📝 Processing ${pendingCount} pending victim transactions`);
 
-    // Check if victim exists in the investigation data
+    // AUTO-CREATE VICTIM IF NEEDED
+    let victim = null;
+    let needsNewVictim = false;
+
+    // Check if any victims exist
     if (!investigation || !investigation.victims || investigation.victims.length === 0) {
-        // No victims created yet - guide user to create one first
-        if (confirm(`You have ${pendingCount} pending victim deposit(s).\n\nYou need to create a victim before adding transactions.\n\nClick OK to go to Victims tab and create a victim (your pending deposits will be preserved), or Cancel to stay in Wallet Explorer.`)) {
-            // Hide modal but DON'T reset state (preserve pending transactions)
-            hideModal('walletExplorerModal');
-            switchTab('victims');
+        console.log('📋 No victims exist - auto-creating new victim');
+        needsNewVictim = true;
+    } else {
+        // Get the most recent victim
+        victim = investigation.victims[investigation.victims.length - 1];
 
-            // Scroll to add victim button and highlight it
-            setTimeout(() => {
-                const addVictimBtn = document.querySelector('button[onclick="addVictim()"]');
-                if (addVictimBtn) {
-                    addVictimBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    addVictimBtn.style.animation = 'highlight-pulse 2s';
-                }
+        // Check if victim is completed
+        if (victim.isCompleted) {
+            console.log(`📋 Victim ${victim.id} is completed - auto-creating new victim`);
+            needsNewVictim = true;
+        } else {
+            // Count empty transaction slots
+            const emptySlots = victim.transactions.filter(t => !t.txHash || t.txHash.trim() === '').length;
+            console.log(`📋 Victim ${victim.id} has ${emptySlots} empty slots for ${pendingCount} pending transactions`);
 
-                // Show reminder about pending transactions
-                showNotification(`⚠️ ${pendingCount} pending victim deposit(s) preserved. After creating the victim, reopen Wallet Explorer and click "Done" again to populate the form.`, 'warning', 8000);
-            }, 300);
+            if (emptySlots < pendingCount) {
+                console.log(`📋 Not enough empty slots - auto-creating new victim`);
+                needsNewVictim = true;
+            }
         }
-        return;
     }
 
-    // Get the most recent victim (highest ID)
-    const victim = investigation.victims[investigation.victims.length - 1];
+    // Auto-create new victim if needed
+    if (needsNewVictim) {
+        console.log(`📋 Auto-creating new victim for ${pendingCount} pending transactions`);
+
+        // Create new victim
+        const victimId = investigation.victims.length + 1;
+        victim = {
+            id: victimId,
+            isCompleted: false,
+            name: '',
+            transactions: []
+        };
+
+        // Create enough transaction slots for all pending transactions
+        for (let i = 1; i <= pendingCount; i++) {
+            victim.transactions.push({
+                id: i,
+                txHash: '',
+                amount: '',
+                currency: 'USD',
+                customCurrency: '',
+                receivingWallet: '',
+                datetime: '',
+                timezone: 'UTC',
+                notes: '',
+                chain: ''
+            });
+        }
+
+        investigation.victims.push(victim);
+        saveToStorage();
+        renderVictims(); // Render the new victim in the DOM
+
+        showNotification(`✅ Auto-created new victim (Victim ${victimId}) for ${pendingCount} pending deposits`, 'success');
+    }
+
     const victimId = victim.id;
 
     console.log(`📝 Populating Victim ${victimId} form with ${pendingCount} pending transactions`);
@@ -51351,6 +51390,8 @@ function populateVictimFormFromPending() {
     switchTab('victims');
 
     // Wait for DOM to update, then populate the form fields
+    // Use longer timeout if we just created a new victim
+    const domUpdateDelay = needsNewVictim ? 500 : 300;
     setTimeout(() => {
         let populatedCount = 0;
 
@@ -51443,7 +51484,7 @@ function populateVictimFormFromPending() {
         showNotification(`✅ Populated ${populatedCount} victim deposit(s) in the form. Review and click "Add Victim to Investigation" to confirm.`, 'success', 6000);
 
         console.log(`📋 Form population complete. ${populatedCount} transactions added to victim form.`);
-    }, 300);
+    }, domUpdateDelay);
 }
 
 async function lookupVictimTransaction(victimId, transactionId) {
