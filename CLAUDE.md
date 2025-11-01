@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-11-01 11:06)
 
-**Commit:** d8f4cc26b1ce3df9192641febf7b7623bebc1b34
+**Commit:** 86c3a6bcc8f9bf90ec964287513c228223f2bf74
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 70 +++++++++++++++++++++++++++++++++++++++++++++++++--------------
- 1 file changed, 55 insertions(+), 15 deletions(-)
+ CLAUDE.md | 56 ++++++++------------------------------------------------
+ 1 file changed, 8 insertions(+), 48 deletions(-)
 ```
 
 ## Recent Commits History
 
-- d8f4cc2 Update CLAUDE.md with latest commit info (0 seconds ago)
-- c285c5a Feature: Add multi-selection support for victim deposits (17 seconds ago)
+- 86c3a6b Update CLAUDE.md with latest commit info (0 seconds ago)
+- d8f4cc2 Update CLAUDE.md with latest commit info (6 seconds ago)
+- c285c5a Feature: Add multi-selection support for victim deposits (23 seconds ago)
 - 6da252e Update CLAUDE.md with latest commit info (20 minutes ago)
-- 6e946de Update CLAUDE.md with latest commit info (20 minutes ago)
+- 6e946de Update CLAUDE.md with latest commit info (21 minutes ago)
 - c788ab2 Update CLAUDE.md with latest commit info (21 minutes ago)
 - a4fd606 Update CLAUDE.md with latest commit info (21 minutes ago)
 - 11fde78 Update CLAUDE.md with latest commit info (21 minutes ago)
 - 7ac963d Update CLAUDE.md with latest commit info (21 minutes ago)
-- 6c937fd Feature: Implement pending victim transaction builder with sidebar controls (21 minutes ago)
-- 81d3456 Fix: Correct victim form detection by using investigation data instead of DOM IDs (2 hours ago)
+- 6c937fd Feature: Implement pending victim transaction builder with sidebar controls (22 minutes ago)
 
 ## Key Features
 
