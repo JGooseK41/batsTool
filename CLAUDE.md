@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-11-01 16:32)
 
-**Commit:** fb9d11c527f7101d8e0012283e3488564a90c279
+**Commit:** 97d9b2e320d4f030f5ad8ed834aa8a0d730fc483
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 47 +++++++----------------------------------------
- 1 file changed, 7 insertions(+), 40 deletions(-)
+ CLAUDE.md | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 ```
 
 ## Recent Commits History
 
-- fb9d11c Update CLAUDE.md with latest commit info (0 seconds ago)
-- a7696da Update CLAUDE.md with latest commit info (6 seconds ago)
-- 5525ea5 Fix: Auto-create victim when populating pending deposits (21 seconds ago)
+- 97d9b2e Update CLAUDE.md with latest commit info (0 seconds ago)
+- fb9d11c Update CLAUDE.md with latest commit info (6 seconds ago)
+- a7696da Update CLAUDE.md with latest commit info (12 seconds ago)
+- 5525ea5 Fix: Auto-create victim when populating pending deposits (27 seconds ago)
 - 77c585d Update CLAUDE.md with latest commit info (5 hours ago)
 - cfb0687 Update CLAUDE.md with latest commit info (5 hours ago)
 - ca5c2e5 Update CLAUDE.md with latest commit info (5 hours ago)
 - fb09c8b Update CLAUDE.md with latest commit info (5 hours ago)
 - bb8de01 Update CLAUDE.md with latest commit info (5 hours ago)
 - dfc321e Update CLAUDE.md with latest commit info (5 hours ago)
-- 4c2fb34 Update CLAUDE.md with latest commit info (5 hours ago)
 
 ## Key Features
 
