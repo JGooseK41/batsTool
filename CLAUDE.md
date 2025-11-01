@@ -5,66 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-11-01 10:44)
 
-**Commit:** 6c937fd2a786728dd1155bd35f5167c0e8ee8b65
+**Commit:** 7ac963d2fa44ee31390c87b71a5554cc569e5abf
 **Author:** Your Name
-**Message:** Feature: Implement pending victim transaction builder with sidebar controls
-
-Redesigned victim deposit workflow to match hop builder pattern for better UX and reduced confusion:
-
-**Pending Transaction Builder Pattern:**
-- "Add to Victim" now adds transactions to pending list instead of immediately filling form
-- Multiple deposits can be queued from same wallet without closing explorer
-- Click green checkmark to remove pending transaction (undo)
-- All pending transactions populate victim form when "Done" is clicked
-- Pending transactions preserved across wallet explorer resets
-
-**Sidebar Action Panel:**
-- Moved "Done Adding Deposits" button from bottom overlay to sidebar sticky footer
-- Large visual counter shows pending deposit count (32px prominent display)
-- Includes "Close Explorer" convenience button
-- Panel collapses/expands with sidebar toggle
-- Matches ART Actions panel UX pattern
-
-**Improved Workflow:**
-1. Click "Add to Victim" on outputs → pending list (green checkmark)
-2. Click again to remove (undo accidental adds)
-3. Click "Done Adding Deposits" → close wallet explorer
-4. Navigate to Victims tab → form pre-filled with all pending transactions
-5. Review and click "Add Victim to Investigation" to confirm
-
-**Technical Details:**
-- Added walletExplorerState.pendingVictimTransactions array
-- Created addOutputToVictim() and removeOutputFromVictim() functions
-- Added populateVictimFormFromPending() for form population
-- Enhanced resetWalletExplorer() to preserve pending state
-- Updated toggleWalletExplorerSidebar() to handle victim actions panel
-- Removed obsolete bottom overlay buttons
-
-This eliminates the confusion from immediate form-filling and provides clear visual feedback throughout the workflow.
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+**Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md  | 103 ++++++++--------
- index.html | 387 ++++++++++++++++++++++++++++++++++++++++++++-----------------
- 2 files changed, 327 insertions(+), 163 deletions(-)
+ CLAUDE.md | 96 ++++++++++++++++++++++++++++++++-------------------------------
+ 1 file changed, 49 insertions(+), 47 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6c937fd Feature: Implement pending victim transaction builder with sidebar controls (1 second ago)
+- 7ac963d Update CLAUDE.md with latest commit info (0 seconds ago)
+- 6c937fd Feature: Implement pending victim transaction builder with sidebar controls (19 seconds ago)
 - 81d3456 Fix: Correct victim form detection by using investigation data instead of DOM IDs (73 minutes ago)
-- 4b030eb Fix: Check for victim FORM in DOM before checking saved data (77 minutes ago)
+- 4b030eb Fix: Check for victim FORM in DOM before checking saved data (78 minutes ago)
 - 75c7ce5 Fix: Improve victim detection and guidance in wallet explorer (82 minutes ago)
 - 5ccbfca Feature: Add purpose-built "Done" button for victim deposit workflow (86 minutes ago)
 - f04a094 Feature: Allow sequential adding of multiple victim deposits without closing wallet explorer (2 hours ago)
 - 58de8d7 Feature: Context-aware wallet explorer buttons for victims vs hops (2 hours ago)
 - f86f4ba Fix: Correct victim data field names in thread allocation (2 hours ago)
 - 25f58d1 Fix: Add victim thread support to Bitcoin UTXO allocation (2 hours ago)
-- 060314d Feature: Add write-off functionality for dead-end bridge entries (18 hours ago)
 
 ## Key Features
 
