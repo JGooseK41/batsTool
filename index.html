@@ -3113,8 +3113,8 @@
                             <button onclick="clearTransactionSelection()" style="padding: 10px 20px; background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.3s; backdrop-filter: blur(10px);" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
                                 ✕ Clear
                             </button>
-                            <button onclick="addSelectedTransactionsToInvestigation()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 12px 28px; font-weight: 700; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); transition: all 0.3s; letter-spacing: 0.5px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(245, 158, 11, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(245, 158, 11, 0.3)'">
-                                ➕ Add to Investigation
+                            <button id="walletExplorerBulkAddButton" onclick="addSelectedTransactionsToInvestigation()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 12px 28px; font-weight: 700; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); transition: all 0.3s; letter-spacing: 0.5px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(245, 158, 11, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(245, 158, 11, 0.3)'">
+                                <span id="walletExplorerBulkAddButtonText">➕ Add to Investigation</span>
                             </button>
                         </div>
                     </div>
@@ -15178,6 +15178,7 @@ function exportRedWalletIndexCSV() {
         // Update action buttons based on context
         function updateWalletExplorerActionButtons() {
             const victimActionsPanel = document.getElementById('walletExplorerVictimActions');
+            const bulkAddButtonText = document.getElementById('walletExplorerBulkAddButtonText');
             const context = walletExplorerState.context || 'hops';
 
             if (context === 'victims') {
@@ -15186,11 +15187,21 @@ function exportRedWalletIndexCSV() {
                     victimActionsPanel.style.display = 'block';
                     console.log('📍 Showing victim actions panel in sidebar');
                 }
+
+                // Update bulk add button text for victims context
+                if (bulkAddButtonText) {
+                    bulkAddButtonText.textContent = '➕ Add to Pending Deposits';
+                }
             } else {
                 // Hide victim actions panel
                 if (victimActionsPanel) {
                     victimActionsPanel.style.display = 'none';
                     console.log('📍 Hiding victim actions panel');
+                }
+
+                // Update bulk add button text for hops context
+                if (bulkAddButtonText) {
+                    bulkAddButtonText.textContent = '➕ Add to Investigation';
                 }
             }
 
@@ -20267,8 +20278,51 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
             const blockchain = walletExplorerState.blockchain;
             const walletAddress = walletExplorerState.address;
+            const context = walletExplorerState.context || 'hops';
 
-            // Close wallet explorer
+            // NEW WORKFLOW: If in victims context, add to pending list instead of immediately adding
+            if (context === 'victims') {
+                console.log(`📋 VICTIMS CONTEXT: Adding ${selectedTxs.length} transactions to pending victim deposits`);
+
+                // Initialize pending array if needed
+                if (!walletExplorerState.pendingVictimTransactions) {
+                    walletExplorerState.pendingVictimTransactions = [];
+                }
+
+                // Add each selected transaction to pending list
+                selectedTxs.forEach(tx => {
+                    const pendingTransaction = {
+                        txHash: tx.hash,
+                        amount: tx.amount,
+                        receivingAddress: tx.type === 'IN' ? walletAddress : tx.counterparty,
+                        currency: tx.asset,
+                        chain: blockchain,
+                        timestamp: new Date(tx.timestamp).toISOString().slice(0, 16),
+                        type: tx.type, // 'IN' or 'OUT'
+                        counterparty: tx.counterparty,
+                        notes: `Bulk added from Wallet Explorer - ${tx.type === 'IN' ? 'Incoming' : 'Outgoing'}`,
+                        _fullTxData: tx
+                    };
+
+                    walletExplorerState.pendingVictimTransactions.push(pendingTransaction);
+                });
+
+                console.log(`📋 Added ${selectedTxs.length} transactions to pending. Total pending: ${walletExplorerState.pendingVictimTransactions.length}`);
+
+                // DON'T close wallet explorer - let user continue selecting
+                // Clear selection
+                clearTransactionSelection();
+
+                // Update counter
+                updateWalletExplorerPendingCounter();
+
+                // Show notification
+                showNotification(`✅ Added ${selectedTxs.length} transaction(s) to pending victim deposits (${walletExplorerState.pendingVictimTransactions.length} total pending)`, 'success');
+
+                return; // Exit function - don't continue with old workflow
+            }
+
+            // OLD WORKFLOW: Close wallet explorer for hop building
             closeWalletExplorer();
 
             // CONTEXT-AWARE ROUTING
@@ -51338,7 +51392,8 @@ function populateVictimFormFromPending() {
                 // Amount
                 const amountInput = document.getElementById(`amount_victim_${victimId}_${transactionId}`);
                 if (amountInput) {
-                    amountInput.value = pendingTx.amount.toFixed(8);
+                    const amount = typeof pendingTx.amount === 'number' ? pendingTx.amount : parseFloat(pendingTx.amount);
+                    amountInput.value = amount.toFixed(8);
                 }
 
                 // Currency
@@ -51357,6 +51412,14 @@ function populateVictimFormFromPending() {
                 const timestampInput = document.getElementById(`timestamp_victim_${victimId}_${transactionId}`);
                 if (timestampInput && pendingTx.timestamp) {
                     timestampInput.value = pendingTx.timestamp;
+                }
+
+                // Notes (if available from bulk selection)
+                if (pendingTx.notes) {
+                    const notesInput = document.getElementById(`notes_victim_${victimId}_${transactionId}`);
+                    if (notesInput) {
+                        notesInput.value = pendingTx.notes;
+                    }
                 }
 
                 populatedCount++;
