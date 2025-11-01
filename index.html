@@ -17272,9 +17272,69 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             const threads = [];
             const walletLower = walletAddress.toLowerCase();
 
+            // FIRST: Check victim transactions (these create initial threads)
+            if (investigation.victims) {
+                console.log(`👥 Checking ${investigation.victims.length} victims for threads to this wallet...`);
+
+                investigation.victims.forEach(victim => {
+                    if (!victim.transactions) return;
+
+                    victim.transactions.forEach((tx, txIndex) => {
+                        // Check if this victim transaction went to the target wallet
+                        const txDestination = tx.toWallet || tx.destinationWallet;
+
+                        console.log(`  V${victim.victimNumber}-T${txIndex + 1}: dest=${txDestination}, amount=${tx.amount}`);
+
+                        if (txDestination && txDestination.toLowerCase() === walletLower) {
+                            console.log(`    ✅ MATCH: Victim transaction creates thread at target wallet`);
+
+                            // Calculate available amount for this victim thread
+                            const threadId = `V${victim.victimNumber}-T${txIndex + 1}`;
+                            const originalAmount = parseFloat(tx.amount) || 0;
+
+                            // Find subsequent allocations of this thread in hops
+                            let allocated = 0;
+                            investigation.hops.forEach(hop => {
+                                if (!hop.entries) return;
+
+                                hop.entries.forEach(entry => {
+                                    if (entry.sourceThreadId === threadId ||
+                                        (entry.multipleSourceThreads && entry.multipleSourceThreads.includes(threadId))) {
+                                        // This thread was used - calculate how much
+                                        if (entry.multipleSourceThreads && entry.multipleSourceThreads.length > 1) {
+                                            // Commingled - divide equally (simplified)
+                                            const perThread = parseFloat(entry.amount) / entry.multipleSourceThreads.length;
+                                            allocated += perThread;
+                                        } else {
+                                            allocated += parseFloat(entry.amount) || 0;
+                                        }
+                                    }
+                                });
+                            });
+
+                            const available = originalAmount - allocated;
+                            console.log(`    💰 Victim thread ${threadId}: original=${originalAmount.toFixed(8)}, allocated=${allocated.toFixed(8)}, available=${available.toFixed(8)}`);
+
+                            if (available > 0.00000001) {
+                                threads.push({
+                                    threadId: threadId,
+                                    available: available,
+                                    original: originalAmount,
+                                    allocated: allocated,
+                                    internalId: `V${victim.victimNumber}-T${txIndex + 1}`
+                                });
+                                console.log(`    ✅ Added victim thread to available list`);
+                            } else {
+                                console.log(`    ⚠️ Victim thread fully allocated or too small`);
+                            }
+                        }
+                    });
+                });
+            }
+
             console.log(`📊 Searching through ${investigation.hops.length} hops...`);
 
-            // Search all hops for threads that end at this wallet
+            // SECOND: Search all hops for threads that end at this wallet
             investigation.hops.forEach(hop => {
                 if (!hop.entries) return;
 
