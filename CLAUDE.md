@@ -5,28 +5,28 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-11-01 10:45)
 
-**Commit:** c788ab23413f233707640e972f79df470ebaf00c
+**Commit:** 6e946deba97ead2ce9204116c2d6c7a863bc4235
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ CLAUDE.md | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c788ab2 Update CLAUDE.md with latest commit info (0 seconds ago)
-- a4fd606 Update CLAUDE.md with latest commit info (7 seconds ago)
-- 11fde78 Update CLAUDE.md with latest commit info (18 seconds ago)
-- 7ac963d Update CLAUDE.md with latest commit info (29 seconds ago)
-- 6c937fd Feature: Implement pending victim transaction builder with sidebar controls (48 seconds ago)
+- 6e946de Update CLAUDE.md with latest commit info (0 seconds ago)
+- c788ab2 Update CLAUDE.md with latest commit info (13 seconds ago)
+- a4fd606 Update CLAUDE.md with latest commit info (20 seconds ago)
+- 11fde78 Update CLAUDE.md with latest commit info (31 seconds ago)
+- 7ac963d Update CLAUDE.md with latest commit info (42 seconds ago)
+- 6c937fd Feature: Implement pending victim transaction builder with sidebar controls (61 seconds ago)
 - 81d3456 Fix: Correct victim form detection by using investigation data instead of DOM IDs (74 minutes ago)
 - 4b030eb Fix: Check for victim FORM in DOM before checking saved data (78 minutes ago)
 - 75c7ce5 Fix: Improve victim detection and guidance in wallet explorer (83 minutes ago)
 - 5ccbfca Feature: Add purpose-built "Done" button for victim deposit workflow (87 minutes ago)
-- f04a094 Feature: Allow sequential adding of multiple victim deposits without closing wallet explorer (2 hours ago)
 
 ## Key Features
 
