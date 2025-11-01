@@ -15251,6 +15251,7 @@ function exportRedWalletIndexCSV() {
                 showScamTokens: false,
                 hideZeroBalance: true,  // Hide zero-balance transfers by default
                 pendingEntries: [],  // Track entries created in wallet explorer session
+                addedToVictim: [],  // Track outputs added to victim in this session
                 firstActivityDate: null,
                 oldestFetchedDate: null,
                 isCompleteHistory: false,
@@ -16926,6 +16927,10 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 // Check if already allocated
                 const allocationStatus = getOutputAllocationStatus(group.txHash, output.index);
 
+                // Check if already added to victim (in this wallet explorer session)
+                const outputKey = `${group.txHash.toLowerCase()}_${output.index}`;
+                const addedToVictim = walletExplorerState.addedToVictim && walletExplorerState.addedToVictim.includes(outputKey);
+
                 // Detect contract type
                 const detectedContract = detectContractType(output.address);
                 let contractBadge = '';
@@ -16986,11 +16991,18 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                             <div style="display: flex; flex-direction: column; gap: 8px; margin-left: 15px;">
                                 ${!allocationStatus.fullyAllocated ? `
                                     ${walletExplorerState.context === 'victims' ? `
-                                        <button class="btn btn-primary"
-                                                onclick="addOutputToVictim('${group.txHash}', ${output.index}, ${output.amount}, '${output.address}')"
-                                                style="min-width: 120px; padding: 8px 16px; white-space: nowrap; display: flex; align-items: center; justify-content: center; line-height: 1.4; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
-                                            <span style="display: inline-block; vertical-align: middle;">➕ Add to Victim</span>
-                                        </button>
+                                        ${addedToVictim ? `
+                                            <button class="btn btn-success" disabled
+                                                    style="min-width: 120px; padding: 8px 16px; white-space: nowrap; display: flex; align-items: center; justify-content: center; line-height: 1.4; background: linear-gradient(135deg, #27ae60 0%, #229954 100%); opacity: 0.8;">
+                                                <span style="display: inline-block; vertical-align: middle;">✓ Added to Victim</span>
+                                            </button>
+                                        ` : `
+                                            <button class="btn btn-primary"
+                                                    onclick="addOutputToVictim('${group.txHash}', ${output.index}, ${output.amount}, '${output.address}')"
+                                                    style="min-width: 120px; padding: 8px 16px; white-space: nowrap; display: flex; align-items: center; justify-content: center; line-height: 1.4; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                                                <span style="display: inline-block; vertical-align: middle;">➕ Add to Victim</span>
+                                            </button>
+                                        `}
                                     ` : `
                                         <button class="btn btn-primary"
                                                 onclick="openOutputThreadAllocation('${group.txHash}', ${output.index})"
@@ -51124,14 +51136,24 @@ function addOutputToVictim(txHash, outputIndex, amount, receivingAddress) {
         timestampInput.value = date.toISOString().slice(0, 16);
     }
 
-    // Close wallet explorer
-    closeWalletExplorer();
+    // Track which outputs have been added to victim (so we can update button state)
+    if (!walletExplorerState.addedToVictim) {
+        walletExplorerState.addedToVictim = [];
+    }
+    const outputKey = `${txHash.toLowerCase()}_${outputIndex}`;
+    walletExplorerState.addedToVictim.push(outputKey);
+
+    // DON'T close wallet explorer - allow adding multiple outputs
+    // User can close it when done
+
+    // Re-render transaction table to update button states
+    renderTransactionTable();
 
     // Show success notification
-    showNotification(`✅ Added Bitcoin transaction to Victim ${victimId}: ${amount.toFixed(8)} BTC`, 'success');
+    showNotification(`✅ Added to Victim ${victimId}: ${amount.toFixed(8)} BTC (wallet explorer still open - add more if needed)`, 'success');
 
-    // Scroll to the victim section
-    lastVictimSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Scroll victim section into view in background (but keep explorer in focus)
+    lastVictimSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 async function lookupVictimTransaction(victimId, transactionId) {
