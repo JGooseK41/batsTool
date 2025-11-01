@@ -3,30 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-01 11:06)
+## Latest Commit (Auto-updated: 2025-11-01 11:07)
 
-**Commit:** dfc321e1aea540ff2595cccb5cae2ec2aecc18d3
+**Commit:** bb8de01d8aa3dec6739c942e4bb96cfb6d310f9a
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
 ### Changed Files:
 ```
- CLAUDE.md | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+ CLAUDE.md | 24 ++++++++++++------------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
 ```
 
 ## Recent Commits History
 
-- dfc321e Update CLAUDE.md with latest commit info (0 seconds ago)
-- 4c2fb34 Update CLAUDE.md with latest commit info (11 seconds ago)
-- 3d5006d Update CLAUDE.md with latest commit info (16 seconds ago)
-- 12d98d4 Update CLAUDE.md with latest commit info (23 seconds ago)
-- b16eb1d Update CLAUDE.md with latest commit info (34 seconds ago)
-- 7b05c76 Update CLAUDE.md with latest commit info (41 seconds ago)
-- 86c3a6b Update CLAUDE.md with latest commit info (47 seconds ago)
-- d8f4cc2 Update CLAUDE.md with latest commit info (53 seconds ago)
-- c285c5a Feature: Add multi-selection support for victim deposits (70 seconds ago)
-- 6da252e Update CLAUDE.md with latest commit info (21 minutes ago)
+- bb8de01 Update CLAUDE.md with latest commit info (0 seconds ago)
+- dfc321e Update CLAUDE.md with latest commit info (8 seconds ago)
+- 4c2fb34 Update CLAUDE.md with latest commit info (19 seconds ago)
+- 3d5006d Update CLAUDE.md with latest commit info (24 seconds ago)
+- 12d98d4 Update CLAUDE.md with latest commit info (31 seconds ago)
+- b16eb1d Update CLAUDE.md with latest commit info (42 seconds ago)
+- 7b05c76 Update CLAUDE.md with latest commit info (49 seconds ago)
+- 86c3a6b Update CLAUDE.md with latest commit info (55 seconds ago)
+- d8f4cc2 Update CLAUDE.md with latest commit info (61 seconds ago)
+- c285c5a Feature: Add multi-selection support for victim deposits (78 seconds ago)
 
 ## Key Features
 
