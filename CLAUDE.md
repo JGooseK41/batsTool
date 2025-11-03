@@ -5,11 +5,9 @@ B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for t
 
 ## Latest Commit (Auto-updated: 2025-11-02 21:19)
 
-**Commit:** 4566ccfeff6b91a880998d8f47852b0b9540fe0e
+**Commit:** 033dd887eaf8270f2ca900351b58483eade018a6
 **Author:** Your Name
-**Message:** Update CLAUDE.md commit timestamps
-
-Routine auto-update of commit age timestamps in project documentation.
+**Message:** Update CLAUDE.md with latest commit info
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -17,22 +15,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+ CLAUDE.md | 34 ++++++++++++++++++++--------------
+ 1 file changed, 20 insertions(+), 14 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 4566ccf Update CLAUDE.md commit timestamps (0 seconds ago)
+- 033dd88 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 4566ccf Update CLAUDE.md commit timestamps (6 seconds ago)
 - 0e9d7fc Update CLAUDE.md with latest commit info (3 minutes ago)
 - e15a57d Update CLAUDE.md with latest commit info (3 minutes ago)
 - bf39225 Update CLAUDE.md with latest commit info (3 minutes ago)
-- 6112f1d Update CLAUDE.md with latest commit info (3 minutes ago)
-- 2689651 Update CLAUDE.md with latest commit info (3 minutes ago)
-- 4c0b0ac Update CLAUDE.md with latest commit info (3 minutes ago)
+- 6112f1d Update CLAUDE.md with latest commit info (4 minutes ago)
+- 2689651 Update CLAUDE.md with latest commit info (4 minutes ago)
+- 4c0b0ac Update CLAUDE.md with latest commit info (4 minutes ago)
 - c54ce8a Update CLAUDE.md with latest commit info (4 minutes ago)
 - dc0b7c6 Fix: Populate datetime field when adding bulk victim deposits (4 minutes ago)
-- 07719bc Update CLAUDE.md with latest commit info (30 hours ago)
 
 ## Key Features
 
