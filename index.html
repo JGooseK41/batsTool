@@ -4010,8 +4010,14 @@
                         const exchangeName = entry.exchangeName ||
                             (entry.notes && entry.notes.match(/Terminal wallet: ([^\n]+)/)?.[1]) ||
                             'Unknown Exchange';
+                        const attributionSource = entry.attributionSource ||
+                            (entry.notes && entry.notes.match(/Source: ([^\n]+)/)?.[1]) ||
+                            '';
                         html += `<div style="margin-left: 20px; margin-top: 15px; background: #e6d7ff; padding: 10px; border-radius: 5px;">`;
                         html += `<strong>🏦 Terminal Exchange:</strong> ${exchangeName}`;
+                        if (attributionSource) {
+                            html += `<br><small style="color: #666;">📍 Source: ${attributionSource}</small>`;
+                        }
                         html += `</div>`;
                     }
 
@@ -17880,12 +17886,18 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             console.log(`🔍 Checking attribution for ${ctx.output.address}...`);
             let walletType = '';
             let attributionNote = '';
+            let exchangeName = '';
+            let walletLabel = '';
+            let attributionSource = '';
 
             try {
                 const attribution = await getWalletAttribution(ctx.output.address, 'bitcoin');
                 if (attribution && !attribution.isPersonalLabel) {
                     walletType = 'purple';
-                    attributionNote = `\n\n🟣 AUTO-CLASSIFIED: Terminal Wallet (${attribution.name || attribution.label})`;
+                    exchangeName = attribution.name || attribution.label || '';
+                    walletLabel = attribution.name || attribution.label || '';
+                    attributionSource = attribution.source || 'API';
+                    attributionNote = `\n\n🟣 AUTO-CLASSIFIED: Terminal Wallet (${exchangeName})\n📍 Source: ${attributionSource}`;
                 }
             } catch (err) {
                 console.log('Attribution check failed:', err);
@@ -17896,10 +17908,14 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             if (detectedContract && !walletType) {
                 if (detectedContract.type === 'dex') {
                     walletType = 'brown';
-                    attributionNote = `\n\n🔄 AUTO-CLASSIFIED: DEX (${detectedContract.name})`;
+                    exchangeName = detectedContract.name || '';
+                    walletLabel = detectedContract.name || '';
+                    attributionNote = `\n\n🔄 AUTO-CLASSIFIED: DEX (${exchangeName})`;
                 } else if (detectedContract.type === 'bridge') {
                     walletType = 'brown';
-                    attributionNote = `\n\n🌉 AUTO-CLASSIFIED: Bridge (${detectedContract.name})`;
+                    exchangeName = detectedContract.name || '';
+                    walletLabel = detectedContract.name || '';
+                    attributionNote = `\n\n🌉 AUTO-CLASSIFIED: Bridge (${exchangeName})`;
                 }
             }
 
@@ -17935,7 +17951,11 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 transactionHash: ctx.txHash,
                 utxoOutputIndex: ctx.outputIndex, // CRITICAL: Store output index
                 destinationWallet: ctx.output.address,
-                toWalletType: walletType
+                toWalletType: walletType,
+                exchangeName: exchangeName || undefined,
+                walletLabel: walletLabel || undefined,
+                attributionSource: attributionSource || undefined,
+                isTerminalWallet: walletType === 'purple'
             };
 
             hop.entries.push(entry);
