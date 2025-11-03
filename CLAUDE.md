@@ -3,30 +3,58 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-01 16:35)
+## Latest Commit (Auto-updated: 2025-11-02 21:15)
 
-**Commit:** c515c7df1cc90830b2b4f0150c228afb09ffc083
+**Commit:** dc0b7c6391c7c998792deeb46e4f8a8cef06858b
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Fix: Populate datetime field when adding bulk victim deposits
+
+**Problem:**
+Timestamps were not being populated in victim form when using bulk selection to add pending deposits. The datetime field remained empty even though timestamps were in the pending transaction data.
+
+**Root Cause:**
+Field name mismatch - the victim form uses field ID `datetime_victim_X_Y` but the population code was looking for `timestamp_victim_X_Y`. This caused the datetime input to never be found, so timestamps were never populated.
+
+**Solution:**
+Changed field lookup from `timestamp_victim_` to `datetime_victim_` to match actual DOM structure (line 51453).
+
+**Technical Details:**
+- Victim form renders datetime field as: `id="datetime_victim_${victim.id}_${transaction.id}"`
+- Code was incorrectly looking for: `id="timestamp_victim_${victim.id}_${transaction.id}"`
+- Fixed by using correct field name: `datetime_victim_`
+- Added comment to clarify field naming for future maintenance
+
+Now when bulk adding victim deposits, all fields populate correctly:
+✅ Transaction hash
+✅ Amount
+✅ Currency
+✅ Blockchain
+✅ **Datetime (FIXED)**
+✅ Receiving address
+✅ Notes
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
+ index.html | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 ```
 
 ## Recent Commits History
 
-- c515c7d Update CLAUDE.md with latest commit info (0 seconds ago)
-- f977ad1 Update CLAUDE.md with latest commit info (7 seconds ago)
-- 9c5adde Update CLAUDE.md with latest commit info (15 seconds ago)
-- c942b8d Update CLAUDE.md with latest commit info (22 seconds ago)
-- 3bdb9ca Update CLAUDE.md with latest commit info (27 seconds ago)
-- 68435ef Update CLAUDE.md with latest commit info (36 seconds ago)
-- a3ea28a Update CLAUDE.md with latest commit info (44 seconds ago)
-- 78ffe38 Trigger Netlify rebuild with latest victim auto-create feature (56 seconds ago)
-- 666daf7 Update CLAUDE.md with latest commit info (2 minutes ago)
-- 8e5025d Update CLAUDE.md with latest commit info (2 minutes ago)
+- dc0b7c6 Fix: Populate datetime field when adding bulk victim deposits (0 seconds ago)
+- 07719bc Update CLAUDE.md with latest commit info (30 hours ago)
+- c515c7d Update CLAUDE.md with latest commit info (30 hours ago)
+- f977ad1 Update CLAUDE.md with latest commit info (30 hours ago)
+- 9c5adde Update CLAUDE.md with latest commit info (30 hours ago)
+- c942b8d Update CLAUDE.md with latest commit info (30 hours ago)
+- 3bdb9ca Update CLAUDE.md with latest commit info (30 hours ago)
+- 68435ef Update CLAUDE.md with latest commit info (30 hours ago)
+- a3ea28a Update CLAUDE.md with latest commit info (30 hours ago)
+- 78ffe38 Trigger Netlify rebuild with latest victim auto-create feature (30 hours ago)
 
 ## Key Features
 
