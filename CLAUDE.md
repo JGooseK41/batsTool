@@ -3,37 +3,35 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-02 22:20)
+## Latest Commit (Auto-updated: 2025-11-02 22:21)
 
-**Commit:** 14e4ac2136a2f6603ed8c3609479cdec78835032
+**Commit:** 171f55da5bbf9b11cfd2208d5499915740a7b04c
 **Author:** Your Name
-**Message:** Fix: Entry collapse and bulk logging improvements
+**Message:** Fix: Fee write-offs no longer cause over-allocation warnings
 
-Problem 1: When clicking "Log Entry" on terminal wallet entries, they
-weren't collapsing. The button set the collapse state but didn't re-render
-the UI to show the collapsed view.
+Problem: Users were seeing "OVER-ALLOCATED" warnings showing 200%
+allocation for each thread. For example:
+- V1-T1: Available 0.124 BTC | Allocated 0.247 BTC (200%)
 
-Problem 2: Users had to manually click "Log Entry" on each individual
-entry when adding multiple bulk entries, which was tedious and time-consuming.
+Root Cause: Fee entries were being created with sourceThreadId and
+multipleSourceThreads fields, which made the allocation system think
+the fee was "consuming" funds from those threads. Since both the trace
+entry AND the fee entry allocated from the same thread, each thread
+appeared 200% allocated (once for trace, once for fee).
 
-Solution:
-1. logAndCollapseEntry() now calls renderTraceDocumentation() after setting
-   collapse state to properly re-render and show collapsed entries (line 22953)
-2. Changed alert to showNotification for better UX (line 22961)
-3. Added new logAllEntriesInHop(hopNumber) function that:
-   - Loops through all unlogged entries in a hop
-   - Validates each entry (amount, notation)
-   - Auto-generates notation if possible
-   - Logs and collapses all valid entries
-   - Shows summary of successes/failures
-4. Added "✅ Log All Entries (N)" button at bottom of each hop that:
-   - Only appears if there are unlogged entries
-   - Shows count of unlogged entries
-   - One-click logs and collapses all entries
-   - Positioned before "+ Add Entry" button
+Solution: Removed sourceThreadId and multipleSourceThreads from fee
+entry creation (lines 17837-17838). Fees are write-offs that reduce
+the global ART, not allocations from specific threads.
 
-This dramatically improves workflow when adding multiple bulk entries like
-victim deposits that were traced to terminal wallets.
+Added affectedThreads field (line 17846) to store which threads the
+fee relates to for informational/auditing purposes, but this field
+is NOT used by the allocation tracking system.
+
+Now fee write-offs correctly:
+- Show as write-off entries (not traceable)
+- Reduce ART globally
+- Don't count against thread allocation limits
+- Still document which threads were involved (in notes + affectedThreads)
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -41,22 +39,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 90 +++++++++++++++++++++++++++++++++++++++++++++++++++++---------
- 1 file changed, 78 insertions(+), 12 deletions(-)
+ index.html | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 14e4ac2 Fix: Entry collapse and bulk logging improvements (0 seconds ago)
-- 3bcbcdb Update CLAUDE.md with latest commit info (3 minutes ago)
-- 5e39892 Fix: Fee entries now use writeoff entry type instead of generic type (3 minutes ago)
-- 422916d Update CLAUDE.md with latest commit info (14 minutes ago)
-- 5ce8d29 Fix: Remove undefined needsNewVictim variable reference (14 minutes ago)
-- 20cf47e Update CLAUDE.md with latest commit info (25 minutes ago)
-- 7875eff Fix: Remove auto-victim creation - require manual "Add Victim" button (25 minutes ago)
-- 5dbb746 Update CLAUDE.md with latest commit info (33 minutes ago)
-- 17c5f6f Fix: Use and expand Victim 1 instead of creating Victim 2 (33 minutes ago)
-- 014d5ed Update CLAUDE.md with latest commit info (38 minutes ago)
+- 171f55d Fix: Fee write-offs no longer cause over-allocation warnings (0 seconds ago)
+- 0b66947 Update CLAUDE.md with latest commit info (58 seconds ago)
+- 14e4ac2 Fix: Entry collapse and bulk logging improvements (66 seconds ago)
+- 3bcbcdb Update CLAUDE.md with latest commit info (4 minutes ago)
+- 5e39892 Fix: Fee entries now use writeoff entry type instead of generic type (4 minutes ago)
+- 422916d Update CLAUDE.md with latest commit info (15 minutes ago)
+- 5ce8d29 Fix: Remove undefined needsNewVictim variable reference (15 minutes ago)
+- 20cf47e Update CLAUDE.md with latest commit info (26 minutes ago)
+- 7875eff Fix: Remove auto-victim creation - require manual "Add Victim" button (26 minutes ago)
+- 5dbb746 Update CLAUDE.md with latest commit info (34 minutes ago)
 
 ## Key Features
 
