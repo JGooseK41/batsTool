@@ -51507,11 +51507,17 @@ function populateVictimFormFromPending() {
         saveToStorage();
         console.log(`💾 Saved ${populatedCount} victim transaction(s) to data model`);
 
-        // Scroll to the victim form
-        const firstTxInput = document.querySelector(`[id="txHash_victim_${victimId}_1"]`);
-        if (firstTxInput) {
-            firstTxInput.closest('.trace-entry')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        // Re-render the victim form to enable the Complete Victim button
+        renderVictims();
+        console.log(`🔄 Re-rendered victim form to update button state`);
+
+        // Scroll to the victim form (after re-render)
+        setTimeout(() => {
+            const firstTxInput = document.querySelector(`[id="txHash_victim_${victimId}_1"]`);
+            if (firstTxInput) {
+                firstTxInput.closest('.trace-entry')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
 
         // Show success notification
         showNotification(`✅ Populated ${populatedCount} victim deposit(s) in the form. Data saved - click "Complete Victim" when ready.`, 'success', 6000);
