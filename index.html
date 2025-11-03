@@ -2200,14 +2200,41 @@
                     </div>
 
                     <!-- Reports Sub-Navigation -->
-                    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; padding: 0 20px;">
-                        <button class="btn-primary" onclick="switchReportTab('audit-trail')" id="report-tab-audit" style="background: #3498db;">
+                    <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; padding: 0 20px;">
+                        <button class="btn-primary" onclick="switchReportTab('audit-trail')" id="report-tab-audit"
+                                style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+                                       padding: 14px 28px;
+                                       font-size: 15px;
+                                       font-weight: 600;
+                                       border-radius: 8px;
+                                       box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+                                       transition: all 0.3s ease;
+                                       border: none;
+                                       cursor: pointer;">
                             🔍 Audit Trail
                         </button>
-                        <button class="btn-primary" onclick="switchReportTab('indexes')" id="report-tab-indexes" style="background: #95a5a6;">
+                        <button class="btn-primary" onclick="switchReportTab('indexes')" id="report-tab-indexes"
+                                style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+                                       padding: 14px 28px;
+                                       font-size: 15px;
+                                       font-weight: 600;
+                                       border-radius: 8px;
+                                       box-shadow: 0 2px 8px rgba(149, 165, 166, 0.2);
+                                       transition: all 0.3s ease;
+                                       border: none;
+                                       cursor: pointer;">
                             📋 Wallet Indexes
                         </button>
-                        <button class="btn-primary" onclick="switchReportTab('narrative')" id="report-tab-narrative" style="background: #95a5a6;">
+                        <button class="btn-primary" onclick="switchReportTab('narrative')" id="report-tab-narrative"
+                                style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+                                       padding: 14px 28px;
+                                       font-size: 15px;
+                                       font-weight: 600;
+                                       border-radius: 8px;
+                                       box-shadow: 0 2px 8px rgba(149, 165, 166, 0.2);
+                                       transition: all 0.3s ease;
+                                       border: none;
+                                       cursor: pointer;">
                             📝 Narrative
                         </button>
                     </div>
@@ -2216,7 +2243,23 @@
 
                         <!-- Audit Trail Tab -->
                         <div id="report-audit-trail-section" class="report-section" style="display: block;">
-                            <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px;">🔍 Technical Audit Trail</h2>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin: 0; flex: 1;">🔍 Technical Audit Trail</h2>
+                                <button onclick="exportAuditTrail()"
+                                        style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+                                               color: white;
+                                               border: none;
+                                               padding: 12px 24px;
+                                               border-radius: 8px;
+                                               font-size: 14px;
+                                               font-weight: 600;
+                                               cursor: pointer;
+                                               box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+                                               transition: all 0.3s ease;
+                                               margin-left: 20px;">
+                                    📄 Export / Print
+                                </button>
+                            </div>
                             <div id="report-technical-content"></div>
                         </div>
 
@@ -30088,24 +30131,148 @@ function switchReportTab(tabName) {
         section.style.display = 'none';
     });
 
-    // Reset all tab button styles
-    document.getElementById('report-tab-audit').style.background = '#95a5a6';
-    document.getElementById('report-tab-indexes').style.background = '#95a5a6';
-    document.getElementById('report-tab-narrative').style.background = '#95a5a6';
+    // Reset all tab button styles to inactive
+    const inactiveStyle = 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)';
+    const inactiveShadow = '0 2px 8px rgba(149, 165, 166, 0.2)';
+
+    document.getElementById('report-tab-audit').style.background = inactiveStyle;
+    document.getElementById('report-tab-audit').style.boxShadow = inactiveShadow;
+    document.getElementById('report-tab-indexes').style.background = inactiveStyle;
+    document.getElementById('report-tab-indexes').style.boxShadow = inactiveShadow;
+    document.getElementById('report-tab-narrative').style.background = inactiveStyle;
+    document.getElementById('report-tab-narrative').style.boxShadow = inactiveShadow;
 
     // Show selected section and highlight button
     if (tabName === 'audit-trail') {
         document.getElementById('report-audit-trail-section').style.display = 'block';
-        document.getElementById('report-tab-audit').style.background = '#3498db';
+        document.getElementById('report-tab-audit').style.background = 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)';
+        document.getElementById('report-tab-audit').style.boxShadow = '0 4px 12px rgba(52, 152, 219, 0.3)';
     } else if (tabName === 'indexes') {
         document.getElementById('report-indexes-section').style.display = 'block';
-        document.getElementById('report-tab-indexes').style.background = '#e74c3c';
+        document.getElementById('report-tab-indexes').style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+        document.getElementById('report-tab-indexes').style.boxShadow = '0 4px 12px rgba(231, 76, 60, 0.3)';
     } else if (tabName === 'narrative') {
         document.getElementById('report-narrative-section').style.display = 'block';
-        document.getElementById('report-tab-narrative').style.background = '#27ae60';
+        document.getElementById('report-tab-narrative').style.background = 'linear-gradient(135deg, #27ae60 0%, #229954 100%)';
+        document.getElementById('report-tab-narrative').style.boxShadow = '0 4px 12px rgba(39, 174, 96, 0.3)';
         // Load saved narrative if exists
         loadNarrative();
     }
+}
+
+// Export/Print Audit Trail as standalone page
+function exportAuditTrail() {
+    const auditTrailContent = document.getElementById('report-technical-content').innerHTML;
+    const caseId = investigation.caseId || 'Investigation';
+    const investigator = investigation.investigatorName || 'Not specified';
+    const date = new Date().toLocaleDateString();
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <title>Audit Trail - ${caseId}</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none !important; }
+        }
+        @media screen {
+            body { padding: 20px; }
+            .print-button {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+                color: white;
+                border: none;
+                padding: 14px 28px;
+                border-radius: 8px;
+                font-size: 15px;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+                z-index: 1000;
+            }
+            .print-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+            }
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background: white;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 28px;
+        }
+        .header-info {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #34495e;
+            margin-top: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .currency-section {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button no-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+
+    <div class="header">
+        <h1>🔍 Technical Audit Trail</h1>
+        <div class="header-info">
+            <strong>Case ID:</strong> ${caseId} |
+            <strong>Investigator:</strong> ${investigator} |
+            <strong>Generated:</strong> ${date}
+        </div>
+    </div>
+
+    ${auditTrailContent}
+</body>
+</html>`);
+    printWindow.document.close();
 }
 
 // Switch between wallet index views
