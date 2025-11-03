@@ -17834,15 +17834,16 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 entryType: 'writeoff',  // Fees are write-offs that reduce ART
                 amount: fee.toFixed(8),
                 currency: 'BTC',
-                sourceThreadId: threadArray[0], // Primary thread
-                multipleSourceThreads: threadArray.length > 1 ? threadArray : undefined,
+                // Don't set sourceThreadId/multipleSourceThreads for fees - they reduce ART globally, not from specific threads
+                // Store affected threads in notes for reference only
                 notation: '', // Will be auto-generated
                 notes: `⛽ Bitcoin Transaction Fee\n\nTransaction: ${txHash}\nTotal Inputs: ${totalInputs.toFixed(8)} BTC\nTotal Outputs: ${totalOutputs.toFixed(8)} BTC\nFee Paid: ${fee.toFixed(8)} BTC\n\nThis fee was paid to miners and reduces the Available Running Total (ART).\n\nThreads affected:\n${threadArray.map(t => `  • ${t}`).join('\n')}`,
                 timestamp: new Date(group.timestamp).toISOString().slice(0, 16),
                 chain: 'bitcoin',
                 transactionHash: txHash,
                 destinationWallet: '⛽ Miner Fee',
-                toWalletType: ''
+                toWalletType: '',
+                affectedThreads: threadArray  // Store for reference, not for allocation
             };
 
             return feeEntry;
