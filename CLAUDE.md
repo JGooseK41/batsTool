@@ -3,31 +3,21 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-02 21:54)
+## Latest Commit (Auto-updated: 2025-11-02 22:05)
 
-**Commit:** 7875eff2b7bed075224a08fce843ef71dede466a
+**Commit:** 5ce8d29f680f5e56cf731d50b78c70025bd55bb9
 **Author:** Your Name
-**Message:** Fix: Remove auto-victim creation - require manual "Add Victim" button
+**Message:** Fix: Remove undefined needsNewVictim variable reference
 
-Problem: System was auto-creating victims without user explicitly requesting
-it. This removed user control over when new victims are created.
+Error: "Uncaught ReferenceError: needsNewVictim is not defined at line 51407"
 
-User Requirement: "We should never begin a new victim unless the user
-expressly selects the button to add victim"
+Root Cause: When removing auto-victim creation logic, I deleted the
+needsNewVictim variable declaration but left one reference to it at
+line 51407 where it was used to determine DOM update delay timing.
 
-Solution:
-1. Removed all auto-create logic for new victims
-2. If no victim exists when adding deposits → show alert directing user to click "Add Victim" first
-3. If latest victim is completed → show alert directing user to click "Add Victim" first
-4. If victim exists and incomplete → still expand it as needed (not creating new victim, just adding slots)
-
-New Workflow:
-1. User clicks "Add Victim" button (manual, explicit)
-2. User opens Wallet Explorer and selects deposits
-3. System expands victim if needed but never creates new one
-4. When ready for next victim → user clicks "Add Victim" again (manual)
-
-This gives user full control over victim creation.
+Solution: Changed the timeout calculation to use needsExpansion instead,
+which correctly determines if the victim was just expanded and needs
+extra time for DOM updates.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -35,22 +25,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 84 +++++++++++++++++++-------------------------------------------
- 1 file changed, 25 insertions(+), 59 deletions(-)
+ index.html | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 7875eff Fix: Remove auto-victim creation - require manual "Add Victim" button (0 seconds ago)
-- 5dbb746 Update CLAUDE.md with latest commit info (8 minutes ago)
-- 17c5f6f Fix: Use and expand Victim 1 instead of creating Victim 2 (8 minutes ago)
-- 014d5ed Update CLAUDE.md with latest commit info (13 minutes ago)
-- 61b6734 Fix: Complete Victim button now enabled after auto-population (13 minutes ago)
-- 4319ed7 Debug: Add detailed logging to completeVictim function (18 minutes ago)
-- 1448ecc Update CLAUDE.md with latest commit info (26 minutes ago)
-- 791beb8 Update CLAUDE.md with latest commit info (26 minutes ago)
-- 9a08fa5 Update CLAUDE.md with latest commit info (26 minutes ago)
-- bc59c52 Fix: Victim completion now works after auto-population (26 minutes ago)
+- 5ce8d29 Fix: Remove undefined needsNewVictim variable reference (1 second ago)
+- 20cf47e Update CLAUDE.md with latest commit info (11 minutes ago)
+- 7875eff Fix: Remove auto-victim creation - require manual "Add Victim" button (11 minutes ago)
+- 5dbb746 Update CLAUDE.md with latest commit info (19 minutes ago)
+- 17c5f6f Fix: Use and expand Victim 1 instead of creating Victim 2 (19 minutes ago)
+- 014d5ed Update CLAUDE.md with latest commit info (24 minutes ago)
+- 61b6734 Fix: Complete Victim button now enabled after auto-population (24 minutes ago)
+- 4319ed7 Debug: Add detailed logging to completeVictim function (29 minutes ago)
+- 1448ecc Update CLAUDE.md with latest commit info (37 minutes ago)
+- 791beb8 Update CLAUDE.md with latest commit info (37 minutes ago)
 
 ## Key Features
 
