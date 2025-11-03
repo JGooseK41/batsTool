@@ -51449,10 +51449,10 @@ function populateVictimFormFromPending() {
                     chainSelect.value = pendingTx.chain;
                 }
 
-                // Timestamp
-                const timestampInput = document.getElementById(`timestamp_victim_${victimId}_${transactionId}`);
-                if (timestampInput && pendingTx.timestamp) {
-                    timestampInput.value = pendingTx.timestamp;
+                // Datetime (note: field is called 'datetime' not 'timestamp')
+                const datetimeInput = document.getElementById(`datetime_victim_${victimId}_${transactionId}`);
+                if (datetimeInput && pendingTx.timestamp) {
+                    datetimeInput.value = pendingTx.timestamp;
                 }
 
                 // Notes (if available from bulk selection)
