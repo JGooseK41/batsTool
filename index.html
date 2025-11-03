@@ -3905,7 +3905,7 @@
                         html += ` <span style="color: #7f8c8d; margin-left: 10px;">${displayNotation}</span>`;
                     }
                     html += `</div>`;
-                    html += `<div style="font-size: 18px; font-weight: bold;">${parseFloat(entry.amount).toLocaleString()} ${entry.currency}</div>`;
+                    html += `<div style="font-size: 18px; font-weight: bold;">${entry.currency === 'BTC' ? parseFloat(entry.amount).toFixed(8) : parseFloat(entry.amount).toFixed(6)} ${entry.currency}</div>`;
                     html += `</div>`;
 
                     // Entry details
@@ -9680,10 +9680,10 @@ function renderHopEntry(entry, hop) {
                     
                     <!-- Status Indicators -->
                     <div style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
-                        ${hasAmount ? 
+                        ${hasAmount ?
                             `<span style="background: #27ae60; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
-                                <span style="font-size: 14px;">✓</span> ${parseFloat(entry.amount).toLocaleString()} ${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency || ''}
-                            </span>` : 
+                                <span style="font-size: 14px;">✓</span> ${(entry.currency === 'BTC' || entry.customCurrency === 'BTC') ? parseFloat(entry.amount).toFixed(8) : parseFloat(entry.amount).toFixed(6)} ${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency || ''}
+                            </span>` :
                             `<span style="background: #e74c3c; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px;">⚠️ No amount</span>`}
                         
                         ${isTrace && entry.txHash ? 
@@ -10017,7 +10017,7 @@ function renderHopEntry(entry, hop) {
                     <div style="display: grid; gap: 10px;">
                         <div><strong>Category:</strong> ${writeoffCategories[entry.category] || entry.category || 'Unspecified'}</div>
                         <div><strong>Justification:</strong> ${entry.justification || 'No justification provided'}</div>
-                        <div><strong>Amount:</strong> ${parseFloat(entry.amount).toLocaleString()} ${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency}</div>
+                        <div><strong>Amount:</strong> ${(entry.currency === 'BTC' || entry.customCurrency === 'BTC') ? parseFloat(entry.amount).toFixed(8) : parseFloat(entry.amount).toFixed(6)} ${entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency}</div>
                         ${entry.notation ? `<div><strong>Notation:</strong> ${entry.notation}</div>` : ''}
                     </div>
                 </div>
@@ -25554,7 +25554,7 @@ function showHopFinalizationPreview(hop, validation) {
                                 </td>
                                 <td style="padding: 8px; font-size: 11px;">${sources}</td>
                                 <td style="padding: 8px; text-align: right; font-weight: bold;">
-                                    ${parseFloat(entry.amount).toLocaleString()} ${currency}
+                                    ${currency === 'BTC' ? parseFloat(entry.amount).toFixed(8) : parseFloat(entry.amount).toFixed(6)} ${currency}
                                 </td>
                                 <td style="padding: 8px; font-size: 11px;">
                                     ${entry.toWallet ? entry.toWallet.substring(0, 12) + '...' : 'N/A'}
