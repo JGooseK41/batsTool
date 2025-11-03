@@ -17787,38 +17787,19 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 return null;
             }
 
-            // Calculate total outputs
+            // Calculate total outputs from blockchain data
             const totalOutputs = group.outputs.reduce((sum, output) => sum + output.amount, 0);
 
-            // Calculate total inputs (sum of all thread allocations for this transaction across all outputs)
-            let totalInputs = 0;
+            // Calculate total inputs from blockchain data (not from investigation allocations)
+            const totalInputs = group.totalSent || 0;
+
+            // Track which threads are being allocated for this transaction (for fee attribution)
             const inputThreads = new Set();
-
-            investigation.hops.forEach(hop => {
-                if (!hop.entries) return;
-                hop.entries.forEach(entry => {
-                    if (entry.transactionHash?.toLowerCase() === txHash.toLowerCase() &&
-                        entry.utxoOutputIndex !== undefined) {
-                        const amount = parseFloat(entry.amount) || 0;
-                        totalInputs += amount;
-
-                        // Track which threads are being used
-                        if (entry.multipleSourceThreads) {
-                            entry.multipleSourceThreads.forEach(t => inputThreads.add(t));
-                        } else if (entry.sourceThreadId) {
-                            inputThreads.add(entry.sourceThreadId);
-                        }
-                    }
-                });
-            });
-
-            // Add current allocation to inputs
             allocations.forEach(alloc => {
-                totalInputs += alloc.amount;
                 inputThreads.add(alloc.threadId);
             });
 
-            // Calculate fee
+            // Calculate fee from actual blockchain amounts
             const fee = totalInputs - totalOutputs;
 
             if (fee <= 0.00000001) {
@@ -17834,16 +17815,15 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 entryType: 'writeoff',  // Fees are write-offs that reduce ART
                 amount: fee.toFixed(8),
                 currency: 'BTC',
-                // Don't set sourceThreadId/multipleSourceThreads for fees - they reduce ART globally, not from specific threads
-                // Store affected threads in notes for reference only
+                sourceThreadId: threadArray[0], // Primary thread - fee reduces this thread
+                multipleSourceThreads: threadArray.length > 1 ? threadArray : undefined,
                 notation: '', // Will be auto-generated
-                notes: `⛽ Bitcoin Transaction Fee\n\nTransaction: ${txHash}\nTotal Inputs: ${totalInputs.toFixed(8)} BTC\nTotal Outputs: ${totalOutputs.toFixed(8)} BTC\nFee Paid: ${fee.toFixed(8)} BTC\n\nThis fee was paid to miners and reduces the Available Running Total (ART).\n\nThreads affected:\n${threadArray.map(t => `  • ${t}`).join('\n')}`,
+                notes: `⛽ Bitcoin Transaction Fee\n\nTransaction: ${txHash}\nTotal Inputs: ${totalInputs.toFixed(8)} BTC\nTotal Outputs: ${totalOutputs.toFixed(8)} BTC\nFee Paid: ${fee.toFixed(8)} BTC\n\nThis fee was paid to miners and reduces the Available Running Total (ART) and the source thread balance.\n\nThreads paying fee:\n${threadArray.map(t => `  • ${t}`).join('\n')}`,
                 timestamp: new Date(group.timestamp).toISOString().slice(0, 16),
                 chain: 'bitcoin',
                 transactionHash: txHash,
                 destinationWallet: '⛽ Miner Fee',
-                toWalletType: '',
-                affectedThreads: threadArray  // Store for reference, not for allocation
+                toWalletType: ''
             };
 
             return feeEntry;
