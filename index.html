@@ -51421,50 +51421,64 @@ function populateVictimFormFromPending() {
 
             // If we found an empty slot, populate it
             if (targetTxElement && transactionId) {
-                // Transaction hash
-                targetTxElement.value = pendingTx.txHash;
+                // Get the transaction object from the data model
+                const transaction = victim.transactions.find(t => t.id === transactionId);
 
-                // Receiving wallet address
-                const receivingWalletInput = document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`);
-                if (receivingWalletInput) {
-                    receivingWalletInput.value = pendingTx.receivingAddress;
-                }
-
-                // Amount
-                const amountInput = document.getElementById(`amount_victim_${victimId}_${transactionId}`);
-                if (amountInput) {
-                    const amount = typeof pendingTx.amount === 'number' ? pendingTx.amount : parseFloat(pendingTx.amount);
-                    amountInput.value = amount.toFixed(8);
-                }
-
-                // Currency
-                const currencySelect = document.getElementById(`currency_victim_${victimId}_${transactionId}`);
-                if (currencySelect) {
-                    currencySelect.value = pendingTx.currency;
-                }
-
-                // Blockchain
-                const chainSelect = document.getElementById(`chain_victim_${victimId}_${transactionId}`);
-                if (chainSelect) {
-                    chainSelect.value = pendingTx.chain;
-                }
-
-                // Datetime (note: field is called 'datetime' not 'timestamp')
-                const datetimeInput = document.getElementById(`datetime_victim_${victimId}_${transactionId}`);
-                if (datetimeInput && pendingTx.timestamp) {
-                    datetimeInput.value = pendingTx.timestamp;
-                }
-
-                // Notes (if available from bulk selection)
-                if (pendingTx.notes) {
-                    const notesInput = document.getElementById(`notes_victim_${victimId}_${transactionId}`);
-                    if (notesInput) {
-                        notesInput.value = pendingTx.notes;
+                if (transaction) {
+                    // Update the data model directly
+                    transaction.txHash = pendingTx.txHash;
+                    transaction.receivingWallet = pendingTx.receivingAddress;
+                    transaction.amount = typeof pendingTx.amount === 'number' ? pendingTx.amount.toFixed(8) : parseFloat(pendingTx.amount).toFixed(8);
+                    transaction.currency = pendingTx.currency;
+                    transaction.chain = pendingTx.chain;
+                    if (pendingTx.timestamp) {
+                        transaction.datetime = pendingTx.timestamp;
                     }
-                }
+                    if (pendingTx.notes) {
+                        transaction.notes = pendingTx.notes;
+                    }
 
-                populatedCount++;
-                console.log(`✅ Populated transaction ${populatedCount}: ${pendingTx.txHash.substring(0, 12)}... (${pendingTx.amount} ${pendingTx.currency})`);
+                    // Also update the UI fields for visual feedback
+                    targetTxElement.value = pendingTx.txHash;
+
+                    const receivingWalletInput = document.getElementById(`receivingWallet_victim_${victimId}_${transactionId}`);
+                    if (receivingWalletInput) {
+                        receivingWalletInput.value = pendingTx.receivingAddress;
+                    }
+
+                    const amountInput = document.getElementById(`amount_victim_${victimId}_${transactionId}`);
+                    if (amountInput) {
+                        const amount = typeof pendingTx.amount === 'number' ? pendingTx.amount : parseFloat(pendingTx.amount);
+                        amountInput.value = amount.toFixed(8);
+                    }
+
+                    const currencySelect = document.getElementById(`currency_victim_${victimId}_${transactionId}`);
+                    if (currencySelect) {
+                        currencySelect.value = pendingTx.currency;
+                    }
+
+                    const chainSelect = document.getElementById(`chain_victim_${victimId}_${transactionId}`);
+                    if (chainSelect) {
+                        chainSelect.value = pendingTx.chain;
+                    }
+
+                    const datetimeInput = document.getElementById(`datetime_victim_${victimId}_${transactionId}`);
+                    if (datetimeInput && pendingTx.timestamp) {
+                        datetimeInput.value = pendingTx.timestamp;
+                    }
+
+                    if (pendingTx.notes) {
+                        const notesInput = document.getElementById(`notes_victim_${victimId}_${transactionId}`);
+                        if (notesInput) {
+                            notesInput.value = pendingTx.notes;
+                        }
+                    }
+
+                    populatedCount++;
+                    console.log(`✅ Populated transaction ${populatedCount}: ${pendingTx.txHash.substring(0, 12)}... (${pendingTx.amount} ${pendingTx.currency})`);
+                } else {
+                    console.error(`⚠️ Could not find transaction object with ID ${transactionId} in victim ${victimId}`);
+                }
             } else {
                 console.warn(`⚠️ No empty form slot found for pending transaction ${index + 1}`);
             }
@@ -51474,6 +51488,10 @@ function populateVictimFormFromPending() {
         walletExplorerState.pendingVictimTransactions = [];
         walletExplorerState.addedToVictim = [];
 
+        // Save the updated data model
+        saveToStorage();
+        console.log(`💾 Saved ${populatedCount} victim transaction(s) to data model`);
+
         // Scroll to the victim form
         const firstTxInput = document.querySelector(`[id="txHash_victim_${victimId}_1"]`);
         if (firstTxInput) {
@@ -51481,7 +51499,7 @@ function populateVictimFormFromPending() {
         }
 
         // Show success notification
-        showNotification(`✅ Populated ${populatedCount} victim deposit(s) in the form. Review and click "Add Victim to Investigation" to confirm.`, 'success', 6000);
+        showNotification(`✅ Populated ${populatedCount} victim deposit(s) in the form. Data saved - click "Complete Victim" when ready.`, 'success', 6000);
 
         console.log(`📋 Form population complete. ${populatedCount} transactions added to victim form.`);
     }, domUpdateDelay);
