@@ -3,30 +3,31 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-02 21:46)
+## Latest Commit (Auto-updated: 2025-11-02 21:54)
 
-**Commit:** 17c5f6f69a8f4198fa0c00174d67421dc488d2b2
+**Commit:** 7875eff2b7bed075224a08fce843ef71dede466a
 **Author:** Your Name
-**Message:** Fix: Use and expand Victim 1 instead of creating Victim 2
+**Message:** Fix: Remove auto-victim creation - require manual "Add Victim" button
 
-Problem: When starting a fresh investigation and using wallet explorer
-to add victim deposits, the system was creating "Victim 2" even though
-"Victim 1" existed and was completely empty. This happened because
-Victim 1 had only 1 transaction slot but user was adding 3 transactions.
+Problem: System was auto-creating victims without user explicitly requesting
+it. This removed user control over when new victims are created.
 
-Root Cause: The auto-create logic only checked if there were enough
-empty slots, not whether the victim was completely unused. So it
-created a new victim instead of expanding the existing empty one.
+User Requirement: "We should never begin a new victim unless the user
+expressly selects the button to add victim"
 
 Solution:
-1. Check if existing victim is completely empty (all txHash fields blank)
-2. If empty and needs more slots → expand it instead of creating new
-3. If has data and needs more slots → create new victim (correct behavior)
-4. This ensures Victim 1 is always used for the first batch of deposits
+1. Removed all auto-create logic for new victims
+2. If no victim exists when adding deposits → show alert directing user to click "Add Victim" first
+3. If latest victim is completed → show alert directing user to click "Add Victim" first
+4. If victim exists and incomplete → still expand it as needed (not creating new victim, just adding slots)
 
-Now the workflow correctly:
-- Uses Victim 1 for first deposit batch (expands if needed)
-- Only creates Victim 2+ if Victim 1 already has data
+New Workflow:
+1. User clicks "Add Victim" button (manual, explicit)
+2. User opens Wallet Explorer and selects deposits
+3. System expands victim if needed but never creates new one
+4. When ready for next victim → user clicks "Add Victim" again (manual)
+
+This gives user full control over victim creation.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -34,22 +35,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 40 ++++++++++++++++++++++++++++++++++++----
- 1 file changed, 36 insertions(+), 4 deletions(-)
+ index.html | 84 +++++++++++++++++++-------------------------------------------
+ 1 file changed, 25 insertions(+), 59 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 17c5f6f Fix: Use and expand Victim 1 instead of creating Victim 2 (0 seconds ago)
-- 014d5ed Update CLAUDE.md with latest commit info (5 minutes ago)
-- 61b6734 Fix: Complete Victim button now enabled after auto-population (5 minutes ago)
-- 4319ed7 Debug: Add detailed logging to completeVictim function (10 minutes ago)
-- 1448ecc Update CLAUDE.md with latest commit info (18 minutes ago)
-- 791beb8 Update CLAUDE.md with latest commit info (18 minutes ago)
-- 9a08fa5 Update CLAUDE.md with latest commit info (18 minutes ago)
-- bc59c52 Fix: Victim completion now works after auto-population (18 minutes ago)
-- 919b50f Update CLAUDE.md with latest commit info (26 minutes ago)
-- 1f00ff9 Update CLAUDE.md with latest commit info (26 minutes ago)
+- 7875eff Fix: Remove auto-victim creation - require manual "Add Victim" button (0 seconds ago)
+- 5dbb746 Update CLAUDE.md with latest commit info (8 minutes ago)
+- 17c5f6f Fix: Use and expand Victim 1 instead of creating Victim 2 (8 minutes ago)
+- 014d5ed Update CLAUDE.md with latest commit info (13 minutes ago)
+- 61b6734 Fix: Complete Victim button now enabled after auto-population (13 minutes ago)
+- 4319ed7 Debug: Add detailed logging to completeVictim function (18 minutes ago)
+- 1448ecc Update CLAUDE.md with latest commit info (26 minutes ago)
+- 791beb8 Update CLAUDE.md with latest commit info (26 minutes ago)
+- 9a08fa5 Update CLAUDE.md with latest commit info (26 minutes ago)
+- bc59c52 Fix: Victim completion now works after auto-population (26 minutes ago)
 
 ## Key Features
 
