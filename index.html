@@ -24836,15 +24836,15 @@ function addNewHop() {
                                         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                                             ${(() => {
                                                 const unloggedCount = hop.entries.filter(e => {
-                                                    const entryKey = \`\${hop.hopNumber}_\${e.id}\`;
+                                                    const entryKey = hop.hopNumber + '_' + e.id;
                                                     return !window.entryCollapseState[entryKey];
                                                 }).length;
-                                                return unloggedCount > 0 ? \`
-                                                    <button class="btn btn-success" onclick="logAllEntriesInHop(\${hop.hopNumber})"
-                                                            style="padding: 12px 24px; background: #27ae60; color: white; font-size: 16px; font-weight: bold;">
-                                                        ✅ Log All Entries (\${unloggedCount})
-                                                    </button>
-                                                \` : '';
+                                                return unloggedCount > 0 ?
+                                                    '<button class="btn btn-success" onclick="logAllEntriesInHop(' + hop.hopNumber + ')" ' +
+                                                    'style="padding: 12px 24px; background: #27ae60; color: white; font-size: 16px; font-weight: bold;">' +
+                                                    '✅ Log All Entries (' + unloggedCount + ')' +
+                                                    '</button>'
+                                                    : '';
                                             })()}
                                             <button class="btn btn-primary" onclick="showAddEntryWizard(${hop.hopNumber})"
                                                     style="padding: 12px 24px; background: #3498db; color: white; font-size: 16px;">
