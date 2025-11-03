@@ -22901,6 +22901,66 @@ function addNewHop() {
         }
         
         // Log entry and collapse
+        function logAllEntriesInHop(hopNumber) {
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
+            if (!hop) return;
+
+            let successCount = 0;
+            let failCount = 0;
+            const errors = [];
+
+            // Loop through all entries and log the unlogged ones
+            hop.entries.forEach(entry => {
+                const entryKey = `${hopNumber}_${entry.id}`;
+
+                // Skip if already logged (collapsed)
+                if (window.entryCollapseState[entryKey]) {
+                    return;
+                }
+
+                // Validate entry before logging
+                if (!entry.amount || parseFloat(entry.amount) <= 0) {
+                    errors.push(`Entry ${entry.id}: Missing amount`);
+                    failCount++;
+                    return;
+                }
+
+                // Try to auto-generate notation if missing
+                if (!entry.notation || entry.notation.trim() === '') {
+                    if (entry.sourceThreadId) {
+                        autoGenerateNotationFromSource(hopNumber, entry.id, entry.sourceThreadId);
+                    } else if (entry.multipleSourceThreads && entry.multipleSourceThreads.length > 0) {
+                        autoGenerateNotationFromMultipleSources(hopNumber, entry.id, entry.multipleSourceThreads);
+                    }
+                }
+
+                if (!entry.notation || entry.notation.trim() === '') {
+                    errors.push(`Entry ${entry.id}: Missing notation`);
+                    failCount++;
+                    return;
+                }
+
+                // Log the entry
+                window.entryCollapseState[entryKey] = true;
+                successCount++;
+            });
+
+            // Save if any entries were logged
+            if (successCount > 0) {
+                saveUndoState(`Log ${successCount} entries in Hop ${hopNumber}`);
+                saveToStorage();
+                renderTraceDocumentation();
+                updateInvestigationCompletionStatus();
+            }
+
+            // Show summary
+            if (failCount > 0) {
+                showNotification(`⚠️ Logged ${successCount} entries. ${failCount} entries failed:\n${errors.join('\n')}`, 'warning', 8000);
+            } else {
+                showNotification(`✅ Successfully logged all ${successCount} entries in Hop ${hopNumber}`, 'success');
+            }
+        }
+
         function logAndCollapseEntry(hopNumber, entryId) {
             // Find the entry
             const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
@@ -22948,23 +23008,17 @@ function addNewHop() {
             // Set entry as collapsed
             const entryKey = `${hopNumber}_${entryId}`;
             window.entryCollapseState[entryKey] = true;
-            
-            // Update UI to show collapsed state
-            const content = document.getElementById(`entryContent_${entryKey}`);
-            const summary = document.getElementById(`entrySummary_${entryKey}`);
-            
-            if (content && summary) {
-                content.style.display = 'none';
-                summary.style.display = 'block';
-            }
-            
+
+            // Re-render the trace documentation to show collapsed state
+            renderTraceDocumentation();
+
             // Update the hop to refresh ART calculations
             updateInvestigationCompletionStatus();
-            
+
             // Show success message
             const amount = parseFloat(entry.amount);
             const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
-            alert(` Entry logged successfully!\n\n${entry.notation}: ${amount.toLocaleString()} ${currency}`);
+            showNotification(` Entry logged: ${entry.notation} - ${amount.toLocaleString()} ${currency}`, 'success');
         }
         
         // Render collapsible hop entry
@@ -24799,6 +24853,18 @@ function addNewHop() {
                                     ${!hop.completed ? `
                                         <h4 style="margin-bottom: 15px; color: #2c3e50;">Next Action:</h4>
                                         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                            ${(() => {
+                                                const unloggedCount = hop.entries.filter(e => {
+                                                    const entryKey = \`\${hop.hopNumber}_\${e.id}\`;
+                                                    return !window.entryCollapseState[entryKey];
+                                                }).length;
+                                                return unloggedCount > 0 ? \`
+                                                    <button class="btn btn-success" onclick="logAllEntriesInHop(\${hop.hopNumber})"
+                                                            style="padding: 12px 24px; background: #27ae60; color: white; font-size: 16px; font-weight: bold;">
+                                                        ✅ Log All Entries (\${unloggedCount})
+                                                    </button>
+                                                \` : '';
+                                            })()}
                                             <button class="btn btn-primary" onclick="showAddEntryWizard(${hop.hopNumber})"
                                                     style="padding: 12px 24px; background: #3498db; color: white; font-size: 16px;">
                                                 + Add Entry
