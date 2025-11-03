@@ -51333,6 +51333,7 @@ function populateVictimFormFromPending() {
     // AUTO-CREATE VICTIM IF NEEDED
     let victim = null;
     let needsNewVictim = false;
+    let needsExpansion = false;
 
     // Check if any victims exist
     if (!investigation || !investigation.victims || investigation.victims.length === 0) {
@@ -51347,12 +51348,19 @@ function populateVictimFormFromPending() {
             console.log(`📋 Victim ${victim.id} is completed - auto-creating new victim`);
             needsNewVictim = true;
         } else {
-            // Count empty transaction slots
+            // Check if victim is completely empty (all transactions have no txHash)
+            const allEmpty = victim.transactions.every(t => !t.txHash || t.txHash.trim() === '');
             const emptySlots = victim.transactions.filter(t => !t.txHash || t.txHash.trim() === '').length;
-            console.log(`📋 Victim ${victim.id} has ${emptySlots} empty slots for ${pendingCount} pending transactions`);
 
-            if (emptySlots < pendingCount) {
-                console.log(`📋 Not enough empty slots - auto-creating new victim`);
+            console.log(`📋 Victim ${victim.id} has ${emptySlots} empty slots for ${pendingCount} pending transactions (all empty: ${allEmpty})`);
+
+            if (allEmpty && emptySlots < pendingCount) {
+                // Victim is completely empty but needs more slots - expand it
+                console.log(`📋 Victim ${victim.id} is empty - expanding to fit ${pendingCount} transactions`);
+                needsExpansion = true;
+            } else if (!allEmpty && emptySlots < pendingCount) {
+                // Victim has some data and not enough space - create new victim
+                console.log(`📋 Victim ${victim.id} has data and not enough slots - auto-creating new victim`);
                 needsNewVictim = true;
             }
         }
@@ -51392,6 +51400,30 @@ function populateVictimFormFromPending() {
         renderVictims(); // Render the new victim in the DOM
 
         showNotification(`✅ Auto-created new victim (Victim ${victimId}) for ${pendingCount} pending deposits`, 'success');
+    } else if (needsExpansion) {
+        // Expand existing victim to fit pending transactions
+        const slotsNeeded = pendingCount - victim.transactions.length;
+        console.log(`📋 Expanding Victim ${victim.id} by ${slotsNeeded} transaction slot(s)`);
+
+        for (let i = 0; i < slotsNeeded; i++) {
+            const newId = victim.transactions.length + 1;
+            victim.transactions.push({
+                id: newId,
+                txHash: '',
+                amount: '',
+                currency: 'USD',
+                customCurrency: '',
+                receivingWallet: '',
+                datetime: '',
+                timezone: 'UTC',
+                notes: '',
+                chain: ''
+            });
+        }
+
+        saveToStorage();
+        renderVictims();
+        showNotification(`✅ Expanded Victim ${victim.id} to accommodate ${pendingCount} deposits`, 'success');
     }
 
     const victimId = victim.id;
