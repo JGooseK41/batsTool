@@ -3,30 +3,53 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-02 21:28)
+## Latest Commit (Auto-updated: 2025-11-02 21:41)
 
-**Commit:** 791beb8c7428069d724c94acacd5801aa65cb4df
+**Commit:** 61b673424c62963ea4c94fe652463382bdb38dfa
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Fix: Complete Victim button now enabled after auto-population
+
+Root Cause: The "Complete Victim" button was being rendered as disabled
+during initial victim creation because validTransactions was 0. When we
+later populated the form and saved the data, we never re-rendered the
+DOM, so the button remained in its old disabled state even though the
+data model had valid transactions.
+
+Solution:
+1. Call renderVictims() after saveToStorage() to refresh the DOM
+2. Recalculate validTransactions count with the new data
+3. Button is now properly enabled when it should be
+4. Wrapped scroll in setTimeout to happen after re-render completes
+
+The complete workflow now works end-to-end:
+1. Select victim deposits in wallet explorer
+2. Click "Done Adding Deposits"
+3. Form auto-populates and saves to data model
+4. Form re-renders with enabled "Complete Victim" button
+5. Click "Complete Victim" - now works!
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 40 ++++++----------------------------------
- 1 file changed, 6 insertions(+), 34 deletions(-)
+ index.html | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 791beb8 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 9a08fa5 Update CLAUDE.md with latest commit info (5 seconds ago)
-- bc59c52 Fix: Victim completion now works after auto-population (9 seconds ago)
-- 919b50f Update CLAUDE.md with latest commit info (8 minutes ago)
-- 1f00ff9 Update CLAUDE.md with latest commit info (8 minutes ago)
-- 033dd88 Update CLAUDE.md with latest commit info (9 minutes ago)
-- 4566ccf Update CLAUDE.md commit timestamps (9 minutes ago)
-- 0e9d7fc Update CLAUDE.md with latest commit info (12 minutes ago)
-- e15a57d Update CLAUDE.md with latest commit info (12 minutes ago)
-- bf39225 Update CLAUDE.md with latest commit info (12 minutes ago)
+- 61b6734 Fix: Complete Victim button now enabled after auto-population (1 second ago)
+- 4319ed7 Debug: Add detailed logging to completeVictim function (5 minutes ago)
+- 1448ecc Update CLAUDE.md with latest commit info (13 minutes ago)
+- 791beb8 Update CLAUDE.md with latest commit info (13 minutes ago)
+- 9a08fa5 Update CLAUDE.md with latest commit info (13 minutes ago)
+- bc59c52 Fix: Victim completion now works after auto-population (13 minutes ago)
+- 919b50f Update CLAUDE.md with latest commit info (22 minutes ago)
+- 1f00ff9 Update CLAUDE.md with latest commit info (22 minutes ago)
+- 033dd88 Update CLAUDE.md with latest commit info (22 minutes ago)
+- 4566ccf Update CLAUDE.md commit timestamps (22 minutes ago)
 
 ## Key Features
 
