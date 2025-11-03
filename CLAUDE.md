@@ -3,30 +3,58 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-02 21:20)
+## Latest Commit (Auto-updated: 2025-11-02 21:28)
 
-**Commit:** 1f00ff9dba0b5db94c764cafb840024ad6a86008
+**Commit:** bc59c52a2873dc31900871ec2750a96b3ec1b63e
 **Author:** Your Name
-**Message:** Update CLAUDE.md with latest commit info
+**Message:** Fix: Victim completion now works after auto-population
+
+Problem: After using the pending victim transaction workflow to auto-populate
+victim deposits, clicking "Complete Victim" did nothing. The form fields showed
+the correct values but the button wouldn't respond.
+
+Root Cause: When programmatically setting input.value in JavaScript, the onchange
+event doesn't fire. So while the UI showed the populated data, the underlying
+investigation.victims[x].transactions[y] data model was never updated.
+
+The completeVictim() validation requires:
+- amount > 0
+- receivingWallet filled
+These fields were empty in the data model, causing silent validation failure.
+
+Solution:
+1. Directly update the transaction objects in the data model when populating
+2. Call saveToStorage() to persist changes
+3. Updated notification to confirm "Data saved"
+
+Now the workflow works end-to-end:
+- Select victim deposits in wallet explorer
+- Click "Done Adding Deposits"
+- Form auto-populates with data saved to model
+- Click "Complete Victim" - works immediately
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- CLAUDE.md | 20 +++++++++-----------
- 1 file changed, 9 insertions(+), 11 deletions(-)
+ index.html | 92 +++++++++++++++++++++++++++++++++++++-------------------------
+ 1 file changed, 55 insertions(+), 37 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 1f00ff9 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 033dd88 Update CLAUDE.md with latest commit info (11 seconds ago)
-- 4566ccf Update CLAUDE.md commit timestamps (17 seconds ago)
-- 0e9d7fc Update CLAUDE.md with latest commit info (3 minutes ago)
-- e15a57d Update CLAUDE.md with latest commit info (3 minutes ago)
-- bf39225 Update CLAUDE.md with latest commit info (4 minutes ago)
-- 6112f1d Update CLAUDE.md with latest commit info (4 minutes ago)
-- 2689651 Update CLAUDE.md with latest commit info (4 minutes ago)
-- 4c0b0ac Update CLAUDE.md with latest commit info (4 minutes ago)
-- c54ce8a Update CLAUDE.md with latest commit info (4 minutes ago)
+- bc59c52 Fix: Victim completion now works after auto-population (0 seconds ago)
+- 919b50f Update CLAUDE.md with latest commit info (8 minutes ago)
+- 1f00ff9 Update CLAUDE.md with latest commit info (8 minutes ago)
+- 033dd88 Update CLAUDE.md with latest commit info (9 minutes ago)
+- 4566ccf Update CLAUDE.md commit timestamps (9 minutes ago)
+- 0e9d7fc Update CLAUDE.md with latest commit info (12 minutes ago)
+- e15a57d Update CLAUDE.md with latest commit info (12 minutes ago)
+- bf39225 Update CLAUDE.md with latest commit info (12 minutes ago)
+- 6112f1d Update CLAUDE.md with latest commit info (12 minutes ago)
+- 2689651 Update CLAUDE.md with latest commit info (12 minutes ago)
 
 ## Key Features
 
