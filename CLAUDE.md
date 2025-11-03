@@ -3,35 +3,39 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-02 22:21)
+## Latest Commit (Auto-updated: 2025-11-02 22:27)
 
-**Commit:** 171f55da5bbf9b11cfd2208d5499915740a7b04c
+**Commit:** bd81b643c286294ca21cc56cca23c1fa03e39717
 **Author:** Your Name
-**Message:** Fix: Fee write-offs no longer cause over-allocation warnings
+**Message:** Fix: Fee calculation now uses blockchain data and reduces source threads
 
-Problem: Users were seeing "OVER-ALLOCATED" warnings showing 200%
-allocation for each thread. For example:
-- V1-T1: Available 0.124 BTC | Allocated 0.247 BTC (200%)
+Problem 1: Fees were being calculated using investigation allocations
+instead of actual blockchain transaction data. This caused massive
+incorrect fees like 0.12352302 BTC ($12,000) instead of the actual
+732 sats ($0.66).
 
-Root Cause: Fee entries were being created with sourceThreadId and
-multipleSourceThreads fields, which made the allocation system think
-the fee was "consuming" funds from those threads. Since both the trace
-entry AND the fee entry allocated from the same thread, each thread
-appeared 200% allocated (once for trace, once for fee).
+Problem 2: Previous "fix" removed sourceThreadId from fees, making them
+not reduce thread balances (only ART), which was incorrect.
 
-Solution: Removed sourceThreadId and multipleSourceThreads from fee
-entry creation (lines 17837-17838). Fees are write-offs that reduce
-the global ART, not allocations from specific threads.
+Root Cause: Lines 17797-17819 were calculating totalInputs by summing:
+- Existing investigation entries for this transaction
+- Current allocations being added
+This double-counted amounts and used traced amounts instead of blockchain amounts.
 
-Added affectedThreads field (line 17846) to store which threads the
-fee relates to for informational/auditing purposes, but this field
-is NOT used by the allocation tracking system.
+Solution:
+1. Restored sourceThreadId/multipleSourceThreads to fee entries (line 17837-17838)
+   - Fees now correctly reduce both the source thread AND the ART
+2. Changed fee calculation to use blockchain data (lines 17790-17803):
+   - totalInputs = group.totalSent (actual blockchain input amount)
+   - totalOutputs = sum of group.outputs (actual blockchain outputs)
+   - fee = totalInputs - totalOutputs (correct blockchain fee)
 
-Now fee write-offs correctly:
-- Show as write-off entries (not traceable)
-- Reduce ART globally
-- Don't count against thread allocation limits
-- Still document which threads were involved (in notes + affectedThreads)
+Example from user's transaction d78e8b044a37:
+Before: Fee = 0.12352302 BTC (WRONG - using investigation data)
+After:  Fee = 0.00000732 BTC (CORRECT - using blockchain data)
+Blockchain confirms: 732 sats fee
+
+Now fees are accurate and properly reduce thread balances.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -39,22 +43,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ index.html | 40 ++++++++++------------------------------
+ 1 file changed, 10 insertions(+), 30 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 171f55d Fix: Fee write-offs no longer cause over-allocation warnings (0 seconds ago)
-- 0b66947 Update CLAUDE.md with latest commit info (58 seconds ago)
-- 14e4ac2 Fix: Entry collapse and bulk logging improvements (66 seconds ago)
-- 3bcbcdb Update CLAUDE.md with latest commit info (4 minutes ago)
-- 5e39892 Fix: Fee entries now use writeoff entry type instead of generic type (4 minutes ago)
-- 422916d Update CLAUDE.md with latest commit info (15 minutes ago)
-- 5ce8d29 Fix: Remove undefined needsNewVictim variable reference (15 minutes ago)
-- 20cf47e Update CLAUDE.md with latest commit info (26 minutes ago)
-- 7875eff Fix: Remove auto-victim creation - require manual "Add Victim" button (26 minutes ago)
-- 5dbb746 Update CLAUDE.md with latest commit info (34 minutes ago)
+- bd81b64 Fix: Fee calculation now uses blockchain data and reduces source threads (0 seconds ago)
+- bac90ce Update CLAUDE.md with latest commit info (7 minutes ago)
+- 171f55d Fix: Fee write-offs no longer cause over-allocation warnings (7 minutes ago)
+- 0b66947 Update CLAUDE.md with latest commit info (8 minutes ago)
+- 14e4ac2 Fix: Entry collapse and bulk logging improvements (8 minutes ago)
+- 3bcbcdb Update CLAUDE.md with latest commit info (11 minutes ago)
+- 5e39892 Fix: Fee entries now use writeoff entry type instead of generic type (11 minutes ago)
+- 422916d Update CLAUDE.md with latest commit info (22 minutes ago)
+- 5ce8d29 Fix: Remove undefined needsNewVictim variable reference (22 minutes ago)
+- 20cf47e Update CLAUDE.md with latest commit info (33 minutes ago)
 
 ## Key Features
 
