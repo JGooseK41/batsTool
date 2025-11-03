@@ -3,34 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-02 21:19)
+## Latest Commit (Auto-updated: 2025-11-02 21:20)
 
-**Commit:** 033dd887eaf8270f2ca900351b58483eade018a6
+**Commit:** 1f00ff9dba0b5db94c764cafb840024ad6a86008
 **Author:** Your Name
 **Message:** Update CLAUDE.md with latest commit info
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-
 ### Changed Files:
 ```
- CLAUDE.md | 34 ++++++++++++++++++++--------------
- 1 file changed, 20 insertions(+), 14 deletions(-)
+ CLAUDE.md | 20 +++++++++-----------
+ 1 file changed, 9 insertions(+), 11 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 033dd88 Update CLAUDE.md with latest commit info (0 seconds ago)
-- 4566ccf Update CLAUDE.md commit timestamps (6 seconds ago)
+- 1f00ff9 Update CLAUDE.md with latest commit info (0 seconds ago)
+- 033dd88 Update CLAUDE.md with latest commit info (11 seconds ago)
+- 4566ccf Update CLAUDE.md commit timestamps (17 seconds ago)
 - 0e9d7fc Update CLAUDE.md with latest commit info (3 minutes ago)
 - e15a57d Update CLAUDE.md with latest commit info (3 minutes ago)
-- bf39225 Update CLAUDE.md with latest commit info (3 minutes ago)
+- bf39225 Update CLAUDE.md with latest commit info (4 minutes ago)
 - 6112f1d Update CLAUDE.md with latest commit info (4 minutes ago)
 - 2689651 Update CLAUDE.md with latest commit info (4 minutes ago)
 - 4c0b0ac Update CLAUDE.md with latest commit info (4 minutes ago)
 - c54ce8a Update CLAUDE.md with latest commit info (4 minutes ago)
-- dc0b7c6 Fix: Populate datetime field when adding bulk victim deposits (4 minutes ago)
 
 ## Key Features
 
