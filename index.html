@@ -17793,6 +17793,11 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             // Calculate total inputs from blockchain data (not from investigation allocations)
             const totalInputs = group.totalSent || 0;
 
+            console.log(`⛽ Fee calculation for ${txHash.substring(0, 12)}...`);
+            console.log(`   Total Inputs: ${totalInputs.toFixed(8)} BTC (from group.totalSent)`);
+            console.log(`   Total Outputs: ${totalOutputs.toFixed(8)} BTC (sum of ${group.outputs.length} outputs)`);
+            console.log(`   Calculated Fee: ${(totalInputs - totalOutputs).toFixed(8)} BTC`);
+
             // Track which threads are being allocated for this transaction (for fee attribution)
             const inputThreads = new Set();
             allocations.forEach(alloc => {
@@ -17803,7 +17808,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             const fee = totalInputs - totalOutputs;
 
             if (fee <= 0.00000001) {
-                console.log(`⛽ No fee to record for transaction ${txHash.substring(0, 12)}... (fee: ${fee.toFixed(8)} BTC)`);
+                console.log(`⛽ No fee to record for transaction ${txHash.substring(0, 12)}... (fee: ${fee.toFixed(8)} BTC) - below dust threshold`);
                 return null;
             }
 
@@ -21002,6 +21007,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                                     // Additional UTXO metadata
                                     utxoData: {
                                         totalSent: sentBTC,
+                                        totalInputValue: totalInputValue / 100000000, // Store actual input amount for fee calculation
                                         changeAmount: changeValue / 100000000,
                                         outputCount: otherOutputs.length,
                                         hasChange: ourOutputs.length > 0,
@@ -21045,6 +21051,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                                     isUTXO: true,
                                     utxoData: {
                                         totalSent: sentBTC,
+                                        totalInputValue: totalInputValue / 100000000, // Store actual input amount for fee calculation
                                         changeAmount: changeBTC,
                                         outputCount: otherOutputs.length,
                                         originalAddress: address
@@ -21089,8 +21096,8 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         explorerUrl: tx.explorerUrl,
                         isUTXO: true,
 
-                        // For outgoing: sum all outputs
-                        totalSent: 0,
+                        // For outgoing: use actual input value from first transaction, sum all outputs
+                        totalSent: tx.utxoData?.totalInputValue || 0, // Use actual total input value for fee calculation
                         outputs: [],
                         outputCount: 0,
 
@@ -21115,7 +21122,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         potentialNewAddressChange: tx.potentialNewAddressChange || false,
                         originalTx: tx // Keep reference to full transaction object
                     });
-                    group.totalSent += tx.amount;
+                    // Don't add to totalSent - it should be the input amount, not sum of outputs
                     group.outputCount = group.outputs.length;
                 } else if (tx.type === 'CHANGE') {
                     // Add change as special output
@@ -21126,7 +21133,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                         isChange: true,
                         originalTx: tx
                     });
-                    group.totalSent += tx.amount;
+                    // Don't add to totalSent - it should be the input amount, not sum of outputs
                     group.outputCount = group.outputs.length;
                 }
             });
