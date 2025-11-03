@@ -3,30 +3,37 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-02 22:17)
+## Latest Commit (Auto-updated: 2025-11-02 22:20)
 
-**Commit:** 5e398927e1ddda4ca9d94488f48a78f08f1a6971
+**Commit:** 14e4ac2136a2f6603ed8c3609479cdec78835032
 **Author:** Your Name
-**Message:** Fix: Fee entries now use writeoff entry type instead of generic type
+**Message:** Fix: Entry collapse and bulk logging improvements
 
-Problem: Auto-created Bitcoin transaction fee entries were using
-entryType: 'fee' which displayed as regular "Outgoing Transaction"
-entries instead of "Write-Off" entries in the hop tracker.
+Problem 1: When clicking "Log Entry" on terminal wallet entries, they
+weren't collapsing. The button set the collapse state but didn't re-render
+the UI to show the collapsed view.
 
-Impact: Fee write-offs appeared traceable when they should be marked
-as write-offs that reduce the Available Running Total (ART).
+Problem 2: Users had to manually click "Log Entry" on each individual
+entry when adding multiple bulk entries, which was tedious and time-consuming.
 
 Solution:
-1. Changed fee entry creation to use entryType: 'writeoff' (line 17830)
-2. Updated duplicate fee detection to look for writeoff entries with
-   destinationWallet === '⛽ Miner Fee' (lines 17150, 17783)
+1. logAndCollapseEntry() now calls renderTraceDocumentation() after setting
+   collapse state to properly re-render and show collapsed entries (line 22953)
+2. Changed alert to showNotification for better UX (line 22961)
+3. Added new logAllEntriesInHop(hopNumber) function that:
+   - Loops through all unlogged entries in a hop
+   - Validates each entry (amount, notation)
+   - Auto-generates notation if possible
+   - Logs and collapses all valid entries
+   - Shows summary of successes/failures
+4. Added "✅ Log All Entries (N)" button at bottom of each hop that:
+   - Only appears if there are unlogged entries
+   - Shows count of unlogged entries
+   - One-click logs and collapses all entries
+   - Positioned before "+ Add Entry" button
 
-Now fee entries correctly display as write-offs and properly reduce
-ART without appearing as traceable transactions.
-
-Note: Existing fee entries in current investigations will still show
-as "Outgoing Transaction" - users can manually change them or recreate
-the hops to get the correct entry type.
+This dramatically improves workflow when adding multiple bulk entries like
+victim deposits that were traced to terminal wallets.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -34,22 +41,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+ index.html | 90 +++++++++++++++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 78 insertions(+), 12 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5e39892 Fix: Fee entries now use writeoff entry type instead of generic type (1 second ago)
-- 422916d Update CLAUDE.md with latest commit info (11 minutes ago)
-- 5ce8d29 Fix: Remove undefined needsNewVictim variable reference (11 minutes ago)
-- 20cf47e Update CLAUDE.md with latest commit info (22 minutes ago)
-- 7875eff Fix: Remove auto-victim creation - require manual "Add Victim" button (22 minutes ago)
-- 5dbb746 Update CLAUDE.md with latest commit info (30 minutes ago)
-- 17c5f6f Fix: Use and expand Victim 1 instead of creating Victim 2 (31 minutes ago)
-- 014d5ed Update CLAUDE.md with latest commit info (35 minutes ago)
-- 61b6734 Fix: Complete Victim button now enabled after auto-population (35 minutes ago)
-- 4319ed7 Debug: Add detailed logging to completeVictim function (41 minutes ago)
+- 14e4ac2 Fix: Entry collapse and bulk logging improvements (0 seconds ago)
+- 3bcbcdb Update CLAUDE.md with latest commit info (3 minutes ago)
+- 5e39892 Fix: Fee entries now use writeoff entry type instead of generic type (3 minutes ago)
+- 422916d Update CLAUDE.md with latest commit info (14 minutes ago)
+- 5ce8d29 Fix: Remove undefined needsNewVictim variable reference (14 minutes ago)
+- 20cf47e Update CLAUDE.md with latest commit info (25 minutes ago)
+- 7875eff Fix: Remove auto-victim creation - require manual "Add Victim" button (25 minutes ago)
+- 5dbb746 Update CLAUDE.md with latest commit info (33 minutes ago)
+- 17c5f6f Fix: Use and expand Victim 1 instead of creating Victim 2 (33 minutes ago)
+- 014d5ed Update CLAUDE.md with latest commit info (38 minutes ago)
 
 ## Key Features
 
