@@ -3,21 +3,30 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-02 22:05)
+## Latest Commit (Auto-updated: 2025-11-02 22:17)
 
-**Commit:** 5ce8d29f680f5e56cf731d50b78c70025bd55bb9
+**Commit:** 5e398927e1ddda4ca9d94488f48a78f08f1a6971
 **Author:** Your Name
-**Message:** Fix: Remove undefined needsNewVictim variable reference
+**Message:** Fix: Fee entries now use writeoff entry type instead of generic type
 
-Error: "Uncaught ReferenceError: needsNewVictim is not defined at line 51407"
+Problem: Auto-created Bitcoin transaction fee entries were using
+entryType: 'fee' which displayed as regular "Outgoing Transaction"
+entries instead of "Write-Off" entries in the hop tracker.
 
-Root Cause: When removing auto-victim creation logic, I deleted the
-needsNewVictim variable declaration but left one reference to it at
-line 51407 where it was used to determine DOM update delay timing.
+Impact: Fee write-offs appeared traceable when they should be marked
+as write-offs that reduce the Available Running Total (ART).
 
-Solution: Changed the timeout calculation to use needsExpansion instead,
-which correctly determines if the victim was just expanded and needs
-extra time for DOM updates.
+Solution:
+1. Changed fee entry creation to use entryType: 'writeoff' (line 17830)
+2. Updated duplicate fee detection to look for writeoff entries with
+   destinationWallet === '⛽ Miner Fee' (lines 17150, 17783)
+
+Now fee entries correctly display as write-offs and properly reduce
+ART without appearing as traceable transactions.
+
+Note: Existing fee entries in current investigations will still show
+as "Outgoing Transaction" - users can manually change them or recreate
+the hops to get the correct entry type.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -25,22 +34,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ index.html | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 5ce8d29 Fix: Remove undefined needsNewVictim variable reference (1 second ago)
-- 20cf47e Update CLAUDE.md with latest commit info (11 minutes ago)
-- 7875eff Fix: Remove auto-victim creation - require manual "Add Victim" button (11 minutes ago)
-- 5dbb746 Update CLAUDE.md with latest commit info (19 minutes ago)
-- 17c5f6f Fix: Use and expand Victim 1 instead of creating Victim 2 (19 minutes ago)
-- 014d5ed Update CLAUDE.md with latest commit info (24 minutes ago)
-- 61b6734 Fix: Complete Victim button now enabled after auto-population (24 minutes ago)
-- 4319ed7 Debug: Add detailed logging to completeVictim function (29 minutes ago)
-- 1448ecc Update CLAUDE.md with latest commit info (37 minutes ago)
-- 791beb8 Update CLAUDE.md with latest commit info (37 minutes ago)
+- 5e39892 Fix: Fee entries now use writeoff entry type instead of generic type (1 second ago)
+- 422916d Update CLAUDE.md with latest commit info (11 minutes ago)
+- 5ce8d29 Fix: Remove undefined needsNewVictim variable reference (11 minutes ago)
+- 20cf47e Update CLAUDE.md with latest commit info (22 minutes ago)
+- 7875eff Fix: Remove auto-victim creation - require manual "Add Victim" button (22 minutes ago)
+- 5dbb746 Update CLAUDE.md with latest commit info (30 minutes ago)
+- 17c5f6f Fix: Use and expand Victim 1 instead of creating Victim 2 (31 minutes ago)
+- 014d5ed Update CLAUDE.md with latest commit info (35 minutes ago)
+- 61b6734 Fix: Complete Victim button now enabled after auto-population (35 minutes ago)
+- 4319ed7 Debug: Add detailed logging to completeVictim function (41 minutes ago)
 
 ## Key Features
 
