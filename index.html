@@ -17144,10 +17144,12 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             const totalOutputs = group.outputs.reduce((sum, output) => sum + output.amount, 0);
             const totalSent = group.totalSent || totalOutputs;
 
-            // Check if fee entry already exists
+            // Check if fee entry already exists (fees are write-offs to miner)
             const existingFeeEntry = investigation.hops
                 .flatMap(h => h.entries || [])
-                .find(e => e.transactionHash?.toLowerCase() === group.txHash.toLowerCase() && e.entryType === 'fee');
+                .find(e => e.transactionHash?.toLowerCase() === group.txHash.toLowerCase() &&
+                          e.entryType === 'writeoff' &&
+                          e.destinationWallet === '⛽ Miner Fee');
 
             html += `
                 <div style="border: 2px solid #ffc107; border-radius: 8px; padding: 15px; background: #fff9e6; margin-top: 10px;">
@@ -17773,10 +17775,12 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
          * Only creates fee entry once per transaction
          */
         function createBitcoinTransactionFeeEntry(txHash, group, hopNumber, allocations) {
-            // Check if fee entry already exists for this transaction
+            // Check if fee entry already exists for this transaction (fees are write-offs to miner)
             const existingFeeEntry = investigation.hops
                 .flatMap(h => h.entries || [])
-                .find(e => e.transactionHash?.toLowerCase() === txHash.toLowerCase() && e.entryType === 'fee');
+                .find(e => e.transactionHash?.toLowerCase() === txHash.toLowerCase() &&
+                          e.entryType === 'writeoff' &&
+                          e.destinationWallet === '⛽ Miner Fee');
 
             if (existingFeeEntry) {
                 console.log(`⛽ Fee entry already exists for transaction ${txHash.substring(0, 12)}...`);
@@ -17827,7 +17831,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             const feeEntry = {
                 id: investigation.hops.find(h => h.hopNumber === hopNumber).entries.length + 2, // +2 because we're adding after the main entry
                 hopNumber: hopNumber,
-                entryType: 'fee',
+                entryType: 'writeoff',  // Fees are write-offs that reduce ART
                 amount: fee.toFixed(8),
                 currency: 'BTC',
                 sourceThreadId: threadArray[0], // Primary thread
