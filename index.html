@@ -17823,7 +17823,7 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
                 sourceThreadId: threadArray[0], // Primary thread - fee reduces this thread
                 multipleSourceThreads: threadArray.length > 1 ? threadArray : undefined,
                 notation: '', // Will be auto-generated
-                notes: `⛽ Bitcoin Transaction Fee\n\nTransaction: ${txHash}\nTotal Inputs: ${totalInputs.toFixed(8)} BTC\nTotal Outputs: ${totalOutputs.toFixed(8)} BTC\nFee Paid: ${fee.toFixed(8)} BTC\n\nThis fee was paid to miners and reduces the Available Running Total (ART) and the source thread balance.\n\nThreads paying fee:\n${threadArray.map(t => `  • ${t}`).join('\n')}`,
+                notes: `⛽ Bitcoin Transaction Fee\n\nTransaction: ${txHash}\nTotal Inputs: ${totalInputs.toFixed(8)} BTC\nTotal Outputs: ${totalOutputs.toFixed(8)} BTC\nFee Paid: ${fee.toFixed(8)} BTC\n\nThis fee was paid to miners and reduces the Adjusted Root Total (ART) and the source thread balance.\n\nThreads paying fee:\n${threadArray.map(t => `  • ${t}`).join('\n')}`,
                 timestamp: new Date(group.timestamp).toISOString().slice(0, 16),
                 chain: 'bitcoin',
                 transactionHash: txHash,
@@ -40040,7 +40040,7 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
                     <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                         <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #2c3e50;">Impact on ART:</h4>
                         <p style="margin: 0; color: #666; font-size: 14px;">
-                            Writing off this entry will reduce your Available Running Total (ART) by <strong>${entry.amount} ${entry.currency}</strong>.
+                            Writing off this entry will reduce your Adjusted Root Total (ART) by <strong>${entry.amount} ${entry.currency}</strong>.
                             The thread will be marked as a dead end and removed from active tracking.
                         </p>
                     </div>
@@ -53891,7 +53891,7 @@ To (RED Wallet): ${transfer.to}`;
                   '   T = Transaction number (T1, T2, etc.)\n' +
                   '   H = Hop level (H1, H2, etc.)\n\n' +
                   '2. ART System:\n' +
-                  '   Track Available Running Total at each hop\n' +
+                  '   Track Adjusted Root Total at each hop\n' +
                   '   Document amounts traced vs. remaining\n\n' +
                   '3. Documentation Requirements:\n' +
                   '   - Screenshot all transactions\n' +

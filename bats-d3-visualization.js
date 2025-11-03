@@ -36,7 +36,8 @@ class BATSVisualizationD3 {
                 gray: '#95a5a6',     // Obfuscated/Mixer
                 blue: '#3498db',     // Cold Storage
                 orange: '#f39c12',   // Change
-                green: '#27ae60'     // Recovered
+                green: '#27ae60',    // Recovered
+                writeoff: '#dc3545'  // Write-offs (fees, etc)
             }
         };
 
@@ -350,9 +351,51 @@ class BATSVisualizationD3 {
             // Process entries
             console.log(`Processing Hop ${hop.hopNumber} with ${hop.entries.length} entries`);
             hop.entries.forEach((entry, entryIndex) => {
+                // Handle writeoffs as special nodes that reduce ART
                 if (entry.entryType === 'writeoff') {
-                    console.log(`  - Skipping writeoff entry ${entryIndex}`);
-                    // Skip writeoffs for now (could add as special nodes later)
+                    console.log(`  - Processing writeoff entry ${entryIndex}: ${entry.amount} ${entry.currency}`);
+                    const currency = entry.currency === 'CUSTOM' ? entry.customCurrency : entry.currency;
+                    const amount = parseFloat(entry.amount || 0);
+
+                    // Subtract writeoff from ART
+                    hopColumn.artAfter[currency] = (hopColumn.artAfter[currency] || 0) - amount;
+
+                    // Create writeoff node (small marker, not a full wallet)
+                    const nodeId = `H${hop.hopNumber}-WRITEOFF-${entryIndex}`;
+                    const writeoffNode = {
+                        id: nodeId,
+                        label: entry.notation || `⛽ ${entry.notes?.split('\n')[0] || 'Write-off'}`,
+                        wallet: entry.destinationWallet || '⛽ Write-off',
+                        walletLabel: entry.notes?.includes('Transaction Fee') ? '⛽ Miner Fee' : 'Write-off',
+                        walletId: 'W',
+                        type: 'writeoff',
+                        amount: amount,
+                        currency: currency,
+                        column: hopIndex + 1,
+                        isWriteoff: true
+                    };
+
+                    hopColumn.nodes.push(writeoffNode);
+                    this.nodes.push(writeoffNode);
+                    this.nodeMap.set(nodeId, writeoffNode);
+
+                    // Create edge showing writeoff reduction
+                    if (entry.sourceThreadId) {
+                        const sourceNode = this.nodeMap.get(entry.sourceThreadId) || this.nodeMap.get(`${entry.sourceThreadId}_${currency}`);
+                        if (sourceNode) {
+                            this.edges.push({
+                                source: sourceNode.id,
+                                target: nodeId,
+                                label: `${amount.toFixed(currency === 'BTC' ? 8 : 2)} ${currency}`,
+                                amount: amount,
+                                currency: currency,
+                                entryData: entry,
+                                isWriteoff: true
+                            });
+                        }
+                    }
+
+                    console.log(`  - Added writeoff node: ${nodeId} (${amount} ${currency})`);
                     return;
                 }
 
@@ -2347,18 +2390,40 @@ class BATSVisualizationD3 {
                 this.hideNoteTooltip();
             });
 
-        // Node circle
-        nodeEnter.append('circle')
-            .attr('r', this.config.nodeRadius)
-            .attr('fill', d => this.config.colors[d.type] || this.config.colors.black)
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 3)
-            .on('mouseover', function() {
-                d3.select(this).attr('stroke-width', 5);
-            })
-            .on('mouseout', function() {
-                d3.select(this).attr('stroke-width', 3);
-            });
+        // Node shape - circles for regular nodes, triangles for writeoffs
+        nodeEnter.each(function(d) {
+            const node = d3.select(this);
+
+            if (d.isWriteoff) {
+                // Draw triangle (pointing down) for writeoffs
+                const size = 30;
+                const points = `0,-${size} ${size},${size/2} -${size},${size/2}`;
+                node.append('polygon')
+                    .attr('points', points)
+                    .attr('fill', '#dc3545')
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 3)
+                    .on('mouseover', function() {
+                        d3.select(this).attr('stroke-width', 5);
+                    })
+                    .on('mouseout', function() {
+                        d3.select(this).attr('stroke-width', 3);
+                    });
+            } else {
+                // Draw circle for regular nodes
+                node.append('circle')
+                    .attr('r', this.config.nodeRadius)
+                    .attr('fill', this.config.colors[d.type] || this.config.colors.black)
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 3)
+                    .on('mouseover', function() {
+                        d3.select(this).attr('stroke-width', 5);
+                    })
+                    .on('mouseout', function() {
+                        d3.select(this).attr('stroke-width', 3);
+                    });
+            }
+        }.bind(this));
 
         // Wallet ID (B-1, P-2, etc) - INSIDE the circle in white
         nodeEnter.append('text')
@@ -2394,13 +2459,19 @@ class BATSVisualizationD3 {
             .style('pointer-events', 'none')
             .text(d => d.note ? '📝' : '');
 
-        // Wallet address
+        // Wallet address/attribution - show prominently for terminal wallets
         nodeEnter.append('text')
             .attr('y', this.config.nodeRadius + 22)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '9px')
-            .attr('fill', '#7f8c8d')
-            .text(d => d.walletLabel);
+            .attr('font-size', d => d.isTerminal || d.type === 'purple' ? '11px' : '9px')
+            .attr('font-weight', d => d.isTerminal || d.type === 'purple' ? 'bold' : 'normal')
+            .attr('fill', d => d.isTerminal || d.type === 'purple' ? '#9b59b6' : '#7f8c8d')
+            .text(d => {
+                if (d.isTerminal || d.type === 'purple') {
+                    return `🏦 ${d.walletLabel || this.shortenAddress(d.wallet)}`;
+                }
+                return d.walletLabel;
+            });
 
         // Amount - show totals for red wallets with multiple currencies
         nodeEnter.append('text')
@@ -2423,7 +2494,8 @@ class BATSVisualizationD3 {
                     }
                 }
                 // Default for other wallet types
-                return `${(d.amount || 0).toFixed(2)} ${d.currency || ''}`;
+                const decimals = d.currency === 'BTC' ? 8 : 2;
+                return `${(d.amount || 0).toFixed(decimals)} ${d.currency || ''}`;
             });
     }
 
