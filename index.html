@@ -41590,28 +41590,43 @@ function updateWriteoffAmount(hopNumber, entryId, amount) {
         }
         
         function completeVictim(victimId) {
+            console.log(`🔵 COMPLETE VICTIM ${victimId}: Button clicked`);
             const victim = investigation.victims.find(v => v.id === victimId);
-            if (!victim) return;
-            
+            if (!victim) {
+                console.error(`❌ Victim ${victimId} not found`);
+                return;
+            }
+
+            console.log(`📝 Victim ${victimId} data:`, victim);
+            console.log(`📝 Victim ${victimId} transactions:`, victim.transactions);
+
             // Validate victim has at least one transaction
-            const validTransactions = victim.transactions.filter(t => 
+            const validTransactions = victim.transactions.filter(t =>
                 parseFloat(t.amount) > 0 && t.receivingWallet && t.receivingWallet.trim() !== ''
             );
-            
+
+            console.log(`✅ Found ${validTransactions.length} valid transactions (with amount > 0 and receiving wallet)`);
+
             if (validTransactions.length === 0) {
+                console.error(`❌ No valid transactions found`);
                 alert('Please add at least one transaction with amount and receiving wallet before completing this victim.');
                 return;
             }
-            
+
             // Validate all transactions have required data
-            const incompleteTransactions = victim.transactions.filter(t => 
+            const incompleteTransactions = victim.transactions.filter(t =>
                 parseFloat(t.amount) > 0 && (!t.receivingWallet || t.receivingWallet.trim() === '')
             );
-            
+
+            console.log(`⚠️ Found ${incompleteTransactions.length} incomplete transactions (amount > 0 but missing receiving wallet)`);
+
             if (incompleteTransactions.length > 0) {
+                console.error(`❌ Incomplete transactions:`, incompleteTransactions);
                 alert(`Cannot complete victim ${victimId}: ${incompleteTransactions.length} transaction(s) are missing receiving wallet addresses.`);
                 return;
             }
+
+            console.log(`✅ All validations passed, showing confirm dialog...`);
             
             if (confirm(`Complete Victim ${victimId}?\n\nThis will minimize the view to show only a summary. You can edit later if needed.`)) {
                 victim.isCompleted = true;
