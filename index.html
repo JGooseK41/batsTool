@@ -51403,8 +51403,8 @@ function populateVictimFormFromPending() {
     switchTab('victims');
 
     // Wait for DOM to update, then populate the form fields
-    // Use longer timeout if we just created a new victim
-    const domUpdateDelay = needsNewVictim ? 500 : 300;
+    // Use longer timeout if we just expanded the victim
+    const domUpdateDelay = needsExpansion ? 500 : 300;
     setTimeout(() => {
         let populatedCount = 0;
 
