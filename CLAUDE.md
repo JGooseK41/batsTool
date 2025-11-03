@@ -3,39 +3,34 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-02 22:27)
+## Latest Commit (Auto-updated: 2025-11-02 22:32)
 
-**Commit:** bd81b643c286294ca21cc56cca23c1fa03e39717
+**Commit:** 6daa818a3a984f80740c8eba976f8b99cd7b4945
 **Author:** Your Name
-**Message:** Fix: Fee calculation now uses blockchain data and reduces source threads
+**Message:** Fix: JavaScript syntax error in Log All Entries button
 
-Problem 1: Fees were being calculated using investigation allocations
-instead of actual blockchain transaction data. This caused massive
-incorrect fees like 0.12352302 BTC ($12,000) instead of the actual
-732 sats ($0.66).
+Problem: Page wouldn't load, showing "Uncaught SyntaxError: Invalid
+or unexpected token" at line 24839.
 
-Problem 2: Previous "fix" removed sourceThreadId from fees, making them
-not reduce thread balances (only ART), which was incorrect.
+Root Cause: Used escaped template literals inside a template literal:
+```javascript
+const entryKey = \`\${hop.hopNumber}_\${e.id}\`;
+return unloggedCount > 0 ? \`<button...>\` : '';
+```
+This created invalid nested template literal syntax.
 
-Root Cause: Lines 17797-17819 were calculating totalInputs by summing:
-- Existing investigation entries for this transaction
-- Current allocations being added
-This double-counted amounts and used traced amounts instead of blockchain amounts.
+Solution: Changed to regular string concatenation instead of nested
+template literals (lines 24839-24847):
+```javascript
+const entryKey = hop.hopNumber + '_' + e.id;
+return unloggedCount > 0 ?
+    '<button onclick="logAllEntriesInHop(' + hop.hopNumber + ')">' +
+    '✅ Log All Entries (' + unloggedCount + ')' +
+    '</button>'
+    : '';
+```
 
-Solution:
-1. Restored sourceThreadId/multipleSourceThreads to fee entries (line 17837-17838)
-   - Fees now correctly reduce both the source thread AND the ART
-2. Changed fee calculation to use blockchain data (lines 17790-17803):
-   - totalInputs = group.totalSent (actual blockchain input amount)
-   - totalOutputs = sum of group.outputs (actual blockchain outputs)
-   - fee = totalInputs - totalOutputs (correct blockchain fee)
-
-Example from user's transaction d78e8b044a37:
-Before: Fee = 0.12352302 BTC (WRONG - using investigation data)
-After:  Fee = 0.00000732 BTC (CORRECT - using blockchain data)
-Blockchain confirms: 732 sats fee
-
-Now fees are accurate and properly reduce thread balances.
+Page now loads correctly with working Log All Entries button.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -43,22 +38,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 40 ++++++++++------------------------------
- 1 file changed, 10 insertions(+), 30 deletions(-)
+ index.html | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 ```
 
 ## Recent Commits History
 
-- bd81b64 Fix: Fee calculation now uses blockchain data and reduces source threads (0 seconds ago)
-- bac90ce Update CLAUDE.md with latest commit info (7 minutes ago)
-- 171f55d Fix: Fee write-offs no longer cause over-allocation warnings (7 minutes ago)
-- 0b66947 Update CLAUDE.md with latest commit info (8 minutes ago)
-- 14e4ac2 Fix: Entry collapse and bulk logging improvements (8 minutes ago)
-- 3bcbcdb Update CLAUDE.md with latest commit info (11 minutes ago)
-- 5e39892 Fix: Fee entries now use writeoff entry type instead of generic type (11 minutes ago)
-- 422916d Update CLAUDE.md with latest commit info (22 minutes ago)
-- 5ce8d29 Fix: Remove undefined needsNewVictim variable reference (22 minutes ago)
-- 20cf47e Update CLAUDE.md with latest commit info (33 minutes ago)
+- 6daa818 Fix: JavaScript syntax error in Log All Entries button (0 seconds ago)
+- e60e7f1 Update CLAUDE.md with latest commit info (5 minutes ago)
+- bd81b64 Fix: Fee calculation now uses blockchain data and reduces source threads (5 minutes ago)
+- bac90ce Update CLAUDE.md with latest commit info (11 minutes ago)
+- 171f55d Fix: Fee write-offs no longer cause over-allocation warnings (12 minutes ago)
+- 0b66947 Update CLAUDE.md with latest commit info (12 minutes ago)
+- 14e4ac2 Fix: Entry collapse and bulk logging improvements (13 minutes ago)
+- 3bcbcdb Update CLAUDE.md with latest commit info (15 minutes ago)
+- 5e39892 Fix: Fee entries now use writeoff entry type instead of generic type (16 minutes ago)
+- 422916d Update CLAUDE.md with latest commit info (27 minutes ago)
 
 ## Key Features
 
