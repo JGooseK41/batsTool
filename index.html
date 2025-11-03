@@ -51330,77 +51330,43 @@ function populateVictimFormFromPending() {
 
     console.log(`📝 Processing ${pendingCount} pending victim transactions`);
 
-    // AUTO-CREATE VICTIM IF NEEDED
+    // CHECK FOR EXISTING VICTIM (NEVER AUTO-CREATE)
     let victim = null;
-    let needsNewVictim = false;
     let needsExpansion = false;
 
     // Check if any victims exist
     if (!investigation || !investigation.victims || investigation.victims.length === 0) {
-        console.log('📋 No victims exist - auto-creating new victim');
-        needsNewVictim = true;
-    } else {
-        // Get the most recent victim
-        victim = investigation.victims[investigation.victims.length - 1];
-
-        // Check if victim is completed
-        if (victim.isCompleted) {
-            console.log(`📋 Victim ${victim.id} is completed - auto-creating new victim`);
-            needsNewVictim = true;
-        } else {
-            // Check if victim is completely empty (all transactions have no txHash)
-            const allEmpty = victim.transactions.every(t => !t.txHash || t.txHash.trim() === '');
-            const emptySlots = victim.transactions.filter(t => !t.txHash || t.txHash.trim() === '').length;
-
-            console.log(`📋 Victim ${victim.id} has ${emptySlots} empty slots for ${pendingCount} pending transactions (all empty: ${allEmpty})`);
-
-            if (allEmpty && emptySlots < pendingCount) {
-                // Victim is completely empty but needs more slots - expand it
-                console.log(`📋 Victim ${victim.id} is empty - expanding to fit ${pendingCount} transactions`);
-                needsExpansion = true;
-            } else if (!allEmpty && emptySlots < pendingCount) {
-                // Victim has some data and not enough space - create new victim
-                console.log(`📋 Victim ${victim.id} has data and not enough slots - auto-creating new victim`);
-                needsNewVictim = true;
-            }
-        }
+        console.error('❌ No victims exist - user must manually create a victim first');
+        closeWalletExplorer();
+        alert('⚠️ No victim exists yet!\n\nPlease click the "Add Victim" button first to create a victim, then use the Wallet Explorer to add deposits.');
+        return;
     }
 
-    // Auto-create new victim if needed
-    if (needsNewVictim) {
-        console.log(`📋 Auto-creating new victim for ${pendingCount} pending transactions`);
+    // Get the most recent victim
+    victim = investigation.victims[investigation.victims.length - 1];
 
-        // Create new victim
-        const victimId = investigation.victims.length + 1;
-        victim = {
-            id: victimId,
-            isCompleted: false,
-            name: '',
-            transactions: []
-        };
+    // Check if victim is completed
+    if (victim.isCompleted) {
+        console.error(`❌ Victim ${victim.id} is completed - user must manually create a new victim`);
+        closeWalletExplorer();
+        alert(`⚠️ Victim ${victim.id} is already completed!\n\nPlease click the "Add Victim" button to create a new victim, then use the Wallet Explorer to add deposits.`);
+        return;
+    }
 
-        // Create enough transaction slots for all pending transactions
-        for (let i = 1; i <= pendingCount; i++) {
-            victim.transactions.push({
-                id: i,
-                txHash: '',
-                amount: '',
-                currency: 'USD',
-                customCurrency: '',
-                receivingWallet: '',
-                datetime: '',
-                timezone: 'UTC',
-                notes: '',
-                chain: ''
-            });
-        }
+    // Check if victim needs expansion
+    const allEmpty = victim.transactions.every(t => !t.txHash || t.txHash.trim() === '');
+    const emptySlots = victim.transactions.filter(t => !t.txHash || t.txHash.trim() === '').length;
 
-        investigation.victims.push(victim);
-        saveToStorage();
-        renderVictims(); // Render the new victim in the DOM
+    console.log(`📋 Victim ${victim.id} has ${emptySlots} empty slots for ${pendingCount} pending transactions (all empty: ${allEmpty})`);
 
-        showNotification(`✅ Auto-created new victim (Victim ${victimId}) for ${pendingCount} pending deposits`, 'success');
-    } else if (needsExpansion) {
+    if (emptySlots < pendingCount) {
+        // Need more slots - expand the existing victim
+        console.log(`📋 Victim ${victim.id} needs expansion - adding ${pendingCount - emptySlots} more slot(s)`);
+        needsExpansion = true;
+    }
+
+    // Expand victim if needed
+    if (needsExpansion) {
         // Expand existing victim to fit pending transactions
         const slotsNeeded = pendingCount - victim.transactions.length;
         console.log(`📋 Expanding Victim ${victim.id} by ${slotsNeeded} transaction slot(s)`);
