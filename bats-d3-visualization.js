@@ -3853,13 +3853,17 @@ Click OK to copy transaction hash to clipboard.
                         // Check if dropped on another node for clustering (use tighter radius)
                         const targetNode = self.findNodeAtPosition(d.x, d.y, d);
                         if (targetNode && targetNode.column === d.column) {
-                            // Same hop - offer to create cluster
-                            self.showClusterConfirmation(d, targetNode);
-                            // Reset position temporarily
-                            d.x = self.dragStartPos.x;
-                            d.y = self.dragStartPos.y;
-                            self.render();
-                            return;
+                            // Check if nodes are compatible for clustering
+                            if (self.canClusterNodes(d, targetNode)) {
+                                // Same hop and compatible types - offer to create cluster
+                                self.showClusterConfirmation(d, targetNode);
+                                // Reset position temporarily
+                                d.x = self.dragStartPos.x;
+                                d.y = self.dragStartPos.y;
+                                self.render();
+                                return;
+                            }
+                            // If not compatible, just treat as normal drag (fall through to save state)
                         }
                     }
 
@@ -3962,6 +3966,40 @@ Click OK to copy transaction hash to clipboard.
             }
         }
         return null;
+    }
+
+    canClusterNodes(sourceNode, targetNode) {
+        // Check if two nodes can be clustered together based on type compatibility
+
+        // If target is a cluster, check if source is compatible with cluster type
+        if (targetNode.isCluster) {
+            // Get the type of nodes in the cluster
+            const clusterNodes = this.nodes.filter(n => targetNode.nodeIds.includes(n.id));
+            if (clusterNodes.length === 0) return true; // Empty cluster, allow
+
+            // Check if source matches any node type in cluster
+            const firstClusterNode = clusterNodes[0];
+            return this.nodesHaveSameType(sourceNode, firstClusterNode);
+        }
+
+        // Both are regular nodes - check if they have compatible types
+        return this.nodesHaveSameType(sourceNode, targetNode);
+    }
+
+    nodesHaveSameType(node1, node2) {
+        // Determine node type categories
+        const getNodeCategory = (node) => {
+            if (node.isWriteoff || node.type === 'writeoff') return 'writeoff';
+            if (node.isSwap) return 'swap';
+            if (node.type === 'purple') return 'terminal';
+            if (node.type === 'red') return 'victim';
+            return node.type || 'unknown'; // black, brown, etc.
+        };
+
+        const cat1 = getNodeCategory(node1);
+        const cat2 = getNodeCategory(node2);
+
+        return cat1 === cat2;
     }
 
     showClusterConfirmation(draggedNode, targetNode) {
