@@ -1327,6 +1327,7 @@ class BATSVisualizationD3 {
             .text('ART (Adjusted Root Total)');
 
         // ART Values (bottom)
+        const self = this;
         headerGroup.append('text')
             .attr('x', d => d.x)
             .attr('y', 75)
@@ -1339,9 +1340,9 @@ class BATSVisualizationD3 {
                 const artEntries = Object.entries(d.artBefore || {});
                 if (artEntries.length === 0) return 'No ART';
                 return artEntries.map(([currency, amount]) =>
-                    `${this.formatAmount(amount, currency)} ${currency}`
+                    `${self.formatAmount(amount, currency)} ${currency}`
                 ).join(' + ');
-            }.bind(this));
+            });
     }
 
     drawHopReconciliation(hopSpaces) {
@@ -2066,6 +2067,7 @@ class BATSVisualizationD3 {
     drawHopCreationARTBoxes(hopSpaces) {
         // Draw NEW ART boxes below T-account in hop creation columns
         // These show the ART AFTER the hop completes
+        const self = this;
         const artBoxes = this.backgroundGroup.selectAll('.hop-creation-art-box')
             .data(hopSpaces);
 
@@ -2109,8 +2111,8 @@ class BATSVisualizationD3 {
             .text(d => {
                 const currencies = Object.keys(d.artAfter);
                 if (currencies.length === 0) return '0';
-                return currencies.map(curr => `${this.formatAmount(d.artAfter[curr], curr)} ${curr}`).join(' + ');
-            }.bind(this));
+                return currencies.map(curr => `${self.formatAmount(d.artAfter[curr], curr)} ${curr}`).join(' + ');
+            });
     }
 
     drawEdges() {
