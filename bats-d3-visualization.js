@@ -2391,6 +2391,7 @@ class BATSVisualizationD3 {
             });
 
         // Node shape - circles for regular nodes, triangles for writeoffs
+        const self = this;  // Capture class context
         nodeEnter.each(function(d) {
             const node = d3.select(this);
 
@@ -2412,8 +2413,8 @@ class BATSVisualizationD3 {
             } else {
                 // Draw circle for regular nodes
                 node.append('circle')
-                    .attr('r', this.config.nodeRadius)
-                    .attr('fill', this.config.colors[d.type] || this.config.colors.black)
+                    .attr('r', self.config.nodeRadius)
+                    .attr('fill', self.config.colors[d.type] || self.config.colors.black)
                     .attr('stroke', '#fff')
                     .attr('stroke-width', 3)
                     .on('mouseover', function() {
@@ -2423,7 +2424,7 @@ class BATSVisualizationD3 {
                         d3.select(this).attr('stroke-width', 3);
                     });
             }
-        }.bind(this));
+        });
 
         // Wallet ID (B-1, P-2, etc) - INSIDE the circle in white
         nodeEnter.append('text')

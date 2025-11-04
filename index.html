@@ -2929,6 +2929,36 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Sticky Completion Footer (shown after allocations complete) -->
+                    <div id="walletExplorerCompletionActions" style="display: none; background: white; border-top: 3px solid #28a745; padding: 12px; box-shadow: 0 -4px 8px rgba(0,0,0,0.1);">
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Success Message -->
+                            <div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid #4caf50; border-radius: 8px; padding: 12px; text-align: center;">
+                                <div style="font-size: 24px; margin-bottom: 8px;">
+                                    ✅
+                                </div>
+                                <div style="font-size: 14px; font-weight: bold; color: #2e7d32; margin-bottom: 5px;">
+                                    Allocations Complete!
+                                </div>
+                                <div style="font-size: 12px; color: #388e3c;">
+                                    <span id="walletExplorerAllocatedCount">0</span> outputs traced
+                                </div>
+                            </div>
+
+                            <!-- Done Button (Primary Action) -->
+                            <button class="btn btn-success" onclick="finishWalletExplorerAndViewHop()" style="padding: 12px 16px; font-weight: bold; font-size: 14px; background: linear-gradient(135deg, #28a745 0%, #20883e 100%); border: none; width: 100%; box-shadow: 0 2px 6px rgba(40,167,69,0.3); transition: all 0.2s;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(40,167,69,0.4)'"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(40,167,69,0.3)'">
+                                ✓ Done - View Hop
+                            </button>
+
+                            <!-- Continue Exploring (Secondary Action) -->
+                            <button class="btn btn-secondary" onclick="continueWalletExploring()" style="padding: 8px 16px; font-size: 12px; width: 100%;">
+                                🔍 Continue Exploring
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Resizer Bar -->
@@ -15411,6 +15441,7 @@ function exportRedWalletIndexCSV() {
                 highlightTxHash: null,
                 sourceThreadId: null,
                 sortOrder: 'desc', // 'desc' = newest first, 'asc' = oldest first
+                allocatedOutputsCount: 0,  // Track allocations in this session
                 // ART Tracking
                 artMode: false,
                 artAvailable: 0,
@@ -15431,6 +15462,12 @@ function exportRedWalletIndexCSV() {
             document.getElementById('walletExplorerEmpty').style.display = 'none';
             document.getElementById('walletExplorerARTPanel').style.display = 'none';
             document.getElementById('walletExplorerSplitContainer').style.display = 'none';
+
+            // Hide completion footer
+            const completionActions = document.getElementById('walletExplorerCompletionActions');
+            if (completionActions) {
+                completionActions.style.display = 'none';
+            }
         }
 
         // Search wallet history
@@ -16815,8 +16852,17 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             saveToStorage();
             renderHops();
 
-            // Close wallet explorer
-            closeWalletExplorer();
+            // Track allocations in this session
+            if (!window.walletExplorerState.allocatedOutputsCount) {
+                window.walletExplorerState.allocatedOutputsCount = 0;
+            }
+            window.walletExplorerState.allocatedOutputsCount += entriesCreated;
+
+            // Clear ART selections (also calls updateARTDisplay and renderTransactionTable)
+            clearARTSelections();
+
+            // Show completion footer instead of closing
+            showWalletExplorerCompletionFooter();
 
             // Show success notification
             showNotification(`✅ ART Commit Complete: ${entriesCreated} ${entriesCreated === 1 ? 'entry' : 'entries'} created (${totalSelected.toLocaleString()} ${currency})`, 'success');
@@ -18021,6 +18067,15 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             // Refresh wallet explorer to show updated allocation status
             renderTransactionTable();
 
+            // Track allocations in this session
+            if (!window.walletExplorerState.allocatedOutputsCount) {
+                window.walletExplorerState.allocatedOutputsCount = 0;
+            }
+            window.walletExplorerState.allocatedOutputsCount++;
+
+            // Show completion footer
+            showWalletExplorerCompletionFooter();
+
             showNotification(`✅ Allocated ${totalAllocated.toFixed(8)} BTC from ${allocations.length} thread(s) to Output ${ctx.outputIndex + 1}`, 'success');
         }
 
@@ -18034,6 +18089,82 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             }
             window.currentOutputAllocation = null;
             window.outputAllocationThreads = null;
+        }
+
+        /**
+         * Show completion footer in wallet explorer sidebar after allocations
+         */
+        function showWalletExplorerCompletionFooter() {
+            console.log('🎉 Showing completion footer...');
+            console.log('   Allocated outputs count:', window.walletExplorerState?.allocatedOutputsCount);
+
+            // Hide other footers
+            const artActions = document.getElementById('walletExplorerARTActions');
+            const victimActions = document.getElementById('walletExplorerVictimActions');
+            if (artActions) {
+                artActions.style.display = 'none';
+                console.log('   ✓ Hid ART actions footer');
+            }
+            if (victimActions) {
+                victimActions.style.display = 'none';
+                console.log('   ✓ Hid victim actions footer');
+            }
+
+            // Show completion footer
+            const completionActions = document.getElementById('walletExplorerCompletionActions');
+            if (completionActions) {
+                completionActions.style.display = 'block';
+                console.log('   ✓ Showed completion footer');
+
+                // Update count
+                const countSpan = document.getElementById('walletExplorerAllocatedCount');
+                if (countSpan) {
+                    countSpan.textContent = window.walletExplorerState.allocatedOutputsCount || 0;
+                    console.log('   ✓ Updated count to:', countSpan.textContent);
+                }
+            } else {
+                console.error('   ❌ Completion footer element not found!');
+            }
+        }
+
+        /**
+         * Finish wallet explorer and view the hop
+         */
+        function finishWalletExplorerAndViewHop() {
+            const hopNumber = getCurrentHop();
+
+            // Close wallet explorer
+            closeWalletExplorer();
+
+            // Navigate to hops step and scroll to current hop
+            if (hopNumber) {
+                switchStep('hops');
+
+                // Wait for render, then scroll to the hop
+                setTimeout(() => {
+                    const hopElement = document.getElementById(`hop-${hopNumber}`);
+                    if (hopElement) {
+                        hopElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                        // Flash the hop to highlight it
+                        hopElement.style.transition = 'background-color 0.3s ease';
+                        hopElement.style.backgroundColor = '#d4edda';
+                        setTimeout(() => {
+                            hopElement.style.backgroundColor = '';
+                        }, 1000);
+                    }
+                }, 200);
+            }
+        }
+
+        /**
+         * Continue exploring - hide completion footer and return to normal state
+         */
+        function continueWalletExploring() {
+            const completionActions = document.getElementById('walletExplorerCompletionActions');
+            if (completionActions) {
+                completionActions.style.display = 'none';
+            }
         }
 
         /**
@@ -23239,7 +23370,7 @@ function addNewHop() {
                                         ${amount > 0 ? (
                                             entry.entryType === 'writeoff' ? `
                                                 <span style="font-weight: bold; color: #e74c3c;">
-                                                    -${amount.toLocaleString()} ${currency}
+                                                    -${currency === 'BTC' ? amount.toFixed(8) : amount.toFixed(6)} ${currency}
                                                 </span>
                                                 <div style="font-size: 11px; color: #7f8c8d;">
                                                     ${entry.category || 'Written off'}${entry.justification ? `: ${entry.justification.substring(0, 50)}${entry.justification.length > 50 ? '...' : ''}` : ''}

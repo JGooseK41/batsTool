@@ -3,34 +3,56 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-02 22:32)
+## Latest Commit (Auto-updated: 2025-11-03 10:01)
 
-**Commit:** 6daa818a3a984f80740c8eba976f8b99cd7b4945
+**Commit:** 73dbe9eb612a42807acdc676784211a40ee63e8f
 **Author:** Your Name
-**Message:** Fix: JavaScript syntax error in Log All Entries button
+**Message:** UX: Refine final report buttons and add Audit Trail export
 
-Problem: Page wouldn't load, showing "Uncaught SyntaxError: Invalid
-or unexpected token" at line 24839.
+Problem: Final report buttons looked basic and flat
+- No visual hierarchy between active/inactive tabs
+- No way to export just the Audit Trail for standalone use
+- Buttons needed more polish and modern styling
 
-Root Cause: Used escaped template literals inside a template literal:
-```javascript
-const entryKey = \`\${hop.hopNumber}_\${e.id}\`;
-return unloggedCount > 0 ? \`<button...>\` : '';
-```
-This created invalid nested template literal syntax.
+Solution:
 
-Solution: Changed to regular string concatenation instead of nested
-template literals (lines 24839-24847):
-```javascript
-const entryKey = hop.hopNumber + '_' + e.id;
-return unloggedCount > 0 ?
-    '<button onclick="logAllEntriesInHop(' + hop.hopNumber + ')">' +
-    '✅ Log All Entries (' + unloggedCount + ')' +
-    '</button>'
-    : '';
-```
+1. REFINED BUTTON STYLING (lines 2203-2239):
+   - Added gradient backgrounds for depth
+   - Active tab: Bright gradient with enhanced shadow
+   - Inactive tabs: Gray gradient with subtle shadow
+   - Increased padding (14px 28px) for better touch targets
+   - Added border-radius (8px) for modern look
+   - Smooth transitions for interactions
 
-Page now loads correctly with working Log All Entries button.
+2. UPDATED TAB SWITCHING LOGIC (lines 30112-30161):
+   - Active tabs now use color-coded gradients:
+     * Audit Trail: Blue gradient (#3498db → #2980b9)
+     * Wallet Indexes: Red gradient (#e74c3c → #c0392b)
+     * Narrative: Green gradient (#27ae60 → #229954)
+   - Enhanced box shadows show active state clearly
+   - Smooth visual feedback on tab changes
+
+3. AUDIT TRAIL EXPORT BUTTON (lines 2246-2262):
+   - Green gradient button with icon: "📄 Export / Print"
+   - Positioned next to title for easy access
+   - Opens standalone page with print-optimized layout
+
+4. EXPORT FUNCTION (lines 30163-30276):
+   - Opens new window with just audit trail content
+   - Includes case metadata (Case ID, Investigator, Date)
+   - Print-optimized CSS with @media print rules
+   - Floating print button (hides when printing)
+   - Clean header with case information
+   - Browser's print dialog can save as PDF
+
+Usage:
+✅ Click "📄 Export / Print" in Audit Trail tab
+✅ New window opens with standalone audit trail
+✅ Click "🖨️ Print / Save as PDF" button
+✅ Use browser's print dialog to save as PDF or print
+
+Now buttons look professional with clear visual hierarchy
+and investigators can easily export audit trail standalone.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -38,22 +60,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ index.html | 191 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 179 insertions(+), 12 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 6daa818 Fix: JavaScript syntax error in Log All Entries button (0 seconds ago)
-- e60e7f1 Update CLAUDE.md with latest commit info (5 minutes ago)
-- bd81b64 Fix: Fee calculation now uses blockchain data and reduces source threads (5 minutes ago)
-- bac90ce Update CLAUDE.md with latest commit info (11 minutes ago)
-- 171f55d Fix: Fee write-offs no longer cause over-allocation warnings (12 minutes ago)
-- 0b66947 Update CLAUDE.md with latest commit info (12 minutes ago)
-- 14e4ac2 Fix: Entry collapse and bulk logging improvements (13 minutes ago)
-- 3bcbcdb Update CLAUDE.md with latest commit info (15 minutes ago)
-- 5e39892 Fix: Fee entries now use writeoff entry type instead of generic type (16 minutes ago)
-- 422916d Update CLAUDE.md with latest commit info (27 minutes ago)
+- 73dbe9e UX: Refine final report buttons and add Audit Trail export (0 seconds ago)
+- a02b9d9 Fix: Terminal wallet attribution not saving to entry fields (5 minutes ago)
+- cbfb122 Fix: Visualization improvements and ART terminology correction (3 hours ago)
+- 80e0832 Fix: Display Bitcoin amounts with 8 decimal places to show fees correctly (3 hours ago)
+- a643acc UX: Increase Wallet Explorer height to reduce sidebar scrolling (4 hours ago)
+- 396dfd2 Fix: Bitcoin fee calculation using output sum instead of input amount (11 hours ago)
+- b0b72ca Update CLAUDE.md with latest commit info (11 hours ago)
+- 6daa818 Fix: JavaScript syntax error in Log All Entries button (11 hours ago)
+- e60e7f1 Update CLAUDE.md with latest commit info (12 hours ago)
+- bd81b64 Fix: Fee calculation now uses blockchain data and reduces source threads (12 hours ago)
 
 ## Key Features
 
