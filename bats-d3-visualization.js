@@ -1167,10 +1167,10 @@ class BATSVisualizationD3 {
         columns.enter()
             .append('rect')
             .attr('class', 'wallet-column-bg')
-            .attr('x', d => d.x - this.config.walletColumnWidth / 2)
-            .attr('y', 0)
-            .attr('width', this.config.walletColumnWidth)
-            .attr('height', this.config.height)  // Full viewport height
+            .attr('x', d => this.orientation === 'horizontal' ? d.x - this.config.walletColumnWidth / 2 : 0)
+            .attr('y', d => this.orientation === 'horizontal' ? 0 : d.y - this.config.walletColumnWidth / 2)
+            .attr('width', d => this.orientation === 'horizontal' ? this.config.walletColumnWidth : this.config.width)
+            .attr('height', d => this.orientation === 'horizontal' ? this.config.height : this.config.walletColumnWidth)
             .attr('fill', d => {
                 // Darker shading for wallet columns - much more contrast
                 if (d.columnIndex === 0) return '#2c3e50';  // Dark blue-gray for victims
@@ -1297,10 +1297,10 @@ class BATSVisualizationD3 {
 
         // Header background box (taller to fit hop creation label)
         headerGroup.append('rect')
-            .attr('x', d => d.leftX + 10)
-            .attr('y', 20)
-            .attr('width', d => d.width - 20)
-            .attr('height', 70)
+            .attr('x', d => this.orientation === 'horizontal' ? d.leftX + 10 : 20)
+            .attr('y', d => this.orientation === 'horizontal' ? 20 : d.topY + 10)
+            .attr('width', d => this.orientation === 'horizontal' ? d.width - 20 : 300)
+            .attr('height', d => this.orientation === 'horizontal' ? 70 : d.height - 20)
             .attr('fill', '#2c3e50')
             .attr('stroke', '#f39c12')
             .attr('stroke-width', 2)
@@ -1308,8 +1308,8 @@ class BATSVisualizationD3 {
 
         // Hop Construction Title (top)
         headerGroup.append('text')
-            .attr('x', d => d.x)
-            .attr('y', 38)
+            .attr('x', d => this.orientation === 'horizontal' ? d.x : 170)
+            .attr('y', d => this.orientation === 'horizontal' ? 38 : d.y - 40)
             .attr('text-anchor', 'middle')
             .attr('font-size', '12px')
             .attr('font-weight', 'bold')
@@ -1318,8 +1318,8 @@ class BATSVisualizationD3 {
 
         // ART Label (middle)
         headerGroup.append('text')
-            .attr('x', d => d.x)
-            .attr('y', 55)
+            .attr('x', d => this.orientation === 'horizontal' ? d.x : 170)
+            .attr('y', d => this.orientation === 'horizontal' ? 55 : d.y - 20)
             .attr('text-anchor', 'middle')
             .attr('font-size', '10px')
             .attr('font-weight', 'bold')
@@ -1329,8 +1329,8 @@ class BATSVisualizationD3 {
         // ART Values (bottom)
         const self = this;
         headerGroup.append('text')
-            .attr('x', d => d.x)
-            .attr('y', 75)
+            .attr('x', d => this.orientation === 'horizontal' ? d.x : 170)
+            .attr('y', d => this.orientation === 'horizontal' ? 75 : d.y)
             .attr('text-anchor', 'middle')
             .attr('font-size', '13px')
             .attr('font-weight', 'bold')
@@ -1355,11 +1355,12 @@ class BATSVisualizationD3 {
             .append('g')
             .attr('class', 'hop-reconciliation')
             .attr('transform', (d, i) => {
-                // In vertical mode, offset each T-account to align with its hop space
+                // In vertical mode, position T-accounts on left side aligned with hop spaces
                 if (this.orientation === 'vertical') {
-                    // Stack T-accounts vertically, one per hop
-                    const yOffset = i * 300; // Space between T-accounts
-                    return `translate(0, ${yOffset})`;
+                    // Position on left side (x=350) and align with hop space center (y=d.y)
+                    // Offset Y upward by half the box height to center it in the hop space
+                    const boxHeight = 400; // Approximate T-account height
+                    return `translate(350, ${d.y - boxHeight/2})`;
                 }
                 return 'translate(0, 0)';
             });
@@ -2075,16 +2076,17 @@ class BATSVisualizationD3 {
             .append('g')
             .attr('class', 'hop-creation-art-box');
 
-        // Position below T-account reconciliation box
-        // T-account ends at: this.config.height - 50
-        const boxY = this.config.height - 40; // 10px gap below T-account
+        // Position based on orientation
+        // Horizontal: below T-account at bottom
+        // Vertical: on right side aligned with hop space
+        const boxY = this.config.height - 40; // 10px gap below T-account in horizontal mode
 
         // Header background box (same style as other headers)
         artGroup.append('rect')
-            .attr('x', d => d.leftX + 10)
-            .attr('y', boxY)
-            .attr('width', d => d.width - 20)
-            .attr('height', 60)
+            .attr('x', d => this.orientation === 'horizontal' ? d.leftX + 10 : this.config.width - 330)
+            .attr('y', d => this.orientation === 'horizontal' ? boxY : d.topY + 10)
+            .attr('width', d => this.orientation === 'horizontal' ? d.width - 20 : 300)
+            .attr('height', d => this.orientation === 'horizontal' ? 60 : d.height - 20)
             .attr('fill', '#2c3e50')
             .attr('stroke', '#f39c12')
             .attr('stroke-width', 2)
@@ -2092,8 +2094,8 @@ class BATSVisualizationD3 {
 
         // Label
         artGroup.append('text')
-            .attr('x', d => d.x)
-            .attr('y', boxY + 20)
+            .attr('x', d => this.orientation === 'horizontal' ? d.x : this.config.width - 180)
+            .attr('y', d => this.orientation === 'horizontal' ? boxY + 20 : d.y - 40)
             .attr('text-anchor', 'middle')
             .attr('font-size', '11px')
             .attr('font-weight', 'bold')
@@ -2102,8 +2104,8 @@ class BATSVisualizationD3 {
 
         // ART Values
         artGroup.append('text')
-            .attr('x', d => d.x)
-            .attr('y', boxY + 45)
+            .attr('x', d => this.orientation === 'horizontal' ? d.x : this.config.width - 180)
+            .attr('y', d => this.orientation === 'horizontal' ? boxY + 45 : d.y)
             .attr('text-anchor', 'middle')
             .attr('font-size', '13px')
             .attr('font-weight', 'bold')
