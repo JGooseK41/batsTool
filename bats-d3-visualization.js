@@ -1188,7 +1188,10 @@ class BATSVisualizationD3 {
 
             this.hopColumns.forEach((column) => {
                 const totalWidth = column.nodes.length * this.config.verticalSpacing;
-                const startX = (this.config.width - totalWidth) / 2;
+                // Leave room for T-accounts on left (0-800px), start nodes at x=850
+                const leftMargin = 850;
+                const availableWidth = this.config.width - leftMargin - 50; // 50px right margin
+                const startX = leftMargin + Math.max(0, (availableWidth - totalWidth) / 2);
 
                 column.nodes.forEach((node, nodeIndex) => {
                     // Only recalculate position if not manually positioned
@@ -1254,26 +1257,49 @@ class BATSVisualizationD3 {
             .append('g')
             .attr('class', 'wallet-column-header');
 
-        // Header background box (same style as hop ART boxes)
-        headerGroup.append('rect')
-            .attr('x', d => d.x - this.config.walletColumnWidth / 2 + 10)
-            .attr('y', 20)
-            .attr('width', this.config.walletColumnWidth - 20)
-            .attr('height', 50)
-            .attr('fill', '#2c3e50')
-            .attr('stroke', '#3498db')
-            .attr('stroke-width', 2)
-            .attr('rx', 5);
+        if (this.orientation === 'horizontal') {
+            // Header background box (horizontal layout)
+            headerGroup.append('rect')
+                .attr('x', d => d.x - this.config.walletColumnWidth / 2 + 10)
+                .attr('y', 20)
+                .attr('width', this.config.walletColumnWidth - 20)
+                .attr('height', 50)
+                .attr('fill', '#2c3e50')
+                .attr('stroke', '#3498db')
+                .attr('stroke-width', 2)
+                .attr('rx', 5);
 
-        // Title text
-        headerGroup.append('text')
-            .attr('x', d => d.x)
-            .attr('y', 50)
-            .attr('text-anchor', 'middle')
-            .attr('font-size', '14px')
-            .attr('font-weight', 'bold')
-            .attr('fill', '#3498db')
-            .text(d => d.title.toUpperCase());
+            // Title text
+            headerGroup.append('text')
+                .attr('x', d => d.x)
+                .attr('y', 50)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '14px')
+                .attr('font-weight', 'bold')
+                .attr('fill', '#3498db')
+                .text(d => d.title.toUpperCase());
+        } else {
+            // Header background box (vertical layout) - on left side
+            headerGroup.append('rect')
+                .attr('x', 10)
+                .attr('y', d => d.y - this.config.walletColumnWidth / 2 + 10)
+                .attr('width', 180)
+                .attr('height', this.config.walletColumnWidth - 20)
+                .attr('fill', '#2c3e50')
+                .attr('stroke', '#3498db')
+                .attr('stroke-width', 2)
+                .attr('rx', 5);
+
+            // Title text (vertical layout)
+            headerGroup.append('text')
+                .attr('x', 100)
+                .attr('y', d => d.y)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '14px')
+                .attr('font-weight', 'bold')
+                .attr('fill', '#3498db')
+                .text(d => d.title.toUpperCase());
+        }
     }
 
     drawHopSpaceLabels() {
@@ -1301,12 +1327,12 @@ class BATSVisualizationD3 {
                 // Vertical layout: hop spaces are horizontal regions at specific Y positions
                 hopSpaces.push({
                     hopNumber: rightColumn.hopNumber,
-                    x: this.config.width / 2, // Center horizontally
+                    x: 400, // Center of T-account box (left-aligned)
                     y: (leftColumn.y + this.config.walletColumnWidth / 2 + rightColumn.y - this.config.walletColumnWidth / 2) / 2,
                     topY: leftColumn.y + this.config.walletColumnWidth / 2,
                     bottomY: rightColumn.y - this.config.walletColumnWidth / 2,
-                    leftX: 50, // Left edge for T-account box in vertical mode
-                    width: this.config.width - 100, // Full width minus margins
+                    leftX: 200, // Left edge for T-account box in vertical mode
+                    width: 600, // Fixed width for left column T-account
                     height: rightColumn.y - this.config.walletColumnWidth / 2 - (leftColumn.y + this.config.walletColumnWidth / 2),
                     hopData: this.investigation.hops.find(h => h.hopNumber === rightColumn.hopNumber),
                     artBefore: rightColumn.artBefore,
@@ -1427,10 +1453,10 @@ class BATSVisualizationD3 {
             .attr('transform', (d, i) => {
                 // In vertical mode, position T-accounts on left side aligned with hop spaces
                 if (this.orientation === 'vertical') {
-                    // Position on left side (x=350) and align with hop space center (y=d.y)
-                    // Offset Y upward by half the box height to center it in the hop space
+                    // Position on left side and align with hop space center (y=d.y)
+                    // No X translation needed as we use absolute positioning
                     const boxHeight = 400; // Approximate T-account height
-                    return `translate(350, ${d.y - boxHeight/2})`;
+                    return `translate(0, ${d.y - boxHeight/2})`;
                 }
                 return 'translate(0, 0)';
             });
@@ -3815,16 +3841,26 @@ Click OK to copy transaction hash to clipboard.
                     d3.select(this).style('cursor', 'grab');
                     d.isDragging = false;
 
-                    // Check if dropped on another node for clustering
-                    const targetNode = self.findNodeAtPosition(d.x, d.y, d);
-                    if (targetNode && targetNode.column === d.column) {
-                        // Same hop - offer to create cluster
-                        self.showClusterConfirmation(d, targetNode);
-                        // Reset position temporarily
-                        d.x = self.dragStartPos.x;
-                        d.y = self.dragStartPos.y;
-                        self.render();
-                        return;
+                    // Calculate distance moved
+                    const dragDistance = Math.sqrt(
+                        Math.pow(d.x - self.dragStartPos.x, 2) +
+                        Math.pow(d.y - self.dragStartPos.y, 2)
+                    );
+
+                    // Only check for clustering if dragged significantly (> 20 pixels)
+                    // This prevents accidental clustering on small movements
+                    if (dragDistance > 20) {
+                        // Check if dropped on another node for clustering (use tighter radius)
+                        const targetNode = self.findNodeAtPosition(d.x, d.y, d);
+                        if (targetNode && targetNode.column === d.column) {
+                            // Same hop - offer to create cluster
+                            self.showClusterConfirmation(d, targetNode);
+                            // Reset position temporarily
+                            d.x = self.dragStartPos.x;
+                            d.y = self.dragStartPos.y;
+                            self.render();
+                            return;
+                        }
                     }
 
                     // Mark as manually positioned so it's preserved when switching views
@@ -3897,20 +3933,21 @@ Click OK to copy transaction hash to clipboard.
     findNodeAtPosition(x, y, excludeNode) {
         // Find node at given position (excluding the dragged node)
         const radius = this.config.nodeRadius;
+        const clusterRadius = radius * 1.3;
 
-        // Check clusters first (larger hit area)
+        // Check clusters first (tighter hit area for precision)
         for (const cluster of this.clusters) {
-            const clusterRadius = radius * 1.3;
             const dx = cluster.x - x;
             const dy = cluster.y - y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < clusterRadius * 2) {
+            // Must be very close to cluster center
+            if (distance < clusterRadius * 1.2) {
                 return cluster;
             }
         }
 
-        // Check regular nodes
+        // Check regular nodes (tighter hit area to avoid accidental clustering)
         for (const node of this.nodes) {
             if (node.id === excludeNode.id) continue;
             if (node.clusteredIn) continue; // Skip nodes already in clusters
@@ -3919,7 +3956,8 @@ Click OK to copy transaction hash to clipboard.
             const dy = node.y - y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < radius * 2) {
+            // Must overlap significantly (within 1.2x radius)
+            if (distance < radius * 1.2) {
                 return node;
             }
         }
