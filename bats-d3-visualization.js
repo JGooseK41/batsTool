@@ -989,7 +989,7 @@ class BATSVisualizationD3 {
         return address.substring(0, 10) + '...' + address.substring(address.length - 8);
     }
 
-    self.formatAmount(amount, currency) {
+    formatAmount(amount, currency) {
         // Format amount with proper decimal precision based on currency
         if (currency === 'BTC') {
             return amount.toFixed(8);
