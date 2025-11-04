@@ -252,11 +252,36 @@ class BATSVisualizationD3 {
 
         this.investigation = investigation;
 
+        // Load clusters from investigation (if any)
+        if (investigation.clusters && Array.isArray(investigation.clusters)) {
+            this.clusters = investigation.clusters;
+            console.log(`Loaded ${this.clusters.length} cluster(s) from investigation`);
+        } else {
+            this.clusters = [];
+            // Initialize clusters array in investigation
+            this.investigation.clusters = [];
+        }
+
         // Build data structure
         this.buildDataStructure();
 
+        // Apply cluster markings to nodes after building
+        this.applyClusterMarkings();
+
         // Render based on layout mode
         this.render();
+    }
+
+    applyClusterMarkings() {
+        // Mark nodes that are in clusters
+        this.clusters.forEach(cluster => {
+            cluster.nodeIds.forEach(nodeId => {
+                const node = this.nodes.find(n => n.id === nodeId);
+                if (node) {
+                    node.clusteredIn = cluster.id;
+                }
+            });
+        });
     }
 
     buildDataStructure() {
@@ -3990,8 +4015,23 @@ Click OK to copy transaction hash to clipboard.
 
         console.log('Created cluster:', cluster);
 
+        // Save to investigation
+        this.saveClustersToInvestigation();
+
         // Redraw
         this.render();
+    }
+
+    saveClustersToInvestigation() {
+        if (this.investigation) {
+            this.investigation.clusters = this.clusters;
+            console.log(`Saved ${this.clusters.length} cluster(s) to investigation`);
+
+            // Trigger auto-save if available
+            if (typeof window.autosaveInvestigation === 'function') {
+                window.autosaveInvestigation();
+            }
+        }
     }
 
     showClusterInstructions() {
@@ -4136,6 +4176,9 @@ Click OK to copy transaction hash to clipboard.
             }
         });
 
+        // Save to investigation
+        this.saveClustersToInvestigation();
+
         // Close modal and redraw
         const modals = document.querySelectorAll('[style*="z-index: 10000"]');
         modals.forEach(m => m.remove());
@@ -4157,6 +4200,9 @@ Click OK to copy transaction hash to clipboard.
 
         // Remove cluster
         this.clusters = this.clusters.filter(c => c.id !== clusterId);
+
+        // Save to investigation
+        this.saveClustersToInvestigation();
 
         // Close modal and redraw
         const modals = document.querySelectorAll('[style*="z-index: 10000"]');
