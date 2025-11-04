@@ -143,39 +143,10 @@ class BATSVisualizationD3 {
         };
         this.adjustButton.onclick = () => this.toggleAdjustMode();
 
-        // Cluster Mode toggle button
-        this.clusterButton = document.createElement('button');
-        this.clusterButton.textContent = '🗂️ Cluster Nodes';
-        this.clusterButton.style.cssText = `
-            padding: 12px 20px;
-            background: #9b59b6;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-        `;
-        this.clusterButton.onmouseover = () => {
-            if (!this.clusterMode) {
-                this.clusterButton.style.background = '#8e44ad';
-            }
-        };
-        this.clusterButton.onmouseout = () => {
-            if (!this.clusterMode) {
-                this.clusterButton.style.background = '#9b59b6';
-            }
-        };
-        this.clusterButton.onclick = () => this.toggleClusterMode();
-        this.clusterMode = false;
-
         controlPanel.appendChild(this.undoButton);
         controlPanel.appendChild(this.redoButton);
         controlPanel.appendChild(this.resetButton);
         controlPanel.appendChild(this.adjustButton);
-        controlPanel.appendChild(this.clusterButton);
         this.container.appendChild(controlPanel);
 
         // Create SVG
@@ -268,6 +239,9 @@ class BATSVisualizationD3 {
         // Apply cluster markings to nodes after building
         this.applyClusterMarkings();
 
+        // Redirect edges to clusters
+        this.redirectEdgesToClusters();
+
         // Render based on layout mode
         this.render();
     }
@@ -282,6 +256,46 @@ class BATSVisualizationD3 {
                 }
             });
         });
+    }
+
+    getClusterForNode(nodeId) {
+        // Find cluster containing this node
+        return this.clusters.find(c => c.nodeIds.includes(nodeId));
+    }
+
+    redirectEdgeToCluster(nodeId) {
+        // If node is in a cluster, return cluster ID, otherwise return node ID
+        const cluster = this.getClusterForNode(nodeId);
+        return cluster ? cluster.id : nodeId;
+    }
+
+    redirectEdgesToClusters() {
+        // Redirect edges to point to clusters instead of individual nodes
+        this.edges.forEach(edge => {
+            edge.source = this.redirectEdgeToCluster(edge.source);
+            edge.target = this.redirectEdgeToCluster(edge.target);
+        });
+
+        // Remove duplicate edges (multiple nodes from same cluster to same target)
+        const edgeMap = new Map();
+        const uniqueEdges = [];
+
+        this.edges.forEach(edge => {
+            const key = `${edge.source}-${edge.target}-${edge.currency || ''}`;
+            const existing = edgeMap.get(key);
+
+            if (existing) {
+                // Combine amounts for duplicate edges
+                existing.amount += edge.amount;
+                existing.label = `${existing.amount.toFixed(existing.currency === 'BTC' ? 8 : 2)} ${existing.currency || ''}`;
+            } else {
+                edgeMap.set(key, edge);
+                uniqueEdges.push(edge);
+            }
+        });
+
+        this.edges = uniqueEdges;
+        console.log(`Redirected edges to clusters, reduced to ${this.edges.length} unique edges`);
     }
 
     buildDataStructure() {
@@ -3755,11 +3769,6 @@ Click OK to copy transaction hash to clipboard.
         this.adjustMode = !this.adjustMode;
 
         if (this.adjustMode) {
-            // Disable cluster mode if enabled
-            if (this.clusterMode) {
-                this.toggleClusterMode();
-            }
-
             // Enable adjust mode
             this.adjustButton.textContent = '✓ Done Adjusting';
             this.adjustButton.style.background = '#27ae60';
@@ -3768,7 +3777,7 @@ Click OK to copy transaction hash to clipboard.
             // Disable zoom/pan so dragging nodes/edges works
             this.svg.on('.zoom', null);
 
-            // Enable dragging on nodes and edges
+            // Enable dragging on nodes and edges (now includes clustering)
             this.enableDragging();
         } else {
             // Disable adjust mode
@@ -3784,48 +3793,6 @@ Click OK to copy transaction hash to clipboard.
         }
     }
 
-    toggleClusterMode() {
-        this.clusterMode = !this.clusterMode;
-
-        if (this.clusterMode) {
-            // Disable adjust mode if enabled
-            if (this.adjustMode) {
-                this.toggleAdjustMode();
-            }
-
-            // Enable cluster mode
-            this.clusterButton.textContent = '✓ Done Clustering';
-            this.clusterButton.style.background = '#27ae60';
-            this.clusterButton.style.transform = 'scale(1.05)';
-
-            // Disable zoom/pan
-            this.svg.on('.zoom', null);
-
-            // Enable cluster dragging
-            this.enableClusterDragging();
-
-            // Show instruction overlay
-            this.showClusterInstructions();
-        } else {
-            // Disable cluster mode
-            this.clusterButton.textContent = '🗂️ Cluster Nodes';
-            this.clusterButton.style.background = '#9b59b6';
-            this.clusterButton.style.transform = 'scale(1)';
-
-            // Disable cluster dragging
-            this.disableClusterDragging();
-
-            // Re-enable zoom/pan
-            this.svg.call(this.zoom);
-
-            // Hide instruction overlay
-            this.hideClusterInstructions();
-
-            // Redraw to show clusters
-            this.render();
-        }
-    }
-
     enableDragging() {
         const self = this;
 
@@ -3837,6 +3804,7 @@ Click OK to copy transaction hash to clipboard.
                     event.sourceEvent.stopPropagation();
                     d3.select(this).style('cursor', 'grabbing');
                     d.isDragging = true;
+                    self.dragStartPos = { x: d.x, y: d.y };
                 })
                 .on('drag', (event, d) => {
                     event.sourceEvent.stopPropagation();
@@ -3846,6 +3814,19 @@ Click OK to copy transaction hash to clipboard.
                     event.sourceEvent.stopPropagation();
                     d3.select(this).style('cursor', 'grab');
                     d.isDragging = false;
+
+                    // Check if dropped on another node for clustering
+                    const targetNode = self.findNodeAtPosition(d.x, d.y, d);
+                    if (targetNode && targetNode.column === d.column) {
+                        // Same hop - offer to create cluster
+                        self.showClusterConfirmation(d, targetNode);
+                        // Reset position temporarily
+                        d.x = self.dragStartPos.x;
+                        d.y = self.dragStartPos.y;
+                        self.render();
+                        return;
+                    }
+
                     // Mark as manually positioned so it's preserved when switching views
                     d.manuallyPositioned = true;
                     // Save state for undo
@@ -3887,53 +3868,6 @@ Click OK to copy transaction hash to clipboard.
             .on('.drag', null); // Remove drag handlers
     }
 
-    enableClusterDragging() {
-        const self = this;
-
-        // Add visual highlight for nodes in same hop
-        this.nodesGroup.selectAll('.node')
-            .style('cursor', 'grab')
-            .call(d3.drag()
-                .on('start', function(event, d) {
-                    event.sourceEvent.stopPropagation();
-                    d3.select(this).style('cursor', 'grabbing');
-                    self.draggedNodeForClustering = d;
-
-                    // Highlight nodes in same hop
-                    self.highlightClusterableNodes(d);
-                })
-                .on('drag', function(event, d) {
-                    // Visual feedback - node follows cursor
-                    d3.select(this)
-                        .attr('transform', `translate(${event.x},${event.y})`);
-                })
-                .on('end', function(event, d) {
-                    d3.select(this).style('cursor', 'grab');
-
-                    // Check if dropped on another node
-                    const targetNode = self.findNodeAtPosition(event.x, event.y, d);
-                    if (targetNode && targetNode.column === d.column) {
-                        // Same hop - create cluster
-                        self.createClusterFromNodes([d, targetNode]);
-                    }
-
-                    // Reset position
-                    d3.select(this).attr('transform', null);
-
-                    // Remove highlights
-                    self.removeClusterHighlights();
-                    self.draggedNodeForClustering = null;
-                })
-            );
-    }
-
-    disableClusterDragging() {
-        this.nodesGroup.selectAll('.node')
-            .style('cursor', 'pointer')
-            .on('.drag', null);
-        this.removeClusterHighlights();
-    }
-
     highlightClusterableNodes(sourceNode) {
         // Highlight nodes in the same hop (same column)
         this.nodesGroup.selectAll('.node')
@@ -3963,9 +3897,23 @@ Click OK to copy transaction hash to clipboard.
     findNodeAtPosition(x, y, excludeNode) {
         // Find node at given position (excluding the dragged node)
         const radius = this.config.nodeRadius;
+
+        // Check clusters first (larger hit area)
+        for (const cluster of this.clusters) {
+            const clusterRadius = radius * 1.3;
+            const dx = cluster.x - x;
+            const dy = cluster.y - y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < clusterRadius * 2) {
+                return cluster;
+            }
+        }
+
+        // Check regular nodes
         for (const node of this.nodes) {
             if (node.id === excludeNode.id) continue;
-            if (node.isCluster) continue; // Can't cluster with clusters yet
+            if (node.clusteredIn) continue; // Skip nodes already in clusters
 
             const dx = node.x - x;
             const dy = node.y - y;
@@ -3976,6 +3924,95 @@ Click OK to copy transaction hash to clipboard.
             }
         }
         return null;
+    }
+
+    showClusterConfirmation(draggedNode, targetNode) {
+        const self = this;
+
+        // Create modal
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        `;
+
+        const targetName = targetNode.isCluster ? targetNode.name : (targetNode.walletLabel || targetNode.label || 'node');
+        const action = targetNode.isCluster ? 'add to cluster' : 'create new cluster with';
+
+        modal.innerHTML = `
+            <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <h3 style="margin: 0 0 20px 0; color: #2c3e50;">🗂️ Cluster Nodes?</h3>
+                <p style="color: #7f8c8d; margin-bottom: 25px;">
+                    Do you want to ${action} <strong>${targetName}</strong>?
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button id="cancelCluster" style="padding: 12px 24px; background: #95a5a6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        Cancel
+                    </button>
+                    <button id="confirmCluster" style="padding: 12px 24px; background: #9b59b6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        ${targetNode.isCluster ? 'Add to Cluster' : 'Create Cluster'}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Cancel button
+        modal.querySelector('#cancelCluster').onclick = () => {
+            document.body.removeChild(modal);
+        };
+
+        // Confirm button
+        modal.querySelector('#confirmCluster').onclick = () => {
+            document.body.removeChild(modal);
+
+            if (targetNode.isCluster) {
+                // Add to existing cluster
+                self.addNodeToCluster(draggedNode, targetNode);
+            } else {
+                // Create new cluster
+                self.createClusterFromNodes([draggedNode, targetNode]);
+            }
+        };
+
+        // Close on background click
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        };
+    }
+
+    addNodeToCluster(node, cluster) {
+        // Add node to cluster
+        cluster.nodeIds.push(node.id);
+        node.clusteredIn = cluster.id;
+
+        // Recalculate cluster amounts
+        cluster.amount += (node.amount || 0);
+        if (node.currency) {
+            cluster.currencies[node.currency] = (cluster.currencies[node.currency] || 0) + (node.amount || 0);
+        }
+
+        console.log(`Added node ${node.id} to cluster ${cluster.name}`);
+
+        // Rebuild edges to redirect to cluster
+        this.redirectEdgesToClusters();
+
+        // Save to investigation
+        this.saveClustersToInvestigation();
+
+        // Redraw
+        this.render();
     }
 
     createClusterFromNodes(nodes) {
@@ -4015,6 +4052,9 @@ Click OK to copy transaction hash to clipboard.
 
         console.log('Created cluster:', cluster);
 
+        // Rebuild edges to redirect to cluster
+        this.redirectEdgesToClusters();
+
         // Save to investigation
         this.saveClustersToInvestigation();
 
@@ -4031,41 +4071,6 @@ Click OK to copy transaction hash to clipboard.
             if (typeof window.autosaveInvestigation === 'function') {
                 window.autosaveInvestigation();
             }
-        }
-    }
-
-    showClusterInstructions() {
-        const overlay = document.createElement('div');
-        overlay.id = 'cluster-instructions';
-        overlay.style.cssText = `
-            position: absolute;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            z-index: 1000;
-            font-weight: 600;
-            text-align: center;
-            max-width: 600px;
-        `;
-        overlay.innerHTML = `
-            <div style="font-size: 18px; margin-bottom: 10px;">🗂️ Cluster Mode Active</div>
-            <div style="font-size: 14px; opacity: 0.9;">
-                Drag nodes in the same hop onto each other to create clusters.<br>
-                Groups writeoffs, terminals, or any nodes to simplify your graph.
-            </div>
-        `;
-        this.container.appendChild(overlay);
-    }
-
-    hideClusterInstructions() {
-        const overlay = document.getElementById('cluster-instructions');
-        if (overlay) {
-            overlay.remove();
         }
     }
 
@@ -4176,6 +4181,9 @@ Click OK to copy transaction hash to clipboard.
             }
         });
 
+        // Rebuild edges to redirect to cluster
+        this.redirectEdgesToClusters();
+
         // Save to investigation
         this.saveClustersToInvestigation();
 
@@ -4200,6 +4208,11 @@ Click OK to copy transaction hash to clipboard.
 
         // Remove cluster
         this.clusters = this.clusters.filter(c => c.id !== clusterId);
+
+        // Rebuild data structure to restore original edges
+        this.buildDataStructure();
+        this.applyClusterMarkings();
+        this.redirectEdgesToClusters();
 
         // Save to investigation
         this.saveClustersToInvestigation();
