@@ -4210,36 +4210,47 @@
                         html += `<div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">`;
                         html += `<strong>${currency}:</strong><br>`;
 
+                        // Helper function to format amounts with proper decimal precision
+                        const formatAmount = (amount, curr) => {
+                            if (curr === 'BTC') {
+                                return amount.toFixed(8);
+                            } else if (curr === 'ETH' || curr === 'SOL' || curr === 'AVAX') {
+                                return amount.toFixed(6);
+                            } else {
+                                return amount.toLocaleString();
+                            }
+                        };
+
                         // Show opening balance if exists
                         if (flows.opening > 0) {
-                            html += `Starting: ${flows.opening.toLocaleString()}<br>`;
+                            html += `Starting: ${formatAmount(flows.opening, currency)}<br>`;
                         }
 
                         // Show created from conversion if exists
                         if (flows.createdFromConversion > 0) {
-                            html += `<span style="color: #f39c12;">+ Created from conversion: ${flows.createdFromConversion.toLocaleString()}</span><br>`;
+                            html += `<span style="color: #f39c12;">+ Created from conversion: ${formatAmount(flows.createdFromConversion, currency)}</span><br>`;
                         }
 
                         // Calculate total available (opening + created)
                         const totalAvailable = flows.opening + flows.createdFromConversion;
 
                         if (flows.terminal > 0) {
-                            html += `<span style="color: #9b59b6;">→ To Exchanges: ${flows.terminal.toLocaleString()}</span><br>`;
+                            html += `<span style="color: #9b59b6;">→ To Exchanges: ${formatAmount(flows.terminal, currency)}</span><br>`;
                         }
                         if (flows.converted > 0) {
-                            html += `<span style="color: #f39c12;">→ Converted: ${flows.converted.toLocaleString()}</span><br>`;
+                            html += `<span style="color: #f39c12;">→ Converted: ${formatAmount(flows.converted, currency)}</span><br>`;
                         }
                         if (flows.writeoff > 0) {
-                            html += `<span style="color: #95a5a6;">→ Written off: ${flows.writeoff.toLocaleString()}</span><br>`;
+                            html += `<span style="color: #95a5a6;">→ Written off: ${formatAmount(flows.writeoff, currency)}</span><br>`;
                         }
                         if (flows.continuing > 0) {
-                            html += `<span style="color: #27ae60;">→ Continuing: ${flows.continuing.toLocaleString()}</span><br>`;
+                            html += `<span style="color: #27ae60;">→ Continuing: ${formatAmount(flows.continuing, currency)}</span><br>`;
                         }
 
                         // Calculate remaining based on total available
                         const remaining = totalAvailable - flows.terminal - flows.writeoff - flows.converted - flows.continuing;
                         if (Math.abs(remaining) > 0.01) {
-                            html += `<strong style="color: #e74c3c;">⚠ Unaccounted: ${remaining.toLocaleString()}</strong>`;
+                            html += `<strong style="color: #e74c3c;">⚠ Unaccounted: ${formatAmount(remaining, currency)}</strong>`;
                         }
                         html += `</div>`;
                     }
@@ -9627,6 +9638,7 @@ async function handleLoadFile() {
 
             // Store the file handle for future saves
             fileHandle = handle;
+            isFileSystemAvailable = true;
 
             // Read the file
             const file = await handle.getFile();
@@ -17909,8 +17921,9 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
 
             // Create fee write-off entry
             const threadArray = Array.from(inputThreads);
+            const hop = investigation.hops.find(h => h.hopNumber === hopNumber);
             const feeEntry = {
-                id: investigation.hops.find(h => h.hopNumber === hopNumber).entries.length + 2, // +2 because we're adding after the main entry
+                id: hop.entries.length + 1, // Next sequential ID after payment entry
                 hopNumber: hopNumber,
                 entryType: 'writeoff',  // Fees are write-offs that reduce ART
                 amount: fee.toFixed(8),
@@ -18068,13 +18081,15 @@ Recommendation: Check your actual balance on Etherscan. If it shows 0 or a small
             renderTransactionTable();
 
             // Track allocations in this session
-            if (!window.walletExplorerState.allocatedOutputsCount) {
-                window.walletExplorerState.allocatedOutputsCount = 0;
-            }
-            window.walletExplorerState.allocatedOutputsCount++;
+            if (window.walletExplorerState) {
+                if (!window.walletExplorerState.allocatedOutputsCount) {
+                    window.walletExplorerState.allocatedOutputsCount = 0;
+                }
+                window.walletExplorerState.allocatedOutputsCount++;
 
-            // Show completion footer
-            showWalletExplorerCompletionFooter();
+                // Show completion footer
+                showWalletExplorerCompletionFooter();
+            }
 
             showNotification(`✅ Allocated ${totalAllocated.toFixed(8)} BTC from ${allocations.length} thread(s) to Output ${ctx.outputIndex + 1}`, 'success');
         }

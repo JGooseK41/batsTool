@@ -708,7 +708,7 @@ class BATSVisualizationD3 {
                             this.edges.push({
                                 source: swapNodeKey,
                                 target: outputNodeId,
-                                label: `${outputNode.amount.toFixed(2)} ${outputNode.currency}`,
+                                label: `${this.formatAmount(outputNode.amount, outputNode.currency)} ${outputNode.currency}`,
                                 amount: outputNode.amount,
                                 currency: outputNode.currency,
                                 entryData: entry
@@ -989,6 +989,17 @@ class BATSVisualizationD3 {
         return address.substring(0, 10) + '...' + address.substring(address.length - 8);
     }
 
+    self.formatAmount(amount, currency) {
+        // Format amount with proper decimal precision based on currency
+        if (currency === 'BTC') {
+            return amount.toFixed(8);
+        } else if (currency === 'ETH' || currency === 'SOL' || currency === 'AVAX') {
+            return amount.toFixed(6);
+        } else {
+            return amount.toFixed(2);
+        }
+    }
+
     generateWalletId(colorType, walletAddress = null) {
         // FIRST: Check universalWalletIndex from investigation data (master source of truth)
         if (walletAddress && this.investigation?.universalWalletIndex) {
@@ -1203,16 +1214,35 @@ class BATSVisualizationD3 {
             const leftColumn = this.hopColumns[i];
             const rightColumn = this.hopColumns[i + 1];
 
-            hopSpaces.push({
-                hopNumber: rightColumn.hopNumber,
-                x: (leftColumn.x + this.config.walletColumnWidth / 2 + rightColumn.x - this.config.walletColumnWidth / 2) / 2,
-                leftX: leftColumn.x + this.config.walletColumnWidth / 2,
-                rightX: rightColumn.x - this.config.walletColumnWidth / 2,
-                width: rightColumn.x - this.config.walletColumnWidth / 2 - (leftColumn.x + this.config.walletColumnWidth / 2),
-                hopData: this.investigation.hops.find(h => h.hopNumber === rightColumn.hopNumber),
-                artBefore: rightColumn.artBefore,
-                artAfter: rightColumn.artAfter
-            });
+            if (this.orientation === 'horizontal') {
+                // Horizontal layout: hop spaces are vertical regions at specific X positions
+                hopSpaces.push({
+                    hopNumber: rightColumn.hopNumber,
+                    x: (leftColumn.x + this.config.walletColumnWidth / 2 + rightColumn.x - this.config.walletColumnWidth / 2) / 2,
+                    y: this.config.height / 2, // Center vertically
+                    leftX: leftColumn.x + this.config.walletColumnWidth / 2,
+                    rightX: rightColumn.x - this.config.walletColumnWidth / 2,
+                    width: rightColumn.x - this.config.walletColumnWidth / 2 - (leftColumn.x + this.config.walletColumnWidth / 2),
+                    hopData: this.investigation.hops.find(h => h.hopNumber === rightColumn.hopNumber),
+                    artBefore: rightColumn.artBefore,
+                    artAfter: rightColumn.artAfter
+                });
+            } else {
+                // Vertical layout: hop spaces are horizontal regions at specific Y positions
+                hopSpaces.push({
+                    hopNumber: rightColumn.hopNumber,
+                    x: this.config.width / 2, // Center horizontally
+                    y: (leftColumn.y + this.config.walletColumnWidth / 2 + rightColumn.y - this.config.walletColumnWidth / 2) / 2,
+                    topY: leftColumn.y + this.config.walletColumnWidth / 2,
+                    bottomY: rightColumn.y - this.config.walletColumnWidth / 2,
+                    leftX: 50, // Left edge for T-account box in vertical mode
+                    width: this.config.width - 100, // Full width minus margins
+                    height: rightColumn.y - this.config.walletColumnWidth / 2 - (leftColumn.y + this.config.walletColumnWidth / 2),
+                    hopData: this.investigation.hops.find(h => h.hopNumber === rightColumn.hopNumber),
+                    artBefore: rightColumn.artBefore,
+                    artAfter: rightColumn.artAfter
+                });
+            }
         }
 
         // Draw hop column backgrounds (lighter shade for contrast)
@@ -1222,10 +1252,10 @@ class BATSVisualizationD3 {
         hopBgs.enter()
             .append('rect')
             .attr('class', 'hop-column-bg')
-            .attr('x', d => d.leftX)
-            .attr('y', 0)
-            .attr('width', d => d.width)
-            .attr('height', this.config.height)  // Full viewport height
+            .attr('x', d => this.orientation === 'horizontal' ? d.leftX : 0)
+            .attr('y', d => this.orientation === 'horizontal' ? 0 : d.topY)
+            .attr('width', d => this.orientation === 'horizontal' ? d.width : this.config.width)
+            .attr('height', d => this.orientation === 'horizontal' ? this.config.height : d.height)
             .attr('fill', '#FFD700')  // Light gold for hop columns
             .attr('opacity', 0.06)  // Very subtle
             .attr('rx', 8);
@@ -1239,17 +1269,17 @@ class BATSVisualizationD3 {
         // Draw ART boxes at bottom of hop creation columns (moved from wallet columns)
         this.drawHopCreationARTBoxes(hopSpaces);
 
-        // Draw subtle vertical guides at hop space boundaries
+        // Draw subtle guides at hop space boundaries
         const guides = this.backgroundGroup.selectAll('.hop-guide')
             .data(hopSpaces);
 
         guides.enter()
             .append('line')
             .attr('class', 'hop-guide')
-            .attr('x1', d => d.leftX)
-            .attr('y1', 0)
-            .attr('x2', d => d.leftX)
-            .attr('y2', this.config.height)
+            .attr('x1', d => this.orientation === 'horizontal' ? d.leftX : 0)
+            .attr('y1', d => this.orientation === 'horizontal' ? 0 : d.topY)
+            .attr('x2', d => this.orientation === 'horizontal' ? d.leftX : this.config.width)
+            .attr('y2', d => this.orientation === 'horizontal' ? this.config.height : d.topY)
             .attr('stroke', '#ddd')
             .attr('stroke-width', 1)
             .attr('stroke-dasharray', '10,5')
@@ -1309,9 +1339,9 @@ class BATSVisualizationD3 {
                 const artEntries = Object.entries(d.artBefore || {});
                 if (artEntries.length === 0) return 'No ART';
                 return artEntries.map(([currency, amount]) =>
-                    `${amount.toFixed(2)} ${currency}`
+                    `${this.formatAmount(amount, currency)} ${currency}`
                 ).join(' + ');
-            });
+            }.bind(this));
     }
 
     drawHopReconciliation(hopSpaces) {
@@ -1322,7 +1352,16 @@ class BATSVisualizationD3 {
 
         const reconGroup = recon.enter()
             .append('g')
-            .attr('class', 'hop-reconciliation');
+            .attr('class', 'hop-reconciliation')
+            .attr('transform', (d, i) => {
+                // In vertical mode, offset each T-account to align with its hop space
+                if (this.orientation === 'vertical') {
+                    // Stack T-accounts vertically, one per hop
+                    const yOffset = i * 300; // Space between T-accounts
+                    return `translate(0, ${yOffset})`;
+                }
+                return 'translate(0, 0)';
+            });
 
         // Calculate reconciliation data for each hop
         hopSpaces.forEach((hopSpace, hopIndex) => {
@@ -1536,6 +1575,9 @@ class BATSVisualizationD3 {
             return colors[currency] || '#34495e';
         };
 
+        // Capture class context for use in callbacks
+        const self = this;
+
         // Render nested T-account entries
         reconGroup.each(function(d) {
             const group = d3.select(this);
@@ -1581,7 +1623,7 @@ class BATSVisualizationD3 {
                     .attr('font-size', '11px')
                     .attr('font-weight', 'bold')
                     .attr('fill', color)
-                    .text(`${account.beginningBalance.toFixed(2)}`);
+                    .text(`${self.formatAmount(account.beginningBalance, currency)}`);
 
                 group.append('text')
                     .attr('x', leftLabelX)
@@ -1604,7 +1646,7 @@ class BATSVisualizationD3 {
                         .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
                         .attr('fill', '#9b59b6')
-                        .text(`(${account.terminated.toFixed(2)})`);
+                        .text(`(${self.formatAmount(account.terminated, currency)})`);
 
                     group.append('text')
                         .attr('x', rightLabelX)
@@ -1623,7 +1665,7 @@ class BATSVisualizationD3 {
                         .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
                         .attr('fill', '#27ae60')
-                        .text(`(${account.stillTracing.toFixed(2)})`);
+                        .text(`(${self.formatAmount(account.stillTracing, currency)})`);
 
                     group.append('text')
                         .attr('x', rightLabelX)
@@ -1644,7 +1686,7 @@ class BATSVisualizationD3 {
                         .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
                         .attr('fill', '#f39c12')
-                        .text(`(${account.converted.toFixed(2)})`);
+                        .text(`(${self.formatAmount(account.converted, currency)})`);
 
                     group.append('text')
                         .attr('x', rightLabelX)
@@ -1663,7 +1705,7 @@ class BATSVisualizationD3 {
                         .attr('text-anchor', 'end')
                         .attr('font-size', '10px')
                         .attr('fill', '#e74c3c')
-                        .text(`(${account.writeOffs.toFixed(2)})`);
+                        .text(`(${self.formatAmount(account.writeOffs, currency)})`);
 
                     group.append('text')
                         .attr('x', rightLabelX)
@@ -1701,7 +1743,7 @@ class BATSVisualizationD3 {
                     .attr('font-size', '11px')
                     .attr('font-weight', 'bold')
                     .attr('fill', color)
-                    .text(`${account.beginningBalance.toFixed(2)}`);
+                    .text(`${self.formatAmount(account.beginningBalance, currency)}`);
 
                 // Right total (right-aligned with parentheses)
                 group.append('text')
@@ -1711,7 +1753,7 @@ class BATSVisualizationD3 {
                     .attr('font-size', '11px')
                     .attr('font-weight', 'bold')
                     .attr('fill', isBalanced ? '#27ae60' : '#e74c3c')
-                    .text(`(${rightTotal.toFixed(2)}) ${isBalanced ? '✓' : '✗'}`);
+                    .text(`(${self.formatAmount(rightTotal, currency)}) ${isBalanced ? '✓' : '✗'}`);
 
                 currentY += lineHeight + 10;
 
@@ -1767,7 +1809,7 @@ class BATSVisualizationD3 {
                         .attr('font-size', '12px')
                         .attr('font-weight', 'bold')
                         .attr('fill', '#856404')
-                        .text(`${nestedAccount.sourceAmount.toFixed(2)} ${sourceCurrency} → ${nestedAccount.fromConversion.toFixed(2)} ${nestedCurrency}`);
+                        .text(`${self.formatAmount(nestedAccount.sourceAmount, sourceCurrency)} ${sourceCurrency} → ${self.formatAmount(nestedAccount.fromConversion, nestedCurrency)} ${nestedCurrency}`);
 
                     currentY += conversionBoxHeight + 10;
 
@@ -1880,7 +1922,7 @@ class BATSVisualizationD3 {
                         .attr('font-size', '11px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
-                        .text(`${nestedAccount.fromConversion.toFixed(2)}`);
+                        .text(`${self.formatAmount(nestedAccount.fromConversion, nestedCurrency)}`);
 
                     group.append('text')
                         .attr('x', nestedLeftLabelX)
@@ -1897,7 +1939,7 @@ class BATSVisualizationD3 {
                             .attr('text-anchor', 'end')
                             .attr('font-size', '8px')
                             .attr('fill', '#7f8c8d')
-                            .text(`(from ${nestedAccount.sourceAmount.toFixed(2)} ${nestedAccount.sourceCurrency})`);
+                            .text(`(from ${self.formatAmount(nestedAccount.sourceAmount, nestedAccount.sourceCurrency)} ${nestedAccount.sourceCurrency})`);
                     }
 
                     // Right: Disposition - compact with right-aligned numbers and parentheses
@@ -1915,7 +1957,7 @@ class BATSVisualizationD3 {
                             .attr('text-anchor', 'end')
                             .attr('font-size', '9px')
                             .attr('fill', '#9b59b6')
-                            .text(`(${nestedAccount.terminated.toFixed(2)})`);
+                            .text(`(${self.formatAmount(nestedAccount.terminated, nestedCurrency)})`);
 
                         group.append('text')
                             .attr('x', nestedRightLabelX)
@@ -1930,7 +1972,7 @@ class BATSVisualizationD3 {
                             .attr('text-anchor', 'end')
                             .attr('font-size', '9px')
                             .attr('fill', '#27ae60')
-                            .text(`(${nestedAccount.stillTracing.toFixed(2)})`);
+                            .text(`(${self.formatAmount(nestedAccount.stillTracing, nestedCurrency)})`);
 
                         group.append('text')
                             .attr('x', nestedRightLabelX)
@@ -1947,7 +1989,7 @@ class BATSVisualizationD3 {
                             .attr('text-anchor', 'end')
                             .attr('font-size', '10px')
                             .attr('fill', '#9b59b6')
-                            .text(`(${nestedAccount.terminated.toFixed(2)})`);
+                            .text(`(${self.formatAmount(nestedAccount.terminated, nestedCurrency)})`);
 
                         group.append('text')
                             .attr('x', nestedRightLabelX)
@@ -1963,7 +2005,7 @@ class BATSVisualizationD3 {
                             .attr('text-anchor', 'end')
                             .attr('font-size', '10px')
                             .attr('fill', '#27ae60')
-                            .text(`(${nestedAccount.stillTracing.toFixed(2)})`);
+                            .text(`(${self.formatAmount(nestedAccount.stillTracing, nestedCurrency)})`);
 
                         group.append('text')
                             .attr('x', nestedRightLabelX)
@@ -2001,7 +2043,7 @@ class BATSVisualizationD3 {
                         .attr('font-size', '10px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedColor)
-                        .text(`${nestedAccount.fromConversion.toFixed(2)}`);
+                        .text(`${self.formatAmount(nestedAccount.fromConversion, nestedCurrency)}`);
 
                     group.append('text')
                         .attr('x', nestedRightBalanceX)
@@ -2010,7 +2052,7 @@ class BATSVisualizationD3 {
                         .attr('font-size', '10px')
                         .attr('font-weight', 'bold')
                         .attr('fill', nestedBalanced ? '#27ae60' : '#e74c3c')
-                        .text(`(${nestedRightTotal.toFixed(2)}) ${nestedBalanced ? '✓' : '✗'}`);
+                        .text(`(${self.formatAmount(nestedRightTotal, nestedCurrency)}) ${nestedBalanced ? '✓' : '✗'}`);
 
                     // Move currentY to after the box
                     currentY = nestedBoxStartY + nestedBoxHeight + 5;
@@ -2067,8 +2109,8 @@ class BATSVisualizationD3 {
             .text(d => {
                 const currencies = Object.keys(d.artAfter);
                 if (currencies.length === 0) return '0';
-                return currencies.map(curr => `${d.artAfter[curr].toFixed(2)} ${curr}`).join(' + ');
-            });
+                return currencies.map(curr => `${this.formatAmount(d.artAfter[curr], curr)} ${curr}`).join(' + ');
+            }.bind(this));
     }
 
     drawEdges() {
@@ -2351,7 +2393,7 @@ class BATSVisualizationD3 {
             .style('stroke-width', '3px')
             .style('stroke-linecap', 'round')
             .style('stroke-linejoin', 'round')
-            .text(d => `${d.amount.toFixed(2)} ${d.currency}`);
+            .text(d => `${this.formatAmount(d.amount, d.currency)} ${d.currency}`);
 
         // Add note indicator for edges
         edgeEnter.append('text')
@@ -2487,16 +2529,15 @@ class BATSVisualizationD3 {
                     const currencyEntries = Object.entries(d.currencies);
                     if (currencyEntries.length === 1) {
                         const [currency, amount] = currencyEntries[0];
-                        return `${amount.toFixed(2)} ${currency}`;
+                        return `${this.formatAmount(amount, currency)} ${currency}`;
                     } else if (currencyEntries.length > 1) {
                         return currencyEntries.map(([currency, amount]) =>
-                            `${amount.toFixed(2)} ${currency}`
+                            `${this.formatAmount(amount, currency)} ${currency}`
                         ).join(', ');
                     }
                 }
                 // Default for other wallet types
-                const decimals = d.currency === 'BTC' ? 8 : 2;
-                return `${(d.amount || 0).toFixed(decimals)} ${d.currency || ''}`;
+                return `${this.formatAmount(d.amount || 0, d.currency || '')} ${d.currency || ''}`;
             });
     }
 
@@ -2643,7 +2684,7 @@ class BATSVisualizationD3 {
             <div style="background: ${idx % 2 === 0 ? '#ecf0f1' : 'white'}; padding: 10px; border-radius: 6px; margin: 5px 0;">
                 <div style="font-weight: bold; color: #2c3e50;">${idx + 1}. ${thread.label || thread.notation || 'Thread'}</div>
                 <div style="color: #27ae60; font-weight: 600; margin-top: 5px;">
-                    ${thread.amount.toFixed(2)} ${thread.currency}
+                    ${this.formatAmount(thread.amount, thread.currency)} ${thread.currency}
                 </div>
             </div>
         `).join('');
@@ -2658,7 +2699,7 @@ class BATSVisualizationD3 {
 
             <div style="margin: 20px 0;">
                 <div style="background: #3498db; color: white; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
-                    <strong>Total Amount:</strong> ${edgeGroup.amount.toFixed(2)} ${edgeGroup.currency}
+                    <strong>Total Amount:</strong> ${this.formatAmount(edgeGroup.amount, edgeGroup.currency)} ${edgeGroup.currency}
                 </div>
 
                 <h3 style="color: #2c3e50; margin: 15px 0 10px 0;">Individual Threads:</h3>
@@ -3151,7 +3192,7 @@ class BATSVisualizationD3 {
             .attr('fill', '#2c3e50')
             .attr('font-weight', 'bold')
             .style('pointer-events', 'none')
-            .text(d => `${d.value.toFixed(2)} ${d.currency || ''}`);
+            .text(d => `${this.formatAmount(d.value, d.currency || '')} ${d.currency || ''}`);
 
         // Draw nodes (wallets)
         const node = this.mainGroup.append('g')
@@ -3203,7 +3244,7 @@ class BATSVisualizationD3 {
             .attr('font-weight', 'bold')
             .attr('fill', '#27ae60')
             .style('pointer-events', 'none')
-            .text(d => d.amount ? `${d.amount.toFixed(2)} ${d.currency || ''}` : '');
+            .text(d => d.amount ? `${this.formatAmount(d.amount, d.currency || '')} ${d.currency || ''}` : '');
 
         console.log('✅ Sankey diagram rendered');
     }

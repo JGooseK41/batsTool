@@ -3,56 +3,80 @@
 ## Project Overview
 B.A.T.S. (Block Audit Tracing Standard) is a blockchain investigation tool for tracing cryptocurrency transactions across multiple chains. It helps investigators track stolen or illicit funds using a standardized notation system.
 
-## Latest Commit (Auto-updated: 2025-11-03 10:01)
+## Latest Commit (Auto-updated: 2025-11-03 21:43)
 
-**Commit:** 73dbe9eb612a42807acdc676784211a40ee63e8f
+**Commit:** eac1dffd42085df6bc05a250edddb9b9dfe8ae23
 **Author:** Your Name
-**Message:** UX: Refine final report buttons and add Audit Trail export
+**Message:** Fix: Wallet Explorer UX improvements and Bitcoin fee display
 
-Problem: Final report buttons looked basic and flat
-- No visual hierarchy between active/inactive tabs
-- No way to export just the Audit Trail for standalone use
-- Buttons needed more polish and modern styling
+Problem 1: D3 visualization crashed with "Cannot read properties of undefined"
+- Error occurred when rendering node shapes at line 2414
+- `this.config.nodeRadius` was undefined inside .each() callback
+- Root cause: Lost class context in callback function
 
-Solution:
+Problem 2: No completion UI after allocating outputs in Wallet Explorer
+- After tracing 3 outputs, user had to click "✕ Close" to exit
+- No clear forward progression or success confirmation
+- No way to track how many outputs were traced in session
 
-1. REFINED BUTTON STYLING (lines 2203-2239):
-   - Added gradient backgrounds for depth
-   - Active tab: Bright gradient with enhanced shadow
-   - Inactive tabs: Gray gradient with subtle shadow
-   - Increased padding (14px 28px) for better touch targets
-   - Added border-radius (8px) for modern look
-   - Smooth transitions for interactions
+Problem 3: Bitcoin fee writeoffs showing "-0 BTC" instead of actual amounts
+- Fees like 0.00000732 BTC displayed as "-0 BTC"
+- Root cause: Using .toLocaleString() which rounds to ~3 decimals
+- Made fees appear as zero when they were actually recorded correctly
 
-2. UPDATED TAB SWITCHING LOGIC (lines 30112-30161):
-   - Active tabs now use color-coded gradients:
-     * Audit Trail: Blue gradient (#3498db → #2980b9)
-     * Wallet Indexes: Red gradient (#e74c3c → #c0392b)
-     * Narrative: Green gradient (#27ae60 → #229954)
-   - Enhanced box shadows show active state clearly
-   - Smooth visual feedback on tab changes
+Solutions:
 
-3. AUDIT TRAIL EXPORT BUTTON (lines 2246-2262):
-   - Green gradient button with icon: "📄 Export / Print"
-   - Positioned next to title for easy access
-   - Opens standalone page with print-optimized layout
+1. FIXED D3 CONTEXT BINDING (bats-d3-visualization.js:2394-2427):
+   - Added `const self = this;` before .each() callback
+   - Changed `this.config` to `self.config` in circle rendering
+   - Removed incorrect `.bind(this)` at end of .each()
+   - Visualization now renders without crashing
 
-4. EXPORT FUNCTION (lines 30163-30276):
-   - Opens new window with just audit trail content
-   - Includes case metadata (Case ID, Investigator, Date)
-   - Print-optimized CSS with @media print rules
-   - Floating print button (hides when printing)
-   - Clean header with case information
-   - Browser's print dialog can save as PDF
+2. ADDED COMPLETION FOOTER (index.html:2933-2961):
+   - New green success panel after allocations complete
+   - Shows "✅ Allocations Complete!" message
+   - Displays count: "N outputs traced"
+   - "✓ Done - View Hop" button (primary action)
+     * Closes explorer
+     * Navigates to hops step
+     * Scrolls to current hop with highlight animation
+   - "🔍 Continue Exploring" button (secondary action)
+     * Hides footer to continue tracing
+
+3. ALLOCATION TRACKING (index.html:15444, 18070-18079, 16859-16865):
+   - Added `allocatedOutputsCount` to walletExplorerState
+   - Increments after each output allocation
+   - Increments after ART batch commits
+   - Resets when opening wallet explorer
+   - Persists across multiple allocations in same session
+
+4. COMPLETION FOOTER DISPLAY (index.html:18094-18128):
+   - `showWalletExplorerCompletionFooter()` function
+   - Hides other footers (ART actions, victim actions)
+   - Shows completion footer with current count
+   - Added debug logging for troubleshooting
+
+5. NAVIGATION FUNCTIONS (index.html:18130-18167):
+   - `finishWalletExplorerAndViewHop()`: Complete and view hop
+   - `continueWalletExploring()`: Hide footer to continue
+
+6. FIXED WRITEOFF DECIMAL PRECISION (index.html:23360):
+   - Changed from `.toLocaleString()` to `.toFixed(8)` for BTC
+   - Uses `.toFixed(6)` for other currencies
+   - Fees now show: "-0.00000732 BTC" instead of "-0 BTC"
+
+7. MODIFIED ART COMMIT FLOW (index.html:16855-16865):
+   - No longer auto-closes wallet explorer after commit
+   - Shows completion footer instead
+   - Allows continuing to trace more outputs
 
 Usage:
-✅ Click "📄 Export / Print" in Audit Trail tab
-✅ New window opens with standalone audit trail
-✅ Click "🖨️ Print / Save as PDF" button
-✅ Use browser's print dialog to save as PDF or print
+✅ Open Wallet Explorer → Trace outputs → See completion panel
+✅ Click "✓ Done - View Hop" to close and view results
+✅ Or click "🔍 Continue Exploring" to trace more outputs
+✅ Bitcoin fees now display correct amounts in writeoff entries
 
-Now buttons look professional with clear visual hierarchy
-and investigators can easily export audit trail standalone.
+Now investigators have clear UX progression and can see accurate fee amounts!
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -60,22 +84,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Changed Files:
 ```
- index.html | 191 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 179 insertions(+), 12 deletions(-)
+ CLAUDE.md                |  98 ++++++++++++++++++++-------------
+ bats-d3-visualization.js |   7 +--
+ index.html               | 137 +++++++++++++++++++++++++++++++++++++++++++++--
+ 3 files changed, 198 insertions(+), 44 deletions(-)
 ```
 
 ## Recent Commits History
 
-- 73dbe9e UX: Refine final report buttons and add Audit Trail export (0 seconds ago)
-- a02b9d9 Fix: Terminal wallet attribution not saving to entry fields (5 minutes ago)
-- cbfb122 Fix: Visualization improvements and ART terminology correction (3 hours ago)
-- 80e0832 Fix: Display Bitcoin amounts with 8 decimal places to show fees correctly (3 hours ago)
-- a643acc UX: Increase Wallet Explorer height to reduce sidebar scrolling (4 hours ago)
-- 396dfd2 Fix: Bitcoin fee calculation using output sum instead of input amount (11 hours ago)
-- b0b72ca Update CLAUDE.md with latest commit info (11 hours ago)
-- 6daa818 Fix: JavaScript syntax error in Log All Entries button (11 hours ago)
-- e60e7f1 Update CLAUDE.md with latest commit info (12 hours ago)
-- bd81b64 Fix: Fee calculation now uses blockchain data and reduces source threads (12 hours ago)
+- eac1dff Fix: Wallet Explorer UX improvements and Bitcoin fee display (0 seconds ago)
+- 73dbe9e UX: Refine final report buttons and add Audit Trail export (12 hours ago)
+- a02b9d9 Fix: Terminal wallet attribution not saving to entry fields (12 hours ago)
+- cbfb122 Fix: Visualization improvements and ART terminology correction (15 hours ago)
+- 80e0832 Fix: Display Bitcoin amounts with 8 decimal places to show fees correctly (15 hours ago)
+- a643acc UX: Increase Wallet Explorer height to reduce sidebar scrolling (16 hours ago)
+- 396dfd2 Fix: Bitcoin fee calculation using output sum instead of input amount (23 hours ago)
+- b0b72ca Update CLAUDE.md with latest commit info (23 hours ago)
+- 6daa818 Fix: JavaScript syntax error in Log All Entries button (23 hours ago)
+- e60e7f1 Update CLAUDE.md with latest commit info (23 hours ago)
 
 ## Key Features
 
