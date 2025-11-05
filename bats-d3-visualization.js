@@ -2330,18 +2330,27 @@ class BATSVisualizationD3 {
         edgeEnter.append('path')
             .attr('class', 'edge-drag-target')
             .attr('d', d => {
-                let x1 = d.source.x + this.config.nodeRadius;
-                let y1 = d.source.y;
-                let x2 = d.target.x - this.config.nodeRadius;
-                let y2 = d.target.y;
+                // Calculate edge points based on orientation
+                const dx = d.target.x - d.source.x;
+                const dy = d.target.y - d.source.y;
+                const angle = Math.atan2(dy, dx);
+
+                let x1 = d.source.x + Math.cos(angle) * this.config.nodeRadius;
+                let y1 = d.source.y + Math.sin(angle) * this.config.nodeRadius;
+                let x2 = d.target.x - Math.cos(angle) * this.config.nodeRadius;
+                let y2 = d.target.y - Math.sin(angle) * this.config.nodeRadius;
 
                 // Apply offset for expanded multi-thread edges
                 if (d.isGroup && !d.isCollapsed && d.threadCount > 1) {
                     const spacing = 15;
                     const totalHeight = (d.threadCount - 1) * spacing;
                     const offset = -totalHeight / 2 + d.threadIndex * spacing;
-                    y1 += offset;
-                    y2 += offset;
+
+                    const perpAngle = angle + Math.PI / 2;
+                    x1 += Math.cos(perpAngle) * offset;
+                    y1 += Math.sin(perpAngle) * offset;
+                    x2 += Math.cos(perpAngle) * offset;
+                    y2 += Math.sin(perpAngle) * offset;
                 }
 
                 // Use custom control point if it exists
@@ -2349,8 +2358,14 @@ class BATSVisualizationD3 {
                     return this.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoint);
                 }
 
-                const mx = (x1 + x2) / 2;
-                return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+                // Create smooth bezier curve based on orientation
+                if (this.orientation === 'horizontal') {
+                    const mx = (x1 + x2) / 2;
+                    return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+                } else {
+                    const my = (y1 + y2) / 2;
+                    return `M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`;
+                }
             })
             .attr('fill', 'none')
             .attr('stroke', 'transparent')
@@ -2394,9 +2409,14 @@ class BATSVisualizationD3 {
                     return this.buildCustomCurvePath(x1, y1, x2, y2, d.controlPoint);
                 }
 
-                // Create smooth bezier curve
-                const mx = (x1 + x2) / 2;
-                return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+                // Create smooth bezier curve based on orientation
+                if (this.orientation === 'horizontal') {
+                    const mx = (x1 + x2) / 2;
+                    return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+                } else {
+                    const my = (y1 + y2) / 2;
+                    return `M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`;
+                }
             })
             .attr('fill', 'none')
             .attr('stroke', d => d.isCollapsed ? '#34495e' : '#95a5a6')
