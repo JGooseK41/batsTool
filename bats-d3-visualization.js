@@ -1601,8 +1601,12 @@ class BATSVisualizationD3 {
         // Store box height for drag boundary calculations
         this.reconBoxHeight = boxHeight;
 
-        // Position reconciliation box near bottom of viewport (dynamic based on calculated height)
-        const reconY = this.config.height - boxHeight - 50;
+        // Position reconciliation box based on orientation
+        // Horizontal: at bottom of viewport
+        // Vertical: at y=0 (group is already positioned via transform)
+        const reconY = this.orientation === 'horizontal'
+            ? this.config.height - boxHeight - 50
+            : 0;
 
         // Main reconciliation box (dynamic height)
         reconGroup.append('rect')
@@ -2713,23 +2717,41 @@ class BATSVisualizationD3 {
     }
 
     dragging(event, d) {
-        // Strictly constrain movement to vertical only within column
-        const newY = event.y;
+        // Constrain movement to one axis only (perpendicular to hop progression)
+        // Horizontal view: nodes move vertically (Y axis), X locked to column
+        // Vertical view: nodes move horizontally (X axis), Y locked to lane
 
-        // Calculate dynamic top boundary based on column header position
-        // Column headers are at y=150 with height=60, so min should be 150 + 60 + nodeRadius
-        const columnHeaderBottom = 150 + 60;  // Column header y + height
-        const minY = columnHeaderBottom + this.config.nodeRadius + 10;  // Add padding below header
+        if (this.orientation === 'horizontal') {
+            // Horizontal orientation: allow Y movement, lock X
+            const newY = event.y;
 
-        // Calculate dynamic bottom boundary based on reconciliation box height
-        const reconBoxHeight = this.reconBoxHeight || 200;  // Use stored height or default
-        const maxY = this.config.height - reconBoxHeight - 70;  // Bottom boundary (above reconciliation boxes)
+            // Calculate dynamic top boundary based on column header position
+            const columnHeaderBottom = 150 + 60;
+            const minY = columnHeaderBottom + this.config.nodeRadius + 10;
 
-        // IMPORTANT: X position is LOCKED - never changes
-        // Only Y can change, and only within bounds
-        d.y = Math.max(minY, Math.min(maxY, newY));
+            // Calculate dynamic bottom boundary based on reconciliation box height
+            const reconBoxHeight = this.reconBoxHeight || 200;
+            const maxY = this.config.height - reconBoxHeight - 70;
 
-        // Update all node positions (D3 will only update the dragged node's transform)
+            // Only Y can change, X is locked
+            d.y = Math.max(minY, Math.min(maxY, newY));
+            // d.x stays unchanged
+
+        } else {
+            // Vertical orientation: allow X movement, lock Y
+            const newX = event.x;
+
+            // Calculate boundaries for horizontal movement
+            const leftMargin = 850; // Leave room for T-accounts
+            const minX = leftMargin + this.config.nodeRadius + 10;
+            const maxX = this.config.width - this.config.nodeRadius - 50;
+
+            // Only X can change, Y is locked
+            d.x = Math.max(minX, Math.min(maxX, newX));
+            // d.y stays unchanged
+        }
+
+        // Update node position
         this.nodesGroup.selectAll('.node')
             .filter(node => node.id === d.id)
             .attr('transform', `translate(${d.x}, ${d.y})`);
@@ -3850,8 +3872,12 @@ Click OK to copy transaction hash to clipboard.
                     // Only check for clustering if dragged significantly (> 20 pixels)
                     // This prevents accidental clustering on small movements
                     if (dragDistance > 20) {
-                        // Check if dropped on another node for clustering (use tighter radius)
-                        const targetNode = self.findNodeAtPosition(d.x, d.y, d);
+                        // CRITICAL: Use event coordinates (where mouse cursor is) not node position
+                        // This ensures we detect the node the user actually dropped onto
+                        const mouseX = event.x;
+                        const mouseY = event.y;
+
+                        const targetNode = self.findNodeAtPosition(mouseX, mouseY, d);
                         if (targetNode && targetNode.column === d.column) {
                             // Check if nodes are compatible for clustering
                             if (self.canClusterNodes(d, targetNode)) {
