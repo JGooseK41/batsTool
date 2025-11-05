@@ -17,6 +17,7 @@ class BATSVisualizationD3 {
         this.redoStack = []; // Stack for redo operations
         this.clusters = []; // Custom node clusters created by user
         this.draggedNodeForClustering = null; // Track node being dragged for clustering
+        this.forceSimulation = null; // D3 force simulation for node repulsion
 
         // Configuration
         this.config = {
@@ -3951,6 +3952,10 @@ Click OK to copy transaction hash to clipboard.
 
                     // Mark as manually positioned so it's preserved when switching views
                     d.manuallyPositioned = true;
+
+                    // Run repulsion simulation to spread nodes apart
+                    self.runRepulsionSimulation();
+
                     // Save state for undo
                     self.saveState();
                 }));
@@ -4388,6 +4393,130 @@ Click OK to copy transaction hash to clipboard.
         modals.forEach(m => m.remove());
 
         this.render();
+    }
+
+    runRepulsionSimulation() {
+        // Run a force simulation to spread nodes apart and prevent overlaps
+        // Only affects nodes in the same column/lane
+        // Constrained to perpendicular axis based on orientation
+
+        // Collect all nodes and clusters for simulation
+        const simulationNodes = [];
+
+        // Add regular nodes (excluding those in clusters)
+        this.nodes.forEach(node => {
+            if (!node.clusteredIn) {
+                simulationNodes.push({
+                    ...node,
+                    radius: this.config.nodeRadius
+                });
+            }
+        });
+
+        // Add clusters
+        this.clusters.forEach(cluster => {
+            simulationNodes.push({
+                ...cluster,
+                radius: this.config.nodeRadius * 1.3 // Clusters are larger
+            });
+        });
+
+        if (simulationNodes.length === 0) return;
+
+        // Group nodes by column for per-column simulation
+        const nodesByColumn = new Map();
+        simulationNodes.forEach(node => {
+            const col = node.column;
+            if (!nodesByColumn.has(col)) {
+                nodesByColumn.set(col, []);
+            }
+            nodesByColumn.get(col).push(node);
+        });
+
+        // Run simulation for each column independently
+        nodesByColumn.forEach((columnNodes, col) => {
+            if (columnNodes.length <= 1) return; // No need to repel if only one node
+
+            // Create force simulation
+            const simulation = d3.forceSimulation(columnNodes)
+                .force('collision', d3.forceCollide()
+                    .radius(d => d.radius + 15) // Add padding between nodes
+                    .strength(1)
+                )
+                .force('charge', d3.forceManyBody()
+                    .strength(-300) // Repulsion strength
+                )
+                .stop(); // Don't run automatically
+
+            // Run simulation manually for better control
+            const numIterations = 30; // Number of ticks to run
+            for (let i = 0; i < numIterations; i++) {
+                simulation.tick();
+
+                // After each tick, constrain nodes to their column/lane
+                columnNodes.forEach(node => {
+                    if (this.orientation === 'horizontal') {
+                        // Horizontal: keep X fixed to column, allow Y to adjust
+                        const column = this.hopColumns[node.column];
+                        if (column) {
+                            node.x = column.x; // Lock to column center
+
+                            // Constrain Y within bounds
+                            const columnHeaderBottom = 150 + 60;
+                            const minY = columnHeaderBottom + this.config.nodeRadius + 10;
+                            const maxY = this.config.height - (this.reconBoxHeight || 200) - 70;
+                            node.y = Math.max(minY, Math.min(maxY, node.y));
+                        }
+                    } else {
+                        // Vertical: keep Y fixed to lane, allow X to adjust
+                        const column = this.hopColumns[node.column];
+                        if (column) {
+                            node.y = column.y; // Lock to lane center
+
+                            // Constrain X within bounds
+                            const leftMargin = 850;
+                            const minX = leftMargin + this.config.nodeRadius + 10;
+                            const maxX = this.config.width - this.config.nodeRadius - 50;
+                            node.x = Math.max(minX, Math.min(maxX, node.x));
+                        }
+                    }
+
+                    // Mark as manually positioned so position is preserved
+                    node.manuallyPositioned = true;
+                });
+            }
+
+            // Update original node/cluster objects with new positions
+            columnNodes.forEach(simNode => {
+                if (simNode.isCluster) {
+                    const cluster = this.clusters.find(c => c.id === simNode.id);
+                    if (cluster) {
+                        cluster.x = simNode.x;
+                        cluster.y = simNode.y;
+                        cluster.manuallyPositioned = true;
+                        // Update perpendicular position for rotation persistence
+                        cluster.perpendicularPos = this.orientation === 'horizontal' ? simNode.y : simNode.x;
+                    }
+                } else {
+                    const node = this.nodes.find(n => n.id === simNode.id);
+                    if (node) {
+                        node.x = simNode.x;
+                        node.y = simNode.y;
+                        node.manuallyPositioned = true;
+                    }
+                }
+            });
+        });
+
+        // Redraw to show new positions
+        this.updateNodePositions();
+        this.updateEdges();
+    }
+
+    updateNodePositions() {
+        // Update visual position of all nodes without full re-render
+        this.nodesGroup.selectAll('.node')
+            .attr('transform', d => `translate(${d.x}, ${d.y})`);
     }
 
     saveState() {
