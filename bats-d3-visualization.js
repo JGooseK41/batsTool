@@ -240,11 +240,19 @@ class BATSVisualizationD3 {
         // Apply cluster markings to nodes after building
         this.applyClusterMarkings();
 
-        // Redirect edges to clusters
+        // Render first to position clusters properly
+        this.render();
+
+        // Add clusters to nodeMap so edges can find them
+        this.clusters.forEach(cluster => {
+            this.nodeMap.set(cluster.id, cluster);
+        });
+
+        // Now redirect edges to clusters (clusters have proper coordinates)
         this.redirectEdgesToClusters();
 
-        // Render based on layout mode
-        this.render();
+        // Redraw edges with cluster connections
+        this.drawEdges();
     }
 
     applyClusterMarkings() {
@@ -4168,14 +4176,20 @@ Click OK to copy transaction hash to clipboard.
 
         console.log(`Added node ${node.id} to cluster ${cluster.name}`);
 
+        // Redraw first to update cluster position
+        this.render();
+
+        // Make sure cluster is in nodeMap
+        this.nodeMap.set(cluster.id, cluster);
+
         // Rebuild edges to redirect to cluster
         this.redirectEdgesToClusters();
 
+        // Run repulsion to spread nodes apart
+        this.runRepulsionSimulation();
+
         // Save to investigation
         this.saveClustersToInvestigation();
-
-        // Redraw
-        this.render();
     }
 
     createClusterFromNodes(nodes) {
@@ -4223,14 +4237,20 @@ Click OK to copy transaction hash to clipboard.
 
         console.log('Created cluster:', cluster);
 
-        // Rebuild edges to redirect to cluster
+        // Redraw first to position the cluster properly
+        this.render();
+
+        // Add cluster to nodeMap so edges can find it
+        this.nodeMap.set(cluster.id, cluster);
+
+        // Now rebuild edges to redirect to cluster (cluster has proper coordinates now)
         this.redirectEdgesToClusters();
+
+        // Run repulsion to spread cluster away from overlapping nodes
+        this.runRepulsionSimulation();
 
         // Save to investigation
         this.saveClustersToInvestigation();
-
-        // Redraw
-        this.render();
     }
 
     saveClustersToInvestigation() {
