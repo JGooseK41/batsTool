@@ -1177,6 +1177,22 @@ class BATSVisualizationD3 {
                     swapNode.y = 400 + index * 120;
                 }
             });
+
+            // Position clusters in their columns
+            this.clusters.forEach((cluster, clusterIndex) => {
+                const column = this.hopColumns[cluster.column];
+                if (column) {
+                    // X is fixed to column center
+                    cluster.x = column.x;
+                    // Y uses perpendicular position (stored from creation) or calculate new
+                    if (cluster.perpendicularPos !== undefined) {
+                        cluster.y = cluster.perpendicularPos;
+                    } else {
+                        // Legacy clusters: position at bottom of column to avoid overlap
+                        cluster.y = this.config.height - this.reconBoxHeight - 150 - (clusterIndex * 100);
+                    }
+                }
+            });
         } else {
             // Vertical layout (top-to-bottom)
             this.hopColumns.forEach((column) => {
@@ -1212,6 +1228,23 @@ class BATSVisualizationD3 {
                     swapNode.y = (topColumn.y + this.config.walletColumnWidth / 2 +
                                  bottomColumn.y - this.config.walletColumnWidth / 2) / 2;
                     swapNode.x = 400 + index * 120;
+                }
+            });
+
+            // Position clusters in their lanes
+            this.clusters.forEach((cluster, clusterIndex) => {
+                const column = this.hopColumns[cluster.column];
+                if (column) {
+                    // Y is fixed to lane center
+                    cluster.y = column.y;
+                    // X uses perpendicular position (stored from creation) or calculate new
+                    if (cluster.perpendicularPos !== undefined) {
+                        cluster.x = cluster.perpendicularPos;
+                    } else {
+                        // Legacy clusters: position at right side of lane to avoid overlap
+                        const leftMargin = 850;
+                        cluster.x = this.config.width - 150 - (clusterIndex * 100);
+                    }
                 }
             });
         }
@@ -2168,6 +2201,9 @@ class BATSVisualizationD3 {
     drawHopCreationARTBoxes(hopSpaces) {
         // Draw NEW ART boxes below T-account in hop creation columns
         // These show the ART AFTER the hop completes
+        // Only show in horizontal mode - vertical mode has this info in the left header
+        if (this.orientation === 'vertical') return;
+
         const self = this;
         const artBoxes = this.backgroundGroup.selectAll('.hop-creation-art-box')
             .data(hopSpaces);
@@ -4142,14 +4178,22 @@ Click OK to copy transaction hash to clipboard.
         const clusterName = prompt('Enter cluster name:', 'Writeoffs');
         if (!clusterName) return;
 
+        // Calculate position along perpendicular axis only (average of node positions)
+        // Column/lane position will be set during render
+        const avgPerpendicularPos = this.orientation === 'horizontal'
+            ? nodes.reduce((sum, n) => sum + n.y, 0) / nodes.length
+            : nodes.reduce((sum, n) => sum + n.x, 0) / nodes.length;
+
         // Create cluster object
         const cluster = {
             id: `cluster-${Date.now()}`,
             name: clusterName,
             hopNumber: nodes[0].column,
             nodeIds: nodes.map(n => n.id),
-            x: nodes.reduce((sum, n) => sum + n.x, 0) / nodes.length,
-            y: nodes.reduce((sum, n) => sum + n.y, 0) / nodes.length,
+            // Position will be set during render based on orientation
+            x: 0, // Placeholder, set during render
+            y: 0, // Placeholder, set during render
+            perpendicularPos: avgPerpendicularPos, // Stored position along perpendicular axis
             isCluster: true,
             column: nodes[0].column,
             amount: nodes.reduce((sum, n) => sum + (n.amount || 0), 0),
